@@ -34,6 +34,47 @@
             </a>
         </p>
 
+        <h3>Users</h3>
+
+        <h4>Editors Group</h4>
+        <p>
+            The following users are able to edit, use this algorithm and
+            see all of the results:
+        </p>
+
+        <ul>
+            {% for user in object.editors_group.user_set.all %}
+                <li>{{ user|user_profile_link }}</li>
+            {% empty %}
+                <li>There are no editors for this algorithm.</li>
+            {% endfor %}
+        </ul>
+
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:editors-update' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Add an editor for this algorithm
+            </a>
+        </p>
+
+        <h4>Users Group</h4>
+        <p>The following users are able to use this algorithm:</p>
+
+        <ul>
+            {% for user in object.users_group.user_set.all %}
+                <li>{{ user|user_profile_link }}</li>
+            {% empty %}
+                <li>There are no users in this algorithms users group.</li>
+            {% endfor %}
+        </ul>
+
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:users-update' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Add a user for this algorithm
+            </a>
+        </p>
+
         <h3>Container Images</h3>
 
         <ul>

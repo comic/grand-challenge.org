@@ -165,7 +165,9 @@ def test_algorithm_jobs_view(client):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view_name", ["update", "image-create"])
+@pytest.mark.parametrize(
+    "view_name", ["update", "image-create", "users-update", "editors-update"]
+)
 def test_algorithm_edit_view_permissions(client, view_name):
     alg_set = TwoAlgorithms()
 
@@ -194,6 +196,29 @@ def test_algorithm_edit_view_permissions(client, view_name):
             reverse_kwargs={"slug": test[1].slug},
         )
         assert response.status_code == test[2]
+
+
+@pytest.mark.django_db
+def test_user_autocomplete_permissions(client):
+    alg_set = TwoAlgorithms()
+
+    tests = (
+        (None, 302),
+        (alg_set.creator, 403),
+        (alg_set.editor1, 200),
+        (alg_set.user1, 403),
+        (alg_set.editor2, 200),
+        (alg_set.user2, 403),
+        (alg_set.u, 403),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname="algorithms:users-autocomplete",
+            client=client,
+            user=test[0],
+        )
+        assert response.status_code == test[1]
 
 
 @pytest.mark.django_db

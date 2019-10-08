@@ -1,8 +1,20 @@
 import logging
 
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from dal import autocomplete
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    ListView,
+    UpdateView,
+    FormView,
+)
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
@@ -16,6 +28,8 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmForm,
     AlgorithmImageUpdateForm,
+    EditorsForm,
+    UsersForm,
 )
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -75,6 +89,75 @@ class AlgorithmUpdate(
         f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
     raise_exception = True
+
+
+class AlgorithmUserAutocomplete(
+    LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
+):
+    def test_func(self):
+        group_pks = (
+            Algorithm.objects.all()
+            .select_related("editors_group")
+            .values_list("editors_group__pk", flat=True)
+        )
+        return self.request.user.groups.filter(pk__in=group_pks).exists()
+
+    def get_queryset(self):
+        qs = (
+            get_user_model()
+            .objects.all()
+            .order_by("username")
+            .exclude(username=settings.ANONYMOUS_USER_NAME)
+        )
+
+        if self.q:
+            qs = qs.filter(username__istartswith=self.q)
+
+        return qs
+
+
+class AlgorithmUserGroupUpdateMixin(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    template_name = "algorithms/algorithm_user_groups_form.html"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.algorithm
+
+    @property
+    def algorithm(self):
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {"object": self.algorithm, "role": self.get_form().role}
+        )
+        return context
+
+    def get_success_url(self):
+        return self.algorithm.get_absolute_url()
+
+    def form_valid(self, form):
+        form.add_or_remove_user(algorithm=self.algorithm)
+        return super().form_valid(form)
+
+
+class EditorsUpdate(AlgorithmUserGroupUpdateMixin):
+    form_class = EditorsForm
+    success_message = "Editors successfully updated"
+
+
+class UsersUpdate(AlgorithmUserGroupUpdateMixin):
+    form_class = UsersForm
+    success_message = "Users successfully updated"
 
 
 class AlgorithmImageCreate(

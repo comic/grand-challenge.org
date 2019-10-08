@@ -10,6 +10,9 @@ from grandchallenge.algorithms.views import (
     AlgorithmUpdate,
     AlgorithmImageUpdate,
     AlgorithmJobsList,
+    AlgorithmUserAutocomplete,
+    EditorsUpdate,
+    UsersUpdate,
 )
 
 app_name = "algorithms"
@@ -17,6 +20,11 @@ app_name = "algorithms"
 urlpatterns = [
     path("", AlgorithmList.as_view(), name="list"),
     path("create/", AlgorithmCreate.as_view(), name="create"),
+    path(
+        "users-autocomplete/",
+        AlgorithmUserAutocomplete.as_view(),
+        name="users-autocomplete",
+    ),
     path("<slug:slug>/", AlgorithmDetail.as_view(), name="detail"),
     path("<slug:slug>/update/", AlgorithmUpdate.as_view(), name="update"),
     path(
@@ -40,4 +48,10 @@ urlpatterns = [
         name="execution-session-create",
     ),
     path("<slug:slug>/jobs/", AlgorithmJobsList.as_view(), name="jobs-list"),
+    path(
+        "<slug>/editors/update/",
+        EditorsUpdate.as_view(),
+        name="editors-update",
+    ),
+    path("<slug>/users/update/", UsersUpdate.as_view(), name="users-update"),
 ]
