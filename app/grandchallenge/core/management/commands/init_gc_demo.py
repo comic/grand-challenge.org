@@ -255,17 +255,19 @@ class Command(BaseCommand):
         algorithm = Algorithm.objects.create(
             title="Test Algorithm", logo=get_temporary_image()
         )
-        algorithm.editors_group.user_set.add(self.users["demo"])
+        algorithm.editors_group.user_set.add(self.users["algorithm"])
 
         algorithm_image = AlgorithmImage(
-            creator=self.users["demo"], algorithm=algorithm
+            creator=self.users["algorithm"], algorithm=algorithm
         )
         container = ContentFile(base64.b64decode(b""))
         algorithm_image.image.save("test_algorithm.tar", container)
         algorithm_image.save()
 
         algorithms_job = grandchallenge.algorithms.models.Job(
-            algorithm_image=algorithm_image, image=cases_image
+            creator=self.users["algorithm"],
+            algorithm_image=algorithm_image,
+            image=cases_image,
         )
         algorithms_job.save()
 
