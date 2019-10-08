@@ -71,6 +71,10 @@ def test_algorithm_create_page(client, settings):
 def test_algorithm_detail_view_permissions(client, view_name):
     alg_set = TwoAlgorithms()
 
+    # We need to fake some images to use
+    AlgorithmImageFactory(ready=True, algorithm=alg_set.alg1)
+    AlgorithmImageFactory(ready=True, algorithm=alg_set.alg2)
+
     tests = (
         (None, alg_set.alg1, 302),
         (None, alg_set.alg2, 302),

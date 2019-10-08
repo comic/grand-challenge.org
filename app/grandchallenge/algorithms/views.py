@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.http import Http404
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -243,6 +244,11 @@ class AlgorithmExecutionSessionCreate(
 
     def get_permission_object(self):
         return self.algorithm
+
+    def get_initial(self):
+        if self.algorithm.latest_ready_image is None:
+            raise Http404()
+        return super().get_initial()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

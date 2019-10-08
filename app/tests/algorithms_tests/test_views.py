@@ -140,7 +140,7 @@ def test_algorithm_image_create_detail(client):
 @pytest.mark.django_db
 def test_algorithm_run(client):
     user = UserFactory()
-    ai1 = AlgorithmImageFactory()
+    ai1 = AlgorithmImageFactory(ready=True)
     ai1.algorithm.users_group.user_set.add(user)
 
     response = get_view_for_user(
