@@ -21,3 +21,6 @@ class AlgorithmsConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(init_algorithm_creators_group, sender=self)
+
+        # noinspection PyUnresolvedReferences
+        import grandchallenge.algorithms.signals
