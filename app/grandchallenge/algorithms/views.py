@@ -62,6 +62,11 @@ class AlgorithmCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         self.object.add_editor(self.request.user)
         return response
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
 
 class AlgorithmList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Algorithm
@@ -89,6 +94,11 @@ class AlgorithmUpdate(
         f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
     raise_exception = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
 
 class AlgorithmUserAutocomplete(
