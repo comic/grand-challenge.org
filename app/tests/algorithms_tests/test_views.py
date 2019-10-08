@@ -71,33 +71,6 @@ def test_algorithm_list_view_filter(client):
 
 
 @pytest.mark.django_db
-def test_creator_added_to_editors_group(client, settings):
-    user = UserFactory()
-    Group.objects.get(
-        name=settings.ALGORITHMS_CREATORS_GROUP_NAME
-    ).user_set.add(user)
-
-    assert Algorithm.objects.all().count() == 0
-
-    response = get_view_for_user(
-        viewname="algorithms:create",
-        client=client,
-        user=user,
-        method=client.post,
-        data={
-            "title": "foo",
-            "logo": get_temporary_image(),
-            "workstation": WorkstationFactory().pk,
-        },
-    )
-    assert response.status_code == 302
-
-    algorithms = Algorithm.objects.all()
-    assert len(algorithms) == 1
-    assert algorithms[0].is_editor(user)
-
-
-@pytest.mark.django_db
 def test_algorithm_image_create_link_view(client):
     alg = AlgorithmFactory()
     expected_url = reverse(
