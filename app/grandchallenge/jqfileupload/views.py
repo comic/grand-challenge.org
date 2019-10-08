@@ -6,7 +6,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
@@ -20,7 +20,7 @@ class StagedFileViewSet(ModelViewSet):
     queryset = StagedFile.objects.all()
     parser_classes = (FormParser, MultiPartParser)
     permission_classes = (DjangoObjectOnlyPermissions,)
-    filter_backends = (DjangoObjectPermissionsFilter,)
+    filter_backends = (ObjectPermissionsFilter,)
 
     def create(self, request, *args, **kwargs):
         if "HTTP_CONTENT_RANGE" in self.request.META:

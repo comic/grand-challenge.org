@@ -10,7 +10,7 @@ from guardian.mixins import (
 )
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.forms import AlgorithmImageForm, AlgorithmForm
 from grandchallenge.algorithms.models import (
@@ -167,25 +167,25 @@ class AlgorithmViewSet(ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoObjectPermissionsFilter]
+    filter_backends = [ObjectPermissionsFilter]
 
 
 class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     queryset = AlgorithmImage.objects.all()
     serializer_class = AlgorithmImageSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoObjectPermissionsFilter]
+    filter_backends = [ObjectPermissionsFilter]
 
 
 class JobViewSet(ReadOnlyModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoObjectPermissionsFilter]
+    filter_backends = [ObjectPermissionsFilter]
 
 
 class ResultViewSet(ReadOnlyModelViewSet):
     queryset = Result.objects.all()
     serializer_class = ResultSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoObjectPermissionsFilter]
+    filter_backends = [ObjectPermissionsFilter]

@@ -2,7 +2,7 @@ from django.http import Http404
 from django.views.generic import CreateView, DetailView
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
-from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from rest_framework.mixins import (
     CreateModelMixin,
@@ -59,7 +59,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = ImageSerializer
     queryset = Image.objects.all()
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoObjectPermissionsFilter]
+    filter_backends = [ObjectPermissionsFilter]
 
     def filter_queryset(self, queryset):
         """
