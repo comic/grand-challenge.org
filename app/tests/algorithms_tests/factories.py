@@ -22,6 +22,7 @@ class AlgorithmImageFactory(factory.DjangoModelFactory):
         model = AlgorithmImage
 
     algorithm = factory.SubFactory(AlgorithmFactory)
+    creator = factory.SubFactory(UserFactory)
 
 
 class AlgorithmJobFactory(factory.DjangoModelFactory):

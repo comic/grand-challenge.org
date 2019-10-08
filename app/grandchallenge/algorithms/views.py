@@ -12,7 +12,11 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.algorithms.forms import AlgorithmImageForm, AlgorithmForm
+from grandchallenge.algorithms.forms import (
+    AlgorithmImageForm,
+    AlgorithmForm,
+    AlgorithmImageUpdateForm,
+)
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
     Job,
@@ -117,7 +121,7 @@ class AlgorithmImageUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):
     model = AlgorithmImage
-    fields = ("requires_gpu",)
+    form_class = AlgorithmImageUpdateForm
     permission_required = f"{AlgorithmImage._meta.app_label}.change_{AlgorithmImage._meta.model_name}"
     raise_exception = True
 
@@ -161,6 +165,25 @@ class AlgorithmExecutionSessionCreate(
         return reverse(
             "algorithms:image-detail", kwargs={"slug": self.kwargs["slug"]}
         )
+
+
+class AlgorithmJobsList(LoginRequiredMixin, PermissionListMixin, ListView):
+    model = Job
+    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+
+    @property
+    def algorithm(self) -> Algorithm:
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
+
+    def get_queryset(self, *args, **kwargs):
+        """ Only display the jobs for this algorithm """
+        qs = super().get_queryset(*args, **kwargs)
+        return qs.filter(algorithm_image__algorithm=self.algorithm)
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):

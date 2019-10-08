@@ -3,7 +3,6 @@
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
 {% load user_profile_link from profiles %}
-{% load workstations %}
 {% load guardian_tags %}
 
 {% block title %}
@@ -67,70 +66,12 @@
         </div>
     {% endif %}
 
-    <h2>Jobs for this algorithm</h2>
-
-    <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm">
-            <thead class="thead-light">
-            <tr>
-                <th>Created</th>
-                <th>Creator</th>
-                <th>Image</th>
-                <th>Status</th>
-                <th>Result</th>
-                <th>Overlay</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for job in object.job_set.all %}
-                <tr>
-                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                    <td>{{ job.image.origin.creator|user_profile_link }}</td>
-                    <td>
-                        <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=job.image %}">{{ job.image }}</a>
-                    </td>
-                    <td>
-                    <span class="badge
-                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
-                        badge-danger
-                    {% elif job.status == job.RETRY %}
-                        badge-warning
-                    {% elif job.status == job.SUCCESS %}
-                        badge-success
-                    {% else %}
-                        badge-info
-                    {% endif %}">
-                        {{ job.get_status_display }}
-                    </span>
-                    </td>
-                    <td>{{ job.result.output }}</td>
-                    <td>
-                        {% if job.result.images.all %}
-                            {% for image in job.result.images.all %}
-                                <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=job.image overlay=image %}">
-                                    {{ image }}
-                                </a>
-                            {% endfor %}
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'algorithms:jobs-list' slug=object.slug %}">
+            <i class="fa fa-cogs"></i> View the jobs for this algorithm
+        </a>
+    </p>
 {% endblock %}
 
-{% block script %}
-    {{ block.super }}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('.table').DataTable({
-                order: [[0, "desc"]],
-                "pageLength": 50,
-                ordering: true
-            });
-        });
-    </script>
-{% endblock %}
+

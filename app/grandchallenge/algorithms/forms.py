@@ -36,3 +36,9 @@ class AlgorithmImageForm(ModelForm):
     class Meta:
         model = AlgorithmImage
         fields = ("requires_gpu", "chunked_upload")
+
+
+class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = AlgorithmImage
+        fields = ("requires_gpu",)

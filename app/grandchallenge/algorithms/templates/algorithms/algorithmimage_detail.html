@@ -2,8 +2,7 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% load grandchallenge_tags %}
-{% load user_profile_link from profiles %}
-{% load workstations %}
+{% load guardian_tags %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -63,4 +62,15 @@
         <dt>Requires GPU</dt>
         <dd>{{ object.requires_gpu }}</dd>
     </dl>
+
+    {% get_obj_perms request.user for object as "algorithm_image_perms" %}
+
+   {% if "change_algorithmimage" in algorithm_image_perms %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
+                <i class="fa fa-edit"></i> Edit this algorithm image
+            </a>
+        </p>
+    {% endif %}
 {% endblock %}

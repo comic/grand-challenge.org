@@ -9,6 +9,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmCreate,
     AlgorithmUpdate,
     AlgorithmImageUpdate,
+    AlgorithmJobsList,
 )
 
 app_name = "algorithms"
@@ -38,4 +39,5 @@ urlpatterns = [
         AlgorithmExecutionSessionCreate.as_view(),
         name="execution-session-create",
     ),
+    path("<slug:slug>/jobs/", AlgorithmJobsList.as_view(), name="jobs-list"),
 ]

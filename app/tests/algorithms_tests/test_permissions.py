@@ -99,6 +99,72 @@ def test_algorithm_detail_view_permissions(client, view_name):
 
 
 @pytest.mark.django_db
+def test_algorithm_jobs_view(client):
+    # This view is a bit special, all algorithm users should be able to
+    # view it, but the results should be filtered
+
+    alg_set = TwoAlgorithms()
+
+    extra_user1, extra_user2 = UserFactory(), UserFactory()
+
+    alg_set.alg1.add_user(extra_user1)
+    alg_set.alg2.add_user(extra_user2)
+
+    j1, j2 = (
+        AlgorithmJobFactory(
+            algorithm_image__algorithm=alg_set.alg1, creator=extra_user1
+        ),
+        AlgorithmJobFactory(
+            algorithm_image__algorithm=alg_set.alg2, creator=extra_user2
+        ),
+    )
+
+    all_jobs = {j1, j2}
+
+    tests = (
+        (None, alg_set.alg1, 302, set()),
+        (None, alg_set.alg2, 302, set()),
+        (alg_set.creator, alg_set.alg1, 200, set()),
+        (alg_set.creator, alg_set.alg2, 200, set()),
+        (alg_set.editor1, alg_set.alg1, 200, {j1}),
+        (alg_set.editor1, alg_set.alg2, 200, set()),
+        (alg_set.user1, alg_set.alg1, 200, set()),
+        (alg_set.user1, alg_set.alg2, 200, set()),
+        (alg_set.editor2, alg_set.alg1, 200, set()),
+        (alg_set.editor2, alg_set.alg2, 200, {j2}),
+        (alg_set.user2, alg_set.alg1, 200, set()),
+        (alg_set.user2, alg_set.alg2, 200, set()),
+        (alg_set.u, alg_set.alg1, 200, set()),
+        (alg_set.u, alg_set.alg2, 200, set()),
+        (extra_user1, alg_set.alg1, 200, {j1}),
+        (extra_user1, alg_set.alg2, 200, set()),
+        (extra_user2, alg_set.alg1, 200, set()),
+        (extra_user2, alg_set.alg2, 200, {j2}),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname=f"algorithms:jobs-list",
+            reverse_kwargs={"slug": test[1].slug},
+            client=client,
+            user=test[0],
+        )
+        assert response.status_code == test[2]
+
+        # Check that the results are filtered
+        if response.status_code == 200:
+            expected_jobs = test[3]
+            excluded_jobs = all_jobs - expected_jobs
+            assert all(
+                str(j.pk) in response.rendered_content for j in expected_jobs
+            )
+            assert all(
+                str(j.pk) not in response.rendered_content
+                for j in excluded_jobs
+            )
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("view_name", ["update", "image-create"])
 def test_algorithm_edit_view_permissions(client, view_name):
     alg_set = TwoAlgorithms()
