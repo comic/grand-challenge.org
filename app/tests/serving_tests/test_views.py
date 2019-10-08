@@ -1,6 +1,6 @@
 import pytest
 from django.conf import settings
-from rest_framework.authtoken.models import Token
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.datasets.models import ImageSet, AnnotationSet
 from tests.factories import (
@@ -34,9 +34,6 @@ def test_imageset_annotationset_download(
     annotation_file = ImageFileFactory()
     annotationset.images.add(annotation_file.image)
 
-    staff_user = UserFactory(is_staff=True)
-    staff_token = Token.objects.create(user=staff_user)
-
     tests = [
         # (
         #   image response + annotation response not test ground truth,
@@ -44,7 +41,8 @@ def test_imageset_annotationset_download(
         #   user
         # )
         (404, 404, None),
-        (200, 200, staff_user),
+        (404, 404, UserFactory()),
+        (404, 404, UserFactory(is_staff=True)),
         (404, 404, TwoChallengeSets.ChallengeSet1.non_participant),
         (200, 404, TwoChallengeSets.ChallengeSet1.participant),
         (200, 404, TwoChallengeSets.ChallengeSet1.participant1),
@@ -78,34 +76,24 @@ def test_imageset_annotationset_download(
             # ground truth predictions
             assert response.status_code == test[0]
 
-    # Someone with a staff token should be able to get all images
-    response = client.get(
-        image_file.file.url, HTTP_AUTHORIZATION=f"Token {staff_token.key}"
-    )
-    assert response.status_code == 200
-
-    response = client.get(
-        annotation_file.file.url, HTTP_AUTHORIZATION=f"Token {staff_token.key}"
-    )
-    assert response.status_code == 200
-
 
 @pytest.mark.django_db
 def test_image_response(client):
     image_file = ImageFileFactory()
+    user = UserFactory()
 
     response = get_view_for_user(
-        url=image_file.file.url, client=client, user=None
+        url=image_file.file.url, client=client, user=user
     )
 
     # Forbidden view
     assert response.status_code == 404
     assert not response.has_header("x-accel-redirect")
 
-    staff_user = UserFactory(is_staff=True)
+    assign_perm("view_image", user, image_file.image)
 
     response = get_view_for_user(
-        url=image_file.file.url, client=client, user=staff_user
+        url=image_file.file.url, client=client, user=user
     )
 
     assert response.status_code == 200
