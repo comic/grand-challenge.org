@@ -16,7 +16,7 @@ from django_extensions.db.models import (
     TitleSlugDescriptionModel,
     TitleDescriptionModel,
 )
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.challenges.models import get_logo_path
@@ -59,6 +59,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
 
+    def __str__(self):
+        return f"{self.title}"
+
     def get_absolute_url(self):
         return reverse("algorithms:detail", kwargs={"slug": self.slug})
 
@@ -80,6 +83,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         if adding:
             self.assign_permissions()
 
+        self.assign_workstation_permissions()
+
     def create_groups(self):
         self.editors_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
@@ -96,6 +101,23 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         assign_perm(
             f"change_{self._meta.model_name}", self.editors_group, self
         )
+
+    def assign_workstation_permissions(self):
+        """ Allow the editors and users group to view the workstation """
+        perm = f"view_{Workstation._meta.model_name}"
+
+        for group in [self.users_group, self.editors_group]:
+            workstations = get_objects_for_group(
+                group=group, perms=perm, klass=Workstation
+            )
+
+            if (
+                self.workstation not in workstations
+            ) or workstations.count() > 1:
+                remove_perm(perm=perm, user_or_group=group, obj=workstations)
+                assign_perm(
+                    perm=perm, user_or_group=group, obj=self.workstation
+                )
 
     @property
     def latest_ready_image(self):

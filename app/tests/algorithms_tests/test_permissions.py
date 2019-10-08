@@ -1,6 +1,6 @@
 import pytest
 from django.contrib.auth.models import Group
-from guardian.shortcuts import get_group_perms
+from guardian.shortcuts import get_group_perms, get_perms, assign_perm
 
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -9,7 +9,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmResultFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
-from tests.factories import UserFactory
+from tests.factories import UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
 
 
@@ -398,3 +398,39 @@ def test_api_result_list_permissions(client):
 
             for pk in test[2]:
                 assert str(pk) in pks
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("group", ["user", "editor"])
+def test_workstation_changes(client, group):
+    # Ensure that read permissions are kept up to date if the workstation
+    # changes
+    ws1, ws2 = WorkstationFactory(), WorkstationFactory()
+    user = UserFactory()
+
+    alg = AlgorithmFactory(workstation=ws1)
+
+    assert "view_workstation" not in get_perms(user, ws1)
+    assert "view_workstation" not in get_perms(user, ws2)
+
+    getattr(alg, f"add_{group}")(user=user)
+
+    assert "view_workstation" in get_perms(user, ws1)
+    assert "view_workstation" not in get_perms(user, ws2)
+
+    alg.workstation = ws2
+    alg.save()
+
+    assert "view_workstation" not in get_perms(user, ws1)
+    assert "view_workstation" in get_perms(user, ws2)
+
+    # Test permission cleanup
+    assign_perm("view_workstation", getattr(alg, f"{group}s_group"), ws1)
+
+    assert "view_workstation" in get_perms(user, ws1)
+    assert "view_workstation" in get_perms(user, ws2)
+
+    alg.save()
+
+    assert "view_workstation" not in get_perms(user, ws1)
+    assert "view_workstation" in get_perms(user, ws2)

@@ -282,6 +282,8 @@ class Command(BaseCommand):
             title=settings.DEFAULT_WORKSTATION_SLUG, logo=get_temporary_image()
         )
         w.add_user(user=self.users["readerstudy"])
+        w.add_editor(user=self.users["workstation"])
+        w.add_user(user=self.users["algorithm"])
 
     @staticmethod
     def _log_tokens():
