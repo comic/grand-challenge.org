@@ -308,22 +308,22 @@ def test_api_job_list_permissions(client):
 
     j1_creator, j2_creator = UserFactory(), UserFactory()
 
-    alg1_job_pk = AlgorithmJobFactory(
+    alg1_job = AlgorithmJobFactory(
         algorithm_image__algorithm=alg_set.alg1, creator=j1_creator
-    ).pk
-    alg2_job_pk = AlgorithmJobFactory(
+    )
+    alg2_job = AlgorithmJobFactory(
         algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
-    ).pk
+    )
 
     tests = (
         (None, 401, []),
         (alg_set.creator, 200, []),
-        (alg_set.editor1, 200, [alg1_job_pk]),
+        (alg_set.editor1, 200, [alg1_job]),
         (alg_set.user1, 200, []),
-        (j1_creator, 200, [alg1_job_pk]),
-        (alg_set.editor2, 200, [alg2_job_pk]),
+        (j1_creator, 200, [alg1_job]),
+        (alg_set.editor2, 200, [alg2_job]),
         (alg_set.user2, 200, []),
-        (j2_creator, 200, [alg2_job_pk]),
+        (j2_creator, 200, [alg2_job]),
         (alg_set.u, 200, []),
     )
 
@@ -340,10 +340,20 @@ def test_api_job_list_permissions(client):
             # We provided auth details and get a response
             assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
+            job_pks = {obj["pk"] for obj in response.json()["results"]}
+            assert job_pks == {str(j.pk) for j in test[2]}
 
-            for pk in test[2]:
-                assert str(pk) in pks
+            # Ensure that the images are downloadable
+            response = get_view_for_user(
+                viewname="api:image-list",
+                client=client,
+                user=test[0],
+                content_type="application/json",
+            )
+            assert response.status_code == 200
+
+            image_pks = {obj["pk"] for obj in response.json()["results"]}
+            assert image_pks == {str(j.image.pk) for j in test[2]}
 
 
 @pytest.mark.django_db

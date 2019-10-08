@@ -41,9 +41,18 @@
                     {# pk included for test support #}
                     <!-- {{ job.pk }} -->
                     <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                    <td>{{ job.creator|user_profile_link }}</td>
+                    <td>
+                        {% if job.creator %}
+                            {{ job.creator|user_profile_link }}
+                        {% endif %}
+                    </td>
                     <td>
                         <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image %}">{{ job.image }}</a>
+
+
+                        {% for file in job.image.files.all %}
+                            <a href="{{ file.file.url }}">{{ file.file.name }}</a>
+                        {% endfor %}
                     </td>
                     <td>
                     <span class="badge
@@ -66,6 +75,10 @@
                                 <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image %}">
                                     {{ image }}
                                 </a>
+
+                                {% for file in image.files.all %}
+                                    <a href="{{ file.file.url }}">{{ file.file.name }}</a>
+                                {% endfor %}
                             {% endfor %}
                         {% endif %}
                     </td>

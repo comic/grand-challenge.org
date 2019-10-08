@@ -163,7 +163,7 @@ class AlgorithmExecutionSessionCreate(
 
     def get_success_url(self):
         return reverse(
-            "algorithms:image-detail", kwargs={"slug": self.kwargs["slug"]}
+            "algorithms:jobs-list", kwargs={"slug": self.kwargs["slug"]}
         )
 
 

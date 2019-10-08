@@ -369,11 +369,19 @@ class Job(UUIDModel, ContainerExecJobModel):
             self.assign_permissions()
 
     def assign_permissions(self):
-        # Editors and creators can view this job
+        # Editors and creators can view this job and the related image
         assign_perm(
             f"view_{self._meta.model_name}",
             self.algorithm_image.algorithm.editors_group,
             self,
         )
+        assign_perm(
+            f"view_{self.image._meta.model_name}",
+            self.algorithm_image.algorithm.editors_group,
+            self.image,
+        )
         if self.creator:
             assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+            assign_perm(
+                f"view_{self.image._meta.model_name}", self.creator, self.image
+            )
