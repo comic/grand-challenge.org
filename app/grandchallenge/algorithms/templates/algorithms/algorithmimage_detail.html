@@ -14,92 +14,53 @@
         <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm.title }}
+        </a>
+        </li>
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object }}</li>
+            aria-current="page">{{ object }}
+        </li>
     </ol>
 {% endblock %}
 
 {% block content %}
+    <h2>Algorithm Container Image</h2>
 
-    <h2>{{ object.title }}</h2>
+    <dl class="inline">
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
 
-    <p>{{ object.description }}</p>
+        <dt>Algorithm</dt>
+        <dd>
+            <a href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm.title }}</a>
+        </dd>
 
-    {% if object.ready %}
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                Try out this algorithm
-            </a>
-        </p>
-    {% else %}
-        <div class="alert alert-warning">
-            Algorithm is not ready to be used yet. Please try again later.
-        </div>
-    {% endif %}
+        <dt>Creator</dt>
+        <dd>
+            <a href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a>
+        </dd>
 
-    <h2>Jobs for this algorithm</h2>
+        <dt>Created</dt>
+        <dd>{{ object.created }}</dd>
 
-    <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm">
-            <thead class="thead-light">
-            <tr>
-                <th>Created</th>
-                <th>Creator</th>
-                <th>Image</th>
-                <th>Status</th>
-                <th>Result</th>
-                <th>Overlay</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for job in object.job_set.all %}
-                <tr>
-                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                    <td>{{ job.image.origin.creator|user_profile_link }}</td>
-                    <td>
-                        <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=job.image %}">{{ job.image }}</a>
-                    </td>
-                    <td>
-                    <span class="badge
-                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
-                        badge-danger
-                    {% elif job.status == job.RETRY %}
-                        badge-warning
-                    {% elif job.status == job.SUCCESS %}
-                        badge-success
-                    {% else %}
-                        badge-info
-                    {% endif %}">
-                        {{ job.get_status_display }}
-                    </span>
-                    </td>
-                    <td>{{ job.result.output }}</td>
-                    <td>
-                        {% if job.result.images.all %}
-                            {% for image in job.result.images.all %}
-                                <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=job.image overlay=image %}">
-                                    {{ image }}
-                                </a>
-                            {% endfor %}
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% endblock %}
+        <dt>Image</dt>
+        <dd>
+            {% if object.image %}
+                {{ object.image.name }}
+            {% endif %}
+        </dd>
 
-{% block script %}
-    {{ block.super }}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('.table').DataTable({
-                order: [[0, "desc"]],
-                "pageLength": 50,
-                ordering: true
-            });
-        });
-    </script>
+        <dt>Image SHA256</dt>
+        <dd>{{ object.image_sha256 }}</dd>
+
+        <dt>Ready</dt>
+        <dd>{{ object.ready }}</dd>
+
+        <dt>Status</dt>
+        <dd>{{ object.status }}</dd>
+
+        <dt>Requires GPU</dt>
+        <dd>{{ object.requires_gpu }}</dd>
+    </dl>
 {% endblock %}

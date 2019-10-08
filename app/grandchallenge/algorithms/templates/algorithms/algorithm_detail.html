@@ -16,7 +16,7 @@
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object }}</li>
+            aria-current="page">{{ object.title }}</li>
     </ol>
 {% endblock %}
 
@@ -27,11 +27,38 @@
 
     <p>{{ object.description }}</p>
 
-    {% if object.ready %}
+    {% if "change_algorithm" in algorithm_perms %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:update' slug=object.slug %}">
+                <i class="fa fa-edit"></i> Edit this algorithm
+            </a>
+        </p>
+
+        <h3>Container Images</h3>
+
+        <ul>
+            {% for image in object.algorithm_container_images.all %}
+                <li>
+                    <a href="{{ image.get_absolute_url }}">{{ image }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:image-create' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Upload a new container image for
+                this algorithm
+            </a>
+        </p>
+    {% endif %}
+
+    {% if object.latest_ready_image %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                Try out this algorithm
+                <i class="fa fa-flask"></i> Try out this algorithm
             </a>
         </p>
     {% else %}
@@ -92,15 +119,7 @@
         </table>
     </div>
 
-    {% if "change_algorithm" in algorithm_perms %}
-        <p class="mt-3">
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:image-create' slug=object.slug %}">
-                <i class="fa fa-plus"></i> Upload a new container image for
-                this algorithm
-            </a>
-        </p>
-    {% endif %}
+
 {% endblock %}
 
 {% block script %}
