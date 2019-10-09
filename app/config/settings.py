@@ -179,7 +179,8 @@ PROTECTED_S3_STORAGE_KWARGS = {
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+        "BACKEND": "speedinfo.backends.proxy_cache",
+        "CACHE_BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
         "LOCATION": "memcached:11211",
     }
 }
@@ -281,6 +282,8 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    # speedinfo at the end but before FetchFromCacheMiddleware
+    "speedinfo.middleware.ProfilerMiddleware",
 )
 
 # Python dotted path to the WSGI application used by Django's runserver.
@@ -320,6 +323,7 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # custom extensions
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
+    "speedinfo",  # for profiling views
 ]
 
 LOCAL_APPS = [
