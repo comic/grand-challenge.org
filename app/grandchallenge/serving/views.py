@@ -44,6 +44,9 @@ def protected_storage_redirect(*, name):
     # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url'] to the url
     storage = ProtectedS3Storage(internal=True)
 
+    if not storage.exists(name=name):
+        raise Http404("File not found.")
+
     url = storage.url(name=name)
 
     # Now strip the endpoint_url
