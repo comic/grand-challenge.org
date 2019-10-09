@@ -659,8 +659,8 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 DEFAULT_WORKSTATION_SLUG = os.environ.get(
     "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
 )
-WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
-WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
+WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
+WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
 WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
 # The name of the network that the workstations will be attached to
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
