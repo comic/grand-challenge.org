@@ -39,6 +39,7 @@ django-favicon-plus==0.0.8
 django-guardian==2.0.0
 django-select2==7.1.0
 django-simple-history==2.7.3
+django-speedinfo==1.4.1
 django-storages==1.7.1
 django-summernote==0.8.11.4
 django-timezone-field==3.0
