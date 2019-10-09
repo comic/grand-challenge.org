@@ -30,7 +30,10 @@ def algorithm_container_images_to_algorithms_forward(apps, schema_editor):
 
     for ai in AlgorithmImage.objects.all():
         a = Algorithm.objects.create(
-            title=ai.title, slug=ai.slug, logo=ai.logo
+            title=ai.title,
+            slug=ai.slug,
+            logo=ai.logo,
+            description=ai.description,
         )
 
         ai.algorithm_id = a.pk
