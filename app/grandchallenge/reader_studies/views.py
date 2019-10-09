@@ -27,7 +27,7 @@ from rest_framework.mixins import (
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
-from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -239,14 +239,14 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         "images", "questions"
     )
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoObjectPermissionsFilter]
+    filter_backends = [ObjectPermissionsFilter]
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):
     serializer_class = QuestionSerializer
     queryset = Question.objects.all().select_related("reader_study")
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoObjectPermissionsFilter]
+    filter_backends = [ObjectPermissionsFilter]
 
 
 class AnswerViewSet(
@@ -259,7 +259,7 @@ class AnswerViewSet(
         .prefetch_related("images")
     )
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoObjectPermissionsFilter]
+    filter_backends = [ObjectPermissionsFilter]
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)

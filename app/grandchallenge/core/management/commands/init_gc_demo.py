@@ -13,6 +13,7 @@ from userena.models import UserenaSignup
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+from grandchallenge.algorithms.models import AlgorithmImage, Algorithm
 from grandchallenge.challenges.models import (
     Challenge,
     ExternalChallenge,
@@ -23,7 +24,6 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.evaluation.models import Result, Submission, Job, Method
 from grandchallenge.pages.models import Page
-import grandchallenge.algorithms.models
 import grandchallenge.cases.models
 from grandchallenge.workstations.models import Workstation
 
@@ -74,6 +74,7 @@ class Command(BaseCommand):
             "retina",
             "readerstudy",
             "workstation",
+            "algorithm",
         ]
         self.users = self._create_users(usernames=default_users)
 
@@ -81,8 +82,8 @@ class Command(BaseCommand):
         self._create_user_tokens()
         self._create_demo_challenge()
         self._create_external_challenge()
-        self._create_algorithm_demo()
         self._create_workstation()
+        self._create_algorithm_demo()
         self._log_tokens()
 
     def _create_flatpages(self, site):
@@ -125,6 +126,11 @@ class Command(BaseCommand):
             name=settings.WORKSTATIONS_CREATORS_GROUP_NAME
         )
         self.users["workstation"].groups.add(workstation_group)
+
+        algorithm_group = Group.objects.get(
+            name=settings.ALGORITHMS_CREATORS_GROUP_NAME
+        )
+        self.users["algorithm"].groups.add(algorithm_group)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
@@ -246,18 +252,22 @@ class Command(BaseCommand):
         )
         cases_image.save()
 
-        algorithm_image = grandchallenge.algorithms.models.AlgorithmImage(
-            creator=self.users["demo"],
-            title="test_algorithm",
-            logo=get_temporary_image(),
+        algorithm = Algorithm.objects.create(
+            title="Test Algorithm", logo=get_temporary_image()
         )
+        algorithm.editors_group.user_set.add(self.users["algorithm"])
 
+        algorithm_image = AlgorithmImage(
+            creator=self.users["algorithm"], algorithm=algorithm
+        )
         container = ContentFile(base64.b64decode(b""))
         algorithm_image.image.save("test_algorithm.tar", container)
         algorithm_image.save()
 
         algorithms_job = grandchallenge.algorithms.models.Job(
-            algorithm_image=algorithm_image, image=cases_image
+            creator=self.users["algorithm"],
+            algorithm_image=algorithm_image,
+            image=cases_image,
         )
         algorithms_job.save()
 
@@ -272,6 +282,8 @@ class Command(BaseCommand):
             title=settings.DEFAULT_WORKSTATION_SLUG, logo=get_temporary_image()
         )
         w.add_user(user=self.users["readerstudy"])
+        w.add_editor(user=self.users["workstation"])
+        w.add_user(user=self.users["algorithm"])
 
     @staticmethod
     def _log_tokens():

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load grandchallenge_tags %}
+{% load user_profile_link from profiles %}
+{% load guardian_tags %}
+
+{% block title %}
+    {{ object.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% get_obj_perms request.user for object as "algorithm_perms" %}
+
+    <h2>{{ object.title }}</h2>
+
+    <p>{{ object.description }}</p>
+
+    {% if "change_algorithm" in algorithm_perms %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:update' slug=object.slug %}">
+                <i class="fa fa-edit"></i> Edit this algorithm
+            </a>
+        </p>
+
+        <h3>Users</h3>
+
+        <h4>Editors Group</h4>
+        <p>
+            The following users are able to edit, use this algorithm and
+            see all of the results:
+        </p>
+
+        <ul>
+            {% for user in object.editors_group.user_set.all %}
+                <li>{{ user|user_profile_link }}</li>
+            {% empty %}
+                <li>There are no editors for this algorithm.</li>
+            {% endfor %}
+        </ul>
+
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:editors-update' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Add an editor for this algorithm
+            </a>
+        </p>
+
+        <h4>Users Group</h4>
+        <p>The following users are able to use this algorithm:</p>
+
+        <ul>
+            {% for user in object.users_group.user_set.all %}
+                <li>{{ user|user_profile_link }}</li>
+            {% empty %}
+                <li>There are no users in this algorithms users group.</li>
+            {% endfor %}
+        </ul>
+
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:users-update' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Add a user for this algorithm
+            </a>
+        </p>
+
+        <h3>Container Images</h3>
+
+        <ul>
+            {% for image in object.algorithm_container_images.all %}
+                <li>
+                    <a href="{{ image.get_absolute_url }}">{{ image }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:image-create' slug=object.slug %}">
+                <i class="fa fa-plus"></i> Upload a new container image for
+                this algorithm
+            </a>
+        </p>
+    {% endif %}
+
+    {% if object.latest_ready_image %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
+                <i class="fa fa-flask"></i> Try out this algorithm
+            </a>
+        </p>
+    {% else %}
+        <div class="alert alert-warning">
+            Algorithm is not ready to be used yet. Please try again later.
+        </div>
+    {% endif %}
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'algorithms:jobs-list' slug=object.slug %}">
+            <i class="fa fa-cogs"></i> View the jobs for this algorithm
+        </a>
+    </p>
+{% endblock %}
+
+

@@ -1,6 +1,7 @@
 from pathlib import Path
 from tempfile import TemporaryFile
 from typing import NamedTuple
+from uuid import uuid4
 
 import tifffile
 import pyvips
@@ -131,14 +132,16 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     new_folder_upload = []
 
     for file_path in path.iterdir():
+        pk = uuid4()
+
         try:
             tiff_file = load_tiff_file(path=file_path)
-            dzi_output = create_dzi_images(tiff_file=tiff_file)
+            dzi_output = create_dzi_images(tiff_file=tiff_file, pk=pk)
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message
             continue
 
-        image = create_tiff_image_entry(tiff_file=tiff_file)
+        image = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
 
         temp_file = TemporaryFile()
         with open(tiff_file.path.absolute(), "rb") as open_file:
@@ -151,7 +154,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             ImageFile(
                 image=image,
                 image_type=ImageFile.IMAGE_TYPE_TIFF,
-                file=File(temp_file, name="out.tif"),
+                file=File(temp_file, name=f"{image.pk}.tif"),
             )
         )
 
@@ -166,7 +169,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             ImageFile(
                 image=image,
                 image_type=ImageFile.IMAGE_TYPE_DZI,
-                file=File(temp_dzi_file, name="out.dzi"),
+                file=File(temp_dzi_file, name=f"{image.pk}.dzi"),
             )
         )
 
@@ -186,9 +189,10 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
     )
 
 
-def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
+def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile, pk) -> Image:
     # Builds a new Image model item
     return Image(
+        pk=pk,
         name=tiff_file.path.name,
         width=tiff_file.tags.image_width,
         height=tiff_file.tags.image_height,
@@ -201,9 +205,9 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
     )
 
 
-def create_dzi_images(*, tiff_file: GrandChallengeTiffFile) -> str:
-    # Creates a dzi file(out.dzi) and corresponding tiles in folder out_files
-    dzi_output = str(tiff_file.path.parent) + "/out"
+def create_dzi_images(*, tiff_file: GrandChallengeTiffFile, pk) -> str:
+    # Creates a dzi file(out.dzi) and corresponding tiles in folder {pk}_files
+    dzi_output = str(tiff_file.path.parent / str(pk))
     try:
         image = pyvips.Image.new_from_file(
             str(tiff_file.path.absolute()), access="sequential"

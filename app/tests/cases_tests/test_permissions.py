@@ -20,7 +20,6 @@ class TestImagePermission:
         [
             (AnonymousUser, False),
             (UserFactory, False),
-            (UserFactory, True),
             ("retina_grader_no_access", False),
             ("retina_admin_no_access", False),
             ("retina_grader", True),
@@ -46,7 +45,7 @@ class TestImagePermission:
         elif user == AnonymousUser:
             user = AnonymousUser()
         else:
-            user = user(is_staff=access)
+            user = user(is_staff=True)
         request = Request(user=user)
         permission = ImagePermission()
         assert permission.has_object_permission(request, {}, image) == access

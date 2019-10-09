@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-import glob
+from uuid import uuid4
 
 import pytest
 import tifffile as tiff_lib
@@ -104,7 +104,7 @@ def test_dzi_creation(
     try:
         # Load the tiff file and create dzi
         tiff_file = load_tiff_file(path=temp_file)
-        create_dzi_images(tiff_file=tiff_file)
+        create_dzi_images(tiff_file=tiff_file, pk=uuid4())
     except ValidationError as e:
         error_message = e.message
 
@@ -123,10 +123,11 @@ def test_dzi_creation(
 def test_tiff_image_entry_creation(resource, expected_error_message):
     error_message = ""
     image_entry = None
+    pk = uuid4()
 
     try:
         tiff_file = load_tiff_file(path=resource)
-        image_entry = create_tiff_image_entry(tiff_file=tiff_file)
+        image_entry = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
     except ValidationError as e:
         error_message = e.message
 
@@ -146,6 +147,7 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
         assert image_entry.color_space == get_color_space(
             str(tiff_tags["PhotometricInterpretation"].value)
         )
+        assert image_entry.pk == pk
 
 
 # Integration test of all features being accessed through the image builder
@@ -163,7 +165,8 @@ def test_image_builder_tiff(tmpdir_factory):
     assert len(image_builder_result.new_image_files) == 2
 
     # Asserts successful creation of files
-    assert os.path.isfile(temp_dir / "out.dzi")
-    assert os.path.isdir(temp_dir / "out_files")
+    new_image_pk = image_builder_result.new_images[0].pk
+    assert os.path.isfile(temp_dir / f"{new_image_pk}.dzi")
+    assert os.path.isdir(temp_dir / f"{new_image_pk}_files")
 
     assert len(list(temp_dir.glob("**/*.jpeg"))) == 9

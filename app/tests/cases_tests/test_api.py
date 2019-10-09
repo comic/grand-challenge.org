@@ -40,7 +40,7 @@ def test_upload_sessions_create(client):
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm": algo.api_url},
+        data={"algorithm_image": algo.api_url},
         content_type="application/json",
     )
     assert response.status_code == 201
@@ -48,7 +48,7 @@ def test_upload_sessions_create(client):
     upload_session = RawImageUploadSession.objects.get(
         pk=response.data.get("pk")
     )
-    assert upload_session.algorithm == algo
+    assert upload_session.algorithm_image == algo
 
 
 @pytest.mark.django_db
@@ -60,11 +60,13 @@ def test_invalid_upload_sessions(client):
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm": None},
+        data={"algorithm_image": None},
         content_type="application/json",
     )
     assert response.status_code == 400
-    assert response.json() == {"algorithm": ["This field may not be null."]}
+    assert response.json() == {
+        "algorithm_image": ["This field may not be null."]
+    }
 
 
 @pytest.mark.django_db
@@ -80,7 +82,7 @@ def test_empty_data_upload_sessions(client):
         content_type="application/json",
     )
     assert response.status_code == 400
-    assert response.json() == {"algorithm": ["This field is required."]}
+    assert response.json() == {"algorithm_image": ["This field is required."]}
 
 
 @pytest.mark.django_db
@@ -95,7 +97,7 @@ def test_upload_session_post_permissions(client, is_staff, expected_response):
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm": algo.api_url},
+        data={"algorithm_image": algo.api_url},
         content_type="application/json",
     )
     assert response.status_code == expected_response

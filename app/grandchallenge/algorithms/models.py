@@ -3,16 +3,20 @@ import uuid
 from datetime import timedelta
 from pathlib import Path
 
+from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
-from django_extensions.db.fields import AutoSlugField
 from django_extensions.db.models import (
     TitleSlugDescriptionModel,
     TitleDescriptionModel,
 )
+from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
 from grandchallenge.challenges.models import get_logo_path
@@ -29,20 +33,196 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
 
 
-class AlgorithmImage(UUIDModel, ContainerImageModel, TitleDescriptionModel):
-    slug = AutoSlugField(_("slug"), populate_from="title", db_index=False)
-    logo = models.ImageField(upload_to=get_logo_path, null=True)
+class Algorithm(UUIDModel, TitleSlugDescriptionModel):
+    editors_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name=f"editors_of_algorithm",
+    )
+    users_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name=f"users_of_algorithm",
+    )
+    logo = models.ImageField(upload_to=get_logo_path)
+    workstation = models.ForeignKey(
+        "workstations.Workstation", on_delete=models.CASCADE
+    )
+
+    class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
+        ordering = ("created",)
+
+    def __str__(self):
+        return f"{self.title}"
 
     def get_absolute_url(self):
-        return reverse("algorithms:image-detail", kwargs={"slug": self.slug})
+        return reverse("algorithms:detail", kwargs={"slug": self.slug})
+
+    @property
+    def api_url(self):
+        return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.create_groups()
+            self.workstation_id = (
+                self.workstation_id or self.default_workstation.pk
+            )
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+        self.assign_workstation_permissions()
+
+    def create_groups(self):
+        self.editors_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
+        )
+        self.users_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
+        )
+
+    def assign_permissions(self):
+        # Editors and users can view this algorithm
+        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+        # Editors can change this algorithm
+        assign_perm(
+            f"change_{self._meta.model_name}", self.editors_group, self
+        )
+
+    def assign_workstation_permissions(self):
+        """ Allow the editors and users group to view the workstation """
+        perm = f"view_{Workstation._meta.model_name}"
+
+        for group in [self.users_group, self.editors_group]:
+            workstations = get_objects_for_group(
+                group=group, perms=perm, klass=Workstation
+            )
+
+            if (
+                self.workstation not in workstations
+            ) or workstations.count() > 1:
+                remove_perm(perm=perm, user_or_group=group, obj=workstations)
+                assign_perm(
+                    perm=perm, user_or_group=group, obj=self.workstation
+                )
+
+    @property
+    def latest_ready_image(self):
+        """
+        Returns
+        -------
+            The most recent container image for this algorithm
+        """
+        return (
+            self.algorithm_container_images.filter(ready=True)
+            .order_by("-created")
+            .first()
+        )
+
+    @property
+    def default_workstation(self):
+        """
+        Returns the default workstation, creating it if it does not already
+        exist.
+        """
+        w, created = Workstation.objects.get_or_create(
+            slug=settings.DEFAULT_WORKSTATION_SLUG
+        )
+
+        if created:
+            w.title = settings.DEFAULT_WORKSTATION_SLUG
+            w.save()
+
+        return w
+
+    def is_editor(self, user):
+        return user.groups.filter(pk=self.editors_group.pk).exists()
+
+    def add_editor(self, user):
+        # using .pk is required here as it is called from a data migration
+        return user.groups.add(self.editors_group.pk)
+
+    def remove_editor(self, user):
+        return user.groups.remove(self.editors_group)
+
+    def is_user(self, user):
+        return user.groups.filter(pk=self.users_group.pk).exists()
+
+    def add_user(self, user):
+        return user.groups.add(self.users_group)
+
+    def remove_user(self, user):
+        return user.groups.remove(self.users_group)
+
+
+@receiver(post_delete, sender=Algorithm)
+def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
+    """
+    Use a signal rather than delete() override to catch usages of bulk_delete
+    """
+    try:
+        instance.editors_group.delete(using=using)
+    except ObjectDoesNotExist:
+        pass
+
+    try:
+        instance.users_group.delete(using=using)
+    except ObjectDoesNotExist:
+        pass
+
+
+class AlgorithmImage(UUIDModel, ContainerImageModel):
+    algorithm = models.ForeignKey(
+        Algorithm,
+        on_delete=models.CASCADE,
+        related_name="algorithm_container_images",
+    )
+
+    class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
+        ordering = ("created", "creator")
+
+    def get_absolute_url(self):
+        return reverse(
+            "algorithms:image-detail",
+            kwargs={"slug": self.algorithm.slug, "pk": self.pk},
+        )
 
     @property
     def api_url(self):
         return reverse("api:algorithms-image-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Editors and users can view this algorithm image
+        assign_perm(
+            f"view_{self._meta.model_name}", self.algorithm.editors_group, self
+        )
+        # Editors can change this algorithm image
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.algorithm.editors_group,
+            self,
+        )
 
 
 class Result(UUIDModel):
@@ -58,6 +238,23 @@ class Result(UUIDModel):
     @property
     def api_url(self):
         return reverse("api:algorithms-result-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Algorithm editors and job creators can view this result
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.job.algorithm_image.algorithm.editors_group,
+            self,
+        )
+        assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
 
 
 class AlgorithmExecutor(Executor):
@@ -157,6 +354,9 @@ class Job(UUIDModel, ContainerExecJobModel):
         AlgorithmImage, on_delete=models.CASCADE
     )
     image = models.ForeignKey("cases.Image", on_delete=models.CASCADE)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
 
     @property
     def container(self):
@@ -181,3 +381,29 @@ class Job(UUIDModel, ContainerExecJobModel):
     @property
     def api_url(self):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        # Editors and creators can view this job and the related image
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.algorithm_image.algorithm.editors_group,
+            self,
+        )
+        assign_perm(
+            f"view_{self.image._meta.model_name}",
+            self.algorithm_image.algorithm.editors_group,
+            self.image,
+        )
+        if self.creator:
+            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+            assign_perm(
+                f"view_{self.image._meta.model_name}", self.creator, self.image
+            )

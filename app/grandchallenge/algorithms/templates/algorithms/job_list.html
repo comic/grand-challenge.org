@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+{% load user_profile_link from profiles %}
+{% load workstations %}
+{% load guardian_tags %}
+
+{% block title %}
+    Algorithm Jobs - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+        </a>
+        <li class="breadcrumb-item active"
+            aria-current="page">Jobs
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Jobs for this algorithm</h2>
+
+    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
+
+    {% if "view_algorithm" in algorithm_perms and algorithm.latest_ready_image %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}">
+                <i class="fa fa-flask"></i> Try out this algorithm
+            </a>
+        </p>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm">
+            <thead class="thead-light">
+            <tr>
+                <th>Created</th>
+                <th>Creator</th>
+                <th>Image</th>
+                <th>Status</th>
+                <th>Result</th>
+                <th>Overlay</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for job in object_list %}
+                <tr>
+                    {# pk included for test support #}
+                    <!-- {{ job.pk }} -->
+                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                    <td>
+                        {% if job.creator %}
+                            {{ job.creator|user_profile_link }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn btn-primary"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="View image in workstation ({{ job.image }})"
+                           href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image %}"><i
+                                class="fa fa-eye"></i></a>
+                    </td>
+                    <td>
+                    <span class="badge
+                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                        badge-danger
+                    {% elif job.status == job.RETRY %}
+                        badge-warning
+                    {% elif job.status == job.SUCCESS %}
+                        badge-success
+                    {% else %}
+                        badge-info
+                    {% endif %}">
+                        {{ job.get_status_display }}
+                    </span>
+                    </td>
+                    <td>{{ job.result.output }}</td>
+                    <td>
+                        {% if job.result.images.all %}
+                            {% for image in job.result.images.all %}
+                                <a class="btn btn-primary"
+                                   data-toggle="tooltip"
+                                   data-placement="bottom"
+                                   title="View overlay in workstation ({{ image }})"
+                                   href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image %}">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').DataTable({
+                order: [[0, "desc"]],
+                "pageLength": 50,
+                ordering: true
+            });
+        });
+    </script>
+
+    {# enable tooltips #}
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+{% endblock %}

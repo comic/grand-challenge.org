@@ -20,6 +20,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
     JobViewSet,
     ResultViewSet,
+    AlgorithmViewSet,
 )
 
 app_name = "api"
@@ -42,6 +43,7 @@ router.register(
 router.register(
     r"algorithms/images", AlgorithmImageViewSet, basename="algorithms-image"
 )
+router.register(r"algorithms", AlgorithmViewSet, basename="algorithm")
 
 router.register(
     r"reader-studies/answers", AnswerViewSet, basename="reader-studies-answer"

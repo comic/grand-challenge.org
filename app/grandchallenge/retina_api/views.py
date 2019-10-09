@@ -768,7 +768,7 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = PolygonAnnotationSet.objects.all()
 
@@ -777,7 +777,7 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = SinglePolygonAnnotationSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = SinglePolygonAnnotation.objects.all()
 
@@ -809,7 +809,7 @@ class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = ETDRSGridAnnotationSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = ETDRSGridAnnotation.objects.all()
 
@@ -818,7 +818,7 @@ class LandmarkAnnotationSetForImageList(ListAPIView):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = LandmarkAnnotationSetSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
 
     def get_queryset(self):
@@ -838,7 +838,7 @@ class OctObsRegistrationRetrieve(RetrieveAPIView):
     permission_classes = (RetinaAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = OctObsRegistrationSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     lookup_url_kwarg = "image_id"
 
     def get_object(self):
@@ -881,7 +881,7 @@ class ImageQualityAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = ImageQualityAnnotationSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = ImageQualityAnnotation.objects.all()
 
@@ -890,7 +890,7 @@ class ImagePathologyAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = ImagePathologyAnnotationSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = ImagePathologyAnnotation.objects.all()
 
@@ -899,7 +899,7 @@ class RetinaImagePathologyAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = RetinaImagePathologyAnnotationSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = RetinaImagePathologyAnnotation.objects.all()
 
@@ -1016,6 +1016,6 @@ class ImageTextAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = ImageTextAnnotationSerializer
-    filter_backends = (filters.DjangoObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = ImageTextAnnotation.objects.all()

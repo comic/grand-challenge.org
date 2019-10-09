@@ -30,7 +30,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework_guardian.filters import DjangoObjectPermissionsFilter
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
@@ -57,7 +57,7 @@ class SessionViewSet(ReadOnlyModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
     permission_classes = (DjangoObjectOnlyPermissions,)
-    filter_backends = (DjangoObjectPermissionsFilter,)
+    filter_backends = (ObjectPermissionsFilter,)
 
     @action(detail=True, methods=["patch"])
     def keep_alive(self, *_, **__):

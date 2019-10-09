@@ -286,10 +286,11 @@ def build_images(upload_session_uuid: UUID):
                 if upload_session.annotationset:
                     upload_session.annotationset.images.add(*collected_images)
 
-                if upload_session.algorithm:
+                if upload_session.algorithm_image:
                     for image in collected_images:
                         Job.objects.create(
-                            algorithm_image=upload_session.algorithm,
+                            creator=upload_session.creator,
+                            algorithm_image=upload_session.algorithm_image,
                             image=image,
                         )
 
