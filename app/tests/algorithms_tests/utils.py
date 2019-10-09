@@ -7,7 +7,7 @@ from tests.factories import UserFactory
 
 def get_algorithm_creator():
     creator = UserFactory()
-    g = Group.objects.get(name=settings.READER_STUDY_CREATORS_GROUP_NAME)
+    g = Group.objects.get(name=settings.ALGORITHMS_CREATORS_GROUP_NAME)
     g.user_set.add(creator)
     return creator
 

@@ -1,9 +1,8 @@
 import pytest
-from django.conf import settings
-from django.contrib.auth.models import Group
 
 from grandchallenge.algorithms.models import Algorithm
 from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.factories import UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user, get_temporary_image
 
@@ -95,10 +94,7 @@ def test_user_update_form(client):
 @pytest.mark.django_db
 def test_algorithm_create(client):
     # The algorithm creator should automatically get added to the editors group
-    creator = UserFactory()
-
-    g = Group.objects.get(name=settings.ALGORITHMS_CREATORS_GROUP_NAME)
-    g.user_set.add(creator)
+    creator = get_algorithm_creator()
 
     ws = WorkstationFactory()
 
