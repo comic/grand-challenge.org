@@ -157,7 +157,6 @@ class RawImageFile(UUIDModel):
         return reverse("api:image-file-detail", kwargs={"pk": self.pk})
 
 
-
 def image_file_path(instance, filename):
     return (
         f"{settings.IMAGE_FILES_SUBDIRECTORY}/{instance.image.pk}/{filename}"

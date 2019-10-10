@@ -36,9 +36,7 @@ router.register(
     basename="upload-session",
 )
 router.register(
-    r"cases/image-files",
-    RawImageFileViewSet,
-    basename="image-file",
+    r"cases/image-files", RawImageFileViewSet, basename="image-file"
 )
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)

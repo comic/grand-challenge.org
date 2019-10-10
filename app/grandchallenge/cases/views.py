@@ -116,4 +116,3 @@ class RawImageFileViewSet(
 ):
     serializer_class = RawImageFileSerializer
     queryset = RawImageFile.objects.all()
-
