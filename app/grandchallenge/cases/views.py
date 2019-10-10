@@ -21,6 +21,7 @@ from grandchallenge.cases.models import (
 from grandchallenge.cases.serializers import (
     ImageSerializer,
     RawImageUploadSessionSerializer,
+    RawImageFileSerializer,
 )
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 
@@ -108,3 +109,11 @@ class RawImageUploadSessionViewSet(
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+
+
+class RawImageFileViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
+    serializer_class = RawImageFileSerializer
+    queryset = RawImageFile.objects.all()
+

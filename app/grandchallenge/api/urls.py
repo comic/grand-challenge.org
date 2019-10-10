@@ -5,6 +5,7 @@ from rest_framework import routers
 from grandchallenge.cases.views import (
     ImageViewSet,
     RawImageUploadSessionViewSet,
+    RawImageFileViewSet,
 )
 from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.patients.views import PatientViewSet
@@ -33,6 +34,11 @@ router.register(
     r"cases/upload-sessions",
     RawImageUploadSessionViewSet,
     basename="upload-session",
+)
+router.register(
+    r"cases/image-files",
+    RawImageFileViewSet,
+    basename="image-file",
 )
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)

@@ -152,6 +152,11 @@ class RawImageFile(UUIDModel):
         max_length=256, blank=False, null=True, default=None
     )
 
+    @property
+    def api_url(self):
+        return reverse("api:image-file-detail", kwargs={"pk": self.pk})
+
+
 
 def image_file_path(instance, filename):
     return (

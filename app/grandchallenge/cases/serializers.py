@@ -1,7 +1,12 @@
 from rest_framework import serializers
 from rest_framework.relations import HyperlinkedRelatedField
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
+    RawImageUploadSession,
+    RawImageFile,
+)
 from grandchallenge.algorithms.models import AlgorithmImage
 
 
@@ -48,5 +53,21 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "session_state",
             "error_message",
             "algorithm_image",
+            "api_url",
+        ]
+
+
+class RawImageFileSerializer(serializers.ModelSerializer):
+    upload_session = HyperlinkedRelatedField(
+        queryset=RawImageUploadSession.objects.all(),
+        view_name="api:upload-session-detail",
+    )
+
+    class Meta:
+        model = RawImageFile
+        fields = [
+            "pk",
+            "upload_session",
+            "filename",
             "api_url",
         ]
