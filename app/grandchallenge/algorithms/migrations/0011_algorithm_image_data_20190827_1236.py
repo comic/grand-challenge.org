@@ -37,6 +37,7 @@ def create_algorithm_workstation(apps):
     )
 
     workstation = Workstation.objects.create(
+        pk=pk,
         title="Algorithm Workstation",
         editors_group=editors_group,
         users_group=users_group,
@@ -65,6 +66,7 @@ def algorithm_container_images_to_algorithms_forward(apps, schema_editor):
         )
 
         a = Algorithm.objects.create(
+            pk=pk,
             description=ai.description,
             logo=ai.logo,
             slug=ai.slug,
