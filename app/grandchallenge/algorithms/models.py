@@ -55,6 +55,15 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE
     )
+    visible_to_public = models.BooleanField(
+        default=False,
+        help_text=(
+            "Should this algorithm be visible to all users on the algorithm "
+            "overview page? This does not grant all users permission to use "
+            "this algorithm. Users will still need to be added to the "
+            "algorithm users group in order to do that."
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

@@ -32,7 +32,13 @@ class AlgorithmForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = Algorithm
-        fields = ("title", "description", "logo", "workstation")
+        fields = (
+            "title",
+            "description",
+            "logo",
+            "visible_to_public",
+            "workstation",
+        )
 
 
 class AlgorithmImageForm(ModelForm):

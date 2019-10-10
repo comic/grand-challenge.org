@@ -69,11 +69,18 @@ class AlgorithmCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         return kwargs
 
 
-class AlgorithmList(LoginRequiredMixin, PermissionListMixin, ListView):
+class AlgorithmList(PermissionListMixin, ListView):
     model = Algorithm
     permission_required = {
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     }
+
+    def get_queryset(self, *args, **kwargs):
+        # Add algorithms that are publicly visible
+        qs = super().get_queryset(*args, **kwargs)
+        qs |= Algorithm.objects.filter(visible_to_public=True)
+
+        return qs
 
 
 class AlgorithmDetail(
