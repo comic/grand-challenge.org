@@ -173,7 +173,10 @@ class ReaderStudyUserAutocomplete(
             .select_related("editors_group")
             .values_list("editors_group__pk", flat=True)
         )
-        return self.request.user.groups.filter(pk__in=group_pks).exists()
+        return (
+            self.request.user.is_superuser
+            or self.request.user.groups.filter(pk__in=group_pks).exists()
+        )
 
     def get_queryset(self):
         qs = (

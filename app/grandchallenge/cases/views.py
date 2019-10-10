@@ -61,16 +61,6 @@ class ImageViewSet(ReadOnlyModelViewSet):
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
 
-    def filter_queryset(self, queryset):
-        """
-        Bypasses the filtering for staff users, who have permission to view
-        all images (see serving/permissions.py).
-        """
-        if self.request.user.is_staff:
-            return queryset
-        else:
-            return super().filter_queryset(queryset)
-
     def get_queryset(self):
         filters = {
             "worklist": self.request.query_params.get("worklist", None),
