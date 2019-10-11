@@ -355,6 +355,7 @@ LOCAL_APPS = [
     "grandchallenge.worklists",
     "grandchallenge.workstations",
     "grandchallenge.reader_studies",
+    "grandchallenge.workstation_configs",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
