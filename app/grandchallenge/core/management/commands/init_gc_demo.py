@@ -110,6 +110,7 @@ class Command(BaseCommand):
 
     def _set_user_permissions(self):
         self.users["admin"].is_staff = True
+        self.users["admin"].is_superuser = True
         self.users["admin"].save()
 
         retina_group = Group.objects.get(
