@@ -5,6 +5,7 @@ from rest_framework.serializers import ModelSerializer
 from grandchallenge.workstation_configs.models import (
     WorkstationConfig,
     WindowPreset,
+    LookUpTable,
 )
 
 
@@ -12,6 +13,27 @@ class WindowPresetSerializer(ModelSerializer):
     class Meta:
         model = WindowPreset
         fields = ["pk", "slug", "title", "description", "center", "width"]
+
+
+class LookUpTableSerializer(ModelSerializer):
+    class Meta:
+        model = LookUpTable
+        fields = [
+            "pk",
+            "slug",
+            "title",
+            "description",
+            "lut_color",
+            "lut_alpha",
+            "lut_color_invert",
+            "lut_alpha_invert",
+            "lut_range_min",
+            "lut_range_max",
+            "lut_relative",
+            "color_interpolation",
+            "color_interpolation_invert",
+            "interpolation",
+        ]
 
 
 class WorkstationConfigSerializer(ModelSerializer):
@@ -23,6 +45,7 @@ class WorkstationConfigSerializer(ModelSerializer):
     default_slab_thickness_mm = FloatField()
     window_presets = WindowPresetSerializer(many=True, read_only=True)
     default_window_preset = WindowPresetSerializer()
+    default_overlay_lut = LookUpTableSerializer()
 
     class Meta:
         model = WorkstationConfig
@@ -38,4 +61,5 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_slab_thickness_mm",
             "default_slab_render_method",
             "default_orientation",
+            "default_overlay_lut",
         ]
