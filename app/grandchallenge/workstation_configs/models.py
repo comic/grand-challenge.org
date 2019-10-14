@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
@@ -142,3 +143,19 @@ class LookUpTable(TitleSlugDescriptionModel):
 
     def __str__(self):
         return f"{self.title}"
+
+    def clean(self):
+        color_points = len(self.color.split(","))
+        alpha_points = len(self.alpha.split(","))
+        if color_points != alpha_points:
+            raise ValidationError(
+                "The color and alpha LUT should have the same number of elements"
+            )
+
+        if self.color_invert or self.alpha_invert:
+            color_invert_points = len(self.color_invert.split(","))
+            alpha_invert_points = len(self.alpha_invert.split(","))
+            if color_invert_points != alpha_invert_points:
+                raise ValidationError(
+                    "The color invert and alpha invert LUT should have the same number of elements"
+                )

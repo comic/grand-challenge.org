@@ -45,3 +45,36 @@ def test_legacy_lut_conversion(legacy_lut: LegacyLUT):
         ),
     )
     lut.full_clean()
+
+
+@pytest.mark.parametrize(
+    "lut",
+    (
+        LookUpTable(
+            title="foo",
+            color="[1 2 3 4, 5 6 7 8, 9 10 11 12]",
+            alpha="[1 1, 1 1]",
+        ),
+        LookUpTable(
+            title="foo", color="[1 2 3 4, 5 6 7 8]", alpha="[1 1, 1 1, 1 1]"
+        ),
+        LookUpTable(
+            title="foo",
+            color="[1 2 3 4, 5 6 7 8]",
+            alpha="[1 1, 1 1]",
+            color_invert="[1 2 3 4, 5 6 7 8, 9 10 11 12]",
+            alpha_invert="[1 1, 1 1]",
+        ),
+        LookUpTable(
+            title="foo",
+            color="[1 2 3 4, 5 6 7 8]",
+            alpha="[1 1, 1 1]",
+            color_invert="[1 2 3 4, 5 6 7 8]",
+            alpha_invert="[1 1, 1 1, 1 1]",
+        ),
+    ),
+)
+def test_color_alpha_validation(lut):
+    lut.clean_fields()
+    with pytest.raises(ValidationError):
+        lut.full_clean()
