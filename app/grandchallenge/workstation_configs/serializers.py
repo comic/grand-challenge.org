@@ -23,16 +23,15 @@ class LookUpTableSerializer(ModelSerializer):
             "slug",
             "title",
             "description",
-            "lut_color",
-            "lut_alpha",
-            "lut_color_invert",
-            "lut_alpha_invert",
-            "lut_range_min",
-            "lut_range_max",
-            "lut_relative",
+            "color",
+            "alpha",
+            "color_invert",
+            "alpha_invert",
+            "range_min",
+            "range_max",
+            "relative",
             "color_interpolation",
             "color_interpolation_invert",
-            "interpolation",
         ]
 
 
@@ -46,6 +45,9 @@ class WorkstationConfigSerializer(ModelSerializer):
     window_presets = WindowPresetSerializer(many=True, read_only=True)
     default_window_preset = WindowPresetSerializer()
     default_overlay_lut = LookUpTableSerializer()
+    default_overlay_interpolation = CharField(
+        source="get_default_overlay_interpolation_display"
+    )
 
     class Meta:
         model = WorkstationConfig
@@ -62,4 +64,5 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_slab_render_method",
             "default_orientation",
             "default_overlay_lut",
+            "default_overlay_interpolation",
         ]

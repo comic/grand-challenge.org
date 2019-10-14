@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 
@@ -25,6 +25,13 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         (SLAB_RENDER_METHOD_MAXIMUM, "Maximum"),
         (SLAB_RENDER_METHOD_MINIMUM, "Minimum"),
         (SLAB_RENDER_METHOD_AVERAGE, "Average"),
+    )
+
+    IMAGE_INTERPOLATION_TYPE_NEAREST = "NN"
+    IMAGE_INTERPOLATION_TYPE_TRILINEAR = "TL"
+    IMAGE_INTERPOLATION_TYPE_CHOICES = (
+        (IMAGE_INTERPOLATION_TYPE_NEAREST, "NearestNeighbour"),
+        (IMAGE_INTERPOLATION_TYPE_TRILINEAR, "Trilinear"),
     )
 
     creator = models.ForeignKey(
@@ -63,6 +70,12 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     default_overlay_lut = models.ForeignKey(
         to="LookUpTable", blank=True, null=True, on_delete=models.SET_NULL
     )
+    default_overlay_interpolation = models.CharField(
+        max_length=2,
+        choices=IMAGE_INTERPOLATION_TYPE_CHOICES,
+        default=IMAGE_INTERPOLATION_TYPE_NEAREST,
+        blank=True,
+    )
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")
@@ -98,20 +111,20 @@ class LookUpTable(TitleSlugDescriptionModel):
         (COLOR_INTERPOLATION_CONSTANT, "Constant"),
     )
 
-    INTERPOLATION_TYPE_NEAREST = "NearestNeighbour"
-    INTERPOLATION_TYPE_TRILINEAR = "Trilinear"
-    INTERPOLATION_TYPE_CHOICES = (
-        (INTERPOLATION_TYPE_NEAREST, "Nearest Neighbour"),
-        (INTERPOLATION_TYPE_NEAREST, "Trilinear"),
-    )
+    COLOR_REGEX = r"^\[(?:((?: ?-?\d*(?:\.\d+)? ){3}(?:-?\d*(?:\.\d+)?)) ?, ?)+((?:-?\d*(?:\.\d+)? ){3}(?:\d*(:?\.\d+)? ?))\]$"
+    ALPHA_REGEX = r"^\[(?:((?: ?-?\d*(?:\.\d+)? ){1}(?:-?\d*(?:\.\d+)?)) ?, ?)+((?:-?\d*(?:\.\d+)? ){1}(?:\d*(:?\.\d+)? ?))\]$"
 
-    lut_color = models.TextField()
-    lut_alpha = models.TextField()
-    lut_color_invert = models.TextField(blank=True)
-    lut_alpha_invert = models.TextField(blank=True)
-    lut_range_min = models.SmallIntegerField(default=0)
-    lut_range_max = models.SmallIntegerField(default=4095)
-    lut_relative = models.BooleanField(default=False)
+    color = models.TextField(validators=[RegexValidator(regex=COLOR_REGEX)])
+    alpha = models.TextField(validators=[RegexValidator(regex=ALPHA_REGEX)])
+    color_invert = models.TextField(
+        blank=True, validators=[RegexValidator(regex=COLOR_REGEX)]
+    )
+    alpha_invert = models.TextField(
+        blank=True, validators=[RegexValidator(regex=ALPHA_REGEX)]
+    )
+    range_min = models.SmallIntegerField(default=0)
+    range_max = models.SmallIntegerField(default=4095)
+    relative = models.BooleanField(default=False)
 
     color_interpolation = models.CharField(
         max_length=8,
@@ -122,12 +135,6 @@ class LookUpTable(TitleSlugDescriptionModel):
         max_length=8,
         choices=COLOR_INTERPOLATION_CHOICES,
         default=COLOR_INTERPOLATION_RGB,
-    )
-
-    interpolation = models.CharField(
-        max_length=16,
-        choices=INTERPOLATION_TYPE_CHOICES,
-        default=INTERPOLATION_TYPE_NEAREST,
     )
 
     class Meta(TitleSlugDescriptionModel.Meta):
