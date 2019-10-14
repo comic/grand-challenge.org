@@ -66,6 +66,8 @@ class RawImageFileSerializer(serializers.ModelSerializer):
         queryset=RawImageUploadSession.objects.all(),
         view_name="api:upload-session-detail",
     )
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [ObjectPermissionsFilter]
 
     class Meta:
         model = RawImageFile
