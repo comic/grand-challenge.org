@@ -55,6 +55,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "pk",
             "slug",
             "title",
+            "description",
             "created",
             "modified",
             "creator",
@@ -65,4 +66,6 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_orientation",
             "default_overlay_lut",
             "default_overlay_interpolation",
+            "show_image_info_plugin",
+            "show_display_plugin",
         ]

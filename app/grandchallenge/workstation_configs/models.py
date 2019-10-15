@@ -78,6 +78,9 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         blank=True,
     )
 
+    show_image_info_plugin = models.BooleanField(default=True)
+    show_display_plugin = models.BooleanField(default=True)
+
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")
 
@@ -112,6 +115,9 @@ class LookUpTable(TitleSlugDescriptionModel):
         (COLOR_INTERPOLATION_CONSTANT, "Constant"),
     )
 
+    # These regex reflect what MeVisLab accepts as color and alpha strings
+    # and kept for compatibility. Probably, we want to clean these fields up
+    # later for use elsewhere.
     COLOR_REGEX = r"^\[(?:((?: ?-?\d*(?:\.\d+)? ){3}(?:-?\d*(?:\.\d+)?)) ?, ?)+((?:-?\d*(?:\.\d+)? ){3}(?:\d*(:?\.\d+)? ?))\]$"
     ALPHA_REGEX = r"^\[(?:((?: ?-?\d*(?:\.\d+)? ){1}(?:-?\d*(?:\.\d+)?)) ?, ?)+((?:-?\d*(?:\.\d+)? ){1}(?:\d*(:?\.\d+)? ?))\]$"
 
@@ -123,6 +129,7 @@ class LookUpTable(TitleSlugDescriptionModel):
     alpha_invert = models.TextField(
         blank=True, validators=[RegexValidator(regex=ALPHA_REGEX)]
     )
+
     range_min = models.SmallIntegerField(default=0)
     range_max = models.SmallIntegerField(default=4095)
     relative = models.BooleanField(default=False)
