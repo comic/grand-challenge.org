@@ -64,7 +64,7 @@
                            data-toggle="tooltip"
                            data-placement="bottom"
                            title="View image in workstation ({{ job.image }})"
-                           href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image %}"><i
+                           href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image config=algorithm.workstation_config %}"><i
                                 class="fa fa-eye"></i></a>
                     </td>
                     <td>
@@ -89,7 +89,7 @@
                                    data-toggle="tooltip"
                                    data-placement="bottom"
                                    title="View overlay in workstation ({{ image }})"
-                                   href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image %}">
+                                   href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image config=algorithm.workstation_config %}">
                                     <i class="fa fa-eye"></i>
                                 </a>
                             {% endfor %}
