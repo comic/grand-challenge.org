@@ -1,9 +1,7 @@
 import pytest
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
-from guardian.shortcuts import get_perms
 
-from grandchallenge.workstations.models import Workstation
 from tests.factories import UserFactory
 
 
@@ -16,6 +14,7 @@ def test_workstation_group_migration():
 
     executor.migrate(migrate_from)
     old_apps = executor.loader.project_state(migrate_from).apps
+    new_apps = executor.loader.project_state(migrate_to).apps
 
     user = UserFactory()
     OldWorkstation = old_apps.get_model(app, "Workstation")
@@ -29,14 +28,14 @@ def test_workstation_group_migration():
     # Migrate forwards
     executor.migrate(migrate_to)
 
-    new_ws = Workstation.objects.get(title="foo")
-    new_ws.add_user(user=user)
+    NewWorkstation = new_apps.get_model(app, "Workstation")
+
+    new_ws = NewWorkstation.objects.get(title="foo")
 
     assert new_ws.editors_group
     assert new_ws.users_group
     assert new_ws.slug == old_ws.slug
     assert new_ws.title == old_ws.title
-    assert "view_workstation" in get_perms(user, new_ws)
 
     # For some reason this migration is removed but not added back?
     # E psycopg2.errors.FeatureNotSupported: cannot truncate a table referenced
