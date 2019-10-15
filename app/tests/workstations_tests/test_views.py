@@ -143,7 +143,7 @@ def test_workstationimage_create(client):
         user=u2,
         data={
             "chunked_upload": staged_file.file_id,
-            "initial_path": "",
+            "initial_path": "a",
             "websocket_port": 1337,
             "http_port": 1234,
         },
@@ -162,7 +162,7 @@ def test_workstationimage_create(client):
     assert w2_images[0].websocket_port == 1337
     assert w2_images[0].http_port == 1234
     assert w2_images[0].staged_image_uuid == staged_file.file_id
-    assert w2_images[0].initial_path == ""
+    assert w2_images[0].initial_path == "a"
 
 
 @pytest.mark.django_db
@@ -205,7 +205,7 @@ def test_workstationimage_update(client):
         viewname="workstations:image-update",
         reverse_kwargs={"slug": wsi.workstation.slug, "pk": wsi.pk},
         user=user,
-        data={"initial_path": "", "websocket_port": 1337, "http_port": 1234},
+        data={"initial_path": "a", "websocket_port": 1337, "http_port": 1234},
     )
 
     assert response.status_code == 302
@@ -213,7 +213,7 @@ def test_workstationimage_update(client):
 
     wsi.refresh_from_db()
 
-    assert wsi.initial_path == ""
+    assert wsi.initial_path == "a"
     assert wsi.websocket_port == 1337
     assert wsi.http_port == 1234
 

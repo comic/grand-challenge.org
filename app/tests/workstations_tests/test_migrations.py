@@ -2,8 +2,6 @@ import pytest
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
-from tests.factories import UserFactory
-
 
 @pytest.mark.django_db(transaction=True)
 def test_workstation_group_migration():
@@ -16,7 +14,6 @@ def test_workstation_group_migration():
     old_apps = executor.loader.project_state(migrate_from).apps
     new_apps = executor.loader.project_state(migrate_to).apps
 
-    user = UserFactory()
     OldWorkstation = old_apps.get_model(app, "Workstation")
     old_ws = OldWorkstation.objects.create(title="foo")
 
