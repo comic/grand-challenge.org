@@ -50,6 +50,12 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         editable=False,
         related_name="users_of_workstation",
     )
+    config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created", "title")
@@ -164,8 +170,7 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
     )
     initial_path = models.CharField(
         max_length=256,
-        default="Applications/CIRRUSCoreWeb/DIAG/CIRRUSCore/Modules/www/index.html",
-        blank=True,
+        default="cirrus",
         validators=[
             RegexValidator(
                 regex=r"^(?:[^/][^\s]*)\Z",
