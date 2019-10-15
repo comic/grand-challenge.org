@@ -37,7 +37,7 @@
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-borderless table-sm">
+        <table class="table table-hover table-borderless table-sm">
             <thead class="thead-light">
             <tr>
                 <th>Created</th>
@@ -60,12 +60,11 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a class="btn btn-primary"
-                           data-toggle="tooltip"
-                           data-placement="bottom"
-                           title="View image in workstation ({{ job.image }})"
-                           href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image %}"><i
-                                class="fa fa-eye"></i></a>
+                        <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image %}">
+                            <span class="badge badge-primary">
+                                    <i class="fa fa-eye"></i> View image
+                                    </span>
+                        </a>
                     </td>
                     <td>
                     <span class="badge
@@ -85,12 +84,10 @@
                     <td>
                         {% if job.result.images.all %}
                             {% for image in job.result.images.all %}
-                                <a class="btn btn-primary"
-                                   data-toggle="tooltip"
-                                   data-placement="bottom"
-                                   title="View overlay in workstation ({{ image }})"
-                                   href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image %}">
-                                    <i class="fa fa-eye"></i>
+                                <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image %}">
+                                    <span class="badge badge-primary">
+                                    <i class="fa fa-eye"></i> View image &amp; overlay
+                                    </span>
                                 </a>
                             {% endfor %}
                         {% endif %}
@@ -112,12 +109,5 @@
                 ordering: true
             });
         });
-    </script>
-
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
     </script>
 {% endblock %}
