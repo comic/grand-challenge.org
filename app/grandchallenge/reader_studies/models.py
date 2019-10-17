@@ -85,6 +85,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE
     )
+    workstation_config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     logo = models.ImageField(upload_to=get_logo_path)
 
     # A hanging_list is a list of dictionaries where the keys are the

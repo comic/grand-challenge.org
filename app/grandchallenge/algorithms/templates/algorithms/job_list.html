@@ -63,7 +63,7 @@
                     <td>
                         <ul class="list-unstyled">
                             <li>
-                                <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image %}">
+                                <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image config=algorithm.workstation_config %}">
                                     <span class="badge badge-primary">
                                         <i class="fa fa-eye"></i> View input
                                     </span>
@@ -100,7 +100,7 @@
                             <ul class="list-unstyled">
                                 {% for image in job.result.images.all %}
                                     <li>
-                                        <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image %}">
+                                        <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image config=algorithm.workstation_config %}">
                                             <span class="badge badge-primary">
                                                 <i class="fa fa-eye"></i> View input &amp; output
                                             </span>

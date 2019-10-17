@@ -17,15 +17,17 @@ def delete_workstation_groups(apps, schema_editor):
 
 
 def create_workstation_groups(apps, schema_editor):
-    from grandchallenge.workstations.models import Workstation
+    Workstation = apps.get_model("workstations", "Workstation")
+    Group = apps.get_model("auth", "Group")
 
     for ws in Workstation.objects.all():
-        ws.create_groups()
+        ws.editors_group = Group.objects.create(
+            name=f"workstations_workstation_{ws.pk}_editors"
+        )
+        ws.users_group = Group.objects.create(
+            name=f"workstations_workstation_{ws.pk}_users"
+        )
         ws.save()
-        ws.assign_permissions()
-
-        for wsi in ws.workstationimage_set.all():
-            wsi.assign_permissions()
 
 
 class Migration(migrations.Migration):

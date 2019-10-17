@@ -6,23 +6,35 @@ register = template.Library()
 
 
 @register.simple_tag()
-def workstation_query(image=None, overlay=None, reader_study=None):
+def workstation_query(
+    image=None, overlay=None, reader_study=None, config=None
+):
     """
     Generate the workstation query string for this image with overlay or
     reader_study.
     """
 
-    if image is not None:
+    if image:
         query = {settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM: image.pk}
-        if overlay is not None:
+        if overlay:
             query.update(
                 {settings.WORKSTATIONS_OVERLAY_QUERY_PARAM: overlay.pk}
             )
-    elif reader_study is not None:
+    elif reader_study:
         query = {
             settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM: reader_study.pk
         }
     else:
         query = {}
+
+    if config:
+        # Explicit configs have precedence
+        query.update({settings.WORKSTATIONS_CONFIG_QUERY_PARAM: config.pk})
+    elif reader_study and reader_study.workstation_config:
+        query.update(
+            {
+                settings.WORKSTATIONS_CONFIG_QUERY_PARAM: reader_study.workstation_config.pk
+            }
+        )
 
     return urlencode(query)

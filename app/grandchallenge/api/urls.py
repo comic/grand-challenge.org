@@ -15,6 +15,7 @@ from grandchallenge.reader_studies.views import (
 )
 from grandchallenge.studies.views import StudyViewSet
 from grandchallenge.worklists.views import WorklistViewSet
+from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
@@ -36,6 +37,11 @@ router.register(
 )
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)
+router.register(
+    r"workstations/configs",
+    WorkstationConfigViewSet,
+    basename="workstations-config",
+)
 router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")
 router.register(
     r"algorithms/results", ResultViewSet, basename="algorithms-result"

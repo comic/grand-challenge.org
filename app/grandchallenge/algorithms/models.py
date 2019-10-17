@@ -55,6 +55,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE
     )
+    workstation_config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     visible_to_public = models.BooleanField(
         default=False,
         help_text=(

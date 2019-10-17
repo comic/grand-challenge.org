@@ -38,6 +38,7 @@ class AlgorithmForm(SaveFormInitMixin, ModelForm):
             "logo",
             "visible_to_public",
             "workstation",
+            "workstation_config",
         )
 
 
