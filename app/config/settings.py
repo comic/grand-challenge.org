@@ -355,6 +355,7 @@ LOCAL_APPS = [
     "grandchallenge.worklists",
     "grandchallenge.workstations",
     "grandchallenge.reader_studies",
+    "grandchallenge.workstation_configs",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -662,6 +663,7 @@ DEFAULT_WORKSTATION_SLUG = os.environ.get(
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
 WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
+WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
 # The name of the network that the workstations will be attached to
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
     "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"

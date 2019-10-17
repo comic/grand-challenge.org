@@ -20,6 +20,7 @@ from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
+from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import (
     Session,
     Workstation,
@@ -194,6 +195,11 @@ class StagedFileFactory(factory.DjangoModelFactory):
     start_byte = 0
     end_byte = factory.LazyAttribute(lambda s: s.file.size)
     client_filename = factory.LazyAttribute(lambda s: s.file.name)
+
+
+class WorkstationConfigFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = WorkstationConfig
 
 
 class WorkstationFactory(factory.DjangoModelFactory):

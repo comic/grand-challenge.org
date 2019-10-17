@@ -47,7 +47,13 @@ class ReaderStudyCreateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = ReaderStudy
-        fields = ("title", "logo", "description", "workstation")
+        fields = (
+            "title",
+            "logo",
+            "description",
+            "workstation",
+            "workstation_config",
+        )
         help_texts = READER_STUDY_HELP_TEXTS
 
 
@@ -58,6 +64,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "logo",
             "description",
             "workstation",
+            "workstation_config",
             "shuffle_hanging_list",
             "hanging_list",
         )
