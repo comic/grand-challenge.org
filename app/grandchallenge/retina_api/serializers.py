@@ -56,3 +56,16 @@ class BytesImageSerializer(PILImageSerializer):
         buffer = BytesIO()
         image_pil.save(buffer, format="png")
         return buffer.getvalue()
+
+
+class TreeObjectSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+
+
+class TreeImageSerializer(TreeObjectSerializer):
+    eye = serializers.CharField()
+    study = serializers.CharField
+    modality = serializers.CharField()
+    # patient
+    # archives

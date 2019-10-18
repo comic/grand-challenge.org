@@ -53,9 +53,14 @@ from grandchallenge.annotations.serializers import (
     ImageTextAnnotationSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
-from grandchallenge.retina_api.serializers import BytesImageSerializer
+from grandchallenge.retina_api.serializers import (
+    BytesImageSerializer,
+    TreeObjectSerializer,
+    TreeImageSerializer,
+)
 from grandchallenge.serving.permissions import user_can_download_image
 from grandchallenge.retina_api.renderers import Base64Renderer
+from grandchallenge.studies.models import Study
 
 
 class ArchiveView(APIView):
@@ -906,94 +911,48 @@ class RetinaImagePathologyAnnotationViewSet(viewsets.ModelViewSet):
 
 class ArchiveAPIView(APIView):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (authentication.TokenAuthentication,)
-    renderer_classes = (JSONRenderer,)
+    authentication_classes = (
+        authentication.SessionAuthentication,
+    )  # TODO change to tokenauth
     pagination_class = None
 
-    @staticmethod
-    def create_response_object(archives, patients):
-        def generate_archives(archive_list, patients):
-            for archive in archive_list:
-                archive_only_images = []
-                for image in archive.images.all():
-                    if image.study is None:
-                        archive_only_images.append(image)
-
-                images = sorted(
-                    generate_images(archive_only_images, archive_only=True),
-                    key=lambda x: x["id"],
+    def get(self, request, pk=None):
+        image_prefetch_related = (
+            "modality",
+            "study__patient",
+            "obs_image",
+            "oct_image",
+            "archive_set",
+        )
+        objects = []
+        images = []
+        if pk is None:
+            objects = Archive.objects.all()
+        else:
+            if Archive.objects.filter(pk=pk).exists:
+                objects = Patient.objects.filter(
+                    study__image__archive__pk=pk
+                ).distinct()
+                images = Image.objects.filter(
+                    archive__pk=pk, study=None
+                ).prefetch_related(*image_prefetch_related)
+            elif Patient.objects.filter(pk=pk).exists():
+                objects = Study.objects.filter(patient__pk=pk)
+            elif Study.objects.filter(pk=pk).exists():
+                images = Image.objects.filter(study__pk=pk).prefetch_related(
+                    *image_prefetch_related
                 )
-                subfolders = sorted(
-                    generate_patients(archive, patients), key=lambda x: x["id"]
-                )
+            else:
+                return HttpResponse(status=status.HTTP_404_NOT_FOUND)
 
-                yield {
-                    "id": archive.id,
-                    "name": archive.name,
-                    "subfolders": subfolders,
-                    "images": images,
-                }
+        objects_serialized = TreeObjectSerializer(objects, many=True).data
+        images_serialized = TreeImageSerializer(images, many=True).data
 
-        def generate_patients(archive, patients):
-            patient_list = patients.filter(
-                study__image__archive=archive
-            ).distinct()
-            for patient in patient_list:
-                yield {
-                    "id": patient.id,
-                    "name": patient.name,
-                    "subfolders": sorted(
-                        generate_studies(patient.study_set),
-                        key=lambda x: x["id"],
-                    ),
-                    "images": [],
-                }
-
-        def generate_studies(study_list):
-            for study in study_list.all():
-                yield {
-                    "id": study.id,
-                    "name": study.name,
-                    "images": sorted(
-                        generate_images(study.image_set.all()),
-                        key=lambda x: x["id"],
-                    ),
-                    "subfolders": [],
-                }
-
-        def generate_images(image_list, archive_only=False):
-            for image in image_list:
-                yield_obj = {
-                    "id": image.id,
-                    "name": image.name,
-                    "eye": image.eye_choice,
-                    "modality": image.modality.modality,
-                    "archives": image.archive_set.values(),
-                }
-                if not archive_only:
-                    yield_obj.update(
-                        {
-                            "study": image.study.name,
-                            "patient": image.study.patient.name,
-                        }
-                    )
-                yield yield_obj
-
-        return sorted(
-            generate_archives(archives, patients), key=lambda x: x["id"]
-        )
-
-    def get(self, request):
-        archives = Archive.objects.all().prefetch_related(
-            "images", "images__study"
-        )
-        patients = Patient.objects.all().prefetch_related(
-            "study_set",
-            "study_set__image_set",
-            "study_set__image_set__modality",
-            "study_set__image_set__archive_set",
-        )
-        return Response(self.create_response_object(archives, patients))
+        response = {
+            "directories": sorted(objects_serialized, key=lambda x: x["name"]),
+            "images": sorted(images_serialized, key=lambda x: x["name"]),
+        }
+        return Response(response)
 
 
 class B64ThumbnailAPIView(RetrieveAPIView):
