@@ -917,13 +917,7 @@ class ArchiveAPIView(APIView):
     pagination_class = None
 
     def get(self, request, pk=None):
-        image_prefetch_related = (
-            "modality",
-            "study__patient",
-            "obs_image",
-            "oct_image",
-            "archive_set",
-        )
+        image_prefetch_related = ("modality", "study__patient", "archive_set")
         objects = []
         images = []
         if pk is None:
