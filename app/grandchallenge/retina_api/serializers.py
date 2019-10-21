@@ -84,7 +84,6 @@ class TreeArchiveSerializer(serializers.ModelSerializer):
 
 class TreeImageSerializer(TreeObjectSerializer):
     eye_choice = serializers.CharField()
-    study = serializers.CharField()
     modality = ImagingModalitySerializer()
     study = TreeStudySerializer(required=False)
     archive_set = TreeArchiveSerializer(many=True)
