@@ -912,8 +912,9 @@ class RetinaImagePathologyAnnotationViewSet(viewsets.ModelViewSet):
 class ArchiveAPIView(APIView):
     permission_classes = (RetinaAPIPermission,)
     authentication_classes = (
+        authentication.TokenAuthentication,
         authentication.SessionAuthentication,
-    )  # TODO change to tokenauth
+    )  # TODO remove sessionsAuth
     pagination_class = None
 
     def get(self, request, pk=None):
