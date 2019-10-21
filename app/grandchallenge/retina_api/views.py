@@ -923,7 +923,7 @@ class ArchiveAPIView(APIView):
         if pk is None:
             objects = Archive.objects.all()
         else:
-            if Archive.objects.filter(pk=pk).exists:
+            if Archive.objects.filter(pk=pk).exists():
                 objects = Patient.objects.filter(
                     study__image__archive__pk=pk
                 ).distinct()
