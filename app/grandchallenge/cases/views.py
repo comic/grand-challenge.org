@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.views.generic import CreateView, DetailView
+
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -24,6 +25,7 @@ from grandchallenge.cases.serializers import (
     RawImageFileSerializer,
 )
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
+from grandchallenge.core.permissions.rest_framework import DjangoObjectOnlyWithCustomPostPermissions
 
 
 class UploadRawFiles(UserIsStaffMixin, CreateView):
@@ -107,6 +109,9 @@ class RawImageUploadSessionViewSet(
     serializer_class = RawImageUploadSessionSerializer
     queryset = RawImageUploadSession.objects.all()
 
+    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    filter_backends = [ObjectPermissionsFilter]
+
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
@@ -114,5 +119,8 @@ class RawImageUploadSessionViewSet(
 class RawImageFileViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
+    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    filter_backends = [ObjectPermissionsFilter]
+
     serializer_class = RawImageFileSerializer
     queryset = RawImageFile.objects.all()

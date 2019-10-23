@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from rest_framework.relations import HyperlinkedRelatedField
-from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.models import (
     Image,
@@ -46,8 +44,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         queryset=AlgorithmImage.objects.all(),
         view_name="api:algorithms-image-detail",
     )
-    permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
 
     class Meta:
         model = RawImageUploadSession
@@ -66,8 +62,6 @@ class RawImageFileSerializer(serializers.ModelSerializer):
         queryset=RawImageUploadSession.objects.all(),
         view_name="api:upload-session-detail",
     )
-    permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
 
     class Meta:
         model = RawImageFile
