@@ -6,6 +6,11 @@ from PIL import Image as PILImage
 from django.http import Http404
 from rest_framework import serializers
 
+from grandchallenge.archives.models import Archive
+from grandchallenge.challenges.serializers import ImagingModalitySerializer
+from grandchallenge.patients.serializers import PatientSerializer
+from grandchallenge.studies.models import Study
+
 
 class PILImageSerializer(serializers.BaseSerializer):
     """
@@ -56,3 +61,29 @@ class BytesImageSerializer(PILImageSerializer):
         buffer = BytesIO()
         image_pil.save(buffer, format="png")
         return buffer.getvalue()
+
+
+class TreeObjectSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+
+
+class TreeStudySerializer(serializers.ModelSerializer):
+    patient = PatientSerializer()
+
+    class Meta:
+        model = Study
+        fields = ("name", "patient")
+
+
+class TreeArchiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Archive
+        fields = ("name",)
+
+
+class TreeImageSerializer(TreeObjectSerializer):
+    eye_choice = serializers.CharField()
+    modality = ImagingModalitySerializer()
+    study = TreeStudySerializer(required=False)
+    archive_set = TreeArchiveSerializer(many=True)

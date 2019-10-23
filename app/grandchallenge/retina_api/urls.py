@@ -58,6 +58,13 @@ urlpatterns = [
         name="archive-data-api-view",
     ),
     path(
+        "archive_data/<uuid:pk>/",
+        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
+            views.ArchiveAPIView.as_view()
+        ),
+        name="archive-data-api-view",
+    ),
+    path(
         "image/<str:image_type>/<str:patient_identifier>/<str:study_identifier>/<str:image_identifier>/<str:image_modality>/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
             views.ImageView.as_view()
