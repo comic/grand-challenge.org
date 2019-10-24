@@ -18,19 +18,20 @@ RUN apt-get update && \
 
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir -p /opt/pipenv /app /static /opt/static /dbox/Dropbox/media
+RUN mkdir -p /opt/poetry /app /static /opt/static /dbox/Dropbox/media
 RUN python -m pip install -U pip
-RUN python -m pip install -U pipenv
+RUN python -m pip install -U poetry
+
+RUN groupadd -g 2001 -r django && useradd -m -u 2001 -r -g django django
+RUN chown django:django /opt/poetry /app /static /opt/static /dbox/Dropbox/media
+USER django:django
 
 # Install base python packages
-WORKDIR /opt/pipenv
-COPY Pipfile /opt/pipenv
-COPY Pipfile.lock /opt/pipenv
-RUN pipenv install --system
-
-RUN groupadd -g 2001 -r django && useradd -u 2001 -r -g django django
-
-RUN chown django:django /app /static /opt/static /dbox/Dropbox/media
+WORKDIR /opt/poetry
+COPY pyproject.toml /opt/poetry
+COPY poetry.lock /opt/poetry
+RUN poetry install --no-dev
+ENV PATH="/home/django/.cache/pypoetry/virtualenvs/grand-challenge.org-py3.7/bin:$PATH"
 
 ###################
 #  Webpack        #
@@ -47,22 +48,18 @@ RUN npm install && npm run build
 ###################
 FROM base as test
 
-WORKDIR /opt/pipenv
-RUN pipenv install --system --dev
+RUN poetry install
 
-USER django:django
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/
 COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 RUN python manage.py collectstatic --noinput
-COPY --chown=django:django pyproject.toml /tmp/pyproject.toml
 
 ##################
 # Dist Container #
 ##################
 FROM base as dist
 
-USER django:django
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/
 COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
