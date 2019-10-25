@@ -31,7 +31,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     IMAGE_INTERPOLATION_TYPE_NEAREST = "NN"
     IMAGE_INTERPOLATION_TYPE_TRILINEAR = "TL"
     IMAGE_INTERPOLATION_TYPE_CHOICES = (
-        (IMAGE_INTERPOLATION_TYPE_NEAREST, "NearestNeighbour"),
+        (IMAGE_INTERPOLATION_TYPE_NEAREST, "NearestNeighbor"),
         (IMAGE_INTERPOLATION_TYPE_TRILINEAR, "Trilinear"),
     )
 
