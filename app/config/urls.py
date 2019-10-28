@@ -98,11 +98,6 @@ urlpatterns = [
         "media/",
         include("grandchallenge.serving.urls", namespace="root-serving"),
     ),
-    # ========== catch all ====================
-    # when all other urls have been checked, try to load page from flatpages
-    # keep this url at the bottom of this list, because urls are checked in
-    # order
-    path("", include("django.contrib.flatpages.urls")),
 ]
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar
