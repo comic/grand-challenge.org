@@ -184,6 +184,7 @@ CACHES = {
         "LOCATION": "memcached:11211",
     }
 }
+SPEEDINFO_STORAGE = "speedinfo.storage.cache.storage.CacheStorage"
 
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
