@@ -1,6 +1,5 @@
 import json
 
-import factory
 from rest_framework.test import force_authenticate
 from rest_framework import status
 from django.contrib.auth import get_user_model

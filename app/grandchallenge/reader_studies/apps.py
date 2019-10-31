@@ -23,4 +23,4 @@ class ReaderStudiesConfig(AppConfig):
         post_migrate.connect(init_reader_study_creators_group, sender=self)
 
         # noinspection PyUnresolvedReferences
-        import grandchallenge.reader_studies.signals
+        import grandchallenge.reader_studies.signals  # noqa: F401

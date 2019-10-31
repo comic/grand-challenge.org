@@ -1,6 +1,5 @@
 from django.conf import settings
-from django.core.files.storage import DefaultStorage
-from django.http import Http404, JsonResponse
+from django.http import Http404
 from django.shortcuts import render
 from django.template import Template, TemplateSyntaxError, RequestContext
 from django.utils._os import safe_join
@@ -32,11 +31,12 @@ def challenge_homepage(request):
 
 
 def renderTags(request, p, recursecount=0):
-    """ render page contents using django template system
+    """
+    Render page contents using django template system
+
     This makes it possible to use tags like '{% dataset %}' in page content.
     If a rendered tag results in another tag, this can be rendered recursively
     as long as recurse limit is not exceeded.
-    
     """
     recurselimit = 2
     try:
@@ -74,18 +74,27 @@ def renderTags(request, p, recursecount=0):
 
 def permissionMessage(request, p):
     if request.user.is_authenticated:
-        msg = """ <div class="system_message">
-                <h2> Restricted page</h2>
-                  
-                  <p>This page can only be viewed by participants of this project to view this page please make sure of the following:</p>
-                  
-                  <ul>
-                      <li>First, log in to this site by using the 'Sign in' button at the top right.</li>
-                      <li>Second, you need to join / register with the specific project you are interested in as a participant. 
-                      The link to do this is provided by the project organizers on the project website.</li>
-                  </ul>
-                  <div>
-              """
+        msg = """
+        <div class="system_message">
+            <h2>Restricted page</h2>
+            <p>
+                This page can only be viewed by participants of this
+                project to view this page please make sure of the following:
+            </p>
+            <ul>
+                <li>
+                    First, log in to this site by using the 'Sign in'
+                    button at the top right.
+                </li>
+                <li>
+                    Second, you need to join / register with the
+                    specific project you are interested in as a
+                    participant. The link to do this is provided by the
+                    project organizers on the project website.
+                </li>
+            </ul>
+        <div>
+        """
         title = p.title
     else:
         msg = (
@@ -100,8 +109,6 @@ def permissionMessage(request, p):
 
 # TODO: could a decorator be better then all these ..IfAllowed pages?
 def getRenderedPageIfAllowed(page_or_page_title, request):
-    """ check permissions and render tags in page. If string title is given page is looked for 
-        return nice message if not allowed to view"""
     if isinstance(page_or_page_title, bytes):
         page_or_page_title = page_or_page_title.decode()
 

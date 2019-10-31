@@ -56,13 +56,13 @@ def create_uploaded_file(
 
 
 def do_default_content_tests(uploaded_file, file_content):
-    l = 10
+    test_len = 10
     assert uploaded_file.exists
     assert uploaded_file.is_complete
     assert uploaded_file.size == len(file_content)
     with uploaded_file.open() as file:
-        assert file.read(l) == file_content[0:l]
-        assert file.read(l) == file_content[l : 2 * l]
+        assert file.read(test_len) == file_content[0:test_len]
+        assert file.read(test_len) == file_content[test_len : 2 * test_len]
         assert file.seek(0) == file.tell()
         assert file.read() == file_content
         assert file.seek(-1, 1) == len(file_content) - 1
@@ -75,23 +75,23 @@ def do_default_content_tests(uploaded_file, file_content):
         file.seek(0)
         assert file.read(-12) == file_content
         file.seek(0)
-        assert file.read(l) == file_content[0:l]
+        assert file.read(test_len) == file_content[0:test_len]
         file.seek(0)
-        assert file.read1(l) == file_content[0:l]
-        byte_buffer = bytearray(b"0" * l)
+        assert file.read1(test_len) == file_content[0:test_len]
+        byte_buffer = bytearray(b"0" * test_len)
         file.seek(0)
-        assert file.readinto(byte_buffer) == l
-        assert byte_buffer == file_content[0:l]
+        assert file.readinto(byte_buffer) == test_len
+        assert byte_buffer == file_content[0:test_len]
         file.seek(len(file_content) + 10)
         assert file.readinto(byte_buffer) == 0
-        assert byte_buffer == file_content[0:l]
-        byte_buffer = bytearray(b"0" * l)
+        assert byte_buffer == file_content[0:test_len]
+        byte_buffer = bytearray(b"0" * test_len)
         file.seek(0)
-        assert file.readinto1(byte_buffer) == l
-        assert byte_buffer == file_content[0:l]
+        assert file.readinto1(byte_buffer) == test_len
+        assert byte_buffer == file_content[0:test_len]
         file.seek(len(file_content) + 10)
         assert file.readinto1(byte_buffer) == 0
-        assert byte_buffer == file_content[0:l]
+        assert byte_buffer == file_content[0:test_len]
         assert file.readable()
         assert not file.writable()
         assert file.seekable()

@@ -6,11 +6,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from tests.factories import UserFactory
-from tests.cases_tests.factories import ImageFactory, ImageFactoryWithImageFile
-from tests.studies_tests.factories import StudyFactory
-from tests.patients_tests.factories import PatientFactory
-from tests.archives_tests.factories import ArchiveFactory
-from grandchallenge.studies.models import Study
 from tests.cases_tests import RESOURCE_PATH
 from grandchallenge.subdomains.utils import reverse
 

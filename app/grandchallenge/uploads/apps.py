@@ -6,4 +6,4 @@ class UploadsConfig(AppConfig):
 
     def ready(self):
         # noinspection PyUnresolvedReferences
-        import grandchallenge.uploads.signals
+        import grandchallenge.uploads.signals  # noqa: F401

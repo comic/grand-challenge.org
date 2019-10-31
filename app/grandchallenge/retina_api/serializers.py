@@ -23,7 +23,7 @@ class PILImageSerializer(serializers.BaseSerializer):
     def to_representation(self, instance):
         try:
             image_itk = instance.get_sitk_image()
-        except:
+        except Exception:
             raise Http404
         pil_image = self.convert_itk_to_pil(image_itk)
         try:

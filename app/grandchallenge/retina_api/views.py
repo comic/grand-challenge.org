@@ -4,7 +4,6 @@ from enum import Enum
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views import View
-from rest_framework.renderers import JSONRenderer
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response

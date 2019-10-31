@@ -36,7 +36,9 @@ from tests.studies_tests.factories import StudyFactory
 
 # Import fixtures that are used throughout a module
 # noinspection PyUnresolvedReferences
-from tests.workstations_tests.fixtures import two_workstation_sets
+from tests.workstations_tests.fixtures import (
+    two_workstation_sets,
+)  # noqa: F401
 
 
 def pytest_addoption(parser):
@@ -386,13 +388,11 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
     )
 
     # Create child models for polygon annotation set
-    singlepolygonbatches = (
-        SinglePolygonAnnotationFactory.create_batch(
-            10, annotation_set=polygonsets[0]
-        ),
-        SinglePolygonAnnotationFactory.create_batch(
-            10, annotation_set=polygonsets[1]
-        ),
+    SinglePolygonAnnotationFactory.create_batch(
+        10, annotation_set=polygonsets[0]
+    )
+    SinglePolygonAnnotationFactory.create_batch(
+        10, annotation_set=polygonsets[1]
     )
 
     return TwoPolygonAnnotationSets(

@@ -13,7 +13,7 @@ from tests.factories import JobFactory as EvaluationJobFactory
 @pytest.mark.django_db
 def test_mark_long_running_jobs_failed():
     # Started jobs should be unaffected
-    j = EvaluationJobFactory(status=EvaluationJob.STARTED)
+    EvaluationJobFactory(status=EvaluationJob.STARTED)
 
     # Long running jobs should be marked as failed
     j2 = EvaluationJobFactory(status=EvaluationJob.STARTED)
@@ -27,7 +27,7 @@ def test_mark_long_running_jobs_failed():
     j3.save()
 
     # Algorithm jobs should not be affected
-    aj = AlgorithmJobFactory(status=AlgorithmJob.STARTED)
+    AlgorithmJobFactory(status=AlgorithmJob.STARTED)
 
     assert EvaluationJob.objects.all().count() == 3
     assert (

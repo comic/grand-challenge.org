@@ -2,7 +2,6 @@
 Tests for the mhd-file reconstruction.
 """
 
-import shutil
 from pathlib import Path
 
 import pytest

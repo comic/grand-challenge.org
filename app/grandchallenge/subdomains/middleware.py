@@ -15,7 +15,7 @@ def subdomain_middleware(get_response):
         host = request.get_host().lower()
         domain = request.site.domain.lower()
 
-        pattern = f"^(?:(?P<subdomain>.*?)\.)?{domain}$"
+        pattern = rf"^(?:(?P<subdomain>.*?)[.])?{domain}$"
         matches = re.match(pattern, host)
 
         try:

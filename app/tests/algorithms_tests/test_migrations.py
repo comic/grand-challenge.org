@@ -2,7 +2,6 @@ import pytest
 from django.contrib.auth.models import Group
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
-from guardian.shortcuts import get_group_perms
 
 from tests.factories import UserFactory
 from tests.utils import get_temporary_image

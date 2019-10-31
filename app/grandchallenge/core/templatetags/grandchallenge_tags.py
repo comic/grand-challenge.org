@@ -30,21 +30,20 @@ logger = logging.getLogger(__name__)
 
 def parseKeyValueToken(token):
     """Parses token content string into a parameter dictionary
-    
-    Args:        
+
+    Args:
         token (django.base.Token): Object representing the string content of
-            the template tag. Key values are expected to be of the format         
+            the template tag. Key values are expected to be of the format
             key1:value1 key2:value2,...
 
     Returns:
         A dictionary of key:value pairs
-        
+
     Raises:
         ValueError: if token contents are not in key:val1 key:val2 .. format
-        
+
     """
     split = token.split_contents()
-    tag = split[0]
     args = split[1:]
     if "=" in "".join(args):
         raise ValueError(
@@ -83,9 +82,9 @@ def url(view_name, *args, **kwargs):
 
 
 def filter_by_extension(filenames, extensions):
-    """Takes two lists of strings. Return only strings that end with any of 
-    the strings in extensions. 
-    
+    """
+    Takes two lists of strings. Return only strings that end with any of
+    the strings in extensions.
     """
     filtered = []
     for extension in extensions:
@@ -94,28 +93,27 @@ def filter_by_extension(filenames, extensions):
 
 
 def resolve_path(path, parser, context):
-    """Try to resolve all parameters in path   
-    
+    """
+    Try to resolve all parameters in path
+
     Paths in COMIC template tag parameters can include variables. Try to
-    resolve these and throw error if this is not possible. 
+    resolve these and throw error if this is not possible.
     path can be of three types:
         * a raw filename like "stuff.html" or "results/table1.txt"
-        * a filname containing a variable like "results/{{teamid}}/table1.txt"
+        * a filename containing a variable like "results/{{teamid}}/table1.txt"
         * a django template variable like "site.short_name"
-    
+
     Args:
         Path (string)
-        parser (django object) 
+        parser (django object)
         context (django context given tag render function)
-        
-        
+
     Returns:
         resolved path (string)
-    
+
     Raises:
         PathResolutionException when path cannot be resolved
-        :param path: 
-                
+        :param path:
     """
     # Find out what type it is:
     # If it contains any / or {{ resolving as django var
@@ -211,9 +209,9 @@ def google_group(group_name):
     """Allows challenge admins to add google groups to pages"""
     return mark_safe(
         f"""
-    <iframe 
+    <iframe
         class="w-100"
-        id="forum_embed" 
+        id="forum_embed"
         data-groupname="{group_name}"
         src="javascript:void(0)"
         scrolling="no"
@@ -341,19 +339,11 @@ def in_list(needles, haystack):
 
 @register.tag(name="insert_file")
 def insert_file(parser, token):
-    """Render the contents of a file from the local dropbox folder of the 
-    current project
-        
     """
-    usagestr = """Tag usage: {% insertfile <file> %}
-                  <file>: filepath relative to project dropboxfolder.
-                  Example: {% insertfile results/test.txt %}
-                  You can use url parameters in <file> by using {{curly braces}}.
-                  Example: {% insterfile {{id}}/result.txt %} called with ?id=1234
-                  appended to the url will show the contents of "1234/result.txt".
-                  """
+    Render the contents of a file from the local dropbox folder of the current
+    project
+    """
     split = token.split_contents()
-    tag = split[0]
     all_args = split[1:]
     if len(all_args) != 1:
         error_message = "Expected 1 argument, found " + str(len(all_args))
@@ -421,7 +411,6 @@ def insert_graph(parser, token):
                   appended to the url will show the contents of "1234/result.txt".
                   """
     split = token.split_contents()
-    tag = split[0]
     all_args = split[1:]
     if len(all_args) > 2:
         error_message = "Expected no more than 2 arguments, found " + str(
@@ -482,7 +471,7 @@ class InsertGraphNode(template.Node):
 
         storage = DefaultStorage()
         try:
-            contents = storage.open(filename, "r").read()
+            storage.open(filename, "r").read()
         except Exception as e:
             return self.make_error_msg(str(e))
 
@@ -501,7 +490,7 @@ class InsertGraphNode(template.Node):
         #                   debug page
         try:
             svg_data = render_function(filename)
-        except Exception as e:
+        except Exception:
             if RENDER_FRIENDLY_ERRORS:
                 return self.make_error_msg(
                     str(
@@ -552,7 +541,7 @@ def canvas_to_svg(canvas):
 
 
 def render_anode09_result(filename):
-    """ Read in a file with the anode09 result format, return html to render an 
+    """ Read in a file with the anode09 result format, return html to render an
         FROC graph.
         To be able to read this without changing the evaluation
         executable. anode09 results have the following format:
@@ -740,42 +729,20 @@ def parse_php_arrays(filename):
         )
         for var in phpvars:
             result = phpvar.search(var)
-            # TODO Log these messages as info
-            if result is None:
-                msg = (
-                    "Could not match regex pattern '%s' to '%s'\
-                                                "
-                    % (phpvar.pattern, var)
-                )
-                continue
 
-            if len(result.groups()) != 2:
-                msg = (
-                    "Expected to find  varname and content,\
-                                  but regex '%s' found %d items:%s "
-                    % (
-                        phpvar.pattern,
-                        len(result.groups()),
-                        "[" + ",".join(result.groups()) + "]",
-                    )
-                )
+            if result is None or len(result.groups()) != 2:
                 continue
 
             (varname, varcontent) = result.groups()
             output[varname] = [float(x) for x in varcontent.split(",")]
+
     return output
 
 
 @register.tag(name="url_parameter")
 def url_parameter(parser, token):
     """ Try to read given variable from given url. """
-    usagestr = """Tag usage: {% url_parameter <param_name> %}
-                  <param_name>: The parameter to read from the requested url.
-                  Example: {% url_parameter name %} will write "John" when the
-                  requested url included ?name=John.
-                  """
     split = token.split_contents()
-    tag = split[0]
     all_args = split[1:]
     if len(all_args) != 1:
         error_message = "Expected 1 argument, found " + str(len(all_args))
@@ -845,20 +812,11 @@ def makeErrorMsgHtml(text):
 
 @register.tag(name="project_statistics")
 def display_project_statistics(parser, token):
-    usagestr = """Tag usage: {% project_statistics %}
-                  Displays a javascript map of the world listing the country
-                  of residence entered by each participants for this project when they signed up.
-                  
-                  """
     return ProjectStatisticsNode()
 
 
 @register.tag(name="allusers_statistics")
-def display_project_statistics(parser, token):
-    usagestr = """Tag usage: {% allusers_statistics %}
-                  Displays a javascript map of the world which listing the country
-                  of residence entered by each user of the framework when they signed up.
-                  """
+def display_allusers_statistics(parser, token):
     try:
         _, include_header = token.split_contents()
         if include_header.lower() == "false":
