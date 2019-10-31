@@ -7,11 +7,11 @@ from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import send_new_result_email
 from grandchallenge.evaluation.models import (
-    Submission,
+    Config,
     Job,
     Method,
     Result,
-    Config,
+    Submission,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.submission_conversion.models import (

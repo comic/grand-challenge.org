@@ -1,4 +1,5 @@
 from django.urls import path
+
 from grandchallenge.retina_importers import views
 
 app_name = "importers"

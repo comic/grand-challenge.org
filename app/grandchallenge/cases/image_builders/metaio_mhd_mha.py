@@ -6,7 +6,7 @@ See: https://itk.org/Wiki/MetaIO/Documentation
 
 from pathlib import Path
 from tempfile import TemporaryDirectory, TemporaryFile
-from typing import Mapping, Union, Sequence, Tuple
+from typing import Mapping, Sequence, Tuple, Union
 from uuid import uuid4
 
 import SimpleITK as sitk

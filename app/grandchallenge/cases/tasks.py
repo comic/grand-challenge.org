@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Tuple, Sequence
+from typing import Sequence, Tuple
 from uuid import UUID
 
 from celery import shared_task
@@ -15,16 +15,16 @@ from grandchallenge.cases.image_builders.metaio_mhd_mha import (
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
-    RawImageUploadSession,
-    UPLOAD_SESSION_STATE,
+    FolderUpload,
     Image,
     ImageFile,
     RawImageFile,
-    FolderUpload,
+    RawImageUploadSession,
+    UPLOAD_SESSION_STATE,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
-    StagedAjaxFile,
     NotFoundError,
+    StagedAjaxFile,
 )
 
 

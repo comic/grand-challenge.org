@@ -1,11 +1,11 @@
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import render
-from django.template import Template, TemplateSyntaxError, RequestContext
+from django.template import RequestContext, Template, TemplateSyntaxError
 from django.utils._os import safe_join
 from django.views.generic import TemplateView
 
-from grandchallenge.pages.models import Page, ErrorPage
+from grandchallenge.pages.models import ErrorPage, Page
 
 
 def challenge_homepage(request):

@@ -7,42 +7,42 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import (
-    ListView,
     CreateView,
     DetailView,
-    UpdateView,
     FormView,
+    ListView,
+    UpdateView,
 )
 from guardian.mixins import (
-    PermissionListMixin,
     LoginRequiredMixin,
+    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
-    RetrieveModelMixin,
     ListModelMixin,
+    RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
-from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.reader_studies.forms import (
+    EditorsForm,
+    QuestionCreateForm,
     ReaderStudyCreateForm,
     ReaderStudyUpdateForm,
-    QuestionCreateForm,
-    EditorsForm,
     ReadersForm,
 )
-from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.reader_studies.serializers import (
-    ReaderStudySerializer,
     AnswerSerializer,
     QuestionSerializer,
+    ReaderStudySerializer,
 )
 
 

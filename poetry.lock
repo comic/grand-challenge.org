@@ -612,6 +612,18 @@ attrs = "*"
 flake8 = ">=3.0.0"
 
 [[package]]
+category = "dev"
+description = "Flake8 and pylama plugin that checks the ordering of import statements."
+name = "flake8-import-order"
+optional = false
+python-versions = "*"
+version = "0.18.1"
+
+[package.dependencies]
+pycodestyle = "*"
+setuptools = "*"
+
+[[package]]
 category = "main"
 description = "WSGI HTTP Server for UNIX"
 name = "gunicorn"
@@ -1635,7 +1647,7 @@ version = "0.6.0"
 more-itertools = "*"
 
 [metadata]
-content-hash = "c81aff26dc0d08523ca226d455d1d19de987aa324c9d832e2512ed201e30ff1b"
+content-hash = "437eefc38c85178ab5a06ba1829e04394a62dd8c9b979db8280d3c9f472eea5c"
 python-versions = ">=3.7"
 
 [metadata.hashes]
@@ -1696,6 +1708,7 @@ factory-boy = ["728df59b372c9588b83153facf26d3d28947fc750e8e3c95cefa9bed0e6394ee
 faker = ["5902379d8df308a204fc11c4f621590ee83975805a6c7b2228203b9defa45250", "5e8c755c619f332d5ec28b7586389665f136bcf528e165eb925e87c06a63eda7"]
 flake8 = ["45681a117ecc81e870cbf1262835ae4af5e7a8b08e40b944a8a6e6b895914cfb", "49356e766643ad15072a789a20915d3c91dc89fd313ccd71802303fd67e4deca"]
 flake8-bugbear = ["d8c466ea79d5020cb20bf9f11cf349026e09517a42264f313d3f6fddb83e0571", "ded4d282778969b5ab5530ceba7aa1a9f1b86fa7618fc96a19a1d512331640f8"]
+flake8-import-order = ["90a80e46886259b9c396b578d75c749801a41ee969a235e163cfe1be7afd2543", "a28dc39545ea4606c1ac3c24e9d05c849c6e5444a50fb7e9cdd430fc94de6e92"]
 gunicorn = ["aa8e0b40b4157b36a5df5e599f45c9c76d6af43845ba3b3b0efe2c70473c2471", "fa2662097c66f920f53f70621c6c58ca4a3c4d3434205e608e121b5b3b71f4f3"]
 html2text = ["55ce85704f244fc18890c5ded89fa22ff7333e41e9f3cad04d51f48d62ad8834", "6f56057c5c2993b5cc5b347cb099bdf6d095828fef1b53ef4e2a2bf2a1be9b4f"]
 httplib2 = ["34537dcdd5e0f2386d29e0e2c6d4a1703a3b982d34c198a5102e6e5d6194b107", "409fa5509298f739b34d5a652df762cb0042507dc93f6633e306b11289d6249d"]

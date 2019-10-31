@@ -3,11 +3,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import (
-    ModelForm,
-    Form,
-    ModelChoiceField,
     ChoiceField,
+    Form,
     HiddenInput,
+    ModelChoiceField,
+    ModelForm,
     TextInput,
 )
 from guardian.shortcuts import get_objects_for_user
@@ -16,9 +16,9 @@ from guardian.utils import get_anonymous_user
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.models import (
-    ReaderStudy,
     HANGING_LIST_SCHEMA,
     Question,
+    ReaderStudy,
 )
 from grandchallenge.workstations.models import Workstation
 

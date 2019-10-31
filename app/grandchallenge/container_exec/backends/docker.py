@@ -13,7 +13,7 @@ import docker
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
-from docker.errors import ContainerError, APIError, NotFound
+from docker.errors import APIError, ContainerError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError

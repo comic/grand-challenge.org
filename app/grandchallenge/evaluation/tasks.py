@@ -5,8 +5,8 @@ from celery import shared_task
 from django.db.models import Q
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Result, Config
-from grandchallenge.evaluation.utils import rank_results, Metric
+from grandchallenge.evaluation.models import Config, Result
+from grandchallenge.evaluation.utils import Metric, rank_results
 
 
 def filter_by_creators_most_recent(*, results):

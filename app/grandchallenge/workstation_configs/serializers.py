@@ -3,9 +3,9 @@ from rest_framework.relations import SlugRelatedField
 from rest_framework.serializers import ModelSerializer
 
 from grandchallenge.workstation_configs.models import (
-    WorkstationConfig,
-    WindowPreset,
     LookUpTable,
+    WindowPreset,
+    WorkstationConfig,
 )
 
 

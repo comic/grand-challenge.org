@@ -3,8 +3,8 @@ from django.shortcuts import redirect, render
 from userena import views as userena_views
 
 from grandchallenge.profiles.forms import EditProfileForm
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.profiles.utils import signin_redirect
+from grandchallenge.subdomains.utils import reverse
 
 
 def login_redirect(request):

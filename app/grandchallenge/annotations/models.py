@@ -1,12 +1,13 @@
-from django.db import models
-from django.contrib.postgres.fields import ArrayField
-from django.utils import timezone
-from grandchallenge.core.models import UUIDModel
-from grandchallenge.cases.models import Image
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.utils import timezone
 from guardian.shortcuts import assign_perm
+
+from grandchallenge.cases.models import Image
+from grandchallenge.core.models import UUIDModel
 
 
 class AbstractAnnotationModel(UUIDModel):

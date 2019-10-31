@@ -1,22 +1,21 @@
 from django.http import Http404
 from django.views.generic import CreateView, DetailView
-from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
-
 from rest_framework.mixins import (
     CreateModelMixin,
-    RetrieveModelMixin,
     ListModelMixin,
+    RetrieveModelMixin,
 )
+from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
     RawImageFile,
     RawImageUploadSession,
     UPLOAD_SESSION_STATE,
-    Image,
-    ImageFile,
 )
 from grandchallenge.cases.serializers import (
     ImageSerializer,

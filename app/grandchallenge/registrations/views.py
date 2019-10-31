@@ -1,7 +1,8 @@
 from rest_framework import viewsets
+
+from grandchallenge.retina_importers.mixins import RetinaImportPermission
 from .models import OctObsRegistration
 from .serializers import OctObsRegistrationSerializer
-from grandchallenge.retina_importers.mixins import RetinaImportPermission
 
 
 class OctObsRegistrationViewSet(viewsets.ModelViewSet):

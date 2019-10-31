@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Submission, Result
+from grandchallenge.evaluation.models import Result, Submission
 
 
 class StatisticsDetail(TemplateView):

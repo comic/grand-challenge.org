@@ -2,7 +2,6 @@ from io import BytesIO
 
 import SimpleITK as sitk
 from PIL import Image as PILImage
-
 from django.http import Http404
 from rest_framework import serializers
 

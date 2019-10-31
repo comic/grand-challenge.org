@@ -4,12 +4,12 @@ from django.urls import path, re_path
 from grandchallenge.profiles.forms import SignupFormExtra
 from grandchallenge.profiles.views import (
     login_redirect,
-    profile_edit_redirect,
     profile,
-    signup,
-    signin,
-    signup_complete,
     profile_edit,
+    profile_edit_redirect,
+    signin,
+    signup,
+    signup_complete,
 )
 
 urlpatterns = [

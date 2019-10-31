@@ -1,4 +1,5 @@
 from django.db import models
+
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.patients.models import Patient
 

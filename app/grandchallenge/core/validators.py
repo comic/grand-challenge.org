@@ -4,8 +4,7 @@ from typing import Tuple
 import magic
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
-from jsonschema import validate
-from jsonschema import ValidationError as JSONValidationError
+from jsonschema import ValidationError as JSONValidationError, validate
 
 
 @deconstructible

@@ -5,11 +5,11 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 
-from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
+from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import (
-    UploadedAjaxFileList,
     StagedAjaxFile,
+    UploadedAjaxFileList,
 )
 
 

@@ -1,14 +1,16 @@
 from io import BytesIO
+
+import SimpleITK as sitk
+import numpy as np
+from PIL import Image as PILImage
+from django.conf import settings
+from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views import View, generic
-from config import settings
-from PIL import Image as PILImage
 from rest_framework import status
-from django.http.response import HttpResponse
-import numpy as np
-import SimpleITK as sitk
-from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
+
 from grandchallenge.cases.models import Image
+from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
 from grandchallenge.serving.permissions import user_can_download_image
 
 

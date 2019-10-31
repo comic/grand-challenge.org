@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Patient
+
 from grandchallenge.studies.admin import StudyInline
+from .models import Patient
 
 
 class PatientInline(admin.StackedInline):

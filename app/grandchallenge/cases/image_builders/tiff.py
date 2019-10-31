@@ -3,14 +3,14 @@ from tempfile import TemporaryFile
 from typing import NamedTuple
 from uuid import uuid4
 
-import tifffile
 import pyvips
+import tifffile
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.conf import settings
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.models import Image, ImageFile, FolderUpload
+from grandchallenge.cases.models import FolderUpload, Image, ImageFile
 
 
 class GrandChallengeTiffFileTags(NamedTuple):

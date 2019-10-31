@@ -1,9 +1,9 @@
 from django.contrib import admin
 
 from grandchallenge.workstation_configs.models import (
-    WorkstationConfig,
-    WindowPreset,
     LookUpTable,
+    WindowPreset,
+    WorkstationConfig,
 )
 
 admin.site.register(WorkstationConfig)

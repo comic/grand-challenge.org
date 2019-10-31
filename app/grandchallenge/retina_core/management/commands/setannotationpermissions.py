@@ -1,19 +1,19 @@
+from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.annotations.models import (
-    MeasurementAnnotation,
     BooleanClassificationAnnotation,
-    IntegerClassificationAnnotation,
-    PolygonAnnotationSet,
-    LandmarkAnnotationSet,
-    ETDRSGridAnnotation,
     CoordinateListAnnotation,
-    SinglePolygonAnnotation,
+    ETDRSGridAnnotation,
+    IntegerClassificationAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
     SingleLandmarkAnnotation,
+    SinglePolygonAnnotation,
 )
-from django.contrib.auth.models import Group
-from django.conf import settings
-from guardian.shortcuts import assign_perm, remove_perm
 
 # Existing annotation (name, codename) as of annotations.0001_initial
 ANNOTATION_MODELS = (

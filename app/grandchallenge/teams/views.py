@@ -1,13 +1,13 @@
 from django.contrib import messages
-from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import (
-    ListView,
     CreateView,
-    UpdateView,
-    DetailView,
     DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
 )
 
 from grandchallenge.core.permissions.mixins import (
@@ -16,8 +16,8 @@ from grandchallenge.core.permissions.mixins import (
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.teams.permissions.mixins import (
-    UserIsTeamOwnerOrChallengeAdminMixin,
     UserIsTeamMemberUserOrTeamOwnerOrChallengeAdminMixin,
+    UserIsTeamOwnerOrChallengeAdminMixin,
 )
 
 

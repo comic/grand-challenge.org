@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
-from django.http import QueryDict, HttpResponseRedirect
+from django.http import HttpResponseRedirect, QueryDict
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.subdomains.utils import reverse

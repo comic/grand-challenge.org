@@ -1,17 +1,17 @@
 from rest_framework import serializers
 
 from .models import (
-    ETDRSGridAnnotation,
-    MeasurementAnnotation,
     BooleanClassificationAnnotation,
-    PolygonAnnotationSet,
-    SinglePolygonAnnotation,
-    LandmarkAnnotationSet,
-    SingleLandmarkAnnotation,
-    ImageQualityAnnotation,
+    ETDRSGridAnnotation,
     ImagePathologyAnnotation,
-    RetinaImagePathologyAnnotation,
+    ImageQualityAnnotation,
     ImageTextAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
+    RetinaImagePathologyAnnotation,
+    SingleLandmarkAnnotation,
+    SinglePolygonAnnotation,
 )
 from .validators import validate_grader_is_current_retina_user
 

@@ -1,7 +1,7 @@
 from dal import autocomplete
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
-from django.views.generic import ListView, FormView
+from django.views.generic import FormView, ListView
 
 from grandchallenge.admins.forms import AdminsForm
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin

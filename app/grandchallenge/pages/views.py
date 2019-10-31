@@ -6,14 +6,14 @@ from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.utils._os import safe_join
 from django.views.generic import (
-    ListView,
     CreateView,
-    UpdateView,
     DeleteView,
+    ListView,
     RedirectView,
+    UpdateView,
 )
 from favicon.models import Favicon
 

@@ -10,8 +10,8 @@ from django.db import models
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.evaluation.models import Submission
+from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 

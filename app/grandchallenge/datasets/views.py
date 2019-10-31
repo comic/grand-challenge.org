@@ -1,15 +1,15 @@
-from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.datasets.forms import (
-    ImageSetUpdateForm,
     AnnotationSetForm,
     AnnotationSetUpdateForm,
     AnnotationSetUpdateLabelsForm,
+    ImageSetUpdateForm,
 )
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.datasets.utils import process_csv_file
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 from grandchallenge.subdomains.utils import reverse
