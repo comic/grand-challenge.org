@@ -1,15 +1,15 @@
 from django.urls import path
 
 from grandchallenge.algorithms.views import (
+    AlgorithmCreate,
+    AlgorithmDetail,
+    AlgorithmExecutionSessionCreate,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
-    AlgorithmExecutionSessionCreate,
-    AlgorithmList,
-    AlgorithmDetail,
-    AlgorithmCreate,
-    AlgorithmUpdate,
     AlgorithmImageUpdate,
     AlgorithmJobsList,
+    AlgorithmList,
+    AlgorithmUpdate,
     AlgorithmUserAutocomplete,
     EditorsUpdate,
     UsersUpdate,

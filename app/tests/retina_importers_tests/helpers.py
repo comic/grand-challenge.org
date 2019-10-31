@@ -1,18 +1,15 @@
+import json
 from io import BytesIO
 from pathlib import Path
-import json
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
-from tests.factories import UserFactory
-from tests.cases_tests.factories import ImageFactory, ImageFactoryWithImageFile
-from tests.studies_tests.factories import StudyFactory
-from tests.patients_tests.factories import PatientFactory
-from tests.archives_tests.factories import ArchiveFactory
-from grandchallenge.studies.models import Study
-from tests.cases_tests import RESOURCE_PATH
+
 from grandchallenge.subdomains.utils import reverse
+from tests.cases_tests import RESOURCE_PATH
+from tests.factories import UserFactory
 
 
 def get_retina_user_with_token(is_retina_user=True, **user_kwargs):
@@ -29,10 +26,13 @@ def get_retina_user_with_token(is_retina_user=True, **user_kwargs):
 
 def get_auth_token_header(user, token=None):
     """
-    Retrieve auth token that can be inserted into client request for authentication
-    :param user: "staff" for staff user, "normal" for normal user, else AnonymousUser
-    :param token: (optional) authentication token, `user` is not used if this is defined
-    :return:
+    Retrieve auth token that can be inserted into client request for
+    authentication
+
+    :param user:
+        "staff" for staff user, "normal" for normal user, else AnonymousUser
+    :param token:
+        (optional) authentication token, `user` is not used if this is defined
     """
     if token is None:
         if user == "staff":

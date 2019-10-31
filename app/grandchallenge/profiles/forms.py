@@ -1,6 +1,5 @@
 import userena.forms as userena_forms
 from django import forms
-from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
 from django_countries import countries
 

@@ -1,8 +1,8 @@
 from django.conf import settings
 
 from grandchallenge.cases.models import Image
-from grandchallenge.challenges.models import ComicSiteModel, Challenge
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.challenges.models import Challenge, ComicSiteModel
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.evaluation.models import Submission
 
 

@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
 
-import SimpleITK as sitk
+import SimpleITK
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
@@ -19,7 +19,7 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-class UPLOAD_SESSION_STATE:
+class UploadSessionState:
     created = "created"
     queued = "queued"
     running = "running"
@@ -43,7 +43,7 @@ class RawImageUploadSession(UUIDModel):
     )
 
     session_state = models.CharField(
-        max_length=16, default=UPLOAD_SESSION_STATE.created
+        max_length=16, default=UploadSessionState.created
     )
 
     processing_task = models.UUIDField(null=True, default=None)
@@ -110,7 +110,7 @@ class RawImageUploadSession(UUIDModel):
 
         try:
             RawImageUploadSession.objects.filter(pk=self.pk).update(
-                session_state=UPLOAD_SESSION_STATE.queued,
+                session_state=UploadSessionState.queued,
                 processing_task=self.pk,
             )
 
@@ -118,7 +118,7 @@ class RawImageUploadSession(UUIDModel):
 
         except Exception as e:
             RawImageUploadSession.objects.filter(pk=self.pk).update(
-                session_state=UPLOAD_SESSION_STATE.stopped,
+                session_state=UploadSessionState.stopped,
                 error_message=f"Could not start job: {e}",
             )
             raise e
@@ -312,21 +312,16 @@ class Image(UUIDModel):
 
         with TemporaryDirectory() as tempdirname:
             for file in (mhd_file, raw_file):
-                infile = file.file.open("rb")
-                try:
-                    with open(
-                        Path(tempdirname) / Path(file.file.name).name, "wb"
-                    ) as outfile:
-                        buffer = True
-                        while buffer:
-                            buffer = infile.read(1024)
-                            outfile.write(buffer)
-                except:
-                    infile.close()
-                    raise
+                with file.file.open("rb") as infile, open(
+                    Path(tempdirname) / Path(file.file.name).name, "wb"
+                ) as outfile:
+                    buffer = True
+                    while buffer:
+                        buffer = infile.read(1024)
+                        outfile.write(buffer)
 
             try:
-                sitk_image = sitk.ReadImage(
+                sitk_image = SimpleITK.ReadImage(
                     str(Path(tempdirname) / Path(mhd_file.file.name).name)
                 )
             except RuntimeError as e:

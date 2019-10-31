@@ -2,8 +2,8 @@ import copy
 import importlib
 
 import pytest
-from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings as dj_settings
+from django.core.exceptions import ImproperlyConfigured
 
 import grandchallenge.core.storage
 

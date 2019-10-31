@@ -2,66 +2,66 @@ import pytest
 
 
 @pytest.mark.django_db
-def test_challenge_set_fixture(ChallengeSet):
-    assert ChallengeSet.challenge.is_admin(ChallengeSet.creator)
-    assert not ChallengeSet.challenge.is_participant(ChallengeSet.creator)
-    assert ChallengeSet.challenge.is_admin(ChallengeSet.admin)
-    assert not ChallengeSet.challenge.is_participant(ChallengeSet.admin)
-    assert not ChallengeSet.challenge.is_admin(ChallengeSet.participant)
-    assert ChallengeSet.challenge.is_participant(ChallengeSet.participant)
-    assert not ChallengeSet.challenge.is_admin(ChallengeSet.participant1)
-    assert ChallengeSet.challenge.is_participant(ChallengeSet.participant1)
-    assert ChallengeSet.participant != ChallengeSet.participant1
-    assert not ChallengeSet.challenge.is_admin(ChallengeSet.non_participant)
-    assert not ChallengeSet.challenge.is_participant(
-        ChallengeSet.non_participant
+def test_challenge_set_fixture(challenge_set):
+    assert challenge_set.challenge.is_admin(challenge_set.creator)
+    assert not challenge_set.challenge.is_participant(challenge_set.creator)
+    assert challenge_set.challenge.is_admin(challenge_set.admin)
+    assert not challenge_set.challenge.is_participant(challenge_set.admin)
+    assert not challenge_set.challenge.is_admin(challenge_set.participant)
+    assert challenge_set.challenge.is_participant(challenge_set.participant)
+    assert not challenge_set.challenge.is_admin(challenge_set.participant1)
+    assert challenge_set.challenge.is_participant(challenge_set.participant1)
+    assert challenge_set.participant != challenge_set.participant1
+    assert not challenge_set.challenge.is_admin(challenge_set.non_participant)
+    assert not challenge_set.challenge.is_participant(
+        challenge_set.non_participant
     )
 
 
 @pytest.mark.django_db
-def test_two_challenge_sets_fixture(TwoChallengeSets):
-    assert TwoChallengeSets.ChallengeSet1.challenge.is_admin(
-        TwoChallengeSets.admin12
+def test_two_challenge_sets_fixture(two_challenge_sets):
+    assert two_challenge_sets.challenge_set_1.challenge.is_admin(
+        two_challenge_sets.admin12
     )
-    assert TwoChallengeSets.ChallengeSet2.challenge.is_admin(
-        TwoChallengeSets.admin12
+    assert two_challenge_sets.challenge_set_2.challenge.is_admin(
+        two_challenge_sets.admin12
     )
-    assert not TwoChallengeSets.ChallengeSet1.challenge.is_participant(
-        TwoChallengeSets.admin12
+    assert not two_challenge_sets.challenge_set_1.challenge.is_participant(
+        two_challenge_sets.admin12
     )
-    assert not TwoChallengeSets.ChallengeSet2.challenge.is_participant(
-        TwoChallengeSets.admin12
+    assert not two_challenge_sets.challenge_set_2.challenge.is_participant(
+        two_challenge_sets.admin12
     )
-    assert TwoChallengeSets.ChallengeSet1.challenge.is_participant(
-        TwoChallengeSets.participant12
+    assert two_challenge_sets.challenge_set_1.challenge.is_participant(
+        two_challenge_sets.participant12
     )
-    assert TwoChallengeSets.ChallengeSet2.challenge.is_participant(
-        TwoChallengeSets.participant12
+    assert two_challenge_sets.challenge_set_2.challenge.is_participant(
+        two_challenge_sets.participant12
     )
-    assert not TwoChallengeSets.ChallengeSet1.challenge.is_admin(
-        TwoChallengeSets.participant12
+    assert not two_challenge_sets.challenge_set_1.challenge.is_admin(
+        two_challenge_sets.participant12
     )
-    assert not TwoChallengeSets.ChallengeSet2.challenge.is_admin(
-        TwoChallengeSets.participant12
+    assert not two_challenge_sets.challenge_set_2.challenge.is_admin(
+        two_challenge_sets.participant12
     )
-    assert not TwoChallengeSets.ChallengeSet1.challenge.is_participant(
-        TwoChallengeSets.admin1participant2
+    assert not two_challenge_sets.challenge_set_1.challenge.is_participant(
+        two_challenge_sets.admin1participant2
     )
-    assert TwoChallengeSets.ChallengeSet2.challenge.is_participant(
-        TwoChallengeSets.admin1participant2
+    assert two_challenge_sets.challenge_set_2.challenge.is_participant(
+        two_challenge_sets.admin1participant2
     )
-    assert TwoChallengeSets.ChallengeSet1.challenge.is_admin(
-        TwoChallengeSets.admin1participant2
+    assert two_challenge_sets.challenge_set_1.challenge.is_admin(
+        two_challenge_sets.admin1participant2
     )
-    assert not TwoChallengeSets.ChallengeSet2.challenge.is_admin(
-        TwoChallengeSets.admin1participant2
+    assert not two_challenge_sets.challenge_set_2.challenge.is_admin(
+        two_challenge_sets.admin1participant2
     )
 
 
 @pytest.mark.django_db
-def test_eval_challenge_set_fixture(EvalChallengeSet):
-    assert EvalChallengeSet.ChallengeSet.challenge.use_evaluation
+def test_eval_challenge_set_fixture(eval_challenge_set):
+    assert eval_challenge_set.challenge_set.challenge.use_evaluation
     assert (
-        EvalChallengeSet.ChallengeSet.challenge
-        == EvalChallengeSet.method.challenge
+        eval_challenge_set.challenge_set.challenge
+        == eval_challenge_set.method.challenge
     )

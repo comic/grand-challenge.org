@@ -3,19 +3,19 @@ from django.db import IntegrityError
 from guardian.shortcuts import get_perms
 
 from tests.annotations_tests.factories import (
-    ETDRSGridAnnotationFactory,
-    MeasurementAnnotationFactory,
     BooleanClassificationAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
     CoordinateListAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    SinglePolygonAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    SingleLandmarkAnnotationFactory,
-    ImageQualityAnnotationFactory,
+    ETDRSGridAnnotationFactory,
     ImagePathologyAnnotationFactory,
-    RetinaImagePathologyAnnotationFactory,
+    ImageQualityAnnotationFactory,
     ImageTextAnnotationFactory,
+    IntegerClassificationAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    MeasurementAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    RetinaImagePathologyAnnotationFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
 )
 from tests.model_helpers import do_test_factory
 from tests.viewset_helpers import get_user_from_user_type
@@ -35,7 +35,8 @@ class TestAnnotationModels:
     def test_measurement_duplicate_not_allowed(self):
         measurement = MeasurementAnnotationFactory()
         try:
-            measuremt_duplicate = MeasurementAnnotationFactory(
+            # Duplicate the creation
+            MeasurementAnnotationFactory(
                 image=measurement.image,
                 grader=measurement.grader,
                 created=measurement.created,
@@ -61,17 +62,17 @@ class TestAnnotationModels:
 @pytest.mark.django_db
 class TestPermissions:
     def test_single_model_permissions(
-        self, TwoRetinaPolygonAnnotationSets, user_type
+        self, two_retina_polygon_annotation_sets, user_type
     ):
         user = get_user_from_user_type(
-            user_type, grader=TwoRetinaPolygonAnnotationSets.grader1
+            user_type, grader=two_retina_polygon_annotation_sets.grader1
         )
         perms = get_perms(
             user,
-            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
+            two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
         )
         default_permissions = (
-            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()._meta.default_permissions
+            two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first()._meta.default_permissions
         )
         for permission_type in default_permissions:
             if user_type == "retina_grader_non_allowed":
@@ -82,14 +83,14 @@ class TestPermissions:
                 assert f"{permission_type}_singlepolygonannotation" in perms
 
     def test_model_permissions(
-        self, TwoRetinaPolygonAnnotationSets, user_type
+        self, two_retina_polygon_annotation_sets, user_type
     ):
         user = get_user_from_user_type(
-            user_type, grader=TwoRetinaPolygonAnnotationSets.grader1
+            user_type, grader=two_retina_polygon_annotation_sets.grader1
         )
-        perms = get_perms(user, TwoRetinaPolygonAnnotationSets.polygonset1)
+        perms = get_perms(user, two_retina_polygon_annotation_sets.polygonset1)
         default_permissions = (
-            TwoRetinaPolygonAnnotationSets.polygonset1._meta.default_permissions
+            two_retina_polygon_annotation_sets.polygonset1._meta.default_permissions
         )
         for permission_type in default_permissions:
             if user_type == "retina_grader_non_allowed":

@@ -1,14 +1,11 @@
 import json
-import os
 
 import pytest
-from django.conf import settings
 from django.utils.encoding import force_text
 from rest_framework.authtoken.models import Token
 
-from grandchallenge.evaluation.models import Submission
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import UserFactory, ChallengeFactory
+from tests.factories import UserFactory
 
 
 def get_staff_user_with_token():

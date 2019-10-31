@@ -19,8 +19,6 @@ from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.views import upload_handler
 from tests.factories import PageFactory, RegistrationRequestFactory
-
-# Platform independent regex which will match line endings in win and linux
 from tests.utils import get_http_host
 
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -52,9 +50,8 @@ def extract_form_errors(html):
 
 
 def find_text_between(start, end, haystack: bytes):
-    """ Return text between the first occurence of string start and 
-    string end in haystack. 
-     
+    """ Return text between the first occurence of string start and
+    string end in haystack.
     """
     found = re.search(
         start + "(.*)" + end, haystack.decode(), re.IGNORECASE | re.DOTALL
@@ -70,16 +67,15 @@ def find_text_between(start, end, haystack: bytes):
 
 
 def extract_href_from_anchor(anchor: str):
-    """ For a html link like '<a href="www.some.nl">click here</a>' 
+    """ For a html link like '<a href="www.some.nl">click here</a>'
     return only 'www.some.nl'
     """
     return find_text_between('href="', '">', anchor.encode())
 
 
-def is_subset(listA, listB):
-    """ True if listA is a subset of listB 
-    """
-    all(item in listA for item in listB)
+def is_subset(a, b):
+    """ True if listA is a subset of listB """
+    all(item in a for item in b)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
@@ -89,21 +85,20 @@ class ComicframeworkTestCase(TestCase):
 
     def setUp(self):
         call_command("check_permissions")
-        self.setUp_base()
-        self.setUp_extra()
+        self.set_up_base()
+        self.set_up_extra()
 
-    def setUp_base(self):
+    def set_up_base(self):
         """ This setup should be run for all comic framework testcases
         """
         self._create_root_superuser()
 
-    def setUp_extra(self):
-        """ Overwrite this method in child classes 
-        """
+    def set_up_extra(self):
+        """ Overwrite this method in child classes """
         pass
 
     def _create_root_superuser(self):
-        User = get_user_model()
+        User = get_user_model()  # noqa: N806
         try:
             self.root = User.objects.filter(username="root")[0]
         except IndexError:
@@ -117,7 +112,7 @@ class ComicframeworkTestCase(TestCase):
             self.root = root
 
     def _create_dummy_project(self, projectname="testproject"):
-        """ Create a project with some pages and users. In part this is 
+        """ Create a project with some pages and users. In part this is
         done through admin views, meaning admin views are also tested here.
         """
         # Create three types of users that exist: Root, can do anything,
@@ -195,10 +190,9 @@ class ComicframeworkTestCase(TestCase):
         return response
 
     def _find_errors_in_page(self, response):
-        """ see if there are any errors rendered in the html of reponse.
+        """ see if there are any errors rendered in the html of response.
         Used for checking forms. Also checks for 403 response forbidden.
-        
-        Return string error message if anything does not check out, "" if not.         
+        Return string error message if anything does not check out, "" if not.
         """
         if response.status_code == 403:
             return "Could not check for errors, as response was a 403 response\
@@ -243,10 +237,8 @@ class ComicframeworkTestCase(TestCase):
     def _signup_user(self, overwrite_data=None):
         """Create a user in the same way as a new user is signed up on the project.
         any key specified in data overwrites default key passed to form.
-        For example, signup_user({'username':'user1'}) to creates a user called 
-        'user1' and fills the rest with default data.  
-        
-        
+        For example, signup_user({'username':'user1'}) to creates a user called
+        'user1' and fills the rest with default data.
         """
         if overwrite_data is None:
             overwrite_data = {}
@@ -286,10 +278,9 @@ class ComicframeworkTestCase(TestCase):
         return self._create_user(data)
 
     def _create_user(self, data):
-        """ Sign up user in a way as close to production as possible. Check a 
+        """ Sign up user in a way as close to production as possible. Check a
         lot of stuff. Data is a dictionary form_field:for_value pairs. Any
         unspecified values are given default values
-        
         """
         username = data["username"]
         self._signup_user(data)
@@ -331,7 +322,7 @@ class ComicframeworkTestCase(TestCase):
                 resp.status_code
             ),
         )
-        User = get_user_model()
+        User = get_user_model()  # noqa: N806
         query_result = User.objects.filter(username=username)
         return query_result[0]
 
@@ -380,7 +371,6 @@ class ComicframeworkTestCase(TestCase):
     def _login(self, user, password="testpassword"):
         """ convenience function. log in user an assert whether it worked.
         passing None as user will log out
-        
         """
         self.client.logout()
         if user is None:
@@ -394,12 +384,11 @@ class ComicframeworkTestCase(TestCase):
         )
         return success
 
-    def assertEmail(self, email, email_expected):
+    def assert_email(self, email, email_expected):
         """ Convenient way to check subject, content, mailto etc at once for
-        an email 
-        
+        an email
         email : django.core.mail.message object
-        email_expected : dict like {"subject":"Registration complete","to":"user@email.org" }        
+        email_expected : dict like {"subject":"Registration complete","to":"user@email.org" }
         """
         for attr in email_expected.keys():
             try:
@@ -428,8 +417,7 @@ class CreateProjectTest(ComicframeworkTestCase):
     def test_cannot_create_project_with_weird_name(self):
         """ Expose issue #222 : projects can be created with names which are
         not valid as hostname, for instance containing underscores. Make sure
-        These cannot be created 
-        
+        These cannot be created
         """
         # non-root users are created as if they signed up through the project,
         # to maximize test coverage.
@@ -486,7 +474,7 @@ class CreateProjectTest(ComicframeworkTestCase):
 
 
 class ViewsTest(ComicframeworkTestCase):
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -503,19 +491,17 @@ class ViewsTest(ComicframeworkTestCase):
     def test_registered_user_can_create_project(self):
         """ A user freshly registered through the project can immediately create
         a project
-        
         """
         user = self._create_user({"username": "user2", "email": "ab@cd.com"})
         testproject = self._create_challenge_in_admin(user, "user1project")
         testpage1 = create_page(testproject, "testpage1")
-        testpage2 = create_page(testproject, "testpage2")
+        create_page(testproject, "testpage2")
         self._test_page_can_be_viewed(user, testpage1)
         self._test_page_can_be_viewed(self.root, testpage1)
 
     def test_page_view_permission(self):
         """ Check that a page with permissions set can be viewed by the correct
         users only
-                
         """
         adminonlypage = create_page(
             self.testproject, "adminonlypage", permission_lvl=Page.ADMIN_ONLY
@@ -549,8 +535,7 @@ class ViewsTest(ComicframeworkTestCase):
 
     def test_robots_txt_can_be_loaded(self):
         """ Just check there are no errors in finding robots.txt. Only testing
-        for non-logged in users because I would hope bots are never logged in 
-        
+        for non-logged in users because I would hope bots are never logged in
         """
         # main domain robots.txt
         robots_url = "/robots.txt/"
@@ -568,7 +553,6 @@ class ViewsTest(ComicframeworkTestCase):
     def test_non_exitant_page_gives_404(self):
         """ reproduces issue #219
         https://github.com/comic/grand-challenge.org/issues/219
-        
         """
         page_url = reverse(
             "pages:detail",
@@ -589,7 +573,6 @@ class ViewsTest(ComicframeworkTestCase):
     def test_non_exitant_project_gives_404_or_302(self):
         """ reproduces issue #219,
         https://github.com/comic/grand-challenge.org/issues/219
-        
         """
         # main domain robots.txt
         non_existant_url = reverse(
@@ -609,7 +592,7 @@ class ViewsTest(ComicframeworkTestCase):
 
 
 class UploadTest(ComicframeworkTestCase):
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -636,8 +619,7 @@ class UploadTest(ComicframeworkTestCase):
     # self._test_url_can_be_viewed(self.root.username,url)
     def _upload_test_file(self, user, project, testfilename=""):
         """ Upload a very small text file as user to project, through standard
-        upload view at /files 
-        
+        upload view at /files
         """
         if testfilename == "":
             testfilename = self.giverandomfilename(user)
@@ -660,10 +642,11 @@ class UploadTest(ComicframeworkTestCase):
         # don't know what this does but if fixes the bug.
         from django.contrib.messages.storage.fallback import FallbackStorage
 
-        setattr(request, "session", "session")
+        request.session = "session"
         messages = FallbackStorage(request)
-        setattr(request, "_messages", messages)
+        request._messages = messages
         response = upload_handler(request)
+
         self.assertEqual(
             response.status_code,
             302,
@@ -681,7 +664,8 @@ class UploadTest(ComicframeworkTestCase):
         return response
 
     def giverandomfilename(self, user, postfix=""):
-        """ Create a filename where you can see from which user is came, but 
+        """
+        Create a filename where you can see from which user is came, but
         you don't get any nameclashes when creating a few
         """
         return "{}_{}_{}".format(
@@ -693,30 +677,22 @@ class UploadTest(ComicframeworkTestCase):
     def test_file_can_be_uploaded(self):
         """ Upload a fake file, see if correct users can see this file
         """
-        project = self.testproject
         name1 = self.giverandomfilename(self.root)
         name2 = self.giverandomfilename(self.projectadmin)
         name3 = self.giverandomfilename(self.participant)
         name4 = self.giverandomfilename(self.participant2)
-        resp1 = self._upload_test_file(self.root, self.testproject, name1)
-        resp2 = self._upload_test_file(
-            self.projectadmin, self.testproject, name2
-        )
-        resp3 = self._upload_test_file(
-            self.participant, self.testproject, name3
-        )
-        resp4 = self._upload_test_file(
-            self.participant2, self.testproject, name4
-        )
+        self._upload_test_file(self.root, self.testproject, name1)
+        self._upload_test_file(self.projectadmin, self.testproject, name2)
+        self._upload_test_file(self.participant, self.testproject, name3)
+        self._upload_test_file(self.participant2, self.testproject, name4)
 
 
 class TemplateTagsTest(ComicframeworkTestCase):
     """ See if using template tags like {% include file.txt %} inside page html
     will crash anything
-    
     """
 
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -747,7 +723,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
     def _extract_download_link(self, response1):
         """ From a page rendering a listfile template tag, return the first
         download link
-        
         """
         found = re.search(
             '<ul class="dataset">(.*)</ul>',
@@ -756,7 +731,6 @@ class TemplateTagsTest(ComicframeworkTestCase):
         )
         link = ""
         if found:
-            filelist_HTML = found.group(0).strip()
             found_link = re.search(
                 'href="(.*)">', found.group(0), re.IGNORECASE
             )
@@ -771,10 +745,8 @@ class TemplateTagsTest(ComicframeworkTestCase):
 
     def test_listdir(self):
         """ Does the template tag for listing and downloading files in a dir work
-        correctly? 
-        
+        correctly?
         test for comcisite.templatetags.templatetags.listdir
-        
         """
         # create a page containing the listdir tag on the public folder.
         # Path to browse is a special path for which Mockstorage will return some
@@ -786,9 +758,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
         )
         page1 = create_page(self.testproject, "listdirpage", content)
         # can everyone now view this?
-        response1 = self._test_page_can_be_viewed(None, page1)
+        _ = self._test_page_can_be_viewed(None, page1)
         response1 = self._test_page_can_be_viewed(self.root, page1)
-        response2 = self._test_page_can_be_viewed(self.signedup_user, page1)
+        _ = self._test_page_can_be_viewed(self.signedup_user, page1)
         # open one of the download links from the file list
         # see if there are any errors rendered in the reponse
         link = self._extract_download_link(response1)
@@ -804,7 +776,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         page2 = create_page(self.testproject, "restrictedlistdirpage", content)
         # can everyone now view this page?
         response5 = self._test_page_can_be_viewed(self.root, page2)
-        response6 = self._test_page_can_be_viewed(self.signedup_user, page2)
+        _ = self._test_page_can_be_viewed(self.signedup_user, page2)
         # A download link from a restricted path should only be loadable by
         # participants that registered with the challenge
         link = self._extract_download_link(response5)
@@ -821,9 +793,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
         self._test_page_can_be_viewed(self.signedup_user, page2)
 
     def test_insert_file_tag(self):
-        """ Can directly include the contents of a file. Contents can again 
-        include files.  
-        
+        """
+        Can directly include the contents of a file. Contents can again include
+        files.
         """
         content = "Here is an included file: <toplevelcontent> {% insert_file public_html/fakeinclude.html %}</toplevelcontent>"
         insertfiletagpage = create_page(
@@ -872,16 +844,17 @@ class TemplateTagsTest(ComicframeworkTestCase):
         )
 
     def get_mail_html_part(self, mail):
-        """ Extract html content from email sent with models.challenge.send_templated_email
-        
+        """
+        Extract html content from email sent with
+        models.challenge.send_templated_email
         """
         return mail.alternatives[0][0]
 
-    def assertText(self, content, expected_text, description=""):
-        """ assert that expected_text can be found in text, 
+    def assert_text(self, content, expected_text, description=""):
+        """
+        assert that expected_text can be found in text,
         description can describe what this link should do, like
         "register user without permission", for better fail messages
-                
         """
         self.assertTrue(
             expected_text in content.decode(),
@@ -891,13 +864,13 @@ class TemplateTagsTest(ComicframeworkTestCase):
             ),
         )
 
-    def assertTextBetweenTags(
+    def assert_text_between_tags(
         self, text, tagname, expected_text, description=""
     ):
-        """ Assert whether expected_text was found in between <tagname> and </tagname>
-        in text. On error, will include description of operation, like "trying to render
-        table from csv".
-        
+        """
+        Assert whether expected_text was found in between <tagname> and
+        </tagname> in text. On error, will include description of operation,
+        like "trying to render table from csv".
         """
         content = find_text_between(
             "<" + tagname + ">", "</" + tagname + ">", text
@@ -912,17 +885,17 @@ class TemplateTagsTest(ComicframeworkTestCase):
             "Rendering tag between <{0}> </{0}>, ".format(tagname)
             + description
         )
-        self.assertText(text, expected_text, description)
+        self.assert_text(text, expected_text, description)
 
 
 class ProjectLoginTest(ComicframeworkTestCase):
-    """ Getting userena login and signup to display inside a project context 
-    (with correct banner and pages, sending project-based email etc..) was quite
-    a hassle, not to mention messy. Do all the links still work?
-    
+    """
+    Getting userena login and signup to display inside a project context
+    (with correct banner and pages, sending project-based email etc..) was
+    quite a hassle, not to mention messy. Do all the links still work?
     """
 
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """

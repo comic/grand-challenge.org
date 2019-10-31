@@ -3,10 +3,10 @@ from rest_framework.fields import SerializerMethodField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.algorithms.models import (
+    Algorithm,
     AlgorithmImage,
     Job,
     Result,
-    Algorithm,
 )
 from grandchallenge.cases.models import Image
 

@@ -34,12 +34,12 @@ class StaffOnlyView(UserIsStaffMixin, EmptyResponseView):
 
 
 @pytest.mark.django_db
-def test_staff_view(rf: RequestFactory, ChallengeSet, admin_user, mocker):
+def test_staff_view(rf: RequestFactory, challenge_set, admin_user, mocker):
     # admin_user is a superuser, not a challenge admin
-    creator = ChallengeSet.creator
-    challenge = ChallengeSet.challenge
-    participant = ChallengeSet.participant
-    non_participant = ChallengeSet.non_participant
+    creator = challenge_set.creator
+    challenge = challenge_set.challenge
+    participant = challenge_set.participant
+    non_participant = challenge_set.non_participant
 
     # Messages need to be mocked when using request factory
     mock_messages = mocker.patch(
@@ -63,13 +63,13 @@ def test_staff_view(rf: RequestFactory, ChallengeSet, admin_user, mocker):
 
 @pytest.mark.django_db
 def test_permissions_mixin(
-    rf: RequestFactory, admin_user, mocker, ChallengeSet
+    rf: RequestFactory, admin_user, mocker, challenge_set
 ):
     # admin_user is a superuser, not a challenge admin
-    creator = ChallengeSet.creator
-    challenge = ChallengeSet.challenge
-    participant = ChallengeSet.participant
-    non_participant = ChallengeSet.non_participant
+    creator = challenge_set.creator
+    challenge = challenge_set.challenge
+    participant = challenge_set.participant
+    non_participant = challenge_set.non_participant
 
     # Messages need to be mocked when using request factory
     mock_messages = mocker.patch(
@@ -111,14 +111,14 @@ def test_permissions_mixin(
 
 @pytest.mark.django_db
 def test_permissions_after_challenge_rename(
-    rf: RequestFactory, admin_user, mocker, ChallengeSet
+    rf: RequestFactory, admin_user, mocker, challenge_set
 ):
     """ Check that we can rename challenges.
     Admin_user is superuser """
-    creator = ChallengeSet.creator
-    challenge = ChallengeSet.challenge
-    participant = ChallengeSet.participant
-    non_participant = ChallengeSet.non_participant
+    creator = challenge_set.creator
+    challenge = challenge_set.challenge
+    participant = challenge_set.participant
+    non_participant = challenge_set.non_participant
     # Messages need to be mocked when using request factory
     mock_messages = mocker.patch(
         "grandchallenge.core.permissions.mixins.messages"

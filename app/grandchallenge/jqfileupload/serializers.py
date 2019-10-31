@@ -1,4 +1,4 @@
-from rest_framework.fields import CharField, UUIDField, SerializerMethodField
+from rest_framework.fields import CharField, SerializerMethodField, UUIDField
 from rest_framework.serializers import ModelSerializer
 
 from grandchallenge.jqfileupload.models import StagedFile

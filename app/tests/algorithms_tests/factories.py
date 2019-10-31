@@ -1,11 +1,12 @@
 import factory
+
 from grandchallenge.algorithms.models import (
+    Algorithm,
     AlgorithmImage,
     Job,
     Result,
-    Algorithm,
 )
-from tests.factories import ImageFactory, WorkstationFactory, UserFactory
+from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 
 
 class AlgorithmFactory(factory.DjangoModelFactory):

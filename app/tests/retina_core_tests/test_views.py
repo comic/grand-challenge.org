@@ -1,16 +1,17 @@
-import pytest
 import io
+
+import SimpleITK
 import numpy as np
-import SimpleITK as sitk
+import pytest
 from PIL import Image as PILImage
-from rest_framework import status
-from guardian.shortcuts import assign_perm
-from grandchallenge.subdomains.utils import reverse
-from django.urls import reverse as django_reverse
-from tests.retina_importers_tests.helpers import get_retina_user_with_token
 from django.conf import settings
+from django.urls import reverse as django_reverse
+from rest_framework import status
+
+from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import ImageFactoryWithImageFile
 from tests.retina_api_tests.helpers import client_login
+from tests.retina_importers_tests.helpers import get_retina_user_with_token
 
 
 @pytest.mark.django_db
@@ -102,7 +103,7 @@ class TestCustomImageViews:
         )
         sitk_image = image.get_sitk_image()
         depth = sitk_image.GetDepth()
-        nda_image = sitk.GetArrayFromImage(sitk_image)
+        nda_image = SimpleITK.GetArrayFromImage(sitk_image)
         if depth > 0:
             nda_image = nda_image[depth // 2]
         expected_np = nda_image.astype(np.uint8)
@@ -164,6 +165,6 @@ class TestCustomImageViews:
         response = client.get(url)
         response_np = np.load(io.BytesIO(response.content))
         sitk_image = image.get_sitk_image()
-        nda_image = sitk.GetArrayFromImage(sitk_image)
+        nda_image = SimpleITK.GetArrayFromImage(sitk_image)
         request_image_arr = nda_image.astype(np.int8)
         assert np.array_equal(response_np, request_image_arr)

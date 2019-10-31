@@ -2,14 +2,14 @@ import pytest
 from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
-from grandchallenge.algorithms.models import AlgorithmImage, Algorithm
+from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
-    AlgorithmImageFactory,
     AlgorithmFactory,
+    AlgorithmImageFactory,
 )
-from tests.factories import UserFactory, StagedFileFactory, WorkstationFactory
-from tests.utils import get_view_for_user, get_temporary_image
+from tests.factories import StagedFileFactory, UserFactory
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db

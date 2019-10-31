@@ -1,6 +1,6 @@
 from celery import shared_task
 from django.core.mail import mail_managers
-from requests import get, exceptions
+from requests import exceptions, get
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.evaluation.models import Result

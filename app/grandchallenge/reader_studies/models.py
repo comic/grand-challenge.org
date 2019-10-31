@@ -3,7 +3,7 @@ from collections import Counter
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver

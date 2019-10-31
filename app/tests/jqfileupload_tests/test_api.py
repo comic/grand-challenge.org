@@ -8,10 +8,10 @@ from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory
 from tests.jqfileupload_tests.utils import (
-    create_upload_file_request,
-    load_test_data,
-    generate_new_upload_id,
     create_partial_upload_file_request,
+    create_upload_file_request,
+    generate_new_upload_id,
+    load_test_data,
 )
 
 
@@ -140,7 +140,7 @@ def create_chunked_request(filename, content, upload_id, start_byte, end_byte):
             filename: BytesIO(content[start_byte:end_byte]),
             "X-Upload-ID": upload_id,
         },
-        "HTTP_CONTENT_RANGE": f"bytes {start_byte}-{end_byte-1}/{len(content)}",
+        "HTTP_CONTENT_RANGE": f"bytes {start_byte}-{end_byte - 1}/{len(content)}",
     }
 
 

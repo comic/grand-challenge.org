@@ -1,16 +1,16 @@
-from crispy_forms.bootstrap import TabHolder, Tab
+from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout, ButtonHolder
+from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
-    Method,
-    Submission,
     Config,
     EXTRA_RESULT_COLUMNS_SCHEMA,
+    Method,
+    Submission,
 )
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList

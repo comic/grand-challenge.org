@@ -1,11 +1,11 @@
 import pytest
 
 from grandchallenge.reader_studies.models import Answer, Question
-from tests.factories import UserFactory, ImageFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
-    ReaderStudyFactory,
-    QuestionFactory,
     AnswerFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies
 from tests.utils import get_view_for_user
@@ -20,7 +20,7 @@ def test_api_list_is_filtered(client):
         QuestionFactory(reader_study=rs1),
         QuestionFactory(reader_study=rs2),
     )
-    a1, a2 = (
+    a1, _ = (
         AnswerFactory(question=q1, answer=True),
         AnswerFactory(question=q2, answer=False),
     )
@@ -274,7 +274,6 @@ def test_answer_creator_is_reader(client):
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):
-
     im = ImageFactory()
 
     rs = ReaderStudyFactory()

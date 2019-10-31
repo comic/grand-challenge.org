@@ -1,12 +1,12 @@
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 import pytest
 
 from grandchallenge.cases.models import (
+    Image,
     RawImageFile,
     RawImageUploadSession,
-    UPLOAD_SESSION_STATE,
-    Image,
+    UploadSessionState,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
@@ -50,8 +50,8 @@ def test_file_session_creation():
     assert len(uploaded_images) == 1
     assert uploaded_images[images[0]].staged_file_id is not None
 
-    aFile = StagedAjaxFile(uploaded_images[images[0]].staged_file_id)
-    assert aFile.exists
+    a_file = StagedAjaxFile(uploaded_images[images[0]].staged_file_id)
+    assert a_file.exists
 
 
 @pytest.mark.django_db
@@ -74,7 +74,7 @@ def test_image_file_creation(settings):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.session_state == UploadSessionState.stopped
     assert session.error_message is None
 
     assert Image.objects.filter(origin=session).count() == 4
@@ -104,7 +104,7 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     )
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.session_state == UploadSessionState.stopped
     assert session.error_message is not None
 
 
@@ -118,7 +118,7 @@ def test_no_convertible_file(settings):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.session_state == UploadSessionState.stopped
     assert session.error_message is None
 
     no_image_image = list(uploaded_images.values())[0]
@@ -151,7 +151,7 @@ def test_errors_on_files_with_duplicate_file_names(settings):
     assert len(uploaded_images) == 4
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.session_state == UploadSessionState.stopped
     assert session.error_message is None
 
     for raw_image in uploaded_images:
@@ -169,7 +169,7 @@ def test_mhd_file_annotation_creation(settings):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.session_state == UploadSessionState.stopped
     assert session.error_message is None
 
     images = Image.objects.filter(origin=session).all()

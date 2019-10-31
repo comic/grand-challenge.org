@@ -1,12 +1,11 @@
 from django.conf import settings
-from django.core.files.storage import DefaultStorage
-from django.http import Http404, JsonResponse
+from django.http import Http404
 from django.shortcuts import render
-from django.template import Template, TemplateSyntaxError, RequestContext
+from django.template import RequestContext, Template, TemplateSyntaxError
 from django.utils._os import safe_join
 from django.views.generic import TemplateView
 
-from grandchallenge.pages.models import Page, ErrorPage
+from grandchallenge.pages.models import ErrorPage, Page
 
 
 def challenge_homepage(request):
@@ -22,7 +21,7 @@ def challenge_homepage(request):
     else:
         currentpage = pages[0]
 
-    currentpage = getRenderedPageIfAllowed(currentpage, request)
+    currentpage = get_rendered_page_if_allowed(currentpage, request)
 
     return render(
         request,
@@ -31,12 +30,13 @@ def challenge_homepage(request):
     )
 
 
-def renderTags(request, p, recursecount=0):
-    """ render page contents using django template system
+def render_tags(request, p, recursecount=0):
+    """
+    Render page contents using django template system
+
     This makes it possible to use tags like '{% dataset %}' in page content.
     If a rendered tag results in another tag, this can be rendered recursively
     as long as recurse limit is not exceeded.
-    
     """
     recurselimit = 2
     try:
@@ -59,7 +59,7 @@ def renderTags(request, p, recursecount=0):
         if recursecount < recurselimit:
             p2 = copy_page(p)
             p2.html = pagecontents
-            return renderTags(request, p2, recursecount + 1)
+            return render_tags(request, p2, recursecount + 1)
 
         else:
             # when page contents cannot be rendered, just display raw contents and include error message on page
@@ -72,20 +72,29 @@ def renderTags(request, p, recursecount=0):
     return pagecontents
 
 
-def permissionMessage(request, p):
+def permission_message(request, p):
     if request.user.is_authenticated:
-        msg = """ <div class="system_message">
-                <h2> Restricted page</h2>
-                  
-                  <p>This page can only be viewed by participants of this project to view this page please make sure of the following:</p>
-                  
-                  <ul>
-                      <li>First, log in to this site by using the 'Sign in' button at the top right.</li>
-                      <li>Second, you need to join / register with the specific project you are interested in as a participant. 
-                      The link to do this is provided by the project organizers on the project website.</li>
-                  </ul>
-                  <div>
-              """
+        msg = """
+        <div class="system_message">
+            <h2>Restricted page</h2>
+            <p>
+                This page can only be viewed by participants of this
+                project to view this page please make sure of the following:
+            </p>
+            <ul>
+                <li>
+                    First, log in to this site by using the 'Sign in'
+                    button at the top right.
+                </li>
+                <li>
+                    Second, you need to join / register with the
+                    specific project you are interested in as a
+                    participant. The link to do this is provided by the
+                    project organizers on the project website.
+                </li>
+            </ul>
+        <div>
+        """
         title = p.title
     else:
         msg = (
@@ -99,9 +108,7 @@ def permissionMessage(request, p):
 
 
 # TODO: could a decorator be better then all these ..IfAllowed pages?
-def getRenderedPageIfAllowed(page_or_page_title, request):
-    """ check permissions and render tags in page. If string title is given page is looked for 
-        return nice message if not allowed to view"""
+def get_rendered_page_if_allowed(page_or_page_title, request):
     if isinstance(page_or_page_title, bytes):
         page_or_page_title = page_or_page_title.decode()
 
@@ -115,10 +122,10 @@ def getRenderedPageIfAllowed(page_or_page_title, request):
         p = page_or_page_title
 
     if p.can_be_viewed_by(request.user):
-        p.html = renderTags(request, p)
+        p.html = render_tags(request, p)
         currentpage = p
     else:
-        currentpage = permissionMessage(request, p)
+        currentpage = permission_message(request, p)
 
     return currentpage
 

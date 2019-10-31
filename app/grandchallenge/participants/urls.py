@@ -1,10 +1,10 @@
 from django.urls import path
 
 from grandchallenge.participants.views import (
-    RegistrationRequestList,
-    RegistrationRequestCreate,
-    RegistrationRequestUpdate,
     ParticipantsList,
+    RegistrationRequestCreate,
+    RegistrationRequestList,
+    RegistrationRequestUpdate,
 )
 
 app_name = "participants"

@@ -5,8 +5,8 @@ from celery import shared_task
 from django.db.models import Q
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Result, Config
-from grandchallenge.evaluation.utils import rank_results, Metric
+from grandchallenge.evaluation.models import Config, Result
+from grandchallenge.evaluation.utils import Metric, rank_results
 
 
 def filter_by_creators_most_recent(*, results):
@@ -68,7 +68,10 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):
         )
 
     if score_method_choice == Config.ABSOLUTE and len(metrics) == 1:
-        score_method = lambda x: list(x)[0]
+
+        def score_method(x):
+            return list(x)[0]
+
     elif score_method_choice == Config.MEAN:
         score_method = mean
     elif score_method_choice == Config.MEDIAN:

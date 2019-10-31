@@ -1,16 +1,16 @@
+from dataclasses import dataclass
+
 import pytest
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser, Group
+from django.contrib.auth.models import AnonymousUser, Group, User
 
 from grandchallenge.cases.permissions import ImagePermission
-from tests.factories import UserFactory, ImageFactory
+from tests.factories import ImageFactory, UserFactory
 
 
+@dataclass
 class Request:
-    """ Mock request class containing only user """
-
-    def __init__(self, user):
-        self.user = user
+    user: User
 
 
 @pytest.mark.django_db

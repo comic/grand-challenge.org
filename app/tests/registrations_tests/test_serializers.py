@@ -1,11 +1,12 @@
 import pytest
-from tests.registrations_tests.factories import OctObsRegistrationFactory
+
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
+from tests.registrations_tests.factories import OctObsRegistrationFactory
 from tests.serializer_helpers import (
-    do_test_serializer_valid,
     do_test_serializer_fields,
+    do_test_serializer_valid,
 )
 
 

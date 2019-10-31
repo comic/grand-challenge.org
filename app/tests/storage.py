@@ -7,8 +7,9 @@ from django.core.files.storage import FileSystemStorage
 
 
 def fake_file(filename, content="mock content"):
-    """ For testing I sometimes want specific file request to return 
-    specific content. This is make creation easier 
+    """
+    For testing I sometimes want specific file request to return
+    specific content. This is to make creation easier
     """
     return {"filename": filename, "content": content}
 
@@ -44,9 +45,9 @@ class MockStorage(FileSystemStorage):
         return name
 
     def _open(self, path, mode="rb"):
-        """ Return a memory only file which will not be saved to disk
+        """
+        Return a memory only file which will not be saved to disk
         If an image is requested, fake image content using PIL
-        
         """
         if not self.exists(path):
             raise OSError(
@@ -81,9 +82,9 @@ class MockStorage(FileSystemStorage):
         return mockfile
 
     def add_fake_file(self, filename, content):
-        """ This will appear to exist in folder /public_html. Content will be 
+        """
+        This will appear to exist in folder /public_html. Content will be
         returned when opening this file.
-        
         """
         self.FAKE_FILES.append(fake_file(filename, content))
 
@@ -91,8 +92,9 @@ class MockStorage(FileSystemStorage):
         pass
 
     def exists(self, name):
-        """ Any file exists if one of the FAKE_DIRS are in its 
-        path. And its name is one of FAKE_FILES         
+        """
+        Any file exists if one of the FAKE_DIRS are in its path. And its name
+        is one of FAKE_FILES
         """
         if name in self.saved_files.keys():
             return True
@@ -137,9 +139,9 @@ class MockStorage(FileSystemStorage):
             return 0
 
     def is_in_fake_test_dir(self, path):
-        """ Is this file in the special fake directory? This dir does not exist
+        """
+        Is this file in the special fake directory? This dir does not exist
         on disk but returns some values anyway. For testing.
-        
         """
         for directory in self.FAKE_DIRS:
             if (

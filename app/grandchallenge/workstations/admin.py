@@ -1,9 +1,10 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
+
 from grandchallenge.workstations.models import (
+    Session,
     Workstation,
     WorkstationImage,
-    Session,
 )
 
 admin.site.register(Workstation)

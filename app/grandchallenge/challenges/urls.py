@@ -2,12 +2,12 @@ from django.urls import path
 
 from grandchallenge.challenges.views import (
     ChallengeCreate,
-    UsersChallengeList,
-    ExternalChallengeCreate,
-    ExternalChallengeUpdate,
     ChallengeList,
-    ExternalChallengeList,
+    ExternalChallengeCreate,
     ExternalChallengeDelete,
+    ExternalChallengeList,
+    ExternalChallengeUpdate,
+    UsersChallengeList,
 )
 
 app_name = "challenges"

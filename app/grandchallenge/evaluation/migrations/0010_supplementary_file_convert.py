@@ -6,7 +6,7 @@ from grandchallenge.evaluation.models import Config as ConfigModel
 
 
 def set_supplementary_file_option_forward(apps, schema_editor):
-    Config = apps.get_model("evaluation", "Config")
+    Config = apps.get_model("evaluation", "Config")  # noqa: N806
     for config in Config.objects.all():
         if config.require_supplementary_file:
             config.supplementary_file_choice = ConfigModel.REQUIRED
@@ -18,7 +18,7 @@ def set_supplementary_file_option_forward(apps, schema_editor):
 
 
 def set_supplementary_file_option_reverse(apps, schema_editor):
-    Config = apps.get_model("evaluation", "Config")
+    Config = apps.get_model("evaluation", "Config")  # noqa: N806
     for config in Config.objects.all():
         if config.supplementary_file_choice == ConfigModel.REQUIRED:
             config.require_supplementary_file = True

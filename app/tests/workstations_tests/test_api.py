@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 from django.utils.timezone import now
 
-from tests.factories import UserFactory, SessionFactory
+from tests.factories import SessionFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -21,7 +21,7 @@ def test_session_list_api(client):
     assert response.status_code == 200
     assert response.json()["count"] == 0
 
-    s, _ = SessionFactory(creator=user), SessionFactory(creator=user)
+    _ = SessionFactory(creator=user), SessionFactory(creator=user)
 
     response = get_view_for_user(
         client=client,
