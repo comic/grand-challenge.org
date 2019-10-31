@@ -25,7 +25,9 @@ from grandchallenge.cases.serializers import (
     RawImageFileSerializer,
 )
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
-from grandchallenge.core.permissions.rest_framework import DjangoObjectOnlyWithCustomPostPermissions
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyWithCustomPostPermissions,
+)
 
 
 class UploadRawFiles(UserIsStaffMixin, CreateView):
