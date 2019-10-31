@@ -13,16 +13,16 @@ from tests.utils import (
 @pytest.mark.parametrize(
     "view", ["challenges:create", "challenges:users-list"]
 )
-def test_challenge_logged_in_permissions(view, client, ChallengeSet):
+def test_challenge_logged_in_permissions(view, client, challenge_set):
     validate_logged_in_view(
-        url=reverse(view), challenge_set=ChallengeSet, client=client
+        url=reverse(view), challenge_set=challenge_set, client=client
     )
 
 
 @pytest.mark.django_db
-def test_challenge_update_permissions(client, TwoChallengeSets):
+def test_challenge_update_permissions(client, two_challenge_sets):
     validate_admin_only_view(
-        two_challenge_set=TwoChallengeSets, viewname="update", client=client
+        two_challenge_set=two_challenge_sets, viewname="update", client=client
     )
 
 

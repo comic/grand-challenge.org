@@ -115,59 +115,59 @@ def generate_challenge_set():
     )
 
 
-@pytest.fixture(name="ChallengeSet")
+@pytest.fixture(name="challenge_set")
 def challenge_set():
     """ Creates a challenge with creator, 2 participants, and non participant.
     To use this you must mark the test with @pytest.mark.django_db """
     return generate_challenge_set()
 
 
-@pytest.fixture(name="TwoChallengeSets")
+@pytest.fixture(name="two_challenge_sets")
 def two_challenge_sets():
     """ Creates two challenges with combination participants and admins """
-    TwoChallengeSets = namedtuple(
-        "TwoChallengeSets",
+    two_challenge_sets = namedtuple(
+        "two_challenge_sets",
         [
-            "ChallengeSet1",
-            "ChallengeSet2",
+            "challenge_set_1",
+            "challenge_set_2",
             "admin12",
             "participant12",
             "admin1participant2",
         ],
     )
-    ChallengeSet1 = generate_challenge_set()
-    ChallengeSet2 = generate_challenge_set()
+    challenge_set_1 = generate_challenge_set()
+    challenge_set_2 = generate_challenge_set()
     admin12 = UserFactory()
-    ChallengeSet1.challenge.add_admin(admin12)
-    ChallengeSet2.challenge.add_admin(admin12)
+    challenge_set_1.challenge.add_admin(admin12)
+    challenge_set_2.challenge.add_admin(admin12)
     participant12 = UserFactory()
-    ChallengeSet1.challenge.add_participant(participant12)
-    ChallengeSet2.challenge.add_participant(participant12)
+    challenge_set_1.challenge.add_participant(participant12)
+    challenge_set_2.challenge.add_participant(participant12)
     admin1participant2 = UserFactory()
-    ChallengeSet1.challenge.add_admin(admin1participant2)
-    ChallengeSet2.challenge.add_participant(admin1participant2)
-    return TwoChallengeSets(
-        ChallengeSet1,
-        ChallengeSet2,
+    challenge_set_1.challenge.add_admin(admin1participant2)
+    challenge_set_2.challenge.add_participant(admin1participant2)
+    return two_challenge_sets(
+        challenge_set_1,
+        challenge_set_2,
         admin12,
         participant12,
         admin1participant2,
     )
 
 
-@pytest.fixture(name="EvalChallengeSet")
-def challenge_set_with_evaluation(ChallengeSet):
+@pytest.fixture(name="eval_challenge_set")
+def challenge_set_with_evaluation(challenge_set):
     """ Creates a challenge with two methods.
     To use this you must mark the test with @pytest.mark.django_db """
-    EvalChallengeSet = namedtuple(
-        "EvalChallengeSet", ["ChallengeSet", "method"]
+    eval_challenge_set = namedtuple(
+        "eval_challenge_set", ["challenge_set", "method"]
     )
-    ChallengeSet.challenge.use_evaluation = True
-    ChallengeSet.challenge.save()
+    challenge_set.challenge.use_evaluation = True
+    challenge_set.challenge.save()
     method = MethodFactory(
-        challenge=ChallengeSet.challenge, creator=ChallengeSet.creator
+        challenge=challenge_set.challenge, creator=challenge_set.creator
     )
-    return EvalChallengeSet(ChallengeSet, method)
+    return eval_challenge_set(challenge_set, method)
 
 
 @pytest.fixture(scope="session")
