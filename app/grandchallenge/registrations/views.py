@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 from .models import OctObsRegistration
 from .serializers import OctObsRegistrationSerializer
 from grandchallenge.retina_importers.mixins import RetinaImportPermission

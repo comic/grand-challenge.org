@@ -9,7 +9,7 @@ from grandchallenge.cases.models import RawImageUploadSession
 
 @pytest.mark.django_db
 def test_upload_session_list(client):
-    upload_session_1, upload_session_2 = (
+    upload_session_1, _ = (
         RawImageUploadSessionFactory(),
         RawImageUploadSessionFactory(),
     )

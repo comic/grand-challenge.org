@@ -71,7 +71,7 @@ def test_challenge_attribute(settings, rf, subdomain):
     request = challenge_subdomain_middleware(lambda x: x)(request)
 
     if subdomain is None:
-        assert request.challenge == None
+        assert request.challenge is None
     elif subdomain.lower() == c.short_name.lower():
         assert request.challenge == c
     else:

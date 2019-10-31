@@ -20,7 +20,7 @@ def test_api_list_is_filtered(client):
         QuestionFactory(reader_study=rs1),
         QuestionFactory(reader_study=rs2),
     )
-    a1, a2 = (
+    a1, _ = (
         AnswerFactory(question=q1, answer=True),
         AnswerFactory(question=q2, answer=False),
     )

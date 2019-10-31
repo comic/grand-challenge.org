@@ -66,6 +66,7 @@ def populate_provisioning_directory(
             with staged_file.open() as src_file:
                 BUFFER_SIZE = 0x10000
                 first = True
+                buffer = b""
                 while first or (len(buffer) >= BUFFER_SIZE):
                     first = False
                     buffer = src_file.read(BUFFER_SIZE)
@@ -75,7 +76,7 @@ def populate_provisioning_directory(
     for raw_file in raw_files:
         try:
             copy_to_tmpdir(raw_file)
-        except Exception as e:
+        except Exception:
             logger.exception(
                 f"populate_provisioning_directory exception "
                 f"for file: '{raw_file.filename}'"

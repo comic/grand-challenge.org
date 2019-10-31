@@ -2,7 +2,6 @@
 Tests for the mhd-file reconstruction.
 """
 
-import shutil
 from pathlib import Path
 
 import pytest
@@ -64,7 +63,7 @@ def test_too_many_headers_file(tmpdir):
     test_file_path = Path(tmpdir) / "test.mhd"
     with open(test_file_path, "w", encoding="utf-8") as f:
         for i in range(1000000):
-            f.write("key{i} = {i}\n")
+            f.write(f"key{i} = {i}\n")
 
     with pytest.raises(ValueError):
         parse_mh_header(test_file_path)
@@ -76,7 +75,7 @@ def test_line_too_long(tmpdir):
     with open(test_file_path, "w", encoding="utf-8") as f:
         f.write("key = ")
         for i in range(1000000):
-            f.write("{i}")
+            f.write(f"{i}")
 
     with pytest.raises(ValueError):
         parse_mh_header(test_file_path)

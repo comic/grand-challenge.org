@@ -6,4 +6,4 @@ class ChallengesConfig(AppConfig):
 
     def ready(self):
         # noinspection PyUnresolvedReferences
-        import grandchallenge.challenges.signals
+        import grandchallenge.challenges.signals  # noqa: F401

@@ -66,9 +66,9 @@ def test_tiff_validation(resource, expected_error_message):
     try:
         load_tiff_file(path=resource)
     except ValidationError as e:
-        error_message = e.message
+        error_message = str(e)
 
-    assert error_message == expected_error_message
+    assert expected_error_message in error_message
 
 
 @pytest.mark.parametrize(
@@ -106,10 +106,9 @@ def test_dzi_creation(
         tiff_file = load_tiff_file(path=temp_file)
         create_dzi_images(tiff_file=tiff_file, pk=uuid4())
     except ValidationError as e:
-        error_message = e.message
+        error_message = str(e)
 
-    # Assert
-    assert error_message == expected_error_message
+    assert expected_error_message in error_message
 
 
 @pytest.mark.django_db
@@ -129,10 +128,10 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
         tiff_file = load_tiff_file(path=resource)
         image_entry = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
     except ValidationError as e:
-        error_message = e.message
+        error_message = str(e)
 
     # Asserts possible file opening failures
-    assert error_message == expected_error_message
+    assert expected_error_message in error_message
 
     # Asserts successful creation data
     if not error_message:

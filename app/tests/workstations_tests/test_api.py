@@ -21,7 +21,7 @@ def test_session_list_api(client):
     assert response.status_code == 200
     assert response.json()["count"] == 0
 
-    s, _ = SessionFactory(creator=user), SessionFactory(creator=user)
+    _ = SessionFactory(creator=user), SessionFactory(creator=user)
 
     response = get_view_for_user(
         client=client,

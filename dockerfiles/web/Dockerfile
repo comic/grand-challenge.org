@@ -49,6 +49,7 @@ RUN npm install && npm run build
 FROM base as test
 
 RUN poetry install
+COPY --chown=django:django setup.cfg /home/django
 
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/

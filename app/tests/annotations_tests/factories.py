@@ -1,4 +1,3 @@
-import random
 import factory.fuzzy
 import datetime
 import pytz
@@ -124,7 +123,7 @@ class SingleLandmarkAnnotationFactory(factory.DjangoModelFactory):
 def create_batch_landmarks():
     landmark_annotation_set = LandmarkAnnotationSet()
     landmark_annotations = []
-    for i in range(3):
+    for _ in range(3):
         landmark_annotations.append(
             SingleLandmarkAnnotationFactory(
                 registration=landmark_annotation_set

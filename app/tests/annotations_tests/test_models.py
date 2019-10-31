@@ -35,7 +35,8 @@ class TestAnnotationModels:
     def test_measurement_duplicate_not_allowed(self):
         measurement = MeasurementAnnotationFactory()
         try:
-            measuremt_duplicate = MeasurementAnnotationFactory(
+            # Duplicate the creation
+            MeasurementAnnotationFactory(
                 image=measurement.image,
                 grader=measurement.grader,
                 created=measurement.created,

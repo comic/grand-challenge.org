@@ -138,7 +138,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             tiff_file = load_tiff_file(path=file_path)
             dzi_output = create_dzi_images(tiff_file=tiff_file, pk=pk)
         except ValidationError as e:
-            invalid_file_errors[file_path.name] = e.message
+            invalid_file_errors[file_path.name] = str(e)
             continue
 
         image = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)

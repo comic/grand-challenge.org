@@ -34,7 +34,8 @@ def create_upload_file_request(
 
     if content is None:
         content = load_test_data()
-    ##### Basic request #####
+
+    # Basic request
     data = (
         f"""
 --{boundary}\r
@@ -46,7 +47,7 @@ Content-Type: application/octet-stream\r
         + f"""\r
 --{boundary}--""".encode()
     )
-    ##### Add additional fields #####
+    # Add additional fields
     for key, value in extra_fields.items():
         extra_field_data = f"""
 --{boundary}\r

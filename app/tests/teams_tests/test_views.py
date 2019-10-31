@@ -238,7 +238,8 @@ def test_unique_membership(client, TwoChallengeSets):
         "You are already a member of another team for this challenge"
         in response.rendered_content
     )
-    # participant12 should be able to create a team in their challenge and join another
+    # participant12 should be able to create a team in their challenge and join
+    # another team
     response = get_view_for_user(
         viewname="teams:create",
         challenge=TwoChallengeSets.ChallengeSet2.challenge,

@@ -209,4 +209,9 @@ def test_image_port_only_with_bounding_box(
         user=rs_set.editor1,
     )
 
+    if questions_created == 1:
+        assert response.status_code == 302
+    else:
+        assert response.status_code == 200
+
     assert Question.objects.all().count() == questions_created

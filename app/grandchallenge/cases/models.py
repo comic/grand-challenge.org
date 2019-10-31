@@ -312,18 +312,13 @@ class Image(UUIDModel):
 
         with TemporaryDirectory() as tempdirname:
             for file in (mhd_file, raw_file):
-                infile = file.file.open("rb")
-                try:
-                    with open(
-                        Path(tempdirname) / Path(file.file.name).name, "wb"
-                    ) as outfile:
-                        buffer = True
-                        while buffer:
-                            buffer = infile.read(1024)
-                            outfile.write(buffer)
-                except:
-                    infile.close()
-                    raise
+                with file.file.open("rb") as infile, open(
+                    Path(tempdirname) / Path(file.file.name).name, "wb"
+                ) as outfile:
+                    buffer = True
+                    while buffer:
+                        buffer = infile.read(1024)
+                        outfile.write(buffer)
 
             try:
                 sitk_image = sitk.ReadImage(
