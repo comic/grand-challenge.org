@@ -8,6 +8,9 @@ from tests.cases_tests.factories import (
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 
 from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
+from grandchallenge.subdomains.utils import reverse
+
+from rest_framework.authtoken.models import Token
 
 
 @pytest.mark.django_db
@@ -16,19 +19,21 @@ def test_upload_session_list(client):
         RawImageUploadSessionFactory(),
         RawImageUploadSessionFactory(),
     )
-
-    user = UserFactory(is_staff=True)
-    response = get_view_for_user(
-        viewname="api:upload-session-list", user=user, client=client
+    token = Token.objects.create(user=UserFactory())
+    extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
+    response = getattr(client, "get")(
+        reverse("api:upload-session-list"), **extra_headers
     )
     assert response.status_code == 200
-    assert response.json()["count"] == 2
+    assert response.json()["count"] == 0
 
-    response = get_view_for_user(
-        viewname="api:upload-session-detail",
-        reverse_kwargs={"pk": upload_session_1.pk},
-        user=user,
-        client=client,
+    token = Token.objects.create(user=UserFactory(is_superuser=True))
+    extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
+    response = getattr(client, "get")(
+        reverse(
+            "api:upload-session-detail", kwargs={"pk": upload_session_1.pk}
+        ),
+        **extra_headers,
     )
     assert response.status_code == 200
 
@@ -90,18 +95,16 @@ def test_empty_data_upload_sessions(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "is_staff, expected_response", [(False, 403), (True, 201)]
+    "is_staff, expected_response", [(False, 201), (True, 201)]
 )
 def test_upload_session_post_permissions(client, is_staff, expected_response):
-    user = UserFactory(is_staff=is_staff)
     algo = AlgorithmImageFactory()
-    response = get_view_for_user(
-        viewname="api:upload-session-list",
-        user=user,
-        client=client,
-        method=client.post,
+    token = Token.objects.create(user=UserFactory(is_staff=is_staff))
+    extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
+    response = getattr(client, "post")(
+        reverse("api:upload-session-list"),
         data={"algorithm_image": algo.api_url},
-        content_type="application/json",
+        **extra_headers,
     )
     assert response.status_code == expected_response
 
@@ -110,18 +113,19 @@ def test_upload_session_post_permissions(client, is_staff, expected_response):
 def test_image_file_list(client):
     file_list_1, file_list_2 = (RawImageFileFactory(), RawImageFileFactory())
 
-    user = UserFactory(is_staff=True)
-    response = get_view_for_user(
-        viewname="api:image-file-list", user=user, client=client
+    token = Token.objects.create(user=UserFactory())
+    extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
+    response = getattr(client, "get")(
+        reverse("api:image-file-list"), **extra_headers
     )
     assert response.status_code == 200
-    assert response.json()["count"] == 2
+    assert response.json()["count"] == 0
 
-    response = get_view_for_user(
-        viewname="api:image-file-detail",
-        reverse_kwargs={"pk": file_list_1.pk},
-        user=user,
-        client=client,
+    token = Token.objects.create(user=UserFactory(is_superuser=True))
+    extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
+    response = getattr(client, "get")(
+        reverse("api:image-file-detail", kwargs={"pk": file_list_1.pk}),
+        **extra_headers,
     )
     assert response.status_code == 200
 
@@ -199,20 +203,18 @@ def test_empty_data_image_files(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "is_staff, expected_response", [(False, 403), (True, 201)]
+    "is_staff, expected_response", [(False, 201), (True, 201)]
 )
 def test_image_file_post_permissions(client, is_staff, expected_response):
-    user = UserFactory(is_staff=is_staff)
     upload_session = RawImageUploadSessionFactory()
-    response = get_view_for_user(
-        viewname="api:image-file-list",
-        user=user,
-        client=client,
-        method=client.post,
+    token = Token.objects.create(user=UserFactory(is_staff=is_staff))
+    extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
+    response = getattr(client, "post")(
+        reverse("api:image-file-list"),
         data={
             "upload_session": upload_session.api_url,
             "filename": "dummy.bin",
         },
-        content_type="application/json",
+        **extra_headers,
     )
     assert response.status_code == expected_response
