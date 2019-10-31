@@ -2,13 +2,32 @@
 Tests for the mhd-file reconstruction.
 """
 
-import shutil
 from pathlib import Path
 
 import pytest
 
 from grandchallenge.cases.image_builders.metaio_mhd_mha import parse_mh_header
 from tests.cases_tests import RESOURCE_PATH
+
+
+def test_parse_header_valid_4d_mhd():
+    headers = parse_mh_header(RESOURCE_PATH / "image10x11x12x13.mhd")
+    assert headers == {
+        "ObjectType": "Image",
+        "NDims": "4",
+        "BinaryData": "True",
+        "BinaryDataByteOrderMSB": "False",
+        "CompressedData": "True",
+        "CompressedDataSize": "39",
+        "TransformMatrix": "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1",
+        "Offset": "-131 -99 -917 0",
+        "CenterOfRotation": "0 0 0 0",
+        "AnatomicalOrientation": "RAI",
+        "ElementSpacing": "0.429 0.429 0.5 1",
+        "DimSize": "10 11 12 13",
+        "ElementType": "MET_UCHAR",
+        "ElementDataFile": "image10x11x12x13.zraw",
+    }
 
 
 def test_parse_header_valid_mhd():
