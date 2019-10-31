@@ -29,10 +29,10 @@ class TestFactories:
 @pytest.mark.django_db
 class TestCascadeDelete:
     def test_removes_all_related_models(
-        self, ArchivePatientStudyImageSet, AnnotationSetForImage
+        self, archive_patient_study_image_set, annotation_set_for_image
     ):
-        apsi_set = ArchivePatientStudyImageSet
-        annotation_set = AnnotationSetForImage(
+        apsi_set = archive_patient_study_image_set
+        annotation_set = annotation_set_for_image(
             retina_grader=True, image=apsi_set.images111[0]
         )
         image_not_in_archive = ImageFactoryWithoutImageFile(

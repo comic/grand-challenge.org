@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.views.generic import ListView
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.views import permissionMessage
+from grandchallenge.core.views import permission_message
 from grandchallenge.pages.models import Page
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 from grandchallenge.subdomains.utils import reverse
@@ -33,14 +33,14 @@ def upload_handler(request):
 
     if request.method == "POST":
         # set values excluded from form here to make the model validate
-        uploadedFile = UploadModel(
+        uploaded_file = UploadModel(
             challenge=challenge,
             permission_lvl=UploadModel.ADMIN_ONLY,
             user=request.user,
         )
         # ADMIN_ONLY
         form = UserUploadForm(
-            request.POST, request.FILES, instance=uploadedFile
+            request.POST, request.FILES, instance=uploaded_file
         )
         if form.is_valid():
             form.save()
@@ -73,7 +73,7 @@ def upload_handler(request):
         or challenge.is_participant(request.user)
     ):
         p = Page(challenge=challenge, title="files")
-        currentpage = permissionMessage(request, p)
+        currentpage = permission_message(request, p)
         response = render(
             request,
             "page.html",

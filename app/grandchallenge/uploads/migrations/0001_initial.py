@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
                     "file",
                     models.FileField(
                         max_length=255,
-                        upload_to=grandchallenge.uploads.models.giveFileUploadDestinationPath,
+                        upload_to=grandchallenge.uploads.models.give_file_upload_destination_path,
                     ),
                 ),
                 ("created", models.DateTimeField(auto_now_add=True)),

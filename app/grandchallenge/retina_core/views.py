@@ -1,6 +1,6 @@
 from io import BytesIO
 
-import SimpleITK as sitk
+import SimpleITK
 import numpy as np
 from PIL import Image as PILImage
 from django.conf import settings
@@ -46,7 +46,7 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
         if image_itk is None:
             return HttpResponse(status=status.HTTP_404_NOT_FOUND)
         depth = image_itk.GetDepth()
-        image_nparray = sitk.GetArrayFromImage(image_itk)
+        image_nparray = SimpleITK.GetArrayFromImage(image_itk)
         if depth > 0:
             # Get middle slice of image if 3D
             image_nparray = image_nparray[depth // 2]
@@ -79,7 +79,7 @@ class NumpyView(RetinaAPIPermissionMixin, View):
         image_itk = image_object.get_sitk_image()
         if image_itk is None:
             return HttpResponse(status=status.HTTP_404_NOT_FOUND)
-        npy = sitk.GetArrayFromImage(image_itk)
+        npy = SimpleITK.GetArrayFromImage(image_itk)
 
         bio = BytesIO()
         np.save(bio, npy)

@@ -349,7 +349,7 @@ def generate_annotation_set(retina_grader=False, image=False):
     )
 
 
-@pytest.fixture(name="AnnotationSet")
+@pytest.fixture(name="annotation_set")
 def annotation_set():
     """ Creates a user with the one of each of the following annotations:
     Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
@@ -358,7 +358,7 @@ def annotation_set():
     return generate_annotation_set()
 
 
-@pytest.fixture(name="AnnotationSetForImage")
+@pytest.fixture(name="annotation_set_for_image")
 def annotation_set_for_image():
     """ Creates a user with the one of each of the following annotations:
     Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
@@ -401,7 +401,7 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
     )
 
 
-@pytest.fixture(name="TwoRetinaPolygonAnnotationSets")
+@pytest.fixture(name="two_retina_polygon_annotation_sets")
 def two_retina_polygon_annotation_sets():
     """ Creates two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
     belonging to two different graders that both are in the retina_graders
@@ -524,7 +524,7 @@ def generate_multiple_etdrs_annotations(retina_grader=False):
     )
 
 
-@pytest.fixture(name="MultipleRetinaETDRSAnnotations")
+@pytest.fixture(name="multiple_retina_etdrs_annotations")
 def multiple_retina_etdrs_annotations():
     """ Creates 2 retina_grader users with 10 and 5 etdrs annotations"""
     return generate_multiple_etdrs_annotations(retina_grader=True)
@@ -591,7 +591,7 @@ def generate_archive_patient_study_image_set():
     )
 
 
-@pytest.fixture(name="ArchivePatientStudyImageSet")
+@pytest.fixture(name="archive_patient_study_image_set")
 def archive_patient_study_images_set():
     """ Creates an archive with 2 patients, with 3 (4, 5 and 6 images) and 2
     (2 and 3 images) studies. And another archive with one patient, one study

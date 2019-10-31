@@ -1,6 +1,6 @@
 import io
 
-import SimpleITK as sitk
+import SimpleITK
 import numpy as np
 import pytest
 from PIL import Image as PILImage
@@ -103,7 +103,7 @@ class TestCustomImageViews:
         )
         sitk_image = image.get_sitk_image()
         depth = sitk_image.GetDepth()
-        nda_image = sitk.GetArrayFromImage(sitk_image)
+        nda_image = SimpleITK.GetArrayFromImage(sitk_image)
         if depth > 0:
             nda_image = nda_image[depth // 2]
         expected_np = nda_image.astype(np.uint8)
@@ -165,6 +165,6 @@ class TestCustomImageViews:
         response = client.get(url)
         response_np = np.load(io.BytesIO(response.content))
         sitk_image = image.get_sitk_image()
-        nda_image = sitk.GetArrayFromImage(sitk_image)
+        nda_image = SimpleITK.GetArrayFromImage(sitk_image)
         request_image_arr = nda_image.astype(np.int8)
         assert np.array_equal(response_np, request_image_arr)

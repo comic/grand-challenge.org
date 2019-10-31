@@ -4,7 +4,7 @@ from django.db import migrations
 
 
 def results_cols_to_array(apps, schema_editor):
-    Config = apps.get_model("evaluation", "Config")
+    Config = apps.get_model("evaluation", "Config")  # noqa: N806
 
     for config in Config.objects.all():
 
@@ -18,7 +18,7 @@ def results_cols_to_array(apps, schema_editor):
 
 
 def results_cols_to_dict(apps, schema_editor):
-    Config = apps.get_model("evaluation", "Config")
+    Config = apps.get_model("evaluation", "Config")  # noqa: N806
     for config in Config.objects.all():
 
         extra_cols_dict = {}

@@ -21,7 +21,7 @@ def challenge_homepage(request):
     else:
         currentpage = pages[0]
 
-    currentpage = getRenderedPageIfAllowed(currentpage, request)
+    currentpage = get_rendered_page_if_allowed(currentpage, request)
 
     return render(
         request,
@@ -30,7 +30,7 @@ def challenge_homepage(request):
     )
 
 
-def renderTags(request, p, recursecount=0):
+def render_tags(request, p, recursecount=0):
     """
     Render page contents using django template system
 
@@ -59,7 +59,7 @@ def renderTags(request, p, recursecount=0):
         if recursecount < recurselimit:
             p2 = copy_page(p)
             p2.html = pagecontents
-            return renderTags(request, p2, recursecount + 1)
+            return render_tags(request, p2, recursecount + 1)
 
         else:
             # when page contents cannot be rendered, just display raw contents and include error message on page
@@ -72,7 +72,7 @@ def renderTags(request, p, recursecount=0):
     return pagecontents
 
 
-def permissionMessage(request, p):
+def permission_message(request, p):
     if request.user.is_authenticated:
         msg = """
         <div class="system_message">
@@ -108,7 +108,7 @@ def permissionMessage(request, p):
 
 
 # TODO: could a decorator be better then all these ..IfAllowed pages?
-def getRenderedPageIfAllowed(page_or_page_title, request):
+def get_rendered_page_if_allowed(page_or_page_title, request):
     if isinstance(page_or_page_title, bytes):
         page_or_page_title = page_or_page_title.decode()
 
@@ -122,10 +122,10 @@ def getRenderedPageIfAllowed(page_or_page_title, request):
         p = page_or_page_title
 
     if p.can_be_viewed_by(request.user):
-        p.html = renderTags(request, p)
+        p.html = render_tags(request, p)
         currentpage = p
     else:
-        currentpage = permissionMessage(request, p)
+        currentpage = permission_message(request, p)
 
     return currentpage
 

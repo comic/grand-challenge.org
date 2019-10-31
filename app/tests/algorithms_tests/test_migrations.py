@@ -18,7 +18,7 @@ def test_algorithm_image_data_migration(admin_user):
     old_apps = executor.loader.project_state(migrate_from).apps
 
     user = UserFactory()
-    OldAlgorithmImage = old_apps.get_model(app, "AlgorithmImage")
+    OldAlgorithmImage = old_apps.get_model(app, "AlgorithmImage")  # noqa: N806
     old_ai = OldAlgorithmImage.objects.create(
         creator_id=user.pk,
         title="foo",
@@ -34,7 +34,7 @@ def test_algorithm_image_data_migration(admin_user):
     executor.migrate(migrate_to)
 
     new_apps = executor.loader.project_state(migrate_to).apps
-    NewAlgorithm = new_apps.get_model(app, "Algorithm")
+    NewAlgorithm = new_apps.get_model(app, "Algorithm")  # noqa: N806
 
     new_alg = NewAlgorithm.objects.get(slug=old_ai.slug)
 

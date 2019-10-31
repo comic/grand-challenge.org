@@ -49,7 +49,7 @@ class Team(models.Model):
         )
 
     def get_members(self):
-        User = get_user_model()
+        User = get_user_model()  # noqa: N806
         return User.objects.filter(teammember__team=self)
 
 

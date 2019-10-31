@@ -187,7 +187,9 @@ def mark_long_running_jobs_failed(*, app_label: str, model_name: str):
     4x the CELERY_TASK_TIME_LIMIT. If the task is still running on Celery then
     it will still be able to report as passed later.
     """
-    Job = apps.get_model(app_label=app_label, model_name=model_name)
+    Job = apps.get_model(  # noqa: N806
+        app_label=app_label, model_name=model_name
+    )
 
     jobs_to_mark = Job.objects.filter(
         created__lt=now()

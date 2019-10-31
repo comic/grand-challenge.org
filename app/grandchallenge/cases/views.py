@@ -15,7 +15,7 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageFile,
     RawImageUploadSession,
-    UPLOAD_SESSION_STATE,
+    UploadSessionState,
 )
 from grandchallenge.cases.serializers import (
     ImageSerializer,
@@ -49,7 +49,7 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
         ).all()
         result["images"] = Image.objects.filter(origin=result["object"]).all()
         result["process_finished"] = (
-            result["object"].session_state == UPLOAD_SESSION_STATE.stopped
+            result["object"].session_state == UploadSessionState.stopped
         )
         return result
 

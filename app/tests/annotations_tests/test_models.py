@@ -62,17 +62,17 @@ class TestAnnotationModels:
 @pytest.mark.django_db
 class TestPermissions:
     def test_single_model_permissions(
-        self, TwoRetinaPolygonAnnotationSets, user_type
+        self, two_retina_polygon_annotation_sets, user_type
     ):
         user = get_user_from_user_type(
-            user_type, grader=TwoRetinaPolygonAnnotationSets.grader1
+            user_type, grader=two_retina_polygon_annotation_sets.grader1
         )
         perms = get_perms(
             user,
-            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first(),
+            two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
         )
         default_permissions = (
-            TwoRetinaPolygonAnnotationSets.polygonset1.singlepolygonannotation_set.first()._meta.default_permissions
+            two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first()._meta.default_permissions
         )
         for permission_type in default_permissions:
             if user_type == "retina_grader_non_allowed":
@@ -83,14 +83,14 @@ class TestPermissions:
                 assert f"{permission_type}_singlepolygonannotation" in perms
 
     def test_model_permissions(
-        self, TwoRetinaPolygonAnnotationSets, user_type
+        self, two_retina_polygon_annotation_sets, user_type
     ):
         user = get_user_from_user_type(
-            user_type, grader=TwoRetinaPolygonAnnotationSets.grader1
+            user_type, grader=two_retina_polygon_annotation_sets.grader1
         )
-        perms = get_perms(user, TwoRetinaPolygonAnnotationSets.polygonset1)
+        perms = get_perms(user, two_retina_polygon_annotation_sets.polygonset1)
         default_permissions = (
-            TwoRetinaPolygonAnnotationSets.polygonset1._meta.default_permissions
+            two_retina_polygon_annotation_sets.polygonset1._meta.default_permissions
         )
         for permission_type in default_permissions:
             if user_type == "retina_grader_non_allowed":

@@ -28,7 +28,7 @@ register = library_plus.LibraryPlus()
 logger = logging.getLogger(__name__)
 
 
-def parseKeyValueToken(token):
+def parse_key_value_token(token):
     """Parses token content string into a parameter dictionary
 
     Args:
@@ -234,7 +234,7 @@ def listdir(parser, token):
     """ show all files in dir as a downloadable list"""
     usagestr = get_usagestr("listdir")
     try:
-        args = parseKeyValueToken(token)
+        args = parse_key_value_token(token)
     except ValueError:
         errormsg = (
             "Error rendering {% "
@@ -269,7 +269,7 @@ class ListDirNode(template.Node):
     def make_dataset_error_msg(self, msg):
         logger.error("Error listing folder '" + self.path + "': " + msg)
         errormsg = "Error listing folder"
-        return makeErrorMsgHtml(errormsg)
+        return make_error_message_html(errormsg)
 
     def render(self, context):
         challenge: Challenge = context["currentpage"].challenge
@@ -306,8 +306,7 @@ class ListDirNode(template.Node):
             links.append(
                 '<li><a href="' + downloadlink + '">' + filename + " </a></li>"
             )
-        htmlOut = '<ul class="dataset">' + "".join(links) + "</ul>"
-        return htmlOut
+        return '<ul class="dataset">' + "".join(links) + "</ul>"
 
 
 def add_quotes(s: str = ""):
@@ -367,7 +366,7 @@ class InsertFileNode(template.Node):
             "Error including file '" + "," + self.args["file"] + "': " + msg
         )
         errormsg = "Error including file"
-        return makeErrorMsgHtml(errormsg)
+        return make_error_message_html(errormsg)
 
     def render(self, context):
         # text typed in the tag
@@ -440,7 +439,7 @@ class InsertGraphNode(template.Node):
             + msg
         )
         errormsg = "Error rendering graph from file"
-        return makeErrorMsgHtml(errormsg)
+        return make_error_message_html(errormsg)
 
     def render(self, context):
         filename_raw = self.args["file"]
@@ -483,24 +482,15 @@ class InsertGraphNode(template.Node):
         except Exception as e:
             return self.make_error_msg("getrenderer: %s" % e)
 
-        RENDER_FRIENDLY_ERRORS = True
-        # FRIENDLY = on template tag error, replace template tag with red error
-        #            text
-        # NOT SO FRIENDLY = on template tag error, stop rendering, show full
-        #                   debug page
         try:
             svg_data = render_function(filename)
         except Exception:
-            if RENDER_FRIENDLY_ERRORS:
-                return self.make_error_msg(
-                    str(
-                        "Error in render funtion '%s()' : %s"
-                        % (render_function.__name__, traceback.format_exc(0))
-                    )
+            return self.make_error_msg(
+                str(
+                    "Error in render funtion '%s()' : %s"
+                    % (render_function.__name__, traceback.format_exc(0))
                 )
-
-            else:
-                raise
+            )
 
         # self.get_graph_svg(table,headers)
         # html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
@@ -644,7 +634,7 @@ def render_anode09_table(filename):
         "parsed result of '%s' was emtpy. I cannot create table" % filename
     )
     table_id = id_generator()
-    tableHTML = (
+    table_html = (
         """<table border=1 class = "comictable csvtable sortable" id="%s">
                     <thead><tr>
                         <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
@@ -655,31 +645,31 @@ def render_anode09_table(filename):
                     </tr></thead>"""
         % table_id
     )
-    tableHTML = tableHTML + "<tbody>"
-    tableHTML = tableHTML + array_to_table_row(
+    table_html = table_html + "<tbody>"
+    table_html = table_html + array_to_table_row(
         ["small nodules"] + variables["smallscore"]
     )
-    tableHTML = tableHTML + array_to_table_row(
+    table_html = table_html + array_to_table_row(
         ["large nodules"] + variables["largescore"]
     )
-    tableHTML = tableHTML + array_to_table_row(
+    table_html = table_html + array_to_table_row(
         ["isolated nodules"] + variables["isolatedscore"]
     )
-    tableHTML = tableHTML + array_to_table_row(
+    table_html = table_html + array_to_table_row(
         ["vascular nodules"] + variables["vascularscore"]
     )
-    tableHTML = tableHTML + array_to_table_row(
+    table_html = table_html + array_to_table_row(
         ["pleural nodules"] + variables["pleuralscore"]
     )
-    tableHTML = tableHTML + array_to_table_row(
+    table_html = table_html + array_to_table_row(
         ["peri-fissural nodules"] + variables["fissurescore"]
     )
-    tableHTML = tableHTML + array_to_table_row(
+    table_html = table_html + array_to_table_row(
         ["all nodules"] + variables["frocscore"]
     )
-    tableHTML = tableHTML + "</tbody>"
-    tableHTML = tableHTML + "</table>"
-    return '<div class="comictablecontainer">' + tableHTML + "</div>"
+    table_html = table_html + "</tbody>"
+    table_html = table_html + "</table>"
+    return '<div class="comictablecontainer">' + table_html + "</div>"
 
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
@@ -763,7 +753,7 @@ class UrlParameterNode(template.Node):
             "Error in url_parameter tag: '" + ",".join(self.args) + "': " + msg
         )
         errormsg = "Error in url_parameter tag"
-        return makeErrorMsgHtml(errormsg)
+        return make_error_message_html(errormsg)
 
     def render(self, context):
         if self.args["url_parameter"] in context["request"].GET:
@@ -778,21 +768,23 @@ class UrlParameterNode(template.Node):
                 )
             )
             error_message = "Error rendering"
-            return makeErrorMsgHtml(error_message)
+            return make_error_message_html(error_message)
 
 
 class TemplateErrorNode(template.Node):
-    """Render error message in place of this template tag. This makes it directly obvious where the error occured
+    """
+    Render error message in place of this template tag. This makes it directly
+    obvious where the error occured
     """
 
     def __init__(self, errormsg):
-        self.msg = HTML_encode_django_chars(errormsg)
+        self.msg = html_encode_django_chars(errormsg)
 
     def render(self, context):
-        return makeErrorMsgHtml(self.msg)
+        return make_error_message_html(self.msg)
 
 
-def HTML_encode_django_chars(string):
+def html_encode_django_chars(string):
     """replace curly braces and percent signs by their html encoded equivalents
     """
     string = string.replace("{", "&#123;")
@@ -801,13 +793,12 @@ def HTML_encode_django_chars(string):
     return string
 
 
-def makeErrorMsgHtml(text):
-    errorMsgHTML = (
+def make_error_message_html(text):
+    return (
         '<p><span class="pageError"> '
-        + HTML_encode_django_chars(text)
+        + html_encode_django_chars(text)
         + " </span></p>"
     )
-    return errorMsgHTML
 
 
 @register.tag(name="project_statistics")
@@ -865,7 +856,7 @@ class ProjectStatisticsNode(template.Node):
         snippet_footer = "</div>"
 
         if all_users:
-            User = get_user_model()
+            User = get_user_model()  # noqa: N806
             users = User.objects.all().distinct()
         else:
             users = context["currentpage"].challenge.get_participants()

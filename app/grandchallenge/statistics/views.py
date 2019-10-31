@@ -19,7 +19,7 @@ class StatisticsDetail(TemplateView):
         days = 30
         max_num_results = 10
 
-        User = get_user_model()
+        User = get_user_model()  # noqa: N806
 
         time_period = timezone.now() - timedelta(days=days)
 

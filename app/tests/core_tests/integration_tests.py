@@ -73,9 +73,9 @@ def extract_href_from_anchor(anchor: str):
     return find_text_between('href="', '">', anchor.encode())
 
 
-def is_subset(listA, listB):
+def is_subset(a, b):
     """ True if listA is a subset of listB """
-    all(item in listA for item in listB)
+    all(item in a for item in b)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
@@ -85,20 +85,20 @@ class ComicframeworkTestCase(TestCase):
 
     def setUp(self):
         call_command("check_permissions")
-        self.setUp_base()
-        self.setUp_extra()
+        self.set_up_base()
+        self.set_up_extra()
 
-    def setUp_base(self):
+    def set_up_base(self):
         """ This setup should be run for all comic framework testcases
         """
         self._create_root_superuser()
 
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Overwrite this method in child classes """
         pass
 
     def _create_root_superuser(self):
-        User = get_user_model()
+        User = get_user_model()  # noqa: N806
         try:
             self.root = User.objects.filter(username="root")[0]
         except IndexError:
@@ -322,7 +322,7 @@ class ComicframeworkTestCase(TestCase):
                 resp.status_code
             ),
         )
-        User = get_user_model()
+        User = get_user_model()  # noqa: N806
         query_result = User.objects.filter(username=username)
         return query_result[0]
 
@@ -384,7 +384,7 @@ class ComicframeworkTestCase(TestCase):
         )
         return success
 
-    def assertEmail(self, email, email_expected):
+    def assert_email(self, email, email_expected):
         """ Convenient way to check subject, content, mailto etc at once for
         an email
         email : django.core.mail.message object
@@ -474,7 +474,7 @@ class CreateProjectTest(ComicframeworkTestCase):
 
 
 class ViewsTest(ComicframeworkTestCase):
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -592,7 +592,7 @@ class ViewsTest(ComicframeworkTestCase):
 
 
 class UploadTest(ComicframeworkTestCase):
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -692,7 +692,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
     will crash anything
     """
 
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
@@ -850,7 +850,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         """
         return mail.alternatives[0][0]
 
-    def assertText(self, content, expected_text, description=""):
+    def assert_text(self, content, expected_text, description=""):
         """
         assert that expected_text can be found in text,
         description can describe what this link should do, like
@@ -864,7 +864,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
             ),
         )
 
-    def assertTextBetweenTags(
+    def assert_text_between_tags(
         self, text, tagname, expected_text, description=""
     ):
         """
@@ -885,7 +885,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
             "Rendering tag between <{0}> </{0}>, ".format(tagname)
             + description
         )
-        self.assertText(text, expected_text, description)
+        self.assert_text(text, expected_text, description)
 
 
 class ProjectLoginTest(ComicframeworkTestCase):
@@ -895,7 +895,7 @@ class ProjectLoginTest(ComicframeworkTestCase):
     quite a hassle, not to mention messy. Do all the links still work?
     """
 
-    def setUp_extra(self):
+    def set_up_extra(self):
         """ Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
