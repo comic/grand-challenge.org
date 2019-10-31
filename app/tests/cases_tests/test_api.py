@@ -111,7 +111,7 @@ def test_upload_session_post_permissions(client, is_staff, expected_response):
 
 @pytest.mark.django_db
 def test_image_file_list(client):
-    file_list_1, file_list_2 = (RawImageFileFactory(), RawImageFileFactory())
+    dummy_file = RawImageFileFactory()
 
     token = Token.objects.create(user=UserFactory())
     extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
@@ -124,7 +124,7 @@ def test_image_file_list(client):
     token = Token.objects.create(user=UserFactory(is_superuser=True))
     extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
     response = getattr(client, "get")(
-        reverse("api:image-file-detail", kwargs={"pk": file_list_1.pk}),
+        reverse("api:image-file-detail", kwargs={"pk": dummy_file.pk}),
         **extra_headers,
     )
     assert response.status_code == 200
