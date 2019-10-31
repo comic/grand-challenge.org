@@ -68,7 +68,7 @@ def test_tiff_validation(resource, expected_error_message):
     except ValidationError as e:
         error_message = str(e)
 
-    assert error_message == expected_error_message
+    assert expected_error_message in error_message
 
 
 @pytest.mark.parametrize(
@@ -108,8 +108,7 @@ def test_dzi_creation(
     except ValidationError as e:
         error_message = str(e)
 
-    # Assert
-    assert error_message == expected_error_message
+    assert expected_error_message in error_message
 
 
 @pytest.mark.django_db
@@ -132,7 +131,7 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
         error_message = str(e)
 
     # Asserts possible file opening failures
-    assert error_message == expected_error_message
+    assert expected_error_message in error_message
 
     # Asserts successful creation data
     if not error_message:
