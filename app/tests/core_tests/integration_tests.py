@@ -644,10 +644,11 @@ class UploadTest(ComicframeworkTestCase):
         # don't know what this does but if fixes the bug.
         from django.contrib.messages.storage.fallback import FallbackStorage
 
-        setattr(request, "session", "session")
+        request.session = "session"
         messages = FallbackStorage(request)
-        setattr(request, "_messages", messages)
+        request._messages = messages
         response = upload_handler(request)
+
         self.assertEqual(
             response.status_code,
             302,

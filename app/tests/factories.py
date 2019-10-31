@@ -239,7 +239,7 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
             size = self.size
 
         fuzzy_list = []
-        for i in range(size):
+        for _ in range(size):
             fuzzy_list.append(
                 [
                     round(

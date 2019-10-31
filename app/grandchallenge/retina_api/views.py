@@ -285,9 +285,13 @@ class DataView(APIView):
         return result
 
     def get_models_related_to_image_and_user(
-        self, images, user, model_set, extra_conditions={}
+        self, images, user, model_set, extra_conditions=None
     ):
+        if extra_conditions is None:
+            extra_conditions = {}
+
         annotation_models = []
+
         for image in images:
             user_annotation_models = getattr(image, model_set).filter(
                 grader=user, **extra_conditions
@@ -704,7 +708,7 @@ class DataView(APIView):
                 data_type == self.DataType.GA.value
                 or data_type == self.DataType.KAPPA.value
             ):
-                for visit_image_name, ga_data in data.items():
+                for _visit_image_name, ga_data in data.items():
                     conditions = {}
                     if ga_data["img_name"][1] == "obs_000":
                         conditions.update(

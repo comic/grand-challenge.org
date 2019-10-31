@@ -233,17 +233,11 @@ class TestArchiveIndexAPIEndpoints:
             floats_to_compare = (
                 []
             )  # list of (response_float, expected_float, name) tuples
-            for archive, response_info, ds, oor in (
-                (
-                    "Rotterdam",
-                    response_archive_info,
-                    datastructures,
-                    oct_obs_registration,
-                ),
+            for archive, response_info, oor in (
+                ("Rotterdam", response_archive_info, oct_obs_registration),
                 (
                     "Australia",
                     response_archive_australia_info,
-                    datastructures_aus,
                     oct_obs_registration_aus,
                 ),
             ):

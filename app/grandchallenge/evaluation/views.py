@@ -119,11 +119,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         return context
 
     def get_next_submission(
-        self,
-        *,
-        max_subs: int,
-        period: timedelta = timedelta(days=1),
-        now: datetime = None,
+        self, *, max_subs: int, period: timedelta = None, now: datetime = None
     ) -> Dict:
         """
         Determines the number of submissions left for the user in a given time
@@ -134,6 +130,9 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         """
         if now is None:
             now = timezone.now()
+
+        if period is None:
+            period = timedelta(days=1)
 
         subs = (
             Submission.objects.filter(

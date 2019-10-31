@@ -49,7 +49,7 @@ class TestCustomUploadEndpoints:
         valid,
     ):
         if "upload_image" in endpoint_type:
-            data_type = endpoint_type.lstrip("upload_image_")
+            data_type = endpoint_type.replace("upload_image_", "")
             if valid:
                 data = create_upload_image_test_data(data_type=data_type)
             else:

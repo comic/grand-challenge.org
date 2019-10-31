@@ -21,11 +21,15 @@ def create_uploaded_file(
     user_pk_str="test_user_pk",
     client_id="test_client_id",
     client_filename="test_client_filename_{uuid}",
-    timeout=timedelta(minutes=1),
+    timeout=None,
     init_total_size=True,
 ) -> uuid.UUID:
     if chunks is None:
         chunks = [len(content)]
+
+    if timeout is None:
+        timeout = timedelta(minutes=1)
+
     new_uuid = uuid.uuid4()
     client_filename = client_filename.format(uuid=new_uuid)
     start = 0

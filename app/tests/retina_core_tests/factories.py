@@ -5,15 +5,17 @@ from tests.cases_tests.factories import ImageFactoryWithImageFile
 from tests.studies_tests.factories import StudyFactory
 
 
-def create_some_datastructure_data(
-    archive_pars={},
-    patient_pars={},
-    study_pars={},
-    image_cf_pars={},
-    oct_study_pars={},
-    image_obs_pars={},
-    image_oct_pars={},
-):
+def create_some_datastructure_data(archive_pars=None,):
+    patient_pars = {}
+    study_pars = {}
+    image_cf_pars = {}
+    oct_study_pars = {}
+    image_obs_pars = {}
+    image_oct_pars = {}
+
+    if archive_pars is None:
+        archive_pars = {}
+
     # Create datastructures
     patient = PatientFactory(**patient_pars)
     study = StudyFactory(patient=patient, **study_pars)

@@ -36,9 +36,7 @@ from tests.studies_tests.factories import StudyFactory
 
 # Import fixtures that are used throughout a module
 # noinspection PyUnresolvedReferences
-from tests.workstations_tests.fixtures import (
-    two_workstation_sets,
-)  # noqa: F401
+from tests.workstations_tests.fixtures import two_workstation_sets  # noqa
 
 
 def pytest_addoption(parser):
