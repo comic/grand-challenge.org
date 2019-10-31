@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import OctObsRegistration
+from grandchallenge.registrations.models import OctObsRegistration
 
 
 class OctObsRegistrationSerializer(serializers.ModelSerializer):

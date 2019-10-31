@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
+from grandchallenge.archives.models import Archive
 from grandchallenge.cases.serializers import ImageSerializer
-from .models import Archive
 
 
 class ArchiveSerializer(serializers.ModelSerializer):

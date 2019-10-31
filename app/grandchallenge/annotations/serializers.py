@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import (
+from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
     ETDRSGridAnnotation,
     ImagePathologyAnnotation,
@@ -13,7 +13,9 @@ from .models import (
     SingleLandmarkAnnotation,
     SinglePolygonAnnotation,
 )
-from .validators import validate_grader_is_current_retina_user
+from grandchallenge.annotations.validators import (
+    validate_grader_is_current_retina_user,
+)
 
 
 class AbstractAnnotationSerializer(serializers.ModelSerializer):

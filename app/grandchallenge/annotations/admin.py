@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import (
+from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
     ETDRSGridAnnotation,
     LandmarkAnnotationSet,

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Image, ImageFile
+from grandchallenge.cases.models import Image, ImageFile
 
 
 class ImageFileInline(admin.StackedInline):

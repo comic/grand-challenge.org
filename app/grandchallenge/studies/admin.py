@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from grandchallenge.cases.admin import ImageInline
-from .models import Study
+from grandchallenge.studies.models import Study
 
 
 class StudyInline(admin.StackedInline):

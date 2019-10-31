@@ -16,10 +16,13 @@ from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializers import PatientSerializer
+from grandchallenge.retina_importers.mixins import RetinaImportPermission
+from grandchallenge.retina_importers.utils import (
+    exclude_val_from_dict,
+    upperize,
+)
 from grandchallenge.studies.models import Study
 from grandchallenge.studies.serializers import StudySerializer
-from .mixins import RetinaImportPermission
-from .utils import exclude_val_from_dict, upperize
 
 
 class CheckImage(generics.GenericAPIView):
