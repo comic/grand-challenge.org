@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Archive
+
+from grandchallenge.archives.models import Archive
 
 
 class ArchiveAdmin(admin.ModelAdmin):

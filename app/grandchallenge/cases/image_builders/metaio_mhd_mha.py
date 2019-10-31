@@ -6,10 +6,10 @@ See: https://itk.org/Wiki/MetaIO/Documentation
 
 from pathlib import Path
 from tempfile import TemporaryDirectory, TemporaryFile
-from typing import Mapping, Union, Sequence, Tuple
+from typing import Mapping, Sequence, Tuple, Union
 from uuid import uuid4
 
-import SimpleITK as sitk
+import SimpleITK
 from django.core.files import File
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
@@ -88,16 +88,16 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
      - files associated with the detected images
      - path->error message map describing what is wrong with a given file
     """
-    ELEMENT_DATA_FILE_KEY = "ElementDataFile"
+    element_data_file_key = "ElementDataFile"
 
     def detect_mhd_file(headers: Mapping[str, Union[str, None]]) -> bool:
-        data_file = headers.get(ELEMENT_DATA_FILE_KEY, None)
+        data_file = headers.get(element_data_file_key, None)
         if data_file in [None, "LOCAL"]:
             return False
         data_file_path = (path / Path(data_file)).resolve(strict=False)
         if path not in data_file_path.parents:
             raise ValueError(
-                f"{ELEMENT_DATA_FILE_KEY} references a file which is not in "
+                f"{element_data_file_key} references a file which is not in "
                 f"the uploaded data folder"
             )
         if not data_file_path.is_file():
@@ -105,15 +105,15 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         return True
 
     def detect_mha_file(headers: Mapping[str, Union[str, None]]) -> bool:
-        data_file = headers.get(ELEMENT_DATA_FILE_KEY, None)
+        data_file = headers.get(element_data_file_key, None)
         return data_file == "LOCAL"
 
     def convert_itk_file(
         headers: Mapping[str, Union[str, None]], filename: Path
     ) -> Tuple[Image, Sequence[ImageFile]]:
         try:
-            simple_itk_image = sitk.ReadImage(str(filename.absolute()))
-            simple_itk_image: sitk.Image
+            simple_itk_image = SimpleITK.ReadImage(str(filename.absolute()))
+            simple_itk_image: SimpleITK.Image
         except RuntimeError:
             raise ValueError("SimpleITK cannot open file")
 
@@ -130,7 +130,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
             work_dir = Path(work_dir)
 
             pk = uuid4()
-            sitk.WriteImage(
+            SimpleITK.WriteImage(
                 simple_itk_image, str(work_dir / f"{pk}.mhd"), True
             )
 
@@ -183,8 +183,8 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
 
         if is_hd_or_mha:
             file_dependency = None
-            if parsed_headers[ELEMENT_DATA_FILE_KEY] != "LOCAL":
-                file_dependency = Path(parsed_headers[ELEMENT_DATA_FILE_KEY])
+            if parsed_headers[element_data_file_key] != "LOCAL":
+                file_dependency = Path(parsed_headers[element_data_file_key])
                 if not (path / file_dependency).is_file():
                     invalid_file_errors[file.name] = "cannot find data file"
                     continue

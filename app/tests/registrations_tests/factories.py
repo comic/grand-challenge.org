@@ -1,4 +1,5 @@
 import factory.fuzzy
+
 from grandchallenge.registrations.models import OctObsRegistration
 from tests.cases_tests.factories import ImageFactory
 from tests.factories import FuzzyFloatCoordinatesList

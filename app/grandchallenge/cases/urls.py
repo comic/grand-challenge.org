@@ -1,8 +1,8 @@
 from django.urls import path
 
 from grandchallenge.cases.views import (
-    UploadRawFiles,
     ShowUploadSessionState,
+    UploadRawFiles,
     show_image,
 )
 

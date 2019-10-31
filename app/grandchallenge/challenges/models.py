@@ -7,8 +7,8 @@ from collections import namedtuple
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import CICharField, ArrayField
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.contrib.postgres.fields import ArrayField, CICharField
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_slug
 from django.db import models
 from django.db.models.signals import post_delete

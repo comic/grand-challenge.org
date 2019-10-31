@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Patient
+
+from grandchallenge.patients.models import Patient
 from grandchallenge.studies.admin import StudyInline
 
 

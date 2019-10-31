@@ -1,13 +1,15 @@
+import json
 from io import BytesIO
 from pathlib import Path
-import json
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
-from tests.factories import UserFactory
-from tests.cases_tests import RESOURCE_PATH
+
 from grandchallenge.subdomains.utils import reverse
+from tests.cases_tests import RESOURCE_PATH
+from tests.factories import UserFactory
 
 
 def get_retina_user_with_token(is_retina_user=True, **user_kwargs):

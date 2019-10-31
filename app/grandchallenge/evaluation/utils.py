@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Tuple, NamedTuple, List, Callable, Iterable, Dict
+from typing import Callable, Dict, Iterable, List, NamedTuple, Tuple
 
 from grandchallenge.evaluation.models import Result
 from grandchallenge.evaluation.templatetags.evaluation_extras import (

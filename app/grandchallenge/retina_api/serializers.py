@@ -1,8 +1,7 @@
 from io import BytesIO
 
-import SimpleITK as sitk
+import SimpleITK
 from PIL import Image as PILImage
-
 from django.http import Http404
 from rest_framework import serializers
 
@@ -38,7 +37,7 @@ class PILImageSerializer(serializers.BaseSerializer):
     @staticmethod
     def convert_itk_to_pil(image_itk):
         depth = image_itk.GetDepth()
-        image_nparray = sitk.GetArrayFromImage(image_itk)
+        image_nparray = SimpleITK.GetArrayFromImage(image_itk)
         if depth > 0:
             # Get center slice of image if 3D
             image_nparray = image_nparray[depth // 2]

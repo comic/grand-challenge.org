@@ -1,10 +1,10 @@
 import pytest
-from tests.utils import get_view_for_user
-from tests.factories import UserFactory
-from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.algorithms_tests.factories import AlgorithmImageFactory
 
 from grandchallenge.cases.models import RawImageUploadSession
+from tests.algorithms_tests.factories import AlgorithmImageFactory
+from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.factories import UserFactory
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db

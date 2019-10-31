@@ -6,21 +6,21 @@ from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db.models import Q
 from django.http import Http404, HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.utils._os import safe_join
 from django.views.generic import (
-    ListView,
     CreateView,
-    UpdateView,
     DeleteView,
+    ListView,
     RedirectView,
+    UpdateView,
 )
 from favicon.models import Favicon
 
 from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
 from grandchallenge.core.views import (
-    getRenderedPageIfAllowed,
     get_data_folder_path,
+    get_rendered_page_if_allowed,
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -101,7 +101,7 @@ class PageDelete(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def page(request, page_title):
     """ show a single page on a site """
-    currentpage = getRenderedPageIfAllowed(page_title, request)
+    currentpage = get_rendered_page_if_allowed(page_title, request)
 
     response = render(request, "page.html", {"currentpage": currentpage})
 
@@ -148,7 +148,7 @@ def insertedpage(request, page_title, dropboxpath):
     )
     p.html = "{% insert_file " + dropboxpath + " %} <br/><br/>" + msg
 
-    currentpage = getRenderedPageIfAllowed(p, request)
+    currentpage = get_rendered_page_if_allowed(p, request)
 
     return render(
         request,

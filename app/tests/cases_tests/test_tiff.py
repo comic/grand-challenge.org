@@ -8,11 +8,11 @@ import tifffile as tiff_lib
 from django.core.exceptions import ValidationError
 
 from grandchallenge.cases.image_builders.tiff import (
-    image_builder_tiff,
+    create_dzi_images,
     create_tiff_image_entry,
     get_color_space,
+    image_builder_tiff,
     load_tiff_file,
-    create_dzi_images,
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH

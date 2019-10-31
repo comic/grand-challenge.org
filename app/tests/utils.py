@@ -1,6 +1,6 @@
+from io import BytesIO
 from typing import Callable
 from urllib.parse import urlparse
-from io import BytesIO
 
 import pytest
 from PIL import Image
@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.test import RequestFactory, Client
+from django.test import Client, RequestFactory
 from django.views.generic import View
 
 from grandchallenge.challenges.models import Challenge
@@ -133,22 +133,22 @@ def validate_admin_only_view(*, two_challenge_set, client: Client, **kwargs):
     # No user
     assert_viewname_redirect(
         redirect_url=settings.LOGIN_URL,
-        challenge=two_challenge_set.ChallengeSet1.challenge,
+        challenge=two_challenge_set.challenge_set_1.challenge,
         client=client,
         **kwargs,
     )
 
     tests = [
-        (403, two_challenge_set.ChallengeSet1.non_participant),
-        (403, two_challenge_set.ChallengeSet1.participant),
-        (403, two_challenge_set.ChallengeSet1.participant1),
-        (200, two_challenge_set.ChallengeSet1.creator),
-        (200, two_challenge_set.ChallengeSet1.admin),
-        (403, two_challenge_set.ChallengeSet2.non_participant),
-        (403, two_challenge_set.ChallengeSet2.participant),
-        (403, two_challenge_set.ChallengeSet2.participant1),
-        (403, two_challenge_set.ChallengeSet2.creator),
-        (403, two_challenge_set.ChallengeSet2.admin),
+        (403, two_challenge_set.challenge_set_1.non_participant),
+        (403, two_challenge_set.challenge_set_1.participant),
+        (403, two_challenge_set.challenge_set_1.participant1),
+        (200, two_challenge_set.challenge_set_1.creator),
+        (200, two_challenge_set.challenge_set_1.admin),
+        (403, two_challenge_set.challenge_set_2.non_participant),
+        (403, two_challenge_set.challenge_set_2.participant),
+        (403, two_challenge_set.challenge_set_2.participant1),
+        (403, two_challenge_set.challenge_set_2.creator),
+        (403, two_challenge_set.challenge_set_2.admin),
         (200, two_challenge_set.admin12),
         (403, two_challenge_set.participant12),
         (200, two_challenge_set.admin1participant2),
@@ -157,7 +157,7 @@ def validate_admin_only_view(*, two_challenge_set, client: Client, **kwargs):
     for test in tests:
         assert_viewname_status(
             code=test[0],
-            challenge=two_challenge_set.ChallengeSet1.challenge,
+            challenge=two_challenge_set.challenge_set_1.challenge,
             client=client,
             user=test[1],
             **kwargs,
@@ -173,22 +173,22 @@ def validate_admin_or_participant_view(
     # No user
     assert_viewname_redirect(
         redirect_url=settings.LOGIN_URL,
-        challenge=two_challenge_set.ChallengeSet1.challenge,
+        challenge=two_challenge_set.challenge_set_1.challenge,
         client=client,
         **kwargs,
     )
 
     tests = [
-        (403, two_challenge_set.ChallengeSet1.non_participant),
-        (200, two_challenge_set.ChallengeSet1.participant),
-        (200, two_challenge_set.ChallengeSet1.participant1),
-        (200, two_challenge_set.ChallengeSet1.creator),
-        (200, two_challenge_set.ChallengeSet1.admin),
-        (403, two_challenge_set.ChallengeSet2.non_participant),
-        (403, two_challenge_set.ChallengeSet2.participant),
-        (403, two_challenge_set.ChallengeSet2.participant1),
-        (403, two_challenge_set.ChallengeSet2.creator),
-        (403, two_challenge_set.ChallengeSet2.admin),
+        (403, two_challenge_set.challenge_set_1.non_participant),
+        (200, two_challenge_set.challenge_set_1.participant),
+        (200, two_challenge_set.challenge_set_1.participant1),
+        (200, two_challenge_set.challenge_set_1.creator),
+        (200, two_challenge_set.challenge_set_1.admin),
+        (403, two_challenge_set.challenge_set_2.non_participant),
+        (403, two_challenge_set.challenge_set_2.participant),
+        (403, two_challenge_set.challenge_set_2.participant1),
+        (403, two_challenge_set.challenge_set_2.creator),
+        (403, two_challenge_set.challenge_set_2.admin),
         (200, two_challenge_set.admin12),
         (200, two_challenge_set.participant12),
         (200, two_challenge_set.admin1participant2),
@@ -197,7 +197,7 @@ def validate_admin_or_participant_view(
     for test in tests:
         assert_viewname_status(
             code=test[0],
-            challenge=two_challenge_set.ChallengeSet1.challenge,
+            challenge=two_challenge_set.challenge_set_1.challenge,
             client=client,
             user=test[1],
             **kwargs,
@@ -278,16 +278,16 @@ def validate_admin_only_text_in_page(
 ):
     tests = [
         (False, None),
-        (False, two_challenge_set.ChallengeSet1.non_participant),
-        (False, two_challenge_set.ChallengeSet1.participant),
-        (False, two_challenge_set.ChallengeSet1.participant1),
-        (True, two_challenge_set.ChallengeSet1.creator),
-        (True, two_challenge_set.ChallengeSet1.admin),
-        (False, two_challenge_set.ChallengeSet2.non_participant),
-        (False, two_challenge_set.ChallengeSet2.participant),
-        (False, two_challenge_set.ChallengeSet2.participant1),
-        (False, two_challenge_set.ChallengeSet2.creator),
-        (False, two_challenge_set.ChallengeSet2.admin),
+        (False, two_challenge_set.challenge_set_1.non_participant),
+        (False, two_challenge_set.challenge_set_1.participant),
+        (False, two_challenge_set.challenge_set_1.participant1),
+        (True, two_challenge_set.challenge_set_1.creator),
+        (True, two_challenge_set.challenge_set_1.admin),
+        (False, two_challenge_set.challenge_set_2.non_participant),
+        (False, two_challenge_set.challenge_set_2.participant),
+        (False, two_challenge_set.challenge_set_2.participant1),
+        (False, two_challenge_set.challenge_set_2.creator),
+        (False, two_challenge_set.challenge_set_2.admin),
         (True, two_challenge_set.admin12),
         (False, two_challenge_set.participant12),
         (True, two_challenge_set.admin1participant2),
@@ -296,7 +296,7 @@ def validate_admin_only_text_in_page(
     for test in tests:
         response = assert_viewname_status(
             code=200,
-            challenge=two_challenge_set.ChallengeSet1.challenge,
+            challenge=two_challenge_set.challenge_set_1.challenge,
             client=client,
             user=test[1],
             **kwargs,

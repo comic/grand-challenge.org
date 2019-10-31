@@ -4,15 +4,15 @@ from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.workstations.models import Workstation, Session
+from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
+    SessionFactory,
+    StagedFileFactory,
     UserFactory,
     WorkstationFactory,
-    StagedFileFactory,
     WorkstationImageFactory,
-    SessionFactory,
 )
-from tests.utils import get_view_for_user, get_temporary_image
+from tests.utils import get_temporary_image, get_view_for_user
 
 
 @pytest.fixture

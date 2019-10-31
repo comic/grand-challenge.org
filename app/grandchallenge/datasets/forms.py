@@ -5,7 +5,7 @@ from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.cases.models import Image
 from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 

@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 from django.utils.timezone import now
 
-from tests.factories import UserFactory, SessionFactory
+from tests.factories import SessionFactory, UserFactory
 from tests.utils import get_view_for_user
 
 

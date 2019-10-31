@@ -1,30 +1,30 @@
 import base64
 import logging
 from io import BytesIO
-from PIL import Image
 
+from PIL import Image
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
 from rest_framework.authtoken.models import Token
 from userena.models import UserenaSignup
-from django.contrib.auth.models import Group
-from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from grandchallenge.algorithms.models import AlgorithmImage, Algorithm
+import grandchallenge.cases.models
+from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
 from grandchallenge.challenges.models import (
-    Challenge,
-    ExternalChallenge,
-    TaskType,
     BodyRegion,
     BodyStructure,
+    Challenge,
+    ExternalChallenge,
     ImagingModality,
+    TaskType,
 )
-from grandchallenge.evaluation.models import Result, Submission, Job, Method
+from grandchallenge.evaluation.models import Job, Method, Result, Submission
 from grandchallenge.pages.models import Page
-import grandchallenge.cases.models
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)

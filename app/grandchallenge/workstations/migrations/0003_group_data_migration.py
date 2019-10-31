@@ -4,7 +4,7 @@ from django.db import migrations
 
 
 def delete_workstation_groups(apps, schema_editor):
-    Workstation = apps.get_model("workstations", "Workstation")
+    Workstation = apps.get_model("workstations", "Workstation")  # noqa: N806
 
     for ws in Workstation.objects.all():
         ws.editors_group.delete(keep_parents=True)
@@ -17,8 +17,8 @@ def delete_workstation_groups(apps, schema_editor):
 
 
 def create_workstation_groups(apps, schema_editor):
-    Workstation = apps.get_model("workstations", "Workstation")
-    Group = apps.get_model("auth", "Group")
+    Workstation = apps.get_model("workstations", "Workstation")  # noqa: N806
+    Group = apps.get_model("auth", "Group")  # noqa: N806
 
     for ws in Workstation.objects.all():
         ws.editors_group = Group.objects.create(

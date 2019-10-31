@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Submission, Result
+from grandchallenge.evaluation.models import Result, Submission
 
 
 class StatisticsDetail(TemplateView):
@@ -19,7 +19,7 @@ class StatisticsDetail(TemplateView):
         days = 30
         max_num_results = 10
 
-        User = get_user_model()
+        User = get_user_model()  # noqa: N806
 
         time_period = timezone.now() - timedelta(days=days)
 

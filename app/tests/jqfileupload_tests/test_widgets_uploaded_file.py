@@ -9,9 +9,9 @@ from django.utils import timezone
 from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import (
+    NotFoundError,
     StagedAjaxFile,
     cleanup_stale_files,
-    NotFoundError,
 )
 
 

@@ -4,16 +4,16 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import (
-    ModelForm,
-    Form,
-    ModelChoiceField,
     ChoiceField,
+    Form,
     HiddenInput,
+    ModelChoiceField,
+    ModelForm,
 )
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.algorithms.models import AlgorithmImage, Algorithm
+from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader

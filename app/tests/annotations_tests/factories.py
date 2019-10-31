@@ -1,26 +1,27 @@
-import factory.fuzzy
 import datetime
+
+import factory.fuzzy
 import pytz
 
 from grandchallenge.annotations.models import (
     AbstractImageAnnotationModel,
     AbstractNamedImageAnnotationModel,
-    ETDRSGridAnnotation,
-    MeasurementAnnotation,
     BooleanClassificationAnnotation,
-    IntegerClassificationAnnotation,
     CoordinateListAnnotation,
-    PolygonAnnotationSet,
-    SinglePolygonAnnotation,
-    LandmarkAnnotationSet,
-    SingleLandmarkAnnotation,
-    ImageQualityAnnotation,
+    ETDRSGridAnnotation,
     ImagePathologyAnnotation,
-    RetinaImagePathologyAnnotation,
+    ImageQualityAnnotation,
     ImageTextAnnotation,
+    IntegerClassificationAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
+    RetinaImagePathologyAnnotation,
+    SingleLandmarkAnnotation,
+    SinglePolygonAnnotation,
 )
 from tests.cases_tests.factories import ImageFactory
-from tests.factories import UserFactory, FuzzyFloatCoordinatesList
+from tests.factories import FuzzyFloatCoordinatesList, UserFactory
 
 
 class DefaultImageAnnotationModelFactory(factory.DjangoModelFactory):

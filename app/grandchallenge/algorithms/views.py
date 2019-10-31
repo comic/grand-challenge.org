@@ -12,9 +12,9 @@ from django.http import Http404
 from django.views.generic import (
     CreateView,
     DetailView,
+    FormView,
     ListView,
     UpdateView,
-    FormView,
 )
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -26,23 +26,23 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.forms import (
-    AlgorithmImageForm,
     AlgorithmForm,
+    AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     EditorsForm,
     UsersForm,
 )
 from grandchallenge.algorithms.models import (
+    Algorithm,
     AlgorithmImage,
     Job,
     Result,
-    Algorithm,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
-    ResultSerializer,
-    JobSerializer,
     AlgorithmSerializer,
+    JobSerializer,
+    ResultSerializer,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession

@@ -3,9 +3,9 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from grandchallenge.workstations.models import (
-    WorkstationImage,
-    Workstation,
     Session,
+    Workstation,
+    WorkstationImage,
 )
 
 

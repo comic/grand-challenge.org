@@ -1,13 +1,13 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField
-from rest_framework.relations import SlugRelatedField, HyperlinkedRelatedField
+from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
     SerializerMethodField,
 )
 
 from grandchallenge.cases.models import Image
-from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 
 
 class QuestionSerializer(HyperlinkedModelSerializer):

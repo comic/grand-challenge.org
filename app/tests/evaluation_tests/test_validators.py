@@ -5,8 +5,8 @@ from django.core.exceptions import ValidationError
 
 from grandchallenge.core.validators import (
     ExtensionValidator,
-    MimeTypeValidator,
     JSONSchemaValidator,
+    MimeTypeValidator,
 )
 
 

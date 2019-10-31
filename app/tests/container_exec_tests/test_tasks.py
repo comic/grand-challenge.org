@@ -5,7 +5,6 @@ import pytest
 from grandchallenge.algorithms.models import Job as AlgorithmJob
 from grandchallenge.container_exec.tasks import mark_long_running_jobs_failed
 from grandchallenge.evaluation.models import Job as EvaluationJob
-
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.factories import JobFactory as EvaluationJobFactory
 

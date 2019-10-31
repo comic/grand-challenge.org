@@ -9,8 +9,8 @@ from grandchallenge.workstations.utils import (
 )
 from tests.factories import (
     UserFactory,
-    WorkstationImageFactory,
     WorkstationFactory,
+    WorkstationImageFactory,
 )
 
 

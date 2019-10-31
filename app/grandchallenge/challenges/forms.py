@@ -1,6 +1,6 @@
-from crispy_forms.bootstrap import TabHolder, Tab
+from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout, ButtonHolder
+from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
