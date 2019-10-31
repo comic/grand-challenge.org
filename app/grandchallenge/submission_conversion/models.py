@@ -7,12 +7,12 @@ from django.core.files import File
 from django.db import models
 from django.utils import timezone
 
-from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
+from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.container_exec.backends.docker import (
     Executor,
-    put_file,
     cleanup,
     get_file,
+    put_file,
 )
 from grandchallenge.container_exec.models import ContainerExecJobModel
 from grandchallenge.core.models import UUIDModel

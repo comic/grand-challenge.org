@@ -1,10 +1,10 @@
 import pytest
 
-from grandchallenge.reader_studies.models import ReaderStudy, Question
+from grandchallenge.reader_studies.models import Question, ReaderStudy
 from tests.factories import UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
-from tests.reader_studies_tests.utils import get_rs_creator, TwoReaderStudies
-from tests.utils import get_view_for_user, get_temporary_image
+from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
+from tests.utils import get_temporary_image, get_view_for_user
 
 
 @pytest.mark.django_db
@@ -208,5 +208,10 @@ def test_image_port_only_with_bounding_box(
         reverse_kwargs={"slug": rs_set.rs1.slug},
         user=rs_set.editor1,
     )
+
+    if questions_created == 1:
+        assert response.status_code == 302
+    else:
+        assert response.status_code == 200
 
     assert Question.objects.all().count() == questions_created

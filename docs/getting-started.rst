@@ -157,9 +157,9 @@ with the service running in the docker container.
 
     $ ./cycle_docker_compose.sh
 
-2. Make sure you have ``pipenv`` installed.
-3. In a new terminal, create a new virtual python environment using ``pipenv install --dev`` in this repository's root folder.
-4. Activate the virtual env: ``pipenv shell``.
+2. Make sure you have ``poetry`` installed.
+3. In a new terminal, create a new virtual python environment using ``poetry install`` in this repository's root folder.
+4. Activate the virtual env: ``poetry shell``.
 5. Load the environmental variables contained in ``.env.local``
 
 .. code-block:: console
@@ -179,7 +179,7 @@ with the service running in the docker container.
 
 8. To setup PyCharm:
 
-   1. ``File`` -> ``Settings`` -> ``Project: grand-challenge.org`` -> ``Project Interpreter`` -> Select your created pipenv environment
+   1. ``File`` -> ``Settings`` -> ``Project: grand-challenge.org`` -> ``Project Interpreter`` -> Select your created virtual environment
    2. For each run/debug configuration, make sure the environmental variables are loaded,
       the easiest is to use `this plugin <https://plugins.jetbrains.com/plugin/7861-envfile>`_. Or they can be pasted after pressing
       the folder icon in the ``Environmental variables`` field.
@@ -223,53 +223,27 @@ Having built the web container with ``cycle_docker_compose.sh`` you can use this
 
 This will create the docs in the ``docs/_build/html`` directory.
 
-Using pipenv
-~~~~~~~~~~~~
-
-Alternatively, to build the docs locally you need to install the environment on your local machine, we use pipenv for this.
-
-1. Install pipenv
-
-.. code-block:: console
-
-    $ pip install pipenv
-
-2. Install the environment from the root of the ``grand-challenge.org`` repo with
-
-.. code-block:: console
-
-    $ pipenv install
-
-3. You can then launch a shell in this newly created environment to build the docs
-
-.. code-block:: console
-
-    $ pipenv shell
-    $ cd docs
-    $ make html
-
-
 
 Adding new dependencies
 -----------------------
 
-Pipenv is used to manage the dependencies of the platform. 
+Poetry is used to manage the dependencies of the platform.
 To add a new dependency use
 
 .. code-block:: console
 
-    $ pipenv install <whatever>
+    $ poetry add <whatever>
 
-and then commit the ``Pipfile`` and ``Pipfile.lock``. 
-If this is a development dependency then use the ``--dev`` flag, see the ``pipenv`` documentation for more details.
+and then commit the ``pyproject.toml`` and ``poetry.lock``.
+If this is a development dependency then use the ``--dev`` flag, see the ``poetry`` documentation for more details.
 
-Versions are unpinned in the ``Pipfile``, to update the resolved dependencies use
+Versions are unpinned in the ``pyproject.toml`` file, to update the resolved dependencies use
 
 .. code-block:: console
 
-    $ pipenv update
+    $ poetry lock
 
-and commit the update ``Pipfile.lock``. 
+and commit the update ``poetry.lock``.
 The containers will need to be rebuilt after running these steps, so stop the ``cycle_docker_compose.sh`` process with ``CTRL+C`` and restart.
 
 Going to Production

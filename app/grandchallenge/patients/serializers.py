@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Patient
+
+from grandchallenge.patients.models import Patient
 
 
 class PatientSerializer(serializers.ModelSerializer):

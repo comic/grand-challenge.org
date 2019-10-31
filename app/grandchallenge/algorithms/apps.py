@@ -23,4 +23,4 @@ class AlgorithmsConfig(AppConfig):
         post_migrate.connect(init_algorithm_creators_group, sender=self)
 
         # noinspection PyUnresolvedReferences
-        import grandchallenge.algorithms.signals
+        import grandchallenge.algorithms.signals  # noqa: F401

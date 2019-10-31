@@ -1,6 +1,7 @@
 import pytest
-from tests.patients_tests.factories import PatientFactory
+
 from tests.api_utils import assert_api_read_only
+from tests.patients_tests.factories import PatientFactory
 
 
 @pytest.mark.django_db

@@ -1,28 +1,26 @@
 from django.http import Http404
 from django.views.generic import CreateView, DetailView
-
-from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
-
 from rest_framework.mixins import (
     CreateModelMixin,
-    RetrieveModelMixin,
     ListModelMixin,
+    RetrieveModelMixin,
 )
+from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
-    RawImageFile,
-    RawImageUploadSession,
-    UPLOAD_SESSION_STATE,
     Image,
     ImageFile,
+    RawImageFile,
+    RawImageUploadSession,
+    UploadSessionState,
 )
 from grandchallenge.cases.serializers import (
     ImageSerializer,
-    RawImageUploadSessionSerializer,
     RawImageFileSerializer,
+    RawImageUploadSessionSerializer,
 )
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.core.permissions.rest_framework import (
@@ -55,7 +53,7 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
         ).all()
         result["images"] = Image.objects.filter(origin=result["object"]).all()
         result["process_finished"] = (
-            result["object"].session_state == UPLOAD_SESSION_STATE.stopped
+            result["object"].session_state == UploadSessionState.stopped
         )
         return result
 
@@ -65,16 +63,6 @@ class ImageViewSet(ReadOnlyModelViewSet):
     queryset = Image.objects.all()
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
-
-    def filter_queryset(self, queryset):
-        """
-        Bypasses the filtering for staff users, who have permission to view
-        all images (see serving/permissions.py).
-        """
-        if self.request.user.is_staff:
-            return queryset
-        else:
-            return super().filter_queryset(queryset)
 
     def get_queryset(self):
         filters = {

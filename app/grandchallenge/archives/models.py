@@ -1,8 +1,8 @@
 from django.db import models, transaction
 from django.db.models import Count
 
-from grandchallenge.core.models import UUIDModel
 from grandchallenge.cases.models import Image
+from grandchallenge.core.models import UUIDModel
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
 

@@ -1,16 +1,18 @@
+from dataclasses import dataclass
+
 import pytest
 from django.core.exceptions import ValidationError
 
 from grandchallenge.core.validators import (
     ExtensionValidator,
-    MimeTypeValidator,
     JSONSchemaValidator,
+    MimeTypeValidator,
 )
 
 
+@dataclass
 class FakeFile(object):
-    def __init__(self, name):
-        self.name = name
+    name: str
 
 
 def test_extension_validator():

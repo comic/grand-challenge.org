@@ -1,14 +1,15 @@
-import pytest
 from io import StringIO
-from django.core.management import call_command
+
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
+from django.core.management import call_command
 from guardian.core import ObjectPermissionChecker
 
 from grandchallenge.retina_core.management.commands.setannotationpermissions import (
     ANNOTATION_MODELS,
-    WARNING_TEXT,
     SUCCESS_TEXT,
+    WARNING_TEXT,
 )
 
 
@@ -35,15 +36,15 @@ class TestCommand:
         assert WARNING_TEXT.format(self.nr_of_mlps, "removed") in output
 
     def test_setannotationpermissions_no_retina_grader_annotations(
-        self, AnnotationSet
+        self, annotation_set
     ):
         out = StringIO()
         call_command("setannotationpermissions", stdout=out)
         output = out.getvalue()
         assert WARNING_TEXT.format(self.nr_of_mlps, "assigned") in output
 
-    def test_setannotationpermissions(self, AnnotationSet):
-        AnnotationSet.grader.groups.add(
+    def test_setannotationpermissions(self, annotation_set):
+        annotation_set.grader.groups.add(
             Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
         )
         out = StringIO()
@@ -54,8 +55,8 @@ class TestCommand:
             in output
         )
 
-    def test_setannotationpermissions_remove(self, AnnotationSet):
-        AnnotationSet.grader.groups.add(
+    def test_setannotationpermissions_remove(self, annotation_set):
+        annotation_set.grader.groups.add(
             Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME)
         )
         out = StringIO()
@@ -67,7 +68,7 @@ class TestCommand:
         )
 
     def test_setannotationpermissions_sets_correct_permissions(
-        self, AnnotationSet
+        self, annotation_set
     ):
         admins_group = Group.objects.get(
             name=settings.RETINA_ADMINS_GROUP_NAME
@@ -75,10 +76,10 @@ class TestCommand:
         graders_group = Group.objects.get(
             name=settings.RETINA_GRADERS_GROUP_NAME
         )
-        AnnotationSet.grader.groups.add(graders_group)
+        annotation_set.grader.groups.add(graders_group)
         call_command("setannotationpermissions")
 
-        checker = ObjectPermissionChecker(AnnotationSet.grader)
+        checker = ObjectPermissionChecker(annotation_set.grader)
         group_perms = Permission.objects.filter(
             group=admins_group
         ).values_list("codename", flat=True)
@@ -97,7 +98,7 @@ class TestCommand:
                     )
 
     def test_setannotationpermissions_removes_correct_permissions(
-        self, AnnotationSet
+        self, annotation_set
     ):
         admins_group = Group.objects.get(
             name=settings.RETINA_ADMINS_GROUP_NAME
@@ -105,12 +106,12 @@ class TestCommand:
         graders_group = Group.objects.get(
             name=settings.RETINA_GRADERS_GROUP_NAME
         )
-        AnnotationSet.grader.groups.add(graders_group)
+        annotation_set.grader.groups.add(graders_group)
         call_command("setannotationpermissions")
 
         call_command("setannotationpermissions", remove=True)
 
-        checker = ObjectPermissionChecker(AnnotationSet.grader)
+        checker = ObjectPermissionChecker(annotation_set.grader)
         group_perms = Permission.objects.filter(
             group=admins_group, content_type__app_label="annotations"
         ).values_list("codename", flat=True)

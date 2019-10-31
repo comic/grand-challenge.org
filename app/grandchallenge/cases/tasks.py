@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import Tuple, Sequence
+from typing import Sequence, Tuple
 from uuid import UUID
 
 from celery import shared_task
@@ -15,16 +15,16 @@ from grandchallenge.cases.image_builders.metaio_mhd_mha import (
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
-    RawImageUploadSession,
-    UPLOAD_SESSION_STATE,
+    FolderUpload,
     Image,
     ImageFile,
     RawImageFile,
-    FolderUpload,
+    RawImageUploadSession,
+    UploadSessionState,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
-    StagedAjaxFile,
     NotFoundError,
+    StagedAjaxFile,
 )
 
 
@@ -64,18 +64,19 @@ def populate_provisioning_directory(
 
         with open(provisioning_dir / staged_file.name, "wb") as dest_file:
             with staged_file.open() as src_file:
-                BUFFER_SIZE = 0x10000
+                buffer_size = 0x10000
                 first = True
-                while first or (len(buffer) >= BUFFER_SIZE):
+                buffer = b""
+                while first or (len(buffer) >= buffer_size):
                     first = False
-                    buffer = src_file.read(BUFFER_SIZE)
+                    buffer = src_file.read(buffer_size)
                     dest_file.write(buffer)
 
     exceptions_raised = 0
     for raw_file in raw_files:
         try:
             copy_to_tmpdir(raw_file)
-        except Exception as e:
+        except Exception:
             logger.exception(
                 f"populate_provisioning_directory exception "
                 f"for file: '{raw_file.filename}'"
@@ -203,11 +204,11 @@ def build_images(upload_session_uuid: UUID):
         pk=upload_session_uuid
     )  # type: RawImageUploadSession
 
-    if upload_session.session_state == UPLOAD_SESSION_STATE.queued:
+    if upload_session.session_state == UploadSessionState.queued:
         tmp_dir = Path(mkdtemp(prefix="construct_image_volumes-"))
         try:
             try:
-                upload_session.session_state = UPLOAD_SESSION_STATE.running
+                upload_session.session_state = UploadSessionState.running
                 upload_session.save()
 
                 session_files = RawImageFile.objects.filter(
@@ -320,5 +321,5 @@ def build_images(upload_session_uuid: UUID):
             if tmp_dir is not None:
                 shutil.rmtree(tmp_dir)
 
-            upload_session.session_state = UPLOAD_SESSION_STATE.stopped
+            upload_session.session_state = UploadSessionState.stopped
             upload_session.save()

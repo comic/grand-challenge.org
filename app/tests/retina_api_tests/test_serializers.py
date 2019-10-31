@@ -1,21 +1,29 @@
 import random
-from PIL import Image as PILImage
+
 import pytest
+from PIL import Image as PILImage
 from django.conf import settings
 from django.http import Http404
 
 from grandchallenge.retina_api.serializers import (
-    PILImageSerializer,
     BytesImageSerializer,
+    PILImageSerializer,
+    TreeArchiveSerializer,
+    TreeImageSerializer,
+    TreeObjectSerializer,
+    TreeStudySerializer,
 )
+from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
-    ImageFactoryWithoutImageFile,
-    ImageFactoryWithImageFile3D,
     ImageFactoryWithImageFile2DLarge,
+    ImageFactoryWithImageFile3D,
     ImageFactoryWithImageFile3DLarge3Slices,
     ImageFactoryWithImageFile3DLarge4Slices,
+    ImageFactoryWithoutImageFile,
 )
+from tests.serializer_helpers import do_test_serializer_fields
+from tests.studies_tests.factories import StudyFactory
 
 
 @pytest.mark.django_db
@@ -81,3 +89,47 @@ class TestBytesImageSerializer:
             image_pil
         )
         assert serializer.data == image_bytes
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "serializer_data",
+    (
+        (
+            {
+                "unique": False,
+                "factory": ArchiveFactory,
+                "serializer": TreeObjectSerializer,
+                "fields": ("id", "name"),
+            },
+            {
+                "unique": False,
+                "factory": StudyFactory,
+                "serializer": TreeStudySerializer,
+                "fields": ("name", "patient"),
+            },
+            {
+                "unique": False,
+                "factory": ArchiveFactory,
+                "serializer": TreeArchiveSerializer,
+                "fields": ("name",),
+            },
+            {
+                "unique": False,
+                "factory": ImageFactoryWithoutImageFile,
+                "serializer": TreeImageSerializer,
+                "fields": (
+                    "id",
+                    "name",
+                    "eye_choice",
+                    "modality",
+                    "study",
+                    "archive_set",
+                ),
+            },
+        )
+    ),
+)
+class TestSerializers:
+    def test_serializer_fields(self, serializer_data):
+        do_test_serializer_fields(serializer_data)

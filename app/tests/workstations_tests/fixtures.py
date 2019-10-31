@@ -5,9 +5,9 @@ from django.contrib.auth.models import User
 
 from grandchallenge.workstations.models import Workstation, WorkstationImage
 from tests.factories import (
+    UserFactory,
     WorkstationFactory,
     WorkstationImageFactory,
-    UserFactory,
 )
 
 

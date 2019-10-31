@@ -12,13 +12,10 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from django_extensions.db.models import (
-    TitleSlugDescriptionModel,
-    TitleDescriptionModel,
-)
+from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
-from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
+from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.container_exec.backends.docker import (
     Executor,
@@ -54,6 +51,21 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     logo = models.ImageField(upload_to=get_logo_path)
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE
+    )
+    workstation_config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    visible_to_public = models.BooleanField(
+        default=False,
+        help_text=(
+            "Should this algorithm be visible to all users on the algorithm "
+            "overview page? This does not grant all users permission to use "
+            "this algorithm. Users will still need to be added to the "
+            "algorithm users group in order to do that."
+        ),
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):

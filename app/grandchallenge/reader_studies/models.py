@@ -3,7 +3,7 @@ from collections import Counter
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
@@ -84,6 +84,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     )
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE
+    )
+    workstation_config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
     logo = models.ImageField(upload_to=get_logo_path)
 

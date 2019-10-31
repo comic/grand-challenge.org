@@ -1,33 +1,34 @@
 import pytest
-from tests.annotations_tests.factories import (
-    ETDRSGridAnnotationFactory,
-    MeasurementAnnotationFactory,
-    BooleanClassificationAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    SinglePolygonAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    SingleLandmarkAnnotationFactory,
-    ImageQualityAnnotationFactory,
-    ImagePathologyAnnotationFactory,
-    RetinaImagePathologyAnnotationFactory,
-    ImageTextAnnotationFactory,
-)
+
 from grandchallenge.annotations.serializers import (
-    ETDRSGridAnnotationSerializer,
-    MeasurementAnnotationSerializer,
     BooleanClassificationAnnotationSerializer,
-    PolygonAnnotationSetSerializer,
-    LandmarkAnnotationSetSerializer,
-    SinglePolygonAnnotationSerializer,
-    SingleLandmarkAnnotationSerializer,
-    ImageQualityAnnotationSerializer,
+    ETDRSGridAnnotationSerializer,
     ImagePathologyAnnotationSerializer,
-    RetinaImagePathologyAnnotationSerializer,
+    ImageQualityAnnotationSerializer,
     ImageTextAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
+    MeasurementAnnotationSerializer,
+    PolygonAnnotationSetSerializer,
+    RetinaImagePathologyAnnotationSerializer,
+    SingleLandmarkAnnotationSerializer,
+    SinglePolygonAnnotationSerializer,
+)
+from tests.annotations_tests.factories import (
+    BooleanClassificationAnnotationFactory,
+    ETDRSGridAnnotationFactory,
+    ImagePathologyAnnotationFactory,
+    ImageQualityAnnotationFactory,
+    ImageTextAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    MeasurementAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    RetinaImagePathologyAnnotationFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
 )
 from tests.serializer_helpers import (
-    do_test_serializer_valid,
     do_test_serializer_fields,
+    do_test_serializer_valid,
 )
 
 

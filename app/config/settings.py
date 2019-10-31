@@ -1,7 +1,5 @@
-import glob
 import os
 import re
-import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
@@ -184,6 +182,7 @@ CACHES = {
         "LOCATION": "memcached:11211",
     }
 }
+SPEEDINFO_STORAGE = "speedinfo.storage.cache.storage.CacheStorage"
 
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
@@ -282,6 +281,8 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    # Flatpage fallback almost last
+    "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     # speedinfo at the end but before FetchFromCacheMiddleware
     "speedinfo.middleware.ProfilerMiddleware",
 )
@@ -355,6 +356,7 @@ LOCAL_APPS = [
     "grandchallenge.worklists",
     "grandchallenge.workstations",
     "grandchallenge.reader_studies",
+    "grandchallenge.workstation_configs",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -659,9 +661,10 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 DEFAULT_WORKSTATION_SLUG = os.environ.get(
     "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
 )
-WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "grand_challenge_image"
-WORKSTATIONS_OVERLAY_QUERY_PARAM = "grand_challenge_overlay"
+WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
+WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
 WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
+WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
 # The name of the network that the workstations will be attached to
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
     "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"

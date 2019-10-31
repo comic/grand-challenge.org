@@ -1,7 +1,7 @@
 import uuid
 
 import pytest
-from django.template import Template, Context, RequestContext
+from django.template import Context, RequestContext, Template
 from django.test import RequestFactory, override_settings
 
 from tests.factories import ChallengeFactory, PageFactory

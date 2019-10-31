@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from urllib.parse import unquote, urljoin
 
 from django.conf import settings
@@ -49,6 +49,12 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         on_delete=models.CASCADE,
         editable=False,
         related_name="users_of_workstation",
+    )
+    config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
@@ -164,8 +170,7 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
     )
     initial_path = models.CharField(
         max_length=256,
-        default="Applications/CIRRUSCoreWeb/DIAG/CIRRUSCore/Modules/www/index.html",
-        blank=True,
+        default="cirrus",
         validators=[
             RegexValidator(
                 regex=r"^(?:[^/][^\s]*)\Z",

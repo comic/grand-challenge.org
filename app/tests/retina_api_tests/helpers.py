@@ -1,25 +1,27 @@
 import json
-from rest_framework import status
-from django.urls import reverse as django_reverse
-from grandchallenge.subdomains.utils import reverse
+
 from django.conf import settings
-from django.contrib.auth.models import Group
-from tests.factories import UserFactory
-from tests.retina_importers_tests.helpers import get_retina_user_with_token
-from tests.cases_tests.factories import ImageFactory
-from tests.retina_core_tests.factories import create_some_datastructure_data
-from tests.registrations_tests.factories import OctObsRegistrationFactory
-from tests.annotations_tests.factories import (
-    ETDRSGridAnnotationFactory,
-    MeasurementAnnotationFactory,
-    BooleanClassificationAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    SinglePolygonAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    SingleLandmarkAnnotationFactory,
-)
-from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.urls import reverse as django_reverse
+from rest_framework import status
+
+from grandchallenge.subdomains.utils import reverse
+from tests.annotations_tests.factories import (
+    BooleanClassificationAnnotationFactory,
+    ETDRSGridAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    MeasurementAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
+)
+from tests.cases_tests.factories import ImageFactory
+from tests.factories import UserFactory
+from tests.registrations_tests.factories import OctObsRegistrationFactory
+from tests.retina_core_tests.factories import create_some_datastructure_data
+from tests.retina_importers_tests.helpers import get_retina_user_with_token
+from tests.viewset_helpers import TEST_USER_CREDENTIALS
 
 
 def get_user_from_str(user=None):

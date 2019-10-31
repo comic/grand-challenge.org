@@ -1,10 +1,11 @@
 import pytest
+
+from grandchallenge.studies.serializers import StudySerializer
 from tests.serializer_helpers import (
-    do_test_serializer_valid,
     do_test_serializer_fields,
+    do_test_serializer_valid,
 )
 from tests.studies_tests.factories import StudyFactory
-from grandchallenge.studies.serializers import StudySerializer
 
 
 @pytest.mark.django_db

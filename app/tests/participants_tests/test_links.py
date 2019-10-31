@@ -5,26 +5,26 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_join_page_links(client, ChallengeSet):
+def test_join_page_links(client, challenge_set):
     tests = [
-        (ChallengeSet.non_participant, "Click here to join"),
-        (ChallengeSet.participant, "You are already participating"),
+        (challenge_set.non_participant, "Click here to join"),
+        (challenge_set.participant, "You are already participating"),
     ]
     for test in tests:
         response = get_view_for_user(
             viewname="participants:registration-create",
             client=client,
             user=test[0],
-            challenge=ChallengeSet.challenge,
+            challenge=challenge_set.challenge,
         )
         assert test[1] in response.rendered_content
         rr = RegistrationRequestFactory(
-            user=test[0], challenge=ChallengeSet.challenge
+            user=test[0], challenge=challenge_set.challenge
         )
         response = get_view_for_user(
             viewname="participants:registration-create",
             client=client,
             user=test[0],
-            challenge=ChallengeSet.challenge,
+            challenge=challenge_set.challenge,
         )
         assert rr.status_to_string() in response.rendered_content

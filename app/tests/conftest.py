@@ -3,40 +3,40 @@ import zipfile
 from collections import namedtuple
 from pathlib import Path
 from subprocess import call
-from typing import NamedTuple, List
+from typing import List, NamedTuple
 
 import docker
 import pytest
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.contrib.auth.models import Group
+from django.contrib.sites.models import Site
 
 from grandchallenge.cases.models import Image
+from tests.annotations_tests.factories import (
+    BooleanClassificationAnnotationFactory,
+    CoordinateListAnnotationFactory,
+    ETDRSGridAnnotationFactory,
+    IntegerClassificationAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    MeasurementAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
+)
 from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import ImageFactoryWithoutImageFile
 from tests.factories import (
-    UserFactory,
     ChallengeFactory,
-    MethodFactory,
     ImageFactory,
-)
-from tests.annotations_tests.factories import (
-    MeasurementAnnotationFactory,
-    BooleanClassificationAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    CoordinateListAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    ETDRSGridAnnotationFactory,
-    SingleLandmarkAnnotationFactory,
-    SinglePolygonAnnotationFactory,
+    MethodFactory,
+    UserFactory,
 )
 from tests.patients_tests.factories import PatientFactory
 from tests.studies_tests.factories import StudyFactory
 
 # Import fixtures that are used throughout a module
 # noinspection PyUnresolvedReferences
-from tests.workstations_tests.fixtures import two_workstation_sets
+from tests.workstations_tests.fixtures import two_workstation_sets  # noqa
 
 
 def pytest_addoption(parser):
@@ -115,59 +115,59 @@ def generate_challenge_set():
     )
 
 
-@pytest.fixture(name="ChallengeSet")
+@pytest.fixture(name="challenge_set")
 def challenge_set():
     """ Creates a challenge with creator, 2 participants, and non participant.
     To use this you must mark the test with @pytest.mark.django_db """
     return generate_challenge_set()
 
 
-@pytest.fixture(name="TwoChallengeSets")
+@pytest.fixture(name="two_challenge_sets")
 def two_challenge_sets():
     """ Creates two challenges with combination participants and admins """
-    TwoChallengeSets = namedtuple(
-        "TwoChallengeSets",
+    two_challenge_sets = namedtuple(
+        "two_challenge_sets",
         [
-            "ChallengeSet1",
-            "ChallengeSet2",
+            "challenge_set_1",
+            "challenge_set_2",
             "admin12",
             "participant12",
             "admin1participant2",
         ],
     )
-    ChallengeSet1 = generate_challenge_set()
-    ChallengeSet2 = generate_challenge_set()
+    challenge_set_1 = generate_challenge_set()
+    challenge_set_2 = generate_challenge_set()
     admin12 = UserFactory()
-    ChallengeSet1.challenge.add_admin(admin12)
-    ChallengeSet2.challenge.add_admin(admin12)
+    challenge_set_1.challenge.add_admin(admin12)
+    challenge_set_2.challenge.add_admin(admin12)
     participant12 = UserFactory()
-    ChallengeSet1.challenge.add_participant(participant12)
-    ChallengeSet2.challenge.add_participant(participant12)
+    challenge_set_1.challenge.add_participant(participant12)
+    challenge_set_2.challenge.add_participant(participant12)
     admin1participant2 = UserFactory()
-    ChallengeSet1.challenge.add_admin(admin1participant2)
-    ChallengeSet2.challenge.add_participant(admin1participant2)
-    return TwoChallengeSets(
-        ChallengeSet1,
-        ChallengeSet2,
+    challenge_set_1.challenge.add_admin(admin1participant2)
+    challenge_set_2.challenge.add_participant(admin1participant2)
+    return two_challenge_sets(
+        challenge_set_1,
+        challenge_set_2,
         admin12,
         participant12,
         admin1participant2,
     )
 
 
-@pytest.fixture(name="EvalChallengeSet")
-def challenge_set_with_evaluation(ChallengeSet):
+@pytest.fixture(name="eval_challenge_set")
+def challenge_set_with_evaluation(challenge_set):
     """ Creates a challenge with two methods.
     To use this you must mark the test with @pytest.mark.django_db """
-    EvalChallengeSet = namedtuple(
-        "EvalChallengeSet", ["ChallengeSet", "method"]
+    eval_challenge_set = namedtuple(
+        "eval_challenge_set", ["challenge_set", "method"]
     )
-    ChallengeSet.challenge.use_evaluation = True
-    ChallengeSet.challenge.save()
+    challenge_set.challenge.use_evaluation = True
+    challenge_set.challenge.save()
     method = MethodFactory(
-        challenge=ChallengeSet.challenge, creator=ChallengeSet.creator
+        challenge=challenge_set.challenge, creator=challenge_set.creator
     )
-    return EvalChallengeSet(ChallengeSet, method)
+    return eval_challenge_set(challenge_set, method)
 
 
 @pytest.fixture(scope="session")
@@ -349,7 +349,7 @@ def generate_annotation_set(retina_grader=False, image=False):
     )
 
 
-@pytest.fixture(name="AnnotationSet")
+@pytest.fixture(name="annotation_set")
 def annotation_set():
     """ Creates a user with the one of each of the following annotations:
     Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
@@ -358,7 +358,7 @@ def annotation_set():
     return generate_annotation_set()
 
 
-@pytest.fixture(name="AnnotationSetForImage")
+@pytest.fixture(name="annotation_set_for_image")
 def annotation_set_for_image():
     """ Creates a user with the one of each of the following annotations:
     Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
@@ -386,13 +386,11 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
     )
 
     # Create child models for polygon annotation set
-    singlepolygonbatches = (
-        SinglePolygonAnnotationFactory.create_batch(
-            10, annotation_set=polygonsets[0]
-        ),
-        SinglePolygonAnnotationFactory.create_batch(
-            10, annotation_set=polygonsets[1]
-        ),
+    SinglePolygonAnnotationFactory.create_batch(
+        10, annotation_set=polygonsets[0]
+    )
+    SinglePolygonAnnotationFactory.create_batch(
+        10, annotation_set=polygonsets[1]
     )
 
     return TwoPolygonAnnotationSets(
@@ -403,7 +401,7 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
     )
 
 
-@pytest.fixture(name="TwoRetinaPolygonAnnotationSets")
+@pytest.fixture(name="two_retina_polygon_annotation_sets")
 def two_retina_polygon_annotation_sets():
     """ Creates two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
     belonging to two different graders that both are in the retina_graders
@@ -526,7 +524,7 @@ def generate_multiple_etdrs_annotations(retina_grader=False):
     )
 
 
-@pytest.fixture(name="MultipleRetinaETDRSAnnotations")
+@pytest.fixture(name="multiple_retina_etdrs_annotations")
 def multiple_retina_etdrs_annotations():
     """ Creates 2 retina_grader users with 10 and 5 etdrs annotations"""
     return generate_multiple_etdrs_annotations(retina_grader=True)
@@ -593,7 +591,7 @@ def generate_archive_patient_study_image_set():
     )
 
 
-@pytest.fixture(name="ArchivePatientStudyImageSet")
+@pytest.fixture(name="archive_patient_study_image_set")
 def archive_patient_study_images_set():
     """ Creates an archive with 2 patients, with 3 (4, 5 and 6 images) and 2
     (2 and 3 images) studies. And another archive with one patient, one study

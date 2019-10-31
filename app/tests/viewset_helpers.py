@@ -1,14 +1,13 @@
 import json
 
-import factory
-from rest_framework.test import force_authenticate
-from rest_framework import status
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, AnonymousUser
-from tests.factories import UserFactory
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser, Group
+from rest_framework import status
+from rest_framework.test import force_authenticate
 
 from grandchallenge.subdomains.utils import reverse
+from tests.factories import UserFactory
 
 # Endpoints to check
 VIEWSET_ACTIONS = (
@@ -35,10 +34,16 @@ def get_response_status_viewset(
     request_method,
     model_factory=None,
     user=None,
-    required_relations={},
+    required_relations=None,
     serializer=None,
-    extra_url_kwargs={},
+    extra_url_kwargs=None,
 ):
+    if extra_url_kwargs is None:
+        extra_url_kwargs = {}
+
+    if required_relations is None:
+        required_relations = {}
+
     # get model
     if model_factory:
         if action_name == "create" or action_name == "update":
@@ -113,10 +118,16 @@ def batch_test_viewset_endpoints(
     namespace,
     model_factory,
     test_class,
-    required_relations={},
+    required_relations=None,
     serializer=None,
-    extra_url_kwargs={},
+    extra_url_kwargs=None,
 ):
+    if extra_url_kwargs is None:
+        extra_url_kwargs = {}
+
+    if required_relations is None:
+        required_relations = {}
+
     for action_name, request_method, authenticated_status in actions:
         for (user, authenticated) in (
             (None, False),
@@ -124,7 +135,6 @@ def batch_test_viewset_endpoints(
             ("admin", False),
             ("retina_importer", True),
         ):
-
             test_method = create_test_method(
                 viewset,
                 model_name,
@@ -160,8 +170,11 @@ def create_test_method(
     required_relations,
     authenticated_status,
     serializer,
-    extra_url_kwargs={},
+    extra_url_kwargs=None,
 ):
+    if extra_url_kwargs is None:
+        extra_url_kwargs = {}
+
     # create test method
     def test_method(self, rf):
         response_status = get_response_status_viewset(

@@ -7,19 +7,20 @@ import factory.fuzzy
 from django.conf import settings
 from django.utils import timezone
 
-from grandchallenge.cases.models import Image, RawImageUploadSession, ImageFile
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import (
     Challenge,
     ExternalChallenge,
     ImagingModality,
 )
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
-from grandchallenge.evaluation.models import Submission, Job, Method, Result
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
+from grandchallenge.evaluation.models import Job, Method, Result, Submission
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
+from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import (
     Session,
     Workstation,
@@ -196,6 +197,11 @@ class StagedFileFactory(factory.DjangoModelFactory):
     client_filename = factory.LazyAttribute(lambda s: s.file.name)
 
 
+class WorkstationConfigFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = WorkstationConfig
+
+
 class WorkstationFactory(factory.DjangoModelFactory):
     class Meta:
         model = Workstation
@@ -233,7 +239,7 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
             size = self.size
 
         fuzzy_list = []
-        for i in range(size):
+        for _ in range(size):
             fuzzy_list.append(
                 [
                     round(

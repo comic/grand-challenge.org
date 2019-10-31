@@ -3,9 +3,9 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from grandchallenge.workstations.models import (
-    WorkstationImage,
-    Workstation,
     Session,
+    Workstation,
+    WorkstationImage,
 )
 
 
@@ -15,7 +15,7 @@ def get_or_create_active_session(
     """
     Queries the database to see if there is an active session for this user and
     workstation image, if not, it will create one.
-    
+
     Parameters
     ----------
     user

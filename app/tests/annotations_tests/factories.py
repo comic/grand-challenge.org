@@ -1,27 +1,27 @@
-import random
-import factory.fuzzy
 import datetime
+
+import factory.fuzzy
 import pytz
 
 from grandchallenge.annotations.models import (
     AbstractImageAnnotationModel,
     AbstractNamedImageAnnotationModel,
-    ETDRSGridAnnotation,
-    MeasurementAnnotation,
     BooleanClassificationAnnotation,
-    IntegerClassificationAnnotation,
     CoordinateListAnnotation,
-    PolygonAnnotationSet,
-    SinglePolygonAnnotation,
-    LandmarkAnnotationSet,
-    SingleLandmarkAnnotation,
-    ImageQualityAnnotation,
+    ETDRSGridAnnotation,
     ImagePathologyAnnotation,
-    RetinaImagePathologyAnnotation,
+    ImageQualityAnnotation,
     ImageTextAnnotation,
+    IntegerClassificationAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
+    RetinaImagePathologyAnnotation,
+    SingleLandmarkAnnotation,
+    SinglePolygonAnnotation,
 )
 from tests.cases_tests.factories import ImageFactory
-from tests.factories import UserFactory, FuzzyFloatCoordinatesList
+from tests.factories import FuzzyFloatCoordinatesList, UserFactory
 
 
 class DefaultImageAnnotationModelFactory(factory.DjangoModelFactory):
@@ -124,7 +124,7 @@ class SingleLandmarkAnnotationFactory(factory.DjangoModelFactory):
 def create_batch_landmarks():
     landmark_annotation_set = LandmarkAnnotationSet()
     landmark_annotations = []
-    for i in range(3):
+    for _ in range(3):
         landmark_annotations.append(
             SingleLandmarkAnnotationFactory(
                 registration=landmark_annotation_set

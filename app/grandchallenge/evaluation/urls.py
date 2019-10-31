@@ -1,20 +1,20 @@
 from django.urls import path
 
 from grandchallenge.evaluation.views import (
-    MethodCreate,
-    SubmissionCreate,
-    JobCreate,
-    MethodList,
-    SubmissionList,
-    JobList,
-    ResultList,
-    MethodDetail,
-    SubmissionDetail,
-    JobDetail,
-    ResultDetail,
     ConfigUpdate,
-    ResultUpdate,
+    JobCreate,
+    JobDetail,
+    JobList,
     LegacySubmissionCreate,
+    MethodCreate,
+    MethodDetail,
+    MethodList,
+    ResultDetail,
+    ResultList,
+    ResultUpdate,
+    SubmissionCreate,
+    SubmissionDetail,
+    SubmissionList,
 )
 
 app_name = "evaluation"

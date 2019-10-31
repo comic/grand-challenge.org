@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 
 from grandchallenge.workstations.models import Session
-from tests.factories import UserFactory, SessionFactory
+from tests.factories import SessionFactory, UserFactory
 from tests.utils import get_view_for_user
 
 

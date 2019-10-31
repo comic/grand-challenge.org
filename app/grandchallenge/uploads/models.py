@@ -9,7 +9,7 @@ from django_summernote.models import AbstractAttachment
 from grandchallenge.challenges.models import ComicSiteModel
 
 
-def giveFileUploadDestinationPath(uploadmodel, filename):
+def give_file_upload_destination_path(uploadmodel, filename):
     """ Where should this file go relative to MEDIA_ROOT?
     Determines location based on permission level of the uploaded model.
 
@@ -40,7 +40,7 @@ def giveFileUploadDestinationPath(uploadmodel, filename):
 
 class UploadModel(ComicSiteModel):
     file = models.FileField(
-        max_length=255, upload_to=giveFileUploadDestinationPath
+        max_length=255, upload_to=give_file_upload_destination_path
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

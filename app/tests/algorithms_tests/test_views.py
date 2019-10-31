@@ -2,14 +2,14 @@ import pytest
 from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
-from grandchallenge.algorithms.models import AlgorithmImage, Algorithm
+from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
-    AlgorithmImageFactory,
     AlgorithmFactory,
+    AlgorithmImageFactory,
 )
-from tests.factories import UserFactory, StagedFileFactory, WorkstationFactory
-from tests.utils import get_view_for_user, get_temporary_image
+from tests.factories import StagedFileFactory, UserFactory
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -58,7 +58,11 @@ def test_algorithm_list_view(client):
 @pytest.mark.django_db
 def test_algorithm_list_view_filter(client):
     user = UserFactory()
-    alg1, alg2, = AlgorithmFactory(), AlgorithmFactory()
+    alg1, alg2, pubalg = (
+        AlgorithmFactory(),
+        AlgorithmFactory(),
+        AlgorithmFactory(visible_to_public=True),
+    )
     alg1.add_user(user)
 
     response = get_view_for_user(
@@ -68,6 +72,7 @@ def test_algorithm_list_view_filter(client):
     assert response.status_code == 200
     assert alg1.get_absolute_url() in response.rendered_content
     assert alg2.get_absolute_url() not in response.rendered_content
+    assert pubalg.get_absolute_url() in response.rendered_content
 
 
 @pytest.mark.django_db

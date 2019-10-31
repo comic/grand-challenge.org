@@ -1,16 +1,16 @@
-import pytest
 import json
 
+import pytest
 from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import ImageFactoryWithImageFile
-from .helpers import (
-    create_upload_image_test_data,
+from tests.retina_importers_tests.helpers import (
     create_upload_image_invalid_test_data,
-    read_json_file,
-    get_response_status,
+    create_upload_image_test_data,
     get_auth_token_header,
+    get_response_status,
+    read_json_file,
 )
 
 
@@ -49,7 +49,7 @@ class TestCustomUploadEndpoints:
         valid,
     ):
         if "upload_image" in endpoint_type:
-            data_type = endpoint_type.lstrip("upload_image_")
+            data_type = endpoint_type.replace("upload_image_", "")
             if valid:
                 data = create_upload_image_test_data(data_type=data_type)
             else:

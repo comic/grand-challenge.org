@@ -2,12 +2,12 @@ import pytest
 from django.conf import settings
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from tests.factories import (
-    ImageFileFactory,
     AnnotationSetFactory,
-    UserFactory,
+    ImageFileFactory,
     SubmissionFactory,
+    UserFactory,
 )
 from tests.utils import get_view_for_user
 
@@ -18,13 +18,13 @@ from tests.utils import get_view_for_user
 )
 @pytest.mark.parametrize("phase", [ImageSet.TRAINING, ImageSet.TESTING])
 def test_imageset_annotationset_download(
-    client, TwoChallengeSets, phase, kind
+    client, two_challenge_sets, phase, kind
 ):
     """
     Only participants of a challenge should be able to download imageset images
     """
 
-    imageset = TwoChallengeSets.ChallengeSet1.challenge.imageset_set.get(
+    imageset = two_challenge_sets.challenge_set_1.challenge.imageset_set.get(
         phase=phase
     )
     image_file = ImageFileFactory()
@@ -43,19 +43,19 @@ def test_imageset_annotationset_download(
         (404, 404, None),
         (404, 404, UserFactory()),
         (404, 404, UserFactory(is_staff=True)),
-        (404, 404, TwoChallengeSets.ChallengeSet1.non_participant),
-        (200, 404, TwoChallengeSets.ChallengeSet1.participant),
-        (200, 404, TwoChallengeSets.ChallengeSet1.participant1),
-        (200, 200, TwoChallengeSets.ChallengeSet1.creator),
-        (200, 200, TwoChallengeSets.ChallengeSet1.admin),
-        (404, 404, TwoChallengeSets.ChallengeSet2.non_participant),
-        (404, 404, TwoChallengeSets.ChallengeSet2.participant),
-        (404, 404, TwoChallengeSets.ChallengeSet2.participant1),
-        (404, 404, TwoChallengeSets.ChallengeSet2.creator),
-        (404, 404, TwoChallengeSets.ChallengeSet2.admin),
-        (200, 200, TwoChallengeSets.admin12),
-        (200, 404, TwoChallengeSets.participant12),
-        (200, 200, TwoChallengeSets.admin1participant2),
+        (404, 404, two_challenge_sets.challenge_set_1.non_participant),
+        (200, 404, two_challenge_sets.challenge_set_1.participant),
+        (200, 404, two_challenge_sets.challenge_set_1.participant1),
+        (200, 200, two_challenge_sets.challenge_set_1.creator),
+        (200, 200, two_challenge_sets.challenge_set_1.admin),
+        (404, 404, two_challenge_sets.challenge_set_2.non_participant),
+        (404, 404, two_challenge_sets.challenge_set_2.participant),
+        (404, 404, two_challenge_sets.challenge_set_2.participant1),
+        (404, 404, two_challenge_sets.challenge_set_2.creator),
+        (404, 404, two_challenge_sets.challenge_set_2.admin),
+        (200, 200, two_challenge_sets.admin12),
+        (200, 404, two_challenge_sets.participant12),
+        (200, 200, two_challenge_sets.admin1participant2),
     ]
 
     for test in tests:
@@ -110,13 +110,13 @@ def test_image_response(client):
 
 
 @pytest.mark.django_db
-def test_submission_download(client, TwoChallengeSets):
+def test_submission_download(client, two_challenge_sets):
     """
     Only the challenge admin should be able to download submissions
     """
     submission = SubmissionFactory(
-        challenge=TwoChallengeSets.ChallengeSet1.challenge,
-        creator=TwoChallengeSets.ChallengeSet1.participant,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        creator=two_challenge_sets.challenge_set_1.participant,
     )
 
     tests = [
@@ -125,19 +125,19 @@ def test_submission_download(client, TwoChallengeSets):
         #   user
         # )
         (404, None),
-        (404, TwoChallengeSets.ChallengeSet1.non_participant),
-        (404, TwoChallengeSets.ChallengeSet1.participant),
-        (404, TwoChallengeSets.ChallengeSet1.participant1),
-        (200, TwoChallengeSets.ChallengeSet1.creator),
-        (200, TwoChallengeSets.ChallengeSet1.admin),
-        (404, TwoChallengeSets.ChallengeSet2.non_participant),
-        (404, TwoChallengeSets.ChallengeSet2.participant),
-        (404, TwoChallengeSets.ChallengeSet2.participant1),
-        (404, TwoChallengeSets.ChallengeSet2.creator),
-        (404, TwoChallengeSets.ChallengeSet2.admin),
-        (200, TwoChallengeSets.admin12),
-        (404, TwoChallengeSets.participant12),
-        (200, TwoChallengeSets.admin1participant2),
+        (404, two_challenge_sets.challenge_set_1.non_participant),
+        (404, two_challenge_sets.challenge_set_1.participant),
+        (404, two_challenge_sets.challenge_set_1.participant1),
+        (200, two_challenge_sets.challenge_set_1.creator),
+        (200, two_challenge_sets.challenge_set_1.admin),
+        (404, two_challenge_sets.challenge_set_2.non_participant),
+        (404, two_challenge_sets.challenge_set_2.participant),
+        (404, two_challenge_sets.challenge_set_2.participant1),
+        (404, two_challenge_sets.challenge_set_2.creator),
+        (404, two_challenge_sets.challenge_set_2.admin),
+        (200, two_challenge_sets.admin12),
+        (404, two_challenge_sets.participant12),
+        (200, two_challenge_sets.admin1participant2),
     ]
 
     for test in tests:

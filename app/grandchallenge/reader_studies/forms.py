@@ -3,11 +3,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import (
-    ModelForm,
-    Form,
-    ModelChoiceField,
     ChoiceField,
+    Form,
     HiddenInput,
+    ModelChoiceField,
+    ModelForm,
     TextInput,
 )
 from guardian.shortcuts import get_objects_for_user
@@ -16,9 +16,9 @@ from guardian.utils import get_anonymous_user
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.models import (
-    ReaderStudy,
     HANGING_LIST_SCHEMA,
     Question,
+    ReaderStudy,
 )
 from grandchallenge.workstations.models import Workstation
 
@@ -47,7 +47,13 @@ class ReaderStudyCreateForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = ReaderStudy
-        fields = ("title", "logo", "description", "workstation")
+        fields = (
+            "title",
+            "logo",
+            "description",
+            "workstation",
+            "workstation_config",
+        )
         help_texts = READER_STUDY_HELP_TEXTS
 
 
@@ -58,6 +64,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "logo",
             "description",
             "workstation",
+            "workstation_config",
             "shuffle_hanging_list",
             "hanging_list",
         )

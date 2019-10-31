@@ -1,6 +1,6 @@
 import os
-import time
 import random
+import time
 
 from django.test import RequestFactory
 
@@ -34,7 +34,8 @@ def create_upload_file_request(
 
     if content is None:
         content = load_test_data()
-    ##### Basic request #####
+
+    # Basic request
     data = (
         f"""
 --{boundary}\r
@@ -46,7 +47,7 @@ Content-Type: application/octet-stream\r
         + f"""\r
 --{boundary}--""".encode()
     )
-    ##### Add additional fields #####
+    # Add additional fields
     for key, value in extra_fields.items():
         extra_field_data = f"""
 --{boundary}\r
@@ -74,7 +75,7 @@ def create_partial_upload_file_request(
     http_content_range=None,
     extra_headers=None,
 ):
-    content_range = f"bytes {start_byte}-{end_byte-1}/{len(content)}"
+    content_range = f"bytes {start_byte}-{end_byte - 1}/{len(content)}"
 
     if http_content_range is None:
         http_content_range = content_range

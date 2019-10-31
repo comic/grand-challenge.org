@@ -12,8 +12,9 @@
                     <ul class="list-unstyled">
                         {% for page in flatpages %}
                             <li>
+                                {# Manual construction of url is used here due to flatpage redirect errors #}
                                 <a class="text-muted"
-                                   href="{% url 'django.contrib.flatpages.views.flatpage' url=page.url %}">
+                                   href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
                                     {{ page.title }}
                                 </a>
                             </li>
@@ -55,10 +56,15 @@
                 <div class="px-3">
                     <ul class="list-unstyled">
                         <li>
-                            <a class="text-muted"
-                               href="https://github.com/comic/grand-challenge.org"
+                            <a class="p-1 text-muted"
+                               href="https://github.com/comic/grand-challenge.org/"
                                title="Join us on Github">
                                 <i class="fab fa-github fa-lg"></i>
+                            </a>
+                            <a class="p-1 text-muted"
+                               href="https://twitter.com/g13e_org/"
+                               title="Follow us on Twitter">
+                                <i class="fab fa-twitter fa-lg"></i>
                             </a>
                         </li>
                     </ul>

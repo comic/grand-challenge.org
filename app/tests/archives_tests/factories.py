@@ -1,4 +1,5 @@
 import factory
+
 from grandchallenge.archives.models import Archive
 from tests.cases_tests.factories import ImageFactory
 
@@ -7,7 +8,7 @@ class ArchiveFactory(factory.DjangoModelFactory):
     class Meta:
         model = Archive
 
-    name = factory.Sequence(lambda n: "Archive {}".format(n))
+    name = factory.Sequence(lambda n: f"Archive {n}")
 
     @factory.post_generation
     def images(self, create, extracted, **kwargs):

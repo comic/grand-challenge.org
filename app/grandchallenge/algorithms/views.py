@@ -12,9 +12,9 @@ from django.http import Http404
 from django.views.generic import (
     CreateView,
     DetailView,
+    FormView,
     ListView,
     UpdateView,
-    FormView,
 )
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -26,23 +26,23 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.forms import (
-    AlgorithmImageForm,
     AlgorithmForm,
+    AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     EditorsForm,
     UsersForm,
 )
 from grandchallenge.algorithms.models import (
+    Algorithm,
     AlgorithmImage,
     Job,
     Result,
-    Algorithm,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
-    ResultSerializer,
-    JobSerializer,
     AlgorithmSerializer,
+    JobSerializer,
+    ResultSerializer,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -69,11 +69,18 @@ class AlgorithmCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         return kwargs
 
 
-class AlgorithmList(LoginRequiredMixin, PermissionListMixin, ListView):
+class AlgorithmList(PermissionListMixin, ListView):
     model = Algorithm
     permission_required = {
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     }
+
+    def get_queryset(self, *args, **kwargs):
+        # Add algorithms that are publicly visible
+        qs = super().get_queryset(*args, **kwargs)
+        qs |= Algorithm.objects.filter(visible_to_public=True)
+
+        return qs
 
 
 class AlgorithmDetail(
@@ -111,7 +118,10 @@ class AlgorithmUserAutocomplete(
             .select_related("editors_group")
             .values_list("editors_group__pk", flat=True)
         )
-        return self.request.user.groups.filter(pk__in=group_pks).exists()
+        return (
+            self.request.user.is_superuser
+            or self.request.user.groups.filter(pk__in=group_pks).exists()
+        )
 
     def get_queryset(self):
         qs = (

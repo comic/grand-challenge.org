@@ -1,10 +1,14 @@
 from io import BytesIO
 
-import SimpleITK as sitk
+import SimpleITK
 from PIL import Image as PILImage
-
 from django.http import Http404
 from rest_framework import serializers
+
+from grandchallenge.archives.models import Archive
+from grandchallenge.challenges.serializers import ImagingModalitySerializer
+from grandchallenge.patients.serializers import PatientSerializer
+from grandchallenge.studies.models import Study
 
 
 class PILImageSerializer(serializers.BaseSerializer):
@@ -18,7 +22,7 @@ class PILImageSerializer(serializers.BaseSerializer):
     def to_representation(self, instance):
         try:
             image_itk = instance.get_sitk_image()
-        except:
+        except Exception:
             raise Http404
         pil_image = self.convert_itk_to_pil(image_itk)
         try:
@@ -33,7 +37,7 @@ class PILImageSerializer(serializers.BaseSerializer):
     @staticmethod
     def convert_itk_to_pil(image_itk):
         depth = image_itk.GetDepth()
-        image_nparray = sitk.GetArrayFromImage(image_itk)
+        image_nparray = SimpleITK.GetArrayFromImage(image_itk)
         if depth > 0:
             # Get center slice of image if 3D
             image_nparray = image_nparray[depth // 2]
@@ -56,3 +60,29 @@ class BytesImageSerializer(PILImageSerializer):
         buffer = BytesIO()
         image_pil.save(buffer, format="png")
         return buffer.getvalue()
+
+
+class TreeObjectSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+
+
+class TreeStudySerializer(serializers.ModelSerializer):
+    patient = PatientSerializer()
+
+    class Meta:
+        model = Study
+        fields = ("name", "patient")
+
+
+class TreeArchiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Archive
+        fields = ("name",)
+
+
+class TreeImageSerializer(TreeObjectSerializer):
+    eye_choice = serializers.CharField()
+    modality = ImagingModalitySerializer()
+    study = TreeStudySerializer(required=False)
+    archive_set = TreeArchiveSerializer(many=True)

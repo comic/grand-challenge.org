@@ -1,7 +1,8 @@
-from django.db import models
-from grandchallenge.core.models import UUIDModel
-from grandchallenge.cases.models import Image
 from django.contrib.postgres.fields import ArrayField
+from django.db import models
+
+from grandchallenge.cases.models import Image
+from grandchallenge.core.models import UUIDModel
 
 
 class OctObsRegistration(UUIDModel):

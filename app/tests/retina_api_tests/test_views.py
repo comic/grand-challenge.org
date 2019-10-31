@@ -2,33 +2,35 @@ import base64
 import json
 import random
 from io import BytesIO
-import pytest
 
+import SimpleITK
+import pytest
 from PIL import Image as PILImage
-import SimpleITK as sitk
-from rest_framework import status
-from django.core.cache import cache
-from rest_framework.authtoken.models import Token
 from django.conf import settings
-from rest_framework.compat import SHORT_SEPARATORS, LONG_SEPARATORS
+from django.core.cache import cache
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
 from rest_framework.utils import encoders
 
-from grandchallenge.patients.models import Patient
-from grandchallenge.retina_api.views import ArchiveAPIView
+from grandchallenge.retina_api.serializers import (
+    TreeImageSerializer,
+    TreeObjectSerializer,
+)
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile3DLarge3Slices,
     ImageFactoryWithImageFile2DLarge,
+    ImageFactoryWithImageFile3DLarge3Slices,
     ImageFactoryWithImageFile3DLarge4Slices,
 )
 from tests.retina_api_tests.helpers import (
-    create_datastructures_data,
-    batch_test_image_endpoint_redirects,
     batch_test_data_endpoints,
-    client_login,
+    batch_test_image_endpoint_redirects,
     client_force_login,
+    client_login,
+    create_datastructures_data,
     get_user_from_str,
 )
 
@@ -231,21 +233,14 @@ class TestArchiveIndexAPIEndpoints:
             floats_to_compare = (
                 []
             )  # list of (response_float, expected_float, name) tuples
-            for archive, response_info, ds, oor in (
-                (
-                    "Rotterdam",
-                    response_archive_info,
-                    datastructures,
-                    oct_obs_registration,
-                ),
+            for archive, response_info, oor in (
+                ("Rotterdam", response_archive_info, oct_obs_registration),
                 (
                     "Australia",
                     response_archive_australia_info,
-                    datastructures_aus,
                     oct_obs_registration_aus,
                 ),
             ):
-
                 # oct obs registration
                 response_obs = response_info.get("registration").get("obs")
                 rv = oor.registration_values
@@ -394,14 +389,36 @@ class TestImageElementSpacingView:
 @pytest.mark.django_db
 class TestArchiveAPIView:
     @staticmethod
-    def perform_request(client, user):
-        url = reverse("retina:api:archive-data-api-view")
+    def perform_request(client, user, pk=None):
+        url = reverse(
+            "retina:api:archive-data-api-view",
+            args=[pk] if pk is not None else [],
+        )
         user_model = get_user_from_str(user)
         kwargs = {}
         if user_model is not None and not isinstance(user_model, str):
             token_object, _ = Token.objects.get_or_create(user=user_model)
             kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
         return client.get(url, **kwargs)
+
+    @staticmethod
+    def expected_result_json(objects, images):
+        objects_serialized = TreeObjectSerializer(objects, many=True).data
+        images_serialized = TreeImageSerializer(images, many=True).data
+
+        response = {
+            "directories": sorted(objects_serialized, key=lambda x: x["name"]),
+            "images": sorted(images_serialized, key=lambda x: x["name"]),
+        }
+        return json.dumps(
+            response,
+            cls=encoders.JSONEncoder,
+            ensure_ascii=not api_settings.UNICODE_JSON,
+            allow_nan=not api_settings.STRICT_JSON,
+            separators=SHORT_SEPARATORS
+            if api_settings.COMPACT_JSON
+            else LONG_SEPARATORS,
+        )
 
     @pytest.mark.parametrize(
         "user,expected_status",
@@ -421,31 +438,38 @@ class TestArchiveAPIView:
         cache.clear()
         response = self.perform_request(client, "retina_user")
         assert response.status_code == status.HTTP_200_OK
-        assert response.content == b"[]"
+        assert response.content == b'{"directories":[],"images":[]}'
 
-    def test_with_data(self, client, ArchivePatientStudyImageSet):
+    @pytest.mark.parametrize(
+        "pk,objects,images",
+        [
+            (None, ["archive1", "archive2"], None),
+            ("archive1", ["patient11", "patient12"], None),
+            ("patient11", ["study111", "study112", "study113"], None),
+            ("study111", [], "images111"),
+            ("archive2", [], "images211"),
+        ],
+    )
+    def test_with_data_patient(
+        self, client, archive_patient_study_image_set, pk, objects, images
+    ):
         # Clear cache manually
         cache.clear()
-        response = self.perform_request(client, "retina_user")
+        if pk is not None:
+            pk = getattr(archive_patient_study_image_set, pk).pk
+        response = self.perform_request(client, "retina_user", pk)
         assert response.status_code == status.HTTP_200_OK
-        expected_response_json = json.dumps(
-            ArchiveAPIView.create_response_object(
-                [
-                    ArchivePatientStudyImageSet.archive1,
-                    ArchivePatientStudyImageSet.archive2,
-                ],
-                Patient.objects.all(),
-            ),
-            cls=encoders.JSONEncoder,
-            ensure_ascii=not api_settings.UNICODE_JSON,
-            allow_nan=not api_settings.STRICT_JSON,
-            separators=SHORT_SEPARATORS
-            if api_settings.COMPACT_JSON
-            else LONG_SEPARATORS,
+        objects = [
+            getattr(archive_patient_study_image_set, o) for o in objects
+        ]
+        imgs = []
+        if images is not None:
+            imgs = getattr(archive_patient_study_image_set, images)
+        assert response.content.decode() == self.expected_result_json(
+            objects, imgs
         )
-        assert response.content.decode() == expected_response_json
 
-    def test_caching(self, client, ArchivePatientStudyImageSet):
+    def test_caching(self, client, archive_patient_study_image_set):
         # Clear cache manually
         cache.clear()
         # Perform normal request
@@ -453,8 +477,8 @@ class TestArchiveAPIView:
         assert response.status_code == status.HTTP_200_OK
         json_response = response.content.decode()
         # Remove data
-        ArchivePatientStudyImageSet.archive1.delete()
-        ArchivePatientStudyImageSet.archive2.delete()
+        archive_patient_study_image_set.archive1.delete()
+        archive_patient_study_image_set.archive2.delete()
         # Perform request again and expect unchanged response
         response = self.perform_request(client, "retina_user")
         assert response.status_code == status.HTTP_200_OK
@@ -499,7 +523,7 @@ class TestBase64ThumbnailView:
     @staticmethod
     def get_b64_from_image(image, max_dimension, is_3d=False):
         image_sitk = image.get_sitk_image()
-        image_nparray = sitk.GetArrayFromImage(image_sitk)
+        image_nparray = SimpleITK.GetArrayFromImage(image_sitk)
         if is_3d:
             depth = image_sitk.GetDepth()
             assert depth > 0

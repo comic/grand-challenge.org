@@ -13,7 +13,7 @@ from tests.jqfileupload_tests.external_test_support import (
 
 
 @pytest.mark.django_db
-def test_upload_some_images(client: Client, ChallengeSet, settings):
+def test_upload_some_images(client: Client, challenge_set, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)

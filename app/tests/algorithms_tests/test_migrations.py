@@ -2,7 +2,6 @@ import pytest
 from django.contrib.auth.models import Group
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
-from guardian.shortcuts import get_group_perms
 
 from tests.factories import UserFactory
 from tests.utils import get_temporary_image
@@ -19,7 +18,7 @@ def test_algorithm_image_data_migration(admin_user):
     old_apps = executor.loader.project_state(migrate_from).apps
 
     user = UserFactory()
-    OldAlgorithmImage = old_apps.get_model(app, "AlgorithmImage")
+    OldAlgorithmImage = old_apps.get_model(app, "AlgorithmImage")  # noqa: N806
     old_ai = OldAlgorithmImage.objects.create(
         creator_id=user.pk,
         title="foo",
@@ -35,7 +34,7 @@ def test_algorithm_image_data_migration(admin_user):
     executor.migrate(migrate_to)
 
     new_apps = executor.loader.project_state(migrate_to).apps
-    NewAlgorithm = new_apps.get_model(app, "Algorithm")
+    NewAlgorithm = new_apps.get_model(app, "Algorithm")  # noqa: N806
 
     new_alg = NewAlgorithm.objects.get(slug=old_ai.slug)
 
@@ -53,13 +52,6 @@ def test_algorithm_image_data_migration(admin_user):
 
     assert user.groups.filter(pk=new_alg.editors_group.pk).exists()
     assert not user.groups.filter(pk=new_alg.users_group.pk).exists()
-
-    # Ensure that the group permissions are assigned
-    perms = get_group_perms(
-        Group.objects.get(name=new_alg.editors_group.name), images[0]
-    )
-    assert "view_algorithmimage" in perms
-    assert "change_algorithmimage" in perms
 
 
 @pytest.mark.django_db

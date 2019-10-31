@@ -3,6 +3,7 @@
 {% load user_profile_link from profiles %}
 {% load workstations %}
 {% load guardian_tags %}
+{% load suffix from pathlib %}
 
 {% block title %}
     Algorithm Jobs - {{ block.super }}
@@ -42,10 +43,10 @@
             <tr>
                 <th>Created</th>
                 <th>Creator</th>
-                <th>Image</th>
+                <th>Input Image</th>
                 <th>Status</th>
                 <th>Result</th>
-                <th>Overlay</th>
+                <th>Output Image(s)</th>
             </tr>
             </thead>
             <tbody>
@@ -60,12 +61,24 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a class="btn btn-primary"
-                           data-toggle="tooltip"
-                           data-placement="bottom"
-                           title="View image in workstation ({{ job.image }})"
-                           href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image %}"><i
-                                class="fa fa-eye"></i></a>
+                        <ul class="list-unstyled">
+                            <li>
+                                <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image config=algorithm.workstation_config %}">
+                                    <span class="badge badge-primary">
+                                        <i class="fa fa-eye"></i> View input
+                                    </span>
+                                </a>
+                            </li>
+                            {% for file in job.image.files.all %}
+                                <li>
+                                    <a href="{{ file.file.url }}">
+                                        <span class="badge badge-primary">
+                                            <i class="fa fa-download"></i> input ({{ file.file|suffix }})
+                                        </span>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
                     </td>
                     <td>
                     <span class="badge
@@ -84,15 +97,26 @@
                     <td>{{ job.result.output }}</td>
                     <td>
                         {% if job.result.images.all %}
-                            {% for image in job.result.images.all %}
-                                <a class="btn btn-primary"
-                                   data-toggle="tooltip"
-                                   data-placement="bottom"
-                                   title="View overlay in workstation ({{ image }})"
-                                   href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image %}">
-                                    <i class="fa fa-eye"></i>
-                                </a>
-                            {% endfor %}
+                            <ul class="list-unstyled">
+                                {% for image in job.result.images.all %}
+                                    <li>
+                                        <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image config=algorithm.workstation_config %}">
+                                            <span class="badge badge-primary">
+                                                <i class="fa fa-eye"></i> View input &amp; output
+                                            </span>
+                                        </a>
+                                    </li>
+                                    {% for file in image.files.all %}
+                                        <li>
+                                            <a href="{{ file.file.url }}">
+                                            <span class="badge badge-primary">
+                                                <i class="fa fa-download"></i> output ({{ file.file|suffix }})
+                                            </span>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
                         {% endif %}
                     </td>
                 </tr>
@@ -112,12 +136,5 @@
                 ordering: true
             });
         });
-    </script>
-
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
     </script>
 {% endblock %}

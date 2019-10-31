@@ -5,27 +5,29 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_setting_submission_page_html(client, ChallengeSet):
+def test_setting_submission_page_html(client, challenge_set):
     custom_html = "<p>My custom html</p>"
 
     response = get_view_for_user(
         client=client,
-        user=ChallengeSet.participant,
+        user=challenge_set.participant,
         viewname="evaluation:submission-create",
-        challenge=ChallengeSet.challenge,
+        challenge=challenge_set.challenge,
     )
 
     assert response.status_code == 200
     assert custom_html not in response.rendered_content
 
-    ChallengeSet.challenge.evaluation_config.submission_page_html = custom_html
-    ChallengeSet.challenge.evaluation_config.save()
+    challenge_set.challenge.evaluation_config.submission_page_html = (
+        custom_html
+    )
+    challenge_set.challenge.evaluation_config.save()
 
     response = get_view_for_user(
         client=client,
-        user=ChallengeSet.participant,
+        user=challenge_set.participant,
         viewname="evaluation:submission-create",
-        challenge=ChallengeSet.challenge,
+        challenge=challenge_set.challenge,
     )
 
     assert response.status_code == 200
@@ -33,23 +35,23 @@ def test_setting_submission_page_html(client, ChallengeSet):
 
 
 @pytest.mark.django_db
-def test_setting_display_all_metrics(client, ChallengeSet):
+def test_setting_display_all_metrics(client, challenge_set):
     metrics = {"public": 3245.235, "secret": 4328.432, "extra": 2144.312}
     r = ResultFactory(
-        metrics=metrics, job__submission__challenge=ChallengeSet.challenge
+        metrics=metrics, job__submission__challenge=challenge_set.challenge
     )
 
-    ChallengeSet.challenge.evaluation_config.score_jsonpath = "public"
-    ChallengeSet.challenge.evaluation_config.extra_results_columns = [
+    challenge_set.challenge.evaluation_config.score_jsonpath = "public"
+    challenge_set.challenge.evaluation_config.extra_results_columns = [
         {"title": "extra", "path": "extra", "order": "asc"}
     ]
-    ChallengeSet.challenge.evaluation_config.display_all_metrics = True
-    ChallengeSet.challenge.evaluation_config.save()
+    challenge_set.challenge.evaluation_config.display_all_metrics = True
+    challenge_set.challenge.evaluation_config.save()
 
     response = get_view_for_user(
         client=client,
         viewname="evaluation:result-detail",
-        challenge=ChallengeSet.challenge,
+        challenge=challenge_set.challenge,
         reverse_kwargs={"pk": r.pk},
     )
 
@@ -58,13 +60,13 @@ def test_setting_display_all_metrics(client, ChallengeSet):
     assert str(metrics["extra"]) in response.rendered_content
     assert str(metrics["secret"]) in response.rendered_content
 
-    ChallengeSet.challenge.evaluation_config.display_all_metrics = False
-    ChallengeSet.challenge.evaluation_config.save()
+    challenge_set.challenge.evaluation_config.display_all_metrics = False
+    challenge_set.challenge.evaluation_config.save()
 
     response = get_view_for_user(
         client=client,
         viewname="evaluation:result-detail",
-        challenge=ChallengeSet.challenge,
+        challenge=challenge_set.challenge,
         reverse_kwargs={"pk": r.pk},
     )
 
