@@ -21,15 +21,13 @@ def test_upload_session_list(client):
     )
     token = Token.objects.create(user=UserFactory())
     extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    response = getattr(client, "get")(
-        reverse("api:upload-session-list"), **extra_headers
-    )
+    response = client.get(reverse("api:upload-session-list"), **extra_headers)
     assert response.status_code == 200
     assert response.json()["count"] == 0
 
     token = Token.objects.create(user=UserFactory(is_superuser=True))
     extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    response = getattr(client, "get")(
+    response = client.get(
         reverse(
             "api:upload-session-detail", kwargs={"pk": upload_session_1.pk}
         ),
@@ -101,7 +99,7 @@ def test_upload_session_post_permissions(client, is_staff, expected_response):
     algo = AlgorithmImageFactory()
     token = Token.objects.create(user=UserFactory(is_staff=is_staff))
     extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    response = getattr(client, "post")(
+    response = client.post(
         reverse("api:upload-session-list"),
         data={"algorithm_image": algo.api_url},
         **extra_headers,
@@ -115,15 +113,13 @@ def test_image_file_list(client):
 
     token = Token.objects.create(user=UserFactory())
     extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    response = getattr(client, "get")(
-        reverse("api:image-file-list"), **extra_headers
-    )
+    response = client.get(reverse("api:image-file-list"), **extra_headers)
     assert response.status_code == 200
     assert response.json()["count"] == 0
 
     token = Token.objects.create(user=UserFactory(is_superuser=True))
     extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    response = getattr(client, "get")(
+    response = client.get(
         reverse("api:image-file-detail", kwargs={"pk": dummy_file.pk}),
         **extra_headers,
     )
@@ -209,7 +205,7 @@ def test_image_file_post_permissions(client, is_staff, expected_response):
     upload_session = RawImageUploadSessionFactory()
     token = Token.objects.create(user=UserFactory(is_staff=is_staff))
     extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    response = getattr(client, "post")(
+    response = client.post(
         reverse("api:image-file-list"),
         data={
             "upload_session": upload_session.api_url,
