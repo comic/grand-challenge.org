@@ -3,33 +3,33 @@ import zipfile
 from collections import namedtuple
 from pathlib import Path
 from subprocess import call
-from typing import NamedTuple, List
+from typing import List, NamedTuple
 
 import docker
 import pytest
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.contrib.auth.models import Group
+from django.contrib.sites.models import Site
 
 from grandchallenge.cases.models import Image
+from tests.annotations_tests.factories import (
+    BooleanClassificationAnnotationFactory,
+    CoordinateListAnnotationFactory,
+    ETDRSGridAnnotationFactory,
+    IntegerClassificationAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    MeasurementAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
+)
 from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import ImageFactoryWithoutImageFile
 from tests.factories import (
-    UserFactory,
     ChallengeFactory,
-    MethodFactory,
     ImageFactory,
-)
-from tests.annotations_tests.factories import (
-    MeasurementAnnotationFactory,
-    BooleanClassificationAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    CoordinateListAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    ETDRSGridAnnotationFactory,
-    SingleLandmarkAnnotationFactory,
-    SinglePolygonAnnotationFactory,
+    MethodFactory,
+    UserFactory,
 )
 from tests.patients_tests.factories import PatientFactory
 from tests.studies_tests.factories import StudyFactory

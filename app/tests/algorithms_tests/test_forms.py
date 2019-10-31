@@ -4,7 +4,7 @@ from grandchallenge.algorithms.models import Algorithm
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.factories import UserFactory, WorkstationFactory
-from tests.utils import get_view_for_user, get_temporary_image
+from tests.utils import get_temporary_image, get_view_for_user
 
 
 @pytest.mark.django_db

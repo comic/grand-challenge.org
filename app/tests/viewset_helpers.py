@@ -1,13 +1,13 @@
 import json
 
-from rest_framework.test import force_authenticate
-from rest_framework import status
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, AnonymousUser
-from tests.factories import UserFactory
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser, Group
+from rest_framework import status
+from rest_framework.test import force_authenticate
 
 from grandchallenge.subdomains.utils import reverse
+from tests.factories import UserFactory
 
 # Endpoints to check
 VIEWSET_ACTIONS = (
@@ -135,7 +135,6 @@ def batch_test_viewset_endpoints(
             ("admin", False),
             ("retina_importer", True),
         ):
-
             test_method = create_test_method(
                 viewset,
                 model_name,

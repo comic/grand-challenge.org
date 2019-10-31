@@ -3,7 +3,7 @@ from django.db.models.signals import post_save
 from factory.django import mute_signals
 
 from grandchallenge.evaluation.models import Config
-from tests.factories import ResultFactory, ChallengeFactory, UserFactory
+from tests.factories import ChallengeFactory, ResultFactory, UserFactory
 
 
 @pytest.mark.django_db

@@ -4,9 +4,9 @@ from django.test import Client
 
 from tests.factories import TeamFactory, TeamMemberFactory
 from tests.utils import (
-    get_view_for_user,
-    assert_viewname_status,
     assert_viewname_redirect,
+    assert_viewname_status,
+    get_view_for_user,
     validate_admin_or_participant_view,
     validate_open_view,
 )

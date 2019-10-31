@@ -19,8 +19,6 @@ from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.views import upload_handler
 from tests.factories import PageFactory, RegistrationRequestFactory
-
-# Platform independent regex which will match line endings in win and linux
 from tests.utils import get_http_host
 
 PI_LINE_END_REGEX = "(\r\n|\n)"

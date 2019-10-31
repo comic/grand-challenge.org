@@ -1,12 +1,12 @@
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 import pytest
 
 from grandchallenge.cases.models import (
+    Image,
     RawImageFile,
     RawImageUploadSession,
     UPLOAD_SESSION_STATE,
-    Image,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH

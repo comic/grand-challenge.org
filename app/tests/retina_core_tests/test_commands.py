@@ -1,14 +1,15 @@
-import pytest
 from io import StringIO
-from django.core.management import call_command
+
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
+from django.core.management import call_command
 from guardian.core import ObjectPermissionChecker
 
 from grandchallenge.retina_core.management.commands.setannotationpermissions import (
     ANNOTATION_MODELS,
-    WARNING_TEXT,
     SUCCESS_TEXT,
+    WARNING_TEXT,
 )
 
 

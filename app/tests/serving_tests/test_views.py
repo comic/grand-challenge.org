@@ -2,12 +2,12 @@ import pytest
 from django.conf import settings
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from tests.factories import (
-    ImageFileFactory,
     AnnotationSetFactory,
-    UserFactory,
+    ImageFileFactory,
     SubmissionFactory,
+    UserFactory,
 )
 from tests.utils import get_view_for_user
 

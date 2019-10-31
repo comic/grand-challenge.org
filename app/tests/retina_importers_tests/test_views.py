@@ -1,16 +1,16 @@
-import pytest
 import json
 
+import pytest
 from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import ImageFactoryWithImageFile
-from .helpers import (
-    create_upload_image_test_data,
+from tests.retina_importers_tests.helpers import (
     create_upload_image_invalid_test_data,
-    read_json_file,
-    get_response_status,
+    create_upload_image_test_data,
     get_auth_token_header,
+    get_response_status,
+    read_json_file,
 )
 
 

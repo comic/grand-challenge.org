@@ -3,9 +3,9 @@ import pytest
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import RegistrationRequestFactory
 from tests.utils import (
+    get_view_for_user,
     validate_admin_only_view,
     validate_logged_in_view,
-    get_view_for_user,
 )
 
 

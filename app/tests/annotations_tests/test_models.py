@@ -3,19 +3,19 @@ from django.db import IntegrityError
 from guardian.shortcuts import get_perms
 
 from tests.annotations_tests.factories import (
-    ETDRSGridAnnotationFactory,
-    MeasurementAnnotationFactory,
     BooleanClassificationAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
     CoordinateListAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    SinglePolygonAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    SingleLandmarkAnnotationFactory,
-    ImageQualityAnnotationFactory,
+    ETDRSGridAnnotationFactory,
     ImagePathologyAnnotationFactory,
-    RetinaImagePathologyAnnotationFactory,
+    ImageQualityAnnotationFactory,
     ImageTextAnnotationFactory,
+    IntegerClassificationAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    MeasurementAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    RetinaImagePathologyAnnotationFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
 )
 from tests.model_helpers import do_test_factory
 from tests.viewset_helpers import get_user_from_user_type

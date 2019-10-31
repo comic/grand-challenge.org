@@ -1,64 +1,63 @@
 import copy
 import json
+
 import pytest
-
-from rest_framework import status
-from django.test import TestCase
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from rest_framework.test import force_authenticate, APIRequestFactory
+from django.test import TestCase
+from rest_framework import status
+from rest_framework.test import APIRequestFactory, force_authenticate
 
+from grandchallenge.annotations.models import (
+    ETDRSGridAnnotation,
+    PolygonAnnotationSet,
+)
+from grandchallenge.annotations.serializers import (
+    ETDRSGridAnnotationSerializer,
+    ImagePathologyAnnotationSerializer,
+    ImageQualityAnnotationSerializer,
+    ImageTextAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
+    PolygonAnnotationSetSerializer,
+    RetinaImagePathologyAnnotationSerializer,
+    SinglePolygonAnnotationSerializer,
+)
+from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
-from grandchallenge.subdomains.utils import reverse
-from django.conf import settings
-from django.contrib.auth import get_user_model
-
-from tests.cases_tests.factories import ImageFactory
-from tests.factories import UserFactory
-from tests.annotations_tests.factories import (
-    PolygonAnnotationSetFactory,
-    SinglePolygonAnnotationFactory,
-    ETDRSGridAnnotationFactory,
-    ImageQualityAnnotationFactory,
-    ImagePathologyAnnotationFactory,
-    RetinaImagePathologyAnnotationFactory,
-    ImageTextAnnotationFactory,
-)
-from grandchallenge.annotations.serializers import (
-    PolygonAnnotationSetSerializer,
-    SinglePolygonAnnotationSerializer,
-    LandmarkAnnotationSetSerializer,
-    ETDRSGridAnnotationSerializer,
-    ImageQualityAnnotationSerializer,
-    ImagePathologyAnnotationSerializer,
-    RetinaImagePathologyAnnotationSerializer,
-    ImageTextAnnotationSerializer,
-)
-from grandchallenge.core.serializers import UserSerializer
-from grandchallenge.annotations.models import (
-    PolygonAnnotationSet,
-    ETDRSGridAnnotation,
-)
 from grandchallenge.retina_api.views import (
-    PolygonAnnotationSetViewSet,
-    SinglePolygonViewSet,
-    PolygonListView,
+    ETDRSGridAnnotationViewSet,
     GradersWithPolygonAnnotationsListView,
+    ImagePathologyAnnotationViewSet,
+    ImageQualityAnnotationViewSet,
+    ImageTextAnnotationViewSet,
     LandmarkAnnotationSetForImageList,
     OctObsRegistrationRetrieve,
-    ETDRSGridAnnotationViewSet,
-    ImageQualityAnnotationViewSet,
-    ImagePathologyAnnotationViewSet,
+    PolygonAnnotationSetViewSet,
+    PolygonListView,
     RetinaImagePathologyAnnotationViewSet,
-    ImageTextAnnotationViewSet,
+    SinglePolygonViewSet,
 )
+from grandchallenge.subdomains.utils import reverse
+from tests.annotations_tests.factories import (
+    ETDRSGridAnnotationFactory,
+    ImagePathologyAnnotationFactory,
+    ImageQualityAnnotationFactory,
+    ImageTextAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    RetinaImagePathologyAnnotationFactory,
+    SinglePolygonAnnotationFactory,
+)
+from tests.cases_tests.factories import ImageFactory
 from tests.conftest import (
-    generate_annotation_set,
-    generate_two_polygon_annotation_sets,
-    generate_multiple_landmark_annotation_sets,
     add_to_graders_group,
+    generate_annotation_set,
+    generate_multiple_landmark_annotation_sets,
+    generate_two_polygon_annotation_sets,
 )
+from tests.factories import UserFactory
 from tests.registrations_tests.factories import OctObsRegistrationFactory
 from tests.viewset_helpers import view_test
 

@@ -2,35 +2,35 @@ import base64
 import json
 import random
 from io import BytesIO
-import pytest
 
-from PIL import Image as PILImage
 import SimpleITK as sitk
-from rest_framework import status
-from django.core.cache import cache
-from rest_framework.authtoken.models import Token
+import pytest
+from PIL import Image as PILImage
 from django.conf import settings
-from rest_framework.compat import SHORT_SEPARATORS, LONG_SEPARATORS
+from django.core.cache import cache
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
 from rest_framework.utils import encoders
 
 from grandchallenge.retina_api.serializers import (
-    TreeObjectSerializer,
     TreeImageSerializer,
+    TreeObjectSerializer,
 )
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
-    ImageFactoryWithImageFile3DLarge3Slices,
     ImageFactoryWithImageFile2DLarge,
+    ImageFactoryWithImageFile3DLarge3Slices,
     ImageFactoryWithImageFile3DLarge4Slices,
 )
 from tests.retina_api_tests.helpers import (
-    create_datastructures_data,
-    batch_test_image_endpoint_redirects,
     batch_test_data_endpoints,
-    client_login,
+    batch_test_image_endpoint_redirects,
     client_force_login,
+    client_login,
+    create_datastructures_data,
     get_user_from_str,
 )
 
@@ -241,7 +241,6 @@ class TestArchiveIndexAPIEndpoints:
                     oct_obs_registration_aus,
                 ),
             ):
-
                 # oct obs registration
                 response_obs = response_info.get("registration").get("obs")
                 rv = oor.registration_values

@@ -1,6 +1,6 @@
+from io import BytesIO
 from typing import Callable
 from urllib.parse import urlparse
-from io import BytesIO
 
 import pytest
 from PIL import Image
@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.test import RequestFactory, Client
+from django.test import Client, RequestFactory
 from django.views.generic import View
 
 from grandchallenge.challenges.models import Challenge

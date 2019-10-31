@@ -2,8 +2,8 @@ import pytest
 from django.contrib.sites.middleware import CurrentSiteMiddleware
 
 from grandchallenge.subdomains.middleware import (
-    subdomain_middleware,
     challenge_subdomain_middleware,
+    subdomain_middleware,
 )
 from tests.factories import ChallengeFactory
 

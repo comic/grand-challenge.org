@@ -3,8 +3,8 @@ import pytest
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import ExternalChallengeFactory
 from tests.utils import (
-    validate_logged_in_view,
     validate_admin_only_view,
+    validate_logged_in_view,
     validate_staff_only_view,
 )
 

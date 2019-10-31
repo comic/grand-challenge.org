@@ -1,7 +1,8 @@
 from django.conf import settings
+
 from tests.archives_tests.factories import ArchiveFactory
-from tests.patients_tests.factories import PatientFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFile
+from tests.patients_tests.factories import PatientFactory
 from tests.studies_tests.factories import StudyFactory
 
 

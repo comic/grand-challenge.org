@@ -1,6 +1,6 @@
 import os
-import time
 import random
+import time
 
 from django.test import RequestFactory
 
@@ -75,7 +75,7 @@ def create_partial_upload_file_request(
     http_content_range=None,
     extra_headers=None,
 ):
-    content_range = f"bytes {start_byte}-{end_byte-1}/{len(content)}"
+    content_range = f"bytes {start_byte}-{end_byte - 1}/{len(content)}"
 
     if http_content_range is None:
         http_content_range = content_range

@@ -1,18 +1,20 @@
-import pytest
 from io import StringIO
+
+import pytest
+from django.core.management import CommandError, call_command
 from django.forms.models import model_to_dict
-from django.core.management import call_command, CommandError
 from guardian.core import ObjectPermissionChecker
-from tests.factories import UserFactory
+
 from grandchallenge.annotations.models import (
-    MeasurementAnnotation,
     BooleanClassificationAnnotation,
-    IntegerClassificationAnnotation,
-    PolygonAnnotationSet,
-    LandmarkAnnotationSet,
-    ETDRSGridAnnotation,
     CoordinateListAnnotation,
+    ETDRSGridAnnotation,
+    IntegerClassificationAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
 )
+from tests.factories import UserFactory
 
 
 @pytest.mark.django_db

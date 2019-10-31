@@ -9,8 +9,8 @@ from grandchallenge.container_exec.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
     SessionFactory,
-    WorkstationImageFactory,
     WorkstationFactory,
+    WorkstationImageFactory,
 )
 
 

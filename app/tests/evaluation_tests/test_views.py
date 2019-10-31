@@ -7,13 +7,11 @@ from django.db.models import signals
 from django.utils import timezone
 
 from tests.factories import (
-    MethodFactory,
-    SubmissionFactory,
     JobFactory,
+    MethodFactory,
     ResultFactory,
+    SubmissionFactory,
 )
-
-# TODO: Test creation with forms.
 from tests.utils import (
     get_view_for_user,
     validate_admin_only_view,

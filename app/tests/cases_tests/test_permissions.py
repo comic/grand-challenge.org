@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, Group, User
 
 from grandchallenge.cases.permissions import ImagePermission
-from tests.factories import UserFactory, ImageFactory
+from tests.factories import ImageFactory, UserFactory
 
 
 @dataclass
