@@ -1,13 +1,13 @@
 from django.urls import path
 
 from grandchallenge.pages.views import (
-    page,
-    insertedpage,
-    PageList,
-    PageCreate,
-    PageUpdate,
-    PageDelete,
     FaviconView,
+    PageCreate,
+    PageDelete,
+    PageList,
+    PageUpdate,
+    insertedpage,
+    page,
 )
 
 app_name = "pages"

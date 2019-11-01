@@ -6,4 +6,4 @@ class ParticipantsConfig(AppConfig):
 
     def ready(self):
         # noinspection PyUnresolvedReferences
-        import grandchallenge.participants.signals
+        import grandchallenge.participants.signals  # noqa: F401

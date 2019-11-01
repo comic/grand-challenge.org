@@ -15,10 +15,10 @@ from grandchallenge.container_exec.models import (
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.validators import (
-    MimeTypeValidator,
     ExtensionValidator,
-    get_file_mimetype,
     JSONSchemaValidator,
+    MimeTypeValidator,
+    get_file_mimetype,
 )
 from grandchallenge.evaluation.emails import send_failed_job_email
 from grandchallenge.subdomains.utils import reverse

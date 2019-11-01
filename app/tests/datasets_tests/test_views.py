@@ -1,15 +1,15 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.test_background_tasks import (
     create_raw_upload_image_session,
 )
 from tests.factories import (
-    UserFactory,
-    SUPER_SECURE_TEST_PASSWORD,
     ChallengeFactory,
+    SUPER_SECURE_TEST_PASSWORD,
+    UserFactory,
 )
 from tests.utils import get_http_host
 

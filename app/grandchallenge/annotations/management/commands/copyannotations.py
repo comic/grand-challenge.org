@@ -1,16 +1,16 @@
-from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.management.base import BaseCommand, CommandError
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.annotations.models import (
-    MeasurementAnnotation,
     BooleanClassificationAnnotation,
-    IntegerClassificationAnnotation,
-    PolygonAnnotationSet,
-    LandmarkAnnotationSet,
-    ETDRSGridAnnotation,
     CoordinateListAnnotation,
+    ETDRSGridAnnotation,
+    IntegerClassificationAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
 )
 
 

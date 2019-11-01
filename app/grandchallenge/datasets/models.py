@@ -7,17 +7,11 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from grandchallenge.cases.models import (
-    Image,
-    RawImageUploadSession,
-    RawImageFile,
-)
+from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.container_exec.models import ContainerExecJobModel
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.jqfileupload.models import StagedFile
+from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 

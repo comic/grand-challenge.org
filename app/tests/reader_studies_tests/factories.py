@@ -1,6 +1,6 @@
 import factory
 
-from grandchallenge.reader_studies.models import ReaderStudy, Question, Answer
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.factories import UserFactory, WorkstationFactory
 
 

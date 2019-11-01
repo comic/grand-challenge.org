@@ -5,28 +5,28 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_participants_list_is_filtered(client, TwoChallengeSets):
+def test_participants_list_is_filtered(client, two_challenge_sets):
     response = get_view_for_user(
         viewname="participants:list",
-        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
-        user=TwoChallengeSets.admin12,
+        user=two_challenge_sets.admin12,
     )
     tests = [
-        (False, TwoChallengeSets.ChallengeSet1.non_participant),
-        (True, TwoChallengeSets.ChallengeSet1.participant),
-        (True, TwoChallengeSets.ChallengeSet1.participant1),
-        (False, TwoChallengeSets.ChallengeSet1.creator),
-        (False, TwoChallengeSets.ChallengeSet1.admin),
-        (False, TwoChallengeSets.ChallengeSet2.non_participant),
-        (False, TwoChallengeSets.ChallengeSet2.participant),
-        (False, TwoChallengeSets.ChallengeSet2.participant1),
-        (False, TwoChallengeSets.ChallengeSet2.creator),
-        (False, TwoChallengeSets.ChallengeSet2.admin),
+        (False, two_challenge_sets.challenge_set_1.non_participant),
+        (True, two_challenge_sets.challenge_set_1.participant),
+        (True, two_challenge_sets.challenge_set_1.participant1),
+        (False, two_challenge_sets.challenge_set_1.creator),
+        (False, two_challenge_sets.challenge_set_1.admin),
+        (False, two_challenge_sets.challenge_set_2.non_participant),
+        (False, two_challenge_sets.challenge_set_2.participant),
+        (False, two_challenge_sets.challenge_set_2.participant1),
+        (False, two_challenge_sets.challenge_set_2.creator),
+        (False, two_challenge_sets.challenge_set_2.admin),
         # admin12 is in the response as they're loading the page
-        (True, TwoChallengeSets.admin12),
-        (True, TwoChallengeSets.participant12),
-        (False, TwoChallengeSets.admin1participant2),
+        (True, two_challenge_sets.admin12),
+        (True, two_challenge_sets.participant12),
+        (False, two_challenge_sets.admin1participant2),
     ]
     for test in tests:
         assert (test[1].username in response.rendered_content) == test[0]
@@ -34,18 +34,18 @@ def test_participants_list_is_filtered(client, TwoChallengeSets):
 
 
 @pytest.mark.django_db
-def test_registration_list_is_filtered(client, TwoChallengeSets):
+def test_registration_list_is_filtered(client, two_challenge_sets):
     r1 = RegistrationRequestFactory(
-        challenge=TwoChallengeSets.ChallengeSet1.challenge
+        challenge=two_challenge_sets.challenge_set_1.challenge
     )
     r2 = RegistrationRequestFactory(
-        challenge=TwoChallengeSets.ChallengeSet2.challenge
+        challenge=two_challenge_sets.challenge_set_2.challenge
     )
     response = get_view_for_user(
         viewname="participants:registration-list",
-        challenge=TwoChallengeSets.ChallengeSet1.challenge,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
-        user=TwoChallengeSets.admin12,
+        user=two_challenge_sets.admin12,
     )
     assert r1.user.username in response.rendered_content
     assert r2.user.username not in response.rendered_content

@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.db.models.signals import post_save
 from factory.django import mute_signals
 
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from tests.factories import ChallengeFactory, SubmissionFactory
 
 

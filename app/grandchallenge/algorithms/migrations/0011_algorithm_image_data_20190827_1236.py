@@ -6,8 +6,10 @@ from django.db import migrations
 
 def algorithm_container_images_to_algorithms_reverse(apps, schema_editor):
     # Reverse, create AlgorithmImage from Algorithm
-    Algorithm = apps.get_model("algorithms", "Algorithm")
-    AlgorithmImage = apps.get_model("algorithms", "AlgorithmImage")
+    Algorithm = apps.get_model("algorithms", "Algorithm")  # noqa: N806
+    AlgorithmImage = apps.get_model(  # noqa: N806
+        "algorithms", "AlgorithmImage"
+    )
 
     for a in Algorithm.objects.all():
         for im in a.algorithm_container_images.all():
@@ -25,8 +27,8 @@ def algorithm_container_images_to_algorithms_reverse(apps, schema_editor):
 
 
 def create_algorithm_workstation(apps):
-    Group = apps.get_model("auth", "Group")
-    Workstation = apps.get_model("workstations", "Workstation")
+    Group = apps.get_model("auth", "Group")  # noqa: N806
+    Workstation = apps.get_model("workstations", "Workstation")  # noqa: N806
 
     pk = uuid4()
     editors_group = Group.objects.create(
@@ -49,9 +51,11 @@ def create_algorithm_workstation(apps):
 def algorithm_container_images_to_algorithms_forward(apps, schema_editor):
     # Forward, create Algorithm from AlgorithmImage
 
-    Algorithm = apps.get_model("algorithms", "Algorithm")
-    AlgorithmImage = apps.get_model("algorithms", "AlgorithmImage")
-    Group = apps.get_model("auth", "Group")
+    Algorithm = apps.get_model("algorithms", "Algorithm")  # noqa: N806
+    AlgorithmImage = apps.get_model(  # noqa: N806
+        "algorithms", "AlgorithmImage"
+    )
+    Group = apps.get_model("auth", "Group")  # noqa: N806
 
     workstation = create_algorithm_workstation(apps)
 

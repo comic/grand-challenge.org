@@ -9,7 +9,6 @@ from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
 from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.jqfileupload.models import StagedFile
 
 
 class ContainerExecJobModel(models.Model):

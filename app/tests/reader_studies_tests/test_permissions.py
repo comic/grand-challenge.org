@@ -1,14 +1,14 @@
 import pytest
 from django.conf import settings
-from guardian.shortcuts import get_perms, assign_perm
+from guardian.shortcuts import assign_perm, get_perms
 
 from tests.factories import UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
-    ReaderStudyFactory,
-    QuestionFactory,
     AnswerFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
 )
-from tests.reader_studies_tests.utils import get_rs_creator, TwoReaderStudies
+from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
 from tests.utils import get_view_for_user
 
 

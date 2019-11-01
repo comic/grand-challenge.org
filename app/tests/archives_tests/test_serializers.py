@@ -1,9 +1,10 @@
 import pytest
-from tests.archives_tests.factories import ArchiveFactory
+
 from grandchallenge.archives.serializers import ArchiveSerializer
+from tests.archives_tests.factories import ArchiveFactory
 from tests.serializer_helpers import (
-    do_test_serializer_valid,
     do_test_serializer_fields,
+    do_test_serializer_valid,
 )
 
 

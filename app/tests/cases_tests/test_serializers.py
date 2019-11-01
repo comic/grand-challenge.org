@@ -1,10 +1,11 @@
 import pytest
+
 from grandchallenge.cases.serializers import ImageSerializer
 from tests.cases_tests.factories import ImageFactoryWithImageFile
 from tests.serializer_helpers import (
     check_if_valid,
-    do_test_serializer_valid,
     do_test_serializer_fields,
+    do_test_serializer_valid,
 )
 
 

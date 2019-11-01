@@ -1,5 +1,5 @@
-from django.urls import path, include
-from django.views.generic import TemplateView, RedirectView
+from django.urls import include, path
+from django.views.generic import RedirectView, TemplateView
 
 from grandchallenge.challenges.views import ChallengeUpdate
 from grandchallenge.core.views import challenge_homepage

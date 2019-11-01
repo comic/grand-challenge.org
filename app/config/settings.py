@@ -1,7 +1,5 @@
-import glob
 import os
 import re
-import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 

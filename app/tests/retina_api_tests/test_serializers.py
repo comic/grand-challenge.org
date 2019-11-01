@@ -1,25 +1,26 @@
 import random
-from PIL import Image as PILImage
+
 import pytest
+from PIL import Image as PILImage
 from django.conf import settings
 from django.http import Http404
 
 from grandchallenge.retina_api.serializers import (
-    PILImageSerializer,
     BytesImageSerializer,
+    PILImageSerializer,
+    TreeArchiveSerializer,
+    TreeImageSerializer,
     TreeObjectSerializer,
     TreeStudySerializer,
-    TreeImageSerializer,
-    TreeArchiveSerializer,
 )
 from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
-    ImageFactoryWithoutImageFile,
-    ImageFactoryWithImageFile3D,
     ImageFactoryWithImageFile2DLarge,
+    ImageFactoryWithImageFile3D,
     ImageFactoryWithImageFile3DLarge3Slices,
     ImageFactoryWithImageFile3DLarge4Slices,
+    ImageFactoryWithoutImageFile,
 )
 from tests.serializer_helpers import do_test_serializer_fields
 from tests.studies_tests.factories import StudyFactory

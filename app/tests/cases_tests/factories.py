@@ -1,13 +1,14 @@
 import factory
 from django.conf import settings
+
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from tests.studies_tests.factories import StudyFactory
+from tests.cases_tests import RESOURCE_PATH
 from tests.factories import (
     ImageFactory,
     ImageFileFactory,
     ImagingModalityFactory,
 )
-from tests.cases_tests import RESOURCE_PATH
+from tests.studies_tests.factories import StudyFactory
 
 
 class ImageFileFactoryWithMHDFile(ImageFileFactory):

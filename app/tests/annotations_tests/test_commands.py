@@ -1,18 +1,20 @@
-import pytest
 from io import StringIO
+
+import pytest
+from django.core.management import CommandError, call_command
 from django.forms.models import model_to_dict
-from django.core.management import call_command, CommandError
 from guardian.core import ObjectPermissionChecker
-from tests.factories import UserFactory
+
 from grandchallenge.annotations.models import (
-    MeasurementAnnotation,
     BooleanClassificationAnnotation,
-    IntegerClassificationAnnotation,
-    PolygonAnnotationSet,
-    LandmarkAnnotationSet,
-    ETDRSGridAnnotation,
     CoordinateListAnnotation,
+    ETDRSGridAnnotation,
+    IntegerClassificationAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
 )
+from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -30,7 +32,7 @@ class TestCommands:
     def test_copyannotations_command_requires_arguments(self):
         try:
             call_command("copyannotations")
-            assert False
+            pytest.fail()
         except CommandError as e:
             assert (
                 str(e)
@@ -41,7 +43,7 @@ class TestCommands:
         non_user = "non_existing_user"
         try:
             call_command("copyannotations", non_user, non_user)
-            assert False
+            pytest.fail()
         except CommandError as e:
             assert str(e) == "user_from does not exist"
 
@@ -50,7 +52,7 @@ class TestCommands:
         non_user = "non_existing_user"
         try:
             call_command("copyannotations", user.username, non_user)
-            assert False
+            pytest.fail()
         except CommandError as e:
             assert str(e) == "user_to does not exist"
 
@@ -61,12 +63,12 @@ class TestCommands:
             call_command(
                 "copyannotations", user_from.username, user_to.username
             )
-            assert False
+            pytest.fail()
         except CommandError as e:
             assert str(e) == "No annotations found for this user"
 
-    def test_copyannotations_command_output(self, AnnotationSet):
-        user_from = AnnotationSet.grader
+    def test_copyannotations_command_output(self, annotation_set):
+        user_from = annotation_set.grader
         user_to = UserFactory()
 
         out = StringIO()
@@ -75,36 +77,36 @@ class TestCommands:
         )
         output = out.getvalue()
         assert (
-            f"Copied MeasurementAnnotation({AnnotationSet.measurement.pk})"
+            f"Copied MeasurementAnnotation({annotation_set.measurement.pk})"
             in output
         )
         assert (
-            f"Copied BooleanClassificationAnnotation({AnnotationSet.boolean.pk})"
+            f"Copied BooleanClassificationAnnotation({annotation_set.boolean.pk})"
             in output
         )
         assert (
-            f"Copied IntegerClassificationAnnotation({AnnotationSet.integer.pk})"
+            f"Copied IntegerClassificationAnnotation({annotation_set.integer.pk})"
             in output
         )
         assert (
-            f"Copied PolygonAnnotationSet({AnnotationSet.polygon.pk}) with 10 children"
+            f"Copied PolygonAnnotationSet({annotation_set.polygon.pk}) with 10 children"
             in output
         )
         assert (
-            f"Copied CoordinateListAnnotation({AnnotationSet.coordinatelist.pk})"
+            f"Copied CoordinateListAnnotation({annotation_set.coordinatelist.pk})"
             in output
         )
         assert (
-            f"Copied LandmarkAnnotationSet({AnnotationSet.landmark.pk}) with 5 children"
+            f"Copied LandmarkAnnotationSet({annotation_set.landmark.pk}) with 5 children"
             in output
         )
         assert (
-            f"Copied ETDRSGridAnnotation({AnnotationSet.etdrs.pk})" in output
+            f"Copied ETDRSGridAnnotation({annotation_set.etdrs.pk})" in output
         )
         assert "Done! Copied 7 annotations/sets and 15 children" in output
 
-    def test_copyannotations_command_copies_correctly(self, AnnotationSet):
-        user_from = AnnotationSet.grader
+    def test_copyannotations_command_copies_correctly(self, annotation_set):
+        user_from = annotation_set.grader
         user_to = UserFactory()
 
         call_command(
@@ -128,7 +130,7 @@ class TestCommands:
 
         for model, name in self.annotations:
             models = {
-                "original": model_to_dict(getattr(AnnotationSet, name)),
+                "original": model_to_dict(getattr(annotation_set, name)),
                 "copy": model_to_dict(model.objects.get(grader=user_to)),
             }
             # remove some values from model dicts
@@ -139,8 +141,8 @@ class TestCommands:
 
             assert models["original"] == models["copy"]
 
-    def test_copyannotations_command_adds_permissions(self, AnnotationSet):
-        user_from = AnnotationSet.grader
+    def test_copyannotations_command_adds_permissions(self, annotation_set):
+        user_from = annotation_set.grader
         user_to = UserFactory()
 
         call_command(
@@ -173,9 +175,9 @@ class TestCommands:
                     assert f"{permission_type}_{child_model_name}" in perms
 
     def test_copyannotations_command_doesnt_add_permissions(
-        self, AnnotationSet
+        self, annotation_set
     ):
-        user_from = AnnotationSet.grader
+        user_from = annotation_set.grader
         user_to = UserFactory()
 
         call_command(

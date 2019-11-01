@@ -1,65 +1,64 @@
 import json
 from enum import Enum
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views import View
-from rest_framework.renderers import JSONRenderer
-from rest_framework.views import APIView
+from django.views.decorators.csrf import ensure_csrf_cookie
+from rest_framework import authentication, status, viewsets
+from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
-from rest_framework import status, authentication, viewsets
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth import get_user_model
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.conf import settings
+from rest_framework.views import APIView
 from rest_framework_guardian import filters
-from rest_framework.exceptions import NotFound
 
+from grandchallenge.annotations.models import (
+    ETDRSGridAnnotation,
+    ImagePathologyAnnotation,
+    ImageQualityAnnotation,
+    ImageTextAnnotation,
+    LandmarkAnnotationSet,
+    PolygonAnnotationSet,
+    RetinaImagePathologyAnnotation,
+    SinglePolygonAnnotation,
+)
+from grandchallenge.annotations.serializers import (
+    ETDRSGridAnnotationSerializer,
+    ImagePathologyAnnotationSerializer,
+    ImageQualityAnnotationSerializer,
+    ImageTextAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
+    PolygonAnnotationSetSerializer,
+    RetinaImagePathologyAnnotationSerializer,
+    SinglePolygonAnnotationSerializer,
+)
+from grandchallenge.archives.models import Archive
+from grandchallenge.cases.models import Image
 from grandchallenge.cases.permissions import ImagePermission
+from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.core.serializers import UserSerializer
+from grandchallenge.patients.models import Patient
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
-    RetinaOwnerAPIPermission,
     RetinaAdminAPIPermission,
+    RetinaOwnerAPIPermission,
 )
-from grandchallenge.archives.models import Archive
-from grandchallenge.patients.models import Patient
-from grandchallenge.cases.models import Image
-from grandchallenge.annotations.models import (
-    LandmarkAnnotationSet,
-    PolygonAnnotationSet,
-    SinglePolygonAnnotation,
-    ETDRSGridAnnotation,
-    ImageQualityAnnotation,
-    ImagePathologyAnnotation,
-    RetinaImagePathologyAnnotation,
-    ImageTextAnnotation,
-)
-from grandchallenge.annotations.serializers import (
-    PolygonAnnotationSetSerializer,
-    SinglePolygonAnnotationSerializer,
-    ETDRSGridAnnotationSerializer,
-    LandmarkAnnotationSetSerializer,
-    ImageQualityAnnotationSerializer,
-    ImagePathologyAnnotationSerializer,
-    RetinaImagePathologyAnnotationSerializer,
-    ImageTextAnnotationSerializer,
-)
-from grandchallenge.challenges.models import ImagingModality
+from grandchallenge.retina_api.renderers import Base64Renderer
 from grandchallenge.retina_api.serializers import (
     BytesImageSerializer,
-    TreeObjectSerializer,
     TreeImageSerializer,
+    TreeObjectSerializer,
 )
 from grandchallenge.serving.permissions import user_can_download_image
-from grandchallenge.retina_api.renderers import Base64Renderer
 from grandchallenge.studies.models import Study
 
 
@@ -286,9 +285,13 @@ class DataView(APIView):
         return result
 
     def get_models_related_to_image_and_user(
-        self, images, user, model_set, extra_conditions={}
+        self, images, user, model_set, extra_conditions=None
     ):
+        if extra_conditions is None:
+            extra_conditions = {}
+
         annotation_models = []
+
         for image in images:
             user_annotation_models = getattr(image, model_set).filter(
                 grader=user, **extra_conditions
@@ -705,7 +708,7 @@ class DataView(APIView):
                 data_type == self.DataType.GA.value
                 or data_type == self.DataType.KAPPA.value
             ):
-                for visit_image_name, ga_data in data.items():
+                for _visit_image_name, ga_data in data.items():
                     conditions = {}
                     if ga_data["img_name"][1] == "obs_000":
                         conditions.update(

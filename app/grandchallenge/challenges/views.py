@@ -1,4 +1,4 @@
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 from itertools import chain
 
 from django.contrib import messages
@@ -6,10 +6,10 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.views.generic import (
     CreateView,
-    ListView,
-    UpdateView,
     DeleteView,
+    ListView,
     TemplateView,
+    UpdateView,
 )
 
 from grandchallenge.challenges.forms import (
@@ -18,16 +18,16 @@ from grandchallenge.challenges.forms import (
     ExternalChallengeUpdateForm,
 )
 from grandchallenge.challenges.models import (
+    BodyRegion,
     Challenge,
     ExternalChallenge,
     ImagingModality,
     TaskType,
-    BodyRegion,
 )
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
-    UserIsStaffMixin,
     UserIsNotAnonMixin,
+    UserIsStaffMixin,
 )
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse

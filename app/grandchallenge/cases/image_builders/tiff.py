@@ -3,14 +3,14 @@ from tempfile import TemporaryFile
 from typing import NamedTuple
 from uuid import uuid4
 
-import tifffile
 import pyvips
+import tifffile
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.conf import settings
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.models import Image, ImageFile, FolderUpload
+from grandchallenge.cases.models import FolderUpload, Image, ImageFile
 
 
 class GrandChallengeTiffFileTags(NamedTuple):
@@ -138,7 +138,7 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             tiff_file = load_tiff_file(path=file_path)
             dzi_output = create_dzi_images(tiff_file=tiff_file, pk=pk)
         except ValidationError as e:
-            invalid_file_errors[file_path.name] = e.message
+            invalid_file_errors[file_path.name] = str(e)
             continue
 
         image = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)

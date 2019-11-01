@@ -1,7 +1,6 @@
 from django.urls import path
 
 from grandchallenge.workstations.views import (
-    session_proxy,
     SessionCreate,
     SessionDetail,
     SessionRedirectView,
@@ -16,6 +15,7 @@ from grandchallenge.workstations.views import (
     WorkstationUpdate,
     WorkstationUsersAutocomplete,
     WorkstationUsersUpdate,
+    session_proxy,
 )
 
 app_name = "workstations"

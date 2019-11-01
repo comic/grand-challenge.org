@@ -1,12 +1,12 @@
 from django.contrib import admin
 
 from grandchallenge.challenges.models import (
+    BodyRegion,
+    BodyStructure,
     Challenge,
     ExternalChallenge,
-    BodyRegion,
-    TaskType,
-    BodyStructure,
     ImagingModality,
+    TaskType,
 )
 
 admin.site.register(Challenge)

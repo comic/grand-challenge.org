@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
 
 from grandchallenge.challenges.models import Challenge
@@ -49,7 +49,7 @@ class Team(models.Model):
         )
 
     def get_members(self):
-        User = get_user_model()
+        User = get_user_model()  # noqa: N806
         return User.objects.filter(teammember__team=self)
 
 
