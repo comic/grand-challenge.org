@@ -9,6 +9,7 @@ from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
+    ImageFactoryWithImageFile4D,
 )
 from tests.model_helpers import do_test_factory
 
@@ -43,6 +44,11 @@ class TestGetSitkImage:
             pytest.fail("No MultipleObjectsReturned exception")
         except MultipleObjectsReturned:
             pass
+
+    def test_4d_mhd_object(self):
+        image = ImageFactoryWithImageFile4D()
+        img = image.get_sitk_image()
+        assert img.GetDimension() == 4
 
     def test_no_mhd_object(self):
         image = ImageFactoryWithImageFile()

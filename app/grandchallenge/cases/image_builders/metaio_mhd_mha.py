@@ -12,63 +12,9 @@ from uuid import uuid4
 import SimpleITK as sitk
 from django.core.files import File
 
+from grandchallenge.cases.image_builders.metaio_utils import parse_mh_header
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile
-
-
-def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
-    """
-    Attempts to parse the headers of an mhd file. This function must be
-    secure to safeguard agains any untrusted uploaded file.
-
-    Parameters
-    ----------
-    filename
-
-    Returns
-    -------
-
-    Raises
-    ------
-    ValueError:
-        raised when the file contains problems making it impossible to
-        read
-    """
-
-    # attempt to limit numer of read headers to prevent overflow attacks
-    read_line_limit = 10000
-
-    result = {}
-    with open(filename, "rb") as f:
-        bin_line = True
-        while bin_line is not None:
-            read_line_limit -= 1
-            if read_line_limit < 0:
-                raise ValueError("Files contains too many header lines")
-
-            bin_line = f.readline(10000)
-            if not bin_line:
-                bin_line = None
-                continue
-            if len(bin_line) >= 10000:
-                raise ValueError("Line length is too long")
-
-            try:
-                line = bin_line.decode("utf-8")
-            except UnicodeDecodeError:
-                raise ValueError("Header contains invalid UTF-8")
-            else:
-                # Clean line endings
-                line = line.rstrip("\n\r")
-                if line.strip():
-                    if "=" in line:
-                        key, value = line.split("=", 1)
-                        result[key.strip()] = value.strip()
-                    else:
-                        result[line.strip()] = None
-            if "ElementDataFile" in result:
-                break  # last parsed header...
-    return result
 
 
 def image_builder_mhd(path: Path) -> ImageBuilderResult:
