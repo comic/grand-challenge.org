@@ -10,8 +10,8 @@ from grandchallenge.algorithms.views import (
 )
 from grandchallenge.cases.views import (
     ImageViewSet,
-    RawImageUploadSessionViewSet,
     RawImageFileViewSet,
+    RawImageUploadSessionViewSet,
 )
 from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.patients.views import PatientViewSet
