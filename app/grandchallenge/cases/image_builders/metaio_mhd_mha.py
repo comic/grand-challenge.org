@@ -12,7 +12,10 @@ from uuid import uuid4
 import SimpleITK
 from django.core.files import File
 
-from grandchallenge.cases.image_builders.metaio_utils import parse_mh_header
+from grandchallenge.cases.image_builders.metaio_utils import (
+    parse_mh_header,
+    load_sitk_image,
+)
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.models import Image, ImageFile
 
@@ -58,7 +61,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         headers: Mapping[str, Union[str, None]], filename: Path
     ) -> Tuple[Image, Sequence[ImageFile]]:
         try:
-            simple_itk_image = SimpleITK.ReadImage(str(filename.absolute()))
+            simple_itk_image = load_sitk_image(filename.absolute())
             simple_itk_image: SimpleITK.Image
         except RuntimeError:
             raise ValueError("SimpleITK cannot open file")
@@ -80,6 +83,10 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 simple_itk_image, str(work_dir / f"{pk}.mhd"), True
             )
 
+            if simple_itk_image.GetDimension() == 4:
+                timepoints = simple_itk_image.GetSize()[-1]
+            else:
+                timepoints = None
             depth = simple_itk_image.GetDepth()
             db_image = Image(
                 pk=pk,
@@ -87,13 +94,14 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 width=simple_itk_image.GetWidth(),
                 height=simple_itk_image.GetHeight(),
                 depth=depth if depth else None,
+                timepoints=timepoints,
                 resolution_levels=None,
                 color_space=color_space,
             )
             db_image_files = []
             for _file in work_dir.iterdir():
                 temp_file = TemporaryFile()
-                with open(_file, "rb") as open_file:
+                with open(str(_file), "rb") as open_file:
                     buffer = True
                     while buffer:
                         buffer = open_file.read(1024)

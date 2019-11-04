@@ -39,7 +39,7 @@ METAIO_IMAGE_TYPES = {
 }
 
 
-def parse_mh_header(filename: PathLike) -> Mapping[str, Union[str, None]]:
+def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
     """
     Attempts to parse the headers of an mhd file. This function must be
     secure to safeguard against any untrusted uploaded file.
@@ -118,7 +118,7 @@ def load_sitk_image_with_nd_support_from_headers(
     num_components = 1
     if "ElementNumberOfChannels" in headers:
         num_components = int(headers["ElementNumberOfChannels"])
-        if not "_ARRAY" in headers["ElementType"] and num_components > 1:
+        if "_ARRAY" not in headers["ElementType"] and num_components > 1:
             headers["ElementType"] = headers["ElementType"] + "_ARRAY"
 
     dtype = METAIO_IMAGE_TYPES[headers["ElementType"]]
@@ -141,6 +141,28 @@ def load_sitk_image_with_nd_support_from_headers(
     sitk_image.SetSpacing(extract_header_listing("ElementSpacing"))
     sitk_image.SetOrigin(extract_header_listing("Offset"))
 
-    # TODO Additional meta data setting
+    return sitk_image
 
+
+def load_sitk_image(
+    mhd_file: Path, raw_file: Optional[Path] = None
+) -> sitk.Image:
+    headers = parse_mh_header(mhd_file)
+    ndims = int(headers["NDims"])
+    if ndims < 4:
+        sitk_image = sitk.ReadImage(str(mhd_file))
+    elif ndims == 4:
+        if raw_file is None:
+            raw_file = (
+                mhd_file.resolve().parent
+                / Path(headers["ElementDataFile"]).name
+            )
+        sitk_image = load_sitk_image_with_nd_support_from_headers(
+            headers=headers, data_file_path=raw_file
+        )
+    else:
+        error_msg = (
+            "SimpleITK images with more than 4 dimensions are not supported"
+        )
+        raise NotImplementedError(error_msg)
     return sitk_image

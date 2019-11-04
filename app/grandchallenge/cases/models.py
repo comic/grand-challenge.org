@@ -4,16 +4,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
 
-import SimpleITK
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.cases.image_builders.metaio_utils import (
-    parse_mh_header,
-    load_sitk_image_with_nd_support_from_headers,
-)
+from grandchallenge.cases.image_builders.metaio_utils import load_sitk_image
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
@@ -329,20 +325,7 @@ class Image(UUIDModel):
 
             try:
                 hdr_path = Path(tempdirname) / Path(mhd_file.file.name).name
-                headers = parse_mh_header(hdr_path)
-                ndims = int(headers["NDims"])
-                if ndims < 4:
-                    sitk_image = SimpleITK.ReadImage(str(hdr_path))
-                if ndims <= 4:
-                    data_file_path = (
-                        Path(tempdirname) / Path(raw_file.file.name).name
-                    )
-                    sitk_image = load_sitk_image_with_nd_support_from_headers(
-                        headers=headers, data_file_path=data_file_path
-                    )
-                else:
-                    error_msg = "SimpleITK images with more than 4 dimensions are not supported"
-                    raise NotImplementedError(error_msg)
+                sitk_image = load_sitk_image(mhd_file=hdr_path)
             except RuntimeError as e:
                 logging.error(
                     f"Failed to load SimpleITK image with error: {e}"

@@ -5,8 +5,13 @@ Tests for the mhd-file reconstruction.
 from pathlib import Path
 
 import pytest
+import SimpleITK
 
-from grandchallenge.cases.image_builders.metaio_mhd_mha import parse_mh_header
+from grandchallenge.cases.image_builders.metaio_utils import (
+    load_sitk_image,
+    load_sitk_image_with_nd_support_from_headers,
+    parse_mh_header,
+)
 from tests.cases_tests import RESOURCE_PATH
 
 
@@ -71,6 +76,59 @@ def test_parse_header_valid_mhd_with_extra_fields():
         "woohoo": None,
         "Some_values": '"Huh? \u2713\U0001f604"',
     }
+
+
+def assert_sitk_img_equivalence(
+    img: SimpleITK.Image, img_ref: SimpleITK.Image
+):
+    assert img.GetDimension() == img_ref.GetDimension()
+    assert img.GetSize() == img_ref.GetSize()
+    assert img.GetOrigin() == img_ref.GetOrigin()
+    assert img.GetSpacing() == img_ref.GetSpacing()
+    assert (
+        img.GetNumberOfComponentsPerPixel()
+        == img_ref.GetNumberOfComponentsPerPixel()
+    )
+    assert img.GetPixelIDValue() == img_ref.GetPixelIDValue()
+    assert img.GetPixelIDTypeAsString() == img_ref.GetPixelIDTypeAsString()
+
+
+def test_writing_4d_mhd_produces_same_results(tmpdir):
+    def assert_img_properties(img: SimpleITK.Image):
+        assert img.GetDimension() == 4
+        assert img.GetWidth() == 10
+        assert img.GetHeight() == 11
+        assert img.GetDepth() == 12
+        assert img.GetSize()[-1] == 13
+
+    img_ref = load_sitk_image(RESOURCE_PATH / "image10x11x12x13.mhd")
+    assert_img_properties(img_ref)
+    copypath = Path(tmpdir / "temp4d.mhd")
+    SimpleITK.WriteImage(img_ref, str(copypath), True)
+    img = load_sitk_image(copypath)
+    assert_img_properties(img)
+    assert_sitk_img_equivalence(img, img_ref)
+
+
+@pytest.mark.parametrize(
+    "image",
+    (
+        RESOURCE_PATH / "image3x4.mhd",
+        RESOURCE_PATH / "image5x6x7.mhd",
+        RESOURCE_PATH / "image128x256x4RGB.mhd",
+        RESOURCE_PATH / "image10x10x10-extra-stuff.mhd",
+    ),
+)
+def test_4dloader_reproduces_normal_sitk_loader_results(image: Path):
+    img_ref = SimpleITK.ReadImage(str(image))
+    headers = parse_mh_header(image)
+    data_file_path = (
+        image.resolve().parent / Path(headers["ElementDataFile"]).name
+    )
+    img = load_sitk_image_with_nd_support_from_headers(
+        headers=headers, data_file_path=data_file_path
+    )
+    assert_sitk_img_equivalence(img, img_ref)
 
 
 def test_fail_on_invalid_utf8():
