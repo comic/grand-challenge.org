@@ -3,8 +3,10 @@ Tests for the mhd-file reconstruction.
 """
 
 import SimpleITK
-import pytest
+
 from pathlib import Path
+
+import pytest
 
 from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,
@@ -92,7 +94,14 @@ def assert_sitk_img_equivalence(
     assert img.GetPixelIDTypeAsString() == img_ref.GetPixelIDTypeAsString()
 
 
-def test_writing_4d_mhd_produces_same_results(tmpdir):
+@pytest.mark.parametrize(
+    "image",
+    (
+        RESOURCE_PATH / "image10x11x12x13.mhd",
+        RESOURCE_PATH / "image10x11x12x13.mha",
+    ),
+)
+def test_writing_4d_mhd_produces_same_results(tmpdir, image: Path):
     def assert_img_properties(img: SimpleITK.Image):
         assert img.GetDimension() == 4
         assert img.GetWidth() == 10
@@ -100,7 +109,7 @@ def test_writing_4d_mhd_produces_same_results(tmpdir):
         assert img.GetDepth() == 12
         assert img.GetSize()[-1] == 13
 
-    img_ref = load_sitk_image(RESOURCE_PATH / "image10x11x12x13.mhd")
+    img_ref = load_sitk_image(image)
     assert_img_properties(img_ref)
     copypath = Path(tmpdir / "temp4d.mhd")
     SimpleITK.WriteImage(img_ref, str(copypath), True)
@@ -120,13 +129,7 @@ def test_writing_4d_mhd_produces_same_results(tmpdir):
 )
 def test_4dloader_reproduces_normal_sitk_loader_results(image: Path):
     img_ref = SimpleITK.ReadImage(str(image))
-    headers = parse_mh_header(image)
-    data_file_path = (
-        image.resolve().parent / Path(headers["ElementDataFile"]).name
-    )
-    img = load_sitk_image_with_nd_support_from_headers(
-        headers=headers, data_file_path=data_file_path
-    )
+    img = load_sitk_image_with_nd_support_from_headers(mhd_file=image)
     assert_sitk_img_equivalence(img, img_ref)
 
 

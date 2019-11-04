@@ -1,6 +1,6 @@
 import zlib
-from pathlib import Path
 from os import PathLike
+from pathlib import Path
 from typing import Any, List, Mapping, Optional, Union
 
 import SimpleITK
@@ -95,16 +95,16 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
 
 
 def load_sitk_image_with_nd_support_from_headers(
-    headers: Mapping[str, Union[str, None]],
-    data_file_path: Optional[PathLike] = None,
+    mhd_file: Path, data_file_path: Optional[PathLike] = None
 ) -> SimpleITK.Image:
-    if headers["ElementDataFile"].strip() == "LOCAL":
-        raise ValueError(
-            "Expected the MHD header to contain a valid ElementDataFile"
+    headers = parse_mh_header(mhd_file)
+    is_mha = headers["ElementDataFile"].strip() == "LOCAL"
+    if is_mha:
+        data_file_path = mhd_file
+    elif data_file_path is None:
+        data_file_path = (
+            mhd_file.resolve().parent / Path(headers["ElementDataFile"]).name
         )
-
-    if data_file_path is None:
-        data_file_path = Path(headers["ElementDataFile"])
     if not data_file_path.exists():
         raise IOError("cannot find data file")
 
@@ -130,6 +130,10 @@ def load_sitk_image_with_nd_support_from_headers(
 
     is_compressed = headers["CompressedData"] == "True"
     with open(str(data_file_path), "rb") as f:
+        if is_mha:
+            line = ""
+            while "ElementDataFile = LOCAL" not in str(line):
+                line = f.readline()
         if not is_compressed:
             s = f.read()
         else:
@@ -144,21 +148,14 @@ def load_sitk_image_with_nd_support_from_headers(
     return sitk_image
 
 
-def load_sitk_image(
-    mhd_file: Path, raw_file: Optional[Path] = None
-) -> SimpleITK.Image:
+def load_sitk_image(mhd_file: Path) -> SimpleITK.Image:
     headers = parse_mh_header(mhd_file)
     ndims = int(headers["NDims"])
     if ndims < 4:
         sitk_image = SimpleITK.ReadImage(str(mhd_file))
     elif ndims == 4:
-        if raw_file is None:
-            raw_file = (
-                mhd_file.resolve().parent
-                / Path(headers["ElementDataFile"]).name
-            )
         sitk_image = load_sitk_image_with_nd_support_from_headers(
-            headers=headers, data_file_path=raw_file
+            mhd_file=mhd_file
         )
     else:
         error_msg = (
