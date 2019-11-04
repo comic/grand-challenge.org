@@ -243,6 +243,7 @@ class Image(UUIDModel):
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)
     depth = models.IntegerField(null=True)
+    timepoints = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
@@ -275,6 +276,8 @@ class Image(UUIDModel):
     @property
     def shape_without_color(self) -> List[int]:
         result = []
+        if self.timepoints is not None:
+            result.append(self.timepoints)
         if self.depth is not None:
             result.append(self.depth)
         result.append(self.height)
