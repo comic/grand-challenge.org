@@ -1,11 +1,9 @@
 """
 Tests for the mhd-file reconstruction.
 """
-
-import SimpleITK
-
 from pathlib import Path
 
+import SimpleITK
 import pytest
 
 from grandchallenge.cases.image_builders.metaio_utils import (

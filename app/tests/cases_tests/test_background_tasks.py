@@ -108,6 +108,39 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     assert session.error_message is not None
 
 
+@pytest.mark.parametrize(
+    "images",
+    (
+        ["image10x11x12x13.mha"],
+        ["image10x11x12x13.mhd", "image10x11x12x13.zraw"],
+    ),
+)
+@pytest.mark.django_db
+def test_staged_uploaded_4d_mha_upload(settings, images: List):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.refresh_from_db()
+    assert session.session_state == UploadSessionState.stopped
+    assert session.error_message is None
+
+    images = Image.objects.filter(origin=session).all()
+    assert len(images) == 1
+
+    raw_image_file = list(uploaded_images.values())[0]
+    raw_image_file: RawImageFile
+    raw_image_file.refresh_from_db()
+    assert raw_image_file.staged_file_id is None
+
+    image = images[0]
+    assert image.shape == [13, 12, 11, 10]
+    assert image.shape_without_color == [13, 12, 11, 10]
+    assert image.color_space == Image.COLOR_SPACE_GRAY
+
+
 @pytest.mark.django_db
 def test_no_convertible_file(settings):
     # Override the celery settings

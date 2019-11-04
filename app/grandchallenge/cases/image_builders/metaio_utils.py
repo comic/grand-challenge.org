@@ -1,6 +1,6 @@
 import zlib
-from os import PathLike
 from pathlib import Path
+from os import PathLike
 from typing import Any, List, Mapping, Optional, Union
 
 import SimpleITK
