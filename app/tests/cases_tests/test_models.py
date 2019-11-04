@@ -1,8 +1,7 @@
-import factory
-import pytest
-
 from pathlib import Path
 
+import factory
+import pytest
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 

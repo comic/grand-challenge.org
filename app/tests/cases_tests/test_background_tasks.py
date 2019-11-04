@@ -116,7 +116,7 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     ),
 )
 @pytest.mark.django_db
-def test_staged_uploaded_4d_mha_upload(settings, images: List):
+def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
