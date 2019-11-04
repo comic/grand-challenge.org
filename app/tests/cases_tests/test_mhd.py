@@ -2,10 +2,9 @@
 Tests for the mhd-file reconstruction.
 """
 
-from pathlib import Path
-
-import pytest
 import SimpleITK
+import pytest
+from pathlib import Path
 
 from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,

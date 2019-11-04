@@ -1,39 +1,39 @@
-from pathlib import Path
-
 import zlib
+from pathlib import Path
 from os import PathLike
-from typing import Mapping, Union, Optional, List, Any
-import SimpleITK as sitk
-import SimpleITK._SimpleITK as _sitk
+from typing import Any, List, Mapping, Optional, Union
+
+import SimpleITK
+import SimpleITK._SimpleITK as _SimpleITK
 
 METAIO_IMAGE_TYPES = {
     "MET_NONE": None,
     "MET_ASCII_CHAR": None,
-    "MET_CHAR": sitk.sitkInt8,
-    "MET_UCHAR": sitk.sitkUInt8,
-    "MET_SHORT": sitk.sitkInt16,
-    "MET_USHORT": sitk.sitkUInt16,
-    "MET_INT": sitk.sitkInt32,
-    "MET_UINT": sitk.sitkUInt32,
-    "MET_LONG": sitk.sitkInt64,
-    "MET_ULONG": sitk.sitkUInt64,
+    "MET_CHAR": SimpleITK.sitkInt8,
+    "MET_UCHAR": SimpleITK.sitkUInt8,
+    "MET_SHORT": SimpleITK.sitkInt16,
+    "MET_USHORT": SimpleITK.sitkUInt16,
+    "MET_INT": SimpleITK.sitkInt32,
+    "MET_UINT": SimpleITK.sitkUInt32,
+    "MET_LONG": SimpleITK.sitkInt64,
+    "MET_ULONG": SimpleITK.sitkUInt64,
     "MET_LONG_LONG": None,
     "MET_ULONG_LONG": None,
-    "MET_FLOAT": sitk.sitkFloat32,
-    "MET_DOUBLE": sitk.sitkFloat64,
+    "MET_FLOAT": SimpleITK.sitkFloat32,
+    "MET_DOUBLE": SimpleITK.sitkFloat64,
     "MET_STRING": None,
-    "MET_CHAR_ARRAY": sitk.sitkVectorInt8,
-    "MET_UCHAR_ARRAY": sitk.sitkVectorUInt8,
-    "MET_SHORT_ARRAY": sitk.sitkVectorInt16,
-    "MET_USHORT_ARRAY": sitk.sitkVectorUInt16,
-    "MET_INT_ARRAY": sitk.sitkVectorInt32,
-    "MET_UINT_ARRAY": sitk.sitkVectorUInt32,
-    "MET_LONG_ARRAY": sitk.sitkVectorInt64,
-    "MET_ULONG_ARRAY": sitk.sitkVectorUInt64,
+    "MET_CHAR_ARRAY": SimpleITK.sitkVectorInt8,
+    "MET_UCHAR_ARRAY": SimpleITK.sitkVectorUInt8,
+    "MET_SHORT_ARRAY": SimpleITK.sitkVectorInt16,
+    "MET_USHORT_ARRAY": SimpleITK.sitkVectorUInt16,
+    "MET_INT_ARRAY": SimpleITK.sitkVectorInt32,
+    "MET_UINT_ARRAY": SimpleITK.sitkVectorUInt32,
+    "MET_LONG_ARRAY": SimpleITK.sitkVectorInt64,
+    "MET_ULONG_ARRAY": SimpleITK.sitkVectorUInt64,
     "MET_LONG_LONG_ARRAY": None,
     "MET_ULONG_LONG_ARRAY": None,
-    "MET_FLOAT_ARRAY": sitk.sitkVectorFloat32,
-    "MET_DOUBLE_ARRAY": sitk.sitkVectorFloat64,
+    "MET_FLOAT_ARRAY": SimpleITK.sitkVectorFloat32,
+    "MET_DOUBLE_ARRAY": SimpleITK.sitkVectorFloat64,
     "MET_FLOAT_MATRIX": None,
     "MET_OTHER": None,
 }
@@ -97,7 +97,7 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
 def load_sitk_image_with_nd_support_from_headers(
     headers: Mapping[str, Union[str, None]],
     data_file_path: Optional[PathLike] = None,
-) -> sitk.Image:
+) -> SimpleITK.Image:
     if headers["ElementDataFile"].strip() == "LOCAL":
         raise ValueError(
             "Expected the MHD header to contain a valid ElementDataFile"
@@ -135,8 +135,8 @@ def load_sitk_image_with_nd_support_from_headers(
         else:
             s = zlib.decompress(f.read())
 
-    sitk_image = sitk.Image(shape, dtype, num_components)
-    _sitk._SetImageFromArray(s, sitk_image)
+    sitk_image = SimpleITK.Image(shape, dtype, num_components)
+    _SimpleITK._SetImageFromArray(s, sitk_image)
     sitk_image.SetDirection(extract_header_listing("TransformMatrix"))
     sitk_image.SetSpacing(extract_header_listing("ElementSpacing"))
     sitk_image.SetOrigin(extract_header_listing("Offset"))
@@ -146,11 +146,11 @@ def load_sitk_image_with_nd_support_from_headers(
 
 def load_sitk_image(
     mhd_file: Path, raw_file: Optional[Path] = None
-) -> sitk.Image:
+) -> SimpleITK.Image:
     headers = parse_mh_header(mhd_file)
     ndims = int(headers["NDims"])
     if ndims < 4:
-        sitk_image = sitk.ReadImage(str(mhd_file))
+        sitk_image = SimpleITK.ReadImage(str(mhd_file))
     elif ndims == 4:
         if raw_file is None:
             raw_file = (

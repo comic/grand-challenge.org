@@ -1,16 +1,15 @@
-from pathlib import Path
-
 import factory
 import pytest
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from pathlib import Path
 
 from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
+    ImageFactoryWithImageFile4D,
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
-    ImageFactoryWithImageFile4D,
 )
 from tests.factories import ImageFileFactory
 from tests.model_helpers import do_test_factory

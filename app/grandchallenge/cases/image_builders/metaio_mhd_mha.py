@@ -12,11 +12,11 @@ from uuid import uuid4
 import SimpleITK
 from django.core.files import File
 
-from grandchallenge.cases.image_builders.metaio_utils import (
-    parse_mh_header,
-    load_sitk_image,
-)
 from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.metaio_utils import (
+    load_sitk_image,
+    parse_mh_header,
+)
 from grandchallenge.cases.models import Image, ImageFile
 
 
