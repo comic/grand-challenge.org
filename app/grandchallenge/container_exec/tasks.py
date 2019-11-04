@@ -81,7 +81,7 @@ def _validate_docker_image_manifest(*, model, instance) -> str:
 
 
 def _extract_docker_image_file(*, model, instance, filename: str):
-    """ Extracts a file from the root of a tarball """
+    """Extract a file from the root of a tarball."""
     try:
         with instance.image.open(mode="rb") as im, tarfile.open(
             fileobj=im, mode="r"
@@ -101,8 +101,10 @@ def _extract_docker_image_file(*, model, instance, filename: str):
 
 def retry_if_dropped(func):
     """
-    Sometimes the Mysql connection will drop for long running jobs. This is
-    a decorator that will retry a function that relies on a usable connection.
+    Retry a function that relies on an open database connection.
+
+    Use this decorator when you have a long running task as sometimes the db
+    connection will drop.
     """
 
     def wrapper(*args, **kwargs):

@@ -35,7 +35,7 @@ The user is able to stop the container, otherwise it will be terminated after ``
 
 
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
-    """ This model holds the title and description of a workstation. """
+    """This model holds the title and description of a workstation."""
 
     logo = models.ImageField(upload_to=get_logo_path)
     editors_group = models.OneToOneField(
@@ -129,7 +129,10 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 @receiver(post_delete, sender=Workstation)
 def delete_workstation_groups_hook(*_, instance: Workstation, using, **__):
     """
-    Use a signal rather than delete() override to catch usages of bulk_delete
+    Deletes the related groups.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
     """
     try:
         instance.editors_group.delete(using=using)

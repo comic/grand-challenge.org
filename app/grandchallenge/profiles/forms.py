@@ -39,11 +39,10 @@ class SignupFormExtra(userena_forms.SignupForm):
         super().__init__(*args, **kw)
 
     def clean_country(self):
-        """ Make sure the user changed the country field.
-        """
+        """Make sure the user changed the country field."""
         country = self.cleaned_data["country"]
         if country == "00":
-            raise forms.ValidationError("Please choose a valid country.")
+            raise forms.ValidationError("Please choose a valid location.")
 
         return country
 

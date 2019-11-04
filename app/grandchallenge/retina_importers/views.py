@@ -35,9 +35,7 @@ class CheckImage(generics.GenericAPIView):
 
     @staticmethod
     def check_if_already_exists(request):
-        """
-        Method that checks if a image already exists before uploading.
-        """
+        """Method that checks if a image already exists before uploading."""
         try:
             archive_name = request.data.get("archive_identifier")
             if archive_name is not None:

@@ -6,7 +6,7 @@ from typing import Union
 
 
 def lower_first(iterator):
-    """ Lowers the first line of a file """
+    """Lower the first line of a file."""
     return itertools.chain([next(iterator).lower()], iterator)
 
 
@@ -42,7 +42,7 @@ def type_values(input: dict) -> dict:
 
 
 def process_csv_file(filehandle):
-    """ Reads a csv file into records, requires open file handle """
+    """Reads a csv file into records, requires open file handle."""
     reader = csv.DictReader(
         lower_first(iterdecode(filehandle, encoding="utf-8")),
         skipinitialspace=True,

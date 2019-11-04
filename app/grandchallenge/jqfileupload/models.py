@@ -19,9 +19,7 @@ def generate_upload_filename(instance, filename):
 
 
 class StagedFile(models.Model):
-    """
-    Files uploaded but not committed to other forms.
-    """
+    """Files uploaded but not committed to other forms."""
 
     user_pk_str = models.CharField(max_length=128)
     client_id = models.CharField(max_length=128, null=True, blank=True)

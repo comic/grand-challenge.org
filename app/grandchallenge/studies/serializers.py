@@ -11,9 +11,7 @@ class StudySerializer(serializers.ModelSerializer):
     )
 
     def get_unique_together_validators(self):
-        """
-        Overriding method to disable unique together checks
-        """
+        """Overriding method to disable unique together checks."""
         return []
 
     class Meta:

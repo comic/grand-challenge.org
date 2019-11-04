@@ -34,8 +34,7 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
         raised when the file contains problems making it impossible to
         read
     """
-
-    # attempt to limit numer of read headers to prevent overflow attacks
+    # attempt to limit number of read headers to prevent overflow attacks
     read_line_limit = 10000
 
     result = {}

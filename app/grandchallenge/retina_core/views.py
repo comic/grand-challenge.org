@@ -64,9 +64,7 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
 
 
 class NumpyView(RetinaAPIPermissionMixin, View):
-    """
-    View class for returning a specific image as a numpy array
-    """
+    """View class for returning a specific image as a numpy array."""
 
     raise_exception = True  # Raise 403 on unauthenticated request
 

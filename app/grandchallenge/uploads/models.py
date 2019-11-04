@@ -10,9 +10,10 @@ from grandchallenge.challenges.models import ComicSiteModel
 
 
 def give_file_upload_destination_path(uploadmodel, filename):
-    """ Where should this file go relative to MEDIA_ROOT?
-    Determines location based on permission level of the uploaded model.
+    """
+    Where should this file go relative to MEDIA_ROOT?
 
+    Determines location based on permission level of the uploaded model.
     """
     # uploadmodel can be either a ComicSite, meaning a
     # header image or something belonging to a ComicSite is being uploaded, or
@@ -27,11 +28,13 @@ def give_file_upload_destination_path(uploadmodel, filename):
     else:
         challenge = uploadmodel.challenge
         permission_lvl = uploadmodel.permission_lvl
+
     # If permission is ALL, upload this file to the public_html folder
     if permission_lvl == ComicSiteModel.ALL:
         path = os.path.join(challenge.public_upload_dir_rel(), filename)
     else:
         path = os.path.join(challenge.upload_dir_rel(), filename)
+
     # replace remove double slashes because this can mess up django's url
     # system
     path = path.replace("\\", "/")
@@ -71,6 +74,6 @@ def summernote_upload_filepath(instance, filename):
 
 
 class SummernoteAttachment(AbstractAttachment):
-    """ Workaround for custom upload locations from summernote """
+    """Workaround for custom upload locations from summernote."""
 
     file = models.FileField(upload_to=summernote_upload_filepath)

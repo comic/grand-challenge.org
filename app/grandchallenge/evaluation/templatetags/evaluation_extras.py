@@ -20,7 +20,6 @@ def get_jsonpath(obj: dict, jsonpath):
     :param jsonpath: The path to the object (singular)
     :return: The most relevant object in the dictionary
     """
-
     try:
         keys = jsonpath.split(".")
         val = obj
