@@ -43,7 +43,7 @@ def test_page_update_permissions(client, two_challenge_sets):
 
 @pytest.mark.django_db
 def test_page_list_filter(client, two_challenge_sets):
-    """ Check that only pages related to this challenge are listed """
+    """Check that only pages related to this challenge are listed."""
     p1 = PageFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         title="challenge1page1",

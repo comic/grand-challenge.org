@@ -21,15 +21,14 @@ from tests.utils import (
 
 
 def submission_and_job(*, challenge, creator):
-    """ Creates a submission and a job for that submission """
+    """Creates a submission and a job for that submission."""
     s = SubmissionFactory(challenge=challenge, creator=creator)
     j = JobFactory(submission=s)
     return s, j
 
 
 def submissions_and_jobs(two_challenge_sets):
-    """ Creates jobs (j) and submissions (s) for each participant (p) and
-    challenge (c).  """
+    """Create (j)obs and (s)ubmissions for each (p)articipant and (c)hallenge."""
     SubmissionsAndJobs = namedtuple(
         "SubmissionsAndJobs",
         [

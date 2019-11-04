@@ -65,7 +65,7 @@ def pytest_runtest_setup(item):
 
 @pytest.fixture(scope="session")
 def django_db_setup(django_db_setup, django_db_blocker):
-    """ Ensure that the main challenge has been created """
+    """Ensure that the main challenge has been created."""
     with django_db_blocker.unblock():
         # Set the default domain that is used in RequestFactory
         site = Site.objects.get(pk=settings.SITE_ID)
@@ -117,14 +117,17 @@ def generate_challenge_set():
 
 @pytest.fixture(name="challenge_set")
 def challenge_set():
-    """ Creates a challenge with creator, 2 participants, and non participant.
-    To use this you must mark the test with @pytest.mark.django_db """
+    """
+    Create a challenge with creator, 2 participants, and non participant.
+
+    To use this you must mark the test with `@pytest.mark.django_db`.
+    """
     return generate_challenge_set()
 
 
 @pytest.fixture(name="two_challenge_sets")
 def two_challenge_sets():
-    """ Creates two challenges with combination participants and admins """
+    """Creates two challenges with combination participants and admins."""
     two_challenge_sets = namedtuple(
         "two_challenge_sets",
         [
@@ -157,8 +160,11 @@ def two_challenge_sets():
 
 @pytest.fixture(name="eval_challenge_set")
 def challenge_set_with_evaluation(challenge_set):
-    """ Creates a challenge with two methods.
-    To use this you must mark the test with @pytest.mark.django_db """
+    """
+    Creates a challenge with two methods.
+
+    To use this you must mark the test with `@pytest.mark.django_db`.
+    """
     eval_challenge_set = namedtuple(
         "eval_challenge_set", ["challenge_set", "method"]
     )
@@ -172,9 +178,7 @@ def challenge_set_with_evaluation(challenge_set):
 
 @pytest.fixture(scope="session")
 def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
-    """
-    Creates the example evaluation container
-    """
+    """Create the example evaluation container."""
     im, _ = docker_client.images.build(
         path=os.path.join(
             os.path.split(__file__)[0],
@@ -351,19 +355,23 @@ def generate_annotation_set(retina_grader=False, image=False):
 
 @pytest.fixture(name="annotation_set")
 def annotation_set():
-    """ Creates a user with the one of each of the following annotations:
+    """
+    Create a user with the one of each of the following annotations:
     Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
     annotations), CoordinateList, LandmarkAnnotationSet(with single landmark
-    annotations for 5 images), ETDRSGrid """
+    annotations for 5 images), ETDRSGrid.
+    """
     return generate_annotation_set()
 
 
 @pytest.fixture(name="annotation_set_for_image")
 def annotation_set_for_image():
-    """ Creates a user with the one of each of the following annotations:
+    """
+    Create a user with the one of each of the following annotations:
     Measurement, BooleanClassification, PolygonAnnotationSet (with 10 child
     annotations), CoordinateList, LandmarkAnnotationSet(with single landmark
-    annotations for 5 images), ETDRSGrid """
+    annotations for 5 images), ETDRSGrid.
+    """
     return generate_annotation_set
 
 
@@ -403,17 +411,12 @@ def generate_two_polygon_annotation_sets(retina_grader=False):
 
 @pytest.fixture(name="two_retina_polygon_annotation_sets")
 def two_retina_polygon_annotation_sets():
-    """ Creates two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
+    """
+    Create two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
     belonging to two different graders that both are in the retina_graders
-    group """
+    group.
+    """
     return generate_two_polygon_annotation_sets(retina_grader=True)
-
-
-@pytest.fixture(name="TwoPolygonAnnotationSets")
-def two_polygon_annotation_sets():
-    """ Creates two PolygonAnnotationSets of each 10 SinglePolygonAnnotations
-    belonging to two different graders """
-    return generate_two_polygon_annotation_sets(retina_grader=False)
 
 
 class MultipleLandmarkAnnotationSets(NamedTuple):
@@ -485,21 +488,6 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
     )
 
 
-@pytest.fixture(name="MultipleRetinaLandmarkAnnotationSets")
-def multiple_retina_landmark_annotation_sets():
-    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5
-    SingleLandmarkAnnotations belonging to multiple different graders that
-    both are in the retina_graders group """
-    return generate_multiple_landmark_annotation_sets(retina_grader=True)
-
-
-@pytest.fixture(name="MultipleLandmarkAnnotationSets")
-def multiple_landmark_annotation_sets():
-    """ Creates multiple LandmarkAnnotationSets with 2, 3 and 5
-    SingleLandmarkAnnotations belonging to multiple different graders """
-    return generate_multiple_landmark_annotation_sets(retina_grader=False)
-
-
 class MultipleETDRSAnnotations(NamedTuple):
     grader1: UserFactory
     grader2: UserFactory
@@ -526,13 +514,13 @@ def generate_multiple_etdrs_annotations(retina_grader=False):
 
 @pytest.fixture(name="multiple_retina_etdrs_annotations")
 def multiple_retina_etdrs_annotations():
-    """ Creates 2 retina_grader users with 10 and 5 etdrs annotations"""
+    """Creates 2 retina_grader users with 10 and 5 etdrs annotations."""
     return generate_multiple_etdrs_annotations(retina_grader=True)
 
 
 @pytest.fixture(name="MultipleETDRSAnnotations")
 def multiple_etdrs_annotations():
-    """ Creates 2 users with 10 and 5 etdrs annotations"""
+    """Creates 2 users with 10 and 5 etdrs annotations."""
     return generate_multiple_etdrs_annotations(retina_grader=False)
 
 
@@ -593,7 +581,11 @@ def generate_archive_patient_study_image_set():
 
 @pytest.fixture(name="archive_patient_study_image_set")
 def archive_patient_study_images_set():
-    """ Creates an archive with 2 patients, with 3 (4, 5 and 6 images) and 2
-    (2 and 3 images) studies. And another archive with one patient, one study
-    and 4 images"""
+    """
+    Creates fixture archives.
+
+    This fixture has one with 2 patients, with 3 (4, 5 and 6 images) and 2
+    (2 and 3 images) studies, and another archive with one patient, one study
+    and 4 images.
+    """
     return generate_archive_patient_study_image_set()

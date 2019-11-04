@@ -113,8 +113,11 @@ def test_permissions_mixin(
 def test_permissions_after_challenge_rename(
     rf: RequestFactory, admin_user, mocker, challenge_set
 ):
-    """ Check that we can rename challenges.
-    Admin_user is superuser """
+    """
+    Check that we can rename challenges.
+
+    admin_user is superuser.
+    """
     creator = challenge_set.creator
     challenge = challenge_set.challenge
     participant = challenge_set.participant
