@@ -15,7 +15,7 @@ from config.denylist import USERNAME_DENYLIST
 
 
 def strtobool(val) -> bool:
-    """ Returns disutils.util.strtobool as a boolean """
+    """Return disutils.util.strtobool as a boolean."""
     return bool(strtobool_i(val))
 
 
