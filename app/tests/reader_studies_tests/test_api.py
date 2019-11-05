@@ -1,4 +1,5 @@
 import pytest
+import re
 
 from grandchallenge.reader_studies.models import Answer, Question
 from tests.factories import ImageFactory, UserFactory
@@ -294,3 +295,124 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
         content_type="application/json",
     )
     assert response.status_code == expected
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "answer_type,answer",
+    (
+        (Question.ANSWER_TYPE_BOOL, True,),
+        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, "dgfsgfds"),
+        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfsgfds\ndgfsgfds",),
+        (
+            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "2D bounding box",
+                "name": "test_name",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+            },
+        ),
+        (
+            Question.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Distance measurement",
+                "name": "test",
+                "start": (1, 2, 3),
+                "end": (4, 5, 6),
+            },
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple distance measurements",
+                "name": "test",
+                "lines": [
+                    {"start": (1, 2, 3), "end": (4, 5, 6)},
+                    {"start": (1, 2, 3), "end": (4, 5, 6)},
+                ],
+            },
+        ),
+    ),
+)
+def test_csv_export(client, answer_type, answer):
+    im = ImageFactory()
+
+    rs = ReaderStudyFactory()
+    rs.images.add(im)
+    rs.save()
+
+    editor = UserFactory()
+    rs.add_editor(editor)
+
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    q = QuestionFactory(
+        question_text="foo", reader_study=rs, answer_type=answer_type,
+    )
+
+    response = get_view_for_user(
+        viewname="api:reader-study-export-questions",
+        reverse_kwargs={"pk": rs.pk},
+        user=editor,
+        client=client,
+        method=client.get,
+        content_type="application/json",
+    )
+
+    headers = str(response.serialize_headers())
+    content = str(response.content)
+
+    assert response.status_code == 200
+    assert "Content-Type: text/csv" in headers
+    assert f'filename="{rs.slug}-questions.csv"' in headers
+    assert q.question_text in content
+    assert q.get_answer_type_display() in content
+
+    response = get_view_for_user(
+        viewname="api:reader-study-export-questions",
+        reverse_kwargs={"pk": rs.pk},
+        user=reader,
+        client=client,
+        method=client.get,
+        content_type="application/json",
+    )
+    assert response.status_code == 404
+
+    a = AnswerFactory(question=q, answer=answer)
+
+    response = get_view_for_user(
+        viewname="api:reader-study-export-answers",
+        reverse_kwargs={"pk": rs.pk},
+        user=editor,
+        client=client,
+        method=client.get,
+        content_type="application/json",
+    )
+
+    headers = str(response.serialize_headers())
+    content = str(response.content)
+
+    assert response.status_code == 200
+    assert "Content-Type: text/csv" in headers
+    assert f'filename="{rs.slug}-answers.csv"' in headers
+    assert a.creator.username in content
+    assert a.question.question_text in content
+    if isinstance(answer, dict):
+        for key in answer:
+            assert key in content
+    else:
+        assert re.sub(r"[\n\r\t]", " ", str(a.answer)) in content
+
+    response = get_view_for_user(
+        viewname="api:reader-study-export-answers",
+        reverse_kwargs={"pk": rs.pk},
+        user=reader,
+        client=client,
+        method=client.get,
+        content_type="application/json",
+    )
+    assert response.status_code == 404
