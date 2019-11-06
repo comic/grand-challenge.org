@@ -259,7 +259,7 @@ class ChallengeBase(models.Model):
         raise NotImplementedError
 
     @property
-    def hosted_on_comic(self):
+    def is_self_hosted(self):
         return True
 
     @property
@@ -529,7 +529,7 @@ class ExternalChallenge(ChallengeBase):
         return self.homepage
 
     @property
-    def hosted_on_comic(self):
+    def is_self_hosted(self):
         return False
 
 
