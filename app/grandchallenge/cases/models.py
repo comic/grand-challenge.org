@@ -287,10 +287,15 @@ class Image(UUIDModel):
 
     def get_sitk_image(self):
         """
-        This function returns the image that belongs to this model as an SimpleITK image. It requires that exactly one
-        MHD/RAW file pair is associated with the model. Otherwise it wil raise a MultipleObjectsReturned or
-        ObjectDoesNotExist exception.
-        :return: SimpleITK image
+        Return the image that belongs to this model as an SimpleITK image.
+
+        Requires that exactly one MHD/RAW file pair is associated with the model.
+        Otherwise it wil raise a MultipleObjectsReturned or ObjectDoesNotExist
+        exception.
+
+        Returns
+        -------
+            A SimpleITK image
         """
         # self.files should contain 1 .mhd file
         mhd_file = self.files.get(file__endswith=".mhd")

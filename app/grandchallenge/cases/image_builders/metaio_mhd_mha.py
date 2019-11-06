@@ -19,7 +19,7 @@ from grandchallenge.cases.models import Image, ImageFile
 def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
     """
     Attempts to parse the headers of an mhd file. This function must be
-    secure to safeguard agains any untrusted uploaded file.
+    secure to safeguard against any untrusted uploaded file.
 
     Parameters
     ----------
@@ -27,6 +27,8 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
 
     Returns
     -------
+        A dictionary containing the keys from the MHD header and their values
+        for this file.
 
     Raises
     ------

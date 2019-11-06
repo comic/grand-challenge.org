@@ -89,7 +89,8 @@ class AjaxUploadWidget(Widget):
 
 class OpenedStagedAjaxFile(BufferedIOBase):
     """
-    This class behaves like a file handle for a :class:`StagedAjaxFile`.
+    A open file handle for a :class:`StagedAjaxFile`.
+
     The file handle is strictly read-only. Under the hood, this class
     reconstructs the contingent file from the file chunks that have been
     uploaded.

@@ -1,7 +1,7 @@
 class IntervalMap:
     """
-    This class creates a lookup table for contiguous ranges that can be
-    described by a single length. It stores a mapping of these ranges to an
+    Create a lookup table for contiguous ranges that can be described by a
+    single length. It stores a mapping of these ranges to an
     arbitrary object allowing one to encode mappings like:
 
     ..code-block::

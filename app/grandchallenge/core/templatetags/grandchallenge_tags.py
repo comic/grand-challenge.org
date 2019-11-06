@@ -29,17 +29,21 @@ logger = logging.getLogger(__name__)
 
 
 def parse_key_value_token(token):
-    """Parses token content string into a parameter dictionary
+    """
+    Parses token content string into a parameter dictionary.
 
-    Args:
+    Parameters
+    ----------
         token (django.base.Token): Object representing the string content of
             the template tag. Key values are expected to be of the format
             key1:value1 key2:value2,...
 
-    Returns:
+    Returns
+    -------
         A dictionary of key:value pairs
 
-    Raises:
+    Raises
+    ------
         ValueError: if token contents are not in key:val1 key:val2 .. format
 
     """
@@ -103,17 +107,19 @@ def resolve_path(path, parser, context):
         * a filename containing a variable like "results/{{teamid}}/table1.txt"
         * a django template variable like "site.short_name"
 
-    Args:
+    Parameters
+    ----------
         Path (string)
         parser (django object)
         context (django context given tag render function)
 
-    Returns:
+    Returns
+    -------
         resolved path (string)
 
-    Raises:
+    Raises
+    ------
         PathResolutionException when path cannot be resolved
-        :param path:
     """
     # Find out what type it is:
     # If it contains any / or {{ resolving as django var
@@ -153,9 +159,10 @@ def substitute(string, substitutions):
     Take each key in the substitutions dict. See if this key exists
     between double curly braces in string. If so replace with value.
 
-    Example:
-    substitute("my name is {{name}}.",{version:1,name=John})
-    > "my name is John"
+    Examples
+    --------
+        substitute("my name is {{name}}.",{version:1,name=John})
+        > "my name is John"
     """
     for key, value in substitutions:
         string = re.sub(re.escape("{{" + key + "}}"), value, string)
@@ -437,8 +444,8 @@ class InsertGraphNode(template.Node):
         filename_clean = substitute(
             filename_raw, context["request"].GET.items()
         )
-        # If any url parameters are still in filename they were not replaced. This filename
-        # is missing information..
+        # If any url parameters are still in filename they were not replaced.
+        # This filename is missing information..
         if re.search(r"{{\w+}}", filename_clean):
             missed_parameters = re.findall(r"{{\w+}}", filename_clean)
             found_parameters = context["request"].GET.items()
@@ -483,17 +490,17 @@ class InsertGraphNode(template.Node):
                 )
             )
 
-        # self.get_graph_svg(table,headers)
-        # html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
-        html_out = svg_data
-        # rewrite relative links
-        return html_out
+        return svg_data
 
 
 def getrenderer(renderer_format):
-    """Holds list of functions which can take in a filepath and return html to show a graph.
-    By using this function we can easily list all available renderers and provide some safety:
-    only functions listed here can be called from the template tag render_graph.
+    """
+    Holds list of functions which can take in a filepath and return html to
+    show a graph.
+
+    By using this function we can easily list all available renderers and
+    provide some safety: only functions listed here can be called from the
+    template tag render_graph.
     """
     renderers = {
         "anode09": render_anode09_result,
