@@ -15,6 +15,7 @@ env:
   - DOCKER_COMPOSE_VERSION=1.21.2
 
 before_install:
+  - export TRAVIS_BRANCH_SAFE=$(echo $TRAVIS_BRANCH | sed "s/[/]/-/")
   - sudo docker pull crccheck/hello-world
   - sudo rm /usr/local/bin/docker-compose
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
