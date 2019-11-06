@@ -97,7 +97,7 @@ class PageDelete(
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Legacy methods, moved from comicsite/views.py
+# Legacy methods, moved from core/views.py
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def page(request, page_title):
     """Show a single page on a site."""

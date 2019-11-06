@@ -75,16 +75,14 @@ def is_subset(a, b):
 
 
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
-class ComicframeworkTestCase(TestCase):
-    """Contains methods for creating users using comicframework interface."""
-
+class GrandChallengeFrameworkTestCase(TestCase):
     def setUp(self):
         call_command("check_permissions")
         self.set_up_base()
         self.set_up_extra()
 
     def set_up_base(self):
-        """Function will be run for all comic framework testcases."""
+        """Function will be run for all subclassed testcases."""
         self._create_root_superuser()
 
     def set_up_extra(self):
@@ -130,7 +128,7 @@ class ComicframeworkTestCase(TestCase):
         participant = self._create_random_user("participant")
         self._register(participant, testproject)
         # a user who only signed up but did not register to any project
-        registered_user = self._create_random_user("comicregistered")
+        registered_user = self._create_random_user("registered")
         # TODO: How to do this gracefully?
         return [testproject, root, projectadmin, participant, registered_user]
 
@@ -410,7 +408,7 @@ class ComicframeworkTestCase(TestCase):
             )
 
 
-class CreateProjectTest(ComicframeworkTestCase):
+class CreateProjectTest(GrandChallengeFrameworkTestCase):
     def test_cannot_create_project_with_weird_name(self):
         """
         Expose issue #222 : projects can be created with names which are
@@ -471,7 +469,7 @@ class CreateProjectTest(ComicframeworkTestCase):
         )
 
 
-class ViewsTest(ComicframeworkTestCase):
+class ViewsTest(GrandChallengeFrameworkTestCase):
     def set_up_extra(self):
         """
         Create some objects to work with, In part this is done through
@@ -584,7 +582,7 @@ class ViewsTest(ComicframeworkTestCase):
         )
 
 
-class UploadTest(ComicframeworkTestCase):
+class UploadTest(GrandChallengeFrameworkTestCase):
     def set_up_extra(self):
         """
         Create some objects to work with, In part this is done through
@@ -681,7 +679,7 @@ class UploadTest(ComicframeworkTestCase):
         self._upload_test_file(self.participant2, self.testproject, name4)
 
 
-class TemplateTagsTest(ComicframeworkTestCase):
+class TemplateTagsTest(GrandChallengeFrameworkTestCase):
     """
     See if using template tags like {% include file.txt %} inside page html
     will crash anything.
@@ -884,7 +882,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         self.assert_text(text, expected_text, description)
 
 
-class ProjectLoginTest(ComicframeworkTestCase):
+class ProjectLoginTest(GrandChallengeFrameworkTestCase):
     """
     Getting userena login and signup to display inside a project context
     (with correct banner and pages, sending project-based email etc..) was

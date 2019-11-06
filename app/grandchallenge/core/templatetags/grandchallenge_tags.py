@@ -100,7 +100,7 @@ def resolve_path(path, parser, context):
     """
     Try to resolve all parameters in path
 
-    Paths in COMIC template tag parameters can include variables. Try to
+    Paths in template tag parameters can include variables. Try to
     resolve these and throw error if this is not possible.
     path can be of three types:
         * a raw filename like "stuff.html" or "results/table1.txt"
@@ -176,7 +176,7 @@ class TagListNode(template.Node):
         pass
 
     def render(self, context):
-        html_out = '<table class ="comictable taglist">'
+        html_out = '<table class ="taglist">'
         html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
         rowclass = "odd"
         for key, val in register.usagestrings.items():
@@ -639,7 +639,7 @@ def render_anode09_table(filename):
 
     table_id = id_generator()
     table_html = (
-        """<table border=1 class = "comictable csvtable sortable" id="%s">
+        """<table border=1 class = "csvtable sortable" id="%s">
                     <thead><tr>
                         <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
                         <td align=center width='54'>1/4</td>
@@ -671,7 +671,7 @@ def render_anode09_table(filename):
     table_html += array_to_table_row(["all nodules"] + variables["frocscore"])
     table_html += "</tbody>"
     table_html += "</table>"
-    return '<div class="comictablecontainer">' + table_html + "</div>"
+    return '<div class="tablecontainer">' + table_html + "</div>"
 
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):

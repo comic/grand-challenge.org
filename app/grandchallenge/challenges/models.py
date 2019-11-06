@@ -535,7 +535,8 @@ class ExternalChallenge(ChallengeBase):
 
 class ComicSiteModel(models.Model):
     """
-    An object which can be shown or used in the ComicSite framework.
+    An object which can be shown or used in the framework.
+
     This base class should handle common functions such as authorization.
     """
 

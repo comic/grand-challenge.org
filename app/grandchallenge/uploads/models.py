@@ -15,9 +15,9 @@ def give_file_upload_destination_path(uploadmodel, filename):
 
     Determines location based on permission level of the uploaded model.
     """
-    # uploadmodel can be either a ComicSite, meaning a
-    # header image or something belonging to a ComicSite is being uploaded, or
-    # a ComicSiteModel, meaning it is some inheriting class
+    # uploadmodel can be either a Challenge, meaning a
+    # header image or something belonging to a Challenge is being uploaded, or
+    # a Page, meaning it is some inheriting class
     # TODO: This is confused code. Have a single way of handling uploads,
     # lika a small js browser with upload capability.
     if hasattr(uploadmodel, "short_name"):
