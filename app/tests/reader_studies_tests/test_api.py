@@ -1,6 +1,7 @@
 import csv
-import pytest
 import re
+
+import pytest
 
 from grandchallenge.reader_studies.models import Answer, Question
 from grandchallenge.reader_studies.views import ExportCSVMixin
@@ -429,11 +430,7 @@ def test_csv_export(client, answer_type, answer):
         ([["a\rb\nc", "\nb", "\rc\r\r"]], 3, 1),
         ([["a", "a", "\na"], ["b", "b", "b"], ["c", "c", "c"]], 3, 3),
         (
-            [
-                ["a", '{"a":\n{"b": "c\nd"}\n}'],
-                ["b", "b,c,d"],
-                ["c", "d\r"],
-            ],
+            [["a", '{"a":\n{"b": "c\nd"}\n}'], ["b", "b,c,d"], ["c", "d\r"]],
             2,
             3,
         ),
