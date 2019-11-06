@@ -1,7 +1,6 @@
 import zlib
-from os import PathLike
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Union
+from typing import Any, List, Mapping, Union
 
 import SimpleITK
 import SimpleITK._SimpleITK as _SimpleITK
@@ -94,26 +93,27 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
     return result
 
 
+def extract_header_listing(
+    property: str, headers: Mapping[str, Union[str, None]], dtype: type = float
+) -> List[Any]:
+    return [dtype(e) for e in headers[property].strip().split(" ")]
+
+
 def load_sitk_image_with_nd_support_from_headers(
-    mhd_file: Path, data_file_path: Optional[PathLike] = None
+    mhd_file: Path
 ) -> SimpleITK.Image:
     headers = parse_mh_header(mhd_file)
     is_mha = headers["ElementDataFile"].strip() == "LOCAL"
     if is_mha:
         data_file_path = mhd_file
-    elif data_file_path is None:
+    else:
         data_file_path = (
             mhd_file.resolve().parent / Path(headers["ElementDataFile"]).name
         )
     if not data_file_path.exists():
         raise IOError("cannot find data file")
 
-    def extract_header_listing(
-        property: str, dtype: type = float
-    ) -> List[Any]:
-        return [dtype(e) for e in headers[property].strip().split(" ")]
-
-    shape = extract_header_listing("DimSize", int)
+    shape = extract_header_listing("DimSize", headers=headers, dtype=int)
 
     num_components = 1
     if "ElementNumberOfChannels" in headers:
@@ -141,9 +141,13 @@ def load_sitk_image_with_nd_support_from_headers(
 
     sitk_image = SimpleITK.Image(shape, dtype, num_components)
     _SimpleITK._SetImageFromArray(s, sitk_image)
-    sitk_image.SetDirection(extract_header_listing("TransformMatrix"))
-    sitk_image.SetSpacing(extract_header_listing("ElementSpacing"))
-    sitk_image.SetOrigin(extract_header_listing("Offset"))
+    sitk_image.SetDirection(
+        extract_header_listing("TransformMatrix", headers=headers)
+    )
+    sitk_image.SetSpacing(
+        extract_header_listing("ElementSpacing", headers=headers)
+    )
+    sitk_image.SetOrigin(extract_header_listing("Offset", headers=headers))
 
     return sitk_image
 

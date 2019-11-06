@@ -271,6 +271,10 @@ class Image(UUIDModel):
 
     @property
     def shape_without_color(self) -> List[int]:
+        """This function returns the shape of the image without color in Numpy ordering [(t), (z), y, x]
+
+        :return: [(t), (z), y, x]
+        """
         result = []
         if self.timepoints is not None:
             result.append(self.timepoints)
@@ -282,6 +286,10 @@ class Image(UUIDModel):
 
     @property
     def shape(self) -> List[int]:
+        """This function returns the shape of the image in Numpy ordering [(t), (z), y, x, (c)]
+
+        :return: [(t), (z), y, x, (c)]
+        """
         result = self.shape_without_color
         color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
         if color_components > 1:

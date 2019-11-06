@@ -140,6 +140,9 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
     assert image.shape_without_color == [13, 12, 11, 10]
     assert image.color_space == Image.COLOR_SPACE_GRAY
 
+    sitk_image = image.get_sitk_image()
+    assert [e for e in reversed(sitk_image.GetSize())] == image.shape
+
 
 @pytest.mark.django_db
 def test_no_convertible_file(settings):
@@ -214,6 +217,9 @@ def test_mhd_file_annotation_creation(settings):
     assert raw_image_file.staged_file_id is None
 
     image = images[0]
-    assert image.shape == [5, 6, 7]
-    assert image.shape_without_color == [5, 6, 7]
+    assert image.shape == [7, 6, 5]
+    assert image.shape_without_color == [7, 6, 5]
     assert image.color_space == Image.COLOR_SPACE_GRAY
+
+    sitk_image = image.get_sitk_image()
+    assert [e for e in reversed(sitk_image.GetSize())] == image.shape
