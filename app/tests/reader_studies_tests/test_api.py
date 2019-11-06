@@ -304,9 +304,9 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 @pytest.mark.parametrize(
     "answer_type,answer",
     (
-        (Question.ANSWER_TYPE_BOOL, True,),
+        (Question.ANSWER_TYPE_BOOL, True),
         (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, "dgfsgfds"),
-        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfsgfds\ndgfsgfds",),
+        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfsgfds\ndgfsgfds"),
         (
             Question.ANSWER_TYPE_2D_BOUNDING_BOX,
             {
@@ -354,7 +354,7 @@ def test_csv_export(client, answer_type, answer):
     rs.add_reader(reader)
 
     q = QuestionFactory(
-        question_text="foo", reader_study=rs, answer_type=answer_type,
+        question_text="foo", reader_study=rs, answer_type=answer_type
     )
 
     response = get_view_for_user(
