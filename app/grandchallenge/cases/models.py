@@ -97,12 +97,18 @@ class RawImageUploadSession(UUIDModel):
         )
 
     def save(self, *args, skip_processing=False, **kwargs):
-        created = self._state.adding
+        adding = self._state.adding
 
         super().save(*args, **kwargs)
 
-        if created and not skip_processing:
-            self.process_images()
+        if adding:
+            if self.creator:
+                assign_perm(
+                    f"view_{self._meta.model_name}", self.creator, self
+                )
+
+            if not skip_processing:
+                self.process_images()
 
     def process_images(self):
         # Local import to avoid circular dependency
@@ -155,6 +161,18 @@ class RawImageFile(UUIDModel):
     @property
     def api_url(self):
         return reverse("api:image-file-detail", kwargs={"pk": self.pk})
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding and self.upload_session.creator:
+            assign_perm(
+                f"view_{self._meta.model_name}",
+                self.upload_session.creator,
+                self,
+            )
 
 
 def image_file_path(instance, filename):

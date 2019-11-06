@@ -98,7 +98,6 @@ class RawImageUploadSessionViewSet(
 ):
     serializer_class = RawImageUploadSessionSerializer
     queryset = RawImageUploadSession.objects.all()
-
     permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
     filter_backends = [ObjectPermissionsFilter]
 
@@ -109,8 +108,7 @@ class RawImageUploadSessionViewSet(
 class RawImageFileViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
-    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
-    filter_backends = [ObjectPermissionsFilter]
-
     serializer_class = RawImageFileSerializer
     queryset = RawImageFile.objects.all()
+    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    filter_backends = [ObjectPermissionsFilter]

@@ -14,25 +14,26 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_upload_session_list(client):
-    upload_session_1, _ = (
-        RawImageUploadSessionFactory(),
-        RawImageUploadSessionFactory(),
+    u1, u2 = UserFactory(), UserFactory()
+    RawImageUploadSessionFactory(creator=u1)
+
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        client=client,
+        user=u1,
+        content_type="application/json",
     )
-    token = Token.objects.create(user=UserFactory())
-    extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    response = client.get(reverse("api:upload-session-list"), **extra_headers)
+    assert response.status_code == 200
+    assert response.json()["count"] == 1
+
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        client=client,
+        user=u2,
+        content_type="application/json",
+    )
     assert response.status_code == 200
     assert response.json()["count"] == 0
-
-    token = Token.objects.create(user=UserFactory(is_superuser=True))
-    extra_headers = {"HTTP_AUTHORIZATION": f"Token {token}"}
-    response = client.get(
-        reverse(
-            "api:upload-session-detail", kwargs={"pk": upload_session_1.pk}
-        ),
-        **extra_headers,
-    )
-    assert response.status_code == 200
 
 
 @pytest.mark.django_db
