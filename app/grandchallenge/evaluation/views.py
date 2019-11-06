@@ -70,9 +70,9 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
 
 class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     """
-    This class has no permissions, do not use it directly!
+    Base class for the submission creation forms.
 
-    See the subclasses.
+    It has no permissions, do not use it directly! See the subclasses.
     """
 
     model = Submission

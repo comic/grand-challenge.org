@@ -35,7 +35,7 @@ The user is able to stop the container, otherwise it will be terminated after ``
 
 
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
-    """This model holds the title and description of a workstation."""
+    """Store the title and description of a workstation."""
 
     logo = models.ImageField(upload_to=get_logo_path)
     editors_group = models.OneToOneField(
@@ -225,7 +225,6 @@ class Session(UUIDModel):
 
     Parameters
     ----------
-
     status
         Stores what has happened with the service, is it running, errored, etc?
     creator
@@ -365,9 +364,6 @@ class Session(UUIDModel):
         ------
         RunTimeError
             If the service cannot be started.
-
-        Returns
-        -------
         """
         try:
             if not self.workstation_image.ready:
@@ -392,12 +388,7 @@ class Session(UUIDModel):
             self.update_status(status=self.FAILED)
 
     def stop(self) -> None:
-        """
-        Stops the service for this session, cleaning up all of the containers.
-
-        Returns
-        -------
-        """
+        """Stop the service for this session, cleaning up all of the containers."""
         self.service.stop_and_cleanup()
         self.update_status(status=self.STOPPED)
 
@@ -409,9 +400,6 @@ class Session(UUIDModel):
         ----------
         status
             The new status for this session.
-
-        Returns
-        -------
         """
         self.status = status
         self.save()
@@ -442,12 +430,7 @@ class Session(UUIDModel):
         assign_perm(f"change_{self._meta.model_name}", self.creator, self)
 
     def save(self, *args, **kwargs) -> None:
-        """
-        Saves the session instance, starting or stopping the service if needed.
-
-        Returns
-        -------
-        """
+        """Save the session instance, starting or stopping the service if needed."""
         created = self._state.adding
 
         super().save(*args, **kwargs)

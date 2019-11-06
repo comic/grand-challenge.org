@@ -89,10 +89,7 @@ class MockStorage(FileSystemStorage):
         return mockfile
 
     def add_fake_file(self, filename, content):
-        """
-        This will appear to exist in folder /public_html. Content will be
-        returned when opening this file.
-        """
+        """Add a file in the ``/public_html`` folder."""
         self.FAKE_FILES.append(fake_file(filename, content))
 
     def delete(self, name):

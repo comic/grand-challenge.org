@@ -439,17 +439,11 @@ class Challenge(ChallengeBase):
         return os.path.join(self.short_name, settings.COMIC_PUBLIC_FOLDER_NAME)
 
     def admin_group_name(self):
-        """
-        returns the name of the admin group which should have all rights to
-        this ComicSite instance
-        """
+        """Return the name of this challenges admin group."""
         return self.short_name + "_admins"
 
     def participants_group_name(self):
-        """
-        returns the name of the participants group, which should have some
-        rights to this ComicSite instance
-        """
+        """Return the name of the participants group."""
         return self.short_name + "_participants"
 
     def is_admin(self, user) -> bool:

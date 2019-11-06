@@ -84,7 +84,7 @@ class ComicframeworkTestCase(TestCase):
         self.set_up_extra()
 
     def set_up_base(self):
-        """This setup should be run for all comic framework testcases."""
+        """Function will be run for all comic framework testcases."""
         self._create_root_superuser()
 
     def set_up_extra(self):
@@ -848,7 +848,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
 
     def assert_text(self, content, expected_text, description=""):
         """
-        assert that expected_text can be found in text,
+        Assert that expected_text can be found in text,
         description can describe what this link should do, like
         "register user without permission", for better fail messages
         """
