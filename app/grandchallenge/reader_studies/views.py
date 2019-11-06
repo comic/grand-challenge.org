@@ -245,14 +245,19 @@ class ExportCSVMixin(object):
         if not (user and user.has_perm(self.export_permission, obj)):
             raise Http404()
 
+    def _preprocess_data(self, data):
+        processed = []
+        for entry in data:
+            processed.append(
+                map(lambda x: re.sub(r"[\n\r\t]", " ", str(x)), entry)
+            )
+        return processed
+
     def _create_csv_response(self, data, filename="export.csv"):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         writer = csv.writer(response, quoting=csv.QUOTE_ALL, escapechar="\\")
-
-        for line in data:
-            entry = map(lambda x: re.sub(r"[\n\r\t]", " ", str(x)), line)
-            writer.writerow(entry)
+        writer.writerows(self._preprocess_data(data))
 
         return response
 

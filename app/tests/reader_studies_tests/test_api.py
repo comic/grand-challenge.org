@@ -1,7 +1,9 @@
+import csv
 import pytest
 import re
 
 from grandchallenge.reader_studies.models import Answer, Question
+from grandchallenge.reader_studies.views import ExportCSVMixin
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -416,3 +418,40 @@ def test_csv_export(client, answer_type, answer):
         content_type="application/json",
     )
     assert response.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "data,elements,lines",
+    (
+        ([["a"], ["b"], ["c"]], 1, 3),
+        ([["a"], ["b,c"], ["c"]], 1, 3),
+        ([["a\nb"], ["b"], ["c"]], 1, 3),
+        ([["a\rb\nc", "\nb", "\rc\r\r"]], 3, 1),
+        ([["a", "a", "\na"], ["b", "b", "b"], ["c", "c", "c"]], 3, 3),
+        (
+            [
+                ["a", '{"a":\n{"b": "c\nd"}\n}'],
+                ["b", "b,c,d"],
+                ["c", "d\r"],
+            ],
+            2,
+            3,
+        ),
+    ),
+)
+def test_csv_export_preprocessing(data, elements, lines):
+    exporter = ExportCSVMixin()
+    processed = exporter._preprocess_data(data)
+    assert len(processed) == lines
+
+    # Unfortunately, we have to create an actual file here, as both tempfile
+    # and StringIO seem to cause issues with line endings
+    with open("/tmp/csv.csv", "w+", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerows(processed)
+
+    with open("/tmp/csv.csv", "r", newline="") as f:
+        reader = csv.reader(f)
+        for line in reader:
+            assert len(line) == elements
+        assert reader.line_num == lines
