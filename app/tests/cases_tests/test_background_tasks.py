@@ -65,6 +65,8 @@ def test_image_file_creation(settings):
         "image10x10x10.zraw",
         "image10x10x10.mhd",
         "image10x10x10.mha",
+        "image10x11x12x13.mhd",
+        "image10x11x12x13.zraw",
         "image10x10x10-extra-stuff.mhd",
         "invalid_utf8.mhd",
         "no_image",
@@ -77,7 +79,7 @@ def test_image_file_creation(settings):
     assert session.session_state == UploadSessionState.stopped
     assert session.error_message is None
 
-    assert Image.objects.filter(origin=session).count() == 4
+    assert Image.objects.filter(origin=session).count() == 5
 
     for name, db_object in uploaded_images.items():
         name: str

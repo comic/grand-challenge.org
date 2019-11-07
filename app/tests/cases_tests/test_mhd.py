@@ -1,6 +1,8 @@
 """
 Tests for the mhd-file reconstruction.
 """
+import shutil
+import zlib
 from pathlib import Path
 
 import SimpleITK
@@ -114,6 +116,69 @@ def test_writing_4d_mhd_produces_same_results(tmpdir, image: Path):
     img = load_sitk_image(copypath)
     assert_img_properties(img)
     assert_sitk_img_equivalence(img, img_ref)
+
+
+def test_4d_mh_loader_without_datafile_fails(tmpdir):
+    src = RESOURCE_PATH / "image10x11x12x13.mhd"
+    dest = Path(tmpdir) / src.name
+    shutil.copy(str(src), str(dest))
+    with pytest.raises(IOError):
+        load_sitk_image(dest)
+
+
+def test_4d_mh_loader_with_invalid_data_type_fails(tmpdir):
+    sources = [
+        RESOURCE_PATH / "image10x11x12x13.mhd",
+        RESOURCE_PATH / "image10x11x12x13.zraw",
+    ]
+    targets = []
+    for src in sources:
+        dest = Path(tmpdir) / src.name
+        targets.append(dest)
+        shutil.copy(str(src), str(dest))
+    tmp_header_file = targets[0]
+    with open(str(tmp_header_file), "r") as f:
+        modified_header = f.read().replace("MET_UCHAR", "MET_OTHER")
+    with open(str(tmp_header_file), "w") as f:
+        f.write(modified_header)
+    with pytest.raises(NotImplementedError):
+        load_sitk_image(tmp_header_file)
+
+
+def test_4d_mh_loader_with_uncompressed_data(tmpdir):
+    sources = [
+        RESOURCE_PATH / "image10x11x12x13.mhd",
+        RESOURCE_PATH / "image10x11x12x13.zraw",
+    ]
+    targets = []
+    for src in sources:
+        dest = Path(tmpdir) / src.name
+        targets.append(dest)
+        shutil.copy(str(src), str(dest))
+    tmp_header_file, tmp_data_file = targets
+    with open(str(tmp_header_file), "r") as f:
+        modified_header = f.read().replace(
+            "CompressedData = True", "CompressedData = False"
+        )
+    with open(str(tmp_header_file), "w") as f:
+        f.write(modified_header)
+    with open(str(tmp_data_file), "rb") as f:
+        data = zlib.decompress(f.read())
+    with open(str(tmp_data_file), "wb") as f:
+        f.write(data)
+    load_sitk_image(tmp_header_file)
+
+
+def test_4d_mh_loader_with_more_than_4_dimensions_fails(tmpdir):
+    src = RESOURCE_PATH / "image10x11x12x13.mhd"
+    dest = Path(tmpdir) / src.name
+    shutil.copy(str(src), str(dest))
+    with open(str(dest), "r") as f:
+        modified_header = f.read().replace("NDims = 4", "NDims = 5")
+    with open(str(dest), "w") as f:
+        f.write(modified_header)
+    with pytest.raises(NotImplementedError):
+        load_sitk_image(dest)
 
 
 @pytest.mark.parametrize(
