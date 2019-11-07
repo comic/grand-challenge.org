@@ -28,13 +28,8 @@ class DjangoObjectOnlyPermissions(DjangoObjectPermissions):
 
 class DjangoObjectOnlyWithCustomPostPermissions(DjangoObjectOnlyPermissions):
     """
-    Workaround for using object permissions without setting model perms,
-    which is required by the implementation in Django Rest Framework. It
-    enforces that the user is logged in so that the permissions can be checked
-    later.
-
-    See similar issue detailed here:
-    https://stackoverflow.com/questions/34371409/
+    This class is only bypassing the POST permissions, giving all
+    authenticated users permission to post.
     """
 
     perms_map = {
