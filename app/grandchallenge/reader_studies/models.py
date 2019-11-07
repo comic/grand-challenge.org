@@ -186,7 +186,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def study_image_names(self):
-        return [im.name for im in self.images.all()]
+        return self.images.values_list("name", flat=True)
 
     @property
     def hanging_image_names(self):
