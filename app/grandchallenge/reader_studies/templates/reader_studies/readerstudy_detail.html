@@ -106,17 +106,10 @@
                href="{% url 'reader-studies:add-question' slug=object.slug %}">
                 <i class="fas fa-plus"></i> Add a question to this study
             </a>
-
-            <div>
-                <a class="btn btn-primary"
-                   href="{% url 'api:reader-study-export-questions' pk=object.pk %}">
-                    <i class="fas fa-download"></i> Export questions (CSV)
-                </a>
-                <a class="btn btn-primary"
-                   href="{% url 'api:reader-study-export-answers' pk=object.pk %}">
-                    <i class="fas fa-download"></i> Export answers (CSV)
-                </a>
-            </div>
+            <a class="btn btn-primary mb-1"
+               href="{% url 'api:reader-study-export-answers' pk=object.pk %}">
+                <i class="fas fa-download"></i> Export answers (CSV)
+            </a>
         </div>
 
     {% endif %}

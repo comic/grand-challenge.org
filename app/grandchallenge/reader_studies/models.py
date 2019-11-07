@@ -472,6 +472,15 @@ class Question(UUIDModel):
         )
 
     @property
+    def csv_values(self):
+        return [
+            self.question_text,
+            self.get_answer_type_display(),
+            self.required,
+            f"{self.get_image_port_display() + ' port,' if self.image_port else ''}",
+        ]
+
+    @property
     def api_url(self):
         return reverse(
             "api:reader-studies-question-detail", kwargs={"pk": self.pk}
@@ -542,6 +551,14 @@ class Answer(UUIDModel):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
+
+    @property
+    def csv_values(self):
+        return self.question.csv_values + [
+            self.answer,
+            "; ".join(self.images.values_list("name", flat=True)),
+            self.creator.username,
+        ]
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

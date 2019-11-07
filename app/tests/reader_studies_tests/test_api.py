@@ -357,35 +357,9 @@ def test_csv_export(client, answer_type, answer):
         question_text="foo", reader_study=rs, answer_type=answer_type
     )
 
-    response = get_view_for_user(
-        viewname="api:reader-study-export-questions",
-        reverse_kwargs={"pk": rs.pk},
-        user=editor,
-        client=client,
-        method=client.get,
-        content_type="application/json",
-    )
-
-    headers = str(response.serialize_headers())
-    content = str(response.content)
-
-    assert response.status_code == 200
-    assert "Content-Type: text/csv" in headers
-    assert f'filename="{rs.slug}-questions.csv"' in headers
-    assert q.question_text in content
-    assert q.get_answer_type_display() in content
-
-    response = get_view_for_user(
-        viewname="api:reader-study-export-questions",
-        reverse_kwargs={"pk": rs.pk},
-        user=reader,
-        client=client,
-        method=client.get,
-        content_type="application/json",
-    )
-    assert response.status_code == 404
-
     a = AnswerFactory(question=q, answer=answer)
+    a.images.add(im)
+    a.save()
 
     response = get_view_for_user(
         viewname="api:reader-study-export-answers",
@@ -402,13 +376,17 @@ def test_csv_export(client, answer_type, answer):
     assert response.status_code == 200
     assert "Content-Type: text/csv" in headers
     assert f'filename="{rs.slug}-answers.csv"' in headers
-    assert a.creator.username in content
     assert a.question.question_text in content
+    assert a.question.get_answer_type_display() in content
+    assert str(a.question.required) in content
+    assert a.question.get_image_port_display() in content
     if isinstance(answer, dict):
         for key in answer:
             assert key in content
     else:
         assert re.sub(r"[\n\r\t]", " ", str(a.answer)) in content
+    assert im.name in content
+    assert a.creator.username in content
 
     response = get_view_for_user(
         viewname="api:reader-study-export-answers",

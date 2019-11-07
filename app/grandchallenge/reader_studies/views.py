@@ -276,29 +276,16 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     )
 
     @action(detail=True)
-    def export_questions(self, request, pk=None):
-        reader_study = self.get_object()
-        self._check_export_perms(request.user, reader_study)
-
-        data = []
-        for question in reader_study.questions.all():
-            data.append(
-                [question.question_text, question.get_answer_type_display()]
-            )
-
-        return self._create_csv_response(
-            data, filename=f"{reader_study.slug}-questions.csv"
-        )
-
-    @action(detail=True)
     def export_answers(self, request, pk=None):
         reader_study = self.get_object()
         self._check_export_perms(request.user, reader_study)
 
-        fields = ["creator__username", "question__question_text", "answer"]
-        data = Answer.objects.filter(
-            question__reader_study=reader_study
-        ).values_list(*fields)
+        data = [
+            answer.csv_values
+            for answer in Answer.objects.filter(
+                question__reader_study=reader_study
+            )
+        ]
 
         return self._create_csv_response(
             data,
