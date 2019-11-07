@@ -290,9 +290,12 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
 
         data = [
             answer.csv_values
-            for answer in Answer.objects.filter(
-                question__reader_study=reader_study
+            for answer in Answer.objects.select_related(
+                "question__reader_study"
             )
+            .select_related("creator")
+            .prefetch_related("images")
+            .filter(question__reader_study=reader_study)
         ]
 
         return self._create_csv_response(
