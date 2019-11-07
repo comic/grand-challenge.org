@@ -455,6 +455,8 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
 
+    csv_headers = ["Question text", "Answer type", "Required", "Image port"]
+
     class Meta:
         ordering = ("order", "created")
 
@@ -468,6 +470,15 @@ class Question(UUIDModel):
             f"order {self.order}"
             ")"
         )
+
+    @property
+    def csv_values(self):
+        return [
+            self.question_text,
+            self.get_answer_type_display(),
+            self.required,
+            f"{self.get_image_port_display() + ' port,' if self.image_port else ''}",
+        ]
 
     @property
     def api_url(self):
@@ -537,6 +548,8 @@ class Answer(UUIDModel):
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = JSONField()
 
+    csv_headers = Question.csv_headers + ["Answer", "Images", "Creator"]
+
     class Meta:
         ordering = ("creator", "created")
 
@@ -548,6 +561,14 @@ class Answer(UUIDModel):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
+
+    @property
+    def csv_values(self):
+        return self.question.csv_values + [
+            self.answer,
+            "; ".join(self.images.values_list("name", flat=True)),
+            self.creator.username,
+        ]
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
