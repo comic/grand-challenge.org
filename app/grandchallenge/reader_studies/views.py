@@ -33,7 +33,7 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.reader_studies.forms import (
     EditorsForm,
-    QuestionCreateForm,
+    QuestionForm,
     ReaderStudyCreateForm,
     ReaderStudyUpdateForm,
     ReadersForm,
@@ -106,6 +106,37 @@ class ReaderStudyUpdate(
         return kwargs
 
 
+class QuestionUpdate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
+    model = Question
+    form_class = QuestionForm
+    template_name = "reader_studies/readerstudy_update_object.html"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    @property
+    def reader_study(self):
+        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form_fields = context["form"].fields
+        for field_name in self.object.read_only_fields:
+            form_fields[field_name].required = False
+            form_fields[field_name].disabled = True
+
+        return context
+
+    def get_success_url(self):
+        return self.object.reader_study.get_absolute_url()
+
+
 class AddObjectToReaderStudyMixin(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
 ):
@@ -159,7 +190,7 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
 
 class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):
     model = Question
-    form_class = QuestionCreateForm
+    form_class = QuestionForm
     template_name = "reader_studies/readerstudy_add_object.html"
     type_to_add = "question"
 

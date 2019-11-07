@@ -2,7 +2,11 @@ import pytest
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.reader_studies.models import ReaderStudy
-from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.reader_studies_tests.factories import (
+    AnswerFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 
 
 @pytest.mark.django_db
@@ -43,3 +47,22 @@ def test_group_deletion_reverse(group):
 
     with pytest.raises(ObjectDoesNotExist):
         rs.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_read_only_fields():
+    rs = ReaderStudyFactory()
+    q = QuestionFactory(reader_study=rs)
+
+    assert q.is_fully_editable is True
+    assert q.read_only_fields == []
+
+    AnswerFactory(question=q, answer="true")
+
+    assert q.is_fully_editable is False
+    assert q.read_only_fields == [
+        "question_text",
+        "answer_type",
+        "image_port",
+        "required",
+    ]
