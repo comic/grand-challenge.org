@@ -27,10 +27,7 @@ class DjangoObjectOnlyPermissions(DjangoObjectPermissions):
 
 
 class DjangoObjectOnlyWithCustomPostPermissions(DjangoObjectOnlyPermissions):
-    """
-    This class is only bypassing the POST permissions, giving all
-    authenticated users permission to post.
-    """
+    """Grant all authenticated users POST permissions."""
 
     perms_map = {
         "GET": [],
