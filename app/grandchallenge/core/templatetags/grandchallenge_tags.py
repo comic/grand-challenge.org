@@ -439,7 +439,7 @@ class InsertGraphNode(template.Node):
         errormsg = "Error rendering graph from file"
         return make_error_message_html(errormsg)
 
-    def render(self, context):
+    def render(self, context):  # noqa: C901
         filename_raw = self.args["file"]
         filename_clean = substitute(
             filename_raw, context["request"].GET.items()

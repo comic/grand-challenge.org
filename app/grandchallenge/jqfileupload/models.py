@@ -53,7 +53,7 @@ class StagedFile(models.Model):
             self.start_byte == 0 and self.end_byte == self.total_size - 1
         )
 
-    def clean(self):
+    def clean(self):  # noqa: C901
         if self.start_byte > self.end_byte:
             raise ValidationError("Supplied invalid Content-Range")
 

@@ -172,7 +172,7 @@ def remove_duplicate_files(
     )
 
 
-@shared_task
+@shared_task  # noqa: C901
 def build_images(upload_session_uuid: UUID):
     """
     Task which analyzes an upload session and attempts to extract and store

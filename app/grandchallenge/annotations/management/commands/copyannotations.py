@@ -46,7 +46,7 @@ class Command(BaseCommand):
             help="Adds object level permissions to user_to for the each of the annotation instances",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901
         try:
             user_from = get_user_model().objects.get(
                 username=options["user_from"]

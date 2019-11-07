@@ -45,7 +45,7 @@ def filter_by_creators_best(*, results, ranks):
     return [r for r in best_result_per_user.values()]
 
 
-@shared_task
+@shared_task  # noqa: C901
 def calculate_ranks(*, challenge_pk: uuid.UUID):
     challenge = Challenge.objects.get(pk=challenge_pk)
     display_choice = challenge.evaluation_config.result_display_choice

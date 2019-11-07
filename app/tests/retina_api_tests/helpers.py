@@ -291,7 +291,7 @@ def batch_test_data_endpoints(test_class):
         setattr(test_class, test_load_save_data.__name__, test_load_save_data)
 
 
-def create_data_test_methods(data_type):
+def create_data_test_methods(data_type):  # noqa: C901
     def test_load_no_auth(self, client):
         # create grader user
         user = UserFactory()

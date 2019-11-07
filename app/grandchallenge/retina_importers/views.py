@@ -66,7 +66,7 @@ class UploadImage(generics.CreateAPIView):
     permission_classes = (RetinaImportPermission,)
     parser_classes = (parsers.MultiPartParser, parsers.JSONParser)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):  # noqa: C901
         response_obj = {}
         try:
             # Process archive
