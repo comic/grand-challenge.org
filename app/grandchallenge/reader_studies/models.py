@@ -186,7 +186,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def study_image_names(self):
-        return [im.name for im in self.images.all()]
+        return self.images.values_list("name", flat=True)
 
     @property
     def hanging_image_names(self):
@@ -203,6 +203,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return sorted(self.study_image_names) == sorted(
             self.hanging_image_names
         )
+
+    @property
+    def hanging_list_diff(self):
+        return {
+            "in_study_list": set(self.study_image_names)
+            - set(self.hanging_image_names),
+            "in_hanging_list": set(self.hanging_image_names)
+            - set(self.study_image_names),
+        }
 
     @property
     def non_unique_study_image_names(self):
@@ -456,6 +465,8 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
 
+    csv_headers = ["Question text", "Answer type", "Required", "Image port"]
+
     class Meta:
         ordering = ("order", "created")
 
@@ -471,10 +482,29 @@ class Question(UUIDModel):
         )
 
     @property
+    def csv_values(self):
+        return [
+            self.question_text,
+            self.get_answer_type_display(),
+            self.required,
+            f"{self.get_image_port_display() + ' port,' if self.image_port else ''}",
+        ]
+
+    @property
     def api_url(self):
         return reverse(
             "api:reader-studies-question-detail", kwargs={"pk": self.pk}
         )
+
+    @property
+    def is_fully_editable(self):
+        return self.answer_set.count() == 0
+
+    @property
+    def read_only_fields(self):
+        if not self.is_fully_editable:
+            return ["question_text", "answer_type", "image_port", "required"]
+        return []
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -528,6 +558,8 @@ class Answer(UUIDModel):
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = JSONField()
 
+    csv_headers = Question.csv_headers + ["Answer", "Images", "Creator"]
+
     class Meta:
         ordering = ("creator", "created")
 
@@ -539,6 +571,14 @@ class Answer(UUIDModel):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
+
+    @property
+    def csv_values(self):
+        return self.question.csv_values + [
+            self.answer,
+            "; ".join(self.images.values_list("name", flat=True)),
+            self.creator.username,
+        ]
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

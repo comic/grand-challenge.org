@@ -1,3 +1,6 @@
+import csv
+import re
+
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -6,6 +9,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.http import Http404, HttpResponse
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -33,7 +37,7 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.reader_studies.forms import (
     EditorsForm,
-    QuestionCreateForm,
+    QuestionForm,
     ReaderStudyCreateForm,
     ReaderStudyUpdateForm,
     ReadersForm,
@@ -106,6 +110,37 @@ class ReaderStudyUpdate(
         return kwargs
 
 
+class QuestionUpdate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
+    model = Question
+    form_class = QuestionForm
+    template_name = "reader_studies/readerstudy_update_object.html"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    @property
+    def reader_study(self):
+        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form_fields = context["form"].fields
+        for field_name in self.object.read_only_fields:
+            form_fields[field_name].required = False
+            form_fields[field_name].disabled = True
+
+        return context
+
+    def get_success_url(self):
+        return self.object.reader_study.get_absolute_url()
+
+
 class AddObjectToReaderStudyMixin(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
 ):
@@ -159,7 +194,7 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
 
 class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):
     model = Question
-    form_class = QuestionCreateForm
+    form_class = QuestionForm
     template_name = "reader_studies/readerstudy_add_object.html"
     type_to_add = "question"
 
@@ -236,13 +271,69 @@ class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     success_message = "Readers successfully updated"
 
 
-class ReaderStudyViewSet(ReadOnlyModelViewSet):
+class ExportCSVMixin(object):
+    def _check_export_perms(self, user, obj):
+        if not (user and user.has_perm(self.export_permission, obj)):
+            raise Http404()
+
+    def _create_dicts(self, headers, data):
+        return map(lambda x: dict(zip(headers, x)), data)
+
+    def _preprocess_data(self, data):
+        processed = []
+        for entry in data:
+            processed.append(
+                map(lambda x: re.sub(r"[\n\r\t]", " ", str(x)), entry)
+            )
+        return processed
+
+    def _create_csv_response(self, data, headers, filename="export.csv"):
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        writer = csv.DictWriter(
+            response,
+            quoting=csv.QUOTE_ALL,
+            escapechar="\\",
+            fieldnames=headers,
+        )
+        writer.writeheader()
+        csv_dict = self._create_dicts(headers, self._preprocess_data(data))
+        writer.writerows(csv_dict)
+
+        return response
+
+
+class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
         "images", "questions"
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
+    export_permission = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+
+    @action(detail=True)
+    def export_answers(self, request, pk=None):
+        reader_study = self.get_object()
+        self._check_export_perms(request.user, reader_study)
+
+        data = [
+            answer.csv_values
+            for answer in Answer.objects.select_related(
+                "question__reader_study"
+            )
+            .select_related("creator")
+            .prefetch_related("images")
+            .filter(question__reader_study=reader_study)
+        ]
+
+        return self._create_csv_response(
+            data,
+            Answer.csv_headers,
+            filename=f"{reader_study.slug}-answers.csv",
+        )
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):
