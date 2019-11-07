@@ -216,6 +216,23 @@ def test_image_file_create(client):
     )
     assert response.status_code == 400
 
+    upload_session = RawImageUploadSessionFactory(
+        creator=user, algorithm_image=AlgorithmImageFactory()
+    )
+
+    response = get_view_for_user(
+        viewname="api:image-file-list",
+        user=user,
+        client=client,
+        method=client.post,
+        data={
+            "upload_session": upload_session.api_url,
+            "filename": "dummy.bin",
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
 
 @pytest.mark.django_db
 def test_invalid_image_file_post(client):
