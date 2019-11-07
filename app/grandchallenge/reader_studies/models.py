@@ -186,7 +186,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def study_image_names(self):
-        return [im.name for im in self.images.all()]
+        return self.images.values_list("name", flat=True)
 
     @property
     def hanging_image_names(self):
@@ -203,6 +203,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return sorted(self.study_image_names) == sorted(
             self.hanging_image_names
         )
+
+    @property
+    def hanging_list_diff(self):
+        return {
+            "in_study_list": set(self.study_image_names)
+            - set(self.hanging_image_names),
+            "in_hanging_list": set(self.hanging_image_names)
+            - set(self.study_image_names),
+        }
 
     @property
     def non_unique_study_image_names(self):
