@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -62,6 +63,15 @@ class RawImageFileSerializer(serializers.ModelSerializer):
         queryset=RawImageUploadSession.objects.all(),
         view_name="api:upload-session-detail",
     )
+
+    def validate(self, attrs):
+        upload_session = attrs["upload_session"]
+        user = self.context.get("request").user
+        if upload_session.creator != user:
+            raise ValidationError(
+                f"User {user} does not have permission to see this raw image upload session "
+            )
+        return attrs
 
     class Meta:
         model = RawImageFile

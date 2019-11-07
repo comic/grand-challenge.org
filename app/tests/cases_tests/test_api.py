@@ -179,8 +179,8 @@ def test_image_file_detail(client):
 
 @pytest.mark.django_db
 def test_image_file_create(client):
-    upload_session = RawImageUploadSessionFactory()
     user = UserFactory(is_staff=True)
+    upload_session = RawImageUploadSessionFactory(creator=user)
 
     response = get_view_for_user(
         viewname="api:image-file-list",
@@ -197,6 +197,21 @@ def test_image_file_create(client):
 
     image_file = RawImageFile.objects.get(pk=response.data.get("pk"))
     assert image_file.upload_session == upload_session
+
+    upload_session = RawImageUploadSessionFactory()
+
+    response = get_view_for_user(
+        viewname="api:image-file-list",
+        user=user,
+        client=client,
+        method=client.post,
+        data={
+            "upload_session": upload_session.api_url,
+            "filename": "dummy.bin",
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db
@@ -254,7 +269,7 @@ def test_empty_data_image_files(client):
 )
 def test_image_file_post_permissions(client, is_active, expected_response):
     user = UserFactory(is_active=is_active)
-    upload_session = RawImageUploadSessionFactory()
+    upload_session = RawImageUploadSessionFactory(creator=user)
     response = get_view_for_user(
         viewname="api:image-file-list",
         user=user,
