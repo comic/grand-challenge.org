@@ -103,7 +103,7 @@ def extract_header_listing(
 
 
 def load_sitk_image_with_nd_support_from_headers(
-    mhd_file: Path
+    mhd_file: Path,
 ) -> SimpleITK.Image:
     headers = parse_mh_header(mhd_file)
     is_mha = headers["ElementDataFile"].strip() == "LOCAL"

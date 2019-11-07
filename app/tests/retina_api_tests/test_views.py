@@ -70,9 +70,12 @@ class TestArchiveIndexAPIEndpoints:
         # Clear cache manually (this is not done by pytest-django for some reason...)
         cache.clear()
         # Create data
-        datastructures, datastructures_aus, oct_obs_registration, oct_obs_registration_aus = (
-            create_datastructures_data()
-        )
+        (
+            datastructures,
+            datastructures_aus,
+            oct_obs_registration,
+            oct_obs_registration_aus,
+        ) = create_datastructures_data()
 
         # login client
         client, _ = client_login(client, user="retina_user")

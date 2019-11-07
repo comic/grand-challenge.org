@@ -56,9 +56,10 @@ class Archive(UUIDModel):
             .all()
         )
 
-        protected_study_ids, protected_patient_ids = find_protected_studies_and_patients(
-            images_to_remove
-        )
+        (
+            protected_study_ids,
+            protected_patient_ids,
+        ) = find_protected_studies_and_patients(images_to_remove)
 
         with transaction.atomic():
             Patient.objects.filter(

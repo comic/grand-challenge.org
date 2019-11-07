@@ -162,7 +162,7 @@ It is recommended to setup django integration to ensure that the code completion
 12. Click ``OK``
 13. Install the ``Flake8 Support`` plugin so that PyCharm will understand ``noqa`` comments
 
-It is also recommended to install the black extension (version ``19.3b0``) for code formatting.
+It is also recommended to install the black extension (version ``19.10b0``) for code formatting.
 
 Running locally
 ~~~~~~~~~~~~~~~

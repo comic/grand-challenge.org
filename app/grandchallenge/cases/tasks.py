@@ -137,7 +137,7 @@ IMAGE_BUILDER_ALGORITHMS = [image_builder_mhd, image_builder_tiff]
 
 
 def remove_duplicate_files(
-    session_files: Sequence[RawImageFile]
+    session_files: Sequence[RawImageFile],
 ) -> Tuple[Sequence[RawImageFile], Sequence[RawImageFile]]:
     """
     Filters the given sequence of RawImageFile objects and removes all files

@@ -253,9 +253,14 @@ def test_job_list(client, two_challenge_sets):
         two_challenge_set=two_challenge_sets,
         client=client,
     )
-    *_, j_p_s1, j_p_s2, j_p1_s1, j_p12_s1_c1, j_p12_s1_c2 = submissions_and_jobs(
-        two_challenge_sets
-    )
+    (
+        *_,
+        j_p_s1,
+        j_p_s2,
+        j_p1_s1,
+        j_p12_s1_c1,
+        j_p12_s1_c2,
+    ) = submissions_and_jobs(two_challenge_sets)
     # Participants should only be able to see their own jobs
     response = get_view_for_user(
         viewname="evaluation:job-list",
