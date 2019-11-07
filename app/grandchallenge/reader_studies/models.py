@@ -475,6 +475,16 @@ class Question(UUIDModel):
             "api:reader-studies-question-detail", kwargs={"pk": self.pk}
         )
 
+    @property
+    def is_fully_editable(self):
+        return self.answer_set.count() == 0
+
+    @property
+    def read_only_fields(self):
+        if not self.is_fully_editable:
+            return ["question_text", "answer_type", "image_port", "required"]
+        return []
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 

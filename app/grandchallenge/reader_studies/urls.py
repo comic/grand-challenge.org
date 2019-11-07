@@ -4,6 +4,7 @@ from grandchallenge.reader_studies.views import (
     AddImagesToReaderStudy,
     AddQuestionToReaderStudy,
     EditorsUpdate,
+    QuestionUpdate,
     ReaderStudyCreate,
     ReaderStudyDetail,
     ReaderStudyList,
@@ -33,6 +34,11 @@ urlpatterns = [
         "<slug>/questions/add/",
         AddQuestionToReaderStudy.as_view(),
         name="add-question",
+    ),
+    path(
+        "<slug>/questions/<pk>/update/",
+        QuestionUpdate.as_view(),
+        name="question-update",
     ),
     path(
         "<slug>/editors/update/",

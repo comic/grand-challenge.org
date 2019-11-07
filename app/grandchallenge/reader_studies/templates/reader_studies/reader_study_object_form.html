@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    {% block form_heading %}{% endblock %}
+
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}
