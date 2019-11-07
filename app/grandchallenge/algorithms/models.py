@@ -115,7 +115,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         )
 
     def assign_workstation_permissions(self):
-        """ Allow the editors and users group to view the workstation """
+        """Allow the editors and users group to view the workstation."""
         perm = f"view_{Workstation._meta.model_name}"
 
         for group in [self.users_group, self.editors_group]:
@@ -183,7 +183,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 @receiver(post_delete, sender=Algorithm)
 def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
     """
-    Use a signal rather than delete() override to catch usages of bulk_delete
+    Deletes the related groups.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
     """
     try:
         instance.editors_group.delete(using=using)
@@ -277,10 +280,7 @@ class AlgorithmExecutor(Executor):
         self.output_images_dir = Path("/output/images/")
 
     def _get_result(self):
-        """
-        Reads all of the images in /output/ and converts to upload session
-        """
-
+        """Read all of the images in /output/ & convert to an UploadSession."""
         try:
             with cleanup(
                 self._client.containers.run(

@@ -96,7 +96,7 @@ def get_file_mimetype(f):
 
 @deconstructible
 class JSONSchemaValidator(object):
-    """ Uses jsonschema to validate json fields """
+    """Uses jsonschema to validate json fields."""
 
     schema = None
 

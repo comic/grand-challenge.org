@@ -5,9 +5,7 @@ from grandchallenge.patients.models import Patient
 
 
 class Study(UUIDModel):
-    """
-    Middle level datastructure. Child of patient, contains many images
-    """
+    """Middle level datastructure. Child of patient, contains many images."""
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
 

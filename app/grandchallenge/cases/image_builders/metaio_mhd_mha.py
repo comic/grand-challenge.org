@@ -13,65 +13,14 @@ import SimpleITK
 from django.core.files import File
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.metaio_utils import (
+    load_sitk_image,
+    parse_mh_header,
+)
 from grandchallenge.cases.models import Image, ImageFile
 
 
-def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
-    """
-    Attempts to parse the headers of an mhd file. This function must be
-    secure to safeguard agains any untrusted uploaded file.
-
-    Parameters
-    ----------
-    filename
-
-    Returns
-    -------
-
-    Raises
-    ------
-    ValueError:
-        raised when the file contains problems making it impossible to
-        read
-    """
-
-    # attempt to limit numer of read headers to prevent overflow attacks
-    read_line_limit = 10000
-
-    result = {}
-    with open(filename, "rb") as f:
-        bin_line = True
-        while bin_line is not None:
-            read_line_limit -= 1
-            if read_line_limit < 0:
-                raise ValueError("Files contains too many header lines")
-
-            bin_line = f.readline(10000)
-            if not bin_line:
-                bin_line = None
-                continue
-            if len(bin_line) >= 10000:
-                raise ValueError("Line length is too long")
-
-            try:
-                line = bin_line.decode("utf-8")
-            except UnicodeDecodeError:
-                raise ValueError("Header contains invalid UTF-8")
-            else:
-                # Clean line endings
-                line = line.rstrip("\n\r")
-                if line.strip():
-                    if "=" in line:
-                        key, value = line.split("=", 1)
-                        result[key.strip()] = value.strip()
-                    else:
-                        result[line.strip()] = None
-            if "ElementDataFile" in result:
-                break  # last parsed header...
-    return result
-
-
-def image_builder_mhd(path: Path) -> ImageBuilderResult:
+def image_builder_mhd(path: Path) -> ImageBuilderResult:  # noqa: C901
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -112,7 +61,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
         headers: Mapping[str, Union[str, None]], filename: Path
     ) -> Tuple[Image, Sequence[ImageFile]]:
         try:
-            simple_itk_image = SimpleITK.ReadImage(str(filename.absolute()))
+            simple_itk_image = load_sitk_image(filename.absolute())
             simple_itk_image: SimpleITK.Image
         except RuntimeError:
             raise ValueError("SimpleITK cannot open file")
@@ -134,6 +83,10 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 simple_itk_image, str(work_dir / f"{pk}.mhd"), True
             )
 
+            if simple_itk_image.GetDimension() == 4:
+                timepoints = simple_itk_image.GetSize()[-1]
+            else:
+                timepoints = None
             depth = simple_itk_image.GetDepth()
             db_image = Image(
                 pk=pk,
@@ -141,13 +94,14 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:
                 width=simple_itk_image.GetWidth(),
                 height=simple_itk_image.GetHeight(),
                 depth=depth if depth else None,
+                timepoints=timepoints,
                 resolution_levels=None,
                 color_space=color_space,
             )
             db_image_files = []
             for _file in work_dir.iterdir():
                 temp_file = TemporaryFile()
-                with open(_file, "rb") as open_file:
+                with open(str(_file), "rb") as open_file:
                     buffer = True
                     while buffer:
                         buffer = open_file.read(1024)

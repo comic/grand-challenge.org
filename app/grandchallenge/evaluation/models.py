@@ -316,7 +316,7 @@ class Config(UUIDModel):
 
 
 def method_image_path(instance, filename):
-    """ Deprecated: only used in a migration """
+    """Deprecated: only used in a migration."""
     return (
         f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
         f"{instance.challenge.pk}/"
@@ -327,9 +327,7 @@ def method_image_path(instance, filename):
 
 
 class Method(UUIDModel, ContainerImageModel):
-    """
-    Stores the methods for performing an evaluation
-    """
+    """Store the methods for performing an evaluation."""
 
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
 
@@ -366,9 +364,7 @@ def submission_supplementary_file_path(instance, filename):
 
 
 class Submission(UUIDModel):
-    """
-    Stores files for evaluation
-    """
+    """Store files for evaluation."""
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -461,9 +457,7 @@ class SubmissionEvaluator(Executor):
 
 
 class Result(UUIDModel):
-    """
-    Stores individual results for a challenges
-    """
+    """Store individual results for a challenge."""
 
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
     metrics = JSONField(default=dict)
@@ -498,9 +492,7 @@ class Result(UUIDModel):
 
 
 class Job(UUIDModel, ContainerExecJobModel):
-    """
-    Stores information about a job for a given upload
-    """
+    """Stores information about a job for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)

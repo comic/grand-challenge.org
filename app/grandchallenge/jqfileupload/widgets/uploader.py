@@ -89,7 +89,8 @@ class AjaxUploadWidget(Widget):
 
 class OpenedStagedAjaxFile(BufferedIOBase):
     """
-    This class behaves like a file handle for a :class:`StagedAjaxFile`.
+    A open file handle for a :class:`StagedAjaxFile`.
+
     The file handle is strictly read-only. Under the hood, this class
     reconstructs the contingent file from the file chunks that have been
     uploaded.
@@ -217,9 +218,7 @@ class OpenedStagedAjaxFile(BufferedIOBase):
 
 
 class StagedAjaxFile:
-    """
-    File representation of otherwise loose chnks that belong to a single file.
-    """
+    """File representation of the loose chunks that belong to a single file."""
 
     def __init__(self, _uuid: uuid.UUID):
         super().__init__()
@@ -237,24 +236,26 @@ class StagedAjaxFile:
 
     @property
     def uuid(self):
-        """ The uuid-representation of the file used in the actual form """
+        """The uuid-representation of the file used in the actual form."""
         return self.__uuid
 
     @property
     def name(self):
-        """ Returns the name specified by the client for the uploaded file
-        (might be unsafe!) """
+        """
+        Returns the name specified by the client for the uploaded file (might
+        be unsafe!).
+        """
         chunks_query = self._raise_if_missing()
         return chunks_query.first().client_filename
 
     @property
     def exists(self):
-        """ True if the file has not been cleaned up yet """
+        """True if the file has not been cleaned up yet."""
         return StagedFile.objects.filter(file_id=self.__uuid).exists()
 
     @property
     def size(self):
-        """ Total size of the file in bytes """
+        """Total size of the file in bytes."""
         chunks_query = self._raise_if_missing()
         chunks = chunks_query.all()
         remaining_size = None
@@ -278,7 +279,7 @@ class StagedAjaxFile:
 
     @property
     def is_complete(self):
-        """  False if the upload was incomplete or corrupted in another way """
+        """False if the upload was incomplete or corrupted in another way."""
         if not StagedFile.objects.filter(file_id=self.__uuid).exists():
             return False
 

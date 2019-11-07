@@ -97,10 +97,10 @@ class PageDelete(
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Legacy methods, moved from comicsite/views.py
+# Legacy methods, moved from core/views.py
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def page(request, page_title):
-    """ show a single page on a site """
+    """Show a single page on a site."""
     currentpage = get_rendered_page_if_allowed(page_title, request)
 
     response = render(request, "page.html", {"currentpage": currentpage})
@@ -115,9 +115,7 @@ def page(request, page_title):
 
 
 def insertedpage(request, page_title, dropboxpath):
-    """ show contents of a file from the local dropbox folder for this project
-
-    """
+    """Display contents of a file from the media directory."""
     challenge = request.challenge
 
     (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
@@ -158,9 +156,7 @@ def insertedpage(request, page_title, dropboxpath):
 
 
 def inserted_file(request, filepath=""):
-    """ Get image from local dropbox and serve.
-
-    """
+    """Get a page from the media directory and serve."""
     challenge_short_name = request.challenge.short_name
 
     data_folder_root = get_data_folder_path(challenge_short_name)

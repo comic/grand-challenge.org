@@ -7,11 +7,12 @@ from grandchallenge.evaluation.models import Submission
 
 
 def can_access(user, path, *, challenge: Challenge):
-    """ Does this user have permission to access folder path which is part of
+    """
+    Does this user have permission to access folder path which is part of
     challenge named challenge_short_name?
-    Override permission can be used to make certain folders servable through
-    code even though this would not be allowed otherwise
 
+    Override permission can be used to make certain folders servable through
+    code even though this would not be allowed otherwise.
     """
     required = _required_permission(path)
 
@@ -32,9 +33,9 @@ def can_access(user, path, *, challenge: Challenge):
 
 
 def _required_permission(path):
-    """ Given a file path on local filesystem, which permission level is needed
+    """
+    Given a file path on local filesystem, which permission level is needed
     to view this?
-
     """
     if hasattr(settings, "COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES"):
         if startwith_any(path, settings.COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES):
@@ -51,9 +52,9 @@ def _required_permission(path):
 
 
 def startwith_any(path, start_options):
-    """ Return true if path starts with any of the strings in string array
+    """
+    Return true if the path starts with any of the strings in string array
     start_options
-
     """
     for option in start_options:
         if path.startswith(option):

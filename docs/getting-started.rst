@@ -46,7 +46,7 @@ Running Grand-Challenge within a Windows environment requires additional steps b
 
 .. code-block:: console 
 
-	$ export COMPOSE_CONVERT_WINDOWS_PATHS=1
+    $ export COMPOSE_CONVERT_WINDOWS_PATHS=1
 
 3. Add the following line to your hosts file (``C:\Windows\System32\drivers\etc\hosts``)
 
@@ -136,12 +136,33 @@ To set up the environment in Pycharm Professional 2018.1:
 1. ``File`` -> ``Settings`` -> ``Project: grand-challenge.org`` -> ``Project Interpreter`` -> ``Cog`` wheel (top right) -> ``Add`` -> ``Docker Compose``
 2. Then select the docker server (usually the unix socket)
 3. Set the service to ``web``
-4. Click `OK` in both windows
+4. Click ``OK``
+5. Set the path mappings from ``<Project root>/app->/app``
+6. Click ``OK``
 
 Pycharm will then spend some time indexing the packages within the container to help with code completion and inspections.
-If you edit any template files these will be updated on the fly. 
-If you edit any ``.py``, ``.css``, ``.js`` (etc) you will need to restart the processes using ``CTRL+D`` with ``cycle_docker_compose.sh``.
-You can then add ``py.test`` test configurations to run the tests from within Pycharm.
+If you edit any files these will be updated on the fly by werkzeug.
+
+PyCharm Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+It is recommended to setup django integration to ensure that the code completion, tests and import optimisation works.
+
+1. Open ``File`` -> ``Settings`` -> ``Languages and Frameworks`` -> ``Django``
+2. Check the ``Enable Django Support`` checkbox
+3. Set the project root to ``<Project root>/app``
+4. Set the settings to ``config/settings.py``
+5. Check the ``Do not use the django test runner`` checkbox
+6. In the settings window navigate to ``Tools`` -> ``Python integrated tools``
+7. Under the testing section select ``pytest`` as the default test runner
+8. Under the Docstrings section set ``NumPy`` as the docstrings format
+9. In the settings window navigate to ``Editor`` -> ``Code Style`` -> ``Python``
+10. On the ``Wrapping and Braces`` tab set ``Hard wrap at`` to ``86`` and ``Visual guide`` to ``79``
+11. On the ``Imports`` tab enable ``Sort Import Statements``, ``Sort imported names in "from" imports``, and ``Sort plain and "from" imports separately in the same group``
+12. Click ``OK``
+13. Install the ``Flake8 Support`` plugin so that PyCharm will understand ``noqa`` comments
+
+It is also recommended to install the black extension (version ``19.10b0``) for code formatting.
 
 Running locally
 ~~~~~~~~~~~~~~~

@@ -29,17 +29,21 @@ logger = logging.getLogger(__name__)
 
 
 def parse_key_value_token(token):
-    """Parses token content string into a parameter dictionary
+    """
+    Parses token content string into a parameter dictionary.
 
-    Args:
+    Parameters
+    ----------
         token (django.base.Token): Object representing the string content of
             the template tag. Key values are expected to be of the format
             key1:value1 key2:value2,...
 
-    Returns:
+    Returns
+    -------
         A dictionary of key:value pairs
 
-    Raises:
+    Raises
+    ------
         ValueError: if token contents are not in key:val1 key:val2 .. format
 
     """
@@ -96,24 +100,26 @@ def resolve_path(path, parser, context):
     """
     Try to resolve all parameters in path
 
-    Paths in COMIC template tag parameters can include variables. Try to
+    Paths in template tag parameters can include variables. Try to
     resolve these and throw error if this is not possible.
     path can be of three types:
         * a raw filename like "stuff.html" or "results/table1.txt"
         * a filename containing a variable like "results/{{teamid}}/table1.txt"
         * a django template variable like "site.short_name"
 
-    Args:
+    Parameters
+    ----------
         Path (string)
         parser (django object)
         context (django context given tag render function)
 
-    Returns:
+    Returns
+    -------
         resolved path (string)
 
-    Raises:
+    Raises
+    ------
         PathResolutionException when path cannot be resolved
-        :param path:
     """
     # Find out what type it is:
     # If it contains any / or {{ resolving as django var
@@ -153,9 +159,10 @@ def substitute(string, substitutions):
     Take each key in the substitutions dict. See if this key exists
     between double curly braces in string. If so replace with value.
 
-    Example:
-    substitute("my name is {{name}}.",{version:1,name=John})
-    > "my name is John"
+    Examples
+    --------
+        substitute("my name is {{name}}.",{version:1,name=John})
+        > "my name is John"
     """
     for key, value in substitutions:
         string = re.sub(re.escape("{{" + key + "}}"), value, string)
@@ -163,14 +170,13 @@ def substitute(string, substitutions):
 
 
 class TagListNode(template.Node):
-    """ Print available tags as text
-    """
+    """Print available tags as text."""
 
     def __init__(self):
         pass
 
     def render(self, context):
-        html_out = '<table class ="comictable taglist">'
+        html_out = '<table class ="taglist">'
         html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
         rowclass = "odd"
         for key, val in register.usagestrings.items():
@@ -190,9 +196,7 @@ class TagListNode(template.Node):
 
 
 def sanitize_django_items(string):
-    """
-    remove {{,{% and other items which would be rendered as tags by django
-    """
+    """Remove {{,{% and others which would be rendered as tags by django."""
     out = string
     out = out.replace("{{", "&#123;&#123;")
     out = out.replace("}}", "&#125;&#125;")
@@ -206,7 +210,7 @@ def sanitize_django_items(string):
 
 @register.simple_tag
 def google_group(group_name):
-    """Allows challenge admins to add google groups to pages"""
+    """Allows challenge admins to add google groups to pages."""
     return mark_safe(
         f"""
     <iframe
@@ -231,7 +235,7 @@ def google_group(group_name):
               """,
 )
 def listdir(parser, token):
-    """ show all files in dir as a downloadable list"""
+    """Show all files in dir as a downloadable list."""
     usagestr = get_usagestr("listdir")
     try:
         args = parse_key_value_token(token)
@@ -257,8 +261,7 @@ def listdir(parser, token):
 
 
 class ListDirNode(template.Node):
-    """ Show list of linked files for given directory
-    """
+    """Show list of linked files for given directory."""
 
     usagestr = get_usagestr("listdir")
 
@@ -310,15 +313,13 @@ class ListDirNode(template.Node):
 
 
 def add_quotes(s: str = ""):
-    """ add quotes to string if not there
-    """
+    """Add quotes to string if they do not already exist."""
     s = strip_quotes(s)
     return "'" + s + "'"
 
 
 def strip_quotes(s: str = ""):
-    """ strip outermost quotes from string if there
-    """
+    """Strip outermost quotes from string."""
     if len(s) >= 2 and (s[0] == s[-1]) and s[0] in ("'", '"'):
         return s[1:-1]
 
@@ -326,13 +327,10 @@ def strip_quotes(s: str = ""):
 
 
 def in_list(needles, haystack):
-    """ return True if any of the strings in string array needles is in haystack
-
-    """
+    """Determine if any of the needles are in the heystack."""
     for needle in needles:
         if needle in haystack:
             return True
-
     return False
 
 
@@ -400,7 +398,7 @@ class InsertFileNode(template.Node):
 
 @register.tag(name="insert_graph")
 def insert_graph(parser, token):
-    """ Render a csv file from the local dropbox to a graph """
+    """Render a csv file from the local dropbox to a graph."""
     usagestr = """Tag usage: {% insert_graph <file> type:<type>%}
                   <file>: filepath relative to project dropboxfolder.
                   <type>: how should the file be parsed and rendered?
@@ -441,13 +439,13 @@ class InsertGraphNode(template.Node):
         errormsg = "Error rendering graph from file"
         return make_error_message_html(errormsg)
 
-    def render(self, context):
+    def render(self, context):  # noqa: C901
         filename_raw = self.args["file"]
         filename_clean = substitute(
             filename_raw, context["request"].GET.items()
         )
-        # If any url parameters are still in filename they were not replaced. This filename
-        # is missing information..
+        # If any url parameters are still in filename they were not replaced.
+        # This filename is missing information..
         if re.search(r"{{\w+}}", filename_clean):
             missed_parameters = re.findall(r"{{\w+}}", filename_clean)
             found_parameters = context["request"].GET.items()
@@ -492,17 +490,17 @@ class InsertGraphNode(template.Node):
                 )
             )
 
-        # self.get_graph_svg(table,headers)
-        # html_out = "A graph rendered! source: '%s' <br/><br/> %s" %(filename_clean,svg_data)
-        html_out = svg_data
-        # rewrite relative links
-        return html_out
+        return svg_data
 
 
 def getrenderer(renderer_format):
-    """Holds list of functions which can take in a filepath and return html to show a graph.
-    By using this function we can easily list all available renderers and provide some safety:
-    only functions listed here can be called from the template tag render_graph.
+    """
+    Holds list of functions which can take in a filepath and return html to
+    show a graph.
+
+    By using this function we can easily list all available renderers and
+    provide some safety: only functions listed here can be called from the
+    template tag render_graph.
     """
     renderers = {
         "anode09": render_anode09_result,
@@ -518,9 +516,11 @@ def getrenderer(renderer_format):
 
 
 def canvas_to_svg(canvas):
-    """ Render matplotlib canvas as string containing html/svg instructions. These instructions can be
-    pasted into any html page and will be rendered as graph by any modern browser.
+    """
+    Render matplotlib canvas as string containing html/svg instructions.
 
+    These instructions can be pasted into any html page and will be rendered as
+    a graph by any modern browser.
     """
     imgdata = StringIO()
     imgdata.seek(0, os.SEEK_END)
@@ -531,44 +531,45 @@ def canvas_to_svg(canvas):
 
 
 def render_anode09_result(filename):
-    """ Read in a file with the anode09 result format, return html to render an
-        FROC graph.
-        To be able to read this without changing the evaluation
-        executable. anode09 results have the following format:
+    """
+    Read in a file with the anode09 result format, return html to render an
+    FROC graph. To be able to read this without changing the evaluation
+    executable. anode09 results have the following format:
 
     <?php
-        $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,0.02,0.02,0.04,0.06,0.06,0.08,0.08,0.0 etc..
-        $frocy=array(0,0.00483092,0.00966184,0.0144928,0.0144928,0.0144928,0.0193237,0.0241546,0.0289855,0.02 etc..
-        $frocscore=array(0.135266,0.149758,0.193237,0.236715,0.246377,0.26087,0.26087,0.21187);
-        $pleuraly=array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0169492,0.0169492,0.0169492,0.016 etc..
-        $pleuralscore=array(0.0508475,0.0508475,0.0677966,0.118644,0.135593,0.152542,0.152542,0.104116);
-        $fissurey=array(0,0,0,0.0285714,0.0285714,0.0285714,0.0571429,0.0571429,0.0571429,0.0571429,0.0571429 etc..
-        $fissurescore=array(0.171429,0.171429,0.285714,0.314286,0.314286,0.314286,0.314286,0.269388);
-        $vasculary=array(0,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0. etc..
-        $vascularscore=array(0.116279,0.139535,0.186047,0.209302,0.22093,0.244186,0.244186,0.194352);
-        $isolatedy=array(0,0,0.0238095,0.0238095,0.0238095,0.0238095,0.0238095,0.047619,0.0714286,0.0714286,0 etc..
-        $isolatedscore=array(0.238095,0.261905,0.309524,0.380952,0.380952,0.380952,0.380952,0.333333);
-        $largey=array(0,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,0.0222222,0.0222222,0.022 etc..
-        $largescore=array(0.111111,0.122222,0.144444,0.177778,0.177778,0.188889,0.188889,0.15873);
-        $smally=array(0,0,0.00854701,0.017094,0.017094,0.017094,0.025641,0.025641,0.034188,0.034188,0.034188, etc..
-        $smallscore=array(0.153846,0.17094,0.230769,0.282051,0.299145,0.316239,0.316239,0.252747);
+        $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,...
+        $frocy=array(0,0.00483092,0.00966184,0.0144928,0.014492,...
+        $frocscore=array(0.135266,0.149758,0.193237,0.236715,0.246377,...
+        $pleuraly=array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,...
+        $pleuralscore=array(0.0508475,0.0508475,0.0677966,0.118644,...
+        $fissurey=array(0,0,0,0.0285714,0.0285714,0.0285714,0.0571429,...
+        $fissurescore=array(0.171429,0.171429,0.285714,0.314286,0.314286,...
+        $vasculary=array(0,0.0116279,0.0116279,0.0116279,0.0116279,...
+        $vascularscore=array(0.116279,0.139535,0.186047,0.209302,0.22093,...
+        $isolatedy=array(0,0,0.0238095,0.0238095,0.0238095,0.0238095,...
+        $isolatedscore=array(0.238095,0.261905,0.309524,0.380952,...
+        $largey=array(0,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,...
+        $largescore=array(0.111111,0.122222,0.144444,0.177778,0.177778,...
+        $smally=array(0,0,0.00854701,0.017094,0.017094,0.017094,0.025641,...
+        $smallscore=array(0.153846,0.17094,0.230769,0.282051,0.29914,...
     ?>
 
+    First row are x values, followed by alternating rows of FROC scores for
+    each x value and xxxscore variables which contain FROC scores at
+    [1/8     1/4    1/2    1     2    4    8    average] respectively and are
+    meant to be plotted in a table
 
-        First row are x values, followed by alternating rows of FROC scores for each x value and
-        xxxscore variables which contain FROC scores at
-        [1/8     1/4    1/2    1     2    4    8    average] respectively and are meant to be
-        plotted in a table
-
-        Returns: string containing html/svg instruction to render an anode09 FROC curve
-        of all the variables found in file
-
+    Returns: string containing html/svg instruction to render an anode09 FROC
+    curve of all the variables found in file
     """
-    # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
+    # small nodules, large nodules, isolated nodules, vascular nodules,
+    # pleural nodules, peri-fissural nodules, all nodules
     variables = parse_php_arrays(filename)
+
     assert variables != {}, (
         "parsed result of '%s' was emtpy. I cannot plot anything" % filename
     )
+
     fig = Figure(facecolor="white")
     canvas = FigureCanvas(fig)
     classes = {
@@ -597,45 +598,48 @@ def render_anode09_result(filename):
 
 
 def render_anode09_table(filename):
-    """ Read in a file with the anode09 result format and output html for an anode09 table
+    """
+    Read in a file with the anode09 result format and output html for an
+    anode09 table.
+
     anode09 results have the following format:
 
     <?php
-        $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,0.02,0.02,0.04,0.06,0.06,0.08,0.08,0.0 etc..
-        $frocy=array(0,0.00483092,0.00966184,0.0144928,0.0144928,0.0144928,0.0193237,0.0241546,0.0289855,0.02 etc..
-        $frocscore=array(0.135266,0.149758,0.193237,0.236715,0.246377,0.26087,0.26087,0.21187);
-        $pleuraly=array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0169492,0.0169492,0.0169492,0.016 etc..
-        $pleuralscore=array(0.0508475,0.0508475,0.0677966,0.118644,0.135593,0.152542,0.152542,0.104116);
-        $fissurey=array(0,0,0,0.0285714,0.0285714,0.0285714,0.0571429,0.0571429,0.0571429,0.0571429,0.0571429 etc..
-        $fissurescore=array(0.171429,0.171429,0.285714,0.314286,0.314286,0.314286,0.314286,0.269388);
-        $vasculary=array(0,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0.0116279,0. etc..
-        $vascularscore=array(0.116279,0.139535,0.186047,0.209302,0.22093,0.244186,0.244186,0.194352);
-        $isolatedy=array(0,0,0.0238095,0.0238095,0.0238095,0.0238095,0.0238095,0.047619,0.0714286,0.0714286,0 etc..
-        $isolatedscore=array(0.238095,0.261905,0.309524,0.380952,0.380952,0.380952,0.380952,0.333333);
-        $largey=array(0,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,0.0222222,0.0222222,0.022 etc..
-        $largescore=array(0.111111,0.122222,0.144444,0.177778,0.177778,0.188889,0.188889,0.15873);
-        $smally=array(0,0,0.00854701,0.017094,0.017094,0.017094,0.025641,0.025641,0.034188,0.034188,0.034188, etc..
-        $smallscore=array(0.153846,0.17094,0.230769,0.282051,0.299145,0.316239,0.316239,0.252747);
+        $x=array(1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,1e-39,...
+        $frocy=array(0,0.00483092,0.00966184,0.0144928,0.014492,...
+        $frocscore=array(0.135266,0.149758,0.193237,0.236715,0.246377,...
+        $pleuraly=array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,...
+        $pleuralscore=array(0.0508475,0.0508475,0.0677966,0.118644,...
+        $fissurey=array(0,0,0,0.0285714,0.0285714,0.0285714,0.0571429,...
+        $fissurescore=array(0.171429,0.171429,0.285714,0.314286,0.314286,...
+        $vasculary=array(0,0.0116279,0.0116279,0.0116279,0.0116279,...
+        $vascularscore=array(0.116279,0.139535,0.186047,0.209302,0.22093,...
+        $isolatedy=array(0,0,0.0238095,0.0238095,0.0238095,0.0238095,...
+        $isolatedscore=array(0.238095,0.261905,0.309524,0.380952,...
+        $largey=array(0,0.0111111,0.0111111,0.0111111,0.0111111,0.0111111,...
+        $largescore=array(0.111111,0.122222,0.144444,0.177778,0.177778,...
+        $smally=array(0,0,0.00854701,0.017094,0.017094,0.017094,0.025641,...
+        $smallscore=array(0.153846,0.17094,0.230769,0.282051,0.29914,...
     ?>
 
+    First row are x values, followed by alternating rows of FROC scores for
+    each x value and xxxscore variables which contain FROC scores at
+    [1/8     1/4    1/2    1     2    4    8    average] respectively and are
+    meant to be plotted in a table
 
-        First row are x values, followed by alternating rows of FROC scores for each x value and
-        xxxscore variables which contain FROC scores at
-        [1/8     1/4    1/2    1     2    4    8    average] respectively and are meant to be
-        plotted in a table
-
-        Returns: string containing html/svg instruction to render an anode09 FROC curve
-        of all the variables found in file
-
+    Returns: string containing html/svg instruction to render an anode09 FROC
+    curve of all the variables found in file
     """
-    # small nodules,large nodules, isolated nodules,vascular nodules,pleural nodules,peri-fissural nodules,all nodules
+    # small nodules, large nodules, isolated nodules, vascular nodules,
+    # pleural nodules, peri-fissural nodules, all nodules
     variables = parse_php_arrays(filename)
     assert variables != {}, (
         "parsed result of '%s' was emtpy. I cannot create table" % filename
     )
+
     table_id = id_generator()
     table_html = (
-        """<table border=1 class = "comictable csvtable sortable" id="%s">
+        """<table border=1 class = "csvtable sortable" id="%s">
                     <thead><tr>
                         <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
                         <td align=center width='54'>1/4</td>
@@ -645,35 +649,37 @@ def render_anode09_table(filename):
                     </tr></thead>"""
         % table_id
     )
-    table_html = table_html + "<tbody>"
-    table_html = table_html + array_to_table_row(
+    table_html += "<tbody>"
+    table_html += array_to_table_row(
         ["small nodules"] + variables["smallscore"]
     )
-    table_html = table_html + array_to_table_row(
+    table_html += array_to_table_row(
         ["large nodules"] + variables["largescore"]
     )
-    table_html = table_html + array_to_table_row(
+    table_html += array_to_table_row(
         ["isolated nodules"] + variables["isolatedscore"]
     )
-    table_html = table_html + array_to_table_row(
+    table_html += array_to_table_row(
         ["vascular nodules"] + variables["vascularscore"]
     )
-    table_html = table_html + array_to_table_row(
+    table_html += array_to_table_row(
         ["pleural nodules"] + variables["pleuralscore"]
     )
-    table_html = table_html + array_to_table_row(
+    table_html += array_to_table_row(
         ["peri-fissural nodules"] + variables["fissurescore"]
     )
-    table_html = table_html + array_to_table_row(
-        ["all nodules"] + variables["frocscore"]
-    )
-    table_html = table_html + "</tbody>"
-    table_html = table_html + "</table>"
-    return '<div class="comictablecontainer">' + table_html + "</div>"
+    table_html += array_to_table_row(["all nodules"] + variables["frocscore"])
+    table_html += "</tbody>"
+    table_html += "</table>"
+    return '<div class="tablecontainer">' + table_html + "</div>"
 
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
-    """ thanks to Ignacio Vazquez-Abrams on stackoverflow"""
+    """
+    Generate a random ascii string.
+
+    Source: Ignacio Vazquez-Abrams on Stack Overflow
+    """
     return "".join(random.choice(chars) for x in range(size))
 
 
@@ -689,11 +695,13 @@ def array_to_table_row(rowvalues, trclass=""):
 
 
 def parse_php_arrays(filename):
-    """ Parse a php page containing only php arrays like $x=(1,2,3). Created to parse anode09 eval results.
+    """
+    Parse a php page containing only php arrays like $x=(1,2,3).
+
+    Created to parse anode09 eval results.
 
     Returns: dict{"varname1",array1,....},
     array1 is a float array
-
     """
     verbose = False
     output = {}
@@ -731,7 +739,7 @@ def parse_php_arrays(filename):
 
 @register.tag(name="url_parameter")
 def url_parameter(parser, token):
-    """ Try to read given variable from given url. """
+    """Try to read given variable from given url."""
     split = token.split_contents()
     all_args = split[1:]
     if len(all_args) != 1:
@@ -784,13 +792,15 @@ class TemplateErrorNode(template.Node):
         return make_error_message_html(self.msg)
 
 
-def html_encode_django_chars(string):
-    """replace curly braces and percent signs by their html encoded equivalents
+def html_encode_django_chars(txt):
     """
-    string = string.replace("{", "&#123;")
-    string = string.replace("}", "&#125;")
-    string = string.replace("%", "&#37;")
-    return string
+    Replace curly braces and percent signs that used in the django template
+    tags with their html encoded equivalents.
+    """
+    txt = txt.replace("{", "&#123;")
+    txt = txt.replace("}", "&#125;")
+    txt = txt.replace("%", "&#37;")
+    return txt
 
 
 def make_error_message_html(text):
@@ -828,11 +838,18 @@ class ProjectStatisticsNode(template.Node):
 
     def render(self, context):
         """
-        Renders a map of users and statistics for the current project. This is slow, so cache the response for 10 mins.
-        :param context: the page context
-        :return: the map html string
-        """
+        Render a map of users and statistics for the current project.
 
+        Parameters
+        ----------
+        context
+            The page context
+
+        Returns
+        -------
+            The map html
+
+        """
         all_users = self.allusers
 
         if all_users:

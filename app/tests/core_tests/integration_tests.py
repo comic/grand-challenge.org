@@ -40,9 +40,7 @@ def get_first_page(challenge):
 
 
 def extract_form_errors(html):
-    """ If something in post to a form url fails, I want to know what the
-    problem was.
-    """
+    """Extract the list of errors from the form."""
     errors = re.findall(
         '<ul class="errorlist"(.*)</ul>', html.decode(), re.IGNORECASE
     )
@@ -50,8 +48,9 @@ def extract_form_errors(html):
 
 
 def find_text_between(start, end, haystack: bytes):
-    """ Return text between the first occurence of string start and
-    string end in haystack.
+    """
+    Return text between the first occurrence of string start and string end
+    in haystack.
     """
     found = re.search(
         start + "(.*)" + end, haystack.decode(), re.IGNORECASE | re.DOTALL
@@ -67,34 +66,27 @@ def find_text_between(start, end, haystack: bytes):
 
 
 def extract_href_from_anchor(anchor: str):
-    """ For a html link like '<a href="www.some.nl">click here</a>'
-    return only 'www.some.nl'
-    """
     return find_text_between('href="', '">', anchor.encode())
 
 
 def is_subset(a, b):
-    """ True if listA is a subset of listB """
+    """Determine if a is a subset of b."""
     all(item in a for item in b)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
-class ComicframeworkTestCase(TestCase):
-    """ Contains methods for creating users using comicframework interface
-    """
-
+class GrandChallengeFrameworkTestCase(TestCase):
     def setUp(self):
         call_command("check_permissions")
         self.set_up_base()
         self.set_up_extra()
 
     def set_up_base(self):
-        """ This setup should be run for all comic framework testcases
-        """
+        """Function will be run for all subclassed testcases."""
         self._create_root_superuser()
 
     def set_up_extra(self):
-        """ Overwrite this method in child classes """
+        """Overwrite this method in child classes."""
         pass
 
     def _create_root_superuser(self):
@@ -112,8 +104,11 @@ class ComicframeworkTestCase(TestCase):
             self.root = root
 
     def _create_dummy_project(self, projectname="testproject"):
-        """ Create a project with some pages and users. In part this is
-        done through admin views, meaning admin views are also tested here.
+        """
+        Create a project with some pages and users.
+
+        In part this is done through admin views, meaning admin views are also
+        tested here.
         """
         # Create three types of users that exist: Root, can do anything,
         # projectadmin, cam do things to a project he or she owns. And logged in
@@ -133,13 +128,14 @@ class ComicframeworkTestCase(TestCase):
         participant = self._create_random_user("participant")
         self._register(participant, testproject)
         # a user who only signed up but did not register to any project
-        registered_user = self._create_random_user("comicregistered")
+        registered_user = self._create_random_user("registered")
         # TODO: How to do this gracefully?
         return [testproject, root, projectadmin, participant, registered_user]
 
     def _register(self, user, project):
-        """ Register user for the given project, follow actual signup as
-        closely as possible.
+        """
+        Register user for the given project, follow actual signup as closely
+        as possible.
         """
         RegistrationRequestFactory(challenge=project, user=user)
         self.assertTrue(
@@ -190,7 +186,9 @@ class ComicframeworkTestCase(TestCase):
         return response
 
     def _find_errors_in_page(self, response):
-        """ see if there are any errors rendered in the html of response.
+        """
+        See if there are any errors rendered in the html of response.
+
         Used for checking forms. Also checks for 403 response forbidden.
         Return string error message if anything does not check out, "" if not.
         """
@@ -268,9 +266,6 @@ class ComicframeworkTestCase(TestCase):
         )
 
     def _create_random_user(self, startname=""):
-        """ Sign up a user, saves me having to think of a unique name each time
-        predend startname if given
-        """
         username = startname + "".join(
             [choice("AEOUY") + choice("QWRTPSDFGHHKLMNB") for x in range(3)]
         )
@@ -278,9 +273,11 @@ class ComicframeworkTestCase(TestCase):
         return self._create_user(data)
 
     def _create_user(self, data):
-        """ Sign up user in a way as close to production as possible. Check a
-        lot of stuff. Data is a dictionary form_field:for_value pairs. Any
-        unspecified values are given default values
+        """
+        Sign up user in a way as close to production as possible.
+
+        Check a lot of stuff. Data is a dictionary form_field:for_value pairs.
+        Any unspecified values are given default values.
         """
         username = data["username"]
         self._signup_user(data)
@@ -329,9 +326,6 @@ class ComicframeworkTestCase(TestCase):
     def _try_create_challenge(
         self, user, short_name, description="test project"
     ):
-        """ split this off from create_challenge because sometimes you just
-        want to assert that creation fails
-        """
         url = reverse("challenges:create")
         storage = DefaultStorage()
         banner = storage._open(
@@ -355,9 +349,7 @@ class ComicframeworkTestCase(TestCase):
     def _create_challenge_in_admin(
         self, user, short_name, description="test project"
     ):
-        """
-        Create a challenge object as if created through django admin interface.
-        """
+        """Create a challenge object as if created through django admin interface."""
         response = self._try_create_challenge(user, short_name, description)
         errors = self._find_errors_in_page(response)
         if errors:
@@ -369,8 +361,10 @@ class ComicframeworkTestCase(TestCase):
         return project
 
     def _login(self, user, password="testpassword"):
-        """ convenience function. log in user an assert whether it worked.
-        passing None as user will log out
+        """
+        Log in user an assert whether it worked.
+
+        Passing None as user will log out.
         """
         self.client.logout()
         if user is None:
@@ -385,8 +379,9 @@ class ComicframeworkTestCase(TestCase):
         return success
 
     def assert_email(self, email, email_expected):
-        """ Convenient way to check subject, content, mailto etc at once for
-        an email
+        """
+        Convenient way to check subject, content, mailto etc at once for an email.
+
         email : django.core.mail.message object
         email_expected : dict like {"subject":"Registration complete","to":"user@email.org" }
         """
@@ -413,9 +408,10 @@ class ComicframeworkTestCase(TestCase):
             )
 
 
-class CreateProjectTest(ComicframeworkTestCase):
+class CreateProjectTest(GrandChallengeFrameworkTestCase):
     def test_cannot_create_project_with_weird_name(self):
-        """ Expose issue #222 : projects can be created with names which are
+        """
+        Expose issue #222 : projects can be created with names which are
         not valid as hostname, for instance containing underscores. Make sure
         These cannot be created
         """
@@ -473,9 +469,10 @@ class CreateProjectTest(ComicframeworkTestCase):
         )
 
 
-class ViewsTest(ComicframeworkTestCase):
+class ViewsTest(GrandChallengeFrameworkTestCase):
     def set_up_extra(self):
-        """ Create some objects to work with, In part this is done through
+        """
+        Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
         # todo: is this ugly? At least there is explicit assignment of vars.
@@ -489,8 +486,9 @@ class ViewsTest(ComicframeworkTestCase):
         ] = self._create_dummy_project("view-test")
 
     def test_registered_user_can_create_project(self):
-        """ A user freshly registered through the project can immediately create
-        a project
+        """
+        A user freshly registered through the challenge can immediately create
+        a challenge.
         """
         user = self._create_user({"username": "user2", "email": "ab@cd.com"})
         testproject = self._create_challenge_in_admin(user, "user1project")
@@ -500,8 +498,9 @@ class ViewsTest(ComicframeworkTestCase):
         self._test_page_can_be_viewed(self.root, testpage1)
 
     def test_page_view_permission(self):
-        """ Check that a page with permissions set can be viewed by the correct
-        users only
+        """
+        Check that a page with permissions set can only be viewed by the
+        correct users.
         """
         adminonlypage = create_page(
             self.testproject, "adminonlypage", permission_lvl=Page.ADMIN_ONLY
@@ -534,13 +533,9 @@ class ViewsTest(ComicframeworkTestCase):
         self._test_page_can_be_viewed(None, publicpage)  # None = not logged in
 
     def test_robots_txt_can_be_loaded(self):
-        """ Just check there are no errors in finding robots.txt. Only testing
-        for non-logged in users because I would hope bots are never logged in
-        """
+        """Check there are no errors in finding robots.txt."""
         # main domain robots.txt
         robots_url = "/robots.txt/"
-        # robots.txt for each project, which by bots can be seen as seperate
-        # domain beacuse we use dubdomains to designate projects
         robots_url_project = reverse(
             "subdomain_robots_txt",
             kwargs={"challenge_short_name": self.testproject.short_name},
@@ -551,9 +546,7 @@ class ViewsTest(ComicframeworkTestCase):
         )  # None = not logged in
 
     def test_non_exitant_page_gives_404(self):
-        """ reproduces issue #219
-        https://github.com/comic/grand-challenge.org/issues/219
-        """
+        """Reproduces https://github.com/comic/grand-challenge.org/issues/219."""
         page_url = reverse(
             "pages:detail",
             kwargs={
@@ -571,9 +564,7 @@ class ViewsTest(ComicframeworkTestCase):
         )
 
     def test_non_exitant_project_gives_404_or_302(self):
-        """ reproduces issue #219,
-        https://github.com/comic/grand-challenge.org/issues/219
-        """
+        """Reproduces https://github.com/comic/grand-challenge.org/issues/219."""
         # main domain robots.txt
         non_existant_url = reverse(
             "challenge-homepage",
@@ -591,9 +582,10 @@ class ViewsTest(ComicframeworkTestCase):
         )
 
 
-class UploadTest(ComicframeworkTestCase):
+class UploadTest(GrandChallengeFrameworkTestCase):
     def set_up_extra(self):
-        """ Create some objects to work with, In part this is done through
+        """
+        Create some objects to work with, In part this is done through
         admin views, meaning admin views are also tested here.
         """
         [
@@ -607,8 +599,9 @@ class UploadTest(ComicframeworkTestCase):
         self._register(self.participant2, self.testproject)
 
     def test_file_upload_page_shows(self):
-        """ The /files page should show to admin, signedin and root, but not
-        to others
+        """
+        The /files page should show to admin, signedin and root, but not
+        to others.
         """
         url = reverse(
             "uploads:create",
@@ -616,10 +609,10 @@ class UploadTest(ComicframeworkTestCase):
         )
         self._test_url_can_be_viewed(self.root, url)
 
-    # self._test_url_can_be_viewed(self.root.username,url)
     def _upload_test_file(self, user, project, testfilename=""):
-        """ Upload a very small text file as user to project, through standard
-        upload view at /files
+        """
+        Upload a very small text file as user to project, through standard
+        upload view at /files.
         """
         if testfilename == "":
             testfilename = self.giverandomfilename(user)
@@ -675,8 +668,7 @@ class UploadTest(ComicframeworkTestCase):
         )
 
     def test_file_can_be_uploaded(self):
-        """ Upload a fake file, see if correct users can see this file
-        """
+        """Upload a fake file, see if correct users can see this file."""
         name1 = self.giverandomfilename(self.root)
         name2 = self.giverandomfilename(self.projectadmin)
         name3 = self.giverandomfilename(self.participant)
@@ -687,14 +679,18 @@ class UploadTest(ComicframeworkTestCase):
         self._upload_test_file(self.participant2, self.testproject, name4)
 
 
-class TemplateTagsTest(ComicframeworkTestCase):
-    """ See if using template tags like {% include file.txt %} inside page html
-    will crash anything
+class TemplateTagsTest(GrandChallengeFrameworkTestCase):
+    """
+    See if using template tags like {% include file.txt %} inside page html
+    will crash anything.
     """
 
     def set_up_extra(self):
-        """ Create some objects to work with, In part this is done through
-        admin views, meaning admin views are also tested here.
+        """
+        Create some objects to work with.
+
+        In part this is done through admin views, meaning admin views are also
+        tested here.
         """
         [
             self.testproject,
@@ -721,9 +717,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         )
 
     def _extract_download_link(self, response1):
-        """ From a page rendering a listfile template tag, return the first
-        download link
-        """
+        """Return the first download link from the response."""
         found = re.search(
             '<ul class="dataset">(.*)</ul>',
             response1.content.decode(),
@@ -744,9 +738,9 @@ class TemplateTagsTest(ComicframeworkTestCase):
         return link
 
     def test_listdir(self):
-        """ Does the template tag for listing and downloading files in a dir work
-        correctly?
-        test for comcisite.templatetags.templatetags.listdir
+        """
+        Does the template tag for listing and downloading files in a dir work
+        correctly? test for comcisite.templatetags.templatetags.listdir.
         """
         # create a page containing the listdir tag on the public folder.
         # Path to browse is a special path for which Mockstorage will return some
@@ -852,7 +846,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
 
     def assert_text(self, content, expected_text, description=""):
         """
-        assert that expected_text can be found in text,
+        Assert that expected_text can be found in text,
         description can describe what this link should do, like
         "register user without permission", for better fail messages
         """
@@ -888,7 +882,7 @@ class TemplateTagsTest(ComicframeworkTestCase):
         self.assert_text(text, expected_text, description)
 
 
-class ProjectLoginTest(ComicframeworkTestCase):
+class ProjectLoginTest(GrandChallengeFrameworkTestCase):
     """
     Getting userena login and signup to display inside a project context
     (with correct banner and pages, sending project-based email etc..) was
@@ -896,8 +890,9 @@ class ProjectLoginTest(ComicframeworkTestCase):
     """
 
     def set_up_extra(self):
-        """ Create some objects to work with, In part this is done through
-        admin views, meaning admin views are also tested here.
+        """
+        Create some objects to work with, In part this is done through admin
+        views, meaning admin views are also tested here.
         """
         [
             self.testproject,

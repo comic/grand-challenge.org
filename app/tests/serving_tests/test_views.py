@@ -20,9 +20,7 @@ from tests.utils import get_view_for_user
 def test_imageset_annotationset_download(
     client, two_challenge_sets, phase, kind
 ):
-    """
-    Only participants of a challenge should be able to download imageset images
-    """
+    """Only participants of a challenge should be able to download imageset images."""
 
     imageset = two_challenge_sets.challenge_set_1.challenge.imageset_set.get(
         phase=phase
@@ -111,9 +109,7 @@ def test_image_response(client):
 
 @pytest.mark.django_db
 def test_submission_download(client, two_challenge_sets):
-    """
-    Only the challenge admin should be able to download submissions
-    """
+    """Only the challenge admin should be able to download submissions."""
     submission = SubmissionFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.challenge_set_1.participant,

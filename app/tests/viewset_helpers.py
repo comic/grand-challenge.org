@@ -25,7 +25,7 @@ TEST_USER_CREDENTIALS = {
 }
 
 
-def get_response_status_viewset(
+def get_response_status_viewset(  # noqa: C901
     rf,
     viewset,
     model_name,
@@ -236,7 +236,7 @@ def get_viewset_user_kwargs_url(
     return user, kwargs, url
 
 
-def view_test(
+def view_test(  # noqa: C901
     action,
     user_type,
     namespace,

@@ -15,8 +15,10 @@ from tests.utils import (
 def validate_owner_or_admin_view(
     *, two_challenge_set, client: Client, **kwargs
 ):
-    """ Assert that a view is only accessible to administrators or participants
-    of that particular challenge """
+    """
+    Assert that a view is only accessible to administrators or participants
+    of that particular challenge.
+    """
     # No user
     assert_viewname_redirect(
         redirect_url=settings.LOGIN_URL,
@@ -52,8 +54,10 @@ def validate_owner_or_admin_view(
 def validate_member_owner_or_admin_view(
     *, two_challenge_set, client: Client, **kwargs
 ):
-    """ Assert that a view is only accessible to administrators or participants
-    of that particular challenge """
+    """
+    Assert that a view is only accessible to administrators or participants
+    of that particular challenge.
+    """
     # No user
     assert_viewname_redirect(
         redirect_url=settings.LOGIN_URL,

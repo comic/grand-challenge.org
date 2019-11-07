@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def subdomain_middleware(get_response):
     def middleware(request):
-        """ Adds the subdomain to the request """
+        """Adds the subdomain to the request."""
         host = request.get_host().lower()
         domain = request.site.domain.lower()
 

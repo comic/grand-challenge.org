@@ -16,9 +16,12 @@ from grandchallenge.annotations.models import (
 
 class Command(BaseCommand):
     """
-    This command copies all annotations that belong to one user to another user.
-    Currently, it is used for debugging purposes to copy the (imported) annotations of a certain user to the demo user.
-    This function will also be used to copy the imported annotations of the old workstation to the new grader accounts.
+    Copy all annotations that belong to one user to another user.
+
+    Currently, this command is used for debugging purposes to copy the
+    (imported) annotations of a certain user to the demo user. This function
+    will also be used to copy the imported annotations of the old workstation
+    to the new grader accounts.
     """
 
     help = "Copy annotations from one user to another"
@@ -43,7 +46,7 @@ class Command(BaseCommand):
             help="Adds object level permissions to user_to for the each of the annotation instances",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa: C901
         try:
             user_from = get_user_model().objects.get(
                 username=options["user_from"]

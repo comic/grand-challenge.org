@@ -16,8 +16,8 @@ from grandchallenge.retina_core.management.commands.setannotationpermissions imp
 @pytest.mark.django_db
 class TestCommand:
     nr_of_default_permissions = (
-        4
-    )  # nr of default_permissions in each model is fixed right now
+        4  # nr of default_permissions in each model is fixed right now
+    )
     nr_of_mlps = len(ANNOTATION_MODELS) * nr_of_default_permissions
     nr_of_olps = (
         22 * nr_of_default_permissions

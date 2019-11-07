@@ -29,7 +29,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
         ]
 
     def get_latest_ready_image(self, obj: Algorithm):
-        """ Used by latest_container_image SerializerMethodField """
+        """Used by latest_container_image SerializerMethodField."""
         ci = obj.latest_ready_image
         if ci:
             return ci.api_url

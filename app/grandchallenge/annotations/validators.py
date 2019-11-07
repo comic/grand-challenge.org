@@ -4,9 +4,11 @@ from rest_framework import serializers
 
 def validate_grader_is_current_retina_user(grader, context):
     """
-    This method checks if the passed grader equals the request.user that is passed in the context.
+    Check if the passed grader is the request.user that is passed in the context.
+
     Only applies to users that are in the retina_graders group.
-    BEWARE! Validation will pass if user is not logged in or request or request.user is not defined
+    BEWARE! Validation will pass if user is not logged in or request or
+    request.user is not defined.
     """
     request = context.get("request")
     if (

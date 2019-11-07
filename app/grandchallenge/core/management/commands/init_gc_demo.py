@@ -25,6 +25,7 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.evaluation.models import Job, Method, Result, Submission
 from grandchallenge.pages.models import Page
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -45,9 +46,7 @@ def get_temporary_image():
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        """
-        Creates the main project, demo user and demo challenge
-        """
+        """Creates the main project, demo user and demo challenge."""
         if not settings.DEBUG:
             raise RuntimeError(
                 "Skipping this command, server is not in DEBUG mode."
@@ -55,7 +54,6 @@ class Command(BaseCommand):
 
         # Set the default domain that is used in RequestFactory
         site = Site.objects.get(pk=settings.SITE_ID)
-
         if site.domain == "gc.localhost":
             # Already initialised
             return
@@ -84,6 +82,7 @@ class Command(BaseCommand):
         self._create_external_challenge()
         self._create_workstation()
         self._create_algorithm_demo()
+        self._create_reader_studies()
         self._log_tokens()
 
     def _create_flatpages(self, site):
@@ -284,6 +283,27 @@ class Command(BaseCommand):
         w.add_user(user=self.users["readerstudy"])
         w.add_editor(user=self.users["workstation"])
         w.add_user(user=self.users["algorithm"])
+
+    def _create_reader_studies(self):
+        reader_study = ReaderStudy.objects.create(
+            title="Reader Study",
+            workstation=Workstation.objects.first(),
+            logo=get_temporary_image(),
+        )
+        reader_study.editors_group.user_set.add(self.users["readerstudy"])
+        reader_study.readers_group.user_set.add(self.users["demo"])
+
+        question = Question.objects.create(
+            reader_study=reader_study,
+            question_text="foo",
+            answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
+        )
+
+        answer = Answer.objects.create(
+            creator=self.users["readerstudy"], question=question, answer="foo"
+        )
+        answer.images.add(grandchallenge.cases.models.Image.objects.first())
+        answer.save()
 
     @staticmethod
     def _log_tokens():

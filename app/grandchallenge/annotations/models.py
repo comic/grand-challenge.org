@@ -27,7 +27,7 @@ class AbstractAnnotationModel(UUIDModel):
         ordering = ["-created"]
 
     def save(self, *args, **kwargs):
-        """ Override save method to enable setting of permissions for retina users """
+        """Override save method to enable setting of permissions for retina users."""
         created = self._state.adding
 
         super().save(*args, **kwargs)
@@ -55,7 +55,7 @@ class AbstractAnnotationModel(UUIDModel):
 
 class AbstractSingleAnnotationModel(UUIDModel):
     def save(self, *args, **kwargs):
-        """ Override save method to enable setting of permissions for retina users """
+        """Override save method to enable setting of permissions for retina users."""
         created = self._state.adding
 
         super().save(*args, **kwargs)
@@ -87,9 +87,7 @@ class AbstractSingleAnnotationModel(UUIDModel):
 
 
 class AbstractImageAnnotationModel(AbstractAnnotationModel):
-    """
-    Abstract model for annotation linking to a single image
-    """
+    """Abstract model for annotation linking to a single image."""
 
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
 
@@ -120,9 +118,7 @@ class AbstractNamedImageAnnotationModel(AbstractImageAnnotationModel):
 
 
 class MeasurementAnnotation(AbstractImageAnnotationModel):
-    """
-    Model for a measurement (=2 coordinates) on a 2D image
-    """
+    """Model for a measurement (=2 coordinates) on a 2D image."""
 
     # Fields for start and end coordinates (x,y) of the voxel for the measurement
     start_voxel = ArrayField(models.FloatField(), size=2)
@@ -140,25 +136,19 @@ class MeasurementAnnotation(AbstractImageAnnotationModel):
 
 
 class BooleanClassificationAnnotation(AbstractNamedImageAnnotationModel):
-    """
-    General model for boolean image-level classification
-    """
+    """General model for boolean image-level classification."""
 
     value = models.BooleanField()
 
 
 class IntegerClassificationAnnotation(AbstractNamedImageAnnotationModel):
-    """
-    General model for integer image-level classification
-    """
+    """General model for integer image-level classification."""
 
     value = models.IntegerField()
 
 
 class CoordinateListAnnotation(AbstractNamedImageAnnotationModel):
-    """
-    General model for list of coordinates annotation
-    """
+    """General model for list of coordinates annotation."""
 
     # General form: [[x1,y1],[x2,y2],...]
     value = ArrayField(ArrayField(models.FloatField(), size=2))
@@ -167,7 +157,9 @@ class CoordinateListAnnotation(AbstractNamedImageAnnotationModel):
 class PolygonAnnotationSet(AbstractNamedImageAnnotationModel):
     """
     General model containing a set of specific polygon annotations.
-    Looks empty because it only contains the fields from AbstractNamedImageAnnotationModel
+
+    Looks empty because it only contains the fields from
+    `AbstractNamedImageAnnotationModel`.
     """
 
 
@@ -250,9 +242,7 @@ class ETDRSGridAnnotation(AbstractImageAnnotationModel):
 
 
 class ImageQualityAnnotation(AbstractImageAnnotationModel):
-    """
-    Model to annotate quality of an image
-    """
+    """Model to annotate quality of an image."""
 
     QUALITY_UNGRADABLE = "U"
     QUALITY_FAIR = "F"
@@ -287,9 +277,7 @@ class ImageQualityAnnotation(AbstractImageAnnotationModel):
 
 
 class ImagePathologyAnnotation(AbstractImageAnnotationModel):
-    """
-    Model to annotate if an pathology is present in an image
-    """
+    """Model to annotate if an pathology is present in an image."""
 
     PATHOLOGY_CANNOT_GRADE = "C"
     PATHOLOGY_ABSENT = "A"
@@ -310,9 +298,7 @@ class ImagePathologyAnnotation(AbstractImageAnnotationModel):
 
 
 class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
-    """
-    Model to annotate presence of specific pathologies
-    """
+    """Model to annotate presence of specific pathologies."""
 
     amd_present = models.BooleanField(
         help_text="Is Age-related Macular Degeneration present in this image?"
@@ -335,8 +321,6 @@ class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
 
 
 class ImageTextAnnotation(AbstractImageAnnotationModel):
-    """
-    Model to annotate a textual comment for an image
-    """
+    """Model to annotate a textual comment for an image."""
 
     text = models.TextField()

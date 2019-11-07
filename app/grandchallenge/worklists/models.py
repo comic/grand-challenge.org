@@ -7,9 +7,7 @@ from grandchallenge.core.models import UUIDModel
 
 
 class Worklist(UUIDModel):
-    """
-    Represents a collection of images for a user.
-    """
+    """Represents a collection of images for a user."""
 
     title = CharField(max_length=255, blank=True)
     creator = models.ForeignKey(

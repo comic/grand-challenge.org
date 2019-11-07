@@ -24,10 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 class ChallengeManager(models.Manager):
-    """ adds some tabel level functions for getting ComicSites from db. """
-
     def non_hidden(self):
-        """ like all(), but only return ComicSites for which hidden=false"""
+        """Filter the hidden challenge"""
         return self.filter(hidden=False)
 
 
@@ -52,9 +50,7 @@ def get_banner_path(instance, filename):
 
 
 class TaskType(models.Model):
-    """
-    Stores the task type options, eg, Segmentation, Regression, Prediction, etc
-    """
+    """Stores the task type options, eg, Segmentation, Regression, etc."""
 
     type = CICharField(max_length=16, blank=False, unique=True)
 
@@ -71,7 +67,7 @@ class TaskType(models.Model):
 
 
 class ImagingModality(models.Model):
-    """ Stores the modality options, eg, MR, CT, PET, XR """
+    """Store the modality options, eg, MR, CT, PET, XR."""
 
     modality = CICharField(max_length=16, blank=False, unique=True)
 
@@ -88,7 +84,7 @@ class ImagingModality(models.Model):
 
 
 class BodyRegion(models.Model):
-    """ Stores the anatomy options, eg, Head, Neck, Thorax, etc """
+    """Store the anatomy options, eg, Head, Neck, Thorax, etc."""
 
     region = CICharField(max_length=16, blank=False, unique=True)
 
@@ -105,7 +101,7 @@ class BodyRegion(models.Model):
 
 
 class BodyStructure(models.Model):
-    """ Stores the organ name and what region it belongs to """
+    """Store the organ name and what region it belongs to."""
 
     structure = CICharField(max_length=16, blank=False, unique=True)
     region = models.ForeignKey(
@@ -250,7 +246,6 @@ class ChallengeBase(models.Model):
     objects = ChallengeManager()
 
     def __str__(self):
-        """ string representation for this object"""
         return self.short_name
 
     @property
@@ -264,7 +259,7 @@ class ChallengeBase(models.Model):
         raise NotImplementedError
 
     @property
-    def hosted_on_comic(self):
+    def is_self_hosted(self):
         return True
 
     @property
@@ -432,66 +427,48 @@ class Challenge(ChallengeBase):
     )
 
     def get_project_data_folder(self):
-        """ Full path to root folder for all data belonging to this project
-        """
+        """Full path to root folder for all data belonging to this project."""
         return safe_join(settings.MEDIA_ROOT, self.short_name)
 
     def upload_dir_rel(self):
-        """Path to get and put secure uploaded files relative to MEDIA_ROOT
-
-        """
+        """Path to get and put secure uploaded files relative to MEDIA_ROOT."""
         return os.path.join(self.short_name, "uploads")
 
     def public_upload_dir_rel(self):
-        """ Path to public uploaded files, relative to MEDIA_ROOT
-
-        """
+        """Path to public uploaded files, relative to MEDIA_ROOT."""
         return os.path.join(self.short_name, settings.COMIC_PUBLIC_FOLDER_NAME)
 
     def admin_group_name(self):
-        """
-        returns the name of the admin group which should have all rights to
-        this ComicSite instance
-        """
+        """Return the name of this challenges admin group."""
         return self.short_name + "_admins"
 
     def participants_group_name(self):
-        """
-        returns the name of the participants group, which should have some
-        rights to this ComicSite instance
-        """
+        """Return the name of the participants group."""
         return self.short_name + "_participants"
 
     def is_admin(self, user) -> bool:
-        """
-        is user in the admins group for the challenge to which this object
-        belongs? superuser always passes
-        """
+        """Determines if this user is an admin of this challenge."""
         return (
             user.is_superuser
             or user.groups.filter(pk=self.admins_group.pk).exists()
         )
 
     def is_participant(self, user) -> bool:
-        """
-        is user in the participants group for the challenge to which this
-        object belong? superuser always passes
-        """
+        """Determines if this user is a participant of this challenge."""
         return (
             user.is_superuser
             or user.groups.filter(pk=self.participants_group.pk).exists()
         )
 
     def get_admins(self):
-        """ Return all users that are in this challenges admin group """
+        """Return all admins of this challenge."""
         return self.admins_group.user_set.all()
 
     def get_participants(self):
-        """ Return all participants of this challenge """
+        """Return all participants of this challenge."""
         return self.participants_group.user_set.all()
 
     def get_absolute_url(self):
-        """ With this method, admin will show a 'view on site' button """
         return reverse(
             "challenge-homepage",
             kwargs={"challenge_short_name": self.short_name},
@@ -523,7 +500,10 @@ class Challenge(ChallengeBase):
 @receiver(post_delete, sender=Challenge)
 def delete_challenge_groups_hook(*_, instance: Challenge, using, **__):
     """
-    Use a signal rather than delete() override to catch usages of bulk_delete
+    Deletes the related groups.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
     """
     try:
         instance.admins_group.delete(using=using)
@@ -549,13 +529,14 @@ class ExternalChallenge(ChallengeBase):
         return self.homepage
 
     @property
-    def hosted_on_comic(self):
+    def is_self_hosted(self):
         return False
 
 
 class ComicSiteModel(models.Model):
     """
-    An object which can be shown or used in the ComicSite framework.
+    An object which can be shown or used in the framework.
+
     This base class should handle common functions such as authorization.
     """
 
@@ -580,19 +561,17 @@ class ComicSiteModel(models.Model):
     )
 
     def __str__(self):
-        """ string representation for this object"""
         return self.title
 
     def can_be_viewed_by(self, user):
-        """ boolean, is user allowed to view this? """
+        """Is user allowed to view this?"""
         if self.permission_lvl == self.ALL:
             return True
         else:
             return user.has_perm("view_ComicSiteModel", self)
 
     def setpermissions(self, lvl):
-        """ Give the right groups permissions to this object
-            object needs to be saved before setting perms"""
+        """Give the right groups permissions to this object."""
         admingroup = self.challenge.admins_group
         participantsgroup = self.challenge.participants_group
         self.persist_if_needed()
@@ -612,9 +591,7 @@ class ComicSiteModel(models.Model):
             )
 
     def persist_if_needed(self):
-        """
-        setting permissions needs a persisted object. This method makes sure.
-        """
+        """Save the model if it has not been done so already."""
         if not self.id:
             super().save()
 

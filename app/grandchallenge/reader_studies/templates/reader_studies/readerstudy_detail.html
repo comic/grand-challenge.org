@@ -21,8 +21,31 @@
 
     {% if not object.is_valid %}
         <div class="alert alert-danger">
-        This reader study is not ready to be used. Please update the configuration. All of the images should be included in the hanging list
-        exactly once.
+            This reader study is not ready to be used. Please update the configuration. All of the images should be included in the hanging list exactly once.
+            {% if object.non_unique_study_image_names|length > 0 %}
+                <hr/>
+                The following image names appear more than once in the study: <br/>
+                <span class="font-weight-bold">
+                    {{ object.non_unique_study_image_names|join:', ' }}
+                </span>
+            {% endif %}
+            {% if not object.hanging_list_valid %}
+                {% if object.hanging_list_diff.in_study_list|length > 0 %}
+                    <hr/>
+                    The following image names appear in the study but not in the hanging list: <br/>
+                    <span class="font-weight-bold">
+                        {{ object.hanging_list_diff.in_study_list|join:', ' }}
+                    </span>
+                {% endif %}
+                {% if object.hanging_list_diff.in_hanging_list|length > 0 %}
+                    <hr/>
+                    The following image names appear in the hanging list but not in the study: <br/>
+                    <span class="font-weight-bold">
+                        {{ object.hanging_list_diff.in_hanging_list|join:', ' }}
+                    </span>
+                {% endif %}
+
+            {% endif %}
         </div>
     {% endif %}
 
@@ -95,18 +118,30 @@
 
         <h2>Questions</h2>
 
-        <ul>
+        <ul class="list-group list-group-flush">
             {% for question in object.questions.all %}
-                <li>{{ question }}</li>
+                <li class="list-group-item">
+                    <div class="w-100 d-flex justify-content-between">
+                        <div>{{ question }}</div>
+                        <a class="btn btn-primary btn-sm"
+                           href="{% url 'reader-studies:question-update' slug=object.slug pk=question.pk %}">
+                            <i class="fa fa-edit"></i> Edit
+                        </a>
+                    </div>
+                </li>
             {% endfor %}
         </ul>
 
-        <p class="mt-3">
-            <a class="btn btn-primary"
+        <div class="mt-3 d-lg-flex justify-content-between">
+            <a class="btn btn-primary mb-1"
                href="{% url 'reader-studies:add-question' slug=object.slug %}">
                 <i class="fas fa-plus"></i> Add a question to this study
             </a>
-        </p>
+            <a class="btn btn-primary mb-1"
+               href="{% url 'api:reader-study-export-answers' pk=object.pk %}">
+                <i class="fas fa-download"></i> Export answers (CSV)
+            </a>
+        </div>
 
     {% endif %}
 {% endblock %}

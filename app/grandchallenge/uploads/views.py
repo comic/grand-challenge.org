@@ -22,9 +22,7 @@ class UploadList(
 
 
 def upload_handler(request):
-    """
-    Upload a file to the given challenge, display files previously uploaded
-    """
+    """Upload a file to the given challenge, display files previously uploaded."""
     challenge = request.challenge
 
     view_url = reverse(

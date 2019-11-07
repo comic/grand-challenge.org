@@ -61,7 +61,7 @@ class SessionViewSet(ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["patch"])
     def keep_alive(self, *_, **__):
-        """ Increase the maximum duration of the session, up to the limit """
+        """Increase the maximum duration of the session, up to the limit."""
         session = self.get_object()
 
         new_duration = now() + timedelta(minutes=5) - session.created
@@ -319,7 +319,7 @@ class SessionDetail(
 
 
 def session_proxy(request, *, pk, path, **_):
-    """ Returns an internal redirect to the session instance if authorised """
+    """Return an internal redirect to the session instance if authorised."""
     session = get_object_or_404(Session, pk=pk)
     path = safe_join(f"/workstation-proxy/{session.hostname}", path)
 

@@ -62,7 +62,7 @@ def get_view_for_user(
     reverse_kwargs: dict = None,
     **kwargs,
 ):
-    """ Returns the view for a particular user """
+    """Return the view for a particular user."""
 
     if url is None:
         extra_kwargs = {}
@@ -79,7 +79,7 @@ def get_view_for_user(
 
     elif viewname:
         raise AttributeError(
-            "You defined both a viewname and a url, only " "use one!"
+            "You defined both a viewname and a url, only use one!"
         )
 
     if user and not isinstance(user, AnonymousUser):
@@ -102,7 +102,7 @@ def get_view_for_user(
 
 
 def get_http_host(*, url, kwargs):
-    """ Takes a url and splits out the http host, if found """
+    """Takes a url and splits out the http host, if found."""
     urlparts = urlparse(url)
     if urlparts[1]:
         kwargs.update({"HTTP_HOST": urlparts[1]})
@@ -111,24 +111,31 @@ def get_http_host(*, url, kwargs):
 
 
 def assert_viewname_status(*, code: int, **kwargs):
-    """ Asserts that a viewname for challenge_short_name and pk returns status
-    code `code` for a particular user """
+    """
+    Assert that a viewname for challenge_short_name and pk returns status
+    code `code` for a particular user.
+    """
     response = get_view_for_user(**kwargs)
     assert response.status_code == code
     return response
 
 
 def assert_viewname_redirect(*, redirect_url: str, **kwargs):
-    """ Asserts that a view redirects to the given url. See
-    assert_viewname_status for kwargs details """
+    """
+    Assert that a view redirects to the given url.
+
+    See `assert_viewname_status` for `kwargs` details.
+    """
     response = assert_viewname_status(code=302, **kwargs)
     assert list(urlparse(response.url))[2] == redirect_url
     return response
 
 
 def validate_admin_only_view(*, two_challenge_set, client: Client, **kwargs):
-    """ Assert that a view is only accessible to administrators for that
-    particular challenge """
+    """
+    Assert that a view is only accessible to administrators for that
+    particular challenge.
+    """
 
     # No user
     assert_viewname_redirect(
@@ -167,8 +174,10 @@ def validate_admin_only_view(*, two_challenge_set, client: Client, **kwargs):
 def validate_admin_or_participant_view(
     *, two_challenge_set, client: Client, **kwargs
 ):
-    """ Assert that a view is only accessible to administrators or participants
-    of that particular challenge """
+    """
+    Assert that a view is only accessible to administrators or participants
+    of that particular challenge.
+    """
 
     # No user
     assert_viewname_redirect(
@@ -305,7 +314,7 @@ def validate_admin_only_text_in_page(
 
 
 def get_temporary_image():
-    """ Quick hack, credit to https://stackoverflow.com/questions/43135771/ """
+    """Quick hack, credit to https://stackoverflow.com/questions/43135771/."""
     io = BytesIO()
     size = (200, 200)
     color = (255, 0, 0)

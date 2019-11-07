@@ -10,10 +10,10 @@ def workstation_query(
     image=None, overlay=None, reader_study=None, config=None
 ):
     """
-    Generate the workstation query string for this image with overlay or
-    reader_study.
-    """
+    Generate the workstation query string.
 
+    Supports setting the image with overlay or a reader_study.
+    """
     if image:
         query = {settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM: image.pk}
         if overlay:

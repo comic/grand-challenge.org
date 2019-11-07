@@ -2,7 +2,11 @@ import pytest
 
 from grandchallenge.reader_studies.models import Question, ReaderStudy
 from tests.factories import UserFactory, WorkstationFactory
-from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.reader_studies_tests.factories import (
+    AnswerFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
 from tests.utils import get_temporary_image, get_view_for_user
 
@@ -166,6 +170,95 @@ def test_question_create(client):
             assert question.reader_study == rs_set.rs1
             assert question.question_text == "What?"
             question.delete()
+
+
+@pytest.mark.django_db
+def test_question_update(client):
+    rs = ReaderStudyFactory()
+    editor = UserFactory()
+    reader = UserFactory()
+    rs.editors_group.user_set.add(editor)
+    rs.readers_group.user_set.add(reader)
+
+    question = QuestionFactory(
+        question_text="foo",
+        reader_study=rs,
+        answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
+        direction=Question.DIRECTION_HORIZONTAL,
+        order=100,
+    )
+
+    response = get_view_for_user(
+        viewname="reader-studies:question-update",
+        client=client,
+        method=client.get,
+        reverse_kwargs={"slug": rs.slug, "pk": question.pk},
+        follow=True,
+        user=reader,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:question-update",
+        client=client,
+        method=client.get,
+        reverse_kwargs={"slug": rs.slug, "pk": question.pk},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+
+    assert question.question_text == "foo"
+    assert question.answer_type == Question.ANSWER_TYPE_SINGLE_LINE_TEXT
+    assert question.direction == Question.DIRECTION_HORIZONTAL
+    assert question.order == 100
+
+    response = get_view_for_user(
+        viewname="reader-studies:question-update",
+        client=client,
+        method=client.post,
+        data={
+            "question_text": "bar",
+            "answer_type": Question.ANSWER_TYPE_BOOL,
+            "direction": Question.DIRECTION_VERTICAL,
+            "order": 200,
+        },
+        reverse_kwargs={"slug": rs.slug, "pk": question.pk},
+        follow=True,
+        user=editor,
+    )
+
+    question.refresh_from_db()
+    assert question.question_text == "bar"
+    assert question.answer_type == Question.ANSWER_TYPE_BOOL
+    assert question.direction == Question.DIRECTION_VERTICAL
+    assert question.order == 200
+
+    AnswerFactory(question=question, answer="true")
+
+    # An answer is added, so changing the question text should no longer be possible
+    get_view_for_user(
+        viewname="reader-studies:question-update",
+        client=client,
+        method=client.post,
+        data={
+            "question_text": "foo",
+            "answer_type": Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
+            "direction": Question.DIRECTION_HORIZONTAL,
+            "order": 100,
+        },
+        reverse_kwargs={"slug": rs.slug, "pk": question.pk},
+        follow=True,
+        user=editor,
+    )
+
+    question.refresh_from_db()
+    assert question.question_text == "bar"
+    assert question.answer_type == Question.ANSWER_TYPE_BOOL
+    assert question.direction == Question.DIRECTION_HORIZONTAL
+    assert question.order == 100
 
 
 @pytest.mark.django_db

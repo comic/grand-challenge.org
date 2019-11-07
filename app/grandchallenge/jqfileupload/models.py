@@ -19,9 +19,7 @@ def generate_upload_filename(instance, filename):
 
 
 class StagedFile(models.Model):
-    """
-    Files uploaded but not committed to other forms.
-    """
+    """Files uploaded but not committed to other forms."""
 
     user_pk_str = models.CharField(max_length=128)
     client_id = models.CharField(max_length=128, null=True, blank=True)
@@ -55,7 +53,7 @@ class StagedFile(models.Model):
             self.start_byte == 0 and self.end_byte == self.total_size - 1
         )
 
-    def clean(self):
+    def clean(self):  # noqa: C901
         if self.start_byte > self.end_byte:
             raise ValidationError("Supplied invalid Content-Range")
 

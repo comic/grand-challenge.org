@@ -326,7 +326,7 @@
 
                                         </dl>
 
-                                        {% if not challenge.hosted_on_comic %}
+                                        {% if not challenge.is_self_hosted %}
                                             {% if request.user.is_staff %}
                                                 <div>
                                                     <a class="btn btn-primary btn-sm"
