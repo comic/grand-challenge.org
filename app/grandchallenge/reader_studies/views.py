@@ -245,6 +245,9 @@ class ExportCSVMixin(object):
         if not (user and user.has_perm(self.export_permission, obj)):
             raise Http404()
 
+    def _create_dicts(self, headers, data):
+        return map(lambda x: dict(zip(headers, x)), data)
+
     def _preprocess_data(self, data):
         processed = []
         for entry in data:
@@ -253,13 +256,18 @@ class ExportCSVMixin(object):
             )
         return processed
 
-    def _create_csv_response(self, data, headers=None, filename="export.csv"):
+    def _create_csv_response(self, data, headers, filename="export.csv"):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        writer = csv.writer(response, quoting=csv.QUOTE_ALL, escapechar="\\")
-        if headers:
-            writer.writerow(headers)
-        writer.writerows(self._preprocess_data(data))
+        writer = csv.DictWriter(
+            response,
+            quoting=csv.QUOTE_ALL,
+            escapechar="\\",
+            fieldnames=headers,
+        )
+        writer.writeheader()
+        csv_dict = self._create_dicts(headers, self._preprocess_data(data))
+        writer.writerows(csv_dict)
 
         return response
 
@@ -289,7 +297,7 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
 
         return self._create_csv_response(
             data,
-            headers=Answer.csv_headers,
+            Answer.csv_headers,
             filename=f"{reader_study.slug}-answers.csv",
         )
 

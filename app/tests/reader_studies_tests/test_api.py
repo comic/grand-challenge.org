@@ -430,3 +430,17 @@ def test_csv_export_preprocessing(tmp_path, data, elements, lines):
         for line in reader:
             assert len(line) == elements
         assert reader.line_num == lines
+
+
+def test_csv_export_create_dicts():
+    exporter = ExportCSVMixin()
+    headers = ["foo", "bar"]
+    data = []
+
+    for x in range(10):
+        data.append([f"foo{x}", f"bar{x}"])
+
+    csv_dicts = exporter._create_dicts(headers, data)
+
+    for index, dct in enumerate(csv_dicts):
+        assert dct == {"foo": f"foo{index}", "bar": f"bar{index}"}
