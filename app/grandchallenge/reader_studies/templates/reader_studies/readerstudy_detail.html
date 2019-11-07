@@ -21,8 +21,31 @@
 
     {% if not object.is_valid %}
         <div class="alert alert-danger">
-        This reader study is not ready to be used. Please update the configuration. All of the images should be included in the hanging list
-        exactly once.
+            This reader study is not ready to be used. Please update the configuration. All of the images should be included in the hanging list exactly once.
+            {% if object.non_unique_study_image_names|length > 0 %}
+                <hr/>
+                The following image names appear more than once in the study: <br/>
+                <span class="font-weight-bold">
+                    {{ object.non_unique_study_image_names|join:', ' }}
+                </span>
+            {% endif %}
+            {% if not object.hanging_list_valid %}
+                {% if object.hanging_list_diff.in_study_list|length > 0 %}
+                    <hr/>
+                    The following image names appear in the study but not in the hanging list: <br/>
+                    <span class="font-weight-bold">
+                        {{ object.hanging_list_diff.in_study_list|join:', ' }}
+                    </span>
+                {% endif %}
+                {% if object.hanging_list_diff.in_hanging_list|length > 0 %}
+                    <hr/>
+                    The following image names appear in the hanging list but not in the study: <br/>
+                    <span class="font-weight-bold">
+                        {{ object.hanging_list_diff.in_hanging_list|join:', ' }}
+                    </span>
+                {% endif %}
+
+            {% endif %}
         </div>
     {% endif %}
 

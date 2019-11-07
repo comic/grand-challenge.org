@@ -205,6 +205,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         )
 
     @property
+    def hanging_list_diff(self):
+        return {
+            "in_study_list": set(self.study_image_names)
+            - set(self.hanging_image_names),
+            "in_hanging_list": set(self.hanging_image_names)
+            - set(self.study_image_names),
+        }
+
+    @property
     def non_unique_study_image_names(self):
         """
         Get all of the image names that are non-unique for this ReaderStudy
