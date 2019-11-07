@@ -180,7 +180,10 @@ def test_image_file_detail(client):
 @pytest.mark.django_db
 def test_image_file_create(client):
     user = UserFactory(is_staff=True)
-    upload_session = RawImageUploadSessionFactory(creator=user)
+    algo = AlgorithmImageFactory(creator=user)
+    upload_session = RawImageUploadSessionFactory(
+        creator=user, algorithm_image=algo
+    )
 
     response = get_view_for_user(
         viewname="api:image-file-list",
@@ -269,7 +272,10 @@ def test_empty_data_image_files(client):
 )
 def test_image_file_post_permissions(client, is_active, expected_response):
     user = UserFactory(is_active=is_active)
-    upload_session = RawImageUploadSessionFactory(creator=user)
+    algo = AlgorithmImageFactory(creator=user)
+    upload_session = RawImageUploadSessionFactory(
+        creator=user, algorithm_image=algo
+    )
     response = get_view_for_user(
         viewname="api:image-file-list",
         user=user,

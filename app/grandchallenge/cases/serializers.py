@@ -66,10 +66,15 @@ class RawImageFileSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         upload_session = attrs["upload_session"]
+        algorithm_image = upload_session.algorithm_image
         user = self.context.get("request").user
         if upload_session.creator != user:
             raise ValidationError(
                 f"User {user} does not have permission to see this raw image upload session "
+            )
+        if algorithm_image.creator != user:
+            raise ValidationError(
+                f"User {user} does not have permission to see the corresponding algorithm image "
             )
         return attrs
 
