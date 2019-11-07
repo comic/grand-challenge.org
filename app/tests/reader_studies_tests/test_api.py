@@ -414,18 +414,18 @@ def test_csv_export(client, answer_type, answer):
         ),
     ),
 )
-def test_csv_export_preprocessing(data, elements, lines):
+def test_csv_export_preprocessing(tmp_path, data, elements, lines):
     exporter = ExportCSVMixin()
     processed = exporter._preprocess_data(data)
     assert len(processed) == lines
 
     # Unfortunately, we have to create an actual file here, as both tempfile
     # and StringIO seem to cause issues with line endings
-    with open("/tmp/csv.csv", "w+", newline="") as f:
+    with open(tmp_path / "csv.csv", "w+", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(processed)
 
-    with open("/tmp/csv.csv", "r", newline="") as f:
+    with open(tmp_path / "csv.csv", "r", newline="") as f:
         reader = csv.reader(f)
         for line in reader:
             assert len(line) == elements
