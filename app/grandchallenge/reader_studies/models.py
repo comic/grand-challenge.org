@@ -455,6 +455,8 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
 
+    csv_headers = ["Question text", "Answer type", "Required", "Image port"]
+
     class Meta:
         ordering = ("order", "created")
 
@@ -526,6 +528,8 @@ class Answer(UUIDModel):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = JSONField()
+
+    csv_headers = Question.csv_headers + ["Answer", "Images", "Creator"]
 
     class Meta:
         ordering = ("creator", "created")

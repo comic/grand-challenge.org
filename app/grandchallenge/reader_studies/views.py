@@ -253,10 +253,12 @@ class ExportCSVMixin(object):
             )
         return processed
 
-    def _create_csv_response(self, data, filename="export.csv"):
+    def _create_csv_response(self, data, headers=None, filename="export.csv"):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         writer = csv.writer(response, quoting=csv.QUOTE_ALL, escapechar="\\")
+        if headers:
+            writer.writerow(headers)
         writer.writerows(self._preprocess_data(data))
 
         return response
@@ -299,7 +301,9 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
         ).values_list(*fields)
 
         return self._create_csv_response(
-            data, filename=f"{reader_study.slug}-answers.csv"
+            data,
+            headers=Answer.csv_headers,
+            filename=f"{reader_study.slug}-answers.csv",
         )
 
 
