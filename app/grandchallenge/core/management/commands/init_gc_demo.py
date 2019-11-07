@@ -46,9 +46,7 @@ def get_temporary_image():
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        """
-        Creates the main project, demo user and demo challenge
-        """
+        """Creates the main project, demo user and demo challenge."""
         if not settings.DEBUG:
             raise RuntimeError(
                 "Skipping this command, server is not in DEBUG mode."

@@ -70,7 +70,6 @@ def get_workstation_image_or_404(
     -------
         The `WorkstationImage` that corresponds to this `pk` or `slug`.
     """
-
     if pk is not None:
         workstation_image = get_object_or_404(WorkstationImage, pk=pk)
     else:

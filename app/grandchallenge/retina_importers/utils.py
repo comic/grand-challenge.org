@@ -1,8 +1,3 @@
-"""
-Helper functions
-"""
-
-
 def upperize(val):
     """
     Converts string to uppercase if it exists

@@ -17,7 +17,7 @@ class PageCreateForm(forms.ModelForm):
         self.helper.layout.append(Submit("save", "Save"))
 
     def clean_title(self):
-        """ Ensure that page titles are not duplicated for a challenge """
+        """Ensure that page titles are not duplicated for a challenge."""
         title = self.cleaned_data["title"]
         queryset = Page.objects.filter(
             challenge=self.challenge, title__iexact=title
@@ -55,7 +55,7 @@ class PageCreateForm(forms.ModelForm):
 
 
 class PageUpdateForm(PageCreateForm):
-    """ Like the page update form but you can also move the page """
+    """Like the page update form but you can also move the page."""
 
     move = forms.CharField(widget=forms.Select)
     move.required = False

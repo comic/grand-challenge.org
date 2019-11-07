@@ -41,7 +41,7 @@ def load_tiff_file(*, path: Path) -> GrandChallengeTiffFile:
     return GrandChallengeTiffFile(path=path, tags=tags)
 
 
-def _validate_tifffile(
+def _validate_tifffile(  # noqa: C901
     *, pages: tifffile.tifffile.TiffPages
 ) -> GrandChallengeTiffFileTags:
     """

@@ -24,11 +24,7 @@ def rank_results(
     metrics: Tuple[Metric, ...],
     score_method: Callable,
 ) -> Positions:
-    """
-    Calculates the overall rank for each result, along with the rank_score
-    and the rank per metric.
-    """
-
+    """Determine the overall rank for each result."""
     results = _filter_valid_results(results=results, metrics=metrics)
 
     rank_per_metric = _get_rank_per_metric(results=results, metrics=metrics)
@@ -48,7 +44,7 @@ def rank_results(
 def _filter_valid_results(
     *, results: Iterable[Result], metrics: Tuple[Metric, ...]
 ) -> List[Result]:
-    """ Ensure that all of the metrics are in every result """
+    """Ensure that all of the metrics are in every result."""
     return [
         res
         for res in results

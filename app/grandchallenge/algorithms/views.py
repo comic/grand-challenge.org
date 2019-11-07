@@ -290,7 +290,7 @@ class AlgorithmJobsList(LoginRequiredMixin, PermissionListMixin, ListView):
         return context
 
     def get_queryset(self, *args, **kwargs):
-        """ Only display the jobs for this algorithm """
+        """Filter the jobs for this algorithm."""
         qs = super().get_queryset(*args, **kwargs)
         return qs.filter(algorithm_image__algorithm=self.algorithm)
 

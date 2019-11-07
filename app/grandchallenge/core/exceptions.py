@@ -1,8 +1,5 @@
-class ComicException(Exception):
-    pass
-
-
-class PathResolutionException(ComicException):
-    """ A path given to a COMIC template tag contained variables that could not
-        be resolved
+class PathResolutionException(Exception):
+    """
+    Raised when a path given to a template tag contained variables that could
+    not be resolved.
     """

@@ -14,9 +14,7 @@ def login_redirect(request):
 
 
 def profile(request):
-    """
-    Redirect to the profile page of the currently signed in user.
-    """
+    """Redirect to the profile page of the currently signed in user."""
     if request.user.is_authenticated:
         url = reverse(
             "userena_profile_detail",
@@ -29,9 +27,7 @@ def profile(request):
 
 
 def profile_edit_redirect(request):
-    """
-    Redirect to the profile edit page of the currently signed in user.
-    """
+    """Redirect to the profile edit page of the currently signed in user."""
     if request.user.is_authenticated:
         messages.add_message(
             request,

@@ -8,9 +8,7 @@ from grandchallenge.studies.models import Study
 
 
 class Archive(UUIDModel):
-    """
-    Model for archive. Contains a collection of images
-    """
+    """Model for archive. Contains a collection of images."""
 
     name = models.CharField(max_length=255, default="Unnamed Archive")
 
@@ -21,21 +19,23 @@ class Archive(UUIDModel):
 
     def delete(self, *args, **kwargs):
         """
-        Removes all patients, studies, images, imagefiles and annotations that belong
-        exclusively to this archive
+        Remove all patients, studies, images, imagefiles and annotations that
+        belong exclusively to this archive.
         """
 
         def find_protected_studies_and_patients(images):
             """
-            Returns a tuple containing a set of Study ids and a set of Patient ids
-            that are "protected". Where "protected" means that these Study and Patient
-            objects contain images that are not in the given list of images. Therefore,
-            when deleting an archive and it's related objects, these Study and Patient
-            objects should not be deleted since that would also delete other images,
-            because of the cascading delete behavior of the many-to-one relation.
+            Returns a tuple containing a set of Study ids and a set of Patient
+            ids that are "protected". Where "protected" means that these Study
+            and Patient objects contain images that are not in the given list
+            of images. Therefore, when deleting an archive and it's related
+            objects, these Study and Patient objects should not be deleted
+            since that would also delete other images, because of the cascading
+            delete behavior of the many-to-one relation.
+
             :param images: list of image objects that are going to be removed
-            :return: tuple containing a set of Study ids and a set of Patient ids
-            that should not be removed
+            :return: tuple containing a set of Study ids and a set of Patient
+            ids that should not be removed
             """
             protected_study_ids = set()
             protected_patient_ids = set()
@@ -56,9 +56,10 @@ class Archive(UUIDModel):
             .all()
         )
 
-        protected_study_ids, protected_patient_ids = find_protected_studies_and_patients(
-            images_to_remove
-        )
+        (
+            protected_study_ids,
+            protected_patient_ids,
+        ) = find_protected_studies_and_patients(images_to_remove)
 
         with transaction.atomic():
             Patient.objects.filter(

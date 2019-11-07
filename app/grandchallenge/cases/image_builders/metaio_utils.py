@@ -40,8 +40,10 @@ METAIO_IMAGE_TYPES = {
 
 def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
     """
-    Attempts to parse the headers of an mhd file. This function must be
-    secure to safeguard against any untrusted uploaded file.
+    Attempts to parse the headers of an mhd file.
+
+    This function must be secure to safeguard against any untrusted uploaded
+    file.
 
     Parameters
     ----------
@@ -49,12 +51,13 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
 
     Returns
     -------
+        The extracted header from the mhd file as key value pairs.
 
     Raises
     ------
-    ValueError:
-        raised when the file contains problems making it impossible to
-        read
+    ValueError
+        Raised when the file contains problems making it impossible to
+        read.
     """
 
     # attempt to limit number of read headers to prevent overflow attacks
@@ -100,7 +103,7 @@ def extract_header_listing(
 
 
 def load_sitk_image_with_nd_support_from_headers(
-    mhd_file: Path
+    mhd_file: Path,
 ) -> SimpleITK.Image:
     headers = parse_mh_header(mhd_file)
     is_mha = headers["ElementDataFile"].strip() == "LOCAL"

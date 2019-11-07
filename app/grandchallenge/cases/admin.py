@@ -36,9 +36,7 @@ class ImageInline(admin.StackedInline):
 
 
 class MhdOrRawFilter(admin.SimpleListFilter):
-    """
-    Filter for ImageFileAdmin that allows filtering on mhd or raw/zraw files
-    """
+    """Allow filtering on mhd or raw/zraw files."""
 
     title = "MHD or RAW file"
     parameter_name = "mhd_or_raw"

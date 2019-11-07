@@ -92,9 +92,7 @@ class DockerConnection:
             raise e
 
     def stop_and_cleanup(self, timeout: int = 10):
-        """
-        Stops and prunes all containers and volumes associated with this job
-        """
+        """Stops and prunes all artifacts associated with this job."""
         flt = {"label": f"job={self._job_label}"}
 
         try:
@@ -184,7 +182,7 @@ class Executor(DockerConnection):
             )
 
     def _chmod_volumes(self):
-        """ Ensure that the i/o directories are writable """
+        """Ensure that the i/o directories are writable."""
         try:
             self._client.containers.run(
                 image=self._io_image,
@@ -274,7 +272,7 @@ class Service(DockerConnection):
         )
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """ Do not cleanup the containers for this job, leave them running """
+        """Do not cleanup the containers for this job, leave them running."""
         pass
 
     @property

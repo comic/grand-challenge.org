@@ -2,7 +2,7 @@ from functools import wraps
 
 
 def disable_for_loaddata(signal_handler):
-    """Decorator for disabling a signal handler when using loaddata"""
+    """Decorator for disabling a signal handler when using manage.py loaddata."""
 
     @wraps(signal_handler)
     def wrapper(*args, **kwargs):

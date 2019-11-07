@@ -2,12 +2,12 @@ from grandchallenge.core.utils.email import send_templated_email
 
 
 def send_participation_request_notification_email(request, obj):
-    """ When a user requests to become a participant, let this know to all admins
+    """
+    Email the challenge admins when a new participant request is created.
 
     request:     HTTPRequest containing the current admin posting this
-    obj:         ParticipationRequest object containing info on which user requested
-                 participation for which project
-
+    obj:         ParticipationRequest object containing info on which user
+                 requested participation for which challenge
     """
     title = f"[{obj.challenge.short_name.lower()}] New Participation Request"
     kwargs = {
@@ -27,12 +27,12 @@ def send_participation_request_notification_email(request, obj):
 
 
 def send_participation_request_accepted_email(request, obj):
-    """ When a users requests to become a participant is accepted, let the user know
+    """
+    Email the user when a participant request is accepted.
 
     request:     HTTPRequest containing the current admin posting this
-    obj:         ParticipationRequest object containing info on which user requested
-                 participation for which project
-
+    obj:         ParticipationRequest object containing info on which user
+                 requested participation for which challenge
     """
     title = (
         f"[{obj.challenge.short_name.lower()}] Participation Request Accepted"
@@ -53,12 +53,12 @@ def send_participation_request_accepted_email(request, obj):
 
 
 def send_participation_request_rejected_email(request, obj):
-    """ When a users requests to become a participant is rejected, let the user know
+    """
+    Email the user when a participation request is rejected.
 
     request:     HTTPRequest containing the current admin posting this
-    obj:         ParticipationRequest object containing info on which user requested
-                 participation for which project
-
+    obj:         ParticipationRequest object containing info on which user
+                 requested participation for which challenge
     """
     title = (
         f"[{obj.challenge.short_name.lower()}] Participation Request Rejected"

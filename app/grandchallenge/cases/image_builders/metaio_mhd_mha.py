@@ -20,7 +20,7 @@ from grandchallenge.cases.image_builders.metaio_utils import (
 from grandchallenge.cases.models import Image, ImageFile
 
 
-def image_builder_mhd(path: Path) -> ImageBuilderResult:
+def image_builder_mhd(path: Path) -> ImageBuilderResult:  # noqa: C901
     """
     Constructs image objects by inspecting files in a directory.
 

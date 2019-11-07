@@ -131,8 +131,10 @@ def get_rendered_page_if_allowed(page_or_page_title, request):
 
 
 def get_data_folder_path(challenge_short_name):
-    """ Returns physical base path to the root of the folder where all files for
-    this project are kept """
+    """
+    Return physical base path to the root of the folder where all files for
+    this project are kept.
+    """
     return safe_join(settings.MEDIA_ROOT, challenge_short_name)
 
 

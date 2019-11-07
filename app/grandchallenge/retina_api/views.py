@@ -67,7 +67,7 @@ class ArchiveView(APIView):
     authentication_classes = (authentication.SessionAuthentication,)
     pagination_class = None
 
-    @staticmethod
+    @staticmethod  # noqa: C901
     def create_response_object():
         archives = Archive.objects.all()
         patients = Patient.objects.all().prefetch_related(
@@ -348,7 +348,7 @@ class DataView(APIView):
         image = Image.objects.get(name=image_name)
         return image
 
-    def get(
+    def get(  # noqa: C901
         self,
         request,
         data_type,
@@ -581,7 +581,7 @@ class DataView(APIView):
 
         return Response(response_data)
 
-    @method_decorator(ensure_csrf_cookie)
+    @method_decorator(ensure_csrf_cookie)  # noqa: C901
     def put(
         self,
         request,

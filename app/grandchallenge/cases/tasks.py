@@ -137,7 +137,7 @@ IMAGE_BUILDER_ALGORITHMS = [image_builder_mhd, image_builder_tiff]
 
 
 def remove_duplicate_files(
-    session_files: Sequence[RawImageFile]
+    session_files: Sequence[RawImageFile],
 ) -> Tuple[Sequence[RawImageFile], Sequence[RawImageFile]]:
     """
     Filters the given sequence of RawImageFile objects and removes all files
@@ -172,7 +172,7 @@ def remove_duplicate_files(
     )
 
 
-@shared_task
+@shared_task  # noqa: C901
 def build_images(upload_session_uuid: UUID):
     """
     Task which analyzes an upload session and attempts to extract and store

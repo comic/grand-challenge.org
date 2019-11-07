@@ -70,7 +70,9 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
 
 class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     """
-    This class has no permissions, do not use it directly! See the subclasses
+    Base class for the submission creation forms.
+
+    It has no permissions, do not use it directly! See the subclasses.
     """
 
     model = Submission
@@ -190,7 +192,7 @@ class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Submission
 
     def get_queryset(self):
-        """ Admins see everything, participants just their submissions """
+        """Admins see everything, participants just their submissions."""
         queryset = super().get_queryset()
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
@@ -217,7 +219,7 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Job
 
     def get_queryset(self):
-        """ Admins see everything, participants just their jobs """
+        """Admins see everything, participants just their jobs."""
         challenge = self.request.challenge
 
         queryset = super().get_queryset()

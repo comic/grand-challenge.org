@@ -156,11 +156,13 @@ It is recommended to setup django integration to ensure that the code completion
 6. In the settings window navigate to ``Tools`` -> ``Python integrated tools``
 7. Under the testing section select ``pytest`` as the default test runner
 8. Under the Docstrings section set ``NumPy`` as the docstrings format
-9. In the settings window navigate to ``Editor`` -> ``Code Style`` -> ``Python`` -> ``Imports``
-10. Enable ``Sort Import Statements``, ``Sort imported names in "from" imports``, and ``Sort plain and "from" imports separately in the same group``
-11. Click ``OK``
+9. In the settings window navigate to ``Editor`` -> ``Code Style`` -> ``Python``
+10. On the ``Wrapping and Braces`` tab set ``Hard wrap at`` to ``86`` and ``Visual guide`` to ``79``
+11. On the ``Imports`` tab enable ``Sort Import Statements``, ``Sort imported names in "from" imports``, and ``Sort plain and "from" imports separately in the same group``
+12. Click ``OK``
+13. Install the ``Flake8 Support`` plugin so that PyCharm will understand ``noqa`` comments
 
-It is also recommended to install the black extension for code formatting.
+It is also recommended to install the black extension (version ``19.10b0``) for code formatting.
 
 Running locally
 ~~~~~~~~~~~~~~~

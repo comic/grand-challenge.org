@@ -77,7 +77,7 @@ def test_insert_graph(rf: RequestFactory, view_type):
     if view_type == "anode09":
         assert "Created with matplotlib" in rendered
     else:
-        assert "comictablecontainer" in rendered
+        assert "tablecontainer" in rendered
 
 
 @pytest.mark.django_db

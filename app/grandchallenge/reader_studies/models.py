@@ -215,9 +215,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def non_unique_study_image_names(self):
-        """
-        Get all of the image names that are non-unique for this ReaderStudy
-        """
+        """Return all of the non-unique image names for this ReaderStudy."""
         return [
             name
             for name, count in Counter(self.study_image_names).items()
@@ -226,7 +224,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def is_valid(self):
-        """ Is this ReaderStudy valid? """
+        """Is this ReaderStudy valid?"""
         return (
             self.hanging_list_valid
             and len(self.non_unique_study_image_names) == 0
@@ -270,7 +268,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
     """
-    Use a signal rather than delete() override to catch usages of bulk_delete
+    Deletes the related groups.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
     """
     try:
         instance.editors_group.delete(using=using)
@@ -381,7 +382,7 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
 
 
 def validate_answer_json(schema: dict, obj: object) -> bool:
-    """ The answer type validators must return true or false """
+    """The answer type validators must return true or false."""
     try:
         JSONSchemaValidator(schema=schema)(obj)
         return True

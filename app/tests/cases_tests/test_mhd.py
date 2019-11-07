@@ -1,6 +1,3 @@
-"""
-Tests for the mhd-file reconstruction.
-"""
 import shutil
 import zlib
 from pathlib import Path

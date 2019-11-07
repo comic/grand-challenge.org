@@ -21,15 +21,14 @@ from tests.utils import (
 
 
 def submission_and_job(*, challenge, creator):
-    """ Creates a submission and a job for that submission """
+    """Creates a submission and a job for that submission."""
     s = SubmissionFactory(challenge=challenge, creator=creator)
     j = JobFactory(submission=s)
     return s, j
 
 
 def submissions_and_jobs(two_challenge_sets):
-    """ Creates jobs (j) and submissions (s) for each participant (p) and
-    challenge (c).  """
+    """Create (j)obs and (s)ubmissions for each (p)articipant and (c)hallenge."""
     SubmissionsAndJobs = namedtuple(
         "SubmissionsAndJobs",
         [
@@ -254,9 +253,14 @@ def test_job_list(client, two_challenge_sets):
         two_challenge_set=two_challenge_sets,
         client=client,
     )
-    *_, j_p_s1, j_p_s2, j_p1_s1, j_p12_s1_c1, j_p12_s1_c2 = submissions_and_jobs(
-        two_challenge_sets
-    )
+    (
+        *_,
+        j_p_s1,
+        j_p_s2,
+        j_p1_s1,
+        j_p12_s1_c1,
+        j_p12_s1_c2,
+    ) = submissions_and_jobs(two_challenge_sets)
     # Participants should only be able to see their own jobs
     response = get_view_for_user(
         viewname="evaluation:job-list",

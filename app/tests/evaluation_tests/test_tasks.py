@@ -60,7 +60,7 @@ def test_submission_evaluation(
 
 @pytest.mark.django_db
 def test_method_validation(evaluation_image):
-    """ The validator should set the correct sha256 and set the ready bit """
+    """The validator should set the correct sha256 and set the ready bit."""
     container, sha256 = evaluation_image
     method = MethodFactory(image__from_path=container)
 
@@ -81,7 +81,7 @@ def test_method_validation(evaluation_image):
 
 @pytest.mark.django_db
 def test_method_validation_invalid_dockerfile(alpine_images):
-    """ Uploading two images in a tar archive should fail """
+    """Uploading two images in a tar archive should fail."""
     method = MethodFactory(image__from_path=alpine_images)
     assert method.ready is False
 
@@ -99,7 +99,7 @@ def test_method_validation_invalid_dockerfile(alpine_images):
 
 @pytest.mark.django_db
 def test_method_validation_root_dockerfile(root_image):
-    """ Uploading two images in a tar archive should fail """
+    """Uploading two images in a tar archive should fail."""
     method = MethodFactory(image__from_path=root_image)
     assert method.ready is False
 
@@ -117,7 +117,7 @@ def test_method_validation_root_dockerfile(root_image):
 
 @pytest.mark.django_db
 def test_method_validation_not_a_docker_tar(submission_file):
-    """ Upload something that isnt a docker file should be invalid """
+    """Upload something that isn't a docker file should be invalid."""
     method = MethodFactory(image__from_path=submission_file)
     assert method.ready is False
 

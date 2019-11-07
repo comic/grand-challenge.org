@@ -271,9 +271,12 @@ class Image(UUIDModel):
 
     @property
     def shape_without_color(self) -> List[int]:
-        """This function returns the shape of the image without color in Numpy ordering [(t), (z), y, x]
+        """
+        Return the shape of the image without the color channel.
 
-        :return: [(t), (z), y, x]
+        Returns
+        -------
+            The shape of the image in NumPy ordering [(t), (z), y, x]
         """
         result = []
         if self.timepoints is not None:
@@ -286,9 +289,12 @@ class Image(UUIDModel):
 
     @property
     def shape(self) -> List[int]:
-        """This function returns the shape of the image in Numpy ordering [(t), (z), y, x, (c)]
+        """
+        Return the shape of the image with the color channel.
 
-        :return: [(t), (z), y, x, (c)]
+        Returns
+        -------
+            The shape of the image in NumPy ordering [(t), (z), y, x, (c)]
         """
         result = self.shape_without_color
         color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
@@ -298,10 +304,15 @@ class Image(UUIDModel):
 
     def get_sitk_image(self):
         """
-        This function returns the image that belongs to this model as an SimpleITK image. It requires that exactly one
-        MHD/RAW file pair is associated with the model. Otherwise it wil raise a MultipleObjectsReturned or
-        ObjectDoesNotExist exception.
-        :return: SimpleITK image
+        Return the image that belongs to this model as an SimpleITK image.
+
+        Requires that exactly one MHD/RAW file pair is associated with the model.
+        Otherwise it wil raise a MultipleObjectsReturned or ObjectDoesNotExist
+        exception.
+
+        Returns
+        -------
+            A SimpleITK image
         """
         # self.files should contain 1 .mhd file
         mhd_file = self.files.get(file__endswith=".mhd")
@@ -343,9 +354,7 @@ class Image(UUIDModel):
         return sitk_image
 
     def permit_viewing_by_retina_users(self):
-        """ Calling this function will give the retina graders and retina admins object specific permissions
-        to view this image. """
-        # Set object level view permissions for retina_graders and retina_admins
+        """Set object level view permissions for retina_graders and retina_admins."""
         for group_name in (
             settings.RETINA_GRADERS_GROUP_NAME,
             settings.RETINA_ADMINS_GROUP_NAME,
