@@ -4,12 +4,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
 
-import SimpleITK
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.cases.image_builders.metaio_utils import load_sitk_image
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
@@ -239,6 +239,7 @@ class Image(UUIDModel):
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)
     depth = models.IntegerField(null=True)
+    timepoints = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
@@ -270,7 +271,13 @@ class Image(UUIDModel):
 
     @property
     def shape_without_color(self) -> List[int]:
+        """This function returns the shape of the image without color in Numpy ordering [(t), (z), y, x]
+
+        :return: [(t), (z), y, x]
+        """
         result = []
+        if self.timepoints is not None:
+            result.append(self.timepoints)
         if self.depth is not None:
             result.append(self.depth)
         result.append(self.height)
@@ -279,6 +286,10 @@ class Image(UUIDModel):
 
     @property
     def shape(self) -> List[int]:
+        """This function returns the shape of the image in Numpy ordering [(t), (z), y, x, (c)]
+
+        :return: [(t), (z), y, x, (c)]
+        """
         result = self.shape_without_color
         color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
         if color_components > 1:
@@ -321,9 +332,8 @@ class Image(UUIDModel):
                         outfile.write(buffer)
 
             try:
-                sitk_image = SimpleITK.ReadImage(
-                    str(Path(tempdirname) / Path(mhd_file.file.name).name)
-                )
+                hdr_path = Path(tempdirname) / Path(mhd_file.file.name).name
+                sitk_image = load_sitk_image(mhd_file=hdr_path)
             except RuntimeError as e:
                 logging.error(
                     f"Failed to load SimpleITK image with error: {e}"

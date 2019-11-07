@@ -65,6 +65,18 @@ class ImageFileFactoryWithRAWFile3DLarge4Slices(ImageFileFactory):
     )
 
 
+class ImageFileFactoryWithMHDFile4D(ImageFileFactory):
+    file = factory.django.FileField(
+        from_path=RESOURCE_PATH / "image10x11x12x13.mhd"
+    )
+
+
+class ImageFileFactoryWithRAWFile4D(ImageFileFactory):
+    file = factory.django.FileField(
+        from_path=RESOURCE_PATH / "image10x11x12x13.zraw"
+    )
+
+
 class ImageFactoryWithoutImageFile(ImageFactory):
     eye_choice = factory.Iterator([x[0] for x in Image.EYE_CHOICES])
     stereoscopic_choice = factory.Iterator(
@@ -111,6 +123,20 @@ class ImageFactoryWithImageFile3D(ImageFactoryWithImageFile):
     modality = factory.SubFactory(
         ImagingModalityFactory, modality=settings.MODALITY_OCT
     )
+
+
+class ImageFactoryWithImageFile4D(ImageFactoryWithImageFile):
+    @factory.post_generation
+    def files(self, create, extracted, **kwargs):
+        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
+        if not create:
+            return
+        if extracted:
+            for image in extracted:
+                self.files.add(image)
+        if create and not extracted:
+            ImageFileFactoryWithMHDFile4D(image=self)
+            ImageFileFactoryWithRAWFile4D(image=self)
 
 
 class ImageFactoryWithImageFile2DLarge(ImageFactoryWithImageFile):

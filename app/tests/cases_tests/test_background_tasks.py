@@ -65,6 +65,8 @@ def test_image_file_creation(settings):
         "image10x10x10.zraw",
         "image10x10x10.mhd",
         "image10x10x10.mha",
+        "image10x11x12x13.mhd",
+        "image10x11x12x13.zraw",
         "image10x10x10-extra-stuff.mhd",
         "invalid_utf8.mhd",
         "no_image",
@@ -77,7 +79,7 @@ def test_image_file_creation(settings):
     assert session.session_state == UploadSessionState.stopped
     assert session.error_message is None
 
-    assert Image.objects.filter(origin=session).count() == 4
+    assert Image.objects.filter(origin=session).count() == 5
 
     for name, db_object in uploaded_images.items():
         name: str
@@ -106,6 +108,42 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     session.refresh_from_db()
     assert session.session_state == UploadSessionState.stopped
     assert session.error_message is not None
+
+
+@pytest.mark.parametrize(
+    "images",
+    (
+        ["image10x11x12x13.mha"],
+        ["image10x11x12x13.mhd", "image10x11x12x13.zraw"],
+    ),
+)
+@pytest.mark.django_db
+def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.refresh_from_db()
+    assert session.session_state == UploadSessionState.stopped
+    assert session.error_message is None
+
+    images = Image.objects.filter(origin=session).all()
+    assert len(images) == 1
+
+    raw_image_file = list(uploaded_images.values())[0]
+    raw_image_file: RawImageFile
+    raw_image_file.refresh_from_db()
+    assert raw_image_file.staged_file_id is None
+
+    image = images[0]
+    assert image.shape == [13, 12, 11, 10]
+    assert image.shape_without_color == [13, 12, 11, 10]
+    assert image.color_space == Image.COLOR_SPACE_GRAY
+
+    sitk_image = image.get_sitk_image()
+    assert [e for e in reversed(sitk_image.GetSize())] == image.shape
 
 
 @pytest.mark.django_db
@@ -181,6 +219,9 @@ def test_mhd_file_annotation_creation(settings):
     assert raw_image_file.staged_file_id is None
 
     image = images[0]
-    assert image.shape == [5, 6, 7]
-    assert image.shape_without_color == [5, 6, 7]
+    assert image.shape == [7, 6, 5]
+    assert image.shape_without_color == [7, 6, 5]
     assert image.color_space == Image.COLOR_SPACE_GRAY
+
+    sitk_image = image.get_sitk_image()
+    assert [e for e in reversed(sitk_image.GetSize())] == image.shape
