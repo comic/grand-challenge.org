@@ -58,15 +58,16 @@ def test_upload_session_detail(client):
 
 @pytest.mark.django_db
 def test_upload_sessions_create(client):
-    algo = AlgorithmImageFactory()
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
+    ai = AlgorithmImageFactory()
+    ai.algorithm.add_user(user)
 
     response = get_view_for_user(
         viewname="api:upload-session-list",
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm_image": algo.api_url},
+        data={"algorithm_image": ai.api_url},
         content_type="application/json",
     )
     assert response.status_code == 201
@@ -74,7 +75,7 @@ def test_upload_sessions_create(client):
     upload_session = RawImageUploadSession.objects.get(
         pk=response.data.get("pk")
     )
-    assert upload_session.algorithm_image == algo
+    assert upload_session.algorithm_image == ai
 
 
 @pytest.mark.django_db
@@ -117,13 +118,15 @@ def test_empty_data_upload_sessions(client):
 )
 def test_upload_session_post_permissions(client, is_active, expected_response):
     user = UserFactory(is_active=is_active)
-    algo = AlgorithmImageFactory()
+    ai = AlgorithmImageFactory()
+    ai.algorithm.add_user(user)
+
     response = get_view_for_user(
         viewname="api:upload-session-list",
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm_image": algo.api_url},
+        data={"algorithm_image": ai.api_url},
         content_type="application/json",
     )
     assert response.status_code == expected_response
@@ -180,9 +183,10 @@ def test_image_file_detail(client):
 @pytest.mark.django_db
 def test_image_file_create(client):
     user = UserFactory(is_staff=True)
-    algo = AlgorithmImageFactory(creator=user)
+    ai = AlgorithmImageFactory()
+    ai.algorithm.add_user(user)
     upload_session = RawImageUploadSessionFactory(
-        creator=user, algorithm_image=algo
+        creator=user, algorithm_image=ai
     )
 
     response = get_view_for_user(
@@ -202,23 +206,6 @@ def test_image_file_create(client):
     assert image_file.upload_session == upload_session
 
     upload_session = RawImageUploadSessionFactory()
-
-    response = get_view_for_user(
-        viewname="api:image-file-list",
-        user=user,
-        client=client,
-        method=client.post,
-        data={
-            "upload_session": upload_session.api_url,
-            "filename": "dummy.bin",
-        },
-        content_type="application/json",
-    )
-    assert response.status_code == 400
-
-    upload_session = RawImageUploadSessionFactory(
-        creator=user, algorithm_image=AlgorithmImageFactory()
-    )
 
     response = get_view_for_user(
         viewname="api:image-file-list",

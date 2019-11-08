@@ -46,6 +46,15 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         view_name="api:algorithms-image-detail",
     )
 
+    def validate(self, attrs):
+        algorithm_image = attrs["algorithm_image"]
+        user = self.context.get("request").user
+        if not user.has_perm("view_algorithm", algorithm_image.algorithm):
+            raise ValidationError(
+                f"User {user} does not have permission to view this algorithm "
+            )
+        return attrs
+
     class Meta:
         model = RawImageUploadSession
         fields = [
@@ -66,15 +75,10 @@ class RawImageFileSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         upload_session = attrs["upload_session"]
-        algorithm_image = upload_session.algorithm_image
         user = self.context.get("request").user
-        if upload_session.creator != user:
+        if not user.has_perm("view_rawimageuploadsession", upload_session):
             raise ValidationError(
-                f"User {user} does not have permission to see this raw image upload session "
-            )
-        if algorithm_image.creator != user:
-            raise ValidationError(
-                f"User {user} does not have permission to see the corresponding algorithm image "
+                f"User {user} does not have permission to view this raw image upload session "
             )
         return attrs
 
