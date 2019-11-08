@@ -3,6 +3,7 @@ import re
 
 from dal import autocomplete
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
@@ -10,6 +11,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404, HttpResponse
+from django.shortcuts import redirect
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -272,10 +274,6 @@ class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
 
 
 class ExportCSVMixin(object):
-    def _check_export_perms(self, user, obj):
-        if not (user and user.has_perm(self.export_permission, obj)):
-            raise Http404()
-
     def _create_dicts(self, headers, data):
         return map(lambda x: dict(zip(headers, x)), data)
 
@@ -310,14 +308,18 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
-    export_permission = (
+    change_permission = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+
+    def _check_change_perms(self, user, obj):
+        if not (user and user.has_perm(self.change_permission, obj)):
+            raise Http404()
 
     @action(detail=True)
     def export_answers(self, request, pk=None):
         reader_study = self.get_object()
-        self._check_export_perms(request.user, reader_study)
+        self._check_change_perms(request.user, reader_study)
 
         data = [
             answer.csv_values
@@ -334,6 +336,14 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             Answer.csv_headers,
             filename=f"{reader_study.slug}-answers.csv",
         )
+
+    @action(detail=True)
+    def generate_hanging_list(self, request, pk=None):
+        reader_study = self.get_object()
+        self._check_change_perms(request.user, reader_study)
+        reader_study.generate_hanging_list()
+        messages.success(request, "Hanging list generated.")
+        return redirect(reader_study.get_absolute_url())
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):
