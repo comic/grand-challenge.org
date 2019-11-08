@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath("../app"))
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings"
 
-import django
+import django  # noqa: E402
 
 django.setup()
 
