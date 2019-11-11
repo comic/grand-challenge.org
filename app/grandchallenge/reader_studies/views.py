@@ -23,6 +23,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from guardian.shortcuts import get_perms
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
@@ -95,6 +96,21 @@ class ReaderStudyDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        change_perm = f"change_{ReaderStudy._meta.model_name}"
+        if change_perm in get_perms(self.request.user, self.object):
+            readers = [
+                {
+                    "obj": reader,
+                    "progress": self.object.get_progress_for_user(reader),
+                }
+                for reader in self.object.readers_group.user_set.all()
+            ]
+            context.update({"readers": readers})
+        else:
+            user_progress = self.object.get_progress_for_user(
+                self.request.user
+            )
+            context.update({"progress": user_progress})
         context.update(
             {"user_is_reader": self.object.is_reader(user=self.request.user)}
         )
