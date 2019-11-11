@@ -3,7 +3,6 @@ import re
 
 from dal import autocomplete
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
@@ -11,7 +10,6 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404, HttpResponse
-from django.shortcuts import redirect
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -32,7 +30,11 @@ from rest_framework.mixins import (
 )
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import (
+    GenericViewSet,
+    ModelViewSet,
+    ReadOnlyModelViewSet,
+)
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
@@ -301,7 +303,7 @@ class ExportCSVMixin(object):
         return response
 
 
-class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
+class ReaderStudyViewSet(ExportCSVMixin, ModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
         "images", "questions"
@@ -337,13 +339,21 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             filename=f"{reader_study.slug}-answers.csv",
         )
 
-    @action(detail=True)
+    def check_permissions(self, request):
+        """
+        Check if the request should be permitted.
+        Raises an appropriate exception if the request is not permitted.
+        """
+
+        if request.method == "PATCH":
+            return self.check_object_permissions(request, self.get_object())
+        return super().check_permissions(request)
+
+    @action(detail=True, methods=["patch"])
     def generate_hanging_list(self, request, pk=None):
         reader_study = self.get_object()
-        self._check_change_perms(request.user, reader_study)
         reader_study.generate_hanging_list()
-        messages.success(request, "Hanging list generated.")
-        return redirect(reader_study.get_absolute_url())
+        return Response({"status": "Hanging list generated."},)
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):

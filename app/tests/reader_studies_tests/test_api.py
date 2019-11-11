@@ -461,7 +461,7 @@ def test_generate_hanging_list_api_view(generate_hanging_list, client):
         reverse_kwargs={"pk": rs.pk},
         user=editor,
         client=client,
-        method=client.get,
+        method=client.patch,
         follow=True,
     )
 
