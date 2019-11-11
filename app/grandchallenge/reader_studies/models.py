@@ -265,10 +265,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return hanging_list
 
     def generate_hanging_list(self):
-        hanging_list = []
-        for image_name in self.images.values_list("name", flat=True):
-            hanging_list.append({"main": image_name})
-        self.hanging_list = hanging_list
+        image_names = self.images.values_list("name", flat=True)
+        self.hanging_list = [{"main": name} for name in image_names]
         self.save()
 
 
