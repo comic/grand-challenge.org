@@ -101,17 +101,48 @@ class PolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
 class SingleLandmarkAnnotationSerializer(AbstractSingleAnnotationSerializer):
     class Meta:
         model = SingleLandmarkAnnotation
-        fields = ("image", "annotation_set", "landmarks")
+        fields = ("id", "image", "annotation_set", "landmarks")
 
 
 class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
     singlelandmarkannotation_set = SingleLandmarkAnnotationSerializer(
-        many=True, read_only=True
+        many=True
     )
 
     class Meta:
         model = LandmarkAnnotationSet
         fields = ("id", "grader", "created", "singlelandmarkannotation_set")
+
+    def create(self, validated_data):
+        sla_data = validated_data.pop("singlelandmarkannotation_set")
+        la_set = LandmarkAnnotationSet.objects.create(**validated_data)
+        for sla in sla_data:
+            SingleLandmarkAnnotation.objects.create(
+                annotation_set=la_set, **sla
+            )
+        return la_set
+
+    def update(self, instance, validated_data):
+        sla_data = validated_data.pop("singlelandmarkannotation_set")
+        for sla in sla_data:
+            sla_id = sla.pop("id")
+            if (
+                sla_id is not None
+                and SingleLandmarkAnnotation.objects.filter(id=sla_id).exists()
+            ):
+                item = SingleLandmarkAnnotation.objects.get(id=sla_id)
+                new_landmarks = sla.get("landmarks")
+                if new_landmarks is not None:
+                    if len(new_landmarks) == 0:
+                        item.delete()
+                    else:
+                        item.landmarks = new_landmarks
+                        item.save()
+            else:
+                SingleLandmarkAnnotation.objects.create(
+                    annotation_set=instance, **sla
+                )
+        return instance
 
 
 class ImageQualityAnnotationSerializer(AbstractAnnotationSerializer):
