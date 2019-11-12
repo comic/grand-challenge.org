@@ -274,17 +274,26 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def get_progress_for_user(self, user):
         if not self.is_valid or not self.hanging_list:
             return
+
         answerable_questions = self.questions.exclude(
             answer_type=Question.ANSWER_TYPE_HEADING
         )
         answerable_question_count = answerable_questions.count()
         hanging_list_count = len(self.hanging_list)
 
+        if answerable_question_count == 0 or hanging_list_count == 0:
+            return {
+                "questions": 0.0,
+                "hangings": 0.0,
+                "diff": 0.0,
+            }
+
         expected = hanging_list_count * answerable_question_count
         answers = Answer.objects.filter(
             question__in=answerable_questions, creator_id=user.id
         ).distinct()
         answer_count = answers.count()
+
         # There are unanswered questions
         if answer_count % answerable_question_count != 0:
             # Group the answers by images and filter out the images that
