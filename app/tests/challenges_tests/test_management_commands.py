@@ -15,11 +15,11 @@ from tests.factories import (
 def test_copy_challenge():
     with pytest.raises(CommandError) as e:
         call_command("copy_challenge")
-        assert "the following arguments are required: source, dest" in str(e)
+    assert "the following arguments are required: source, dest" in str(e.value)
 
     with pytest.raises(CommandError) as e:
         call_command("copy_challenge", "foo")
-        assert "the following arguments are required: dest" in str(e)
+    assert "the following arguments are required: dest" in str(e.value)
 
     with pytest.raises(ObjectDoesNotExist):
         call_command("copy_challenge", "foo", "bar")
