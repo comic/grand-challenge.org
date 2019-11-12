@@ -93,7 +93,8 @@ class RawImageUploadSession(UUIDModel):
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
-            f"({self.session_state})"
+            f"({self.session_state}) "
+            f"{self.error_message or ''}"
         )
 
     def save(self, *args, skip_processing=False, **kwargs):
