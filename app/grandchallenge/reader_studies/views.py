@@ -3,6 +3,7 @@ import re
 
 from dal import autocomplete
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
@@ -32,13 +33,15 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import (
     GenericViewSet,
-    ModelViewSet,
     ReadOnlyModelViewSet,
 )
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyPermissions,
+)
 from grandchallenge.reader_studies.forms import (
     EditorsForm,
     QuestionForm,
@@ -303,12 +306,12 @@ class ExportCSVMixin(object):
         return response
 
 
-class ReaderStudyViewSet(ExportCSVMixin, ModelViewSet):
+class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
         "images", "questions"
     )
-    permission_classes = [DjangoObjectPermissions]
+    permission_classes = [DjangoObjectOnlyPermissions]
     filter_backends = [ObjectPermissionsFilter]
     change_permission = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
@@ -339,20 +342,13 @@ class ReaderStudyViewSet(ExportCSVMixin, ModelViewSet):
             filename=f"{reader_study.slug}-answers.csv",
         )
 
-    def check_permissions(self, request):
-        """
-        Check if the request should be permitted.
-        Raises an appropriate exception if the request is not permitted.
-        """
-
-        if request.method == "PATCH":
-            return self.check_object_permissions(request, self.get_object())
-        return super().check_permissions(request)
-
     @action(detail=True, methods=["patch"])
     def generate_hanging_list(self, request, pk=None):
         reader_study = self.get_object()
         reader_study.generate_hanging_list()
+        messages.add_message(
+            request, messages.SUCCESS, "Hanging list re-generated."
+        )
         return Response({"status": "Hanging list generated."},)
 
 

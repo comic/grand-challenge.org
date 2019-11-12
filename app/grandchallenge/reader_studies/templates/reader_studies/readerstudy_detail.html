@@ -5,10 +5,6 @@
 {% load workstations %}
 {% load guardian_tags %}
 
-{% block messages %}
-    {{ block.super }}
-{% endblock %}
-
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
@@ -26,7 +22,9 @@
 
     {% if not object.is_valid %}
         <div class="alert alert-danger">
-            This reader study is not ready to be used. Please update the configuration. All of the images should be included in the hanging list exactly once.
+            This reader study is not ready to be used. Please update the
+            configuration. All of the images should be included in the hanging list
+            exactly once.
             {% if object.non_unique_study_image_names|length > 0 %}
                 <hr/>
                 The following image names appear more than once in the study: <br/>
@@ -37,20 +35,30 @@
             {% if not object.hanging_list_valid %}
                 {% if object.hanging_list_diff.in_study_list|length > 0 %}
                     <hr/>
-                    The following image names appear in the study but not in the hanging list: <br/>
+                    The following image names appear in the study but not in the
+                    hanging list: <br/>
                     <span class="font-weight-bold">
                         {{ object.hanging_list_diff.in_study_list|join:', ' }}
                     </span>
                 {% endif %}
                 {% if object.hanging_list_diff.in_hanging_list|length > 0 %}
                     <hr/>
-                    The following image names appear in the hanging list but not in the study: <br/>
+                    The following image names appear in the hanging list but not in
+                    the study: <br/>
                     <span class="font-weight-bold">
                         {{ object.hanging_list_diff.in_hanging_list|join:', ' }}
                     </span>
                 {% endif %}
 
             {% endif %}
+            <hr/>
+
+            You might be able to solve these issues by re-generating the hanging list:
+            <button type="button" class="btn btn-primary" data-toggle="modal"
+                    data-target="#hangingListModal">
+                <i class="fas fa-sync"></i> Re-generate the hanging list
+            </button>
+
         </div>
     {% endif %}
 
@@ -121,14 +129,6 @@
             </a>
         </p>
 
-        <h2>Hanging list</h2>
-
-        <p class="mt-3">
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#hangingListModal">
-                <i class="fas fa-list"></i> Generate hanging list
-            </button>
-        </p>
-
         <h2>Questions</h2>
 
         <ul class="list-group list-group-flush">
@@ -158,21 +158,32 @@
 
     {% endif %}
     <!-- Modal -->
-    <div class="modal fade" id="hangingListModal" tabindex="-1" role="dialog" aria-labelledby="hangingListModalLabel" aria-hidden="true">
+    <div class="modal fade" id="hangingListModal" tabindex="-1" role="dialog"
+         aria-labelledby="hangingListModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="hangingListModalLabel">Generate hanging list</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title" id="hangingListModalLabel">Generate
+                        hanging list</h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    The generated hanging list will overwrite any existing hanging list. Proceed?
+                    <p>The generated hanging list will overwrite any existing hanging
+                        list by setting 1 image per hanging protocol.</p>
+
+                    <p><b>Are you sure that you want to continue?</b></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="generateHangingList">Generate hanging list</button>
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger"
+                            id="generateHangingList">
+                        <i class="fa fa-trash"></i> Re-generate the hanging list
+                    </button>
                 </div>
             </div>
         </div>
@@ -200,10 +211,7 @@
                                     `${response.responseJSON.status}` +
                                 '</div>'
                             );
-                            $('#hangingListModal').modal('hide');
-                            setTimeout(
-                                window.scrollTo({ top: 0, behavior: 'smooth' }), 200
-                            );
+                            window.location.replace(window.location.href);
                         }
                     })
                 })
