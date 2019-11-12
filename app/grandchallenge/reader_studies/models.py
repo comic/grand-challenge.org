@@ -264,6 +264,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         return hanging_list
 
+    def generate_hanging_list(self):
+        image_names = self.images.values_list("name", flat=True)
+        self.hanging_list = [{"main": name} for name in image_names]
+        self.save()
+
 
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):

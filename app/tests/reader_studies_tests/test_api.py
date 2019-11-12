@@ -1,5 +1,6 @@
 import csv
 import re
+from unittest import mock
 
 import pytest
 
@@ -444,3 +445,26 @@ def test_csv_export_create_dicts():
 
     for index, dct in enumerate(csv_dicts):
         assert dct == {"foo": f"foo{index}", "bar": f"bar{index}"}
+
+
+@pytest.mark.django_db
+@mock.patch(
+    "grandchallenge.reader_studies.models.ReaderStudy.generate_hanging_list"
+)
+def test_generate_hanging_list_api_view(generate_hanging_list, client):
+    rs = ReaderStudyFactory()
+    editor = UserFactory()
+    rs.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="api:reader-study-generate-hanging-list",
+        reverse_kwargs={"pk": rs.pk},
+        user=editor,
+        client=client,
+        method=client.patch,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert "Hanging list generated." in str(response.content)
+    generate_hanging_list.assert_called_once()

@@ -2,6 +2,7 @@ import pytest
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.reader_studies.models import ReaderStudy
+from tests.factories import ImageFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     QuestionFactory,
@@ -65,4 +66,21 @@ def test_read_only_fields():
         "answer_type",
         "image_port",
         "required",
+    ]
+
+
+@pytest.mark.django_db
+def test_generate_hanging_list():
+    rs = ReaderStudyFactory()
+    im1 = ImageFactory(name="im1")
+    im2 = ImageFactory(name="im2")
+
+    rs.generate_hanging_list()
+    assert rs.hanging_list == []
+
+    rs.images.set([im1, im2])
+    rs.generate_hanging_list()
+    assert rs.hanging_list == [
+        {"main": "im1"},
+        {"main": "im2"},
     ]
