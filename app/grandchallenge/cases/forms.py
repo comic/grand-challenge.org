@@ -20,7 +20,7 @@ class UploadRawImagesForm(forms.ModelForm):
         help_text=(
             "Upload images for creating a new archive<br/><br/>"
             "The following file formats are supported: "
-            ".mhd, .mha, .tiff"
+            ".mha, .mhd, .raw, .zraw, .tiff"
         ),
     )
 
