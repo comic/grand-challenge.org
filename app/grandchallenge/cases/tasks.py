@@ -5,6 +5,9 @@ from typing import Sequence, Tuple
 from uuid import UUID
 
 from celery import shared_task
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.core.mail import send_mail
 from django.db import transaction
 
 from grandchallenge.algorithms.models import Job
@@ -242,7 +245,6 @@ def build_images(upload_session_uuid: UUID):
                     algorithm_result = algorithm(
                         tmp_dir
                     )  # type: ImageBuilderResult
-
                     collected_images += list(algorithm_result.new_images)
                     collected_associated_files += list(
                         algorithm_result.new_image_files
@@ -260,7 +262,6 @@ def build_images(upload_session_uuid: UUID):
                         msg,
                     ) in algorithm_result.file_errors_map.items():
                         if filename in unconsumed_filenames:
-                            unconsumed_filenames.remove(filename)
                             raw_image = filename_lookup[
                                 filename
                             ]  # type: RawImageFile
@@ -280,6 +281,28 @@ def build_images(upload_session_uuid: UUID):
                     raw_file.error = (
                         "File could not be processed by any image builder"
                     )
+
+                if unconsumed_filenames:
+                    upload_session.error_message = f"Failed: {', '.join(unconsumed_filenames)}"[
+                        : RawImageUploadSession.max_length_error_message
+                    ]
+                    if upload_session.creator and upload_session.creator.email:
+                        msg = (
+                            "The following image files could not be processed "
+                            f"in reader study {upload_session.reader_study}:"
+                            f"\n\n{', '.join(unconsumed_filenames)}\n\n"
+                            "The following file formats are supported: "
+                            ".mhd, .mha, .tiff"
+                        )
+                        send_mail(
+                            subject=(
+                                f"[{Site.objects.get_current().domain.lower()}] "
+                                f"Unable to process images"
+                            ),
+                            message=msg,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[upload_session.creator.email],
+                        )
 
                 if upload_session.imageset:
                     upload_session.imageset.images.add(*collected_images)
