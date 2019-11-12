@@ -17,7 +17,11 @@ class UploadRawImagesForm(forms.ModelForm):
     files = UploadedAjaxFileList(
         widget=uploader.AjaxUploadWidget(multifile=True, auto_commit=False),
         label="Image files",
-        help_text=("Upload images for creating a new archive"),
+        help_text=(
+            "Upload images for creating a new archive<br/><br/>"
+            "The following file formats are supported: "
+            ".mha, .mhd, .raw, .zraw, .tiff"
+        ),
     )
 
     def __init__(self, *args, user, **kwargs):

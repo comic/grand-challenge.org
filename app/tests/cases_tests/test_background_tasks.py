@@ -10,6 +10,7 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
+from tests.factories import UserFactory
 from tests.jqfileupload_tests.external_test_support import (
     create_file_from_filepath,
 )
@@ -18,8 +19,9 @@ from tests.jqfileupload_tests.external_test_support import (
 def create_raw_upload_image_session(
     images: List[str], delete_file=False, imageset=None, annotationset=None
 ) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
+    creator = UserFactory(email="test@example.com")
     upload_session = RawImageUploadSession(
-        imageset=imageset, annotationset=annotationset
+        imageset=imageset, annotationset=annotationset, creator=creator
     )
 
     uploaded_images = {}
@@ -73,11 +75,14 @@ def test_image_file_creation(settings):
         "valid_tiff.tif",
         "invalid_tiles_tiff.tif",
     ]
+
+    invalid_images = ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif")
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
     assert session.session_state == UploadSessionState.stopped
-    assert session.error_message is None
+    for image_name in invalid_images:
+        assert image_name in session.error_message
 
     assert Image.objects.filter(origin=session).count() == 5
 
@@ -88,7 +93,7 @@ def test_image_file_creation(settings):
         db_object.refresh_from_db()
 
         assert db_object.staged_file_id is None
-        if name in ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif"):
+        if name in invalid_images:
             assert db_object.error is not None
         else:
             assert db_object.error is None
@@ -157,7 +162,8 @@ def test_no_convertible_file(settings):
 
     session.refresh_from_db()
     assert session.session_state == UploadSessionState.stopped
-    assert session.error_message is None
+    for image_name in images:
+        assert image_name in session.error_message
 
     no_image_image = list(uploaded_images.values())[0]
     no_image_image.refresh_from_db()
