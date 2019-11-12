@@ -41,6 +41,7 @@ from grandchallenge.annotations.models import (
     ImagePathologyAnnotation,
     RetinaImagePathologyAnnotation,
     ImageTextAnnotation,
+    SingleLandmarkAnnotation,
 )
 from grandchallenge.annotations.serializers import (
     PolygonAnnotationSetSerializer,
@@ -51,6 +52,7 @@ from grandchallenge.annotations.serializers import (
     ImagePathologyAnnotationSerializer,
     RetinaImagePathologyAnnotationSerializer,
     ImageTextAnnotationSerializer,
+    SingleLandmarkAnnotationSerializer,
 )
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.retina_api.serializers import (
@@ -970,3 +972,12 @@ class ImageTextAnnotationViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = ImageTextAnnotation.objects.all()
+
+
+class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = LandmarkAnnotationSetSerializer
+    filter_backends = (filters.ObjectPermissionsFilter,)
+    pagination_class = None
+    queryset = LandmarkAnnotationSet.objects.all()
