@@ -135,30 +135,26 @@ class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
         return la_set
 
     def update(self, instance, validated_data):
-        sla_data = validated_data.pop("singlelandmarkannotation_set")
-        for sla in sla_data:
-            sla_image = sla.get("image")
-            if (
-                sla_image is not None
-                and SingleLandmarkAnnotation.objects.filter(
-                    image=sla_image, annotation_set=instance
-                ).exists()
-            ):
+        def update_delete_or_create_sla(singe_landmark_annotation):
+            try:
+                sla_image = singe_landmark_annotation.get("image")
                 item = SingleLandmarkAnnotation.objects.get(
                     image=sla_image, annotation_set=instance
                 )
-
-                new_landmarks = sla.get("landmarks")
-                if new_landmarks is not None:
-                    if len(new_landmarks) == 0:
-                        item.delete()
-                    else:
-                        item.landmarks = new_landmarks
-                        item.save()
-            else:
+                new_landmarks = singe_landmark_annotation.get("landmarks")
+                if len(new_landmarks) == 0:
+                    item.delete()
+                else:
+                    item.landmarks = new_landmarks
+                    item.save()
+            except SingleLandmarkAnnotation.DoesNotExist:
                 SingleLandmarkAnnotation.objects.create(
-                    annotation_set=instance, **sla
+                    annotation_set=instance, **singe_landmark_annotation
                 )
+
+        sla_data = validated_data.pop("singlelandmarkannotation_set")
+        for singe_landmark_annotation in sla_data:
+            update_delete_or_create_sla(singe_landmark_annotation)
         return instance
 
 
