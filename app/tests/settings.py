@@ -5,7 +5,7 @@ import os
 os.environ["PROTECTED_S3_CUSTOM_DOMAIN"] = "testserver/media"
 
 # noinspection PyUnresolvedReferences
-from config.settings import *
+from config.settings import *  # noqa: F401, F403
 
 """ Settings overrides for tests """
 

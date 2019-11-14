@@ -5,8 +5,7 @@ from userena.utils import get_user_profile
 
 
 def create_profile(user=None, is_new=False, *args, **kwargs):
-    """ Create user profile if necessary
-    """
+    """Create user profile if necessary."""
     if is_new:
         UserenaSignup.objects.get_or_create(user=user)
         # Give permissions to view and change profile

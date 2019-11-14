@@ -1,12 +1,13 @@
 from django.contrib import admin
-from .models import (
-    ETDRSGridAnnotation,
-    MeasurementAnnotation,
+
+from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
-    PolygonAnnotationSet,
-    SinglePolygonAnnotation,
+    ETDRSGridAnnotation,
     LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
     SingleLandmarkAnnotation,
+    SinglePolygonAnnotation,
 )
 
 

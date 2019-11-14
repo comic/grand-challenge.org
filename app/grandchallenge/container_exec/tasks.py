@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
-from django.db.models import ExpressionWrapper, F, DateTimeField
+from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -81,7 +81,7 @@ def _validate_docker_image_manifest(*, model, instance) -> str:
 
 
 def _extract_docker_image_file(*, model, instance, filename: str):
-    """ Extracts a file from the root of a tarball """
+    """Extract a file from the root of a tarball."""
     try:
         with instance.image.open(mode="rb") as im, tarfile.open(
             fileobj=im, mode="r"
@@ -101,8 +101,10 @@ def _extract_docker_image_file(*, model, instance, filename: str):
 
 def retry_if_dropped(func):
     """
-    Sometimes the Mysql connection will drop for long running jobs. This is
-    a decorator that will retry a function that relies on a usable connection.
+    Retry a function that relies on an open database connection.
+
+    Use this decorator when you have a long running task as sometimes the db
+    connection will drop.
     """
 
     def wrapper(*args, **kwargs):
@@ -187,7 +189,9 @@ def mark_long_running_jobs_failed(*, app_label: str, model_name: str):
     4x the CELERY_TASK_TIME_LIMIT. If the task is still running on Celery then
     it will still be able to report as passed later.
     """
-    Job = apps.get_model(app_label=app_label, model_name=model_name)
+    Job = apps.get_model(  # noqa: N806
+        app_label=app_label, model_name=model_name
+    )
 
     jobs_to_mark = Job.objects.filter(
         created__lt=now()

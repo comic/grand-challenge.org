@@ -8,8 +8,7 @@ register = template.Library()
 
 @register.filter
 def clean(html: str):
-    """ Cleans the html with bleach """
-
+    """Clean the html with bleach."""
     cleaned_html = bleach.clean(
         html,
         tags=settings.BLEACH_ALLOWED_TAGS,

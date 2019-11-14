@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,

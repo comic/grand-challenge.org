@@ -3,11 +3,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import (
-    ModelForm,
-    Form,
-    ModelChoiceField,
     ChoiceField,
+    Form,
     HiddenInput,
+    ModelChoiceField,
+    ModelForm,
     TextInput,
 )
 from guardian.shortcuts import get_objects_for_user
@@ -16,9 +16,9 @@ from guardian.utils import get_anonymous_user
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.models import (
-    ReaderStudy,
     HANGING_LIST_SCHEMA,
     Question,
+    ReaderStudy,
 )
 from grandchallenge.workstations.models import Workstation
 
@@ -88,7 +88,20 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
         }
 
 
-class QuestionCreateForm(SaveFormInitMixin, ModelForm):
+class QuestionForm(SaveFormInitMixin, ModelForm):
+    def full_clean(self):
+        """Override of the form's full_clean method.
+
+        Some fields are made readonly once the question has been answered.
+        Because disabled fields do not get included in the post data, this
+        causes issues with required fields. Therefore we populate them here.
+        """
+        data = self.data.copy()
+        for field in self.instance.read_only_fields:
+            data[field] = getattr(self.instance, field)
+        self.data = data
+        return super().full_clean()
+
     class Meta:
         model = Question
         fields = (

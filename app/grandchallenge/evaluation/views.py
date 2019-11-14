@@ -1,31 +1,31 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from typing import Dict
 
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
 from django.db.models import Q
 from django.utils import timezone
-from django.views.generic import CreateView, ListView, DetailView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
 )
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.evaluation.forms import (
-    MethodForm,
-    SubmissionForm,
     ConfigForm,
     LegacySubmissionForm,
+    MethodForm,
+    SubmissionForm,
 )
 from grandchallenge.evaluation.models import (
-    Result,
-    Submission,
+    Config,
     Job,
     Method,
-    Config,
+    Result,
+    Submission,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from grandchallenge.subdomains.utils import reverse
 
 
 class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
@@ -70,7 +70,9 @@ class MethodDetail(UserIsChallengeAdminMixin, DetailView):
 
 class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     """
-    This class has no permissions, do not use it directly! See the subclasses
+    Base class for the submission creation forms.
+
+    It has no permissions, do not use it directly! See the subclasses.
     """
 
     model = Submission
@@ -119,11 +121,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         return context
 
     def get_next_submission(
-        self,
-        *,
-        max_subs: int,
-        period: timedelta = timedelta(days=1),
-        now: datetime = None,
+        self, *, max_subs: int, period: timedelta = None, now: datetime = None
     ) -> Dict:
         """
         Determines the number of submissions left for the user in a given time
@@ -134,6 +132,9 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         """
         if now is None:
             now = timezone.now()
+
+        if period is None:
+            period = timedelta(days=1)
 
         subs = (
             Submission.objects.filter(
@@ -191,7 +192,7 @@ class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Submission
 
     def get_queryset(self):
-        """ Admins see everything, participants just their submissions """
+        """Admins see everything, participants just their submissions."""
         queryset = super().get_queryset()
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
@@ -218,7 +219,7 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Job
 
     def get_queryset(self):
-        """ Admins see everything, participants just their jobs """
+        """Admins see everything, participants just their jobs."""
         challenge = self.request.challenge
 
         queryset = super().get_queryset()

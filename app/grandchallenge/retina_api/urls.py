@@ -1,8 +1,9 @@
-from django.urls import path, include
-from rest_framework.routers import SimpleRouter
-from grandchallenge.retina_api import views
-from django.views.decorators.cache import cache_page
 from django.conf import settings
+from django.urls import include, path
+from django.views.decorators.cache import cache_page
+from rest_framework.routers import SimpleRouter
+
+from grandchallenge.retina_api import views
 
 app_name = "retina_api"
 

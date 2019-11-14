@@ -1,25 +1,27 @@
 import json
-from rest_framework import status
-from django.urls import reverse as django_reverse
-from grandchallenge.subdomains.utils import reverse
+
 from django.conf import settings
-from django.contrib.auth.models import Group
-from tests.factories import UserFactory
-from tests.retina_importers_tests.helpers import get_retina_user_with_token
-from tests.cases_tests.factories import ImageFactory
-from tests.retina_core_tests.factories import create_some_datastructure_data
-from tests.registrations_tests.factories import OctObsRegistrationFactory
-from tests.annotations_tests.factories import (
-    ETDRSGridAnnotationFactory,
-    MeasurementAnnotationFactory,
-    BooleanClassificationAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    SinglePolygonAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    SingleLandmarkAnnotationFactory,
-)
-from tests.viewset_helpers import TEST_USER_CREDENTIALS
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django.urls import reverse as django_reverse
+from rest_framework import status
+
+from grandchallenge.subdomains.utils import reverse
+from tests.annotations_tests.factories import (
+    BooleanClassificationAnnotationFactory,
+    ETDRSGridAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    MeasurementAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
+)
+from tests.cases_tests.factories import ImageFactory
+from tests.factories import UserFactory
+from tests.registrations_tests.factories import OctObsRegistrationFactory
+from tests.retina_core_tests.factories import create_some_datastructure_data
+from tests.retina_importers_tests.helpers import get_retina_user_with_token
+from tests.viewset_helpers import TEST_USER_CREDENTIALS
 
 
 def get_user_from_str(user=None):
@@ -87,9 +89,13 @@ def batch_test_image_endpoint_redirects(test_class):
         ("thumb", "retina:image-thumbnail"),
         ("original", "retina:image-numpy"),
     ):
-        test_redirect_no_perm, test_redirect, test_redirect_australia, test_redirect_kappa, test_redirect_oct = create_image_test_method(
-            image_type, reverse_name
-        )
+        (
+            test_redirect_no_perm,
+            test_redirect,
+            test_redirect_australia,
+            test_redirect_kappa,
+            test_redirect_oct,
+        ) = create_image_test_method(image_type, reverse_name)
         test_redirect_no_perm.__name__ = (
             f"test_image_{image_type}_redirect_no_perm"
         )
@@ -253,9 +259,13 @@ def batch_test_data_endpoints(test_class):
         "GA",
         "kappa",
     ):
-        test_load_no_auth, test_load_normal_user_no_auth, test_load_no_data, test_load_no_data_wrong_user, test_load_save_data = create_data_test_methods(
-            data_type
-        )
+        (
+            test_load_no_auth,
+            test_load_normal_user_no_auth,
+            test_load_no_data,
+            test_load_no_data_wrong_user,
+            test_load_save_data,
+        ) = create_data_test_methods(data_type)
 
         test_load_no_auth.__name__ = f"test_load_{data_type}_no_auth"
         test_load_normal_user_no_auth.__name__ = "test_load_{}_normal_user_no_auth".format(
@@ -281,7 +291,7 @@ def batch_test_data_endpoints(test_class):
         setattr(test_class, test_load_save_data.__name__, test_load_save_data)
 
 
-def create_data_test_methods(data_type):
+def create_data_test_methods(data_type):  # noqa: C901
     def test_load_no_auth(self, client):
         # create grader user
         user = UserFactory()

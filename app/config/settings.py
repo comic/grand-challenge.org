@@ -1,7 +1,5 @@
-import glob
 import os
 import re
-import uuid
 from datetime import timedelta
 from distutils.util import strtobool as strtobool_i
 
@@ -17,7 +15,7 @@ from config.denylist import USERNAME_DENYLIST
 
 
 def strtobool(val) -> bool:
-    """ Returns disutils.util.strtobool as a boolean """
+    """Return disutils.util.strtobool as a boolean."""
     return bool(strtobool_i(val))
 
 
@@ -41,15 +39,15 @@ IGNORABLE_404_URLS = [
 ]
 
 # Used as starting points for various other paths. realpath(__file__) starts in
-# the "Comic" app dir. We need to  go one dir higher so path.join("..")
+# the config dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.environ.get("POSTGRES_DB", "comic"),
-        "USER": os.environ.get("POSTGRES_USER", "comic"),
+        "NAME": os.environ.get("POSTGRES_DB", "grandchallenge"),
+        "USER": os.environ.get("POSTGRES_USER", "grandchallenge"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
         "PORT": "",
@@ -184,6 +182,7 @@ CACHES = {
         "LOCATION": "memcached:11211",
     }
 }
+SPEEDINFO_STORAGE = "speedinfo.storage.cache.storage.CacheStorage"
 
 ROOT_URLCONF = "config.urls"
 SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
@@ -282,6 +281,8 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    # Flatpage fallback almost last
+    "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
     # speedinfo at the end but before FetchFromCacheMiddleware
     "speedinfo.middleware.ProfilerMiddleware",
 )

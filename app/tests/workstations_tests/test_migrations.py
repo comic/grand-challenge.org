@@ -14,7 +14,7 @@ def test_workstation_group_migration():
     old_apps = executor.loader.project_state(migrate_from).apps
     new_apps = executor.loader.project_state(migrate_to).apps
 
-    OldWorkstation = old_apps.get_model(app, "Workstation")
+    OldWorkstation = old_apps.get_model(app, "Workstation")  # noqa: N806
     old_ws = OldWorkstation.objects.create(title="foo")
 
     assert not hasattr(old_ws, "editors_group")
@@ -25,7 +25,7 @@ def test_workstation_group_migration():
     # Migrate forwards
     executor.migrate(migrate_to)
 
-    NewWorkstation = new_apps.get_model(app, "Workstation")
+    NewWorkstation = new_apps.get_model(app, "Workstation")  # noqa: N806
 
     new_ws = NewWorkstation.objects.get(title="foo")
 

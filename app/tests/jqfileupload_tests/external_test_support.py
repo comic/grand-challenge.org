@@ -14,8 +14,7 @@ def create_file_with_content(
     filename: str, content: bytes, chunk_size=None
 ) -> StagedAjaxFile:
     """
-    This function creates a StagedAjaxFile from a filename and fills it with
-    the provided contents.
+    Create a StagedAjaxFile from a filename and fill it with the given content.
 
     Tests using this function must specify the pytest.mark.django_db marker!
 

@@ -7,16 +7,15 @@ from django.core.files.storage import FileSystemStorage
 
 
 def fake_file(filename, content="mock content"):
-    """ For testing I sometimes want specific file request to return 
-    specific content. This is make creation easier 
+    """
+    For testing I sometimes want specific file request to return
+    specific content. This is to make creation easier
     """
     return {"filename": filename, "content": content}
 
 
 class MockStorage(FileSystemStorage):
-    """
-    For testing, A storage class which does not write anything to disk.
-    """
+    """A storage class which does not write anything to disk."""
 
     # For testing, any dir in FAKE DIRS will exist and contain FAKE_FILES
     FAKE_DIRS = [
@@ -24,7 +23,7 @@ class MockStorage(FileSystemStorage):
         settings.COMIC_PUBLIC_FOLDER_NAME,
         settings.COMIC_REGISTERED_ONLY_FOLDER_NAME,
     ]
-    #
+
     FAKE_FILES = [
         fake_file("fakefile1.txt"),
         fake_file("fakefile2.jpg"),
@@ -44,9 +43,10 @@ class MockStorage(FileSystemStorage):
         return name
 
     def _open(self, path, mode="rb"):
-        """ Return a memory only file which will not be saved to disk
-        If an image is requested, fake image content using PIL
-        
+        """
+        Return a memory only file which will not be saved to disk.
+
+        If an image is requested, fake image content using PIL.
         """
         if not self.exists(path):
             raise OSError(
@@ -63,7 +63,15 @@ class MockStorage(FileSystemStorage):
             ".bmp",
         ]:
             # 1px test image
-            binary_image_data = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82"
+            binary_image_data = (
+                b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00"
+                b"\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x01sRGB"
+                b"\x00\xae\xce\x1c\xe9\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00"
+                b"\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xdb"
+                b"\x0c\x17\x020;\xd1\xda\xcf\xd2\x00\x00\x00\x0cIDAT\x08\xd7c"
+                b"\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00"
+                b"\x00IEND\xaeB`\x82"
+            )
             img = BytesIO(binary_image_data)
             mockfile = File(img)
             mockfile.name = "MOCKED_IMAGE_" + path
@@ -81,18 +89,16 @@ class MockStorage(FileSystemStorage):
         return mockfile
 
     def add_fake_file(self, filename, content):
-        """ This will appear to exist in folder /public_html. Content will be 
-        returned when opening this file.
-        
-        """
+        """Add a file in the ``/public_html`` folder."""
         self.FAKE_FILES.append(fake_file(filename, content))
 
     def delete(self, name):
         pass
 
     def exists(self, name):
-        """ Any file exists if one of the FAKE_DIRS are in its 
-        path. And its name is one of FAKE_FILES         
+        """
+        Any file exists if one of the FAKE_DIRS are in its path. And its name
+        is one of FAKE_FILES
         """
         if name in self.saved_files.keys():
             return True
@@ -137,9 +143,9 @@ class MockStorage(FileSystemStorage):
             return 0
 
     def is_in_fake_test_dir(self, path):
-        """ Is this file in the special fake directory? This dir does not exist
+        """
+        Is this file in the special fake directory? This dir does not exist
         on disk but returns some values anyway. For testing.
-        
         """
         for directory in self.FAKE_DIRS:
             if (

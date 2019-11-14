@@ -1,15 +1,15 @@
 import pytest
-from tests.utils import get_view_for_user
-from tests.factories import UserFactory
-from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.algorithms_tests.factories import AlgorithmImageFactory
 
 from grandchallenge.cases.models import RawImageUploadSession
+from tests.algorithms_tests.factories import AlgorithmImageFactory
+from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.factories import UserFactory
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
 def test_upload_session_list(client):
-    upload_session_1, upload_session_2 = (
+    upload_session_1, _ = (
         RawImageUploadSessionFactory(),
         RawImageUploadSessionFactory(),
     )

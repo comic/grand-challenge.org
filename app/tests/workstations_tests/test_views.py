@@ -4,15 +4,15 @@ from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.workstations.models import Workstation, Session
+from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
+    SessionFactory,
+    StagedFileFactory,
     UserFactory,
     WorkstationFactory,
-    StagedFileFactory,
     WorkstationImageFactory,
-    SessionFactory,
 )
-from tests.utils import get_view_for_user, get_temporary_image
+from tests.utils import get_temporary_image, get_view_for_user
 
 
 @pytest.fixture
@@ -226,10 +226,10 @@ def test_session_create(client):
     ws.add_user(user=user)
 
     # Create some workstations and pretend that they're ready
-    wsi_old = WorkstationImageFactory(workstation=ws, ready=True)
+    WorkstationImageFactory(workstation=ws, ready=True)  # Old WSI
     wsi_new = WorkstationImageFactory(workstation=ws, ready=True)
-    wsi_not_ready = WorkstationImageFactory(workstation=ws)
-    wsi_other_ws = WorkstationImageFactory(ready=True)
+    WorkstationImageFactory(workstation=ws)  # WSI not ready
+    WorkstationImageFactory(ready=True)  # Image for some other ws
 
     assert Session.objects.count() == 0
 
@@ -256,7 +256,7 @@ def test_session_create(client):
 def test_session_update(client):
     session = SessionFactory()
 
-    assert session.user_finished == False
+    assert not session.user_finished
 
     response = get_view_for_user(
         client=client,
@@ -275,7 +275,7 @@ def test_session_update(client):
 
     session.refresh_from_db()
 
-    assert session.user_finished == True
+    assert session.user_finished
 
 
 @pytest.mark.django_db

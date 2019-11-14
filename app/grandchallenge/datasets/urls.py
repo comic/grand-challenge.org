@@ -1,16 +1,16 @@
 from django.urls import path
 
 from grandchallenge.datasets.views import (
-    ImageSetList,
-    ImageSetDetail,
-    AddImagesToImageSet,
-    ImageSetUpdate,
-    AnnotationSetList,
-    AnnotationSetCreate,
     AddImagesToAnnotationSet,
+    AddImagesToImageSet,
+    AnnotationSetCreate,
     AnnotationSetDetail,
+    AnnotationSetList,
     AnnotationSetUpdate,
     AnnotationSetUpdateLabels,
+    ImageSetDetail,
+    ImageSetList,
+    ImageSetUpdate,
 )
 
 app_name = "datasets"

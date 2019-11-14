@@ -2,6 +2,12 @@ from django.conf.urls import include
 from django.urls import path
 from rest_framework import routers
 
+from grandchallenge.algorithms.views import (
+    AlgorithmImageViewSet,
+    AlgorithmViewSet,
+    JobViewSet,
+    ResultViewSet,
+)
 from grandchallenge.cases.views import (
     ImageViewSet,
     RawImageUploadSessionViewSet,
@@ -9,20 +15,14 @@ from grandchallenge.cases.views import (
 from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.patients.views import PatientViewSet
 from grandchallenge.reader_studies.views import (
-    ReaderStudyViewSet,
-    QuestionViewSet,
     AnswerViewSet,
+    QuestionViewSet,
+    ReaderStudyViewSet,
 )
 from grandchallenge.studies.views import StudyViewSet
 from grandchallenge.worklists.views import WorklistViewSet
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
-from grandchallenge.algorithms.views import (
-    AlgorithmImageViewSet,
-    JobViewSet,
-    ResultViewSet,
-    AlgorithmViewSet,
-)
 
 app_name = "api"
 

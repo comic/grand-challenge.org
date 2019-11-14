@@ -4,9 +4,7 @@ from rest_framework import renderers
 
 
 class Base64Renderer(renderers.BaseRenderer):
-    """
-    Custom renderer that converts a bytes object into a base64 encoded png
-    """
+    """A renderer that converts a bytes object into a base64 encoded png."""
 
     media_type = "image/png;base64"
     format = "base64"

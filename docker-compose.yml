@@ -7,8 +7,8 @@ services:
     command: "postgres -c 'config_file=/etc/postgresql/postgresql.conf'"
     environment: &postgresenv
       POSTGRES_PASSWORD: secretpassword
-      POSTGRES_USER: comic
-      POSTGRES_DB: comic
+      POSTGRES_USER: grandchallenge
+      POSTGRES_DB: grandchallenge
     ports:
       - "5432:5432" # Only required for running django locally
     volumes:
@@ -21,7 +21,7 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "comic"]
+      test: ["CMD", "pg_isready", "-U", "grandchallenge"]
       interval: 10s
       timeout: 5s
       retries: 5

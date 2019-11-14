@@ -3,14 +3,16 @@ from collections import Counter
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
+from django.db.models import Count
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from numpy.random.mtrand import RandomState
 
+from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONSchemaValidator
@@ -186,7 +188,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def study_image_names(self):
-        return [im.name for im in self.images.all()]
+        return self.images.values_list("name", flat=True)
 
     @property
     def hanging_image_names(self):
@@ -205,10 +207,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         )
 
     @property
+    def hanging_list_diff(self):
+        return {
+            "in_study_list": set(self.study_image_names)
+            - set(self.hanging_image_names),
+            "in_hanging_list": set(self.hanging_image_names)
+            - set(self.study_image_names),
+        }
+
+    @property
     def non_unique_study_image_names(self):
-        """
-        Get all of the image names that are non-unique for this ReaderStudy
-        """
+        """Return all of the non-unique image names for this ReaderStudy."""
         return [
             name
             for name, count in Counter(self.study_image_names).items()
@@ -217,7 +226,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def is_valid(self):
-        """ Is this ReaderStudy valid? """
+        """Is this ReaderStudy valid?"""
         return (
             self.hanging_list_valid
             and len(self.non_unique_study_image_names) == 0
@@ -257,11 +266,80 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         return hanging_list
 
+    def generate_hanging_list(self):
+        image_names = self.images.values_list("name", flat=True)
+        self.hanging_list = [{"main": name} for name in image_names]
+        self.save()
+
+    def get_progress_for_user(self, user):
+        if not self.is_valid or not self.hanging_list:
+            return
+
+        answerable_questions = self.questions.exclude(
+            answer_type=Question.ANSWER_TYPE_HEADING
+        )
+        answerable_question_count = answerable_questions.count()
+        hanging_list_count = len(self.hanging_list)
+
+        if answerable_question_count == 0 or hanging_list_count == 0:
+            return {
+                "questions": 0.0,
+                "hangings": 0.0,
+                "diff": 0.0,
+            }
+
+        expected = hanging_list_count * answerable_question_count
+        answers = Answer.objects.filter(
+            question__in=answerable_questions, creator_id=user.id
+        ).distinct()
+        answer_count = answers.count()
+
+        # There are unanswered questions
+        if answer_count % answerable_question_count != 0:
+            # Group the answers by images and filter out the images that
+            # have an inadequate amount of answers
+            unanswered_images = (
+                answers.order_by("images__name")
+                .values("images__name")
+                .annotate(answer_count=Count("images__name"))
+                .filter(answer_count__lt=answerable_question_count)
+            )
+            image_names = set(
+                unanswered_images.values_list("images__name", flat=True)
+            ).union(
+                set(
+                    Image.objects.filter(
+                        readerstudies=self, answers__isnull=True
+                    )
+                    .distinct()
+                    .values_list("name", flat=True)
+                )
+            )
+            # Determine which hangings have images with unanswered questions
+            hanging_list = [set(x.values()) for x in self.hanging_list]
+            completed_hangings = [
+                x for x in hanging_list if len(x - image_names) == len(x)
+            ]
+            completed_hangings = len(completed_hangings)
+        else:
+            completed_hangings = answer_count / answerable_question_count
+
+        hangings = completed_hangings / hanging_list_count * 100
+        questions = answer_count / expected * 100
+        return {
+            "questions": questions,
+            "hangings": hangings,
+            "diff": questions - hangings,
+        }
+
 
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
     """
-    Use a signal rather than delete() override to catch usages of bulk_delete
+    Deletes the related groups.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
     """
     try:
         instance.editors_group.delete(using=using)
@@ -372,7 +450,7 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
 
 
 def validate_answer_json(schema: dict, obj: object) -> bool:
-    """ The answer type validators must return true or false """
+    """The answer type validators must return true or false."""
     try:
         JSONSchemaValidator(schema=schema)(obj)
         return True
@@ -455,6 +533,8 @@ class Question(UUIDModel):
     )
     order = models.PositiveSmallIntegerField(default=100)
 
+    csv_headers = ["Question text", "Answer type", "Required", "Image port"]
+
     class Meta:
         ordering = ("order", "created")
 
@@ -470,10 +550,29 @@ class Question(UUIDModel):
         )
 
     @property
+    def csv_values(self):
+        return [
+            self.question_text,
+            self.get_answer_type_display(),
+            self.required,
+            f"{self.get_image_port_display() + ' port,' if self.image_port else ''}",
+        ]
+
+    @property
     def api_url(self):
         return reverse(
             "api:reader-studies-question-detail", kwargs={"pk": self.pk}
         )
+
+    @property
+    def is_fully_editable(self):
+        return self.answer_set.count() == 0
+
+    @property
+    def read_only_fields(self):
+        if not self.is_fully_editable:
+            return ["question_text", "answer_type", "image_port", "required"]
+        return []
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -527,6 +626,8 @@ class Answer(UUIDModel):
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = JSONField()
 
+    csv_headers = Question.csv_headers + ["Answer", "Images", "Creator"]
+
     class Meta:
         ordering = ("creator", "created")
 
@@ -538,6 +639,14 @@ class Answer(UUIDModel):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
+
+    @property
+    def csv_values(self):
+        return self.question.csv_values + [
+            self.answer,
+            "; ".join(self.images.values_list("name", flat=True)),
+            self.creator.username,
+        ]
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

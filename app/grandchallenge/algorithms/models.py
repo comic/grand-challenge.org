@@ -12,13 +12,10 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from django_extensions.db.models import (
-    TitleSlugDescriptionModel,
-    TitleDescriptionModel,
-)
+from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
-from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
+from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.container_exec.backends.docker import (
     Executor,
@@ -118,7 +115,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         )
 
     def assign_workstation_permissions(self):
-        """ Allow the editors and users group to view the workstation """
+        """Allow the editors and users group to view the workstation."""
         perm = f"view_{Workstation._meta.model_name}"
 
         for group in [self.users_group, self.editors_group]:
@@ -186,7 +183,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 @receiver(post_delete, sender=Algorithm)
 def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
     """
-    Use a signal rather than delete() override to catch usages of bulk_delete
+    Deletes the related groups.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
     """
     try:
         instance.editors_group.delete(using=using)
@@ -280,10 +280,7 @@ class AlgorithmExecutor(Executor):
         self.output_images_dir = Path("/output/images/")
 
     def _get_result(self):
-        """
-        Reads all of the images in /output/ and converts to upload session
-        """
-
+        """Read all of the images in /output/ & convert to an UploadSession."""
         try:
             with cleanup(
                 self._client.containers.run(

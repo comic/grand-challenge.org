@@ -7,12 +7,12 @@ from django.core.files import File
 from django.db import models
 from django.utils import timezone
 
-from grandchallenge.cases.models import RawImageUploadSession, RawImageFile
+from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.container_exec.backends.docker import (
     Executor,
-    put_file,
     cleanup,
     get_file,
+    put_file,
 )
 from grandchallenge.container_exec.models import ContainerExecJobModel
 from grandchallenge.core.models import UUIDModel
@@ -50,13 +50,11 @@ class SubmissionToAnnotationSetExecutor(Executor):
                 writer.exec_run(f"mv {dest_file} /input/submission.csv")
 
     def _execute_container(self):
-        """ We do not need to do any conversion, so skip """
+        """We do not need to do any conversion, so skip."""
         pass
 
     def _get_result(self):
-        """
-        Reads all of the images in /output/ and converts to upload session
-        """
+        """Read all of the images in /output/ & convert to an UploadSession."""
         base_dir = "/output/"
 
         try:

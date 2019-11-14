@@ -1,6 +1,6 @@
 from celery import shared_task
 from django.core.mail import mail_managers
-from requests import get, exceptions
+from requests import exceptions, get
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.evaluation.models import Result
@@ -46,10 +46,10 @@ def update_filter_classes():
 @shared_task
 def check_external_challenge_urls():
     """
-    Checks that all external challenge urls are reachable, and emails the
-    managers if not.
-    """
+    Checks that all external challenge urls are reachable.
 
+    Emails the managers if any of the challenges are not.
+    """
     challenges = ExternalChallenge.objects.filter(hidden=False)
     errors = []
 

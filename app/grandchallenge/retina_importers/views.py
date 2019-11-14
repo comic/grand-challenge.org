@@ -1,25 +1,28 @@
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from rest_framework import generics, parsers, status
 import datetime
 import sys
 from io import BytesIO
-from django.http.response import JsonResponse
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.core.files import File
-from django.conf import settings
 
-from .utils import upperize, exclude_val_from_dict
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files import File
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.http.response import JsonResponse
+from rest_framework import generics, parsers, status
+
 from grandchallenge.archives.models import Archive
 from grandchallenge.archives.serializers import ArchiveSerializer
-from grandchallenge.patients.models import Patient
-from grandchallenge.patients.serializers import PatientSerializer
-from grandchallenge.studies.models import Study
-from grandchallenge.studies.serializers import StudySerializer
-
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.challenges.models import ImagingModality
-from .mixins import RetinaImportPermission
+from grandchallenge.patients.models import Patient
+from grandchallenge.patients.serializers import PatientSerializer
+from grandchallenge.retina_importers.mixins import RetinaImportPermission
+from grandchallenge.retina_importers.utils import (
+    exclude_val_from_dict,
+    upperize,
+)
+from grandchallenge.studies.models import Study
+from grandchallenge.studies.serializers import StudySerializer
 
 
 class CheckImage(generics.GenericAPIView):
@@ -32,9 +35,7 @@ class CheckImage(generics.GenericAPIView):
 
     @staticmethod
     def check_if_already_exists(request):
-        """
-        Method that checks if a image already exists before uploading.
-        """
+        """Method that checks if a image already exists before uploading."""
         try:
             archive_name = request.data.get("archive_identifier")
             if archive_name is not None:
@@ -65,7 +66,7 @@ class UploadImage(generics.CreateAPIView):
     permission_classes = (RetinaImportPermission,)
     parser_classes = (parsers.MultiPartParser, parsers.JSONParser)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):  # noqa: C901
         response_obj = {}
         try:
             # Process archive

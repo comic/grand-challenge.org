@@ -1,22 +1,21 @@
 from django.http import Http404
 from django.views.generic import CreateView, DetailView
-from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
-
 from rest_framework.mixins import (
     CreateModelMixin,
-    RetrieveModelMixin,
     ListModelMixin,
+    RetrieveModelMixin,
 )
+from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
-    RawImageFile,
-    RawImageUploadSession,
-    UPLOAD_SESSION_STATE,
     Image,
     ImageFile,
+    RawImageFile,
+    RawImageUploadSession,
+    UploadSessionState,
 )
 from grandchallenge.cases.serializers import (
     ImageSerializer,
@@ -50,7 +49,7 @@ class ShowUploadSessionState(UserIsStaffMixin, DetailView):
         ).all()
         result["images"] = Image.objects.filter(origin=result["object"]).all()
         result["process_finished"] = (
-            result["object"].session_state == UPLOAD_SESSION_STATE.stopped
+            result["object"].session_state == UploadSessionState.stopped
         )
         return result
 

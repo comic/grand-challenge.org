@@ -3,8 +3,8 @@ from django.shortcuts import redirect, render
 from userena import views as userena_views
 
 from grandchallenge.profiles.forms import EditProfileForm
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.profiles.utils import signin_redirect
+from grandchallenge.subdomains.utils import reverse
 
 
 def login_redirect(request):
@@ -14,9 +14,7 @@ def login_redirect(request):
 
 
 def profile(request):
-    """
-    Redirect to the profile page of the currently signed in user.
-    """
+    """Redirect to the profile page of the currently signed in user."""
     if request.user.is_authenticated:
         url = reverse(
             "userena_profile_detail",
@@ -29,9 +27,7 @@ def profile(request):
 
 
 def profile_edit_redirect(request):
-    """
-    Redirect to the profile edit page of the currently signed in user.
-    """
+    """Redirect to the profile edit page of the currently signed in user."""
     if request.user.is_authenticated:
         messages.add_message(
             request,

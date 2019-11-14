@@ -1,11 +1,12 @@
 import pytest
-from tests.registrations_tests.factories import OctObsRegistrationFactory
-from tests.cases_tests.factories import ImageFactory
-from grandchallenge.registrations.views import OctObsRegistrationViewSet
+
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
-from tests.viewset_helpers import batch_test_viewset_endpoints, VIEWSET_ACTIONS
+from grandchallenge.registrations.views import OctObsRegistrationViewSet
+from tests.cases_tests.factories import ImageFactory
+from tests.registrations_tests.factories import OctObsRegistrationFactory
+from tests.viewset_helpers import VIEWSET_ACTIONS, batch_test_viewset_endpoints
 
 
 @pytest.mark.django_db

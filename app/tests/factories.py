@@ -7,14 +7,14 @@ import factory.fuzzy
 from django.conf import settings
 from django.utils import timezone
 
-from grandchallenge.cases.models import Image, RawImageUploadSession, ImageFile
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import (
     Challenge,
     ExternalChallenge,
     ImagingModality,
 )
-from grandchallenge.datasets.models import ImageSet, AnnotationSet
-from grandchallenge.evaluation.models import Submission, Job, Method, Result
+from grandchallenge.datasets.models import AnnotationSet, ImageSet
+from grandchallenge.evaluation.models import Job, Method, Result, Submission
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -239,7 +239,7 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
             size = self.size
 
         fuzzy_list = []
-        for i in range(size):
+        for _ in range(size):
             fuzzy_list.append(
                 [
                     round(

@@ -1,14 +1,14 @@
 import pytest
 from django.conf import settings
-from guardian.shortcuts import get_perms, assign_perm
+from guardian.shortcuts import assign_perm, get_perms
 
 from tests.factories import UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
-    ReaderStudyFactory,
-    QuestionFactory,
     AnswerFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
 )
-from tests.reader_studies_tests.utils import get_rs_creator, TwoReaderStudies
+from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
 from tests.utils import get_view_for_user
 
 
@@ -209,6 +209,37 @@ def test_api_rs_list_permissions(client):
 
             for pk in test[2]:
                 assert str(pk) in pks
+
+
+@pytest.mark.django_db
+def test_api_rs_patch_permissions(client):
+    rs_set = TwoReaderStudies()
+
+    tests = (
+        (None, 401),
+        (rs_set.creator, 404),
+        (rs_set.editor1, 200),
+        (rs_set.reader1, 403),
+        (rs_set.editor2, 404),
+        (rs_set.reader2, 404),
+        (rs_set.u, 404),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname="api:reader-study-generate-hanging-list",
+            client=client,
+            method=client.patch,
+            data={},
+            user=test[0],
+            content_type="application/json",
+            reverse_kwargs={"pk": rs_set.rs1.pk},
+        )
+        assert response.status_code == test[1]
+
+        if test[1] == 200:
+            # We provided auth details and get a response
+            assert response.json()["status"] == "Hanging list generated."
 
 
 @pytest.mark.django_db

@@ -6,4 +6,4 @@ class TeamsConfig(AppConfig):
 
     def ready(self):
         # noinspection PyUnresolvedReferences
-        import grandchallenge.teams.signals
+        import grandchallenge.teams.signals  # noqa: F401

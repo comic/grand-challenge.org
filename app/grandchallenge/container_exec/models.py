@@ -9,7 +9,6 @@ from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
 from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.jqfileupload.models import StagedFile
 
 
 class ContainerExecJobModel(models.Model):
@@ -64,15 +63,17 @@ class ContainerExecJobModel(models.Model):
     @property
     def executor_cls(self) -> Type[Executor]:
         """
-        Returns the executor class for this job, which must be a subclass of
-        Executor
+        Return the executor class for this job.
+
+        The executor class must be a subclass of ``Executor``.
         """
         raise NotImplementedError
 
     def create_result(self, *, result: dict):
         """
-        This is called at the end of the container execution, the result object
-        for this job must be created by this function.
+        The result object for this job must be created here..
+
+        Called once the container has finished its execution.
         """
         raise NotImplementedError
 

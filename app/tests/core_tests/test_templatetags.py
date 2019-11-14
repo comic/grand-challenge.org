@@ -1,7 +1,7 @@
 import uuid
 
 import pytest
-from django.template import Template, Context, RequestContext
+from django.template import Context, RequestContext, Template
 from django.test import RequestFactory, override_settings
 
 from tests.factories import ChallengeFactory, PageFactory
@@ -77,7 +77,7 @@ def test_insert_graph(rf: RequestFactory, view_type):
     if view_type == "anode09":
         assert "Created with matplotlib" in rendered
     else:
-        assert "comictablecontainer" in rendered
+        assert "tablecontainer" in rendered
 
 
 @pytest.mark.django_db

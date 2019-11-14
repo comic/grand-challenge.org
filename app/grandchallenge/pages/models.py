@@ -3,14 +3,12 @@ from django.db import models
 from django.db.models import Max
 
 from grandchallenge.challenges.models import ComicSiteModel
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.utils.query import index
+from grandchallenge.subdomains.utils import reverse
 
 
 class Page(ComicSiteModel):
-    """
-    A single editable page containing html and maybe special output plugins
-    """
+    """Customisable content that belongs to a challenge."""
 
     UP = "UP"
     DOWN = "DOWN"
@@ -92,7 +90,6 @@ class Page(ComicSiteModel):
             page.save()
 
     def get_absolute_url(self):
-        """ With this method, admin will show a 'view on site' button """
         url = reverse(
             "pages:detail",
             kwargs={
@@ -121,7 +118,7 @@ class ErrorPage(Page):
     is_error_page = True
 
     def can_be_viewed_by(self, user):
-        """ overwrites Page class method. Errorpages can always be viewed"""
+        """Allow all users to view ErrorPages."""
         return True
 
     class Meta:

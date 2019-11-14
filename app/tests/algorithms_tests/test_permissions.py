@@ -1,6 +1,6 @@
 import pytest
 from django.contrib.auth.models import Group
-from guardian.shortcuts import get_group_perms, get_perms, assign_perm
+from guardian.shortcuts import assign_perm, get_group_perms, get_perms
 
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,

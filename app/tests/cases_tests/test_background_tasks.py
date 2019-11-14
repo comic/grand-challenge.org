@@ -1,15 +1,16 @@
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 import pytest
 
 from grandchallenge.cases.models import (
+    Image,
     RawImageFile,
     RawImageUploadSession,
-    UPLOAD_SESSION_STATE,
-    Image,
+    UploadSessionState,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
+from tests.factories import UserFactory
 from tests.jqfileupload_tests.external_test_support import (
     create_file_from_filepath,
 )
@@ -18,8 +19,9 @@ from tests.jqfileupload_tests.external_test_support import (
 def create_raw_upload_image_session(
     images: List[str], delete_file=False, imageset=None, annotationset=None
 ) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
+    creator = UserFactory(email="test@example.com")
     upload_session = RawImageUploadSession(
-        imageset=imageset, annotationset=annotationset
+        imageset=imageset, annotationset=annotationset, creator=creator
     )
 
     uploaded_images = {}
@@ -50,8 +52,8 @@ def test_file_session_creation():
     assert len(uploaded_images) == 1
     assert uploaded_images[images[0]].staged_file_id is not None
 
-    aFile = StagedAjaxFile(uploaded_images[images[0]].staged_file_id)
-    assert aFile.exists
+    a_file = StagedAjaxFile(uploaded_images[images[0]].staged_file_id)
+    assert a_file.exists
 
 
 @pytest.mark.django_db
@@ -65,19 +67,24 @@ def test_image_file_creation(settings):
         "image10x10x10.zraw",
         "image10x10x10.mhd",
         "image10x10x10.mha",
+        "image10x11x12x13.mhd",
+        "image10x11x12x13.zraw",
         "image10x10x10-extra-stuff.mhd",
         "invalid_utf8.mhd",
         "no_image",
         "valid_tiff.tif",
         "invalid_tiles_tiff.tif",
     ]
+
+    invalid_images = ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif")
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
-    assert session.error_message is None
+    assert session.session_state == UploadSessionState.stopped
+    for image_name in invalid_images:
+        assert image_name in session.error_message
 
-    assert Image.objects.filter(origin=session).count() == 4
+    assert Image.objects.filter(origin=session).count() == 5
 
     for name, db_object in uploaded_images.items():
         name: str
@@ -86,7 +93,7 @@ def test_image_file_creation(settings):
         db_object.refresh_from_db()
 
         assert db_object.staged_file_id is None
-        if name in ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif"):
+        if name in invalid_images:
             assert db_object.error is not None
         else:
             assert db_object.error is None
@@ -104,8 +111,44 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     )
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.session_state == UploadSessionState.stopped
     assert session.error_message is not None
+
+
+@pytest.mark.parametrize(
+    "images",
+    (
+        ["image10x11x12x13.mha"],
+        ["image10x11x12x13.mhd", "image10x11x12x13.zraw"],
+    ),
+)
+@pytest.mark.django_db
+def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.refresh_from_db()
+    assert session.session_state == UploadSessionState.stopped
+    assert session.error_message is None
+
+    images = Image.objects.filter(origin=session).all()
+    assert len(images) == 1
+
+    raw_image_file = list(uploaded_images.values())[0]
+    raw_image_file: RawImageFile
+    raw_image_file.refresh_from_db()
+    assert raw_image_file.staged_file_id is None
+
+    image = images[0]
+    assert image.shape == [13, 12, 11, 10]
+    assert image.shape_without_color == [13, 12, 11, 10]
+    assert image.color_space == Image.COLOR_SPACE_GRAY
+
+    sitk_image = image.get_sitk_image()
+    assert [e for e in reversed(sitk_image.GetSize())] == image.shape
 
 
 @pytest.mark.django_db
@@ -118,8 +161,9 @@ def test_no_convertible_file(settings):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
-    assert session.error_message is None
+    assert session.session_state == UploadSessionState.stopped
+    for image_name in images:
+        assert image_name in session.error_message
 
     no_image_image = list(uploaded_images.values())[0]
     no_image_image.refresh_from_db()
@@ -151,7 +195,7 @@ def test_errors_on_files_with_duplicate_file_names(settings):
     assert len(uploaded_images) == 4
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.session_state == UploadSessionState.stopped
     assert session.error_message is None
 
     for raw_image in uploaded_images:
@@ -169,7 +213,7 @@ def test_mhd_file_annotation_creation(settings):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UPLOAD_SESSION_STATE.stopped
+    assert session.session_state == UploadSessionState.stopped
     assert session.error_message is None
 
     images = Image.objects.filter(origin=session).all()
@@ -181,6 +225,9 @@ def test_mhd_file_annotation_creation(settings):
     assert raw_image_file.staged_file_id is None
 
     image = images[0]
-    assert image.shape == [5, 6, 7]
-    assert image.shape_without_color == [5, 6, 7]
+    assert image.shape == [7, 6, 5]
+    assert image.shape_without_color == [7, 6, 5]
     assert image.color_space == Image.COLOR_SPACE_GRAY
+
+    sitk_image = image.get_sitk_image()
+    assert [e for e in reversed(sitk_image.GetSize())] == image.shape

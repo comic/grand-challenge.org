@@ -1,13 +1,12 @@
-from django.db import models
-from grandchallenge.core.models import UUIDModel
-from grandchallenge.cases.models import Image
 from django.contrib.postgres.fields import ArrayField
+from django.db import models
+
+from grandchallenge.cases.models import Image
+from grandchallenge.core.models import UUIDModel
 
 
 class OctObsRegistration(UUIDModel):
-    """
-    Model for registration of Topcon OCT to OBS files
-    """
+    """Model for registration of Topcon OCT to OBS files."""
 
     obs_image = models.ForeignKey(
         Image, related_name="obs_image", on_delete=models.CASCADE

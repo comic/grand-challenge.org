@@ -1,35 +1,36 @@
 import pytest
-from tests.annotations_tests.factories import (
-    ETDRSGridAnnotationFactory,
-    MeasurementAnnotationFactory,
-    BooleanClassificationAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    SinglePolygonAnnotationFactory,
-    LandmarkAnnotationSetFactory,
-    SingleLandmarkAnnotationFactory,
-    ImageQualityAnnotationFactory,
-    ImagePathologyAnnotationFactory,
-    RetinaImagePathologyAnnotationFactory,
-    ImageTextAnnotationFactory,
-)
+
 from grandchallenge.annotations.serializers import (
-    ETDRSGridAnnotationSerializer,
-    MeasurementAnnotationSerializer,
     BooleanClassificationAnnotationSerializer,
-    PolygonAnnotationSetSerializer,
-    LandmarkAnnotationSetSerializer,
-    SinglePolygonAnnotationSerializer,
-    SingleLandmarkAnnotationSerializer,
-    ImageQualityAnnotationSerializer,
+    ETDRSGridAnnotationSerializer,
     ImagePathologyAnnotationSerializer,
-    RetinaImagePathologyAnnotationSerializer,
+    ImageQualityAnnotationSerializer,
     ImageTextAnnotationSerializer,
+    LandmarkAnnotationSetSerializer,
+    MeasurementAnnotationSerializer,
+    PolygonAnnotationSetSerializer,
+    RetinaImagePathologyAnnotationSerializer,
+    SingleLandmarkAnnotationSerializer,
     SingleLandmarkAnnotationSerializerNoParent,
+    SinglePolygonAnnotationSerializer,
 )
-from tests.factories import UserFactory, ImageFactory
+from tests.annotations_tests.factories import (
+    BooleanClassificationAnnotationFactory,
+    ETDRSGridAnnotationFactory,
+    ImagePathologyAnnotationFactory,
+    ImageQualityAnnotationFactory,
+    ImageTextAnnotationFactory,
+    LandmarkAnnotationSetFactory,
+    MeasurementAnnotationFactory,
+    PolygonAnnotationSetFactory,
+    RetinaImagePathologyAnnotationFactory,
+    SingleLandmarkAnnotationFactory,
+    SinglePolygonAnnotationFactory,
+)
+from tests.factories import ImageFactory, UserFactory
 from tests.serializer_helpers import (
-    do_test_serializer_valid,
     do_test_serializer_fields,
+    do_test_serializer_valid,
 )
 
 
@@ -174,15 +175,15 @@ class TestSerializers:
 
 @pytest.mark.django_db
 class TestNestedLandmarkSerializer:
-    def test_serialization(self, MultipleLandmarkAnnotationSets):
+    def test_serialization(self, multiple_landmark_annotation_sets):
         serialized_model = LandmarkAnnotationSetSerializer(
-            instance=MultipleLandmarkAnnotationSets.landmarkset1
+            instance=multiple_landmark_annotation_sets.landmarkset1
         )
         assert serialized_model.data.get("id") is not None
         assert serialized_model.data.get("created") is not None
         assert (
             serialized_model.data.get("grader")
-            == MultipleLandmarkAnnotationSets.grader1.id
+            == multiple_landmark_annotation_sets.grader1.id
         )
         assert (
             len(serialized_model.data.get("singlelandmarkannotation_set")) == 2

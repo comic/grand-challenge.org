@@ -1,13 +1,13 @@
 from django.urls import path
 
 from grandchallenge.teams.views import (
-    TeamList,
-    TeamDetail,
-    TeamUpdate,
     TeamCreate,
+    TeamDelete,
+    TeamDetail,
+    TeamList,
     TeamMemberCreate,
     TeamMemberDelete,
-    TeamDelete,
+    TeamUpdate,
 )
 
 app_name = "teams"

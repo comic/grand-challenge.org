@@ -1,7 +1,6 @@
 import pytest
-
-from rest_framework import status
 from django.conf import settings
+from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory

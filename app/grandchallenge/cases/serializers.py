@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from rest_framework.relations import HyperlinkedRelatedField
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 
 
 class ImageFileSerializer(serializers.ModelSerializer):

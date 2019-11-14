@@ -35,10 +35,7 @@ class RegistrationRequest(models.Model):
         max_length=4, choices=REGISTRATION_CHOICES, default=PENDING
     )
 
-    # question: where to send email to admin? probably not here?
     def __str__(self):
-        """ describes this object in admin interface etc.
-        """
         return "{1} registration request by user {0}".format(
             self.user.username, self.challenge.short_name
         )

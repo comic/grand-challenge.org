@@ -4,12 +4,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
 
-import SimpleITK as sitk
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.cases.image_builders.metaio_utils import load_sitk_image
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
@@ -19,7 +19,7 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-class UPLOAD_SESSION_STATE:
+class UploadSessionState:
     created = "created"
     queued = "queued"
     running = "running"
@@ -43,7 +43,7 @@ class RawImageUploadSession(UUIDModel):
     )
 
     session_state = models.CharField(
-        max_length=16, default=UPLOAD_SESSION_STATE.created
+        max_length=16, default=UploadSessionState.created
     )
 
     processing_task = models.UUIDField(null=True, default=None)
@@ -93,7 +93,8 @@ class RawImageUploadSession(UUIDModel):
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
-            f"({self.session_state})"
+            f"({self.session_state}) "
+            f"{self.error_message or ''}"
         )
 
     def save(self, *args, skip_processing=False, **kwargs):
@@ -110,7 +111,7 @@ class RawImageUploadSession(UUIDModel):
 
         try:
             RawImageUploadSession.objects.filter(pk=self.pk).update(
-                session_state=UPLOAD_SESSION_STATE.queued,
+                session_state=UploadSessionState.queued,
                 processing_task=self.pk,
             )
 
@@ -118,7 +119,7 @@ class RawImageUploadSession(UUIDModel):
 
         except Exception as e:
             RawImageUploadSession.objects.filter(pk=self.pk).update(
-                session_state=UPLOAD_SESSION_STATE.stopped,
+                session_state=UploadSessionState.stopped,
                 error_message=f"Could not start job: {e}",
             )
             raise e
@@ -239,6 +240,7 @@ class Image(UUIDModel):
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)
     depth = models.IntegerField(null=True)
+    timepoints = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
@@ -270,7 +272,16 @@ class Image(UUIDModel):
 
     @property
     def shape_without_color(self) -> List[int]:
+        """
+        Return the shape of the image without the color channel.
+
+        Returns
+        -------
+            The shape of the image in NumPy ordering [(t), (z), y, x]
+        """
         result = []
+        if self.timepoints is not None:
+            result.append(self.timepoints)
         if self.depth is not None:
             result.append(self.depth)
         result.append(self.height)
@@ -279,6 +290,13 @@ class Image(UUIDModel):
 
     @property
     def shape(self) -> List[int]:
+        """
+        Return the shape of the image with the color channel.
+
+        Returns
+        -------
+            The shape of the image in NumPy ordering [(t), (z), y, x, (c)]
+        """
         result = self.shape_without_color
         color_components = self.COLOR_SPACE_COMPONENTS[self.color_space]
         if color_components > 1:
@@ -287,10 +305,15 @@ class Image(UUIDModel):
 
     def get_sitk_image(self):
         """
-        This function returns the image that belongs to this model as an SimpleITK image. It requires that exactly one
-        MHD/RAW file pair is associated with the model. Otherwise it wil raise a MultipleObjectsReturned or
-        ObjectDoesNotExist exception.
-        :return: SimpleITK image
+        Return the image that belongs to this model as an SimpleITK image.
+
+        Requires that exactly one MHD/RAW file pair is associated with the model.
+        Otherwise it wil raise a MultipleObjectsReturned or ObjectDoesNotExist
+        exception.
+
+        Returns
+        -------
+            A SimpleITK image
         """
         # self.files should contain 1 .mhd file
         mhd_file = self.files.get(file__endswith=".mhd")
@@ -312,23 +335,17 @@ class Image(UUIDModel):
 
         with TemporaryDirectory() as tempdirname:
             for file in (mhd_file, raw_file):
-                infile = file.file.open("rb")
-                try:
-                    with open(
-                        Path(tempdirname) / Path(file.file.name).name, "wb"
-                    ) as outfile:
-                        buffer = True
-                        while buffer:
-                            buffer = infile.read(1024)
-                            outfile.write(buffer)
-                except:
-                    infile.close()
-                    raise
+                with file.file.open("rb") as infile, open(
+                    Path(tempdirname) / Path(file.file.name).name, "wb"
+                ) as outfile:
+                    buffer = True
+                    while buffer:
+                        buffer = infile.read(1024)
+                        outfile.write(buffer)
 
             try:
-                sitk_image = sitk.ReadImage(
-                    str(Path(tempdirname) / Path(mhd_file.file.name).name)
-                )
+                hdr_path = Path(tempdirname) / Path(mhd_file.file.name).name
+                sitk_image = load_sitk_image(mhd_file=hdr_path)
             except RuntimeError as e:
                 logging.error(
                     f"Failed to load SimpleITK image with error: {e}"
@@ -338,9 +355,7 @@ class Image(UUIDModel):
         return sitk_image
 
     def permit_viewing_by_retina_users(self):
-        """ Calling this function will give the retina graders and retina admins object specific permissions
-        to view this image. """
-        # Set object level view permissions for retina_graders and retina_admins
+        """Set object level view permissions for retina_graders and retina_admins."""
         for group_name in (
             settings.RETINA_GRADERS_GROUP_NAME,
             settings.RETINA_ADMINS_GROUP_NAME,

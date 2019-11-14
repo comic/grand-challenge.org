@@ -1,25 +1,28 @@
 from rest_framework import serializers
 
-from .models import (
-    ETDRSGridAnnotation,
-    MeasurementAnnotation,
+from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
-    PolygonAnnotationSet,
-    SinglePolygonAnnotation,
-    LandmarkAnnotationSet,
-    SingleLandmarkAnnotation,
-    ImageQualityAnnotation,
+    ETDRSGridAnnotation,
     ImagePathologyAnnotation,
-    RetinaImagePathologyAnnotation,
+    ImageQualityAnnotation,
     ImageTextAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
+    RetinaImagePathologyAnnotation,
+    SingleLandmarkAnnotation,
+    SinglePolygonAnnotation,
 )
-from .validators import validate_grader_is_current_retina_user
+from grandchallenge.annotations.validators import (
+    validate_grader_is_current_retina_user,
+)
 
 
 class AbstractAnnotationSerializer(serializers.ModelSerializer):
     def validate_grader(self, value):
         """
-        Validate that grader is the user creating the object for retina_graders group
+        Validate that the current grader is the user creating the object for
+        the retina_graders group.
         """
         validate_grader_is_current_retina_user(value, self.context)
         return value
@@ -32,7 +35,7 @@ class AbstractSingleAnnotationSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """
         Validate that the user that is creating this object equals the
-        annotation_set.grader for retina_graders
+        annotation_set.grader for retina_graders.
         """
         if data.get("annotation_set") is None:
             return data

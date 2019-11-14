@@ -53,7 +53,8 @@ def send_templated_email(
             recipients = recipients.split(",")
     elif type(recipients) != list:
         recipients = [recipients]
-    recipients = remove_empty(recipients)
+
+    recipients = [r for r in recipients if r]
 
     msg = EmailMultiAlternatives(
         subject, text_part, sender, recipients, bcc=bcc
@@ -65,15 +66,3 @@ def send_templated_email(
         for file in files:
             msg.attach_file(file)
     return msg.send(fail_silently)
-
-
-def remove_empty(adresses):
-    """ Remove invalid email adresses from list
-    Currently only removed empty
-
-    """
-    cleaned = []
-    for adress in adresses:
-        if adress != "":
-            cleaned.append(adress)
-    return cleaned

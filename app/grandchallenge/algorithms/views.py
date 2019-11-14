@@ -12,9 +12,9 @@ from django.http import Http404
 from django.views.generic import (
     CreateView,
     DetailView,
+    FormView,
     ListView,
     UpdateView,
-    FormView,
 )
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -26,23 +26,23 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.forms import (
-    AlgorithmImageForm,
     AlgorithmForm,
+    AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     EditorsForm,
     UsersForm,
 )
 from grandchallenge.algorithms.models import (
+    Algorithm,
     AlgorithmImage,
     Job,
     Result,
-    Algorithm,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
-    ResultSerializer,
-    JobSerializer,
     AlgorithmSerializer,
+    JobSerializer,
+    ResultSerializer,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -290,7 +290,7 @@ class AlgorithmJobsList(LoginRequiredMixin, PermissionListMixin, ListView):
         return context
 
     def get_queryset(self, *args, **kwargs):
-        """ Only display the jobs for this algorithm """
+        """Filter the jobs for this algorithm."""
         qs = super().get_queryset(*args, **kwargs)
         return qs.filter(algorithm_image__algorithm=self.algorithm)
 

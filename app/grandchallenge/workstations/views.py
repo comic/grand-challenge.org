@@ -14,12 +14,12 @@ from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
 from django.utils.timezone import now
 from django.views.generic import (
-    ListView,
     CreateView,
     DetailView,
-    UpdateView,
-    RedirectView,
     FormView,
+    ListView,
+    RedirectView,
+    UpdateView,
 )
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -36,20 +36,20 @@ from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
 from grandchallenge.workstations.forms import (
-    WorkstationForm,
-    WorkstationImageForm,
     EditorsForm,
     UsersForm,
+    WorkstationForm,
+    WorkstationImageForm,
 )
 from grandchallenge.workstations.models import (
+    Session,
     Workstation,
     WorkstationImage,
-    Session,
 )
 from grandchallenge.workstations.serializers import SessionSerializer
 from grandchallenge.workstations.utils import (
-    get_workstation_image_or_404,
     get_or_create_active_session,
+    get_workstation_image_or_404,
 )
 
 
@@ -61,7 +61,7 @@ class SessionViewSet(ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["patch"])
     def keep_alive(self, *_, **__):
-        """ Increase the maximum duration of the session, up to the limit """
+        """Increase the maximum duration of the session, up to the limit."""
         session = self.get_object()
 
         new_duration = now() + timedelta(minutes=5) - session.created
@@ -319,7 +319,7 @@ class SessionDetail(
 
 
 def session_proxy(request, *, pk, path, **_):
-    """ Returns an internal redirect to the session instance if authorised """
+    """Return an internal redirect to the session instance if authorised."""
     session = get_object_or_404(Session, pk=pk)
     path = safe_join(f"/workstation-proxy/{session.hostname}", path)
 

@@ -1,19 +1,19 @@
+from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.annotations.models import (
-    MeasurementAnnotation,
     BooleanClassificationAnnotation,
-    IntegerClassificationAnnotation,
-    PolygonAnnotationSet,
-    LandmarkAnnotationSet,
-    ETDRSGridAnnotation,
     CoordinateListAnnotation,
-    SinglePolygonAnnotation,
+    ETDRSGridAnnotation,
+    IntegerClassificationAnnotation,
+    LandmarkAnnotationSet,
+    MeasurementAnnotation,
+    PolygonAnnotationSet,
     SingleLandmarkAnnotation,
+    SinglePolygonAnnotation,
 )
-from django.contrib.auth.models import Group
-from django.conf import settings
-from guardian.shortcuts import assign_perm, remove_perm
 
 # Existing annotation (name, codename) as of annotations.0001_initial
 ANNOTATION_MODELS = (
@@ -81,14 +81,21 @@ def change_retina_permissions(remove=False):
 
 class Command(BaseCommand):
     """
-    This command assigns/removes all model level permissions for annotations to the retina_admins group
-    and object level permissions for every annotation owner that is in the retina_grader group.
-    This command is probably for one time use only so it would be better to implement as data migration,
-    however the django-guardian permission model doesn't work nicely with data migrations. As explained
-    in https://github.com/django-guardian/django-guardian/issues/281
+    Assign or remove all required permissions for annotations to retina_admins.
+
+    Includes table and object level permissions for every annotation owner
+    that is in the retina_grader group. This command is probably for one time
+    use only so it would be better to implement as data migration,
+    however the django-guardian permission model doesn't work nicely with
+    data migrations. As explained in
+    https://github.com/django-guardian/django-guardian/issues/281
     """
 
-    help = "Assign/remove model level permissions for annotations to retina_admins group and object level permissions for annotations owned by an user in retina_graders group"
+    help = (
+        "Assign/remove model level permissions for annotations to "
+        "the retina_admins group and object level permissions for "
+        "annotations owned by an user in the retina_graders group"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(

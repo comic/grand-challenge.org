@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from grandchallenge.workstation_configs.models import LookUpTable
-from tests.workstation_config_tests.legacy_luts import LegacyLUT, LEGACY_LUTS
+from tests.workstation_config_tests.legacy_luts import LEGACY_LUTS, LegacyLUT
 
 
 @pytest.mark.parametrize(

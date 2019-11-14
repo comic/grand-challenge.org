@@ -1,6 +1,7 @@
 import pytest
-from tests.worklists_tests.factories import WorklistFactory
+
 from tests.api_utils import assert_api_crud
+from tests.worklists_tests.factories import WorklistFactory
 
 
 @pytest.mark.django_db
