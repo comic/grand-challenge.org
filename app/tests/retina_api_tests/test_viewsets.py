@@ -1316,37 +1316,42 @@ class TestETDRSAnnotationViewSet:
     ],
 )
 @pytest.mark.parametrize(
-    "viewset,factory,serializer,with_image",
+    "viewset,factory,serializer,with_image,non_update",
     (
         (
             ImageQualityAnnotationViewSet,
             ImageQualityAnnotationFactory,
             ImageQualityAnnotationSerializer,
             True,
+            False,
         ),
         (
             ImagePathologyAnnotationViewSet,
             ImagePathologyAnnotationFactory,
             ImagePathologyAnnotationSerializer,
             True,
+            False,
         ),
         (
             RetinaImagePathologyAnnotationViewSet,
             RetinaImagePathologyAnnotationFactory,
             RetinaImagePathologyAnnotationSerializer,
             True,
+            False,
         ),
         (
             ImageTextAnnotationViewSet,
             ImageTextAnnotationFactory,
             ImageTextAnnotationSerializer,
             True,
+            False,
         ),
         (
             LandmarkAnnotationSetViewSet,
             LandmarkAnnotationSetFactory,
             LandmarkAnnotationSetSerializer,
             False,
+            True,
         ),
     ),
 )
@@ -1368,7 +1373,14 @@ class TestAnnotationViewSets:
         return models
 
     def test_list_view(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         models = self.create_models(factory)
         response = view_test(
@@ -1393,7 +1405,14 @@ class TestAnnotationViewSets:
             assert response.data == serialized_data
 
     def test_create_view(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         models = self.create_models(factory)
         build_kwargs = {"grader": models[0].grader}
@@ -1424,7 +1443,14 @@ class TestAnnotationViewSets:
             assert response.data == model_serialized
 
     def test_create_view_wrong_user_id(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         models = self.create_models(factory)
         build_kwargs = {"grader": models[0].grader}
@@ -1464,7 +1490,14 @@ class TestAnnotationViewSets:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_retrieve_view(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         models = self.create_models(factory)
         response = view_test(
@@ -1482,7 +1515,14 @@ class TestAnnotationViewSets:
             assert response.data == model_serialized
 
     def test_update_view(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         models = self.create_models(factory)
         model_serialized = serializer(models[1]).data
@@ -1507,10 +1547,20 @@ class TestAnnotationViewSets:
         if user_type in ("retina_grader", "retina_admin"):
             if with_image:
                 response.data["image"] = str(response.data["image"])
-            assert response.data == model_serialized
+            if non_update:
+                assert response.data != model_serialized
+            else:
+                assert response.data == model_serialized
 
     def test_update_view_wrong_user_id(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         other_user = UserFactory()
         models = self.create_models(factory)
@@ -1536,7 +1586,10 @@ class TestAnnotationViewSets:
             model_serialized["id"] = response.data["id"]
             if with_image:
                 response.data["image"] = str(response.data["image"])
-            assert response.data == model_serialized
+            if non_update:
+                assert response.data != model_serialized
+            else:
+                assert response.data == model_serialized
         elif user_type == "retina_grader":
             assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert (
@@ -1547,7 +1600,14 @@ class TestAnnotationViewSets:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_partial_update_view(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         models = self.create_models(factory)
         model_serialized = serializer(models[0]).data
@@ -1574,7 +1634,14 @@ class TestAnnotationViewSets:
             assert response.data == model_serialized
 
     def test_destroy_view(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         models = self.create_models(factory)
         view_test(
@@ -1593,7 +1660,14 @@ class TestAnnotationViewSets:
             ).exists()
 
     def test_destroy_view_wrong_user(
-        self, rf, user_type, viewset, factory, serializer, with_image
+        self,
+        rf,
+        user_type,
+        viewset,
+        factory,
+        serializer,
+        with_image,
+        non_update,
     ):
         models = self.create_models(factory)
         response = view_test(
