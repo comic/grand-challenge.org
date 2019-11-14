@@ -110,10 +110,7 @@ class SingleLandmarkAnnotationSerializerNoParent(
     class Meta:
         model = SingleLandmarkAnnotation
         fields = ("id", "image", "landmarks")
-        extra_kwargs = {
-            "landmarks": {"allow_empty": True},
-            "image": {"required": False},
-        }
+        extra_kwargs = {"landmarks": {"allow_empty": True}}
 
 
 class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
@@ -137,15 +134,8 @@ class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
     def update(self, instance, validated_data):
         sla_data = validated_data.pop("singlelandmarkannotation_set")
         for sla in sla_data:
-            item = None
-            sla_id = sla.pop("id", None)
             sla_image = sla.get("image")
             if (
-                sla_id is not None
-                and SingleLandmarkAnnotation.objects.filter(id=sla_id).exists()
-            ):
-                item = SingleLandmarkAnnotation.objects.get(id=sla_id)
-            elif (
                 sla_image is not None
                 and SingleLandmarkAnnotation.objects.filter(
                     image=sla_image, annotation_set=instance
@@ -155,7 +145,6 @@ class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
                     image=sla_image, annotation_set=instance
                 )
 
-            if item is not None:
                 new_landmarks = sla.get("landmarks")
                 if new_landmarks is not None:
                     if len(new_landmarks) == 0:
