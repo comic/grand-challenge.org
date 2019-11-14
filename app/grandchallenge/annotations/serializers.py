@@ -104,8 +104,20 @@ class SingleLandmarkAnnotationSerializer(AbstractSingleAnnotationSerializer):
         fields = ("id", "image", "annotation_set", "landmarks")
 
 
+class SingleLandmarkAnnotationSerializerNoParent(
+    AbstractSingleAnnotationSerializer
+):
+    class Meta:
+        model = SingleLandmarkAnnotation
+        fields = ("id", "image", "landmarks")
+        extra_kwargs = {
+            "landmarks": {"allow_empty": True},
+            "image": {"allow_null": True},
+        }
+
+
 class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
-    singlelandmarkannotation_set = SingleLandmarkAnnotationSerializer(
+    singlelandmarkannotation_set = SingleLandmarkAnnotationSerializerNoParent(
         many=True
     )
 
