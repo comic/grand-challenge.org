@@ -16,7 +16,6 @@ from grandchallenge.cases.views import (
     RawImageUploadSessionViewSet,
 )
 from grandchallenge.jqfileupload.views import StagedFileViewSet
-from grandchallenge.patients.views import PatientViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
     QuestionViewSet,
@@ -29,7 +28,6 @@ from grandchallenge.workstations.views import SessionViewSet
 app_name = "api"
 
 router = routers.DefaultRouter()
-router.register(r"patients", PatientViewSet, basename="patient")
 router.register(r"studies", StudyViewSet, basename="study")
 router.register(
     r"cases/upload-sessions",
