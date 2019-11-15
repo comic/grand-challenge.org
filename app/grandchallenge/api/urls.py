@@ -67,7 +67,6 @@ schema_view = get_schema_view(
         description=f"The API for {settings.SESSION_COOKIE_DOMAIN.lstrip('.')}.",
         license=openapi.License(name="Apache License 2.0"),
     ),
-    public=True,
     permission_classes=(permissions.IsAuthenticated,),
     patterns=[path("api/v1/", include(router.urls))],
 )
@@ -75,16 +74,12 @@ schema_view = get_schema_view(
 urlpatterns = [
     url(
         r"^swagger(?P<format>\.json|\.yaml)$",
-        schema_view.without_ui(cache_timeout=0),
+        schema_view.without_ui(),
         name="schema-json",
     ),
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
-    path(
-        "",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-docs",
-    ),
+    path("", schema_view.with_ui("swagger"), name="schema-docs",),
 ]

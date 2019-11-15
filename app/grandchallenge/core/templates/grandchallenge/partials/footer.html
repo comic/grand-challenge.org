@@ -14,7 +14,8 @@
                             <li>
                                 {# Manual construction of url is used here due to flatpage redirect errors #}
                                 <a class="text-muted"
-                                   href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
+                                   href="{{ request.scheme }}://
+                                           {{ request.site.domain }}{{ page.url }}">
                                     {{ page.title }}
                                 </a>
                             </li>
@@ -24,7 +25,30 @@
             </div>
             <div class="col col-xs-12 col-sm-4 small">
                 <div class="px-3">
-                    <h6>Platform Development</h6>
+                    <h6>OpenAPI</h6>
+                    <ul class="list-unstyled">
+                        <li>
+                            <a class="text-muted"
+                               href="{% url 'api:schema-docs' %}"
+                               title="The interactive documentation for the API.">
+                                Documentation
+                            </a>
+                        </li>
+                        {% if request.user.is_authenticated %}
+                            <li>
+                                <a class="text-muted"
+                                   href="{% url 'api:schema-json' '.yaml' %}"
+                                   title="The OpenAPI schema for the API.">
+                                    Schema
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col col-xs-12 col-sm-4 small">
+                <div class="px-3">
+                    <h6>Developers</h6>
                     <ul class="list-unstyled">
                         <li>
                             <a class="text-muted"
