@@ -21,14 +21,12 @@ from grandchallenge.reader_studies.views import (
     QuestionViewSet,
     ReaderStudyViewSet,
 )
-from grandchallenge.studies.views import StudyViewSet
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
 app_name = "api"
 
 router = routers.DefaultRouter()
-router.register(r"studies", StudyViewSet, basename="study")
 router.register(
     r"cases/upload-sessions",
     RawImageUploadSessionViewSet,
