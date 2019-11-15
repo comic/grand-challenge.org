@@ -23,7 +23,6 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyViewSet,
 )
 from grandchallenge.studies.views import StudyViewSet
-from grandchallenge.worklists.views import WorklistViewSet
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
@@ -32,7 +31,6 @@ app_name = "api"
 router = routers.DefaultRouter()
 router.register(r"patients", PatientViewSet, basename="patient")
 router.register(r"studies", StudyViewSet, basename="study")
-router.register(r"worklists", WorklistViewSet, basename="worklist")
 router.register(
     r"cases/upload-sessions",
     RawImageUploadSessionViewSet,
@@ -74,7 +72,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="Apache License 2.0"),
     ),
     public=True,
-    permission_classes=(permissions.AllowAny,),
+    permission_classes=(permissions.IsAuthenticated,),
     patterns=[path("api/v1/", include(router.urls))],
 )
 
@@ -89,6 +87,8 @@ urlpatterns = [
     path("v1/", include(router.urls)),
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
     path(
-        "", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc",
+        "",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-docs",
     ),
 ]
