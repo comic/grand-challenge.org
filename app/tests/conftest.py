@@ -488,6 +488,16 @@ def generate_multiple_landmark_annotation_sets(retina_grader=False):
     )
 
 
+@pytest.fixture(name="multiple_landmark_retina_annotation_sets")
+def multiple_landmark_retina_annotation_sets():
+    return generate_multiple_landmark_annotation_sets(retina_grader=True)
+
+
+@pytest.fixture(name="multiple_landmark_annotation_sets")
+def multiple_landmark_annotation_sets():
+    return generate_multiple_landmark_annotation_sets(retina_grader=False)
+
+
 class MultipleETDRSAnnotations(NamedTuple):
     grader1: UserFactory
     grader2: UserFactory

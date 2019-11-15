@@ -19,6 +19,11 @@ annotation_router.register(
     basename="polygonannotationset",
 )
 annotation_router.register(
+    "landmarkannotationset",
+    views.LandmarkAnnotationSetViewSet,
+    basename="landmarkannotationset",
+)
+annotation_router.register(
     "etdrsgridannotation",
     views.ETDRSGridAnnotationViewSet,
     basename="etdrsgridannotation",

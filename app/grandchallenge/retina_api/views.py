@@ -973,3 +973,12 @@ class ImageTextAnnotationViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = ImageTextAnnotation.objects.all()
+
+
+class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaOwnerAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = LandmarkAnnotationSetSerializer
+    filter_backends = (filters.ObjectPermissionsFilter,)
+    pagination_class = None
+    queryset = LandmarkAnnotationSet.objects.all()
