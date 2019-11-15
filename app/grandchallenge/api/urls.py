@@ -1,6 +1,9 @@
-from django.conf.urls import include
+from django.conf import settings
+from django.conf.urls import include, url
 from django.urls import path
-from rest_framework import routers
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions, routers
 
 from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
@@ -13,23 +16,17 @@ from grandchallenge.cases.views import (
     RawImageUploadSessionViewSet,
 )
 from grandchallenge.jqfileupload.views import StagedFileViewSet
-from grandchallenge.patients.views import PatientViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
     QuestionViewSet,
     ReaderStudyViewSet,
 )
-from grandchallenge.studies.views import StudyViewSet
-from grandchallenge.worklists.views import WorklistViewSet
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
 app_name = "api"
 
 router = routers.DefaultRouter()
-router.register(r"patients", PatientViewSet, basename="patient")
-router.register(r"studies", StudyViewSet, basename="study")
-router.register(r"worklists", WorklistViewSet, basename="worklist")
 router.register(
     r"cases/upload-sessions",
     RawImageUploadSessionViewSet,
@@ -62,10 +59,27 @@ router.register(
 router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
 router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
+# TODO: add terms_of_service and contact
+schema_view = get_schema_view(
+    openapi.Info(
+        title=f"{settings.SESSION_COOKIE_DOMAIN.lstrip('.')} API",
+        default_version="v1",
+        description=f"The API for {settings.SESSION_COOKIE_DOMAIN.lstrip('.')}.",
+        license=openapi.License(name="Apache License 2.0"),
+    ),
+    permission_classes=(permissions.IsAuthenticated,),
+    patterns=[path("api/v1/", include(router.urls))],
+)
 
 urlpatterns = [
+    url(
+        r"^swagger(?P<format>\.json|\.yaml)$",
+        schema_view.without_ui(),
+        name="schema-json",
+    ),
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path("", schema_view.with_ui("swagger"), name="schema-docs",),
 ]

@@ -56,6 +56,7 @@ sentry-sdk = "*"
 django-cors-headers = "*"
 pyvips = "*"
 django-speedinfo = "*"
+drf-yasg = {version = "^1.17", extras = ["validation"]}
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

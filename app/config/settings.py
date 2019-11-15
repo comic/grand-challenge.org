@@ -325,6 +325,7 @@ THIRD_PARTY_APPS = [
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
     "speedinfo",  # for profiling views
+    "drf_yasg",
 ]
 
 LOCAL_APPS = [
@@ -548,8 +549,15 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PAGINATION_CLASS": "grandchallenge.api.pagination.MaxLimit1000OffsetPagination",
     "PAGE_SIZE": 100,
+}
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
+    }
 }
 
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
