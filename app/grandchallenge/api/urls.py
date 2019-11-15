@@ -1,6 +1,9 @@
-from django.conf.urls import include
+from django.conf import settings
+from django.conf.urls import include, url
 from django.urls import path
-from rest_framework import routers
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions, routers
 
 from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
@@ -62,10 +65,30 @@ router.register(
 router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
 router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
+# TODO: add terms_of_service and contact
+schema_view = get_schema_view(
+    openapi.Info(
+        title=f"{settings.SESSION_COOKIE_DOMAIN.lstrip('.')} API",
+        default_version="v1",
+        description=f"The API for {settings.SESSION_COOKIE_DOMAIN.lstrip('.')}.",
+        license=openapi.License(name="Apache License 2.0"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+    patterns=[path("api/v1/", include(router.urls))],
+)
 
 urlpatterns = [
+    url(
+        r"^swagger(?P<format>\.json|\.yaml)$",
+        schema_view.without_ui(cache_timeout=0),
+        name="schema-json",
+    ),
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path(
+        "", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc",
+    ),
 ]
