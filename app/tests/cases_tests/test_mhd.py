@@ -7,7 +7,7 @@ import pytest
 
 from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,
-    load_sitk_image_with_nd_support_from_headers,
+    load_sitk_image_with_nd_support,
     parse_mh_header,
 )
 from tests.cases_tests import RESOURCE_PATH
@@ -189,7 +189,7 @@ def test_4d_mh_loader_with_more_than_4_dimensions_fails(tmpdir):
 )
 def test_4dloader_reproduces_normal_sitk_loader_results(image: Path):
     img_ref = SimpleITK.ReadImage(str(image))
-    img = load_sitk_image_with_nd_support_from_headers(mhd_file=image)
+    img = load_sitk_image_with_nd_support(mhd_file=image)
     assert_sitk_img_equivalence(img, img_ref)
 
 

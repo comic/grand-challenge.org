@@ -1,6 +1,6 @@
 import zlib
 from pathlib import Path
-from typing import Any, List, Mapping, Union
+from typing import Any, Dict, List, Mapping, Tuple, Union
 
 import SimpleITK
 import SimpleITK._SimpleITK as _SimpleITK
@@ -83,17 +83,20 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
             except UnicodeDecodeError:
                 raise ValueError("Header contains invalid UTF-8")
             else:
-                # Clean line endings
-                line = line.rstrip("\n\r")
-                if line.strip():
-                    if "=" in line:
-                        key, value = line.split("=", 1)
-                        result[key.strip()] = value.strip()
-                    else:
-                        result[line.strip()] = None
+                extract_key_value_pairs(line, result)
             if "ElementDataFile" in result:
                 break  # last parsed header...
     return result
+
+
+def extract_key_value_pairs(line: str, result: Dict[str, str]):
+    line = line.rstrip("\n\r")
+    if line.strip():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            result[key.strip()] = value.strip()
+        else:
+            result[line.strip()] = None
 
 
 def extract_header_listing(
@@ -102,48 +105,19 @@ def extract_header_listing(
     return [dtype(e) for e in headers[property].strip().split(" ")]
 
 
-def load_sitk_image_with_nd_support_from_headers(
-    mhd_file: Path,
-) -> SimpleITK.Image:
+def load_sitk_image_with_nd_support(mhd_file: Path,) -> SimpleITK.Image:
     headers = parse_mh_header(mhd_file)
     is_mha = headers["ElementDataFile"].strip() == "LOCAL"
-    if is_mha:
-        data_file_path = mhd_file
-    else:
-        data_file_path = (
-            mhd_file.resolve().parent / Path(headers["ElementDataFile"]).name
-        )
-    if not data_file_path.exists():
-        raise IOError("cannot find data file")
+    data_file_path = resolve_mh_data_file_path(headers, is_mha, mhd_file)
 
     shape = extract_header_listing("DimSize", headers=headers, dtype=int)
 
-    num_components = 1
-    if "ElementNumberOfChannels" in headers:
-        num_components = int(headers["ElementNumberOfChannels"])
-        if "_ARRAY" not in headers["ElementType"] and num_components > 1:
-            headers["ElementType"] = headers["ElementType"] + "_ARRAY"
+    dtype, num_components = determine_mh_components_and_dtype(headers)
 
-    dtype = METAIO_IMAGE_TYPES[headers["ElementType"]]
-    if dtype is None:
-        error_msg = (
-            f"MetaIO datatype: {headers['ElementType']} is not supported"
-        )
-        raise NotImplementedError(error_msg)
+    sitk_image = create_sitk_img_from_mh_data(
+        data_file_path, dtype, headers, is_mha, num_components, shape
+    )
 
-    is_compressed = headers["CompressedData"] == "True"
-    with open(str(data_file_path), "rb") as f:
-        if is_mha:
-            line = ""
-            while "ElementDataFile = LOCAL" not in str(line):
-                line = f.readline()
-        if not is_compressed:
-            s = f.read()
-        else:
-            s = zlib.decompress(f.read())
-
-    sitk_image = SimpleITK.Image(shape, dtype, num_components)
-    _SimpleITK._SetImageFromArray(s, sitk_image)
     sitk_image.SetDirection(
         extract_header_listing("TransformMatrix", headers=headers)
     )
@@ -155,15 +129,67 @@ def load_sitk_image_with_nd_support_from_headers(
     return sitk_image
 
 
+def determine_mh_components_and_dtype(
+    headers: Mapping[str, Union[str, None]]
+) -> Tuple[int, int]:
+    num_components = 1
+    if "ElementNumberOfChannels" in headers:
+        num_components = int(headers["ElementNumberOfChannels"])
+        if "_ARRAY" not in headers["ElementType"] and num_components > 1:
+            headers["ElementType"] = headers["ElementType"] + "_ARRAY"
+    dtype = METAIO_IMAGE_TYPES[headers["ElementType"]]
+    if dtype is None:
+        error_msg = (
+            f"MetaIO datatype: {headers['ElementType']} is not supported"
+        )
+        raise NotImplementedError(error_msg)
+    return dtype, num_components
+
+
+def resolve_mh_data_file_path(
+    headers: Mapping[str, Union[str, None]], is_mha: bool, mhd_file: Path
+) -> Path:
+    if is_mha:
+        data_file_path = mhd_file
+    else:
+        data_file_path = (
+            mhd_file.resolve().parent / Path(headers["ElementDataFile"]).name
+        )
+    if not data_file_path.exists():
+        raise IOError("cannot find data file")
+    return data_file_path
+
+
+def create_sitk_img_from_mh_data(
+    data_file_path: Path,
+    dtype: int,
+    headers: Mapping[str, Union[str, None]],
+    is_mha: bool,
+    num_components: int,
+    shape,
+) -> SimpleITK.Image:
+    is_compressed = headers["CompressedData"] == "True"
+    with open(str(data_file_path), "rb") as f:
+        if is_mha:
+            line = ""
+            while "ElementDataFile = LOCAL" not in str(line):
+                line = f.readline()
+        if not is_compressed:
+            s = f.read()
+        else:
+            s = zlib.decompress(f.read())
+    sitk_image = SimpleITK.Image(shape, dtype, num_components)
+    _SimpleITK._SetImageFromArray(s, sitk_image)
+    return sitk_image
+
+
 def load_sitk_image(mhd_file: Path) -> SimpleITK.Image:
     headers = parse_mh_header(mhd_file)
     ndims = int(headers["NDims"])
     if ndims < 4:
         sitk_image = SimpleITK.ReadImage(str(mhd_file))
     elif ndims == 4:
-        sitk_image = load_sitk_image_with_nd_support_from_headers(
-            mhd_file=mhd_file
-        )
+        sitk_image = load_sitk_image_with_nd_support(mhd_file=mhd_file)
     else:
         error_msg = (
             "SimpleITK images with more than 4 dimensions are not supported"
