@@ -5,7 +5,9 @@ import pytest
 
 from grandchallenge.cases.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,
+    EXPECTED_HEADERS,
     HEADERS_MATCHING_NUM_TIMEPOINTS,
+    parse_mh_header,
 )
 from grandchallenge.cases.models import (
     Image,
@@ -165,7 +167,7 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
 )
 @pytest.mark.django_db
 def test_staged_mhd_upload_with_additional_headers(
-    settings, images: List[str]
+    settings, tmp_path, images: List[str]
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -184,7 +186,17 @@ def test_staged_mhd_upload_with_additional_headers(
     raw_image_file.refresh_from_db()
     assert raw_image_file.staged_file_id is None
 
-    image = images[0]
+    image: Image = images[0]
+    tmp_header_filename = tmp_path / "tmp_header.mhd"
+    with image.files.get(file__endswith=".mhd").file.open(
+        "rb"
+    ) as in_file, open(tmp_header_filename, "wb") as out_file:
+        out_file.write(in_file.read())
+
+    headers = parse_mh_header(tmp_header_filename)
+    for key in headers.keys():
+        assert (key in ADDITIONAL_HEADERS) or (key in EXPECTED_HEADERS)
+
     sitk_image: SimpleITK.Image = image.get_sitk_image()
     for key in ADDITIONAL_HEADERS:
         assert key in sitk_image.GetMetaDataKeys()

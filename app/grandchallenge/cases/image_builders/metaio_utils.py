@@ -247,7 +247,7 @@ def load_sitk_image(mhd_file: Path) -> SimpleITK.Image:
     if ndims < 4:
         sitk_image = SimpleITK.ReadImage(str(mhd_file))
         for key in sitk_image.GetMetaDataKeys():
-            if key not in ADDITIONAL_HEADERS and key not in EXPECTED_HEADERS:
+            if key not in ADDITIONAL_HEADERS:
                 sitk_image.EraseMetaData(key)
     elif ndims <= 4:
         sitk_image = load_sitk_image_with_nd_support_from_headers(
