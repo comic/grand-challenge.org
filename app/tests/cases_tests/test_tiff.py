@@ -154,7 +154,9 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
 def test_image_builder_tiff(tmpdir_factory):
     # Copy resource files to writable temp folder
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
-    shutil.copytree(RESOURCE_PATH, temp_dir)
+    shutil.copytree(
+        RESOURCE_PATH, temp_dir, ignore=shutil.ignore_patterns("dicom")
+    )
 
     image_builder_result = image_builder_tiff(temp_dir)
 
