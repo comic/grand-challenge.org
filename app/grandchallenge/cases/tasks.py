@@ -12,6 +12,9 @@ from django.db import transaction
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.dicom_4dct import (
+    image_builder_dicom_4dct,
+)
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
@@ -136,7 +139,11 @@ def store_image(
         af.save()
 
 
-IMAGE_BUILDER_ALGORITHMS = [image_builder_mhd, image_builder_tiff]
+IMAGE_BUILDER_ALGORITHMS = [
+    image_builder_mhd,
+    image_builder_tiff,
+    image_builder_dicom_4dct,
+]
 
 
 def remove_duplicate_files(
