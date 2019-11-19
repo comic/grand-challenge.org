@@ -185,15 +185,11 @@ def test_4d_mh_loader_with_more_than_4_dimensions_fails(tmpdir):
 )
 def test_load_sitk_image_with_additional_meta_data(tmpdir, test_img: str):
     src = RESOURCE_PATH / test_img
-    readimage_non_filtered_meta_data = ["Bogus", "ITK_InputFilterName"]
     sitk_image = load_sitk_image(src)
-    use_nd_loader = sitk_image.GetDimension() >= 4
     for key in sitk_image.GetMetaDataKeys():
-        if use_nd_loader or (key not in readimage_non_filtered_meta_data):
-            assert key in ADDITIONAL_HEADERS
-            assert ADDITIONAL_HEADERS[key].match(sitk_image.GetMetaData(key))
-    for key in readimage_non_filtered_meta_data:
-        assert (key in sitk_image.GetMetaDataKeys()) != use_nd_loader
+        assert key in ADDITIONAL_HEADERS
+        assert ADDITIONAL_HEADERS[key].match(sitk_image.GetMetaData(key))
+    assert "Bogus" not in sitk_image.GetMetaDataKeys()
 
 
 @pytest.mark.parametrize("test_img", ["image10x11x12x13.mhd", "image3x4.mhd"])
