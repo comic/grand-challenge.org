@@ -27,7 +27,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:  # noqa: C901
     Parameters
     ----------
     path: Path
-        Path to a directory that contains all images that were uploaded duing
+        Path to a directory that contains all images that were uploaded during
         an upload session.
 
     Returns

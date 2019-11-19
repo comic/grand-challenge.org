@@ -1,7 +1,12 @@
 from typing import Dict, List, Tuple
 
+import SimpleITK
 import pytest
 
+from grandchallenge.cases.image_builders.metaio_utils import (
+    ADDITIONAL_HEADERS,
+    HEADERS_MATCHING_NUM_TIMEPOINTS,
+)
 from grandchallenge.cases.models import (
     Image,
     RawImageFile,
@@ -149,6 +154,49 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
 
     sitk_image = image.get_sitk_image()
     assert [e for e in reversed(sitk_image.GetSize())] == image.shape
+
+
+@pytest.mark.parametrize(
+    "images",
+    (
+        ["image10x11x12x13-extra-stuff.mhd", "image10x11x12x13.zraw"],
+        ["image3x4-extra-stuff.mhd", "image3x4.zraw"],
+    ),
+)
+@pytest.mark.django_db
+def test_staged_mhd_upload_with_additional_headers(
+    settings, images: List[str]
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.refresh_from_db()
+    assert session.session_state == UploadSessionState.stopped
+    assert session.error_message is None
+
+    images = Image.objects.filter(origin=session).all()
+    assert len(images) == 1
+
+    raw_image_file: RawImageFile = list(uploaded_images.values())[0]
+    raw_image_file.refresh_from_db()
+    assert raw_image_file.staged_file_id is None
+
+    image = images[0]
+    sitk_image: SimpleITK.Image = image.get_sitk_image()
+    for key in ADDITIONAL_HEADERS:
+        assert key in sitk_image.GetMetaDataKeys()
+        if key in HEADERS_MATCHING_NUM_TIMEPOINTS:
+            if sitk_image.GetDimension() >= 4:
+                assert (
+                    len(sitk_image.GetMetaData(key).split(" "))
+                    == sitk_image.GetSize()[3]
+                )
+            else:
+                assert len(sitk_image.GetMetaData(key).split(" ")) == 1
+    assert "Bogus" not in sitk_image.GetMetaDataKeys()
 
 
 @pytest.mark.django_db
