@@ -133,13 +133,17 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
 
     for file_path in path.iterdir():
         pk = uuid4()
-
+        dzi_output = None
         try:
             tiff_file = load_tiff_file(path=file_path)
-            dzi_output = create_dzi_images(tiff_file=tiff_file, pk=pk)
         except ValidationError as e:
             invalid_file_errors[file_path.name] = str(e)
             continue
+
+        try:
+            dzi_output = create_dzi_images(tiff_file=tiff_file, pk=pk)
+        except ValidationError as e:
+            invalid_file_errors[file_path.name] = str(e)
 
         image = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
 
@@ -158,27 +162,29 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
             )
         )
 
-        temp_dzi_file = TemporaryFile()
-        with open(dzi_output + ".dzi", "rb") as open_file:
-            buffer = True
-            while buffer:
-                buffer = open_file.read(1024)
-                temp_dzi_file.write(buffer)
+        if dzi_output:
+            temp_dzi_file = TemporaryFile()
+            with open(dzi_output + ".dzi", "rb") as open_file:
+                buffer = True
+                while buffer:
+                    buffer = open_file.read(1024)
+                    temp_dzi_file.write(buffer)
 
-        new_image_files.append(
-            ImageFile(
-                image=image,
-                image_type=ImageFile.IMAGE_TYPE_DZI,
-                file=File(temp_dzi_file, name=f"{image.pk}.dzi"),
+            new_image_files.append(
+                ImageFile(
+                    image=image,
+                    image_type=ImageFile.IMAGE_TYPE_DZI,
+                    file=File(temp_dzi_file, name=f"{image.pk}.dzi"),
+                )
             )
-        )
 
-        dzi_folder_upload = FolderUpload(
-            folder=dzi_output + "_files", image=image
-        )
+            dzi_folder_upload = FolderUpload(
+                folder=dzi_output + "_files", image=image
+            )
+            new_folder_upload.append(dzi_folder_upload)
+
         new_images.append(image)
         consumed_files.add(tiff_file.path.name)
-        new_folder_upload.append(dzi_folder_upload)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
