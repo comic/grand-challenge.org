@@ -240,18 +240,27 @@ def validate_and_clean_additional_mh_headers(
                     )
                 cleaned_headers[key] = value
         if key in HEADERS_MATCHING_NUM_TIMEPOINTS:
-            num_timepoints = len(value.split(" "))
-            expected_timepoints = (
-                int(headers["DimSize"].split(" ")[3])
-                if int(headers["NDims"]) >= 4
-                else 1
+            validate_list_data_matches_num_timepoints(
+                headers=headers, key=key, value=value
             )
-            if num_timepoints != expected_timepoints:
-                raise ValueError(
-                    f"Found {num_timepoints} values for {key}, "
-                    f"but expected {expected_timepoints} (1/timepoint)"
-                )
+
     return cleaned_headers
+
+
+def validate_list_data_matches_num_timepoints(
+    headers: Mapping[str, Union[str, None]], key: str, value: str
+):
+    num_timepoints = len(value.split(" "))
+    expected_timepoints = (
+        int(headers["DimSize"].split(" ")[3])
+        if int(headers["NDims"]) >= 4
+        else 1
+    )
+    if num_timepoints != expected_timepoints:
+        raise ValueError(
+            f"Found {num_timepoints} values for {key}, "
+            f"but expected {expected_timepoints} (1/timepoint)"
+        )
 
 
 def add_additional_mh_headers_to_sitk_image(
