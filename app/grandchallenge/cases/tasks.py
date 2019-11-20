@@ -264,6 +264,11 @@ def build_images(upload_session_uuid: UUID):
                     for filename in algorithm_result.consumed_files:
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
+                            raw_image = filename_lookup[
+                                filename
+                            ]  # type: RawImageFile
+                            raw_image.error = None
+                            raw_image.save()
                     for (
                         filename,
                         msg,
