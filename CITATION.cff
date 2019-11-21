@@ -1,0 +1,67 @@
+# YAML 1.2
+---
+abstract: "A framework to objectively evaluate the performance of machine learning algorithms in biomedical imaging."
+authors: 
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Meakin
+    given-names: James
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: van Zeeland 
+    given-names: Harm
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Koek
+    given-names: Marcel
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Gerke
+    given-names: Paul K.
+  - affiliation: "Medical Image Computing (PSI), Faculty of Engineering, Katholieke Universiteit Leuven, Leuven, Belgium"
+    family-names: de Dobbelaer
+    given-names: Bart
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Pinkaerts 
+    given-names: Hans
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Shneider 
+    given-names: Carl
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Bhattacharya
+    given-names: Haimasree
+  - affiliation: "Netherlands eScience Center, Science Park 140, 1098 XG, Amsterdam, The Netherlands"
+    family-names: Zinkstock 
+    given-names: Roel
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Sogancioglu
+    given-names: Ecem
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: González-Gonzalo
+    given-names: Cristina
+  - affiliation: "Fraunhofer Institute for Digital Medicine MEVIS, Bremen, Germany"
+    family-names: Meine
+    given-names: Hans
+  - affiliation: "Fraunhofer Institute for Digital Medicine MEVIS, Bremen, Germany"
+    family-names: Köhn
+    given-names: Alexander
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Groeneveld 
+    given-names: Miriam
+  - affiliation: "Netherlands eScience Center, Science Park 140, 1098 XG, Amsterdam, The Netherlands"
+    family-names: Klaver
+    given-names: Tom
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Gerbrands
+    given-names: Karel
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: Kerkstra
+    given-names: Sjoerd
+  - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
+    family-names: "van Ginneken"
+    given-names: Bram
+    orcid: "https://orcid.org/0000-0003-2028-8972"
+cff-version: "1.1.0"
+doi: "10.5281/zenodo.3356819"
+identifiers: 
+license: "Apache-2.0"
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/comic/grand-challenge.org"
+title: "Grand-Challenge.org"
+...
