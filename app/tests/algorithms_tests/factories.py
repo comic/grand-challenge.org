@@ -3,6 +3,7 @@ import factory
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmPermissionRequest,
     Job,
     Result,
 )
@@ -40,3 +41,11 @@ class AlgorithmResultFactory(factory.DjangoModelFactory):
         model = Result
 
     job = factory.SubFactory(AlgorithmJobFactory)
+
+
+class AlgorithmPermissionRequestFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = AlgorithmPermissionRequest
+
+    algorithm = factory.SubFactory(AlgorithmFactory)
+    user = factory.SubFactory(UserFactory)

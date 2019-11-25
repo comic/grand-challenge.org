@@ -2,11 +2,15 @@ import pytest
 from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
-from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    AlgorithmPermissionRequest,
+)
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmPermissionRequestFactory,
 )
 from tests.factories import StagedFileFactory, UserFactory
 from tests.utils import get_view_for_user
@@ -156,3 +160,176 @@ def test_algorithm_run(client):
     )
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_algorithm_permission_request_create(client):
+    user = UserFactory()
+    alg = AlgorithmFactory(visible_to_public=True)
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=user,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert "Request access" in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-create",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=user,
+        method=client.post,
+        follow=True,
+    )
+
+    assert AlgorithmPermissionRequest.objects.count() == 1
+    assert response.status_code == 200
+    pr = AlgorithmPermissionRequest.objects.get(user=user)
+    assert "Request access" in response.rendered_content
+    assert pr.status_to_string() in response.rendered_content
+    assert pr.status == AlgorithmPermissionRequest.PENDING
+
+    # Calling create again should not create a new permission request object
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-create",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=user,
+        method=client.post,
+        follow=True,
+    )
+
+    assert AlgorithmPermissionRequest.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_algorithm_permission_request_update(client):
+    user = UserFactory()
+    editor = UserFactory()
+
+    alg = AlgorithmFactory(visible_to_public=True)
+    alg.add_editor(editor)
+
+    pr = AlgorithmPermissionRequestFactory(algorithm=alg, user=user)
+    assert pr.status == AlgorithmPermissionRequest.PENDING
+
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-update",
+        reverse_kwargs={"slug": slugify(alg.slug), "pk": pr.pk},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+    )
+
+    assert "review access request for user" in response.rendered_content
+    assert "Request access" not in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-update",
+        reverse_kwargs={"slug": slugify(alg.slug), "pk": pr.pk},
+        client=client,
+        user=editor,
+        method=client.post,
+        follow=True,
+        data={"status": "NONEXISTENT"},
+    )
+
+    pr.refresh_from_db()
+    assert response.status_code == 200
+    assert pr.status == AlgorithmPermissionRequest.PENDING
+
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-update",
+        reverse_kwargs={"slug": slugify(alg.slug), "pk": pr.pk},
+        client=client,
+        user=editor,
+        method=client.post,
+        follow=True,
+        data={"status": AlgorithmPermissionRequest.REJECTED},
+    )
+
+    pr.refresh_from_db()
+    assert response.status_code == 200
+    assert pr.status == AlgorithmPermissionRequest.REJECTED
+
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-update",
+        reverse_kwargs={"slug": slugify(alg.slug), "pk": pr.pk},
+        client=client,
+        user=user,
+        method=client.get,
+        follow=True,
+    )
+
+    assert "review access request for user" not in response.rendered_content
+    assert "Request access" in response.rendered_content
+
+    # User should not be able to change the status to anything other
+    # than 'pending'
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-update",
+        reverse_kwargs={"slug": slugify(alg.slug), "pk": pr.pk},
+        client=client,
+        user=user,
+        method=client.post,
+        follow=True,
+        data={"status": AlgorithmPermissionRequest.ACCEPTED},
+    )
+
+    pr.refresh_from_db()
+    assert response.status_code == 200
+    assert pr.status == AlgorithmPermissionRequest.PENDING
+
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-update",
+        reverse_kwargs={"slug": slugify(alg.slug), "pk": pr.pk},
+        client=client,
+        user=editor,
+        method=client.post,
+        follow=True,
+        data={"status": AlgorithmPermissionRequest.ACCEPTED},
+    )
+
+    pr.refresh_from_db()
+    assert response.status_code == 200
+    assert pr.status == AlgorithmPermissionRequest.ACCEPTED
+
+
+@pytest.mark.django_db
+def test_algorithm_permission_request_list(client):
+    user = UserFactory()
+    editor = UserFactory()
+
+    alg = AlgorithmFactory(visible_to_public=True)
+    alg.add_editor(editor)
+
+    pr = AlgorithmPermissionRequestFactory(algorithm=alg, user=user)
+
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-list",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert pr.user.username in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="algorithms:permission-request-list",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=user,
+        method=client.get,
+        follow=True,
+    )
+
+    assert response.status_code == 403
