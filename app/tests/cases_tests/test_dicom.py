@@ -1,3 +1,4 @@
+import re
 from unittest import mock
 
 from grandchallenge.cases.image_builders.dicom_4dct import (
@@ -45,3 +46,22 @@ def test_image_builder_dicom_4dct():
     image = result.new_images[0]
     assert image.shape == [19, 4, 2, 3]
     assert len(result.new_image_files) == 2
+    mhd_file_obj = [
+        x for x in result.new_image_files if x.file.name.endswith("mhd")
+    ][0]
+    mhd_file = mhd_file_obj.file
+    with mhd_file.open("r") as f:
+        headers = f.read()
+    headers = headers.decode("utf-8")
+    reg_exp = re.match(
+        r".*ContentTimes = (?P<content_times>[^\n]*).*Exposures = (?P<exposures>[^\n]*).*",
+        headers,
+        flags=re.DOTALL,
+    )
+    exposures = reg_exp.group("exposures").split()
+    content_times = reg_exp.group("content_times").split()
+
+    assert len(exposures) == 19
+    assert exposures == [str(x) for x in range(100, 2000, 100)]
+    assert len(content_times) == 19
+    assert content_times == [str(x) for x in range(214501, 214520)]
