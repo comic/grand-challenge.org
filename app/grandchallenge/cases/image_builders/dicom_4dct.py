@@ -131,6 +131,17 @@ def image_builder_dicom_4dct(path: Path) -> ImageBuilderResult:
         consumed_files += [d["file"].name for d in dicom_ds.headers]
         ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
 
+        direction = np.eye(4, dtype=np.float)
+        try:
+            # Try to extract the direction from the file
+            sitk_ref = SimpleITK.ReadImage(str(dicom_ds.headers[0]["file"]))
+            # The direction per slice is a 3x3 matrix, so we add the time
+            # dimension ourselves
+            dims = sitk_ref.GetDimension()
+            _direction = np.reshape(sitk_ref.GetDirection(), (dims, dims))
+            direction[:dims, :dims] = _direction
+        except Exception:
+            pass
         pixel_dims = (
             dicom_ds.n_time,
             dicom_ds.n_slices,
@@ -171,7 +182,7 @@ def image_builder_dicom_4dct(path: Path) -> ImageBuilderResult:
         sitk_origin = tuple(
             (float(i) for i in ref_file.ImagePositionPatient)
         ) + (0.0,)
-        sitk_direction = tuple(np.eye(4, dtype=np.float).flatten())
+        sitk_direction = tuple(direction.flatten())
         x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
         z_i = float(ref_file.SliceThickness)
         sitk_spacing = (x_i, y_i, z_i, 1.0)
@@ -183,7 +194,6 @@ def image_builder_dicom_4dct(path: Path) -> ImageBuilderResult:
         # Set Additional Meta Data
         img.SetMetaData("ContentTimes", " ".join(content_times))
         img.SetMetaData("Exposures", " ".join(exposures))
-
         # Convert the SimpleITK image to our internal representation
         n_image, n_image_files = convert_itk_to_internal(img)
         new_images.append(n_image)
