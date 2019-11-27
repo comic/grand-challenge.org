@@ -72,10 +72,16 @@
             </a>
         {% endif %}
         {% if "change_readerstudy" in readerstudy_perms %}
-            <a class="btn btn-primary"
-               href="{% url 'reader-studies:update' slug=object.slug %}">
-                <i class="fa fa-edit"></i> Edit this reader study
-            </a>
+            <div class="d-flex justify-content-between align-items-center">
+                <a class="btn btn-primary"
+                   href="{% url 'reader-studies:update' slug=object.slug %}">
+                    <i class="fa fa-edit"></i> Edit this reader study
+                </a>
+                <a href="{% url 'reader-studies:delete' slug=object.slug %}"
+                   class="btn btn-danger">
+                    <i class="fa fa-times"></i> Delete this reader study
+                </a>
+            </div>
         {% endif %}
     </p>
 
