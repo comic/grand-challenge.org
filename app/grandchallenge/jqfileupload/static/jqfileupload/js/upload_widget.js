@@ -81,7 +81,8 @@
             failed_files_list.css("display", "block");
             var countSpan = failed_files_list.find("span.count");
             countSpan.text("" + (parseInt(countSpan.text(), 10) + 1));
-            failed_files_list.append($("<div class='failed-upload'><p><span class='left'>" + filename + "</span>" + message + "</p></div>"));
+            failed_files_list.append(
+                $("<div id='" + filename.replace('.', '-') + "' class='failed-upload'><p><span class='left'>" + filename + "</span>" + message + "</p></div>"));
         }
 
         function generate_uploaded_file_element(filename, uuid, extra_attributes) {
@@ -99,6 +100,7 @@
         function add_succeeded_upload(file_info_list) {
             for (var i = 0; i < file_info_list.length; i++) {
                 var file_info = file_info_list[i];
+                failed_files_list.find("#" + file_info.filename.replace('.', '-')).remove();
                 upload_element.append(
                     generate_uploaded_file_element(
                         file_info.filename,
@@ -160,19 +162,20 @@
             if (!is_multiupload) {
                 clear_succeeded_list();
             }
-
             var error_message = "Sending failed.";
             var response = data.response();
-            console.log(response);
-            if (response.jqXHR.responseJSON) {
+            if (response && response.jqXHR && response.jqXHR.responseJSON) {
                 error_message = response.jqXHR.responseJSON[0];
             }
 
             console.log(data.response());
             for (var i = 0; i < data.files.length; i++) {
                 var file = data.files[i];
+                data.loaded -= file.size;
                 add_failed_upload(file.name, error_message);
             }
+            data.data = null;
+            data.submit();
         });
 
         upload_element.on('fileuploadprogressall', function (e, data) {
@@ -181,9 +184,11 @@
                 'width',
                 progress + '%'
             );
+            var failed_files = failed_files_list.find('div.failed-upload').length > 0;
+            progress_bar.toggleClass("bg-info progress-bar-striped progress-bar-animated", !failed_files).toggleClass('bg-danger', failed_files);
 
             if (progress >= 100) {
-                progress_bar.removeClass("bg-info progress-bar-striped progress-bar-animated").addClass("bg-success");
+                progress_bar.removeClass("bg-info progress-bar-striped progress-bar-animated bg-danger").addClass("bg-success");
             }
 
         });
