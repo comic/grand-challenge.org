@@ -119,6 +119,13 @@ class AlgorithmDetail(
                 "algorithms:permission-request-create", slug=self.object.slug
             )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = UsersForm()
+        form.fields["action"].initial = UsersForm.REMOVE
+        context.update({"form": form})
+        return context
+
 
 class AlgorithmUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
