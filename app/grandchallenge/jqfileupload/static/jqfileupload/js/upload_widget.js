@@ -128,7 +128,6 @@
                 uuid_list_string += succeeded_uploads_list[i].uuid;
             }
             form_element.val(uuid_list_string);
-            console.log("uuid_list_string = " + uuid_list_string);
         }
 
         var fileinput_button = upload_element.find("span.fileinput-button");
@@ -168,7 +167,6 @@
                 error_message = response.jqXHR.responseJSON[0];
             }
 
-            console.log(data.response());
             for (var i = 0; i < data.files.length; i++) {
                 var file = data.files[i];
                 data.loaded -= file.size;
