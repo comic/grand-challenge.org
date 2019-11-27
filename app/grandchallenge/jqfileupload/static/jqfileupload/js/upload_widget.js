@@ -4,6 +4,7 @@
     function init_upload(upload_element) {
         upload_element = $(upload_element);
         var dropzone = upload_element;
+        var retry_counts = {};
         var form_element = upload_element.find("input[type='hidden']");
         var failed_files_list = upload_element.find("div.failed-list");
         var total_expected_files = 0;
@@ -11,6 +12,7 @@
         var is_multiupload = upload_element.data("multi-upload");
         var is_autocommit = upload_element.data("auto-commit");
         var target_url = upload_element.data("upload-target");
+        var file_size_url = upload_element.data("file-size-url");
         var auth_token = upload_element.data("auth-token");
 
         var client_upload_session_key = generate_labeled_id("client_upload_session");
@@ -142,9 +144,11 @@
         });
 
         upload_element.on('fileuploadsubmit', function (e, data) {
-            data.formData = {
-                "X-Upload-ID": generate_labeled_id(data.files[0].name)
-            };
+            if (!data.formData || !data.formData["X-Upload-ID"]) {
+                data.formData = {
+                    "X-Upload-ID": generate_labeled_id(data.files[0].name)
+                };
+            }
         });
 
         var progress_bar = progress_div.find(".progress-bar");
@@ -157,7 +161,11 @@
         });
 
         upload_element.on('fileuploadfail', function (e, data) {
-            progress_bar.removeClass("bg-info progress-bar-striped progress-bar-animated").addClass("bg-danger");
+            var file = data.files[0];
+            // This is a failed chunk and gets handled seprately.
+            if (file.size > data.maxChunkSize) {
+                return
+            }
             if (!is_multiupload) {
                 clear_succeeded_list();
             }
@@ -175,6 +183,34 @@
             data.data = null;
             data.submit();
         });
+
+        upload_element.on('fileuploadchunkfail', function (e, data) {
+            var fu = $(this).data('blueimp-fileupload') || $(this).data('fileupload');
+            var retries = retry_counts[data.files[0].name] || 0;
+            var retry = function () {
+                $.getJSON(file_size_url, {file: data.formData["X-Upload-ID"]})
+                    .done(function (result) {
+                        // Add 1 to the size, because we want the upload the resume
+                        // on the next byte (for some reasen jq fileupload does not
+                        // do so).
+                        data.uploadedBytes = result.current_size + 1;
+                        // clear the previous data:
+                        data.data = null;
+                        data.submit();
+                    })
+            };
+            if (data.errorThrown !== 'abort' &&
+                data.uploadedBytes < data.files[0].size &&
+                retries < fu.options.maxRetries) {
+                    retries += 1;
+                    retry_counts[data.files[0].name] = retries;
+                    window.setTimeout(retry, retries * fu.options.retryTimeout);
+                    return;
+            }
+            delete retry_counts[data.files[0].name];
+            $.blueimp.fileupload.prototype.options.fail.call(this, e, data);
+            });
+
 
         upload_element.on('fileuploadprogressall', function (e, data) {
             var progress = parseInt(data.loaded / data.total * 100, 10);
