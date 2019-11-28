@@ -57,7 +57,9 @@ def _validate_tifffile(  # noqa: C901
             return tags[tag].value
         except KeyError:
             if required:
-                raise ValidationError(f"Missing tag {tag} in tiff file")
+                raise ValidationError(
+                    f"Tiff file is missing required tag {tag}"
+                )
 
     def calculate_pixel_size(tags, tag):
         try:
@@ -67,7 +69,7 @@ def _validate_tifffile(  # noqa: C901
             resolution = get_tag_value(tags, tag)
             if resolution_unit == "RESUNIT.INCH":
                 return 25.4 / resolution[0] / resolution[1]
-            elif resolution_unit == "RESUNIT.CM":
+            elif resolution_unit == "RESUNIT.CENTIMETER":
                 return 10 / resolution[0] / resolution[1]
             raise ValidationError(
                 f"Invalid resolution unit {resolution_unit}" f" in tiff file"
@@ -91,8 +93,8 @@ def _validate_tifffile(  # noqa: C901
             raise ValidationError("Image contains unauthorized information")
 
     # Fails if the image doesn't have all required tile tags
-    if not all(tag in tags for tag in required_tile_tags):
-        raise ValidationError("Image has incomplete tile information")
+    for tag in required_tile_tags:
+        get_tag_value(tags, tag, True)
 
     # Fails if the image only has a single resolution page
     resolution_levels = len(pages)

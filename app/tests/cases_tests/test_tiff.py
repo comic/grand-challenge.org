@@ -45,6 +45,7 @@ def test_get_color_space(color_space_string, expected):
     "resource, expected_error_message",
     [
         (RESOURCE_PATH / "valid_tiff.tif", ""),
+        (RESOURCE_PATH / "valid_tif_resolution_in_cm.tif", ""),
         (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
         (
             RESOURCE_PATH / "invalid_meta_data_tiff.tif",
@@ -69,6 +70,8 @@ def test_tiff_validation(resource, expected_error_message):
         error_message = str(e)
 
     assert expected_error_message in error_message
+    if not expected_error_message:
+        assert not error_message
 
 
 @pytest.mark.parametrize(
@@ -109,17 +112,26 @@ def test_dzi_creation(
         error_message = str(e)
 
     assert expected_error_message in error_message
+    if not expected_error_message:
+        assert not error_message
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "resource, expected_error_message",
+    "resource, expected_error_message, pixel_width, pixel_height",
     [
-        (RESOURCE_PATH / "valid_tiff.tif", ""),
-        (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
+        (
+            RESOURCE_PATH / "valid_tiff.tif",
+            "",
+            3.4974193197968014e-17,
+            3.4974193197968014e-17,
+        ),
+        (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file", 0, 0),
     ],
 )
-def test_tiff_image_entry_creation(resource, expected_error_message):
+def test_tiff_image_entry_creation(
+    resource, expected_error_message, pixel_width, pixel_height
+):
     error_message = ""
     image_entry = None
     pk = uuid4()
@@ -132,6 +144,8 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
 
     # Asserts possible file opening failures
     assert expected_error_message in error_message
+    if not expected_error_message:
+        assert not error_message
 
     # Asserts successful creation data
     if not expected_error_message:
@@ -146,6 +160,8 @@ def test_tiff_image_entry_creation(resource, expected_error_message):
         assert image_entry.color_space == get_color_space(
             str(tiff_tags["PhotometricInterpretation"].value)
         )
+        assert image_entry.pixel_height == pixel_height
+        assert image_entry.pixel_width == pixel_width
         assert image_entry.pk == pk
 
 
