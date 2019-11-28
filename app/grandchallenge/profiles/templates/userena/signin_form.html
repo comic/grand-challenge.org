@@ -8,10 +8,18 @@
 {% block content %}
 
     <div class="white-box text-center">
-        <h2>Register or sign in</h2>
-        <div id="signincontainer" class="">
 
-            <div id="signinlist" class="mt-2">
+        <ul class="nav nav-tabs" id="signinRegister" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="register-tab" data-toggle="tab" href="#register" role="tab" aria-controls="register" aria-selected="true">Register</a>
+          </li>
+          <li class="nav-item">
+                <a class="nav-link" id="signin-tab" data-toggle="tab" href="#signin" role="tab" aria-controls="signin">Sign in</a>
+          </li>
+        </ul>
+        <div class="tab-content" id="signinRegisterContent">
+            <div id="register" class="tab-pane fade show active pt-3">
+                <h2 class="mb-5">Register</h2>
                 <form action="{% url 'social:begin' 'google-oauth2' %}">
                     {% csrf_token %}
                     {% if request.GET.next %}
@@ -33,14 +41,14 @@
 
                     {% endif %}
                         <button type="submit"
-                                class="mx-auto btn btn-lg btn-primary btn-block" style="max-width:400px">
+                                class="mx-auto btn btn-lg btn-secondary btn-block" style="max-width:400px">
                             Register with your email
                         </button>
                 </form>
             </div>
-            <div class="mt-5 dropdown-divider"></div>
-            <div id="signinformcontainer">
-                <h2>Sign in with email</h2>
+
+            <div id="signin" class="tab-pane fade pt-3">
+                <h2 class="mb-5">Sign in with email</h2>
                 <form action="" method="post">
                     {% csrf_token %}
                 <div class="row">
@@ -71,5 +79,25 @@
             </div>
         </div>
     </div>
+
+{% endblock %}
+
+{% block script %}
+
+    {{ block.super }}
+    <script>
+        $(function () {
+            var hash = document.location.hash;
+            var prefix = "tab_";
+            if (hash) {
+                $('.nav-tabs a[href="' + hash + '"]').tab('show');
+            }
+
+            // Change hash for page-reload
+            $('.nav-tabs a').on('shown.bs.tab', function (e) {
+                window.location.hash = e.target.hash;
+            });
+        })
+    </script>
 
 {% endblock %}
