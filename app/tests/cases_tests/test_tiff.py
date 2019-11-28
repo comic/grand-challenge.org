@@ -45,7 +45,6 @@ def test_get_color_space(color_space_string, expected):
     "resource, expected_error_message",
     [
         (RESOURCE_PATH / "valid_tiff.tif", ""),
-        (RESOURCE_PATH / "valid_tif_resolution_in_cm.tif", ""),
         (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
         (
             RESOURCE_PATH / "invalid_meta_data_tiff.tif",
