@@ -2,6 +2,19 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.get_absolute_url }}">{{ object }}</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Add a user to {{ role }}s group </li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <h2>Add a user to the {{ role }}s group for {{ object }}</h2>
 
