@@ -56,7 +56,7 @@ def test_get_color_space(color_space_string, expected):
         ),
         (
             RESOURCE_PATH / "invalid_tiles_tiff.tif",
-            "Image has incomplete tile information",
+            "Tiff file is missing required tag TileOffsets",
         ),
     ],
 )
@@ -91,7 +91,7 @@ def test_tiff_validation(resource, expected_error_message):
         (
             RESOURCE_PATH,
             "invalid_tiles_tiff.tif",
-            "Image has incomplete tile information",
+            "Tiff file is missing required tag TileOffsets",
         ),
     ],
 )
