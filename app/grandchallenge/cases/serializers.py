@@ -31,6 +31,8 @@ class ImageSerializer(serializers.ModelSerializer):
             "field_of_view",
             "shape_without_color",
             "shape",
+            "pixel_height",
+            "pixel_width",
         )
 
 

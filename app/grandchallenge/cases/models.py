@@ -242,6 +242,8 @@ class Image(UUIDModel):
     depth = models.IntegerField(null=True)
     timepoints = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
+    pixel_width = models.FloatField(null=True)
+    pixel_height = models.FloatField(null=True)
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
     )
