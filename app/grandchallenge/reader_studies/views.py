@@ -157,7 +157,7 @@ class QuestionUpdate(
         for field_name in self.object.read_only_fields:
             form_fields[field_name].required = False
             form_fields[field_name].disabled = True
-
+        context.update({"reader_study": self.reader_study})
         return context
 
     def get_success_url(self):
