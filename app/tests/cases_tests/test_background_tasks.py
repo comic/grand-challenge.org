@@ -1,3 +1,8 @@
+import re
+import shutil
+import tarfile
+import zipfile
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import SimpleITK
@@ -14,6 +19,11 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
     UploadSessionState,
+)
+from grandchallenge.cases.tasks import (
+    check_compressed_and_extract,
+    extract_and_flatten,
+    fix_mhd_file,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
@@ -291,3 +301,109 @@ def test_mhd_file_annotation_creation(settings):
 
     sitk_image = image.get_sitk_image()
     assert [e for e in reversed(sitk_image.GetSize())] == image.shape
+
+
+def test_fix_mhd_file(tmpdir):
+    file = RESOURCE_PATH / "image3x4.mhd"
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    with tmp_file.open("r") as f:
+        headers = f.read()
+    headers = re.match(
+        r".*ElementDataFile = (?P<data_file>[^\n]*)", headers, flags=re.DOTALL,
+    )
+    assert headers.group("data_file") == "image3x4.zraw"
+
+    fix_mhd_file(tmp_file, "foo-")
+    with tmp_file.open("r") as f:
+        headers = f.read()
+    headers = re.match(
+        r".*ElementDataFile = (?P<data_file>[^\n]*)", headers, flags=re.DOTALL,
+    )
+    assert headers.group("data_file") == "foo-image3x4.zraw"
+
+
+@pytest.mark.parametrize(
+    "file_name,func,is_tar",
+    (
+        ("test.zip", zipfile.ZipFile, False),
+        ("test.tar", tarfile.TarFile, True),
+    ),
+)
+def test_extract_and_flatten(tmpdir, file_name, func, is_tar):
+    file = RESOURCE_PATH / file_name
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    assert tmpdir.listdir() == [tmp_file]
+
+    tmpdir_path = Path(tmpdir)
+    with func(tmp_file) as f:
+        new_files = extract_and_flatten(f, tmpdir_path, is_tar=is_tar)
+
+    expected = [
+        {"prefix": "folder-0-", "path": tmpdir_path / "folder-0-file-0.txt"},
+        {
+            "prefix": "folder-0-folder-1-",
+            "path": tmpdir_path / "folder-0-folder-1-file-1.txt",
+        },
+        {
+            "prefix": "folder-0-folder-1-folder-2-",
+            "path": tmpdir_path / "folder-0-folder-1-folder-2-file-2.txt",
+        },
+        {
+            "prefix": "folder-0-folder-1-folder-2-",
+            "path": tmpdir_path / "folder-0-folder-1-folder-2-folder-3.zip",
+        },
+    ]
+    assert sorted(new_files, key=lambda k: k["path"]) == expected
+    assert sorted(tmpdir.listdir()) == sorted(
+        [x["path"] for x in expected] + [tmpdir_path / file_name]
+    )
+
+
+@pytest.mark.parametrize("file_name", ("test.zip", "test.tar"))
+def test_check_compressed_and_extract(tmpdir, file_name):
+    file = RESOURCE_PATH / file_name
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    assert tmpdir.listdir() == [tmp_file]
+
+    tmpdir_path = Path(tmpdir)
+    check_compressed_and_extract(tmp_file, tmpdir_path)
+
+    expected = [
+        "folder-0-file-0.txt",
+        "folder-0-folder-1-file-1.txt",
+        "folder-0-folder-1-folder-2-file-2.txt",
+        "folder-0-folder-1-folder-2-folder-3-file-3.txt",
+    ]
+
+    assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
+
+
+@pytest.mark.django_db
+def test_build_zip_file(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # valid.zip contains a tarred version of the dicom folder,
+    # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff
+    images = ["valid.zip"]
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.refresh_from_db()
+    assert session.error_message is None
+    images = session.image_set.all()
+    assert images.count() == 4
+    # image10x10x10.mha image10x10x10.[mhd,zraw]
+    assert (
+        len([x for x in images if x.shape_without_color == [10, 10, 10]]) == 2
+    )
+    # dicom.tar
+    assert (
+        len([x for x in images if x.shape_without_color == [19, 4, 2, 3]]) == 1
+    )
+    # valid_tiff.tiff
+    assert (
+        len([x for x in images if x.shape_without_color == [1, 205, 205]]) == 1
+    )
