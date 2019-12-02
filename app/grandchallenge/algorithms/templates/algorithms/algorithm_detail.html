@@ -27,6 +27,20 @@
 
     <p>{{ object.description }}</p>
 
+    {% if object.contact_information %}
+        <h3 class="h4">Contact information</h3>
+        <p>{{ object.contact_information }}</p>
+    {% endif %}
+
+    {% if object.additional_information %}
+        <h3 class="h4">Additional information</h3>
+        <p>{{ object.additional_information }}</p>
+    {% endif %}
+
+    {% if object.info_url %}
+        <p>For more information about this algorithm, visit <a href="{{ object.info_url }}">the algorithm's own page</a>.
+    {% endif %}
+
     {% if "change_algorithm" in algorithm_perms %}
         <p>
             <a class="btn btn-primary"
