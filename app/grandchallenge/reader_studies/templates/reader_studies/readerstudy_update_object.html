@@ -4,6 +4,17 @@
     Edit {{ object }} - {{ block.super }}
 {% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ reader_study.get_absolute_url }}">{{ reader_study }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Edit {{ object }}
+        </li>
+    </ol>
+{% endblock %}
+
 {% block form_heading %}
     <h2>Edit {{ object }}</h2>
 {% endblock %}

@@ -3,12 +3,26 @@
 {% load grandchallenge_tags %}
 
 {% block title %}
-    Create An Algorithm - {{ block.super }}
+    Create An Algorithm Container Image - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+        </a>
+        <li class="breadcrumb-item active"
+            aria-current="page">Create image
+        </li>
+    </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Create An Algorithm</h2>
+    <h2>Create An Algorithm Container Image</h2>
 
     {% crispy form %}
 
