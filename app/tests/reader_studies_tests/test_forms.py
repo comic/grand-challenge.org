@@ -308,3 +308,50 @@ def test_image_port_only_with_bounding_box(
         assert response.status_code == 200
 
     assert Question.objects.all().count() == questions_created
+
+
+@pytest.mark.django_db
+def test_reader_study_delete(client):
+    rs = ReaderStudyFactory()
+    editor = UserFactory()
+    reader = UserFactory()
+    rs.editors_group.user_set.add(editor)
+    rs.readers_group.user_set.add(reader)
+
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:delete",
+        client=client,
+        method=client.get,
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        user=reader,
+    )
+
+    assert response.status_code == 403
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:delete",
+        client=client,
+        method=client.get,
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert "Confirm Deletion" in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="reader-studies:delete",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 0
