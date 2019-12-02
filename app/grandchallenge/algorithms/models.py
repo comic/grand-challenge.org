@@ -26,10 +26,9 @@ from grandchallenge.container_exec.models import (
     ContainerExecJobModel,
     ContainerImageModel,
 )
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
-from grandchallenge.participants.models import RequestBase
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
