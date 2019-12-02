@@ -4,6 +4,7 @@ from io import BytesIO
 import pytest
 from rest_framework.authtoken.models import Token
 
+from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import StagedFileFactory, UserFactory
@@ -403,3 +404,13 @@ def test_get_current_file_size(client):
     )
     parsed_json = response.json()
     assert parsed_json["current_size"] == 999
+
+    StagedFile.objects.order_by("start_byte")[11].delete()
+
+    response = client.get(
+        path=reverse("api:staged-file-get-current-file-size"),
+        data={"file": "foo"},
+        HTTP_AUTHORIZATION=f"Token {token}",
+    )
+    parsed_json = response.json()
+    assert parsed_json["current_size"] == 549

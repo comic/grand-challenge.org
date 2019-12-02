@@ -1,7 +1,6 @@
 import re
 from datetime import timedelta
 
-from django.db.models import Max
 from django.utils.timezone import now
 from rest_framework import mixins
 from rest_framework.decorators import action
@@ -95,10 +94,20 @@ class StagedFileViewSet(
             "user_pk_str": self.user_pk_str,
         }
 
+    def _find_last_end_byte(self, files):
+        last_end_byte = -1
+        for file in files:
+            if file["start_byte"] != last_end_byte + 1:
+                return last_end_byte
+            last_end_byte = file["end_byte"]
+        return last_end_byte
+
     @action(detail=False, methods=["get"])
     def get_current_file_size(self, request):
         client_id = request.GET.get("file", None)
-        files = StagedFile.objects.filter(client_id=client_id).aggregate(
-            Max("end_byte")
+        files = (
+            StagedFile.objects.filter(client_id=client_id)
+            .order_by("start_byte")
+            .values("start_byte", "end_byte")
         )
-        return Response({"current_size": files["end_byte__max"]})
+        return Response({"current_size": self._find_last_end_byte(files)})
