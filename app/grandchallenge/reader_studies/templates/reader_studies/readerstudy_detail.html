@@ -94,22 +94,24 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>{{ user|user_profile_link }}</div>
                         <div>
-                            <form
-                                action="{% url 'reader-studies:editors-update' slug=object.slug %}"
-                                method="POST">
-                                {% csrf_token %}
-                                {% for field in editor_remove_form %}
-                                    {% if field.name == "user" %}
-                                        <input
-                                            type="hidden"
-                                            name="user"
-                                            value="{{ user.id }}" />
-                                    {% else %}
-                                        {{ field }}
-                                    {% endif %}
-                                {% endfor %}
-                                <button type="submit" class="btn btn-danger">Remove</button>
-                            </form>
+                            {% if user != request.user %}
+                                <form
+                                    action="{% url 'reader-studies:editors-update' slug=object.slug %}"
+                                    method="POST">
+                                    {% csrf_token %}
+                                    {% for field in editor_remove_form %}
+                                        {% if field.name == "user" %}
+                                            <input
+                                                type="hidden"
+                                                name="user"
+                                                value="{{ user.id }}" />
+                                        {% else %}
+                                            {{ field }}
+                                        {% endif %}
+                                    {% endfor %}
+                                    <button type="submit" class="btn btn-danger">Remove</button>
+                                </form>
+                            {% endif %}
                         </div>
                     </div>
                 </li>
