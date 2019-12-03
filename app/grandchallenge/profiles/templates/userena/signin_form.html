@@ -11,18 +11,17 @@
 
         <ul class="nav nav-tabs nav-fill" id="signinRegister" role="tablist">
             <li class="nav-item">
-                <a class="nav-link" id="signin-tab" data-toggle="tab" href="#signin"
-                   role="tab" aria-controls="signin">Sign in</a>
+                <a class="nav-link active" id="signin-tab" data-toggle="tab" href="#signin"
+                   role="tab" aria-controls="signin" aria-selected="true">Sign in</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" id="register-tab" data-toggle="tab"
-                   href="#register" role="tab" aria-controls="register"
-                   aria-selected="true">Register</a>
+                <a class="nav-link" id="register-tab" data-toggle="tab"
+                   href="#register" role="tab" aria-controls="register">Register</a>
             </li>
-
         </ul>
+
         <div class="tab-content" id="signinRegisterContent">
-            <div id="signin" class="tab-pane fade pt-3">
+            <div id="signin" class="tab-pane fade show active pt-3">
                 <form class="mt-3" action="{% url 'social:begin' 'google-oauth2' %}">
                     {% csrf_token %}
                     {% if request.GET.next %}
@@ -78,7 +77,7 @@
                 </form>
             </div>
 
-            <div id="register" class="tab-pane fade show active mt-3 mb-3 pt-3">
+            <div id="register" class="tab-pane fade mt-3 mb-3 pt-3">
                 <form action="{% url 'social:begin' 'google-oauth2' %}">
                     {% csrf_token %}
                     {% if request.GET.next %}
