@@ -57,6 +57,7 @@ django-cors-headers = "*"
 pyvips = "*"
 django-speedinfo = "*"
 drf-yasg = {version = "^1.17", extras = ["validation"]}
+pydicom = "^1.3"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
