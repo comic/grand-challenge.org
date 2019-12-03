@@ -6,6 +6,7 @@ import SimpleITK
 import pytest
 
 from grandchallenge.cases.image_builders.metaio_utils import (
+    ADDITIONAL_HEADERS,
     load_sitk_image,
     load_sitk_image_with_nd_support,
     parse_mh_header,
@@ -175,6 +176,49 @@ def test_4d_mh_loader_with_more_than_4_dimensions_fails(tmpdir):
     with open(str(dest), "w") as f:
         f.write(modified_header)
     with pytest.raises(NotImplementedError):
+        load_sitk_image(dest)
+
+
+@pytest.mark.parametrize(
+    "test_img",
+    ["image10x11x12x13-extra-stuff.mhd", "image3x4-extra-stuff.mhd"],
+)
+def test_load_sitk_image_with_additional_meta_data(tmpdir, test_img: str):
+    src = RESOURCE_PATH / test_img
+    sitk_image = load_sitk_image(src)
+    for key in sitk_image.GetMetaDataKeys():
+        assert key in ADDITIONAL_HEADERS
+        assert ADDITIONAL_HEADERS[key].match(sitk_image.GetMetaData(key))
+    assert "Bogus" not in sitk_image.GetMetaDataKeys()
+
+
+@pytest.mark.parametrize("test_img", ["image10x11x12x13.mhd", "image3x4.mhd"])
+@pytest.mark.parametrize(
+    ["key", "value"],
+    [
+        ("Exposures", "1 2 3e-5 4 5.2 6 7 8 9 10 11 12 13.0 e"),
+        ("Exposures", "1 2 3e-5 4 5.2 6 7 8 9 10 11 12"),
+        ("t0", "1 2"),
+        ("t1", "string"),
+        (
+            "ContentTimes",
+            ("245959.999 000000.000 111111.111 " * 4) + "121212.333",
+        ),
+        ("ContentTimes", "1 2 3e-5 4 5.2 6 7 8 9 10 11 12 13.0 14.0"),
+    ],
+)
+def test_load_sitk_image_with_corrupt_additional_meta_data_fails(
+    tmpdir, test_img: str, key: str, value: str
+):
+    src = RESOURCE_PATH / "image10x11x12x13.mhd"
+    dest = Path(tmpdir) / src.name
+    shutil.copy(str(src), str(dest))
+    with open(str(dest), "r") as f:
+        lines = f.readlines()
+    lines.insert(-1, f"{key} = {value}\n")
+    with open(str(dest), "w") as f:
+        f.writelines(lines)
+    with pytest.raises(ValueError):
         load_sitk_image(dest)
 
 
