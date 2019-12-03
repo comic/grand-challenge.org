@@ -88,9 +88,33 @@
     {% if "change_readerstudy" in readerstudy_perms %}
 
         <h2>Editors</h2>
-        <ul>
+        <ul class="list-group list-group-flush mb-2">
             {% for user in object.editors_group.user_set.all %}
-                <li>{{ user|user_profile_link }}</li>
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>{{ user|user_profile_link }}</div>
+                        <div>
+                            <form
+                                action="{% url 'reader-studies:editors-update' slug=object.slug %}"
+                                method="POST">
+                                {% csrf_token %}
+                                {% for field in editor_remove_form %}
+                                    {% if field.name == "user" %}
+                                        <input
+                                            type="hidden"
+                                            name="user"
+                                            value="{{ user.id }}" />
+                                    {% else %}
+                                        {{ field }}
+                                    {% endif %}
+                                {% endfor %}
+                                <button type="submit" class="btn btn-danger">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </li>
+            {% empty %}
+                <li class="list-group-item">There are no editors for this algorithm.</li>
             {% endfor %}
         </ul>
 
@@ -105,21 +129,43 @@
         <ul class="list-group list-group-flush">
             {% for reader in readers %}
                 <li class="list-group-item">
-                    <div class="container">
-                        <div class="row">
-                            <div class="col-md-4 mb-1">
-                                <div>{{ reader.obj|user_profile_link }}</div>
+                    <div class="row">
+                        <div class="col-3 mb-1">
+                            <div class="h-100 d-flex justify-content-start align-items-center">
+                                {{ reader.obj|user_profile_link }}
                             </div>
-                            <div class="col-md-8">
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: {{ reader.progress.questions }}%" aria-valuenow="{{ reader.progress.questions }}" aria-valuemin="0" aria-valuemax="100">
-                                        Progress: {{ reader.progress.questions|floatformat }}%
-                                    </div>
+                        </div>
+                        <div class="col-6 mb-1">
+                            <div class="progress h-100">
+                                <div class="progress-bar" role="progressbar" style="width: {{ reader.progress.questions }}%" aria-valuenow="{{ reader.progress.questions }}" aria-valuemin="0" aria-valuemax="100">
+                                    Progress: {{ reader.progress.questions|floatformat }}%
                                 </div>
+                            </div>
+                        </div>
+                        <div class="col-3 mb-1">
+                            <div class="d-flex justify-content-end align-items-center">
+                                <form
+                                    action="{% url 'reader-studies:readers-update' slug=object.slug %}"
+                                    method="POST">
+                                    {% csrf_token %}
+                                    {% for field in reader_remove_form %}
+                                        {% if field.name == "user" %}
+                                            <input
+                                                type="hidden"
+                                                name="user"
+                                                value="{{ reader.obj.id }}" />
+                                        {% else %}
+                                            {{ field }}
+                                        {% endif %}
+                                    {% endfor %}
+                                    <button type="submit" class="btn btn-danger">Remove</button>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </li>
+            {% empty %}
+                 <li class="list-group-item">There are no readers for this algorithm.</li>
             {% endfor %}
         </ul>
 

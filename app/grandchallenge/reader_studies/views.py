@@ -113,8 +113,19 @@ class ReaderStudyDetail(
                 self.request.user
             )
             context.update({"progress": user_progress})
+
+        reader_remove_form = ReadersForm()
+        reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
         context.update(
-            {"user_is_reader": self.object.is_reader(user=self.request.user)}
+            {
+                "editor_remove_form": editor_remove_form,
+                "reader_remove_form": reader_remove_form,
+                "user_is_reader": self.object.is_reader(
+                    user=self.request.user
+                ),
+            }
         )
         return context
 
