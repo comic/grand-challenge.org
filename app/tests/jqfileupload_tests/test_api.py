@@ -4,9 +4,10 @@ from io import BytesIO
 import pytest
 from rest_framework.authtoken.models import Token
 
+from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import UserFactory
+from tests.factories import StagedFileFactory, UserFactory
 from tests.jqfileupload_tests.utils import (
     create_partial_upload_file_request,
     create_upload_file_request,
@@ -385,3 +386,31 @@ def test_inconsistent_chunks_rfc7233(client):
         extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
     )
     assert part_2.status_code == 400
+
+
+@pytest.mark.django_db
+def test_get_current_file_size(client):
+    uid = uuid.uuid4()
+    for x in range(0, 1000, 50):
+        StagedFileFactory(
+            client_id="foo", file_id=uid, start_byte=x, end_byte=x + 49
+        )
+    token = Token.objects.create(user=UserFactory())
+
+    response = client.get(
+        path=reverse("api:staged-file-get-current-file-size"),
+        data={"file": "foo"},
+        HTTP_AUTHORIZATION=f"Token {token}",
+    )
+    parsed_json = response.json()
+    assert parsed_json["current_size"] == 999
+
+    StagedFile.objects.order_by("start_byte")[11].delete()
+
+    response = client.get(
+        path=reverse("api:staged-file-get-current-file-size"),
+        data={"file": "foo"},
+        HTTP_AUTHORIZATION=f"Token {token}",
+    )
+    parsed_json = response.json()
+    assert parsed_json["current_size"] == 549
