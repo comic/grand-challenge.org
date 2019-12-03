@@ -14,6 +14,20 @@ build_web:
 		-f dockerfiles/web/Dockerfile \
 		.
 
+	docker build \
+		--target dist \
+		-t grandchallenge/web_ai-test:$(TRAVIS_BUILD_NUMBER)-$(TRAVIS_BRANCH_SAFE) \
+		-t grandchallenge/web_ai-test:latest \
+		-f dockerfiles/web/Dockerfile \
+		.
+
+	docker build \
+		--target dist \
+		-t grandchallenge/web_ai:$(TRAVIS_BUILD_NUMBER)-$(TRAVIS_BRANCH_SAFE) \
+		-t grandchallenge/web_ai:latest \
+		-f dockerfiles/web/Dockerfile \
+		.
+
 build_http:
 	docker build \
 		-t grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME) \

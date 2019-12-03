@@ -29,7 +29,7 @@ http {
   access_log /var/log/nginx/access.log combined;
 
   keepalive_timeout 20s;
-  
+
   sendfile ${SENDFILE_STATUS};
   sendfile_max_chunk 512k;
 
@@ -79,6 +79,11 @@ http {
     server web:8000;
   }
 
+  upstream ai_app_server {
+    server web_ai:8002;
+  }
+
+
   upstream workstations_http {
     server ${WORKSTATION_PROXY_HOSTNAME}:${WORKSTATION_PROXY_HTTP_PORT};
   }
@@ -92,7 +97,7 @@ http {
     listen 80;
     listen [::]:80;
 
-    server_name .${SERVER_NAME};
+    server_name .${SERVER_NAME} example.localhost;
 
     return 301 https://$host$request_uri;
   }
@@ -108,9 +113,24 @@ http {
   }
 
   server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name example.localhost;
+
+    location / {
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header Host $host;
+      proxy_redirect off;
+      proxy_pass http://ai_app_server;
+    }
+
+  }
+
+  server {
     # Try to serve files, otherwise proxy to app
-    listen 443 ssl http2 default_server;
-    listen [::]:443 ssl http2 default_server;
+    listen 443 ssl;
+    listen [::]:443 ssl;
 
     client_body_buffer_size 16m;
     client_max_body_size 16m;
@@ -133,8 +153,8 @@ http {
       set $ref "/";
 
       if ($http_referer ~ ^https://[^/]*(/workstations/[^/]*/sessions/[^/]*)/.*$) {
-	    set $ref $1;
-	  }
+        set $ref $1;
+      }
 
       expires epoch;
       add_header Content-Type text/plain;
@@ -183,7 +203,7 @@ http {
       proxy_request_buffering off; # Disable any internal request buffering.
       proxy_pass ${PROTECTED_S3_STORAGE_ENDPOINT_URL};
     }
-    
+
     location / {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;

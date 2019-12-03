@@ -1,0 +1,30 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+        {% block meta %}
+            {% include "grandchallenge/partials/meta.html" %}
+        {% endblock %}
+
+        <title>
+            {% block title %}{{ request.site.name }}{% endblock %}
+        </title>
+
+        {% block head_script %}
+            {% include "grandchallenge/partials/head_script.html" %}
+        {% endblock %}
+
+        {% block style %}
+            {% include "grandchallenge/partials/style.html" %}
+        {% endblock %}
+    {% endblock %}
+</head>
+
+{% block body %}
+    <body class="d-flex flex-column min-vh-100">
+    <h1>AI Website</h1>
+    </body>
+{% endblock %}
+</html>
