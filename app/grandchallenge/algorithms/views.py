@@ -212,6 +212,11 @@ class AlgorithmImageCreate(
 
         return super().form_valid(form)
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
+
 
 class AlgorithmImageDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
@@ -228,6 +233,11 @@ class AlgorithmImageUpdate(
     form_class = AlgorithmImageUpdateForm
     permission_required = f"{AlgorithmImage._meta.app_label}.change_{AlgorithmImage._meta.model_name}"
     raise_exception = True
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.object.algorithm})
+        return context
 
 
 class AlgorithmExecutionSessionCreate(
@@ -269,6 +279,11 @@ class AlgorithmExecutionSessionCreate(
         form.instance.creator = self.request.user
         form.instance.algorithm_image = self.algorithm.latest_ready_image
         return super().form_valid(form)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
 
     def get_success_url(self):
         return reverse(
