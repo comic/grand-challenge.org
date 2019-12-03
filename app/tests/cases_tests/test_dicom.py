@@ -1,6 +1,9 @@
 import re
 from unittest import mock
 
+import numpy as np
+import pydicom
+
 from grandchallenge.cases.image_builders.dicom_4dct import (
     _get_headers_by_study,
     _validate_dicom_files,
@@ -54,10 +57,18 @@ def test_image_builder_dicom_4dct():
         headers = f.read()
     headers = headers.decode("utf-8")
     reg_exp = re.match(
-        r".*ContentTimes = (?P<content_times>[^\n]*).*Exposures = (?P<exposures>[^\n]*).*",
+        r".*TransformMatrix = (?P<direction>[^\n]*)"
+        ".*Offset = (?P<origin>[^\n]*)"
+        ".*ElementSpacing = (?P<spacing>[^\n]*)"
+        ".*ContentTimes = (?P<content_times>[^\n]*)"
+        ".*Exposures = (?P<exposures>[^\n]*).*",
         headers,
         flags=re.DOTALL,
     )
+
+    direction = reg_exp.group("direction").split()
+    origin = reg_exp.group("origin").split()
+    spacing = reg_exp.group("spacing").split()
     exposures = reg_exp.group("exposures").split()
     content_times = reg_exp.group("content_times").split()
 
@@ -65,3 +76,21 @@ def test_image_builder_dicom_4dct():
     assert exposures == [str(x) for x in range(100, 2000, 100)]
     assert len(content_times) == 19
     assert content_times == [str(x) for x in range(214501, 214520)]
+
+    dcm_ref = pydicom.dcmread(str(DICOM_DIR / "1.dcm"))
+    assert np.array_equal(
+        np.array(list(map(float, direction))).reshape((4, 4)), np.eye(4)
+    )
+    assert np.allclose(
+        list(map(float, spacing)),
+        list(
+            map(
+                float,
+                list(dcm_ref.PixelSpacing) + [dcm_ref.SliceThickness] + [1.0],
+            )
+        ),
+    )
+    assert np.allclose(
+        list(map(float, origin)),
+        list(map(float, dcm_ref.ImagePositionPatient)) + [0.0],
+    )
