@@ -18,8 +18,9 @@ class GrandChallengeTiffFileTags(NamedTuple):
     image_height: int
     resolution_levels: int
     color_space: str
-    pixel_width: float
-    pixel_height: float
+    voxel_height: float
+    voxel_width: float
+    voxel_depth: float
 
 
 class GrandChallengeTiffFile(NamedTuple):
@@ -61,16 +62,16 @@ def _validate_tifffile(  # noqa: C901
                     f"Tiff file is missing required tag {tag}"
                 )
 
-    def calculate_pixel_size(tags, tag):
+    def calculate_voxel_size(tags, tag):
         try:
             # Resolution is a tuple of the number of pixels and the length of the
             # image in cm or inches, depending on resolution unit
             resolution_unit = str(get_tag_value(tags, "ResolutionUnit"))
             resolution = get_tag_value(tags, tag)
             if resolution_unit == "RESUNIT.INCH":
-                return 25.4 / resolution[0] / resolution[1]
+                return 25.4 / (resolution[0] / resolution[1])
             elif resolution_unit == "RESUNIT.CENTIMETER":
-                return 10 / resolution[0] / resolution[1]
+                return 10 / (resolution[0] / resolution[1])
             raise ValidationError(
                 f"Invalid resolution unit {resolution_unit}" f" in tiff file"
             )
@@ -121,8 +122,8 @@ def _validate_tifffile(  # noqa: C901
     if Image.COLOR_SPACE_COMPONENTS[color_space] != tif_color_channels:
         raise ValidationError("Image contains invalid amount of channels.")
 
-    pixel_width = calculate_pixel_size(tags, "XResolution")
-    pixel_height = calculate_pixel_size(tags, "YResolution")
+    voxel_width = calculate_voxel_size(tags, "XResolution")
+    voxel_height = calculate_voxel_size(tags, "YResolution")
     image_width = get_tag_value(tags, "ImageWidth")
     image_height = get_tag_value(tags, "ImageLength")
 
@@ -131,8 +132,9 @@ def _validate_tifffile(  # noqa: C901
         image_height=image_height,
         color_space=color_space,
         resolution_levels=resolution_levels,
-        pixel_width=pixel_width,
-        pixel_height=pixel_height,
+        voxel_height=voxel_height,
+        voxel_width=voxel_width,
+        voxel_depth=0,
     )
 
 
@@ -234,8 +236,11 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile, pk) -> Image:
         eye_choice=Image.EYE_UNKNOWN,
         stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
         field_of_view=Image.FOV_UNKNOWN,
-        pixel_height=tiff_file.tags.pixel_height,
-        pixel_width=tiff_file.tags.pixel_width,
+        voxel_size=[
+            tiff_file.tags.voxel_width,
+            tiff_file.tags.voxel_height,
+            tiff_file.tags.voxel_depth,
+        ],
     )
 
 

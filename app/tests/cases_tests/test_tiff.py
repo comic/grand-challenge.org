@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 import tifffile as tiff_lib
 from django.core.exceptions import ValidationError
+from pytest import approx
 
 from grandchallenge.cases.image_builders.tiff import (
     create_dzi_images,
@@ -117,24 +118,22 @@ def test_dzi_creation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "resource, expected_error_message, pixel_width, pixel_height",
+    "resource, expected_error_message, voxel_size",
     [
+        (RESOURCE_PATH / "valid_tiff.tif", "", [1, 1, 0],),
         (
-            RESOURCE_PATH / "valid_tiff.tif",
-            "",
-            3.4974193197968014e-17,
-            3.4974193197968014e-17,
+            RESOURCE_PATH / "image5x6x7.mhd",
+            "Image isn't a TIFF file",
+            [0, 0, 0],
         ),
-        (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file", 0, 0),
     ],
 )
 def test_tiff_image_entry_creation(
-    resource, expected_error_message, pixel_width, pixel_height
+    resource, expected_error_message, voxel_size
 ):
     error_message = ""
     image_entry = None
     pk = uuid4()
-
     try:
         tiff_file = load_tiff_file(path=resource)
         image_entry = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
@@ -159,8 +158,7 @@ def test_tiff_image_entry_creation(
         assert image_entry.color_space == get_color_space(
             str(tiff_tags["PhotometricInterpretation"].value)
         )
-        assert image_entry.pixel_height == pixel_height
-        assert image_entry.pixel_width == pixel_width
+        assert image_entry.voxel_size == approx(voxel_size)
         assert image_entry.pk == pk
 
 

@@ -39,8 +39,7 @@ class TestRetinaImageSerializers:
                     "field_of_view",
                     "shape_without_color",
                     "shape",
-                    "pixel_height",
-                    "pixel_width",
+                    "voxel_size",
                 ),
                 "no_valid_check": True,
                 # This check is done manually because of the need to skip the image in the check

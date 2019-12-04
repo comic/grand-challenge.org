@@ -97,8 +97,7 @@ def image_builder_mhd(path: Path) -> ImageBuilderResult:  # noqa: C901
                 timepoints=timepoints,
                 resolution_levels=None,
                 color_space=color_space,
-                pixel_width=None,
-                pixel_height=None,
+                voxel_size=simple_itk_image.GetSpacing(),
             )
             db_image_files = []
             for _file in work_dir.iterdir():
