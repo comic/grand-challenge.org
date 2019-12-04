@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.management import CommandError, call_command
 
@@ -23,7 +24,9 @@ def test_copy_challenge():
 
     with pytest.raises(ObjectDoesNotExist):
         call_command("copy_challenge", "foo", "bar")
-
+    site = Site.objects.get_current()
+    site.domain = "foo.bar"
+    site.save()
     src = ChallengeFactory(short_name="foo", use_evaluation=True)
     # toggle a boolean field
     src.evaluation_config.show_publication_url = (
@@ -34,7 +37,15 @@ def test_copy_challenge():
     src.modalities.add(ImagingModalityFactory())
 
     for _ in range(3):
-        PageFactory(challenge=src)
+        PageFactory(
+            challenge=src,
+            html=(
+                "<p><a href='https://foo.foo.bar/test'>test1</a>"
+                '<a href="https://foo.foo.bar/test">test2</a>'
+                "<a href='http://foo.foo.bar/test'>test3</a>"
+                '<a href="http://foo.foo.bar/test">test4</a></p>'
+            ),
+        )
 
     assert Challenge.objects.count() == 1
     assert Page.objects.count() == 3
@@ -51,6 +62,14 @@ def test_copy_challenge():
     assert Page.objects.count() == 6
 
     dest = Challenge.objects.get(short_name="bar")
+
+    for page in dest.page_set.all():
+        assert page.html == (
+            '<p><a href="https://bar.foo.bar/test">test1</a>'
+            '<a href="https://bar.foo.bar/test">test2</a>'
+            '<a href="https://bar.foo.bar/test">test3</a>'
+            '<a href="https://bar.foo.bar/test">test4</a></p>'
+        )
 
     assert (
         dest.evaluation_config.show_publication_url

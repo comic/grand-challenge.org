@@ -1,3 +1,6 @@
+import re
+
+from django.contrib.sites.models import Site
 from django.core.management import BaseCommand, CommandError
 
 from grandchallenge.challenges.models import Challenge
@@ -57,7 +60,6 @@ class Command(BaseCommand):
         "order",
         "display_title",
         "hidden",
-        "html",
     ]
 
     def add_arguments(self, parser):
@@ -113,12 +115,24 @@ class Command(BaseCommand):
 
         dest_config.save()
 
+    def _substitute_urls(self, html, domain, old, new):
+        quote_replace = r"href='([^']*)'"
+        regex = fr'href="[^/]*//{old}.{domain}([^""]*)"'
+        html = re.sub(quote_replace, r'href="\1"', html)
+        return re.sub(regex, fr'href="https://{new}.{domain}\1"', html,)
+
     def _copy_pages(self, *, src_challenge, dest_challenge):
         src_pages = src_challenge.page_set.all()
+
+        site = Site.objects.get_current()
+        domain = site.domain
+        old = src_challenge.short_name
+        new = dest_challenge.short_name
 
         for src_page in src_pages:
             Page.objects.create(
                 challenge=dest_challenge,
+                html=self._substitute_urls(src_page.html, domain, old, new),
                 **{f: getattr(src_page, f) for f in self.page_fields},
             )
 
