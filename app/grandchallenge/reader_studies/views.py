@@ -11,8 +11,10 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404, HttpResponse
+from django.urls import reverse
 from django.views.generic import (
     CreateView,
+    DeleteView,
     DetailView,
     FormView,
     ListView,
@@ -111,8 +113,19 @@ class ReaderStudyDetail(
                 self.request.user
             )
             context.update({"progress": user_progress})
+
+        reader_remove_form = ReadersForm()
+        reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
         context.update(
-            {"user_is_reader": self.object.is_reader(user=self.request.user)}
+            {
+                "editor_remove_form": editor_remove_form,
+                "reader_remove_form": reader_remove_form,
+                "user_is_reader": self.object.is_reader(
+                    user=self.request.user
+                ),
+            }
         )
         return context
 
@@ -131,6 +144,24 @@ class ReaderStudyUpdate(
         kwargs = super().get_form_kwargs()
         kwargs.update({"user": self.request.user})
         return kwargs
+
+
+class ReaderStudyDelete(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    success_message = "Reader study was successfully deleted"
+
+    def get_success_url(self):
+        return reverse("reader-studies:list")
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super().delete(request, *args, **kwargs)
 
 
 class QuestionUpdate(
@@ -157,7 +188,7 @@ class QuestionUpdate(
         for field_name in self.object.read_only_fields:
             form_fields[field_name].required = False
             form_fields[field_name].disabled = True
-
+        context.update({"reader_study": self.reader_study})
         return context
 
     def get_success_url(self):

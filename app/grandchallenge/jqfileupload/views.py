@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.utils.timezone import now
 from rest_framework import mixins
+from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
@@ -35,7 +36,6 @@ class StagedFileViewSet(
                     {"status": "Client did not supply valid Content-Range"},
                     status=HTTP_400_BAD_REQUEST,
                 )
-
         return super().create(request, *args, **kwargs)
 
     def get_serializer(self, *args, **kwargs):
@@ -93,3 +93,21 @@ class StagedFileViewSet(
             "total_size": total_size,
             "user_pk_str": self.user_pk_str,
         }
+
+    def _find_last_end_byte(self, files):
+        last_end_byte = -1
+        for file in files:
+            if file["start_byte"] != last_end_byte + 1:
+                return last_end_byte
+            last_end_byte = file["end_byte"]
+        return last_end_byte
+
+    @action(detail=False, methods=["get"])
+    def get_current_file_size(self, request):
+        client_id = request.GET.get("file", None)
+        files = (
+            StagedFile.objects.filter(client_id=client_id)
+            .order_by("start_byte")
+            .values("start_byte", "end_byte")
+        )
+        return Response({"current_size": self._find_last_end_byte(files)})
