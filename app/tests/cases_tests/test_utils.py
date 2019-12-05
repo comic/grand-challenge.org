@@ -62,6 +62,7 @@ def test_convert_itk_to_internal(image: Path):
             assert internal_image.voxel_depth_mm == img.GetSpacing()[2]
         else:
             assert internal_image.depth is None
+            assert internal_image.voxel_depth_mm is None
 
         assert internal_image.width == img.GetWidth()
         assert internal_image.height == img.GetHeight()
