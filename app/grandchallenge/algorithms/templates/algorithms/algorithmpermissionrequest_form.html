@@ -3,8 +3,26 @@
 {% load clean from bleach %}
 {% load guardian_tags %}
 
-{% block content %}
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+        </a>
+        <li class="breadcrumb-item active"
+            aria-current="page">
+            {% if "change_algorithm" in algorithm_perms %}
+                Review access request
+            {% else %}
+                Request access
+            {% endif %}
+        </li>
+    </ol>
+{% endblock %}
 
+{% block content %}
 
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
 
