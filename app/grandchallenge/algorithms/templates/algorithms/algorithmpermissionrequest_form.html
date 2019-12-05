@@ -3,7 +3,9 @@
 {% load clean from bleach %}
 {% load guardian_tags %}
 
+
 {% block breadcrumbs %}
+    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
@@ -25,7 +27,6 @@
 {% block content %}
 
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
-
     {% if "change_algorithm" in algorithm_perms %}
         {% if permission_request %}
             <h2>{{ algorithm.title }}: review access request for user {{ permission_request.user.username }}</h2>
