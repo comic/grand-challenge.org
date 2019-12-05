@@ -6,7 +6,6 @@ from typing import List
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from guardian.shortcuts import assign_perm
 
@@ -241,9 +240,11 @@ class Image(UUIDModel):
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)
     depth = models.IntegerField(null=True)
+    voxel_width_mm = models.FloatField(null=True)
+    voxel_height_mm = models.FloatField(null=True)
+    voxel_depth_mm = models.FloatField(null=True)
     timepoints = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
-    voxel_size = ArrayField(models.FloatField(), null=True)
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
     )

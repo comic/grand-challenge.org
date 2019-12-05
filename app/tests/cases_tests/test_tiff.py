@@ -120,7 +120,7 @@ def test_dzi_creation(
 @pytest.mark.parametrize(
     "resource, expected_error_message, voxel_size",
     [
-        (RESOURCE_PATH / "valid_tiff.tif", "", [1, 1, 0],),
+        (RESOURCE_PATH / "valid_tiff.tif", "", [1, 1, None],),
         (
             RESOURCE_PATH / "image5x6x7.mhd",
             "Image isn't a TIFF file",
@@ -158,7 +158,9 @@ def test_tiff_image_entry_creation(
         assert image_entry.color_space == get_color_space(
             str(tiff_tags["PhotometricInterpretation"].value)
         )
-        assert image_entry.voxel_size == approx(voxel_size)
+        assert image_entry.voxel_width_mm == approx(voxel_size[0])
+        assert image_entry.voxel_height_mm == approx(voxel_size[1])
+        assert image_entry.voxel_depth_mm == voxel_size[2]
         assert image_entry.pk == pk
 
 

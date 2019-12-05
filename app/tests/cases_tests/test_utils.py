@@ -59,12 +59,14 @@ def test_convert_itk_to_internal(image: Path):
             assert internal_image.timepoints is None
         if img.GetDepth():
             assert internal_image.depth == img.GetDepth()
+            assert internal_image.voxel_depth_mm == img.GetSpacing()[2]
         else:
             assert internal_image.depth is None
 
         assert internal_image.width == img.GetWidth()
         assert internal_image.height == img.GetHeight()
-        assert internal_image.voxel_size == approx(img.GetSpacing())
+        assert internal_image.voxel_width_mm == approx(img.GetSpacing()[0])
+        assert internal_image.voxel_height_mm == approx(img.GetSpacing()[1])
         assert internal_image.resolution_levels is None
 
     img_ref = load_sitk_image(image)
