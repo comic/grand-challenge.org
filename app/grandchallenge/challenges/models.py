@@ -315,20 +315,6 @@ class ChallengeBase(models.Model):
         """
         return extract(self.get_absolute_url()).registered_domain
 
-    @property
-    def host_link(self):
-        """
-        Copied from grandchallenge tags
-
-        Try to find out what framework this challenge is hosted on
-        """
-        domain = self.registered_domain
-
-        if domain:
-            return f'<a href="http://{domain}">{domain}</a>'
-        else:
-            return None
-
     class Meta:
         abstract = True
 
