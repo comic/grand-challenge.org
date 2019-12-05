@@ -18,8 +18,8 @@ class GrandChallengeTiffFileTags(NamedTuple):
     image_height: int
     resolution_levels: int
     color_space: str
-    voxel_height_mm: float
     voxel_width_mm: float
+    voxel_height_mm: float
     voxel_depth_mm: Union[float, None]
 
 
