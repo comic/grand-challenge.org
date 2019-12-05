@@ -2,7 +2,7 @@ from crispy_forms.helper import FormHelper
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
     Form,
@@ -13,7 +13,11 @@ from django.forms import (
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmImage,
+    AlgorithmPermissionRequest,
+)
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader
@@ -114,3 +118,18 @@ class EditorsForm(UserGroupForm):
 
 class UsersForm(UserGroupForm):
     role = "user"
+
+    def add_or_remove_user(self, *args, algorithm):
+        super().add_or_remove_user(algorithm=algorithm)
+        user = self.cleaned_data["user"]
+        try:
+            permission_request = AlgorithmPermissionRequest.objects.get(
+                user=user, algorithm=algorithm
+            )
+        except ObjectDoesNotExist:
+            return
+        if self.cleaned_data["action"] == self.REMOVE:
+            permission_request.status = AlgorithmPermissionRequest.REJECTED
+        else:
+            permission_request.status = AlgorithmPermissionRequest.ACCEPTED
+        permission_request.save()

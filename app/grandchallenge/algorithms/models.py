@@ -26,7 +26,7 @@ from grandchallenge.container_exec.models import (
     ContainerExecJobModel,
     ContainerImageModel,
 )
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
@@ -419,3 +419,34 @@ class Job(UUIDModel, ContainerExecJobModel):
             assign_perm(
                 f"view_{self.image._meta.model_name}", self.creator, self.image
             )
+
+
+class AlgorithmPermissionRequest(RequestBase):
+    """
+    When a user wants to view an algorithm, editors have the option of
+    reviewing each user before accepting or rejecting them. This class records
+    the needed info for that.
+    """
+
+    algorithm = models.ForeignKey(
+        Algorithm,
+        help_text="To which algorithm has the user requested access?",
+        on_delete=models.CASCADE,
+    )
+    rejection_text = models.TextField(
+        blank=True,
+        help_text=(
+            "The text that will be sent to the user with the reason for their "
+            "rejection."
+        ),
+    )
+
+    @property
+    def object_name(self):
+        return self.algorithm.title
+
+    def __str__(self):
+        return f"{self.algorithm.title} registration request by user {self.user.username}"
+
+    class Meta:
+        unique_together = (("algorithm", "user"),)

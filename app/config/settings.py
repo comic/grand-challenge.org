@@ -718,7 +718,7 @@ if MEDIA_ROOT[-1] != "/":
 ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
-    EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
     # Allow localhost in development
     CORS_ORIGIN_REGEX_WHITELIST += [r"^http://localhost:8888$"]
