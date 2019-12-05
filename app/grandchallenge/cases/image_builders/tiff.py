@@ -1,6 +1,6 @@
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import NamedTuple
+from typing import NamedTuple, Union
 from uuid import uuid4
 
 import pyvips
@@ -18,6 +18,9 @@ class GrandChallengeTiffFileTags(NamedTuple):
     image_height: int
     resolution_levels: int
     color_space: str
+    voxel_width_mm: float
+    voxel_height_mm: float
+    voxel_depth_mm: Union[float, None]
 
 
 class GrandChallengeTiffFile(NamedTuple):
@@ -49,6 +52,57 @@ def _validate_tifffile(  # noqa: C901
     :param pages: The pages and tags from tiffile
     :return: The extracted tags that are needed by the rest of the framework
     """
+
+    def get_tag_value(tags, tag, required=True):
+        try:
+            return tags[tag].value
+        except KeyError:
+            if required:
+                raise ValidationError(
+                    f"Tiff file is missing required tag {tag}"
+                )
+
+    def get_voxel_spacing_mm(tags, tag):
+        """
+        Calculate the voxel spacing in mm.
+
+        Use the set of tags from the tiff image to calculate the spacing for a
+        particular dimension. Supports INCH and CENTIMETER resolution units.
+
+        Parameters
+        ----------
+        tags
+            The collection of tags from the tif file.
+        tag
+            The tag that contains the resolution of the tif file along the
+            dimension of interest.
+
+        Raises
+        ------
+        ValidationError
+            Raised if an unrecognised resolution unit is used.
+
+
+        Returns
+        -------
+            The voxel spacing in mm.
+
+        """
+        try:
+            # Resolution is a tuple of the number of pixels and the length of the
+            # image in cm or inches, depending on resolution unit
+            resolution_unit = str(get_tag_value(tags, "ResolutionUnit"))
+            resolution = get_tag_value(tags, tag)
+            if resolution_unit == "RESUNIT.INCH":
+                return 25.4 / (resolution[0] / resolution[1])
+            elif resolution_unit == "RESUNIT.CENTIMETER":
+                return 10 / (resolution[0] / resolution[1])
+            raise ValidationError(
+                f"Invalid resolution unit {resolution_unit}" f" in tiff file"
+            )
+        except ZeroDivisionError:
+            raise ValidationError(f"Invalid resolution in tiff file")
+
     required_tile_tags = ("TileOffsets", "TileByteCounts")
 
     forbidden_description_tags = ("dicom", "xml")
@@ -57,19 +111,16 @@ def _validate_tifffile(  # noqa: C901
 
     # Checks if the image description exists,
     # if so, ensure there's no DICOM or XML data
-    try:
-        image_description = str(tags["ImageDescription"].value).lower()
-        for forbidden in forbidden_description_tags:
-            if forbidden in image_description:
-                raise ValidationError(
-                    "Image contains unauthorized information"
-                )
-    except KeyError:
-        pass
+    image_description = str(
+        get_tag_value(tags, "ImageDescription", False)
+    ).lower()
+    for forbidden in forbidden_description_tags:
+        if forbidden in image_description:
+            raise ValidationError("Image contains unauthorized information")
 
     # Fails if the image doesn't have all required tile tags
-    if not all(tag in tags for tag in required_tile_tags):
-        raise ValidationError("Image has incomplete tile information")
+    for tag in required_tile_tags:
+        get_tag_value(tags, tag, True)
 
     # Fails if the image only has a single resolution page
     resolution_levels = len(pages)
@@ -77,36 +128,38 @@ def _validate_tifffile(  # noqa: C901
         raise ValidationError("Image only has a single resolution level")
 
     # Fails if the image doesn't have the chunky format
-    if str(tags["PlanarConfiguration"].value) != "PLANARCONFIG.CONTIG":
+    if (
+        str(get_tag_value(tags, "PlanarConfiguration"))
+        != "PLANARCONFIG.CONTIG"
+    ):
         raise ValidationError(
             "Image planar configuration isn't configured as 'Chunky' format"
         )
 
     # Fails if the color space isn't supported
-    try:
-        color_space = get_color_space(
-            str(tags["PhotometricInterpretation"].value)
-        )
-    except KeyError:
-        raise ValidationError("Image lacks color space information")
+    color_space = get_color_space(
+        str(get_tag_value(tags, "PhotometricInterpretation"))
+    )
 
     # Fails if the amount of bytes per sample doesn't correspond to the
     # colour space
-    tif_color_channels = tags["SamplesPerPixel"].value
+    tif_color_channels = get_tag_value(tags, "SamplesPerPixel")
     if Image.COLOR_SPACE_COMPONENTS[color_space] != tif_color_channels:
         raise ValidationError("Image contains invalid amount of channels.")
 
-    try:
-        image_width = tags["ImageWidth"].value
-        image_height = tags["ImageLength"].value
-    except KeyError:
-        raise ValidationError("Missing tags in tiff file")
+    voxel_width_mm = get_voxel_spacing_mm(tags, "XResolution")
+    voxel_height_mm = get_voxel_spacing_mm(tags, "YResolution")
+    image_width = get_tag_value(tags, "ImageWidth")
+    image_height = get_tag_value(tags, "ImageLength")
 
     return GrandChallengeTiffFileTags(
         image_width=image_width,
         image_height=image_height,
         color_space=color_space,
         resolution_levels=resolution_levels,
+        voxel_width_mm=voxel_width_mm,
+        voxel_height_mm=voxel_height_mm,
+        voxel_depth_mm=None,
     )
 
 
@@ -208,6 +261,9 @@ def create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile, pk) -> Image:
         eye_choice=Image.EYE_UNKNOWN,
         stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
         field_of_view=Image.FOV_UNKNOWN,
+        voxel_width_mm=tiff_file.tags.voxel_width_mm,
+        voxel_height_mm=tiff_file.tags.voxel_height_mm,
+        voxel_depth_mm=tiff_file.tags.voxel_depth_mm,
     )
 
 
