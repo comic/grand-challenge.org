@@ -1,6 +1,9 @@
+from django.conf import settings
 from django.contrib.sites.models import Site
+from django.core.mail import send_mail
 
 from grandchallenge.core.utils.email import send_templated_email
+from grandchallenge.evaluation.templatetags.evaluation_extras import user_error
 
 
 def send_permission_request_email(obj):
@@ -77,3 +80,33 @@ def send_permission_denied_email(obj):
         kwargs,
         [obj.user.email],
     )
+
+
+def send_failed_job_email(job):
+    algorithm = job.algorithm_image.algorithm
+    message = (
+        f"Unfortunately your job for algorithm "
+        f"'{algorithm.title}' failed with an error. "
+        f"The error message is:\n\n"
+        f"{user_error(job.output)}\n\n"
+        f"You may wish to try and correct this, or contact the challenge "
+        f"organizers. The following information may help them:\n"
+        f"User: {job.creator.username}\n"
+        f"Job ID: {job.pk}\n"
+        f"Submission ID: {job.pk}"
+    )
+    recipient_emails = [
+        o.email for o in algorithm.editors_group.user_set.all()
+    ]
+    recipient_emails.append(job.creator.email)
+    for email in recipient_emails:
+        send_mail(
+            subject=(
+                f"[{Site.objects.get_current().domain.lower()}] "
+                f"[{algorithm.title.lower()}] "
+                f"Job Failed"
+            ),
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
