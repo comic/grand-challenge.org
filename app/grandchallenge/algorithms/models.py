@@ -433,7 +433,13 @@ class AlgorithmPermissionRequest(RequestBase):
         help_text="To which algorithm has the user requested access?",
         on_delete=models.CASCADE,
     )
-    rejection_text = models.TextField(blank=True)
+    rejection_text = models.TextField(
+        blank=True,
+        help_text=(
+            "The text that will be sent to the user with the reason for their "
+            "rejection."
+        ),
+    )
 
     @property
     def object_name(self):

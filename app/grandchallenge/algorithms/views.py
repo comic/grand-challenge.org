@@ -121,9 +121,19 @@ class AlgorithmDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         form = UsersForm()
         form.fields["action"].initial = UsersForm.REMOVE
         context.update({"form": form})
+
+        pending_permission_requests = AlgorithmPermissionRequest.objects.filter(
+            algorithm=self.get_object(),
+            status=AlgorithmPermissionRequest.PENDING,
+        ).count()
+        context.update(
+            {"pending_permission_requests": pending_permission_requests}
+        )
+
         return context
 
 
