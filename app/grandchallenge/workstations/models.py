@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from urllib.parse import unquote, urljoin
 
@@ -9,6 +10,7 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
+from docker.errors import APIError
 from guardian.shortcuts import assign_perm
 from rest_framework.authtoken.models import Token
 from simple_history.models import HistoricalRecords
@@ -32,6 +34,8 @@ The proxy will map the http and websocket connections from the user to the runni
 The container instance will have the users API token set in the environment, so that it is able to interact with the grand challenge API as this user.
 The user is able to stop the container, otherwise it will be terminated after ``maxmium_duration`` is reached.
 """
+
+logger = logging.getLogger(__name__)
 
 
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
@@ -266,7 +270,8 @@ class Session(UUIDModel):
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
-    history = HistoricalRecords()
+    logs = models.TextField(editable=False, blank=True)
+    history = HistoricalRecords(excluded_fields=["logs"])
 
     class Meta(UUIDModel.Meta):
         ordering = ("created", "creator")
@@ -389,6 +394,11 @@ class Session(UUIDModel):
 
     def stop(self) -> None:
         """Stop the service for this session, cleaning up all of the containers."""
+        try:
+            self.logs = self.service.container.logs().decode()
+        except APIError:
+            logger.warning(f"Could not get the logs for {self}.")
+
         self.service.stop_and_cleanup()
         self.update_status(status=self.STOPPED)
 

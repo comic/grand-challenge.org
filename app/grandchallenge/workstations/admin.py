@@ -7,6 +7,13 @@ from grandchallenge.workstations.models import (
     WorkstationImage,
 )
 
+
+class SessionHistoryAdmin(SimpleHistoryAdmin):
+    list_display = ["pk", "created", "status", "creator"]
+    list_filter = ["status"]
+    readonly_fields = ["creator", "workstation_image", "status", "logs"]
+
+
 admin.site.register(Workstation)
 admin.site.register(WorkstationImage)
-admin.site.register(Session, SimpleHistoryAdmin)
+admin.site.register(Session, SessionHistoryAdmin)
