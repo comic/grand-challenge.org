@@ -976,7 +976,7 @@ class ImageTextAnnotationViewSet(viewsets.ModelViewSet):
 
 
 class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
-    permission_classes = (RetinaOwnerAPIPermission,)
+    permission_classes = (RetinaAPIPermission,)
     authentication_classes = (authentication.TokenAuthentication,)
     serializer_class = LandmarkAnnotationSetSerializer
     filter_backends = (filters.ObjectPermissionsFilter,)
