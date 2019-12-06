@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import authentication, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -51,6 +52,7 @@ from grandchallenge.retina_api.mixins import (
     RetinaAPIPermissionMixin,
     RetinaAdminAPIPermission,
     RetinaOwnerAPIPermission,
+    is_in_retina_admins_group,
 )
 from grandchallenge.retina_api.renderers import Base64Renderer
 from grandchallenge.retina_api.serializers import (
@@ -981,4 +983,33 @@ class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
     serializer_class = LandmarkAnnotationSetSerializer
     filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
-    queryset = LandmarkAnnotationSet.objects.all()
+
+    def get_queryset(self):
+        """
+        Only return objects that belong to current user, except for retina_admins
+        :return: queryset
+        """
+        if is_in_retina_admins_group(self.request.user):
+            return LandmarkAnnotationSet.objects.all()
+        return self.request.user.landmarkannotationset_set.all()
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="for-image",
+        url_name="for-image",
+    )
+    def for_image(self, request):
+        """
+        Custom action for retrieving all LandmarkAnnotationSets that are associated
+        with a specific image defined by the query parameter "image_id"
+        :param request: Request
+        :return: Response
+        """
+        image_id = self.request.query_params.get("image_id")
+        image = get_object_or_404(Image.objects.all(), pk=image_id)
+        queryset = self.filter_queryset(self.get_queryset()).filter(
+            singlelandmarkannotation__image=image
+        )
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
