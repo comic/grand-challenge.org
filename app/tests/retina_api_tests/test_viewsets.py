@@ -1316,42 +1316,27 @@ class TestETDRSAnnotationViewSet:
     ],
 )
 @pytest.mark.parametrize(
-    "viewset,factory,serializer,with_image,non_update",
+    "viewset,factory,serializer",
     (
         (
             ImageQualityAnnotationViewSet,
             ImageQualityAnnotationFactory,
             ImageQualityAnnotationSerializer,
-            True,
-            False,
         ),
         (
             ImagePathologyAnnotationViewSet,
             ImagePathologyAnnotationFactory,
             ImagePathologyAnnotationSerializer,
-            True,
-            False,
         ),
         (
             RetinaImagePathologyAnnotationViewSet,
             RetinaImagePathologyAnnotationFactory,
             RetinaImagePathologyAnnotationSerializer,
-            True,
-            False,
         ),
         (
             ImageTextAnnotationViewSet,
             ImageTextAnnotationFactory,
             ImageTextAnnotationSerializer,
-            True,
-            False,
-        ),
-        (
-            LandmarkAnnotationSetViewSet,
-            LandmarkAnnotationSetFactory,
-            LandmarkAnnotationSetSerializer,
-            False,
-            True,
         ),
     ),
 )
@@ -1372,16 +1357,7 @@ class TestAnnotationViewSets:
 
         return models
 
-    def test_list_view(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
-    ):
+    def test_list_view(self, rf, user_type, viewset, factory, serializer):
         models = self.create_models(factory)
         response = view_test(
             "list",
@@ -1404,25 +1380,14 @@ class TestAnnotationViewSets:
             assert len(response.data) == len(serialized_data)
             assert response.data == serialized_data
 
-    def test_create_view(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
-    ):
+    def test_create_view(self, rf, user_type, viewset, factory, serializer):
         models = self.create_models(factory)
         build_kwargs = {"grader": models[0].grader}
-        if with_image:
-            build_kwargs.update({"image": models[0].image})
+        build_kwargs.update({"image": models[0].image})
         model_build = factory.build(**build_kwargs)
         model_serialized = serializer(model_build).data
         model_serialized["grader"] = models[0].grader.id
-        if with_image:
-            model_serialized["image"] = str(model_serialized["image"])
+        model_serialized["image"] = str(model_serialized["image"])
         model_json = json.dumps(model_serialized)
 
         response = view_test(
@@ -1438,29 +1403,19 @@ class TestAnnotationViewSets:
         )
         if user_type in ("retina_grader", "retina_admin"):
             model_serialized["id"] = response.data["id"]
-            if with_image:
-                response.data["image"] = str(response.data["image"])
+            response.data["image"] = str(response.data["image"])
             assert response.data == model_serialized
 
     def test_create_view_wrong_user_id(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
+        self, rf, user_type, viewset, factory, serializer
     ):
         models = self.create_models(factory)
         build_kwargs = {"grader": models[0].grader}
-        if with_image:
-            build_kwargs.update({"image": ImageFactory()})
+        build_kwargs.update({"image": ImageFactory()})
         model_build = factory.build(**build_kwargs)
         model_serialized = serializer(model_build).data
         model_serialized["grader"] = models[2].grader.id
-        if with_image:
-            model_serialized["image"] = str(model_serialized["image"])
+        model_serialized["image"] = str(model_serialized["image"])
         model_json = json.dumps(model_serialized)
 
         response = view_test(
@@ -1477,8 +1432,7 @@ class TestAnnotationViewSets:
         )
         if user_type == "retina_admin":
             model_serialized["id"] = response.data["id"]
-            if with_image:
-                response.data["image"] = str(response.data["image"])
+            response.data["image"] = str(response.data["image"])
             assert response.data == model_serialized
         elif user_type == "retina_grader":
             assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -1489,16 +1443,7 @@ class TestAnnotationViewSets:
         else:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_retrieve_view(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
-    ):
+    def test_retrieve_view(self, rf, user_type, viewset, factory, serializer):
         models = self.create_models(factory)
         response = view_test(
             "retrieve",
@@ -1514,21 +1459,11 @@ class TestAnnotationViewSets:
             model_serialized = serializer(models[0]).data
             assert response.data == model_serialized
 
-    def test_update_view(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
-    ):
+    def test_update_view(self, rf, user_type, viewset, factory, serializer):
         models = self.create_models(factory)
         model_serialized = serializer(models[1]).data
         models[1].delete()
-        if with_image:
-            model_serialized["image"] = str(model_serialized["image"])
+        model_serialized["image"] = str(model_serialized["image"])
         model_serialized["id"] = str(models[0].id)
         model_json = json.dumps(model_serialized)
 
@@ -1545,28 +1480,16 @@ class TestAnnotationViewSets:
         )
 
         if user_type in ("retina_grader", "retina_admin"):
-            if with_image:
-                response.data["image"] = str(response.data["image"])
-            if non_update:
-                assert response.data != model_serialized
-            else:
-                assert response.data == model_serialized
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
 
     def test_update_view_wrong_user_id(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
+        self, rf, user_type, viewset, factory, serializer
     ):
         other_user = UserFactory()
         models = self.create_models(factory)
         model_serialized = serializer(models[0]).data
-        if with_image:
-            model_serialized["image"] = str(model_serialized["image"])
+        model_serialized["image"] = str(model_serialized["image"])
         model_serialized["grader"] = other_user.id
         model_json = json.dumps(model_serialized)
 
@@ -1584,12 +1507,8 @@ class TestAnnotationViewSets:
         )
         if user_type == "retina_admin":
             model_serialized["id"] = response.data["id"]
-            if with_image:
-                response.data["image"] = str(response.data["image"])
-            if non_update:
-                assert response.data != model_serialized
-            else:
-                assert response.data == model_serialized
+            response.data["image"] = str(response.data["image"])
+            assert response.data == model_serialized
         elif user_type == "retina_grader":
             assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert (
@@ -1600,20 +1519,12 @@ class TestAnnotationViewSets:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_partial_update_view(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
+        self, rf, user_type, viewset, factory, serializer
     ):
         models = self.create_models(factory)
         model_serialized = serializer(models[0]).data
         partial_model = copy.deepcopy(model_serialized)
-        if with_image:
-            del partial_model["image"]
+        del partial_model["image"]
         del partial_model["id"]
         del partial_model["grader"]
         model_json = json.dumps(partial_model)
@@ -1633,16 +1544,7 @@ class TestAnnotationViewSets:
         if user_type in ("retina_grader", "retina_admin"):
             assert response.data == model_serialized
 
-    def test_destroy_view(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
-    ):
+    def test_destroy_view(self, rf, user_type, viewset, factory, serializer):
         models = self.create_models(factory)
         view_test(
             "destroy",
@@ -1660,14 +1562,7 @@ class TestAnnotationViewSets:
             ).exists()
 
     def test_destroy_view_wrong_user(
-        self,
-        rf,
-        user_type,
-        viewset,
-        factory,
-        serializer,
-        with_image,
-        non_update,
+        self, rf, user_type, viewset, factory, serializer
     ):
         models = self.create_models(factory)
         response = view_test(
@@ -1680,6 +1575,275 @@ class TestAnnotationViewSets:
             rf,
             viewset,
             check_response_status_code=False,
+        )
+        if user_type == "retina_admin":
+            assert not factory._meta.model.objects.filter(
+                id=models[0].id
+            ).exists()
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type", [None, "normal_user", "retina_grader", "retina_admin"]
+)
+@pytest.mark.parametrize(
+    "viewset,factory,serializer,basename,",
+    (
+        (
+            LandmarkAnnotationSetViewSet,
+            LandmarkAnnotationSetFactory,
+            LandmarkAnnotationSetSerializer,
+            "landmark-annotation",
+        ),
+    ),
+)
+class TestLandmarkAnnotationSetViewSet:
+    namespace = "api"
+
+    @staticmethod
+    def create_models(factory):
+        graders = [UserFactory(), UserFactory(), UserFactory()]
+        add_to_graders_group(graders)
+        model = factory(grader=graders[0])
+        models = [
+            model,
+            factory(grader=graders[0]),
+            factory(grader=graders[1]),
+            factory(grader=graders[2]),
+        ]
+
+        return models
+
+    def test_list_view(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        response = view_test(
+            "list",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            None,
+            rf,
+            viewset,
+            with_user=False,
+        )
+        if user_type == "retina_grader":
+            serialized_data = serializer(models[0:2], many=True).data
+            assert len(response.data) == len(serialized_data)
+            serialized_data.sort(key=lambda k: k["created"], reverse=True)
+            assert response.data == serialized_data
+        elif user_type == "retina_admin":
+            serialized_data = serializer(models, many=True).data
+            serialized_data.sort(key=lambda k: k["created"], reverse=True)
+            assert len(response.data) == len(serialized_data)
+            assert response.data == serialized_data
+
+    def test_create_view(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        build_kwargs = {"grader": models[0].grader}
+        model_build = factory.build(**build_kwargs)
+        model_serialized = serializer(model_build).data
+        model_serialized["grader"] = models[0].grader.id
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            None,
+            rf,
+            viewset,
+            model_json,
+            with_user=False,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            model_serialized["id"] = response.data["id"]
+            assert response.data == model_serialized
+
+    def test_create_view_wrong_user_id(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        build_kwargs = {"grader": models[0].grader}
+        model_build = factory.build(**build_kwargs)
+        model_serialized = serializer(model_build).data
+        model_serialized["grader"] = models[2].grader.id
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            None,
+            rf,
+            viewset,
+            model_json,
+            check_response_status_code=False,
+            with_user=False,
+        )
+        if user_type == "retina_admin":
+            model_serialized["id"] = response.data["id"]
+            assert response.data == model_serialized
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert (
+                str(response.data["grader"][0])
+                == "User is not allowed to create annotation for other grader"
+            )
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_retrieve_view(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        response = view_test(
+            "retrieve",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            models[0],
+            rf,
+            viewset,
+            with_user=False,
+        )
+        if user_type == "retina_grader" or user_type == "retina_admin":
+            model_serialized = serializer(models[0]).data
+            assert response.data == model_serialized
+
+    def test_update_view(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        model_serialized = serializer(models[1]).data
+        models[1].delete()
+        model_serialized["id"] = str(models[0].id)
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            models[0],
+            rf,
+            viewset,
+            model_json,
+            with_user=False,
+        )
+
+        if user_type in ("retina_grader", "retina_admin"):
+            assert response.data != model_serialized
+
+    def test_update_view_wrong_user_id(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        other_user = UserFactory()
+        models = self.create_models(factory)
+        model_serialized = serializer(models[0]).data
+        model_serialized["grader"] = other_user.id
+        model_json = json.dumps(model_serialized)
+
+        response = view_test(
+            "update",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            models[0],
+            rf,
+            viewset,
+            model_json,
+            check_response_status_code=False,
+            with_user=False,
+        )
+        if user_type == "retina_admin":
+            model_serialized["id"] = response.data["id"]
+            assert response.data != model_serialized
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            assert (
+                str(response.data["grader"][0])
+                == "User is not allowed to create annotation for other grader"
+            )
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_partial_update_view(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        model_serialized = serializer(models[0]).data
+        partial_model = copy.deepcopy(model_serialized)
+        del partial_model["id"]
+        del partial_model["grader"]
+        model_json = json.dumps(partial_model)
+
+        response = view_test(
+            "partial_update",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            models[0],
+            rf,
+            viewset,
+            model_json,
+            with_user=False,
+        )
+
+        if user_type in ("retina_grader", "retina_admin"):
+            assert response.data == model_serialized
+
+    def test_destroy_view(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        view_test(
+            "destroy",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            models[0],
+            rf,
+            viewset,
+            with_user=False,
+        )
+        if user_type in ("retina_grader", "retina_admin"):
+            assert not factory._meta.model.objects.filter(
+                id=models[0].id
+            ).exists()
+
+    def test_destroy_view_wrong_user(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        response = view_test(
+            "destroy",
+            user_type,
+            self.namespace,
+            basename,
+            models[2].grader,
+            models[0],
+            rf,
+            viewset,
+            check_response_status_code=False,
+            with_user=False,
         )
         if user_type == "retina_admin":
             assert not factory._meta.model.objects.filter(
