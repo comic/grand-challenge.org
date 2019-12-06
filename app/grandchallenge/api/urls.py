@@ -21,6 +21,7 @@ from grandchallenge.reader_studies.views import (
     QuestionViewSet,
     ReaderStudyViewSet,
 )
+from grandchallenge.retina_api.views import LandmarkAnnotationSetViewSet
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
@@ -59,6 +60,12 @@ router.register(
 router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
 router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
+router.register(
+    r"retina/landmark-annotation",
+    LandmarkAnnotationSetViewSet,
+    basename="landmark-annotation",
+)
+
 # TODO: add terms_of_service and contact
 schema_view = get_schema_view(
     openapi.Info(
@@ -81,5 +88,5 @@ urlpatterns = [
     # the serializers
     path("v1/", include(router.urls)),
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
-    path("", schema_view.with_ui("swagger"), name="schema-docs",),
+    path("", schema_view.with_ui("swagger"), name="schema-docs"),
 ]
