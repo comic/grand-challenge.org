@@ -13,7 +13,7 @@ description = ""
 authors = ["James Meakin <code@jmsmkn.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.7"
+python = "^3.7"
 "beautifulsoup4" = "*"
 celery = "*"
 redis = "*"

@@ -30,6 +30,10 @@
                     -- {{ permission_request.get_status_display|lower }}
                 </a>
             </li>
+        {% empty %}
+            <li class="list-group-item">
+                There are currently no permission requests for this algorithm.
+            </li>
         {% endfor %}
     </ul>
 

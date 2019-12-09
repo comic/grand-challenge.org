@@ -317,10 +317,10 @@
                                                 </dd>
                                             {% endif %}
 
-                                            {% if challenge.host_link %}
+                                            {% if challenge.registered_domain %}
                                                 <dt>Hosted on</dt>
                                                 <dd>
-                                                    {{ challenge.host_link|safe }}
+                                                    <a href="{{ challenge.get_absolute_url }}">{{ challenge.registered_domain }}</a>
                                                 </dd>
                                             {% endif %}
 

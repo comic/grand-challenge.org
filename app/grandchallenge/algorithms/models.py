@@ -15,6 +15,7 @@ from django.utils import timezone
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
+from grandchallenge.algorithms.emails import send_failed_job_email
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.container_exec.backends.docker import (
@@ -442,6 +443,14 @@ class Job(UUIDModel, ContainerExecJobModel):
             assign_perm(
                 f"view_{self.image._meta.model_name}", self.creator, self.image
             )
+
+    def update_status(self, *args, **kwargs):
+        res = super().update_status(*args, **kwargs)
+
+        if self.status == self.FAILURE:
+            send_failed_job_email(self)
+
+        return res
 
 
 class AlgorithmPermissionRequest(RequestBase):
