@@ -61,7 +61,7 @@ from tests.conftest import (
 )
 from tests.factories import UserFactory
 from tests.registrations_tests.factories import OctObsRegistrationFactory
-from tests.viewset_helpers import view_test
+from tests.viewset_helpers import get_user_from_user_type, view_test
 
 
 class TestPolygonAPIListView(TestCase):
@@ -1853,3 +1853,76 @@ class TestLandmarkAnnotationSetViewSet:
             assert response.status_code == status.HTTP_404_NOT_FOUND
         else:
             assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type", [None, "normal_user", "retina_grader", "retina_admin"]
+)
+class TestLandmarkAnnotationSetViewSetForImage:
+    @staticmethod
+    def perform_request(rf, user_type, querystring, data=None):
+        kwargs = {}
+        if data is not None:
+            kwargs.update({"grader": data.grader1})
+
+        user = get_user_from_user_type(user_type, **kwargs)
+
+        url = reverse(f"api:landmark-annotation-for-image") + querystring
+
+        request = rf.get(url)
+
+        force_authenticate(request, user=user)
+        view = LandmarkAnnotationSetViewSet.as_view(
+            actions={"get": "for_image"}
+        )
+        return view(request)
+
+    def test_no_query_params(self, rf, user_type):
+        response = self.perform_request(rf, user_type, "")
+
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        else:
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_non_existant_image(self, rf, user_type):
+        img = ImageFactory()
+        pk = img.pk
+        img.delete()
+        response = self.perform_request(rf, user_type, f"?image_id={pk}")
+
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        else:
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_non_annotation_image(self, rf, user_type):
+        img = ImageFactory()
+        response = self.perform_request(rf, user_type, f"?image_id={img.pk}")
+
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        else:
+            assert response.status_code == status.HTTP_200_OK
+            assert len(response.data) == 0
+
+    def test_annotation_image(
+        self, rf, user_type, multiple_landmark_retina_annotation_sets
+    ):
+        img = multiple_landmark_retina_annotation_sets.landmarkset1images[0]
+        response = self.perform_request(
+            rf,
+            user_type,
+            f"?image_id={img.pk}",
+            data=multiple_landmark_retina_annotation_sets,
+        )
+
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_200_OK
+            assert len(response.data) == 2
+        elif user_type == "retina_admin":
+            assert response.status_code == status.HTTP_200_OK
+            assert len(response.data) == 3
