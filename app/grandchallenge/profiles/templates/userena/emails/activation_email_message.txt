@@ -15,3 +15,5 @@ Your account can be used in any project hosted on {{site.domain}}. To participat
 {% trans "Sincerely" %},
 {{ site.name }}
 {% endautoescape %}
+
+This is an automated service email from {{ site.domain }}.

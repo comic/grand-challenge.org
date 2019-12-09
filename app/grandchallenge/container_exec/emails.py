@@ -6,32 +6,33 @@ from django.core.mail import send_mail
 
 def send_invalid_dockerfile_email(*, container_image):
     container_image.refresh_from_db()
+    site = Site.objects.get_current()
 
     creator = container_image.creator
 
     message = (
-        f"Dear {container_image.creator},\n\n"
+        f"Dear {{}},\n\n"
         f"Unfortunately we were unable to validate your docker image at "
         f"{container_image.get_absolute_url()}. The "
         f"error message was:\n\n"
         f"{container_image.status}\n\n"
-        f"To correct this please upload a new container."
+        f"To correct this please upload a new container.\n\n"
+        f"Regards,\n"
+        f"{site.name}\n\n"
+        f"This is an automated service email from {site.domain}."
     )
 
-    recipient_emails = [
-        s.email for s in get_user_model().objects.filter(is_staff=True)
-    ]
+    recipients = list(get_user_model().objects.filter(is_staff=True))
 
     if creator:
-        recipient_emails.append(container_image.creator.email)
+        recipients.apend(creator)
 
-    for email in recipient_emails:
+    for recipient in recipients:
         send_mail(
             subject=(
-                f"[{Site.objects.get_current().domain.lower()}] "
-                f"Could not validate docker image"
+                f"[{site.domain.lower()}] " f"Could not validate docker image"
             ),
-            message=message,
+            message=message.format(recipient.username),
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
+            recipient_list=[recipient.email],
         )

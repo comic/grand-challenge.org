@@ -7,7 +7,9 @@ from grandchallenge.subdomains.utils import reverse
 
 
 def send_failed_job_email(job):
+    site = Site.objects.get_current()
     message = (
+        f"Dear {{}},\n\n"
         f"Unfortunately the evaluation for the submission to "
         f"{job.submission.challenge.short_name} failed with an error. "
         f"The error message is:\n\n"
@@ -16,30 +18,35 @@ def send_failed_job_email(job):
         f"organizers. The following information may help them:\n"
         f"User: {job.submission.creator.username}\n"
         f"Job ID: {job.pk}\n"
-        f"Submission ID: {job.submission.pk}"
+        f"Submission ID: {job.submission.pk}\n\n"
+        f"Regards,\n"
+        f"{site.name}\n\n"
+        f"This is an automated service email from {site.domain}."
     )
-    recipient_emails = [o.email for o in job.submission.challenge.get_admins()]
-    recipient_emails.append(job.submission.creator.email)
-    for email in recipient_emails:
+    recipients = list(job.submission.challenge.get_admins())
+    recipients.append(job.submission.creator)
+    for recipient in recipients:
         send_mail(
             subject=(
-                f"[{Site.objects.get_current().domain.lower()}] "
+                f"[{site.domain.lower()}] "
                 f"[{job.submission.challenge.short_name.lower()}] "
                 f"Evaluation Failed"
             ),
-            message=message,
+            message=message.format(recipient.username),
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
+            recipient_list=[recipient.email],
         )
 
 
 def send_new_result_email(result):
+    site = Site.objects.get_current()
     challenge = result.job.submission.challenge
 
-    recipient_emails = [o.email for o in challenge.get_admins()]
+    recipients = list(challenge.get_admins())
     message = (
+        f"Dear {{}},\n\n"
         f"There is a new result for {challenge.short_name} from "
-        f"{result.job.submission.creator.username}."
+        f"{result.job.submission.creator.username}. "
     )
     if result.published:
         leaderboard_url = reverse(
@@ -50,20 +57,26 @@ def send_new_result_email(result):
             f"You can view the result on the leaderboard here: "
             f"{leaderboard_url}"
         )
-        recipient_emails.append(result.job.submission.creator.email)
+        recipients.append(result.job.submission.creator)
     else:
         message += (
             f"You can publish the result on the leaderboard here: "
             f"{result.get_absolute_url()}"
         )
-    for email in recipient_emails:
+    message += (
+        f"\n\n"
+        f"Regards,\n"
+        f"{site.name}\n\n"
+        f"This is an automated service email from {site.domain}."
+    )
+    for recipient in recipients:
         send_mail(
             subject=(
-                f"[{Site.objects.get_current().domain.lower()}] "
+                f"[{site.domain.lower()}] "
                 f"[{challenge.short_name.lower()}] "
                 f"New Result"
             ),
-            message=message,
+            message=message.format(recipient.username),
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
+            recipient_list=[recipient.email],
         )

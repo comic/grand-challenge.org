@@ -10,6 +10,12 @@
     <p>For more information, please contact the <a href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">{{ challenge.short_name }}
         organizers</a>.</p>
 
-    <p>Regards,<br/>
-        {{ site.name }}</p>
+    <p>
+        Regards,<br/>
+        {{ site.name }}
+    </p>
+
+    <p>
+        <small>This is an automated service email from {{ site.domain }}.</small>
+    </p>
 {% endautoescape %}
