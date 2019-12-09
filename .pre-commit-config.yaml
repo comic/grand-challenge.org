@@ -17,5 +17,6 @@ repos:
           - flake8-bugbear
           - flake8-import-order
           - pep8-naming
-          - flake8-docstrings
+          # The following is disabled due to a runtime error
+          # - flake8-docstrings
           - mccabe
