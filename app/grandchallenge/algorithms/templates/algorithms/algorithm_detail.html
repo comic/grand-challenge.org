@@ -12,7 +12,8 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.title }}</li>
@@ -42,11 +43,12 @@
             see all of the results:
         </p>
 
-        <ul>
+        <ul class="list-group list-group-flush mb-2">
             {% for user in object.editors_group.user_set.all %}
-                <li>{{ user|user_profile_link }}</li>
+                <li class="list-group-item">{{ user|user_profile_link }}</li>
             {% empty %}
-                <li>There are no editors for this algorithm.</li>
+                <li class="list-group-item">There are no editors for this algorithm.
+                </li>
             {% endfor %}
         </ul>
 
@@ -60,11 +62,36 @@
         <h4>Users Group</h4>
         <p>The following users are able to use this algorithm:</p>
 
-        <ul>
+        <ul class="list-group list-group-flush mb-2">
             {% for user in object.users_group.user_set.all %}
-                <li>{{ user|user_profile_link }}</li>
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>{{ user|user_profile_link }}</div>
+                        <div>
+                            <form
+                                    action="{% url 'algorithms:users-update' slug=object.slug %}"
+                                    method="POST">
+                                {% for field in form %}
+                                    {% csrf_token %}
+                                    {% if field.name == "user" %}
+                                        <input
+                                                type="hidden"
+                                                name="user"
+                                                value="{{ user.id }}"/>
+                                    {% else %}
+                                        {{ field }}
+                                    {% endif %}
+                                {% endfor %}
+                                <button type="submit" class="btn btn-danger">Revoke
+                                    access
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </li>
             {% empty %}
-                <li>There are no users in this algorithms users group.</li>
+                <li class="list-group-item">There are no users for this algorithm.
+                </li>
             {% endfor %}
         </ul>
 
@@ -73,6 +100,17 @@
                href="{% url 'algorithms:users-update' slug=object.slug %}">
                 <i class="fa fa-plus"></i> Add a user for this algorithm
             </a>
+        </p>
+
+        <h3>Permission Requests</h3>
+
+        <p>
+            <a href="{% url 'algorithms:permission-request-list' slug=object.slug %}">Click
+                here</a> to manage the permission requests for this algorithm.
+            {% if pending_permission_requests %}
+                <b>{{ pending_permission_requests }} pending
+                    request{{ pending_permission_requests|pluralize }}.</b>
+            {% endif %}
         </p>
 
         <h3>Container Images</h3>

@@ -67,8 +67,10 @@ def test_algorithm_create_page(client, settings):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view_name", ["detail", "execution-session-create"])
-def test_algorithm_detail_view_permissions(client, view_name):
+@pytest.mark.parametrize(
+    "view_name,index", (("detail", 2), ("execution-session-create", 3))
+)
+def test_algorithm_detail_view_permissions(client, view_name, index):
     alg_set = TwoAlgorithms()
 
     # We need to fake some images to use
@@ -76,20 +78,20 @@ def test_algorithm_detail_view_permissions(client, view_name):
     AlgorithmImageFactory(ready=True, algorithm=alg_set.alg2)
 
     tests = (
-        (None, alg_set.alg1, 302),
-        (None, alg_set.alg2, 302),
-        (alg_set.creator, alg_set.alg1, 403),
-        (alg_set.creator, alg_set.alg2, 403),
-        (alg_set.editor1, alg_set.alg1, 200),
-        (alg_set.editor1, alg_set.alg2, 403),
-        (alg_set.user1, alg_set.alg1, 200),
-        (alg_set.user1, alg_set.alg2, 403),
-        (alg_set.editor2, alg_set.alg1, 403),
-        (alg_set.editor2, alg_set.alg2, 200),
-        (alg_set.user2, alg_set.alg1, 403),
-        (alg_set.user2, alg_set.alg2, 200),
-        (alg_set.u, alg_set.alg1, 403),
-        (alg_set.u, alg_set.alg2, 403),
+        (None, alg_set.alg1, 302, 302),
+        (None, alg_set.alg2, 302, 302),
+        (alg_set.creator, alg_set.alg1, 302, 403),
+        (alg_set.creator, alg_set.alg2, 302, 403),
+        (alg_set.editor1, alg_set.alg1, 200, 200),
+        (alg_set.editor1, alg_set.alg2, 302, 403),
+        (alg_set.user1, alg_set.alg1, 200, 200),
+        (alg_set.user1, alg_set.alg2, 302, 403),
+        (alg_set.editor2, alg_set.alg1, 302, 403),
+        (alg_set.editor2, alg_set.alg2, 200, 200),
+        (alg_set.user2, alg_set.alg1, 302, 403),
+        (alg_set.user2, alg_set.alg2, 200, 200),
+        (alg_set.u, alg_set.alg1, 302, 403),
+        (alg_set.u, alg_set.alg2, 302, 403),
     )
 
     for test in tests:
@@ -99,7 +101,7 @@ def test_algorithm_detail_view_permissions(client, view_name):
             client=client,
             user=test[0],
         )
-        assert response.status_code == test[2]
+        assert response.status_code == test[index]
 
 
 @pytest.mark.django_db

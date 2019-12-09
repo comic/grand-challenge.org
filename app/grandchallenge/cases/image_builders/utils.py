@@ -45,6 +45,9 @@ def convert_itk_to_internal(
             timepoints=timepoints,
             resolution_levels=None,
             color_space=color_space,
+            voxel_width_mm=simple_itk_image.GetSpacing()[0],
+            voxel_height_mm=simple_itk_image.GetSpacing()[1],
+            voxel_depth_mm=simple_itk_image.GetSpacing()[2] if depth else None,
         )
         db_image_files = []
         for _file in work_dir.iterdir():

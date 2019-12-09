@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load grandchallenge_tags %}
+{% load user_profile_link from profiles %}
+
+{% block title %}
+    Algorithms - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+
+        <li class="breadcrumb-item"><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Permission requests</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Permission requests for {{ algorithm.title }}</h2>
+
+     <ul class="list-group list-group-flush">
+        {% for permission_request in object_list %}
+            <li class="list-group-item">
+                <a href="{% url 'algorithms:permission-request-update' slug=algorithm.slug pk=permission_request.pk %}">
+                    <span class="h4">{{ permission_request.user.username }}</span>
+                    -- {{ permission_request.get_status_display|lower }}
+                </a>
+            </li>
+        {% empty %}
+            <li class="list-group-item">
+                There are currently no permission requests for this algorithm.
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}

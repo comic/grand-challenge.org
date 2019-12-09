@@ -1,0 +1,17 @@
+{% load url from grandchallenge_tags %}
+
+{% autoescape off %}
+    <p>Dear {{ user.username }},</p>
+
+    <p>
+        Congratulations, you have been granted access to the
+        <a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a>
+        algorithm on {{ site.domain }}.
+    .</p>
+
+    <p>
+        Regards,<br/>
+
+        {{ site.name }}
+    </p>
+{% endautoescape %}

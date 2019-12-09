@@ -1,0 +1,24 @@
+{% load url from grandchallenge_tags %}
+
+{% autoescape off %}
+    <p>Dear {{ user.username }},</p>
+
+    <p>
+        Your request for access to the
+        <a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a>
+        algorithm on {{ site.domain }} has been rejected.
+    .</p>
+
+    {% if permission_request.rejection_text %}
+        <p>
+            The algorithm's editors have provided the following information regarding the rejection:<br/>
+            {{ permission_request.rejection_text }}
+        </p>
+    {% endif %}
+
+    <p>
+        Regards,<br/>
+
+        {{ site.name }}
+    </p>
+{% endautoescape %}
