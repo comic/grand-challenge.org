@@ -10,7 +10,6 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
-from docker.errors import APIError
 from guardian.shortcuts import assign_perm
 from rest_framework.authtoken.models import Token
 from simple_history.models import HistoricalRecords
@@ -330,7 +329,7 @@ class Session(UUIDModel):
 
         if settings.DEBUG:
             # Allow the container to communicate with the dev environment
-            env.update({"GRAND_CHALLENGE_UNSAFE": "True"})
+            env.update({"GRAND_CHALLENGE_UNSAFE": "true"})
 
         return env
 
@@ -394,11 +393,7 @@ class Session(UUIDModel):
 
     def stop(self) -> None:
         """Stop the service for this session, cleaning up all of the containers."""
-        try:
-            self.logs = self.service.container.logs().decode()
-        except APIError:
-            logger.warning(f"Could not get the logs for {self}.")
-
+        self.logs = self.service.logs()
         self.service.stop_and_cleanup()
         self.update_status(status=self.STOPPED)
 
