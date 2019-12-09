@@ -3,8 +3,10 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.subdomains.utils import reverse
 
 
 class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
@@ -86,6 +88,20 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     def __str__(self):
         return f"{self.title} (created by {self.creator})"
+
+    def get_absolute_url(self):
+        return reverse(
+            "workstation-configs:detail", kwargs={"slug": self.slug}
+        )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.creator:
+            assign_perm(
+                f"{self._meta.app_label}.change_{self._meta.model_name}",
+                self.creator,
+                self,
+            )
 
 
 class WindowPreset(TitleSlugDescriptionModel):

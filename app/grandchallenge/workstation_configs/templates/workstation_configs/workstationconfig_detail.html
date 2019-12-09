@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+{% load url from grandchallenge_tags %}
+{% load user_profile_link from profiles %}
+{% load workstations %}
+{% load guardian_tags %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Workstation Configs</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.title }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% get_obj_perms request.user for object as "config_perms" %}
+
+    <h1>Workstation Config {{ object.title }}</h1>
+
+    {% if object.description %}
+        <p>{{ object.description }}</p>
+    {% endif %}
+
+    <div class="my-3">
+        <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Window presets</div>
+            <div>
+                {% for x in object.window_presets.all %}
+                    <div>{{ preset }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Default window preset</div>
+            <div>{{ object.default_window_preset }}</div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Default slab thickness (mm)</div>
+            <div>{{ object.default_slab_thickness_mm }}</div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Default slab render method</div>
+            <div>{{ object.get_default_slab_render_method_display }}</div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Default orientation</div>
+            <div>{{ object.get_default_orientation_display }}</div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Default overlay lookup table</div>
+            <div>{{ object.default_overlay_lut }}</div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Default overlay interpolation</div>
+            <div>{{ object.get_default_overlay_interpolation_display }}</div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Image info plugin</div>
+            <div><i class="fas {% if object.show_image_info_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i></div>
+        </div>
+         <div class="d-flex justify-content-between">
+            <div class="font-weight-bold">Display plugin</div>
+            <div><i class="fas {% if object.show_display_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i></div>
+        </div>
+    </div>
+
+    <p>
+        {% if "change_workstationconfig" in config_perms %}
+            <div class="d-flex justify-content-start align-items-center">
+                <a class="btn btn-primary mr-1"
+                   href="{% url 'workstation-configs:update' slug=object.slug %}">
+                    <i class="fa fa-edit"></i> Edit this workstation config
+                </a>
+                <a href="{% url 'workstation-configs:delete' slug=object.slug %}"
+                   class="btn btn-danger">
+                    <i class="fa fa-times"></i> Delete this workstation config
+                </a>
+            </div>
+        {% endif %}
+    </p>
+
+{% endblock %}
