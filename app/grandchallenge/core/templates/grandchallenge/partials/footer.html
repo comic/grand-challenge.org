@@ -14,8 +14,7 @@
                             <li>
                                 {# Manual construction of url is used here due to flatpage redirect errors #}
                                 <a class="text-muted"
-                                   href="{{ request.scheme }}://
-                                           {{ request.site.domain }}{{ page.url }}">
+                                   href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
                                     {{ page.title }}
                                 </a>
                             </li>
