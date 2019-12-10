@@ -1,8 +1,7 @@
+from django.conf.urls import include
 from django.urls import path
-
-from grandchallenge.ai_website.views import HomeTemplate
 
 
 urlpatterns = [
-    path("", HomeTemplate.as_view(), name="home"),
+    path("", include("grandchallenge.ai_website.urls")),
 ]

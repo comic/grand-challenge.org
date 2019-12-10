@@ -1,30 +1,114 @@
-{% load static %}
-
 <!DOCTYPE html>
-<html lang="en">
+{% load static %}
+<html>
+<!--<title>W3.CSS Template</title>-->
 <head>
-    {% block head %}
-        {% block meta %}
-            {% include "grandchallenge/partials/meta.html" %}
-        {% endblock %}
-
-        <title>
-            {% block title %}{{ request.site.name }}{% endblock %}
-        </title>
-
-        {% block head_script %}
-            {% include "grandchallenge/partials/head_script.html" %}
-        {% endblock %}
-
-        {% block style %}
-            {% include "grandchallenge/partials/style.html" %}
-        {% endblock %}
-    {% endblock %}
+  <title>
+  {% block title %}
+  {% endblock %}
+  </title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">-->
+  <link rel="stylesheet" href="{% static 'css/products.css' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+  body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+  </style>
 </head>
+<body class="w3-light-grey w3-content" style="max-width:1600px">
 
-{% block body %}
-    <body class="d-flex flex-column min-vh-100">
-    <h1>AI Website</h1>
-    </body>
-{% endblock %}
+<!-- Sidebar/menu -->
+<nav class="w3-sidebar w3-collapse w3-white " style="z-index:3;width:300px;" id="mySidebar"><br>
+  <div class="w3-container">
+    <a href="#" onclick="w3_close()" class="w3-hide-large w3-right w3-jumbo w3-padding w3-hover-grey" title="close menu">
+      <i class="fa fa-remove"></i>
+    </a>
+    <!img src="/Werk/website/brain.jpeg" style="width:100%;" class="w3-round">
+    <div class="w3-bar-block  w3-teal w3-padding-large"><h2><b>AI SOFTWARE IN RADIOLOGY</b></h2></div><br><br>
+    <p class="w3-text-grey">An overview of offered artificial intelligence software for radiology</p>
+  </div>
+  <div class="w3-bar-block">
+    <a href="{% url 'product_list' %}" onclick="w3_close()" class="w3-bar-item w3-button w3-padding w3-text-teal"><i class="fa fa-th-large fa-fw w3-margin-right"></i>PRODUCTS</a>
+    <a href="{% url 'company_list' %}" onclick="w3_close()" class="w3-bar-item w3-button w3-padding"><i class="fa fa-th-large fa-fw w3-margin-right"></i>COMPANIES</a>
+    <a href="{% url 'about' %}" onclick="w3_close()" class="w3-bar-item w3-button w3-padding"><i class="fa fa-user fa-fw w3-margin-right"></i>ABOUT</a>
+    <a href="{% url 'contact' %}"onclick="w3_close()" class="w3-bar-item w3-button w3-padding"><i class="fa fa-envelope fa-fw w3-margin-right"></i>CONTACT</a>
+  </div>
+</nav>
+
+<!-- Overlay effect when opening sidebar on small screens -->
+<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+
+<!-- !PAGE CONTENT! -->
+<div class="w3-main" style="margin-left:300px">
+  {% block content %}
+  {% endblock %}
+
+  <!-- Contact Section -->
+  <div class="w3-container w3-padding-large w3-grey">
+    <h4><b>Contact Us</b></h4>
+    <p>Contact us if you have questions, would like to ask information to be adapted, or if you believe your product is missing from this overview.</p>
+    <div class="w3-row-padding w3-center w3-padding-24" style="margin:0 -16px">
+      <div class="w3-third w3-dark-grey">
+        <p><i class="fa fa-envelope w3-xxlarge w3-text-light-grey"></i></p>
+        <p>kicky.vanleeuwen@radboudumc.com</p>
+      </div>
+      <div class="w3-third w3-teal">
+        <p><i class="fa fa-map-marker w3-xxlarge w3-text-light-grey"></i></p>
+        <p>Nijmegen, The Netherlands</p>
+      </div>
+      <div class="w3-third w3-dark-grey">
+        <p><i class="fa fa-phone w3-xxlarge w3-text-light-grey"></i></p>
+        <p>512312311</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="w3-container w3-padding-32 w3-dark-grey">
+  <div class="w3-row-padding">
+    <div class="w3-third">
+      <h3>ABOUT</h3>
+      <p>This is an initiative of the <a href="http://diagnijmegen.nl/" title="DIAG" target="_blank">Diagnostic Image Analysis Group</a>, part of the Department of Radiology and Nuclear Medicine at the <a href="https://www.radboudumc.nl/en/" title="Radboudumc" target="_blank">Radboud university medical center</a>, Nijmegen, the Netherlands.</p>
+    </div>
+
+    <div class="w3-third">
+      <h3>CONTACT</h3>
+      <p>Radboud University Medical Center <br/> Geert Grooteplein Zuid 10 <br/> 6525 GA, Nijmegen <br/>The Netherlands<br/> kicky.vanleeuwen@radboudumc.nl</p>
+    </div>
+
+    <div class="w3-third">
+      <h3>POPULAR TAGS</h3>
+      <p>
+        <span class="w3-tag w3-black w3-margin-bottom">Artificial intelligence</span> <span class="w3-tag w3-grey w3-small w3-margin-bottom">Radiology</span> <span class="w3-tag w3-grey w3-small w3-margin-bottom">Computer aided detection</span>
+        <span class="w3-tag w3-grey w3-small w3-margin-bottom">Machine learning</span> <span class="w3-tag w3-grey w3-small w3-margin-bottom">MedTech</span> <span class="w3-tag w3-grey w3-small w3-margin-bottom">Innovation</span>
+        <span class="w3-tag w3-grey w3-small w3-margin-bottom">Deep learning</span> <span class="w3-tag w3-grey w3-small w3-margin-bottom">Nuclear medicine</span> <span class="w3-tag w3-grey w3-small w3-margin-bottom">Diagnosis</span>
+        <span class="w3-tag w3-grey w3-small w3-margin-bottom">CE</span> <span class="w3-tag w3-grey w3-small w3-margin-bottom">FDA</span> <span class="w3-tag w3-grey w3-small w3-margin-bottom">Validation</span>
+        <span class="w3-tag w3-grey w3-small w3-margin-bottom">Implementation</span>
+      </p>
+    </div>
+
+  </div>
+  </footer>
+
+  <div class="w3-black w3-center w3-padding-24">Powered by <a href="https://www.radboudumc.nl/en/" title="Radboudumc" target="_blank" class="w3-hover-opacity">Radboud University Medical Center</a></div>
+
+<!-- End page content -->
+</div>
+
+<script>
+// Script to open and close sidebar
+function w3_open() {
+    document.getElementById("mySidebar").style.display = "block";
+    document.getElementById("myOverlay").style.display = "block";
+}
+
+function w3_close() {
+    document.getElementById("mySidebar").style.display = "none";
+    document.getElementById("myOverlay").style.display = "none";
+}
+</script>
+
+</body>
 </html>

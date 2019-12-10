@@ -1,0 +1,49 @@
+{% extends 'products/base.html' %}
+
+{% block title %}
+    Companies
+{% endblock %}
+
+{% block content %}
+    <header id="companies">
+    <a href="#"><img src="/w3images/avatar_g2.jpg" style="width:65px;" class="w3-circle w3-right w3-margin w3-hide-large w3-hover-opacity"></a>
+    <span class="w3-button w3-hide-large w3-xxlarge w3-hover-text-grey" onclick="w3_open()"><i class="fa fa-bars"></i></span>
+    <div class="w3-container w3-padding-large">
+        <h1><b>Companies</b></h1>
+        <div class="w3-row w3-bottombar w3-padding-16">
+            <form method="get">
+                <input name="search" type="text" placeholder="Search..." value={{ q_search }} >
+            </form>
+        </div>
+    </div>
+    </header>
+
+      <!-- First Photo Grid-->
+    {% for company in companies %}
+      <div class = "w3-row-padding w3-padding-large">
+        <div class="w3-container w3-margin-bottom w3-white">
+          <div class="w3-quarter w3-container w3-white">
+            <a href="{% url 'company_page' pk=company.pk %}" title= {{company.company_name}} target="_blank" class="w3-hover-opacity"> <img src="media/logo/aidence.png" alt="Logo" style="width:100%" class="w3-hover-opacity"></a>
+            <div class="w3-white w3-container w3-padding-24">
+                <p> <b>HQ:</b> {{company.hq}}</p>
+                <p> <b>Founded:</b> {{company.founded}}</p>
+            </div>
+          </div>
+          <div class="w3-half w3-container w3-white">
+            <p><b>{{company.company_name}}</b></p>
+            <p>{{company.description}}</p>
+            <div class="w3-white w3-padding-24">
+                <a href="{% url 'company_page' pk=company.pk %}" title="{{company.company_name}}" target="_blank"><button class="w3-button w3-teal w3-padding-medium w3-hover-black">Read more</button></a>
+            </div>
+          </div>
+          <div class="w3-quarter w3-container w3-light-grey">
+              <p><b>Products:</b></p>
+              {% for product in company.products_by_company %}
+                <p>product.product_name</p>
+              {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+{% endblock %}
+

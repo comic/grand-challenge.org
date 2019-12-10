@@ -1,0 +1,88 @@
+{% extends 'products/base.html' %}
+
+{% block title %}
+    {{company.company_name}}
+{% endblock %}
+
+{% block content %}
+  <head>
+      <title>{{company.company_name}}</title>
+  </head>
+  <!-- Header -->
+  <header id={{product.company.company_name}}>
+    <div class="w3-container w3-padding-large">
+        <div class="w3-half w3-container w3-white">
+            <a href={{company.website}} title={{company.company_name}} target="_blank" class="w3-hover-opacity"> <img src="/Werk/website/screenpoint-medical.png" alt="Logo" style="width:100%" class="w3-hover-opacity"></a>
+            <h4 class="w3-text-grey">{{company.company_name}}</h4>
+            <p>{{company.description}}</p>
+        </div>
+    </div>
+  </header>
+
+  <div class="w3-container w3-padding-large" style="margin-bottom:32px">
+    <h4>Company specifications</h4>
+    <div class="w3-row-padding" style="margin:0 -16px">
+      <div class="w3-half w3-margin-bottom ">
+        <table class="w3-table w3-bordered">
+        <tr class="w3-grey w3-text-white">
+          <td>General</td>
+	  <td><b></b></td>
+        </tr>
+        <tr>
+          <td class="w3-text-grey">Company name</td>
+          <td>{{company.company_name}}</td>
+        </tr>
+        <tr>
+          <td class="w3-text-grey">Founded</td>
+          <td>{{company.founded}}</td>
+        </tr>
+        <tr>
+          <td class="w3-text-grey">Head office</td>
+          <td>{{company.hq}}</td>
+        </tr>
+        <tr>
+          <td class="w3-text-grey">Website</td>
+          <td><a href={{company.website}} target="_blank">{{company.website}}</a></td>
+        </tr>
+        <tr>
+          <td class="w3-text-grey">Contact</td>
+          <td>{{company.email}}</td>
+        </tr>
+        </table><br><br>
+      </div>
+    </div>
+  </div>
+
+
+  <div class = "w3-row-padding w3-padding-large">
+  <h4>Products by this company</h4>
+    {% for product in products_by_company %}
+      <div class="w3-container w3-margin-bottom w3-white">
+        <div class="w3-quarter w3-container w3-white">
+          <a href={{company.website}} title= {{product.company_name}} target="_blank" class="w3-hover-opacity"> <img src="/Werk/website/screenpoint-medical.png" alt="Logo" style="width:100%" class="w3-hover-opacity"></a>
+          <div class="w3-white w3-container w3-padding-24">
+              <div class="w3-third w3-bar-block w3-center w3-light-grey w3-padding-small">{{product.subspeciality}}</div>
+              <div class="w3-third w3-bar-block w3-center w3-light-grey w3-padding-small">{{product.modality}}</div>
+          </div>
+        </div>
+        <div class="w3-half w3-container w3-white">
+          <p>{{company.company_name}}</p>
+          <p><b>{{product.product_name}}</b></p>
+          <div class="w3-text-grey">
+            <p>{{product.key_features}}</p></div>
+          <p>{{product.description}}</p>
+          <div class="w3-white w3-padding-24">
+              <a href="{% url 'product_page' pk=product.pk %}" title="{{product.product_name}}" target="_blank"><button class="w3-button w3-teal w3-padding-medium w3-hover-black">Read more</button></a>
+          </div>
+        </div>
+        <div class="w3-quarter w3-container w3-light-grey">
+          <p><b>CE:</b> approved, level IIa</p>
+          <p><b>FDA:</b> 510(k) cleared</p>
+          <p><b>Verified by user:</b> yes</p>
+          <p><b>Last updated:</b> {{product.modified_date}}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+{% endblock %}
