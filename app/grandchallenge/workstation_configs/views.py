@@ -53,7 +53,7 @@ class WorkstationConfigUpdate(
 ):
     model = WorkstationConfig
     form_class = WorkstationConfigForm
-    permission_required = f"change_{WorkstationConfig._meta.model_name}"
+    permission_required = f"{WorkstationConfig._meta.app_label}.change_{WorkstationConfig._meta.model_name}"
     raise_exception = True
 
     def form_valid(self, form):
