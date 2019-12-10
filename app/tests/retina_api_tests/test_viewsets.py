@@ -1918,11 +1918,29 @@ class TestLandmarkAnnotationSetViewSetForImage:
             data=multiple_landmark_retina_annotation_sets,
         )
 
-        if user_type in (None, "normal_user"):
-            assert response.status_code == status.HTTP_403_FORBIDDEN
-        elif user_type == "retina_grader":
+        if user_type == "retina_grader":
             assert response.status_code == status.HTTP_200_OK
             assert len(response.data) == 2
+            serialized_data = LandmarkAnnotationSetSerializer(
+                [
+                    multiple_landmark_retina_annotation_sets.landmarkset1,
+                    multiple_landmark_retina_annotation_sets.landmarkset3,
+                ],
+                many=True,
+            ).data
+            serialized_data.sort(key=lambda k: k["created"], reverse=True)
+            assert response.data == serialized_data
         elif user_type == "retina_admin":
             assert response.status_code == status.HTTP_200_OK
             assert len(response.data) == 3
+            serialized_data = LandmarkAnnotationSetSerializer(
+                [
+                    multiple_landmark_retina_annotation_sets.landmarkset1,
+                    multiple_landmark_retina_annotation_sets.landmarkset3,
+                    multiple_landmark_retina_annotation_sets.landmarkset4,
+                ],
+                many=True,
+            ).data
+            serialized_data.sort(key=lambda k: k["created"], reverse=True)
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
