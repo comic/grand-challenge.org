@@ -50,49 +50,45 @@ class ProductList(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        subspeciality_query = self.request.GET.get("subspeciality")
-        modality_query = self.request.GET.get("modality")
+        subspeciality_query = self.request.GET.get("subspeciality", "All")
+        modality_query = self.request.GET.get("modality", "All")
         search_query = self.request.GET.get("search", "")
-        subspeciality = [
-            {
-                "name": "All subspecialities",
-                "selected": subspeciality_query == "All",
-            },
-            {"name": "Abdomen", "selected": subspeciality_query == "Abdomen"},
-            {"name": "Breast", "selected": subspeciality_query == "Breast"},
-            {"name": "Cardiac", "selected": subspeciality_query == "Cardiac"},
-            {"name": "Chest", "selected": subspeciality_query == "Chest"},
-            {"name": "MSK", "selected": subspeciality_query == "MSK"},
-            {"name": "Neuro", "selected": subspeciality_query == "Neuro"},
-            {"name": "Other", "selected": subspeciality_query == "Other"},
+        subspecialities = [
+            "All",
+            "Abdomen",
+            "Breast",
+            "Cardiac",
+            "Chest",
+            "MSK",
+            "Neuro",
+            "Other",
         ]
 
-        modality = [
-            {"name": "All modalities", "selected": modality_query == "All"},
-            {"name": "X-ray", "selected": modality_query == "X-ray"},
-            {"name": "CT", "selected": modality_query == "CT"},
-            {"name": "MRI", "selected": modality_query == "MRI"},
-            {"name": "Ultrasound", "selected": modality_query == "Ultrasound"},
-            {
-                "name": "Mammography",
-                "selected": modality_query == "Mammography",
-            },
-            {"name": "PET", "selected": modality_query == "PET"},
-            {"name": "Other", "selected": modality_query == "Other"},
+        modalities = [
+            "All",
+            "X-ray",
+            "CT",
+            "MRI",
+            "Ultrasound",
+            "Mammography",
+            "PET",
+            "Other",
         ]
 
         context.update(
             {
                 "q_search": search_query,
-                "q_subspecialities": subspeciality,
-                "q_modalities": modality,
+                "subspecialities": subspecialities,
+                "modalities": modalities,
+                "selected_subspeciality": subspeciality_query,
+                "selected_modality": modality_query,
             }
         )
         return context
 
 
 class ProductPage(TemplateView):
-    template_name = "products/product_page.html"
+    template_name = "ai_website/product_page.html"
 
     def get_context_data(self, pk):
         product = get_object_or_404(ProductEntry, pk=pk)
@@ -100,7 +96,7 @@ class ProductPage(TemplateView):
 
 
 class CompanyList(ListView):
-    template_name = "products/company_list.html"
+    template_name = "ai_website/company_list.html"
     model = CompanyEntry
     context_object_name = "companies"
     queryset = CompanyEntry.objects.order_by("company_name")
@@ -144,7 +140,7 @@ class CompanyList(ListView):
 
 
 class CompanyPage(TemplateView):
-    template_name = "products/company_page.html"
+    template_name = "ai_website/company_page.html"
 
     def get_context_data(self, pk):
         company = get_object_or_404(CompanyEntry, pk=pk)
@@ -155,14 +151,14 @@ class CompanyPage(TemplateView):
 
 
 class AboutPage(TemplateView):
-    template_name = "products/about.html"
+    template_name = "ai_website/about.html"
 
     def get_context_data(self):
         return
 
 
 class ContactPage(TemplateView):
-    template_name = "products/contact.html"
+    template_name = "ai_website/contact.html"
 
     def get_context_data(self):
         return

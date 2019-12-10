@@ -86,8 +86,11 @@ class Command(BaseCommand):
                 "Name relevant (white)papers regarding the implementation of the software (clinical validation)"
             ],
         )
-        p.save()
-        return p
+        try:
+            p.save()
+            return p
+        except:
+            pass
 
     def _create_product_basic(self, row, c):
         p = ProductBasic(

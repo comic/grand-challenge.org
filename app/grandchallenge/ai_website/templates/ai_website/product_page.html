@@ -1,142 +1,140 @@
-{% extends 'products/base.html' %}
+{% extends 'ai_website/base.html' %}
 
 {% block title %}
     {{product.product_name}} - {{product.company.company_name}}
 {% endblock %}
 
 {% block content %}
-  <!-- Header -->
-  <header id={{product.product_name}}>
-    <div class="w3-container w3-padding-large">
-      <h1><b>{{product.product_name}}</b></h1>
-      <a href= "{% url 'company_page' pk=product.company.pk %}" title={{product.company.company_name}} target="_blank"> <button class="w3-button" style="margin:0;padding:0"><h4 class="w3-text-grey w3-hover-text-black">by {{product.company.company_name}}</h4></button></a>
-    </div>
-    <div class="w3-container w3-padding-large">
+    <h1 class="mb-1">{{product.product_name}}</h1>
+    <a href= "{% url 'company_page' pk=product.company.pk %}" title={{product.company.company_name}} class="h5">by {{ product.company.company_name }}</a>
+    <div class="">
       <img src="/media/logo/aidence.png" style="width:50%;"><br><br>
     </div>
   </header>
 
-  <div class="w3-container w3-padding-large" style="margin-bottom:32px">
-    <h4>Product specifications</h4>
-    <div class="w3-row-padding" style="margin:0 -16px">
-      <div class="w3-half w3-margin-bottom">
-        <table class="w3-table w3-bordered">
-            <tr class="w3-grey w3-text-white">
-            <td>General</td>
-	        <td><b> </b></td>
-            </tr>
+  <div class="container pl-0">
+    <h2 class="h4">Product specifications</h2>
+    <div class="row">
+      <div class="col-sm-9">
+        <table class="table">
+          <thead class="thead-light">
             <tr>
-              <td class="w3-text-grey">Product name</td>
-              <td>{{product.product_name}}</td>
+              <th colspan="2">General</th>
             </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Product name</td>
+            <td>{{product.product_name}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Subspeciality</td>
+            <td>{{product.subspeciality}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Modality</td>
+            <td>{{product.modality}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Key-features</td>
+            <td>{{product.key_features}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Input</td>
+            <td>{{product.input_data}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Input format</td>
+            <td>{{product.file_format_input}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Output</td>
+            <td>{{product.output_data}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Output format</td>
+            <td>{{product.file_format_output}}</td>
+          </tr>
+          <thead class="thead-light">
             <tr>
-              <td class="w3-text-grey">Subspeciality</td>
-              <td>{{product.subspeciality}}</td>
+              <th colspan="2">Technology</th>
             </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Integration</td>
+            <td>{{product.integration}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Hosting</td>
+            <td>{{product.hosting}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Specialized hardware required</td>
+            <td>{{product.hardware}}</td>
+          </tr>
+          <thead class="thead-light">
             <tr>
-              <td class="w3-text-grey">Modality</td>
-              <td>{{product.modality}}</td>
+              <th colspan="2">Certification</th>
             </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">CE</td>
+            <td>{{product.ce_status}}, {{product.ce_class}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">FDA</td>
+            <td>{{product.fda_status}}, {{product.fda_class}}</td>
+          </tr>
+          <thead class="thead-light">
             <tr>
-              <td class="w3-text-grey">Key-features</td>
-              <td>{{product.key_features}}</td>
+              <th colspan="2">Market presence</th>
             </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">On market since</td>
+            <td>{{product.market_since}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Distribution channels</td>
+            <td>{{product.distribution}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Countries present (clinical, non-research use)</td>
+            <td>{{product.countries}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Number of paying clinical customers (institutes) </td>
+            <td>{{product.institutes_research}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Number of research/test users (institutes) </td>
+            <td>{{product.institutes_clinical}}</td>
+          </tr>
+          <thead class="thead-light">
             <tr>
-              <td class="w3-text-grey">Input</td>
-              <td>{{product.input_data}}</td>
+              <th colspan="2">Pricing</th>
             </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Pricing model</td>
+            <td>{{product.pricing_model}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Based on</td>
+            <td>{{product.pricing_basis}}</td>
+          </tr>
+          <thead class="thead-light">
             <tr>
-              <td class="w3-text-grey">Input format</td>
-              <td>{{product.file_format_input}}</td>
+              <th colspan="2">Evidence</th>
             </tr>
-            <tr>
-              <td class="w3-text-grey">Output</td>
-              <td>{{product.output_data}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Output format</td>
-              <td>{{product.file_format_output}}</td>
-            </tr>
-
-            <tr class="w3-grey w3-text-white">
-              <td>Technology</td>
-            <td><b> </b></td>
-            <tr>
-              <td class="w3-text-grey">Integration</td>
-              <td>{{product.integration}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Hosting</td>
-              <td>{{product.hosting}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Specialized hardware required</td>
-              <td>{{product.hardware}}</td>
-            </tr>
-
-            <tr class="w3-grey w3-text-white">
-              <td>Certification</td>
-            <td><b> </b></td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">CE</td>
-              <td>{{product.ce_status}}, {{product.ce_class}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">FDA</td>
-              <td>{{product.fda_status}}, {{product.fda_class}}</td>
-            </tr>
-
-            <tr class="w3-grey w3-text-white">
-              <td>Market presence</td>
-            <td><b> </b></td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">On market since</td>
-              <td>{{product.market_since}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Distribution channels</td>
-              <td>{{product.distribution}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Countries present (clinical, non-research use)</td>
-              <td>{{product.countries}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Number of paying clinical customers (institutes) </td>
-              <td>{{product.institutes_research}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Number of research/test users (institutes) </td>
-              <td>{{product.institutes_clinical}}</td>
-            </tr>
-
-            <tr class="w3-grey w3-text-white">
-              <td>Pricing</td>
-            <td><b> </b></td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Pricing model</td>
-              <td>{{product.pricing_model}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Based on</td>
-              <td>{{product.pricing_basis}}</td>
-            </tr>
-
-            <tr class="w3-grey w3-text-white">
-              <td>Evidence</td>
-            <td><b> </b></td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Relevant peer reviewed papers regarding performance</td>
-              <td>{{product.tech_papers}}</td>
-            </tr>
-            <tr>
-              <td class="w3-text-grey">Relevant peer reviewed papers regarding implementation</td>
-              <td>{{product.clin_papers}}</td>
-            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Relevant peer reviewed papers regarding performance</td>
+            <td>{{product.tech_papers}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Relevant peer reviewed papers regarding implementation</td>
+            <td>{{product.clin_papers}}</td>
+          </tr>
         </table>
       </div>
     </div>

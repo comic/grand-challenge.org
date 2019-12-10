@@ -8,10 +8,10 @@ class CompanyEntry(models.Model):
     modified_date = models.DateField(auto_now=True)
     published_date = models.DateField(blank=True, null=True)
     company_name = models.CharField(max_length=200)
-    website = models.URLField(max_length=50)
+    website = models.URLField(max_length=500)
     founded = models.IntegerField()
     hq = models.CharField(max_length=100)
-    email = models.EmailField(max_length=50)
+    email = models.EmailField(max_length=500)
     # logo = models.ImageField(upload_to=get_logo_path, blank=True)
     description = models.CharField(
         max_length=500,
@@ -38,7 +38,7 @@ class ProductBasic(models.Model):
         CompanyEntry, on_delete=models.CASCADE
     )  # product.company.company_name
     short_name = models.CharField(
-        max_length=50,
+        max_length=500,
         blank=False,
         help_text=(
             "short name used in url, specific css, files etc. No spaces allowed"
@@ -51,13 +51,13 @@ class ProductBasic(models.Model):
         blank=True,
         help_text="Short summary of this project, max 250 characters.",
     )
-    modality = models.CharField(max_length=10)
-    subspeciality = models.CharField(max_length=30)
+    modality = models.CharField(max_length=64)
+    subspeciality = models.CharField(max_length=300)
 
     input_data = models.CharField(max_length=150)
-    file_format_input = models.CharField(max_length=50)
+    file_format_input = models.CharField(max_length=500)
     output_data = models.CharField(max_length=150)
-    file_format_output = models.CharField(max_length=50)
+    file_format_output = models.CharField(max_length=500)
     key_features = models.CharField(max_length=150)
 
     def __str__(self):
@@ -66,27 +66,27 @@ class ProductBasic(models.Model):
 
 # Create your models here.
 class ProductEntry(ProductBasic):
-    ce_status = models.CharField(max_length=50, default="unknown")
-    ce_class = models.CharField(max_length=50, default="unknown")
-    fda_status = models.CharField(max_length=50, default="unknown")
-    fda_class = models.CharField(max_length=50, default="unknown")
+    ce_status = models.CharField(max_length=500, default="unknown")
+    ce_class = models.CharField(max_length=500, default="unknown")
+    fda_status = models.CharField(max_length=500, default="unknown")
+    fda_class = models.CharField(max_length=500, default="unknown")
 
-    integration = models.CharField(max_length=50, default="unknown")
-    hosting = models.CharField(max_length=50, default="unknown")
+    integration = models.CharField(max_length=500, default="unknown")
+    hosting = models.CharField(max_length=500, default="unknown")
     hardware = models.CharField(max_length=150, default=" ")
 
     market_since = models.CharField(
-        max_length=50, default="unknown"
+        max_length=500, default="unknown"
     )  # choose only month year in datefield?
-    countries = models.CharField(max_length=50, default="unknown")
+    countries = models.CharField(max_length=500, default="unknown")
     distribution = models.CharField(
         max_length=100, default="unknown"
     )  # or list?
-    institutes_research = models.CharField(max_length=50, default="unknown")
-    institutes_clinic = models.CharField(max_length=50, default="unknown")
+    institutes_research = models.CharField(max_length=500, default="unknown")
+    institutes_clinic = models.CharField(max_length=500, default="unknown")
 
-    pricing_model = models.CharField(max_length=50, default="unknown")
-    pricing_basis = models.CharField(max_length=50, default="unknown")
+    pricing_model = models.CharField(max_length=500, default="unknown")
+    pricing_basis = models.CharField(max_length=500, default="unknown")
 
     tech_papers = models.CharField(max_length=500, default="unknown")
     clin_papers = models.CharField(max_length=500, default="unknown")

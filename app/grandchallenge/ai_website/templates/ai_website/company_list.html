@@ -1,49 +1,56 @@
-{% extends 'products/base.html' %}
+{% extends 'ai_website/base.html' %}
 
 {% block title %}
     Companies
 {% endblock %}
 
 {% block content %}
-    <header id="companies">
-    <a href="#"><img src="/w3images/avatar_g2.jpg" style="width:65px;" class="w3-circle w3-right w3-margin w3-hide-large w3-hover-opacity"></a>
-    <span class="w3-button w3-hide-large w3-xxlarge w3-hover-text-grey" onclick="w3_open()"><i class="fa fa-bars"></i></span>
-    <div class="w3-container w3-padding-large">
-        <h1><b>Companies</b></h1>
-        <div class="w3-row w3-bottombar w3-padding-16">
-            <form method="get">
-                <input name="search" type="text" placeholder="Search..." value={{ q_search }} >
-            </form>
+  <div class="d-flex justify-content-between align-items-center">
+    <h1>Companies</h1>
+    <div class="">
+      <form action="" method="GET">
+        <div class="form-row justify-content-end">
+          <div class="col-auto">
+            <input hidden name="subspeciality" value="{{ selected_subspeciality }}">
+            <input hidden name="modality" value="{{ selected_modality }}">
+            <input class="form-control" name="search" type="text" placeholder="Search..." value={{ q_search }} >
+          </div>
+          <div class="col-auto">
+            <input type="submit" class="btn btn-dark btn-square" value="Search">
+          </div>
         </div>
+      </form>
     </div>
-    </header>
+  </div>
 
-      <!-- First Photo Grid-->
+  <div class="container">
     {% for company in companies %}
-      <div class = "w3-row-padding w3-padding-large">
-        <div class="w3-container w3-margin-bottom w3-white">
-          <div class="w3-quarter w3-container w3-white">
-            <a href="{% url 'company_page' pk=company.pk %}" title= {{company.company_name}} target="_blank" class="w3-hover-opacity"> <img src="media/logo/aidence.png" alt="Logo" style="width:100%" class="w3-hover-opacity"></a>
-            <div class="w3-white w3-container w3-padding-24">
-                <p> <b>HQ:</b> {{company.hq}}</p>
-                <p> <b>Founded:</b> {{company.founded}}</p>
+      <div class="row mb-1">
+          <div class="col-sm-3">
+            <a href="{% url 'company_page' pk=company.pk %}" title="{{ company.company_name }}">
+              <img src="{{ company.logo.url }}" alt="Logo" style="width:100%">
+            </a>
+            <div>
+              <p><b>HQ:</b> {{company.hq}}</p>
+              <p><b>Founded:</b> {{company.founded}}</p>
             </div>
           </div>
-          <div class="w3-half w3-container w3-white">
-            <p><b>{{company.company_name}}</b></p>
+          <div class="col-sm-5">
+            <h2 class="h4 font-weight-bold mt-0">{{ company.company_name }}</h2>
             <p>{{company.description}}</p>
-            <div class="w3-white w3-padding-24">
-                <a href="{% url 'company_page' pk=company.pk %}" title="{{company.company_name}}" target="_blank"><button class="w3-button w3-teal w3-padding-medium w3-hover-black">Read more</button></a>
+            <div class="pt-1 pb-2">
+                <a href="{% url 'company_page' pk=company.pk %}" title="{{ company.company_name }}" class="btn btn-square btn-info">Read more</a>
             </div>
           </div>
-          <div class="w3-quarter w3-container w3-light-grey">
-              <p><b>Products:</b></p>
-              {% for product in company.products_by_company %}
-                <p>product.product_name</p>
-              {% endfor %}
+          <div class="col-sm-4 bg-light">
+            <p><b>Products:</b></p>
+            {% for product in company.products_by_company %}
+              <p>product.product_name</p>
+            {% endfor %}
           </div>
         </div>
-      </div>
     {% endfor %}
+  </div>
+
 {% endblock %}
 

@@ -5,112 +5,38 @@
 {% endblock %}
 
 {% block content %}
-    <header id="products">
-    <a href="#"><img src="/w3images/avatar_g2.jpg" style="width:65px;" class="w3-circle w3-right w3-margin w3-hide-large w3-hover-opacity"></a>
-    <span class="w3-button w3-hide-large w3-xxlarge w3-hover-text-grey" onclick="w3_open()"><i class="fa fa-bars"></i></span>
-    <div class="w3-container w3-padding-large">
-        <h1><b>Products</b></h1>
-        <div class="w3-section w3-padding-16">
-          <span class="w3-margin-right">Filter:</span>
-            <form method="get">
-                {% for q_subspec in q_subspecialities %}
-                    {% if q_subspec.selected %}
-                        <button type="submit" class="w3-button w3-white w3-black" name="subspeciality" value={{q_subspec.name}} selected>{{q_subspec.name}}</button>
-                    {% else %}
-                        <button type="submit" class="w3-button w3-white w3-hover-grey" name="subspeciality" value={{q_subspec.name}}>{{q_subspec.name}}</button>
-                    {% endif %}
-                {% endfor %}
-            </form>
-            <br>
-            <form method="get">
-                {% for q_modality in q_modalities %}
-                    {% if q_modality.selected %}
-                        <button type="submit" class="w3-button w3-white w3-black" name="modality" value={{q_modality.name}} selected>{{q_modality.name}}</button>
-                    {% else %}
-                        <button type="submit" class="w3-button w3-white w3-hover-grey" name="modality" value={{q_modality.name}}>{{q_modality.name}}</button>
-                    {% endif %}
-                {% endfor %}
+  <div class="d-flex justify-content-between align-items-center">
+    <h1>Products</h1>
+    <div class="">
+      <form action="" method="GET">
+        <div class="form-row justify-content-end">
+          <div class="col-auto">
+            <input hidden name="subspeciality" value="{{ selected_subspeciality }}">
+            <input hidden name="modality" value="{{ selected_modality }}">
+            <input class="form-control" name="search" type="text" placeholder="Search..." value={{ q_search }} >
+          </div>
+          <div class="col-auto">
+            <input type="submit" class="btn btn-dark btn-square" value="Search">
+          </div>
         </div>
-        <div class="w3-row w3-bottombar w3-padding-16">
-            <form method="get">
-                <input name="search" type="text" placeholder="Search..." value={{ q_search }} >
-            </form>
-        </div>
+      </form>
     </div>
-    </header>
+  </div>
+  <div class="mt-2 mb-5">
+    <div class="h6">Subspeciality:</div>
+    <div class="mb-2">
+      {% for subspec in subspecialities %}
+        <a href="{% url 'product_list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}" class="btn btn-square {% if subspec == selected_subspeciality %}btn-dark{% else %}btn-outline-light text-dark{% endif %}">{{ subspec }}</a>
+      {% endfor %}
+    </div>
+    <div class="h6">Modality:</div>
+    <div>
+      {% for modality in modalities %}
+        <a href="{% url 'product_list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}" class="btn btn-square {% if modality == selected_modality %}btn-dark{% else %}btn-outline-light text-dark{% endif %}">{{ modality }}</a>
+      {% endfor %}
+    </div>
+  </div>
 
-      <!-- First Photo Grid-->
-    {% for product in products %}
-      <div class = "w3-row-padding w3-padding-large">
-        <div class="w3-container w3-margin-bottom w3-white">
-          <div class="w3-quarter w3-container w3-white">
-            <a href="{% url 'company_page' pk=product.pk %}" title= {{product.company.company_name}} target="_blank" class="w3-hover-opacity"> <img src="media/logo/aidence.png" alt="Logo" style="width:100%" class="w3-hover-opacity"></a>
-            <div class="w3-white w3-container w3-padding-24">
-                <div class="w3-third w3-bar-block w3-center w3-light-grey w3-padding-small">{{product.subspeciality}}</div>
-                <div class="w3-third w3-bar-block w3-center w3-light-grey w3-padding-small">{{product.modality}}</div>
-            </div>
-          </div>
-          <div class="w3-half w3-container w3-white">
-            <p>{{product.company.company_name}}</p>
-            <p><b>{{product.product_name}}</b></p>
-            <div class="w3-text-grey">
-              <p>{{product.key_features}}</p></div>
-            <p>{{product.description}}</p>
-            <div class="w3-white w3-padding-24">
-                <a href="{% url 'product_page' pk=product.pk %}" title="{{product.product_name}}" target="_blank"><button class="w3-button w3-teal w3-padding-medium w3-hover-black">Read more</button></a>
-            </div>
-          </div>
-          <div class="w3-quarter w3-container w3-light-grey">
-            <p><b>CE:</b> approved, level IIa</p>
-            <p><b>FDA:</b> 510(k) cleared</p>
-            <p><b>Verified by user:</b> yes</p>
-            <p><b>Last updated:</b> {{product.modified_date}}</p>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
+  {% include "ai_website/partials/product_list.html" %}
 
-      <!-- Pagination -->
-    {% if is_paginated %}
-        <div class="w3-center w3-padding-32">
-            <div class="w3-bar">
-                <div class="pagination">
-                {% if page_obj.has_previous %}
-                  <a href="?page={{ page_obj.previous_page_number }}" class="w3-bar-item w3-button w3-hover-grey">&laquo;</a>
-                {% else %}
-                  <div class="w3-bar-item"><span>&laquo;</span></div>
-                {% endif %}
-                {% for i in page_obj.paginator.page_range %}
-                  {% if page_obj.number == i %}
-                    <div class="w3-bar-item w3-black w3-button" ><span>{{ i }} <span class="sr-only" >(current)</span></span></div>
-                  {% else %}
-                    <a href="?page={{ i }}" class="w3-bar-item w3-button w3-hover-grey">{{ i }}</a>
-                  {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                  <a href="?page={{ page_obj.next_page_number }}" class="w3-bar-item w3-button w3-hover-grey">&raquo;</a>
-                {% else %}
-                  <div class="w3-bar-item"><span>&raquo;</span></div>
-                {% endif %}
-                </div>
-            </div>
-        </div>
-    {% endif %}
-<!--    <div class="w3-center w3-padding-32">-->
-<!--        <div class="w3-bar">-->
-<!--          <a href="#" class="w3-bar-item w3-button w3-hover-black">«</a>-->
-<!--          <a href="#" class="w3-bar-item w3-black w3-button">1</a>-->
-<!--          <a href="#" class="w3-bar-item w3-button w3-hover-black">2</a>-->
-<!--          <a href="#" class="w3-bar-item w3-button w3-hover-black">3</a>-->
-<!--          <a href="#" class="w3-bar-item w3-button w3-hover-black">4</a>-->
-<!--          <a href="#" class="w3-bar-item w3-button w3-hover-black">»</a>-->
-<!--        </div>-->
-<!--    </div>-->
 {% endblock %}
-
-
-<script>
-function myFunction() {
-  document.getElementById("demo").style.backgroundColor = "grey";
-}
-</script>

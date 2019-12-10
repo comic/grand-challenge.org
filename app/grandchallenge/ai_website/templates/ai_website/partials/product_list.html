@@ -1,0 +1,43 @@
+<div class="container">
+  {% for product in products %}
+    <div class="row mb-1">
+        <div class="col-sm-3">
+          <a href="{% url 'company_page' pk=product.company.pk %}" title="{{product.company.company_name}}">
+            <img src="{{ company.logo.url }}" alt="Logo" style="width:100%">
+          </a>
+          <div class="h5">
+              <span class="badge badge-light font-weight-normal">{{product.subspeciality}}</span>
+              <span class="badge badge-light font-weight-normal">{{product.modality}}</span>
+          </div>
+        </div>
+        <div class="col-sm-5">
+          <div class="h6 mt-0">{{product.company.company_name}}</div>
+          <h2 class="h4 font-weight-bold">{{product.product_name}}</h2>
+          <div class="text-muted">
+            <p>{{product.key_features}}</p></div>
+          <p>{{product.description}}</p>
+          <div class="pt-1 pb-2">
+              <a href="{% url 'product_page' pk=product.pk %}" title="{{product.product_name}}" class="btn btn-square btn-info">Read more</a>
+          </div>
+        </div>
+        <div class="col-sm-4 bg-light">
+          <div class="d-flex justify-content-between pb-1">
+            <div class="font-weight-bold">CE:</div>
+            <div>approved, level IIa</div>
+          </div>
+          <div class="d-flex justify-content-between pb-1">
+            <div class="font-weight-bold">FDA:</div>
+            <div>510(k) cleared</div>
+          </div>
+          <div class="d-flex justify-content-between pb-1">
+            <div class="font-weight-bold">Verified by user:</div>
+            <div>Yes</div>
+          </div>
+          <div class="d-flex justify-content-between pb-1">
+            <div class="font-weight-bold">Last updated:</div>
+            <div>{{product.modified_date}}</div>
+          </div>
+        </div>
+      </div>
+  {% endfor %}
+</div>
