@@ -68,6 +68,29 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "algorithm users group in order to do that."
         ),
     )
+    contact_information = models.TextField(
+        blank=True,
+        help_text=(
+            "Who should users contact with any questions regarding "
+            "this algorithm? This information is only displayed on the "
+            "algorithm's detail page."
+        ),
+    )
+    info_url = models.URLField(
+        blank=True,
+        help_text=(
+            "A URL to a page containing more information about "
+            "the algorithm."
+        ),
+    )
+    additional_information = models.TextField(
+        blank=True,
+        help_text=(
+            "Any additional information that might be relevant to "
+            "users for this algorithm. This is only displayed on the "
+            "algorithm's detail page."
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
