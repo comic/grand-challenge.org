@@ -14,7 +14,9 @@
                             <li>
                                 {# Manual construction of url is used here due to flatpage redirect errors #}
                                 <a class="text-muted"
+                                        {# @formatter:off #}
                                    href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
+                                        {# @formatter:on #}
                                     {{ page.title }}
                                 </a>
                             </li>
