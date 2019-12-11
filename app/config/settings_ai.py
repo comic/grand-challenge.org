@@ -4,4 +4,6 @@ ROOT_URLCONF = "config.urls_ai"
 
 INSTALLED_APPS += ["grandchallenge.ai_website"]  # noqa: F405
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
+
+SESSION_COOKIE_DOMAIN = "example.localhost"

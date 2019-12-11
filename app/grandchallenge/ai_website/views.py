@@ -1,10 +1,15 @@
 from functools import reduce
 from operator import or_
 
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.management import call_command
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, reverse
 from django.views.generic import ListView, TemplateView
+from django.views.generic.edit import FormView
+from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.ai_website.forms import ImportForm
 from grandchallenge.ai_website.models import CompanyEntry, ProductEntry
 
 # Create your views here.
@@ -153,12 +158,28 @@ class CompanyPage(TemplateView):
 class AboutPage(TemplateView):
     template_name = "ai_website/about.html"
 
-    def get_context_data(self):
-        return
-
 
 class ContactPage(TemplateView):
     template_name = "ai_website/contact.html"
 
-    def get_context_data(self):
-        return
+
+class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
+    template_name = "ai_website/import_data.html"
+    form_class = ImportForm
+    permission_required = (
+        f"{ProductEntry._meta.app_label}.add_{ProductEntry._meta.model_name}"
+    )
+
+    def form_valid(self, *args, **kwargs):
+        response = super().form_valid(*args, **kwargs)
+        form = self.get_form()
+        if form.is_valid():
+            call_command(
+                "import_data",
+                form.cleaned_data["products_file"],
+                form.cleaned_data["companies_file"],
+            )
+        return response
+
+    def get_success_url(self):
+        return reverse("ai-website:product_list")

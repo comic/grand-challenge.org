@@ -6,7 +6,7 @@
 
 {% block content %}
     <h1 class="mb-1">{{product.product_name}}</h1>
-    <a href= "{% url 'company_page' pk=product.company.pk %}" title={{product.company.company_name}} class="h5">by {{ product.company.company_name }}</a>
+    <a href= "{% url 'ai-website:company_page' pk=product.company.pk %}" title={{product.company.company_name}} class="h5">by {{ product.company.company_name }}</a>
     <div class="">
       <img src="/media/logo/aidence.png" style="width:50%;"><br><br>
     </div>

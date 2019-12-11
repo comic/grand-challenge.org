@@ -27,7 +27,7 @@
     {% for company in companies %}
       <div class="row mb-1">
           <div class="col-sm-3">
-            <a href="{% url 'company_page' pk=company.pk %}" title="{{ company.company_name }}">
+            <a href="{% url 'ai-website:company_page' pk=company.pk %}" title="{{ company.company_name }}">
               <img src="{{ company.logo.url }}" alt="Logo" style="width:100%">
             </a>
             <div>
@@ -39,7 +39,7 @@
             <h2 class="h4 font-weight-bold mt-0">{{ company.company_name }}</h2>
             <p>{{company.description}}</p>
             <div class="pt-1 pb-2">
-                <a href="{% url 'company_page' pk=company.pk %}" title="{{ company.company_name }}" class="btn btn-square btn-info">Read more</a>
+                <a href="{% url 'ai-website:company_page' pk=company.pk %}" title="{{ company.company_name }}" class="btn btn-square btn-info">Read more</a>
             </div>
           </div>
           <div class="col-sm-4 bg-light">

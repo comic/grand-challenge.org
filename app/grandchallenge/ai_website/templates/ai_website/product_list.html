@@ -26,13 +26,13 @@
     <div class="h6">Subspeciality:</div>
     <div class="mb-2">
       {% for subspec in subspecialities %}
-        <a href="{% url 'product_list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}" class="btn btn-square {% if subspec == selected_subspeciality %}btn-dark{% else %}btn-outline-light text-dark{% endif %}">{{ subspec }}</a>
+        <a href="{% url 'ai-website:product_list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}" class="btn btn-square {% if subspec == selected_subspeciality %}btn-dark{% else %}btn-outline-light text-dark{% endif %}">{{ subspec }}</a>
       {% endfor %}
     </div>
     <div class="h6">Modality:</div>
     <div>
       {% for modality in modalities %}
-        <a href="{% url 'product_list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}" class="btn btn-square {% if modality == selected_modality %}btn-dark{% else %}btn-outline-light text-dark{% endif %}">{{ modality }}</a>
+        <a href="{% url 'ai-website:product_list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}" class="btn btn-square {% if modality == selected_modality %}btn-dark{% else %}btn-outline-light text-dark{% endif %}">{{ modality }}</a>
       {% endfor %}
     </div>
   </div>
