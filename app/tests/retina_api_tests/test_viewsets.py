@@ -1868,14 +1868,12 @@ class TestLandmarkAnnotationSetViewSetForImage:
 
         user = get_user_from_user_type(user_type, **kwargs)
 
-        url = reverse(f"api:landmark-annotation-for-image") + querystring
+        url = reverse(f"api:landmark-annotation-list") + querystring
 
         request = rf.get(url)
 
         force_authenticate(request, user=user)
-        view = LandmarkAnnotationSetViewSet.as_view(
-            actions={"get": "for_image"}
-        )
+        view = LandmarkAnnotationSetViewSet.as_view(actions={"get": "list"})
         return view(request)
 
     def test_no_query_params(self, rf, user_type):
@@ -1884,7 +1882,7 @@ class TestLandmarkAnnotationSetViewSetForImage:
         if user_type in (None, "normal_user"):
             assert response.status_code == status.HTTP_403_FORBIDDEN
         else:
-            assert response.status_code == status.HTTP_404_NOT_FOUND
+            assert response.status_code == status.HTTP_200_OK
 
     def test_non_existant_image(self, rf, user_type):
         img = ImageFactory()
