@@ -46,12 +46,12 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
+from grandchallenge.retina_api.filters import RetinaAnnotationFilter
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
     RetinaAdminAPIPermission,
     RetinaOwnerAPIPermission,
-    is_in_retina_admins_group,
 )
 from grandchallenge.retina_api.renderers import Base64Renderer
 from grandchallenge.retina_api.serializers import (
@@ -980,42 +980,28 @@ class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
     authentication_classes = (authentication.TokenAuthentication,)
     serializer_class = LandmarkAnnotationSetSerializer
-    filter_backends = (filters.ObjectPermissionsFilter,)
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
 
     def get_queryset(self):
         """
-        Only return objects that belong to current user, except if the user is in the
-        `retina_admin` group.
+        If the query parameter `image_id` is defined, the queryset will be a list of
+        `LandmarkAnnotationSet`s that contain a `SingleLandmarkAnnotation` related to
+        the given image id. If the image does not exist, this will raise a Http404
+        Exception. Otherwise, it will return the full `LandmarkAnnotationSet` queryset
 
         Returns
         -------
         QuerySet
         """
-        if is_in_retina_admins_group(self.request.user):
-            return LandmarkAnnotationSet.objects.all()
-        return self.request.user.landmarkannotationset_set.all()
-
-    def list(self, request, *args, **kwargs):
-        """
-        If the query parameter `image_id` is defined, this view will return a list of
-        `LandmarkAnnotationSet`s that contain a `SingleLandmarkAnnotation` related to
-        the given image id. Otherwise, it will return the expected list defined in the
-        `get_queryset()` method.
-
-        Parameters
-        ----------
-        request: Request
-
-        Returns
-        -------
-        Response
-        """
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = LandmarkAnnotationSet.objects.prefetch_related(
+            "singlelandmarkannotation_set"
+        ).all()
         image_id = self.request.query_params.get("image_id")
         if image_id is not None:
             image = get_object_or_404(Image.objects.all(), pk=image_id)
-            queryset = queryset.filter(singlelandmarkannotation__image=image)
+            queryset = LandmarkAnnotationSet.objects.filter(
+                singlelandmarkannotation__image=image
+            )
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return queryset
