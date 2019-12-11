@@ -28,7 +28,7 @@
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse"
                     data-target="#collapsibleNavbar">
-                <span class="navbar-toggler-icon"></span>
+                <div class="navbar-toggler-icon"></div>
             </button>
 
             <div class="collapse navbar-collapse" id="collapsibleNavbar">
@@ -61,18 +61,93 @@
             </nav>
 
             {% block outerContent %}
-                <div class="mb-3 p-3 bg-white">
-                    <div class="row">
-                        {% block sidebar %}{% endblock %}
-                        <div class="col p-0">
-                          {% block content %}
-                          {% endblock %}
-                        </div>
-                    </div>
+              <div class="row">
+                {% block sidebar %}{% endblock %}
+                <div class="col">
+                  {% block content %}
+                  {% endblock %}
                 </div>
+              </div>
             {% endblock %}
         </div>
     </main>
+
+  <footer class="bg-secondary text-white small">
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="h4">About</div>
+          <div>
+            This is an initiative of the <a href="http://diagnijmegen.nl/" title="DIAG" target="_blank">Diagnostic Image Analysis Group</a>,
+            part of the Department of Radiology and Nuclear Medicine at the <a href="https://www.radboudumc.nl/en/" title="Radboudumc" target="_blank">Radboud university medical center</a>, Nijmegen, the Netherlands.
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="h4">Contact</div>
+          <div>Radboud University Medical Center </div>
+          <div>Geert Grooteplein Zuid 10 </div>
+          <div>6525 GA, Nijmegen </div>
+          <div>The Netherlands</div>
+          <div><a href="mailto:kicky.vanleeuwen@radboudumc.nl">kicky.vanleeuwen@radboudumc.nl</a></div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="h4">Popular tags</div>
+          <div class="small d-inline-block">
+            <div class="btn btn-sm btn-square btn-dark mb-1">
+              <div class="small">Artificial intelligence</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Radiology</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Computer aided detection</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Machine learning</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">MedTech</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Innovation</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Deep learning</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Nuclear medicine</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Diagnosis</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">CE</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">FDA</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Validation</div>
+            </div>
+            <div class="btn btn-sm btn-square btn-light mb-1">
+              <div class="small">Implementation</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-dark text-white">
+      <div class="container">
+        <div class="text-center py-4">
+        Powered by <a href="https://www.radboudumc.nl/en/" title="Radboudumc" target="_blank" class="w3-hover-opacity">
+      Radboud University Medical Center</a>
+      </dic>
+    </div>
+  </footer>
+
+
 
   {% block script %}
     {% include "grandchallenge/partials/script.html" %}
