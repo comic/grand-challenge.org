@@ -225,18 +225,19 @@ def get_user_from_user_type(user_type, grader=None):
     return user
 
 
-def get_viewset_user_kwargs_url(
-    user_type, namespace, basename, grader, model, url_name
+def get_viewset_url_kwargs(
+    namespace, basename, grader, model, url_name, with_user=True
 ):
-    user = get_user_from_user_type(user_type, grader=grader)
-    kwargs = {"user_id": grader.id}
+    kwargs = {}
+    if with_user:
+        kwargs.update({"user_id": grader.id})
     if url_name == "detail":
         kwargs.update({"pk": model.pk})
     url = reverse(f"{namespace}:{basename}-{url_name}", kwargs=kwargs)
-    return user, kwargs, url
+    return url, kwargs
 
 
-def view_test(  # noqa: C901
+def view_test(
     action,
     user_type,
     namespace,
@@ -247,49 +248,51 @@ def view_test(  # noqa: C901
     viewset,
     data=None,
     check_response_status_code=True,
+    with_user=True,
 ):
-    if action == "list" or action == "create":
-        url_name = "list"
-    else:
-        url_name = "detail"
-    user, kwargs, url = get_viewset_user_kwargs_url(
-        user_type, namespace, basename, grader, model, url_name
+    user = get_user_from_user_type(user_type, grader=grader)
+
+    url, kwargs = get_viewset_url_kwargs(
+        namespace,
+        basename,
+        grader,
+        model,
+        "list" if action in ("list", "create") else "detail",
+        with_user=with_user,
     )
 
-    method = "get"  # list or retrieve
-    if action == "create":
-        method = "post"
-    elif action == "update":
-        method = "put"
-    elif action == "partial_update":
-        method = "patch"
-    elif action == "destroy":
-        method = "delete"
-
+    action_method = {
+        "create": "post",
+        "update": "put",
+        "partial_update": "patch",
+        "destroy": "delete",
+    }
+    method = action_method.get(action, "get")
     request = getattr(rf, method)(url)  # list, retrieve, destroy
     if action in ("create", "update", "partial_update"):
         request = getattr(rf, method)(
             url, data=data, content_type="application/json"
         )
-
-    view = viewset.as_view(actions={method: action})
     force_authenticate(request, user=user)
+    view = viewset.as_view(actions={method: action})
     response = view(request, **kwargs)
 
-    if not check_response_status_code:
-        return response
+    if check_response_status_code:
+        validate_response_status_code(response.status_code, user_type, action)
+    return response
 
+
+def validate_response_status_code(status_code, user_type, action):
     if (
         user_type is None
         or user_type == "normal_user"
         or user_type == "retina_grader_non_allowed"
     ):
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert status_code == status.HTTP_403_FORBIDDEN
     else:
         if action in ("list", "retrieve", "update", "partial_update"):
-            assert response.status_code == status.HTTP_200_OK
+            assert status_code == status.HTTP_200_OK
         elif action == "create":
-            assert response.status_code == status.HTTP_201_CREATED
+            assert status_code == status.HTTP_201_CREATED
         elif action == "destroy":
-            assert response.status_code == status.HTTP_204_NO_CONTENT
-    return response
+            assert status_code == status.HTTP_204_NO_CONTENT
