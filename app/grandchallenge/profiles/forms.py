@@ -1,7 +1,21 @@
 import userena.forms as userena_forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django_countries import countries
+
+
+class PreSocialForm(forms.Form):
+    accept_terms = forms.BooleanField(
+        label=_(f"I have read and agree to the <a href=\"/terms-of-service\">terms of service"),
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("submit", "Submit"))
 
 
 class SignupFormExtra(userena_forms.SignupForm):
@@ -33,6 +47,10 @@ class SignupFormExtra(userena_forms.SignupForm):
         max_length=150,
         required=False,
         help_text=_("A website which describes you or your department"),
+    )
+    accept_terms = forms.BooleanField(
+        label=_(f"I have read and agree to the <a href=\"/terms-of-service\">terms of service"),
+        required=True,
     )
 
     def __init__(self, *args, **kw):
