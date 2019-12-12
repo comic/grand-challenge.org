@@ -3,7 +3,11 @@ from enum import Enum
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import (
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    ValidationError,
+)
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -46,6 +50,7 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
+from grandchallenge.retina_api.filters import RetinaAnnotationFilter
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -973,3 +978,38 @@ class ImageTextAnnotationViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.ObjectPermissionsFilter,)
     pagination_class = None
     queryset = ImageTextAnnotation.objects.all()
+
+
+class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = LandmarkAnnotationSetSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+
+    def get_queryset(self):
+        """
+        If the query parameter `image_id` is defined, the queryset will be a list of
+        `LandmarkAnnotationSet`s that contain a `SingleLandmarkAnnotation` related to
+        the given image id. If the image does not exist, this will raise a Http404
+        Exception. Otherwise, it will return the full `LandmarkAnnotationSet` queryset
+
+        Returns
+        -------
+        QuerySet
+        """
+        queryset = LandmarkAnnotationSet.objects.prefetch_related(
+            "singlelandmarkannotation_set"
+        ).all()
+        image_id = self.request.query_params.get("image_id")
+        if image_id is not None:
+            try:
+                image = get_object_or_404(Image.objects.all(), pk=image_id)
+            except ValidationError:
+                # Invalid uuid passed, return 404
+                raise NotFound()
+            queryset = LandmarkAnnotationSet.objects.filter(
+                singlelandmarkannotation__image=image
+            )
+
+        return queryset

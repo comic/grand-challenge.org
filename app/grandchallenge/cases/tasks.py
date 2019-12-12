@@ -1,14 +1,25 @@
+import fileinput
+import os
+import re
 import shutil
+import tarfile
+import zipfile
 from pathlib import Path
 from tempfile import mkdtemp
 from typing import Sequence, Tuple
 from uuid import UUID
 
 from celery import shared_task
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.core.mail import send_mail
 from django.db import transaction
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.dicom_4dct import (
+    image_builder_dicom_4dct,
+)
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
@@ -133,7 +144,11 @@ def store_image(
         af.save()
 
 
-IMAGE_BUILDER_ALGORITHMS = [image_builder_mhd, image_builder_tiff]
+IMAGE_BUILDER_ALGORITHMS = [
+    image_builder_mhd,
+    image_builder_tiff,
+    image_builder_dicom_4dct,
+]
 
 
 def remove_duplicate_files(
@@ -170,6 +185,115 @@ def remove_duplicate_files(
         tuple(x for x in filename_lookup.values() if x is not None),
         tuple(duplicates),
     )
+
+
+def fix_mhd_file(file, prefix):
+    """
+    Fixes the reference to the data file for extracted mhd files in place.
+
+    This is needed because we prepend folder names to extraced files to prevent
+    duplicate file names.
+
+    Parameters
+    ----------
+    file:
+        A .mhd file.
+    prefix:
+        The prefix that was added to the file and should be added to the
+        ElementDataFile entry.
+    """
+    try:
+        with fileinput.input(file, inplace=True) as f:
+            for line in f:
+                new_line = re.sub(
+                    r"(ElementDataFile)\s+=\s+(.*)", fr"\1 = {prefix}\2", line,
+                )
+                print(new_line, end="")
+    except Exception:
+        pass
+
+
+def extract_and_flatten(file, path, prefix=None, is_tar=False):
+    """
+    Extracts a flattened list of all files in `file` to `path`.
+
+    Parameters
+    ----------
+    file:
+        A zip or tar file.
+    path:
+        The path to which the contents of `file` are to be extracted.
+
+    Returns
+    -------
+    A list of extracted files.
+    """
+    new_files = []
+    listfunc = file.getmembers if is_tar else file.infolist
+    filename_attr = "name" if is_tar else "filename"
+    is_dir_func = "isdir" if is_tar else "is_dir"
+    for info in listfunc():
+        filename = getattr(info, filename_attr)
+        # Skip directories
+        if getattr(info, is_dir_func)():
+            continue
+        # For any file that is inside a directory, prepend the directory
+        # name(s) to the filename
+        _filename = re.sub(r"[/:?]", "-", filename)
+        base_name = os.path.basename(filename)
+        setattr(info, filename_attr, (prefix or "") + _filename)
+        file.extract(info, path)
+        filename = getattr(info, filename_attr)
+        new_files.append(
+            {
+                "prefix": filename.replace(base_name, ""),
+                "path": path / filename,
+            }
+        )
+    return new_files
+
+
+def check_compressed_and_extract(file_path, target_path, prefix=None):
+    """
+    Checks if `file_path` is a zip or tar file and if so, extracts it.
+
+    Parameters
+    ----------
+    file_path:
+        The file path to be checked and possibly extracted.
+    target_path:
+        The path to which the contents of `file_path` are to be extracted.
+    prefix, optional:
+        For compressed files containing a nested structure, the folder names of
+        all containing folders are prepended to the filename. This is done to
+        be able to flatten the contents of the compressed file, without
+        completely losing the information onthe original compressed folder's
+        structure.
+    """
+    new_files = []
+    if tarfile.is_tarfile(file_path):
+        with tarfile.TarFile(file_path) as tf:
+            new_files = extract_and_flatten(
+                tf, target_path, prefix=prefix, is_tar=True
+            )
+    elif zipfile.is_zipfile(file_path):
+        with zipfile.ZipFile(file_path) as zf:
+            new_files = extract_and_flatten(zf, target_path, prefix=prefix)
+    # is_tarfile seems to recognize non-tarfiles as tarfiles, so check
+    # if anything has been processed before removing the file.
+    if new_files:
+        file_path.unlink()
+    for file in new_files:
+        if file["path"].name.endswith(".mhd") and file["prefix"]:
+            fix_mhd_file(file["path"], file["prefix"])
+        check_compressed_and_extract(
+            file["path"], target_path, prefix=file["prefix"]
+        )
+
+
+def extract_files(source_path: Path):
+    for file_path in source_path.iterdir():
+        check_compressed_and_extract(file_path, source_path)
 
 
 @shared_task  # noqa: C901
@@ -227,10 +351,17 @@ def build_images(upload_session_uuid: UUID):
 
                 populate_provisioning_directory(session_files, tmp_dir)
 
+                extract_files(tmp_dir)
+                session_files = [
+                    RawImageFile.objects.get_or_create(
+                        filename=file.name, upload_session=upload_session,
+                    )[0]
+                    for file in tmp_dir.iterdir()
+                ]
                 filename_lookup = {
-                    StagedAjaxFile(
-                        raw_image_file.staged_file_id
-                    ).name: raw_image_file
+                    raw_image_file.staged_file_id
+                    and StagedAjaxFile(raw_image_file.staged_file_id).name
+                    or raw_image_file.filename: raw_image_file
                     for raw_image_file in session_files
                 }
                 unconsumed_filenames = set(filename_lookup.keys())
@@ -242,7 +373,6 @@ def build_images(upload_session_uuid: UUID):
                     algorithm_result = algorithm(
                         tmp_dir
                     )  # type: ImageBuilderResult
-
                     collected_images += list(algorithm_result.new_images)
                     collected_associated_files += list(
                         algorithm_result.new_image_files
@@ -255,12 +385,16 @@ def build_images(upload_session_uuid: UUID):
                     for filename in algorithm_result.consumed_files:
                         if filename in unconsumed_filenames:
                             unconsumed_filenames.remove(filename)
+                            raw_image = filename_lookup[
+                                filename
+                            ]  # type: RawImageFile
+                            raw_image.error = None
+                            raw_image.save()
                     for (
                         filename,
                         msg,
                     ) in algorithm_result.file_errors_map.items():
                         if filename in unconsumed_filenames:
-                            unconsumed_filenames.remove(filename)
                             raw_image = filename_lookup[
                                 filename
                             ]  # type: RawImageFile
@@ -280,6 +414,28 @@ def build_images(upload_session_uuid: UUID):
                     raw_file.error = (
                         "File could not be processed by any image builder"
                     )
+
+                if unconsumed_filenames:
+                    upload_session.error_message = f"Failed: {', '.join(unconsumed_filenames)}"[
+                        : RawImageUploadSession.max_length_error_message
+                    ]
+                    if upload_session.creator and upload_session.creator.email:
+                        msg = (
+                            "The following image files could not be processed "
+                            f"in reader study {upload_session.reader_study}:"
+                            f"\n\n{', '.join(unconsumed_filenames)}\n\n"
+                            "The following file formats are supported: "
+                            ".mhd, .mha, .tiff"
+                        )
+                        send_mail(
+                            subject=(
+                                f"[{Site.objects.get_current().domain.lower()}] "
+                                f"Unable to process images"
+                            ),
+                            message=msg,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[upload_session.creator.email],
+                        )
 
                 if upload_session.imageset:
                     upload_session.imageset.images.add(*collected_images)
@@ -306,9 +462,10 @@ def build_images(upload_session_uuid: UUID):
                 # Delete any touched file data
                 for file in session_files:
                     try:
-                        saf = StagedAjaxFile(file.staged_file_id)
-                        file.staged_file_id = None
-                        saf.delete()
+                        if file.staged_file_id:
+                            saf = StagedAjaxFile(file.staged_file_id)
+                            file.staged_file_id = None
+                            saf.delete()
                         file.save()
                     except NotFoundError:
                         pass

@@ -31,6 +31,8 @@
 {% else %}
     <li class="nav-item"><a
             class="nav-link"
-            href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}">Sign
-        in / Register</a></li>
+            href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}#signin">Sign In</a></li>
+    <li class="nav-item"><a
+            class="nav-link"
+            href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}#register">Register</a></li>
 {% endif %}

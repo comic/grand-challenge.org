@@ -5,12 +5,14 @@ from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
+from django.db.models import Count
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from numpy.random.mtrand import RandomState
 
+from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONSchemaValidator
@@ -263,6 +265,72 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             RandomState(seed=int(user.pk)).shuffle(hanging_list)
 
         return hanging_list
+
+    def generate_hanging_list(self):
+        image_names = self.images.values_list("name", flat=True)
+        self.hanging_list = [{"main": name} for name in image_names]
+        self.save()
+
+    def get_progress_for_user(self, user):
+        if not self.is_valid or not self.hanging_list:
+            return
+
+        answerable_questions = self.questions.exclude(
+            answer_type=Question.ANSWER_TYPE_HEADING
+        )
+        answerable_question_count = answerable_questions.count()
+        hanging_list_count = len(self.hanging_list)
+
+        if answerable_question_count == 0 or hanging_list_count == 0:
+            return {
+                "questions": 0.0,
+                "hangings": 0.0,
+                "diff": 0.0,
+            }
+
+        expected = hanging_list_count * answerable_question_count
+        answers = Answer.objects.filter(
+            question__in=answerable_questions, creator_id=user.id
+        ).distinct()
+        answer_count = answers.count()
+
+        # There are unanswered questions
+        if answer_count % answerable_question_count != 0:
+            # Group the answers by images and filter out the images that
+            # have an inadequate amount of answers
+            unanswered_images = (
+                answers.order_by("images__name")
+                .values("images__name")
+                .annotate(answer_count=Count("images__name"))
+                .filter(answer_count__lt=answerable_question_count)
+            )
+            image_names = set(
+                unanswered_images.values_list("images__name", flat=True)
+            ).union(
+                set(
+                    Image.objects.filter(
+                        readerstudies=self, answers__isnull=True
+                    )
+                    .distinct()
+                    .values_list("name", flat=True)
+                )
+            )
+            # Determine which hangings have images with unanswered questions
+            hanging_list = [set(x.values()) for x in self.hanging_list]
+            completed_hangings = [
+                x for x in hanging_list if len(x - image_names) == len(x)
+            ]
+            completed_hangings = len(completed_hangings)
+        else:
+            completed_hangings = answer_count / answerable_question_count
+
+        hangings = completed_hangings / hanging_list_count * 100
+        questions = answer_count / expected * 100
+        return {
+            "questions": questions,
+            "hangings": hangings,
+            "diff": questions - hangings,
+        }
 
 
 @receiver(post_delete, sender=ReaderStudy)

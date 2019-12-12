@@ -2,6 +2,7 @@ import pytest
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.reader_studies.models import ReaderStudy
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     QuestionFactory,
@@ -66,3 +67,69 @@ def test_read_only_fields():
         "image_port",
         "required",
     ]
+
+
+@pytest.mark.django_db
+def test_generate_hanging_list():
+    rs = ReaderStudyFactory()
+    im1 = ImageFactory(name="im1")
+    im2 = ImageFactory(name="im2")
+
+    rs.generate_hanging_list()
+    assert rs.hanging_list == []
+
+    rs.images.set([im1, im2])
+    rs.generate_hanging_list()
+    assert rs.hanging_list == [
+        {"main": "im1"},
+        {"main": "im2"},
+    ]
+
+
+@pytest.mark.django_db
+def test_progress_for_user():
+    rs = ReaderStudyFactory()
+    im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
+    q1, q2, q3 = [
+        QuestionFactory(reader_study=rs),
+        QuestionFactory(reader_study=rs),
+        QuestionFactory(reader_study=rs),
+    ]
+
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    question_perc = 100 / 6
+
+    assert rs.get_progress_for_user(reader) is None
+
+    rs.images.set([im1, im2])
+    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
+    rs.save()
+
+    progress = rs.get_progress_for_user(reader)
+    assert progress["hangings"] == 0
+    assert progress["questions"] == 0
+
+    a11 = AnswerFactory(question=q1, answer="foo", creator=reader)
+    a11.images.add(im1)
+
+    progress = rs.get_progress_for_user(reader)
+    assert progress["hangings"] == 0
+    assert progress["questions"] == pytest.approx(question_perc)
+
+    a21 = AnswerFactory(question=q1, answer="foo", creator=reader)
+    a21.images.add(im2)
+
+    progress = rs.get_progress_for_user(reader)
+    assert progress["hangings"] == 0
+    assert progress["questions"] == pytest.approx(question_perc * 2)
+
+    a12 = AnswerFactory(question=q2, answer="foo", creator=reader)
+    a12.images.add(im1)
+    a13 = AnswerFactory(question=q3, answer="foo", creator=reader)
+    a13.images.add(im1)
+
+    progress = rs.get_progress_for_user(reader)
+    assert progress["hangings"] == 50
+    assert progress["questions"] == pytest.approx(question_perc * 4)

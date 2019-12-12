@@ -3,6 +3,7 @@ import re
 
 from dal import autocomplete
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
@@ -10,8 +11,10 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.http import Http404, HttpResponse
+from django.urls import reverse
 from django.views.generic import (
     CreateView,
+    DeleteView,
     DetailView,
     FormView,
     ListView,
@@ -22,6 +25,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from guardian.shortcuts import get_perms
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
@@ -30,11 +34,17 @@ from rest_framework.mixins import (
 )
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import (
+    GenericViewSet,
+    ReadOnlyModelViewSet,
+)
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyPermissions,
+)
 from grandchallenge.reader_studies.forms import (
     EditorsForm,
     QuestionForm,
@@ -88,8 +98,34 @@ class ReaderStudyDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        change_perm = f"change_{ReaderStudy._meta.model_name}"
+        if change_perm in get_perms(self.request.user, self.object):
+            readers = [
+                {
+                    "obj": reader,
+                    "progress": self.object.get_progress_for_user(reader),
+                }
+                for reader in self.object.readers_group.user_set.all()
+            ]
+            context.update({"readers": readers})
+        else:
+            user_progress = self.object.get_progress_for_user(
+                self.request.user
+            )
+            context.update({"progress": user_progress})
+
+        reader_remove_form = ReadersForm()
+        reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
         context.update(
-            {"user_is_reader": self.object.is_reader(user=self.request.user)}
+            {
+                "editor_remove_form": editor_remove_form,
+                "reader_remove_form": reader_remove_form,
+                "user_is_reader": self.object.is_reader(
+                    user=self.request.user
+                ),
+            }
         )
         return context
 
@@ -108,6 +144,24 @@ class ReaderStudyUpdate(
         kwargs = super().get_form_kwargs()
         kwargs.update({"user": self.request.user})
         return kwargs
+
+
+class ReaderStudyDelete(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    success_message = "Reader study was successfully deleted"
+
+    def get_success_url(self):
+        return reverse("reader-studies:list")
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super().delete(request, *args, **kwargs)
 
 
 class QuestionUpdate(
@@ -134,7 +188,7 @@ class QuestionUpdate(
         for field_name in self.object.read_only_fields:
             form_fields[field_name].required = False
             form_fields[field_name].disabled = True
-
+        context.update({"reader_study": self.reader_study})
         return context
 
     def get_success_url(self):
@@ -272,10 +326,6 @@ class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
 
 
 class ExportCSVMixin(object):
-    def _check_export_perms(self, user, obj):
-        if not (user and user.has_perm(self.export_permission, obj)):
-            raise Http404()
-
     def _create_dicts(self, headers, data):
         return map(lambda x: dict(zip(headers, x)), data)
 
@@ -308,16 +358,20 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     queryset = ReaderStudy.objects.all().prefetch_related(
         "images", "questions"
     )
-    permission_classes = [DjangoObjectPermissions]
+    permission_classes = [DjangoObjectOnlyPermissions]
     filter_backends = [ObjectPermissionsFilter]
-    export_permission = (
+    change_permission = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+
+    def _check_change_perms(self, user, obj):
+        if not (user and user.has_perm(self.change_permission, obj)):
+            raise Http404()
 
     @action(detail=True)
     def export_answers(self, request, pk=None):
         reader_study = self.get_object()
-        self._check_export_perms(request.user, reader_study)
+        self._check_change_perms(request.user, reader_study)
 
         data = [
             answer.csv_values
@@ -334,6 +388,15 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             Answer.csv_headers,
             filename=f"{reader_study.slug}-answers.csv",
         )
+
+    @action(detail=True, methods=["patch"])
+    def generate_hanging_list(self, request, pk=None):
+        reader_study = self.get_object()
+        reader_study.generate_hanging_list()
+        messages.add_message(
+            request, messages.SUCCESS, "Hanging list re-generated."
+        )
+        return Response({"status": "Hanging list generated."},)
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):

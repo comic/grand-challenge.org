@@ -98,7 +98,6 @@ class TestGetSitkImage:
         image.files.add(too_large_imagefile)
 
         # Try to open and catch expected exception
-        exec_info = None
         with pytest.raises(IOError) as exec_info:
             image.get_sitk_image()
         assert "File exceeds maximum file size." in str(

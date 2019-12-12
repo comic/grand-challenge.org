@@ -1,15 +1,33 @@
+import re
+import shutil
+import tarfile
+import zipfile
+from pathlib import Path
 from typing import Dict, List, Tuple
 
+import SimpleITK
 import pytest
 
+from grandchallenge.cases.image_builders.metaio_utils import (
+    ADDITIONAL_HEADERS,
+    EXPECTED_HEADERS,
+    HEADERS_MATCHING_NUM_TIMEPOINTS,
+    parse_mh_header,
+)
 from grandchallenge.cases.models import (
     Image,
     RawImageFile,
     RawImageUploadSession,
     UploadSessionState,
 )
+from grandchallenge.cases.tasks import (
+    check_compressed_and_extract,
+    extract_and_flatten,
+    fix_mhd_file,
+)
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
+from tests.factories import UserFactory
 from tests.jqfileupload_tests.external_test_support import (
     create_file_from_filepath,
 )
@@ -18,8 +36,9 @@ from tests.jqfileupload_tests.external_test_support import (
 def create_raw_upload_image_session(
     images: List[str], delete_file=False, imageset=None, annotationset=None
 ) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
+    creator = UserFactory(email="test@example.com")
     upload_session = RawImageUploadSession(
-        imageset=imageset, annotationset=annotationset
+        imageset=imageset, annotationset=annotationset, creator=creator
     )
 
     uploaded_images = {}
@@ -73,11 +92,14 @@ def test_image_file_creation(settings):
         "valid_tiff.tif",
         "invalid_tiles_tiff.tif",
     ]
+
+    invalid_images = ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif")
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
     assert session.session_state == UploadSessionState.stopped
-    assert session.error_message is None
+    for image_name in invalid_images:
+        assert image_name in session.error_message
 
     assert Image.objects.filter(origin=session).count() == 5
 
@@ -88,7 +110,7 @@ def test_image_file_creation(settings):
         db_object.refresh_from_db()
 
         assert db_object.staged_file_id is None
-        if name in ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif"):
+        if name in invalid_images:
             assert db_object.error is not None
         else:
             assert db_object.error is None
@@ -146,6 +168,59 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
     assert [e for e in reversed(sitk_image.GetSize())] == image.shape
 
 
+@pytest.mark.parametrize(
+    "images",
+    (
+        ["image10x11x12x13-extra-stuff.mhd", "image10x11x12x13.zraw"],
+        ["image3x4-extra-stuff.mhd", "image3x4.zraw"],
+    ),
+)
+@pytest.mark.django_db
+def test_staged_mhd_upload_with_additional_headers(
+    settings, tmp_path, images: List[str]
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.refresh_from_db()
+    assert session.session_state == UploadSessionState.stopped
+    assert session.error_message is None
+
+    images = Image.objects.filter(origin=session).all()
+    assert len(images) == 1
+
+    raw_image_file: RawImageFile = list(uploaded_images.values())[0]
+    raw_image_file.refresh_from_db()
+    assert raw_image_file.staged_file_id is None
+
+    image: Image = images[0]
+    tmp_header_filename = tmp_path / "tmp_header.mhd"
+    with image.files.get(file__endswith=".mhd").file.open(
+        "rb"
+    ) as in_file, open(tmp_header_filename, "wb") as out_file:
+        out_file.write(in_file.read())
+
+    headers = parse_mh_header(tmp_header_filename)
+    for key in headers.keys():
+        assert (key in ADDITIONAL_HEADERS) or (key in EXPECTED_HEADERS)
+
+    sitk_image: SimpleITK.Image = image.get_sitk_image()
+    for key in ADDITIONAL_HEADERS:
+        assert key in sitk_image.GetMetaDataKeys()
+        if key in HEADERS_MATCHING_NUM_TIMEPOINTS:
+            if sitk_image.GetDimension() >= 4:
+                assert (
+                    len(sitk_image.GetMetaData(key).split(" "))
+                    == sitk_image.GetSize()[3]
+                )
+            else:
+                assert len(sitk_image.GetMetaData(key).split(" ")) == 1
+    assert "Bogus" not in sitk_image.GetMetaDataKeys()
+
+
 @pytest.mark.django_db
 def test_no_convertible_file(settings):
     # Override the celery settings
@@ -157,7 +232,8 @@ def test_no_convertible_file(settings):
 
     session.refresh_from_db()
     assert session.session_state == UploadSessionState.stopped
-    assert session.error_message is None
+    for image_name in images:
+        assert image_name in session.error_message
 
     no_image_image = list(uploaded_images.values())[0]
     no_image_image.refresh_from_db()
@@ -225,3 +301,109 @@ def test_mhd_file_annotation_creation(settings):
 
     sitk_image = image.get_sitk_image()
     assert [e for e in reversed(sitk_image.GetSize())] == image.shape
+
+
+def test_fix_mhd_file(tmpdir):
+    file = RESOURCE_PATH / "image3x4.mhd"
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    with tmp_file.open("r") as f:
+        headers = f.read()
+    headers = re.match(
+        r".*ElementDataFile = (?P<data_file>[^\n]*)", headers, flags=re.DOTALL,
+    )
+    assert headers.group("data_file") == "image3x4.zraw"
+
+    fix_mhd_file(tmp_file, "foo-")
+    with tmp_file.open("r") as f:
+        headers = f.read()
+    headers = re.match(
+        r".*ElementDataFile = (?P<data_file>[^\n]*)", headers, flags=re.DOTALL,
+    )
+    assert headers.group("data_file") == "foo-image3x4.zraw"
+
+
+@pytest.mark.parametrize(
+    "file_name,func,is_tar",
+    (
+        ("test.zip", zipfile.ZipFile, False),
+        ("test.tar", tarfile.TarFile, True),
+    ),
+)
+def test_extract_and_flatten(tmpdir, file_name, func, is_tar):
+    file = RESOURCE_PATH / file_name
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    assert tmpdir.listdir() == [tmp_file]
+
+    tmpdir_path = Path(tmpdir)
+    with func(tmp_file) as f:
+        new_files = extract_and_flatten(f, tmpdir_path, is_tar=is_tar)
+
+    expected = [
+        {"prefix": "folder-0-", "path": tmpdir_path / "folder-0-file-0.txt"},
+        {
+            "prefix": "folder-0-folder-1-",
+            "path": tmpdir_path / "folder-0-folder-1-file-1.txt",
+        },
+        {
+            "prefix": "folder-0-folder-1-folder-2-",
+            "path": tmpdir_path / "folder-0-folder-1-folder-2-file-2.txt",
+        },
+        {
+            "prefix": "folder-0-folder-1-folder-2-",
+            "path": tmpdir_path / "folder-0-folder-1-folder-2-folder-3.zip",
+        },
+    ]
+    assert sorted(new_files, key=lambda k: k["path"]) == expected
+    assert sorted(tmpdir.listdir()) == sorted(
+        [x["path"] for x in expected] + [tmpdir_path / file_name]
+    )
+
+
+@pytest.mark.parametrize("file_name", ("test.zip", "test.tar"))
+def test_check_compressed_and_extract(tmpdir, file_name):
+    file = RESOURCE_PATH / file_name
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    assert tmpdir.listdir() == [tmp_file]
+
+    tmpdir_path = Path(tmpdir)
+    check_compressed_and_extract(tmp_file, tmpdir_path)
+
+    expected = [
+        "folder-0-file-0.txt",
+        "folder-0-folder-1-file-1.txt",
+        "folder-0-folder-1-folder-2-file-2.txt",
+        "folder-0-folder-1-folder-2-folder-3-file-3.txt",
+    ]
+
+    assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
+
+
+@pytest.mark.django_db
+def test_build_zip_file(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # valid.zip contains a tarred version of the dicom folder,
+    # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff
+    images = ["valid.zip"]
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.refresh_from_db()
+    assert session.error_message is None
+    images = session.image_set.all()
+    assert images.count() == 4
+    # image10x10x10.mha image10x10x10.[mhd,zraw]
+    assert (
+        len([x for x in images if x.shape_without_color == [10, 10, 10]]) == 2
+    )
+    # dicom.tar
+    assert (
+        len([x for x in images if x.shape_without_color == [19, 4, 2, 3]]) == 1
+    )
+    # valid_tiff.tiff
+    assert (
+        len([x for x in images if x.shape_without_color == [1, 205, 205]]) == 1
+    )

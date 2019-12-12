@@ -1,8 +1,15 @@
 import pytest
+from django.contrib.sites.models import Site
+from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 
-from grandchallenge.algorithms.models import Algorithm
-from tests.algorithms_tests.factories import AlgorithmFactory
+from grandchallenge.algorithms.models import Algorithm, Job
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+    AlgorithmJobFactory,
+)
+from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -43,3 +50,34 @@ def test_group_deletion_reverse(group):
 
     with pytest.raises(ObjectDoesNotExist):
         algorithm.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_algorithm_job_update_status():
+    alg = AlgorithmFactory()
+    user = UserFactory()
+    editor = UserFactory()
+
+    alg.add_user(user)
+    alg.add_editor(editor)
+
+    ai = AlgorithmImageFactory(algorithm=alg)
+    job = AlgorithmJobFactory(algorithm_image=ai, creator=user)
+
+    for status, _ in Job.STATUS_CHOICES:
+        job.update_status(status=status)
+        job.refresh_from_db()
+        assert job.status == status
+
+    remaining_recipients = {user.email, editor.email}
+    for email in mail.outbox:
+        remaining_recipients -= set(email.to)
+        assert (
+            email.subject
+            == f"[{Site.objects.get_current().domain.lower()}] [{alg.title.lower()}] Job Failed"
+        )
+        assert (
+            f"Unfortunately your job for algorithm '{alg.title}' failed with an error"
+            in email.body
+        )
+    assert remaining_recipients == set()

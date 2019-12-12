@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+{% load url from grandchallenge_tags %}
+{% load user_profile_link from profiles %}
+{% load workstations %}
+{% load guardian_tags %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Workstation Configs</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.title }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% get_obj_perms request.user for object as "config_perms" %}
+
+    <h1>Workstation Config {{ object.title }}</h1>
+
+    {% if object.description %}
+        <p>{{ object.description }}</p>
+    {% endif %}
+
+    <table class="table table-hover my-3">
+        <tr>
+            <td class="font-weight-bold">Window presets</div>
+            <td>
+                {% for x in object.window_presets.all %}
+                    <div>{{ preset }}</div>
+                {% endfor %}
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Default window preset</td>
+            <td>{{ object.default_window_preset }}</td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Default slab thickness (mm)</td>
+            <td>{{ object.default_slab_thickness_mm }}</td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Default slab render method</td>
+            <td>{{ object.get_default_slab_render_method_display }}</td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Default orientation</td>
+            <td>{{ object.get_default_orientation_display }}</td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Default overlay lookup table</td>
+            <td>{{ object.default_overlay_lut }}</td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Default overlay interpolation</td>
+            <td>{{ object.get_default_overlay_interpolation_display }}</td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Image info plugin</td>
+            <td><i class="fas {% if object.show_image_info_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i></td>
+        </tr>
+         <tr>
+            <td class="font-weight-bold">Display plugin</td>
+            <td><i class="fas {% if object.show_display_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i></td>
+        </tr>
+    </table>
+
+    <p>
+        {% if "change_workstationconfig" in config_perms %}
+            <div class="d-flex justify-content-start align-items-center">
+                <a class="btn btn-primary mr-1"
+                   href="{% url 'workstation-configs:update' slug=object.slug %}">
+                    <i class="fa fa-edit"></i> Edit this workstation config
+                </a>
+                <a href="{% url 'workstation-configs:delete' slug=object.slug %}"
+                   class="btn btn-danger">
+                    <i class="fa fa-times"></i> Delete this workstation config
+                </a>
+            </div>
+        {% endif %}
+    </p>
+
+{% endblock %}

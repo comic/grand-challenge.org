@@ -212,6 +212,37 @@ def test_api_rs_list_permissions(client):
 
 
 @pytest.mark.django_db
+def test_api_rs_patch_permissions(client):
+    rs_set = TwoReaderStudies()
+
+    tests = (
+        (None, 401),
+        (rs_set.creator, 404),
+        (rs_set.editor1, 200),
+        (rs_set.reader1, 403),
+        (rs_set.editor2, 404),
+        (rs_set.reader2, 404),
+        (rs_set.u, 404),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname="api:reader-study-generate-hanging-list",
+            client=client,
+            method=client.patch,
+            data={},
+            user=test[0],
+            content_type="application/json",
+            reverse_kwargs={"pk": rs_set.rs1.pk},
+        )
+        assert response.status_code == test[1]
+
+        if test[1] == 200:
+            # We provided auth details and get a response
+            assert response.json()["status"] == "Hanging list generated."
+
+
+@pytest.mark.django_db
 def test_api_rs_detail_permissions(client):
     rs_set = TwoReaderStudies()
 

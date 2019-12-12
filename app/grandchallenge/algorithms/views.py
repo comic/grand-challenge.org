@@ -8,7 +8,14 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import (
+    NON_FIELD_ERRORS,
+    PermissionDenied,
+    ValidationError,
+)
+from django.forms.utils import ErrorList
 from django.http import Http404
+from django.shortcuts import redirect
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -35,6 +42,7 @@ from grandchallenge.algorithms.forms import (
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmPermissionRequest,
     Job,
     Result,
 )
@@ -46,6 +54,7 @@ from grandchallenge.algorithms.serializers import (
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -91,6 +100,41 @@ class AlgorithmDetail(
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     )
     raise_exception = True
+
+    def on_permission_check_fail(self, request, response, obj=None):
+        response = self.get(request)
+        return response
+
+    def check_permissions(self, request):
+        """
+        Checks if *request.user* has all permissions returned by
+        *get_required_permissions* method.
+
+        :param request: Original request.
+        """
+        try:
+            return super().check_permissions(request)
+        except PermissionDenied:
+            return redirect(
+                "algorithms:permission-request-create", slug=self.object.slug
+            )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        form = UsersForm()
+        form.fields["action"].initial = UsersForm.REMOVE
+        context.update({"form": form})
+
+        pending_permission_requests = AlgorithmPermissionRequest.objects.filter(
+            algorithm=self.get_object(),
+            status=AlgorithmPermissionRequest.PENDING,
+        ).count()
+        context.update(
+            {"pending_permission_requests": pending_permission_requests}
+        )
+
+        return context
 
 
 class AlgorithmUpdate(
@@ -212,6 +256,11 @@ class AlgorithmImageCreate(
 
         return super().form_valid(form)
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
+
 
 class AlgorithmImageDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
@@ -228,6 +277,11 @@ class AlgorithmImageUpdate(
     form_class = AlgorithmImageUpdateForm
     permission_required = f"{AlgorithmImage._meta.app_label}.change_{AlgorithmImage._meta.model_name}"
     raise_exception = True
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.object.algorithm})
+        return context
 
 
 class AlgorithmExecutionSessionCreate(
@@ -269,6 +323,11 @@ class AlgorithmExecutionSessionCreate(
         form.instance.creator = self.request.user
         form.instance.algorithm_image = self.algorithm.latest_ready_image
         return super().form_valid(form)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
 
     def get_success_url(self):
         return reverse(
@@ -321,3 +380,119 @@ class ResultViewSet(ReadOnlyModelViewSet):
     serializer_class = ResultSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
+
+
+class AlgorithmPermissionRequestCreate(
+    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+):
+    model = AlgorithmPermissionRequest
+    fields = ()
+
+    @property
+    def algorithm(self):
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
+    def get_success_url(self):
+        return self.algorithm.get_absolute_url()
+
+    def get_success_message(self, cleaned_data):
+        return self.object.status_to_string()
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.algorithm = self.algorithm
+        try:
+            redirect = super().form_valid(form)
+            return redirect
+
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        permission_request = AlgorithmPermissionRequest.objects.filter(
+            algorithm=self.algorithm, user=self.request.user
+        ).first()
+        context.update(
+            {
+                "permission_request": permission_request,
+                "algorithm": self.algorithm,
+            }
+        )
+        return context
+
+
+class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
+    model = AlgorithmPermissionRequest
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def algorithm(self):
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.algorithm
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(algorithm=self.algorithm)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
+
+
+class AlgorithmPermissionRequestUpdate(SuccessMessageMixin, UpdateView):
+    model = AlgorithmPermissionRequest
+    fields = ("status", "rejection_text")
+
+    @property
+    def algorithm(self) -> Algorithm:
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
+    def form_valid(self, form):
+        permission_request = self.get_object()
+        user = permission_request.user
+        form.instance.user = user
+        if (
+            not self.algorithm.is_editor(self.request.user)
+            and not self.algorithm.is_user(user)
+            and not self.algorithm.is_editor(user)
+        ):
+            form.instance.status = AlgorithmPermissionRequest.PENDING
+        try:
+            redirect = super().form_valid(form)
+            return redirect
+
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "permission_request": self.get_object(),
+                "algorithm": self.algorithm,
+            }
+        )
+        return context
+
+    def get_success_message(self, cleaned_data):
+        if not self.algorithm.is_editor(self.request.user):
+            return "You request for access has been sent to editors"
+        return "Permission request successfully updated"
+
+    def get_success_url(self):
+        if not self.algorithm.is_editor(self.request.user):
+            return reverse("algorithms:list")
+        return reverse(
+            "algorithms:permission-request-list",
+            kwargs={"slug": self.algorithm.slug},
+        )

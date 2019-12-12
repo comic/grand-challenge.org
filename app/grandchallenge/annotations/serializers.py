@@ -104,17 +104,58 @@ class PolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
 class SingleLandmarkAnnotationSerializer(AbstractSingleAnnotationSerializer):
     class Meta:
         model = SingleLandmarkAnnotation
-        fields = ("image", "annotation_set", "landmarks")
+        fields = ("id", "image", "annotation_set", "landmarks")
+
+
+class SingleLandmarkAnnotationSerializerNoParent(
+    AbstractSingleAnnotationSerializer
+):
+    class Meta:
+        model = SingleLandmarkAnnotation
+        fields = ("id", "image", "landmarks")
+        extra_kwargs = {"landmarks": {"allow_empty": True}}
 
 
 class LandmarkAnnotationSetSerializer(AbstractAnnotationSerializer):
-    singlelandmarkannotation_set = SingleLandmarkAnnotationSerializer(
-        many=True, read_only=True
+    singlelandmarkannotation_set = SingleLandmarkAnnotationSerializerNoParent(
+        many=True
     )
 
     class Meta:
         model = LandmarkAnnotationSet
         fields = ("id", "grader", "created", "singlelandmarkannotation_set")
+
+    def create(self, validated_data):
+        sla_data = validated_data.pop("singlelandmarkannotation_set")
+        la_set = LandmarkAnnotationSet.objects.create(**validated_data)
+        for sla in sla_data:
+            SingleLandmarkAnnotation.objects.create(
+                annotation_set=la_set, **sla
+            )
+        return la_set
+
+    def update(self, instance, validated_data):
+        def update_delete_or_create_sla(singe_landmark_annotation):
+            try:
+                sla_image = singe_landmark_annotation.get("image")
+                item = SingleLandmarkAnnotation.objects.get(
+                    image=sla_image, annotation_set=instance
+                )
+                new_landmarks = singe_landmark_annotation.get("landmarks")
+                if len(new_landmarks) == 0:
+                    item.delete()
+                else:
+                    item.landmarks = new_landmarks
+                    item.save()
+            except SingleLandmarkAnnotation.DoesNotExist:
+                SingleLandmarkAnnotation.objects.create(
+                    annotation_set=instance, **singe_landmark_annotation
+                )
+
+        sla_data = validated_data.pop("singlelandmarkannotation_set")
+        for singe_landmark_annotation in sla_data:
+            update_delete_or_create_sla(singe_landmark_annotation)
+        return instance
 
 
 class ImageQualityAnnotationSerializer(AbstractAnnotationSerializer):

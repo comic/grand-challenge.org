@@ -93,7 +93,8 @@ class RawImageUploadSession(UUIDModel):
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
-            f"({self.session_state})"
+            f"({self.session_state}) "
+            f"{self.error_message or ''}"
         )
 
     def save(self, *args, skip_processing=False, **kwargs):
@@ -261,6 +262,9 @@ class Image(UUIDModel):
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)
     depth = models.IntegerField(null=True)
+    voxel_width_mm = models.FloatField(null=True)
+    voxel_height_mm = models.FloatField(null=True)
+    voxel_depth_mm = models.FloatField(null=True)
     timepoints = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
     color_space = models.CharField(

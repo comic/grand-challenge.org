@@ -10,5 +10,10 @@
     <p>You can review, accept or reject this request <a href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">here</a>.</p>
 
     <p>Regards,<br/>
-        {{ site.name }}</p>
+        {{ site.name }}
+    </p>
+
+    <p>
+        <small>This is an automated service email from {{ site.domain }}.</small>
+    </p>
 {% endautoescape %}

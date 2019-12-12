@@ -13,7 +13,7 @@ description = ""
 authors = ["James Meakin <code@jmsmkn.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.7"
+python = "^3.7"
 "beautifulsoup4" = "*"
 celery = "*"
 redis = "*"
@@ -56,6 +56,9 @@ sentry-sdk = "*"
 django-cors-headers = "*"
 pyvips = "*"
 django-speedinfo = "*"
+drf-yasg = {version = "^1.17", extras = ["validation"]}
+pydicom = "^1.3"
+python-dateutil = "<2.8.1"  # This is not used directly but solves a lock conflict with botocore
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

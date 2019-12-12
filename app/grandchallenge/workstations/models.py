@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from urllib.parse import unquote, urljoin
 
@@ -32,6 +33,8 @@ The proxy will map the http and websocket connections from the user to the runni
 The container instance will have the users API token set in the environment, so that it is able to interact with the grand challenge API as this user.
 The user is able to stop the container, otherwise it will be terminated after ``maxmium_duration`` is reached.
 """
+
+logger = logging.getLogger(__name__)
 
 
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
@@ -266,7 +269,8 @@ class Session(UUIDModel):
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
-    history = HistoricalRecords()
+    logs = models.TextField(editable=False, blank=True)
+    history = HistoricalRecords(excluded_fields=["logs"])
 
     class Meta(UUIDModel.Meta):
         ordering = ("created", "creator")
@@ -325,7 +329,7 @@ class Session(UUIDModel):
 
         if settings.DEBUG:
             # Allow the container to communicate with the dev environment
-            env.update({"GRAND_CHALLENGE_UNSAFE": "True"})
+            env.update({"GRAND_CHALLENGE_UNSAFE": "true"})
 
         return env
 
@@ -389,6 +393,7 @@ class Session(UUIDModel):
 
     def stop(self) -> None:
         """Stop the service for this session, cleaning up all of the containers."""
+        self.logs = self.service.logs()
         self.service.stop_and_cleanup()
         self.update_status(status=self.STOPPED)
 
