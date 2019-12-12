@@ -3,7 +3,11 @@ from enum import Enum
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import (
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+    ValidationError,
+)
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -999,7 +1003,11 @@ class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
         ).all()
         image_id = self.request.query_params.get("image_id")
         if image_id is not None:
-            image = get_object_or_404(Image.objects.all(), pk=image_id)
+            try:
+                image = get_object_or_404(Image.objects.all(), pk=image_id)
+            except ValidationError:
+                # Invalid uuid passed, return 404
+                raise NotFound()
             queryset = LandmarkAnnotationSet.objects.filter(
                 singlelandmarkannotation__image=image
             )

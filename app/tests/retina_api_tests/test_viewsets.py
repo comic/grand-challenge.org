@@ -1884,6 +1884,16 @@ class TestLandmarkAnnotationSetViewSetForImage:
         else:
             assert response.status_code == status.HTTP_200_OK
 
+    def test_invalid_image_uuid(self, rf, user_type):
+        response = self.perform_request(
+            rf, user_type, f"?image_id=invalid_uuid"
+        )
+
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        else:
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
     def test_non_existant_image(self, rf, user_type):
         img = ImageFactory()
         pk = img.pk
