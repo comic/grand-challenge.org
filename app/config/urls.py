@@ -101,7 +101,7 @@ urlpatterns = [
             "grandchallenge.registrations.urls", namespace="registrations"
         ),
     ),
-    path('terms-of-service', TermsOfServiceView.as_view(), name='terms'),
+    path("terms-of-service", TermsOfServiceView.as_view(), name="terms"),
     path(
         "media/",
         include("grandchallenge.serving.urls", namespace="root-serving"),

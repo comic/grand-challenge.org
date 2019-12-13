@@ -46,7 +46,7 @@ class AlgorithmForm(SaveFormInitMixin, ModelForm):
             "contact_information",
             "info_url",
             "additional_information",
-            'additional_terms',
+            "additional_terms",
         )
 
 

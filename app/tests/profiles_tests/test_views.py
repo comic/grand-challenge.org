@@ -1,5 +1,6 @@
 import pytest
 from django.conf import settings
+from django.urls import reverse as reverse_orig
 from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
@@ -87,3 +88,13 @@ class TestUrlEncodedUsername:
         response = client.get(url, follow=True)
         assert response.status_code == status.HTTP_200_OK
         assert "t%C3%A9st" in response.redirect_chain[0][0]
+
+
+@pytest.mark.django_db
+def test_terms_form_fields(client):
+    response = client.get(reverse("profile_signup"))
+    assert response.status_code == 200
+    assert reverse_orig("terms") in response.rendered_content
+    response = client.get(reverse("pre-social"))
+    assert response.status_code == 200
+    assert reverse_orig("terms") in response.rendered_content

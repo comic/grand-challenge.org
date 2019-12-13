@@ -13,6 +13,7 @@ from grandchallenge.challenges.models import (
     ExternalChallenge,
     ImagingModality,
 )
+from grandchallenge.core.models import TermsOfService
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.evaluation.models import Job, Method, Result, Submission
 from grandchallenge.jqfileupload.models import StagedFile
@@ -255,3 +256,8 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
             return fuzzy_list[0]
 
         return fuzzy_list
+
+
+class TermsOfServiceFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = TermsOfService
