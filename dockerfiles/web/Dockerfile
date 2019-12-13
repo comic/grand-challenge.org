@@ -20,7 +20,7 @@ ENV PYTHONUNBUFFERED 1
 
 RUN mkdir -p /opt/poetry /app /static /opt/static /dbox/Dropbox/media
 RUN python -m pip install -U pip
-RUN python -m pip install -U poetry==0.12.17
+RUN python -m pip install -U poetry
 
 RUN groupadd -g 2001 -r django && useradd -m -u 2001 -r -g django django
 RUN chown django:django /opt/poetry /app /static /opt/static /dbox/Dropbox/media
@@ -31,7 +31,7 @@ WORKDIR /opt/poetry
 COPY pyproject.toml /opt/poetry
 COPY poetry.lock /opt/poetry
 RUN poetry install --no-dev
-ENV PATH="/home/django/.cache/pypoetry/virtualenvs/grand-challenge.org-py3.7/bin:$PATH"
+ENV PATH="$(poetry run which python | xargs dirname):$PATH"
 
 ###################
 #  Webpack        #
