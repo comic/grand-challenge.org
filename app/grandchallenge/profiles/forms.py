@@ -2,13 +2,14 @@ import userena.forms as userena_forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
+from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django_countries import countries
 
 
 class PreSocialForm(forms.Form):
     accept_terms = forms.BooleanField(
-        label=_(f"I have read and agree to the <a href=\"/terms-of-service\">terms of service"),
+        label='I have read and agree to the <a href="{}">terms of service</a>',
         required=True,
     )
 
@@ -16,6 +17,8 @@ class PreSocialForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("submit", "Submit"))
+        accept_terms = self.fields["accept_terms"]
+        accept_terms.label = accept_terms.label.format(reverse_lazy("terms"))
 
 
 class SignupFormExtra(userena_forms.SignupForm):
@@ -49,12 +52,14 @@ class SignupFormExtra(userena_forms.SignupForm):
         help_text=_("A website which describes you or your department"),
     )
     accept_terms = forms.BooleanField(
-        label=_(f"I have read and agree to the <a href=\"/terms-of-service\">terms of service"),
+        label='I have read and agree to the <a href="{}">terms of service</a>',
         required=True,
     )
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        accept_terms = self.fields["accept_terms"]
+        accept_terms.label = accept_terms.label.format(reverse_lazy("terms"))
 
     def clean_country(self):
         """Make sure the user changed the country field."""

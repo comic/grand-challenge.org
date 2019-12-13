@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.conf.urls import include, url
-from django.urls import path
+from django.urls import path, reverse_lazy
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
@@ -66,6 +66,7 @@ schema_view = get_schema_view(
         default_version="v1",
         description=f"The API for {settings.SESSION_COOKIE_DOMAIN.lstrip('.')}.",
         license=openapi.License(name="Apache License 2.0"),
+        terms_of_service=reverse_lazy("terms"),
     ),
     permission_classes=(permissions.IsAuthenticated,),
     patterns=[path("api/v1/", include(router.urls))],
