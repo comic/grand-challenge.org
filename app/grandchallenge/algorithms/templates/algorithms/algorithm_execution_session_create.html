@@ -28,4 +28,9 @@
 
     {% crispy form %}
 
+    By running this algorithm you agree to the <a href="{% url 'terms' %}"> general terms of service</a>{% if algorithm.additional_terms %}, as well as the algorithm's specific terms of service:
+        <p>{{ algorithm.additional_terms }}</p>
+    {% else %}.
+    {% endif %}
+
 {% endblock %}

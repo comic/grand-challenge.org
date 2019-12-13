@@ -43,6 +43,10 @@ class AlgorithmForm(SaveFormInitMixin, ModelForm):
             "visible_to_public",
             "workstation",
             "workstation_config",
+            "contact_information",
+            "info_url",
+            "additional_information",
+            'additional_terms',
         )
 
 
