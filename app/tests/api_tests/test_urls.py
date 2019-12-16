@@ -43,19 +43,14 @@ def test_api_permissions(
 ):
     if method == "OPTIONS" and schema == "schema-docs":
         pytest.xfail(
-            "These tests are known to fail with with: "
+            reason="These tests are known to fail with with: "
             "django.core.exceptions.ImproperlyConfigured: "
             "Returned a template response with no `template_name` "
             "attribute set on either the view or response"
         )
-    expected_responses_per_user_for_unsafe_methods = dict(
-        user=403, staff=403, super_user=405, anonymous=401
-    )
     kwargs = dict(format=schema_format) if schema == "schema-json" else None
     assert_viewname_status(
-        code=expected_responses_per_user_for_unsafe_methods[user]
-        if method not in permissions.SAFE_METHODS
-        else 200,
+        code=200 if method in permissions.SAFE_METHODS else 405,
         url=reverse(f"api:{schema}", kwargs=kwargs),
         client=client,
         user=getattr(api_users_set, user),
