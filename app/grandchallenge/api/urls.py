@@ -68,9 +68,7 @@ router.register(
 
 
 class IsSuperUserOrReadOnly(permissions.BasePermission):
-    """
-    The request is authenticated as an admin, or is a read-only request.
-    """
+    """The request is authenticated as an admin, or is a read-only request."""
 
     def has_permission(self, request, view):
         return bool(
