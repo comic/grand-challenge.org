@@ -360,7 +360,7 @@ LOCAL_APPS = [
     "grandchallenge.workstation_configs",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
