@@ -30,8 +30,9 @@ USER django:django
 WORKDIR /opt/poetry
 COPY pyproject.toml /opt/poetry
 COPY poetry.lock /opt/poetry
+RUN poetry config --local virtualenvs.in-project true
 RUN poetry install --no-dev
-ENV PATH="$(poetry run which python | xargs dirname):$PATH"
+ENV PATH="/opt/poetry/.venv/bin:$PATH"
 
 ###################
 #  Webpack        #
