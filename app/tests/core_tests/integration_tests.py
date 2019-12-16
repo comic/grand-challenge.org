@@ -251,6 +251,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "department": "test",
             "country": "NL",
             "website": "http://www.example.com",
+            "accept_terms": True,
         }
         data.update(overwrite_data)  # overwrite any key in default if in data
         signin_page = self.client.post(reverse("profile_signup"), data)
