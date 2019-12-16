@@ -20,7 +20,7 @@ ENV PYTHONUNBUFFERED 1
 
 RUN mkdir -p /opt/poetry /app /static /opt/static /dbox/Dropbox/media
 RUN python -m pip install -U pip
-RUN python -m pip install -U poetry
+RUN python -m pip install -U poetry==0.12.17
 
 RUN groupadd -g 2001 -r django && useradd -m -u 2001 -r -g django django
 RUN chown django:django /opt/poetry /app /static /opt/static /dbox/Dropbox/media

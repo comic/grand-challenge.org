@@ -121,19 +121,6 @@ class SingleLandmarkAnnotationFactory(factory.DjangoModelFactory):
     landmarks = FuzzyFloatCoordinatesList()
 
 
-def create_batch_landmarks():
-    landmark_annotation_set = LandmarkAnnotationSet()
-    landmark_annotations = []
-    for _ in range(3):
-        landmark_annotations.append(
-            SingleLandmarkAnnotationFactory(
-                registration=landmark_annotation_set
-            )
-        )
-
-    return landmark_annotation_set, landmark_annotations
-
-
 class ImageQualityAnnotationFactory(DefaultImageAnnotationModelFactory):
     class Meta:
         model = ImageQualityAnnotation
