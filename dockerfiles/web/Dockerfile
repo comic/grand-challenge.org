@@ -28,9 +28,9 @@ USER django:django
 
 # Install base python packages
 WORKDIR /opt/poetry
+COPY poetry.toml /opt/poetry
 COPY pyproject.toml /opt/poetry
 COPY poetry.lock /opt/poetry
-RUN poetry config --local virtualenvs.in-project true
 RUN poetry install --no-dev
 ENV PATH="/opt/poetry/.venv/bin:$PATH"
 
