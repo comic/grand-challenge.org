@@ -90,5 +90,8 @@ app/celerybeat-schedule
 # Local postgres data
 postgres_data/
 
+# Poetry virtualenv path
+.venv
+
 node_modules/
 dist/
