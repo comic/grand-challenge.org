@@ -66,6 +66,20 @@ router.register(
     basename="landmark-annotation",
 )
 
+
+class IsSuperUserOrReadOnly(permissions.BasePermission):
+    """
+    The request is authenticated as an admin, or is a read-only request.
+    """
+
+    def has_permission(self, request, view):
+        return bool(
+            request.method in permissions.SAFE_METHODS
+            or request.user
+            and request.user.is_superuser
+        )
+
+
 # TODO: add terms_of_service and contact
 schema_view = get_schema_view(
     openapi.Info(
@@ -74,7 +88,7 @@ schema_view = get_schema_view(
         description=f"The API for {settings.SESSION_COOKIE_DOMAIN.lstrip('.')}.",
         license=openapi.License(name="Apache License 2.0"),
     ),
-    permission_classes=(permissions.IsAuthenticated,),
+    permission_classes=(IsSuperUserOrReadOnly,),
     patterns=[path("api/v1/", include(router.urls))],
 )
 
