@@ -20,6 +20,7 @@ from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.dicom_4dct import (
     image_builder_dicom_4dct,
 )
+from grandchallenge.cases.image_builders.fallback import image_builder_fallback
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
@@ -148,6 +149,7 @@ IMAGE_BUILDER_ALGORITHMS = [
     image_builder_mhd,
     image_builder_tiff,
     image_builder_dicom_4dct,
+    image_builder_fallback,
 ]
 
 
