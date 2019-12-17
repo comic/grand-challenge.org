@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.urls import reverse as reverse_org
+from django.utils.functional import lazy
 
 
 def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
@@ -30,3 +31,6 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     )
 
     return urljoin(domain.lower(), path)
+
+
+reverse_lazy = lazy(reverse, str)
