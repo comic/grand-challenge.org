@@ -1,10 +1,9 @@
 import pytest
 from django.conf import settings
-from django.urls import reverse as reverse_orig
 from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import UserFactory
+from tests.factories import PolicyFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -92,9 +91,10 @@ class TestUrlEncodedUsername:
 
 @pytest.mark.django_db
 def test_terms_form_fields(client):
+    p = PolicyFactory(title="terms", body="blah")
     response = client.get(reverse("profile_signup"))
     assert response.status_code == 200
-    assert reverse_orig("terms") in response.rendered_content
+    assert p.get_absolute_url() in response.rendered_content
     response = client.get(reverse("pre-social"))
     assert response.status_code == 200
-    assert reverse_orig("terms") in response.rendered_content
+    assert p.get_absolute_url() in response.rendered_content
