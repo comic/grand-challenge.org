@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from grandchallenge.core.models import TermsOfService
+from grandchallenge.policies.models import TermsOfService
 
 
 @pytest.mark.django_db

@@ -5,8 +5,9 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
-from grandchallenge.core.views import HomeTemplate, TermsOfServiceView
+from grandchallenge.core.views import HomeTemplate
 from grandchallenge.pages.views import FaviconView
+from grandchallenge.policies.views import TermsOfServiceView
 
 admin.autodiscover()
 

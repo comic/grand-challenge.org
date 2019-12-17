@@ -5,7 +5,6 @@ from django.template import RequestContext, Template, TemplateSyntaxError
 from django.utils._os import safe_join
 from django.views.generic import TemplateView
 
-from grandchallenge.core.models import TermsOfService
 from grandchallenge.pages.models import ErrorPage, Page
 
 
@@ -145,12 +144,3 @@ class HomeTemplate(TemplateView):
 
 def copy_page(page):
     return Page(challenge=page.challenge, title=page.title, html=page.html)
-
-
-class TermsOfServiceView(TemplateView):
-    template_name = "terms_of_service.html"
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"terms": TermsOfService.objects.first()})
-        return context

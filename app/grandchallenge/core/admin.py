@@ -3,8 +3,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import GroupAdmin
 from django.contrib.auth.models import Group
 
-from grandchallenge.core.models import TermsOfService
-
 admin.site.unregister(Group)
 
 
@@ -23,6 +21,3 @@ class ReadOnlyUserInLine(admin.TabularInline):
 @admin.register(Group)
 class GroupWithUsers(GroupAdmin):
     inlines = [ReadOnlyUserInLine]
-
-
-admin.site.register(TermsOfService)
