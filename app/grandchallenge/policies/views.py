@@ -4,7 +4,7 @@ from grandchallenge.policies.models import TermsOfService
 
 
 class TermsOfServiceView(TemplateView):
-    template_name = "terms_of_service.html"
+    template_name = "policies/terms_of_service.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
