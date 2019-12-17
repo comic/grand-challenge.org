@@ -74,7 +74,7 @@ schema_view = get_schema_view(
         description=f"The API for {settings.SESSION_COOKIE_DOMAIN.lstrip('.')}.",
         license=openapi.License(name="Apache License 2.0"),
     ),
-    permission_classes=(permissions.IsAuthenticated,),
+    permission_classes=(permissions.AllowAny,),
     patterns=[path("api/v1/", include(router.urls))],
 )
 
