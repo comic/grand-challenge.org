@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Terms of service - {{ block.super }}
+    Terms of Service - {{ block.super }}
 {% endblock %}
 
 {% block content %}
-    <h1>Terms of service</h1>
+    <h1>Terms of Service</h1>
 
-    <p>{{ terms.body }}</p>
+    <p>{{ terms.body|safe }}</p>
 {% endblock %}
