@@ -66,7 +66,6 @@ router.register(
     basename="landmark-annotation",
 )
 
-
 # TODO: add terms_of_service and contact
 schema_view = get_schema_view(
     openapi.Info(
