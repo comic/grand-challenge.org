@@ -1,11 +1,16 @@
-from django.core.exceptions import ValidationError
 from django.db import models
+from django_extensions.db.models import TitleSlugDescriptionModel
+from simple_history.models import HistoricalRecords
+
+from grandchallenge.subdomains.utils import reverse
 
 
-class TermsOfService(models.Model):
+class Policy(TitleSlugDescriptionModel):
     body = models.TextField()
+    history = HistoricalRecords()
 
-    def save(self, *args, **kwrags):
-        if not self.pk and TermsOfService.objects.exists():
-            raise ValidationError("Only one terms of service instance allowed")
-        return super().save(*args, **kwrags)
+    def __str__(self):
+        return f"{self.title}"
+
+    def get_absolute_url(self):
+        return reverse("policies:detail", kwargs={"slug": self.slug})

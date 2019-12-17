@@ -1,5 +1,5 @@
 from django.contrib import admin
 
-from grandchallenge.policies.models import TermsOfService
+from grandchallenge.policies.models import Policy
 
-admin.site.register(TermsOfService)
+admin.site.register(Policy)

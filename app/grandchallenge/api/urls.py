@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.conf.urls import include, url
-from django.urls import path, reverse_lazy
+from django.urls import path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
@@ -22,6 +22,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyViewSet,
 )
 from grandchallenge.retina_api.views import LandmarkAnnotationSetViewSet
+from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
@@ -73,7 +74,9 @@ schema_view = get_schema_view(
         default_version="v1",
         description=f"The API for {settings.SESSION_COOKIE_DOMAIN.lstrip('.')}.",
         license=openapi.License(name="Apache License 2.0"),
-        terms_of_service=reverse_lazy("terms"),
+        terms_of_service=reverse_lazy(
+            "policies:detail", kwargs={"slug": "terms-of-service"}
+        ),
     ),
     permission_classes=(permissions.IsAuthenticated,),
     patterns=[path("api/v1/", include(router.urls))],

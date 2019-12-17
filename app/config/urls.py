@@ -7,7 +7,6 @@ from django.views.generic import TemplateView
 
 from grandchallenge.core.views import HomeTemplate
 from grandchallenge.pages.views import FaviconView
-from grandchallenge.policies.views import TermsOfServiceView
 
 admin.autodiscover()
 
@@ -102,7 +101,10 @@ urlpatterns = [
             "grandchallenge.registrations.urls", namespace="registrations"
         ),
     ),
-    path("terms-of-service", TermsOfServiceView.as_view(), name="terms"),
+    path(
+        "policies/",
+        include("grandchallenge.policies.urls", namespace="policies"),
+    ),
     path(
         "media/",
         include("grandchallenge.serving.urls", namespace="root-serving"),
