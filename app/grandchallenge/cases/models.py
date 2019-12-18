@@ -149,9 +149,7 @@ class RawImageFile(UUIDModel):
 
     staged_file_id = models.UUIDField(blank=True, null=True)
 
-    error = models.CharField(
-        max_length=256, blank=False, null=True, default=None
-    )
+    error = models.TextField(blank=False, null=True, default=None)
 
 
 def image_file_path(instance, filename):
