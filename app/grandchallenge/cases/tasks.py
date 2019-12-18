@@ -401,7 +401,7 @@ def build_images(upload_session_uuid: UUID):
                                 filename
                             ]  # type: RawImageFile
                             raw_image.error = raw_image.error or ""
-                            raw_image.error += f"{str(msg)}<br/>"
+                            raw_image.error += f"{msg}\n"
                             raw_image.save()
 
                 for image in collected_images:
@@ -416,8 +416,9 @@ def build_images(upload_session_uuid: UUID):
                     raw_file = filename_lookup[unconsumed_filename]
                     error = raw_file.error or ""
                     raw_file.error = (
-                        "File could not be processed by any image builder:<br/>"
-                    ) + error
+                        "File could not be processed by any image builder:\n\n"
+                        f"{error}"
+                    )
 
                 if unconsumed_filenames:
                     upload_session.error_message = f"Failed: {', '.join(unconsumed_filenames)}"[

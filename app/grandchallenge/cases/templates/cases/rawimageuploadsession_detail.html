@@ -23,7 +23,7 @@
                         <td style="padding-right:1cm;">{{ raw_file.filename }}</td>
                         <td>
                             {% if raw_file.error %}
-                                {{ raw_file.error|safe }}
+                                {{ raw_file.error|linebreaksbr }}
                             {% else %}
                                 {{ "succeeded" }}
                             {% endif %}
