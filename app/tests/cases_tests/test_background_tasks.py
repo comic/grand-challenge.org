@@ -93,7 +93,7 @@ def test_image_file_creation(settings):
         "invalid_tiles_tiff.tif",
     ]
 
-    invalid_images = ("no_image", "invalid_utf8.mhd")
+    invalid_images = ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif")
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
@@ -101,7 +101,7 @@ def test_image_file_creation(settings):
     for image_name in invalid_images:
         assert image_name in session.error_message
 
-    assert Image.objects.filter(origin=session).count() == 6
+    assert Image.objects.filter(origin=session).count() == 5
 
     for name, db_object in uploaded_images.items():
         name: str

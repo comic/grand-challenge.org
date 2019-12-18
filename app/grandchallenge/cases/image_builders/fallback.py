@@ -3,6 +3,7 @@ from pathlib import Path
 import SimpleITK
 import numpy as np
 from PIL import Image
+from django.core.exceptions import ValidationError
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
@@ -33,6 +34,12 @@ def image_builder_fallback(path: Path) -> ImageBuilderResult:
     for file_path in path.iterdir():
         try:
             img = Image.open(file_path)
+
+            if img.format.lower() not in ["jpeg", "png"]:
+                raise ValidationError(
+                    f"Unsupported image format: {img.format}"
+                )
+
             img_array = np.array(img)
             is_vector = img.mode != "L"
             img = SimpleITK.GetImageFromArray(img_array, isVector=is_vector)
@@ -42,7 +49,7 @@ def image_builder_fallback(path: Path) -> ImageBuilderResult:
             new_images.append(n_image)
             new_image_files += n_image_files
             consumed_files.append(file_path.name)
-        except IOError:
+        except (IOError, ValidationError):
             errors[file_path.name] = "Not a valid image file"
 
     return ImageBuilderResult(
