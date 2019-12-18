@@ -190,13 +190,13 @@ def image_builder_tiff(path: Path) -> ImageBuilderResult:
         try:
             tiff_file = load_tiff_file(path=file_path)
         except ValidationError as e:
-            invalid_file_errors[file_path.name] = str(e)
+            invalid_file_errors[file_path.name] = e.message  # noqa: B306
             continue
 
         try:
             dzi_output = create_dzi_images(tiff_file=tiff_file, pk=pk)
         except ValidationError as e:
-            invalid_file_errors[file_path.name] = str(e)
+            invalid_file_errors[file_path.name] = e.message  # noqa: B306
 
         image = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
 
