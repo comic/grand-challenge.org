@@ -91,6 +91,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "algorithm's detail page."
         ),
     )
+    additional_terms = models.TextField(
+        blank=True,
+        help_text=(
+            "By using this algortihm, users agree to the site wide "
+            "terms of service. If your algorithm has any additional "
+            "terms of usage, define them here."
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

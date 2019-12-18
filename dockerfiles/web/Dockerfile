@@ -28,10 +28,11 @@ USER django:django
 
 # Install base python packages
 WORKDIR /opt/poetry
+COPY poetry.toml /opt/poetry
 COPY pyproject.toml /opt/poetry
 COPY poetry.lock /opt/poetry
 RUN poetry install --no-dev
-ENV PATH="/home/django/.cache/pypoetry/virtualenvs/grand-challenge.org-py3.7/bin:$PATH"
+ENV PATH="/opt/poetry/.venv/bin:$PATH"
 
 ###################
 #  Webpack        #

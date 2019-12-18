@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.shortcuts import redirect, render
+from django.views.generic.edit import FormView
 from userena import views as userena_views
 
-from grandchallenge.profiles.forms import EditProfileForm
+from grandchallenge.profiles.forms import EditProfileForm, PreSocialForm
 from grandchallenge.profiles.utils import signin_redirect
 from grandchallenge.subdomains.utils import reverse
 
@@ -72,3 +73,11 @@ def signin(request, **kwargs):
 def signup_complete(request):
     response = render(request, "userena/signup_complete.html")
     return response
+
+
+class PreSocialView(FormView):
+    form_class = PreSocialForm
+    template_name = "profiles/pre_social_form.html"
+
+    def get_success_url(self, *args, **kwargs):
+        return reverse("social:begin", args=["google-oauth2"])

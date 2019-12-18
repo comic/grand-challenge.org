@@ -78,7 +78,7 @@
             </div>
 
             <div id="register" class="tab-pane fade mt-3 mb-3 pt-3">
-                <form action="{% url 'social:begin' 'google-oauth2' %}">
+                <form action="{% url 'pre-social' %}">
                     {% csrf_token %}
                     {% if request.GET.next %}
                         <input type="hidden" name="next"
