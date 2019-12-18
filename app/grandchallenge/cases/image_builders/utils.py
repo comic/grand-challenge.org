@@ -10,7 +10,9 @@ from grandchallenge.cases.models import Image, ImageFile
 
 
 def convert_itk_to_internal(
-    simple_itk_image: SimpleITK.Image, name: Optional[AnyStr] = None,
+    simple_itk_image: SimpleITK.Image,
+    name: Optional[AnyStr] = None,
+    use_spacing: Optional[bool] = True,
 ) -> Tuple[Image, Sequence[ImageFile]]:
     color_space = simple_itk_image.GetNumberOfComponentsPerPixel()
     color_space = {
@@ -45,8 +47,12 @@ def convert_itk_to_internal(
             timepoints=timepoints,
             resolution_levels=None,
             color_space=color_space,
-            voxel_width_mm=simple_itk_image.GetSpacing()[0],
-            voxel_height_mm=simple_itk_image.GetSpacing()[1],
+            voxel_width_mm=simple_itk_image.GetSpacing()[0]
+            if use_spacing
+            else None,
+            voxel_height_mm=simple_itk_image.GetSpacing()[1]
+            if use_spacing
+            else None,
             voxel_depth_mm=simple_itk_image.GetSpacing()[2] if depth else None,
         )
         db_image_files = []
