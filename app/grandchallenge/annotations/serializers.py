@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from grandchallenge.annotations.models import (
@@ -19,6 +20,12 @@ from grandchallenge.annotations.validators import (
 
 
 class AbstractAnnotationSerializer(serializers.ModelSerializer):
+    grader = serializers.PrimaryKeyRelatedField(
+        queryset=get_user_model().objects.all(),
+        required=False,
+        default=serializers.CurrentUserDefault(),
+    )
+
     def validate_grader(self, value):
         """
         Validate that the current grader is the user creating the object for

@@ -1705,6 +1705,38 @@ class TestLandmarkAnnotationSetViewSet:
         else:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    def test_create_view_no_user_id(
+        self, rf, user_type, viewset, factory, serializer, basename
+    ):
+        models = self.create_models(factory)
+        build_kwargs = {"grader": models[0].grader}
+        model_build = factory.build(**build_kwargs)
+        model_serialized = serializer(model_build).data
+        model_serialized_no_grader = model_serialized.copy()
+        del model_serialized_no_grader["grader"]
+        model_json = json.dumps(model_serialized_no_grader)
+
+        response = view_test(
+            "create",
+            user_type,
+            self.namespace,
+            basename,
+            models[0].grader,
+            None,
+            rf,
+            viewset,
+            model_json,
+            check_response_status_code=False,
+            with_user=False,
+        )
+        if user_type in ("retina_admin", "retina_grader"):
+            model_serialized["id"] = response.data["id"]
+            if user_type == "retina_admin":
+                model_serialized["grader"] = response.data["grader"]
+            assert response.data == model_serialized
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
     def test_retrieve_view(
         self, rf, user_type, viewset, factory, serializer, basename
     ):
