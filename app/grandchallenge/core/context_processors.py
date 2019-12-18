@@ -4,6 +4,8 @@ from django.conf import settings
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
+from grandchallenge.policies.models import Policy
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,3 +49,7 @@ def sentry_dsn(*_, **__):
         "SENTRY_DSN": settings.SENTRY_DSN,
         "SENTRY_ENABLE_JS_REPORTING": settings.SENTRY_ENABLE_JS_REPORTING,
     }
+
+
+def policy_pages(*_, **__):
+    return {"policy_pages": Policy.objects.all()}

@@ -6,9 +6,9 @@
     <div class="container mb-3">
         <hr class="m-0">
         <div class="row mt-3">
-            <div class="col col-xs-12 col-sm-4 small">
+            <div class="col col-xs-12 col-sm-3 small">
                 <div class="px-3">
-                    <h6>{{ request.site.name }}</h6>
+                    <h6>About</h6>
                     <ul class="list-unstyled">
                         {% for page in flatpages %}
                             <li>
@@ -24,7 +24,19 @@
                     </ul>
                 </div>
             </div>
-            <div class="col col-xs-12 col-sm-4 small">
+            <div class="col col-xs-12 col-sm-3 small">
+                <div class="px-3">
+                    <h6>Policies</h6>
+                    <ul class="list-unstyled">
+                        {% for policy in policy_pages %}
+                            <li><a class="text-muted"
+                                   href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col col-xs-12 col-sm-3 small">
                 <div class="px-3">
                     <h6>OpenAPI</h6>
                     <ul class="list-unstyled">
@@ -35,19 +47,17 @@
                                 Documentation
                             </a>
                         </li>
-                        {% if request.user.is_authenticated %}
-                            <li>
-                                <a class="text-muted"
-                                   href="{% url 'api:schema-json' '.yaml' %}"
-                                   title="The OpenAPI schema for the API.">
-                                    Schema
-                                </a>
-                            </li>
-                        {% endif %}
+                        <li>
+                            <a class="text-muted"
+                               href="{% url 'api:schema-json' '.yaml' %}"
+                               title="The OpenAPI schema for the API.">
+                                Schema
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
-            <div class="col col-xs-12 col-sm-4 small">
+            <div class="col col-xs-12 col-sm-3 small">
                 <div class="px-3">
                     <h6>Developers</h6>
                     <ul class="list-unstyled">

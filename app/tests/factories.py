@@ -18,6 +18,7 @@ from grandchallenge.evaluation.models import Job, Method, Result, Submission
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
+from grandchallenge.policies.models import Policy
 from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.uploads.models import UploadModel
 from grandchallenge.workstation_configs.models import WorkstationConfig
@@ -255,3 +256,8 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
             return fuzzy_list[0]
 
         return fuzzy_list
+
+
+class PolicyFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = Policy

@@ -102,6 +102,10 @@ urlpatterns = [
         ),
     ),
     path(
+        "policies/",
+        include("grandchallenge.policies.urls", namespace="policies"),
+    ),
+    path(
         "media/",
         include("grandchallenge.serving.urls", namespace="root-serving"),
     ),

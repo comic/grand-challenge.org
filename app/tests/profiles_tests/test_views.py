@@ -3,7 +3,7 @@ from django.conf import settings
 from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import UserFactory
+from tests.factories import PolicyFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -87,3 +87,14 @@ class TestUrlEncodedUsername:
         response = client.get(url, follow=True)
         assert response.status_code == status.HTTP_200_OK
         assert "t%C3%A9st" in response.redirect_chain[0][0]
+
+
+@pytest.mark.django_db
+def test_terms_form_fields(client):
+    p = PolicyFactory(title="terms", body="blah")
+    response = client.get(reverse("profile_signup"))
+    assert response.status_code == 200
+    assert p.get_absolute_url() in response.rendered_content
+    response = client.get(reverse("pre-social"))
+    assert response.status_code == 200
+    assert p.get_absolute_url() in response.rendered_content
