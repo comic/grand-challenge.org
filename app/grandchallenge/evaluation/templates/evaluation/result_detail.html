@@ -99,6 +99,11 @@
             </dd>
         {% endif %}
 
+        {% if challenge.evaluation_config.display_submission_comments %}
+            <dt>Comment:</dt>
+            <dd>{{ object.job.submission.comment }}</dd>
+        {% endif %}
+
         {% if request.user.is_staff and object.job.submission.annotationset %}
             <dt>Predictions</dt>
             <dd>
