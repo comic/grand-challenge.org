@@ -43,7 +43,7 @@ from rest_framework.viewsets import (
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
@@ -458,6 +458,27 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             request, messages.SUCCESS, "Hanging list re-generated."
         )
         return Response({"status": "Hanging list generated."},)
+
+    @action(detail=True, methods=["patch"])
+    def remove_image(self, request, pk=None):
+        image_id = request.data.get("image")
+        reader_study = self.get_object()
+        try:
+            reader_study.images.remove(Image.objects.get(id=image_id))
+            messages.add_message(
+                request, messages.SUCCESS, "Image removed from reader study."
+            )
+            return Response({"status": "Image removed from reader study."},)
+        except Image.DoesNotExist:
+            pass
+        messages.add_message(
+            request,
+            messages.ERROR,
+            "Image could not be removed from reader study.",
+        )
+        return Response(
+            {"status": "Image could not be removed from reader study."},
+        )
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):
