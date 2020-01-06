@@ -14,6 +14,12 @@
 {% block content %}
     <h2>Reader Studies</h2>
 
+    <p>
+        A Reader Study can be used to collect annotations or score algorithm
+        results for a set of medical images. Please email us if you would like
+        to set up your own reader study.
+    </p>
+
     <div class="card-columns">
         {% for reader_study in object_list %}
             <div class="card">
@@ -34,10 +40,12 @@
                     </a>
                 </div>
             </div>
-        {% empty %}
-            <p>No reader studies available.</p>
         {% endfor %}
     </div>
+
+    {% if not object_list %}
+        <p>You do not have permission to view any of the reader studies.</p>
+    {% endif %}
 
     {% if perms.reader_studies.add_readerstudy %}
         <p class="mt-3">
