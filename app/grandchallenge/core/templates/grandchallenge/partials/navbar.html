@@ -16,7 +16,19 @@
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.view_name == 'challenges:list' %}active{% endif %}"
                        href="{% url 'challenges:list' %}">
-                        All Challenges
+                        Challenges
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.view_name == 'algorithms:list' %}active{% endif %}"
+                       href="{% url 'algorithms:list' %}">
+                        Algorithms
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.view_name == 'reader-studies:list' %}active{% endif %}"
+                       href="{% url 'reader-studies:list' %}">
+                        Reader studies
                     </a>
                 </li>
             </ul>
