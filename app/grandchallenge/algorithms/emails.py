@@ -95,10 +95,14 @@ def send_failed_job_email(job):
         f"Job ID: {job.pk}\n"
         f"Submission ID: {job.pk}"
     )
+
     recipient_emails = [
         o.email for o in algorithm.editors_group.user_set.all()
     ]
-    recipient_emails.append(job.creator.email)
+
+    if not algorithm.is_editor(job.creator):
+        recipient_emails.append(job.creator.email)
+
     for email in recipient_emails:
         send_mail(
             subject=(
