@@ -99,7 +99,8 @@ def send_failed_job_email(job):
         o.email for o in algorithm.editors_group.user_set.all()
     ]
     recipient_emails.append(job.creator.email)
-    for email in recipient_emails:
+
+    for email in {*recipient_emails}:
         send_mail(
             subject=(
                 f"[{Site.objects.get_current().domain.lower()}] "
