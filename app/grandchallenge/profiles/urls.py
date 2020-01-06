@@ -3,6 +3,7 @@ from django.urls import path, re_path
 
 from grandchallenge.profiles.forms import SignupFormExtra
 from grandchallenge.profiles.views import (
+    PreSocialView,
     login_redirect,
     profile,
     profile_edit,
@@ -19,6 +20,7 @@ urlpatterns = [
         {"signup_form": SignupFormExtra},
         name="profile_signup",
     ),
+    path("signup-social/", PreSocialView.as_view(), name="pre-social"),
     path("signin/", signin, name="profile_signin"),
     path("signup_complete/", signup_complete, name="profile_signup_complete"),
     path("login-redirect/", login_redirect, name="login_redirect"),

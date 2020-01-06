@@ -1,7 +1,32 @@
 import userena.forms as userena_forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 from django_countries import countries
+
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
+from grandchallenge.policies.models import Policy
+
+
+class PreSocialForm(forms.Form):
+    accept_terms = forms.BooleanField(
+        label="I have read and agree to {}", required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("submit", "Submit"))
+        accept_terms = self.fields["accept_terms"]
+        accept_terms.label = accept_terms.label.format(
+            oxford_comma(
+                [
+                    f'the <a href="{p.get_absolute_url()}">{p.title}</a>'
+                    for p in Policy.objects.all()
+                ]
+            )
+        )
 
 
 class SignupFormExtra(userena_forms.SignupForm):
@@ -34,9 +59,21 @@ class SignupFormExtra(userena_forms.SignupForm):
         required=False,
         help_text=_("A website which describes you or your department"),
     )
+    accept_terms = forms.BooleanField(
+        label="I have read and agree to {}.", required=True,
+    )
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
+        accept_terms = self.fields["accept_terms"]
+        accept_terms.label = accept_terms.label.format(
+            oxford_comma(
+                [
+                    f'the <a href="{p.get_absolute_url()}">{p.title}</a>'
+                    for p in Policy.objects.all()
+                ]
+            )
+        )
 
     def clean_country(self):
         """Make sure the user changed the country field."""
@@ -47,7 +84,6 @@ class SignupFormExtra(userena_forms.SignupForm):
         return country
 
     def save(self):
-
         user = super().save()
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
