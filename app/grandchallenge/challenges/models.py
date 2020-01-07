@@ -66,7 +66,7 @@ class TaskType(models.Model):
         return f"task-{cls}"
 
     @property
-    def button(self):
+    def badge(self):
         return (
             f'<span class="badge badge-light" title="{self.type} challenge">'
             f'<i class="fas fa-tasks"></i>'
@@ -92,7 +92,7 @@ class ImagingModality(models.Model):
         return f"modality-{cls}"
 
     @property
-    def button(self):
+    def badge(self):
         return (
             f'<span class="badge badge-secondary" title="Uses {self.modality} data">'
             f'<i class="fas fa-microscope"></i>'
@@ -138,7 +138,7 @@ class BodyStructure(models.Model):
         return f"structure-{cls}"
 
     @property
-    def button(self):
+    def badge(self):
         return (
             f'<span class="badge badge-dark" title="Uses {self.structure} data">'
             f'<i class="fas fa-child"></i>'
