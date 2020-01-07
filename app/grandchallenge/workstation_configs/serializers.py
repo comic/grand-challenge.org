@@ -2,6 +2,7 @@ from rest_framework.fields import CharField, FloatField
 from rest_framework.relations import SlugRelatedField
 from rest_framework.serializers import ModelSerializer
 
+from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.workstation_configs.models import (
     LookUpTable,
     WindowPreset,
@@ -69,3 +70,6 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_image_info_plugin",
             "show_display_plugin",
         ]
+        swagger_schema_fields = swagger_schema_fields_for_charfield(
+            ("default_orientation",), (WorkstationConfig.ORIENTATION_CHOICES,)
+        )
