@@ -116,11 +116,8 @@ $(document).ready(function () {
     }
 
     function update() {
-
         updateCounters();
         updateLabels();
-        hideEmptyYears();
-
     }
 
 
@@ -196,21 +193,6 @@ $(document).ready(function () {
                 $("label#" + inputname).addClass("greyed_out")
             }
         })
-    }
-
-    function hideEmptyYears() {
-        // hide year headings without any items in them
-        $("div.yearHeader").each(function (i, d) {
-            var count = $(".projectlink." + d.id + ":visible").length;
-            log("finding $('.projectlink." + d.id + ":visible'");
-            if (count === 0) {
-                log("hiding year" + d.id);
-                $(this).hide();
-            } else {
-                //log("showing year"+ d.id + "count was " + count);
-                $(this).show();
-            }
-        });
     }
 
     function removeDuplicates(collection1, collection2) {

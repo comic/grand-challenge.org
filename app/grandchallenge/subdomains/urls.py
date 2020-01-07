@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
@@ -52,3 +53,10 @@ urlpatterns = [
         include("grandchallenge.serving.urls", namespace="challenge-serving"),
     ),
 ]
+
+if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
+    import debug_toolbar
+
+    urlpatterns = [
+        path("__debug__/", include(debug_toolbar.urls))
+    ] + urlpatterns
