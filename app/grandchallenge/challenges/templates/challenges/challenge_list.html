@@ -251,11 +251,11 @@
                                 </a>
 
                                 <div class="card-body">
-                                    <h5 class="card-title">
+                                    <h5 class="card-title text-truncate">
                                         <a id="{{ challenge.short_name }}"
                                            title="{% firstof challenge.title challenge.short_name %}"
                                            href="{{ challenge.get_absolute_url }}">
-                                            {% firstof challenge.title|truncatewords:3 challenge.short_name|truncatewords:3 %}
+                                            {% firstof challenge.title challenge.short_name %}
                                         </a>
                                     </h5>
 
