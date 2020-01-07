@@ -53,8 +53,6 @@
 
     <div class="row">
         <div class="col-lg-3 mb-3">
-            <h2>Filters</h2>
-
             <div id="projectfilterbuttons">
 
                 <div id="accordion">
@@ -220,16 +218,10 @@
         </div>
 
         <div class="col">
-
-            {% for year, challenges in challenges_by_year.items %}
-
-                <div class='row px-2 yearHeader' id='{{ year }}'>
-                    <h2>{{ year }}</h2>
-                </div>
-
-                <div class='row equal-height'>
+            <div class='row equal-height'>
+                {% for year, challenges in challenges_by_year.items %}
                     {% for challenge in challenges %}
-                        <div class="col-12 col-md-6 col-lg-4 mb-3 px-2 projectlink {{ challenge.get_filter_classes|join:" " }} {{ challenge.year }}">
+                        <div class="col-12 col-md-6 col-lg-4 mb-3 px-2 projectlink {{ challenge.get_filter_classes|join:" " }}">
                             <div class="card">
                                 <a id="{{ challenge.short_name }}"
                                    title="{% firstof challenge.title challenge.short_name %}"
@@ -315,7 +307,7 @@
 
                                     {% for structure in challenge.structures.all %}
                                         <span class="badge badge-dark"
-                                              title="Uses {{ structure }} data">
+                                              title="Uses {{ structure.structure }} data">
                                             <i class="fas fa-child"></i>
                                             {{ structure.structure }}
                                         </span>
@@ -328,6 +320,12 @@
                                             <i class="fas fa-calendar-day"></i>
                                             {{ challenge.upcoming_workshop_date }}
                                         </a>
+                                    {% else %}
+                                        <span class="badge badge-info"
+                                              title="Held in {{ challenge.year }}">
+                                            <i class="fas fa-calendar-day"></i>
+                                            {{ challenge.year }}
+                                        </span>
                                     {% endif %}
 
                                     {% if challenge.event_name %}
@@ -373,8 +371,8 @@
                             </div>
                         </div>
                     {% endfor %}
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 
@@ -391,7 +389,8 @@
                 </div>
                 <div class="modal-body">
                     <p class="modal-challenge-description"></p>
-                    <p class="text-right"><a href="" class="modal-challenge-url">Go to this challenge</a>
+                    <p class="text-right"><a href="" class="modal-challenge-url">Go to
+                        this challenge</a>
                     </p>
                 </div>
             </div>
