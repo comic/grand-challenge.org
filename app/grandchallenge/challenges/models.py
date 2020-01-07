@@ -14,6 +14,7 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils._os import safe_join
+from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
@@ -67,11 +68,12 @@ class TaskType(models.Model):
 
     @property
     def badge(self):
-        return (
-            f'<span class="badge badge-light" title="{self.type} challenge">'
-            f'<i class="fas fa-tasks"></i>'
-            f" {self.type}"
-            f"</span>"
+        return format_html(
+            '<span class="badge badge-light" title="{0} challenge">'
+            '<i class="fas fa-tasks"></i>'
+            " {0}"
+            "</span>",
+            self.type,
         )
 
 
@@ -93,11 +95,12 @@ class ImagingModality(models.Model):
 
     @property
     def badge(self):
-        return (
-            f'<span class="badge badge-secondary" title="Uses {self.modality} data">'
-            f'<i class="fas fa-microscope"></i>'
-            f" {self.modality}"
-            f"</span>"
+        return format_html(
+            '<span class="badge badge-secondary" title="Uses {0} data">'
+            '<i class="fas fa-microscope"></i>'
+            " {0}"
+            "</span>",
+            self.modality,
         )
 
 
@@ -139,11 +142,12 @@ class BodyStructure(models.Model):
 
     @property
     def badge(self):
-        return (
-            f'<span class="badge badge-dark" title="Uses {self.structure} data">'
-            f'<i class="fas fa-child"></i>'
-            f" {self.structure}"
-            f"</span>"
+        return format_html(
+            '<span class="badge badge-dark" title="Uses {0} data">'
+            '<i class="fas fa-child"></i>'
+            " {0}"
+            "</span>",
+            self.structure,
         )
 
 
