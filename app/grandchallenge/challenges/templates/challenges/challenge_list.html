@@ -73,7 +73,7 @@
                            data-toggle="collapse"
                            href="#collapseHost">
                             <div class="card-header">
-                                <h6 class="mb-0">Host</h6>
+                                <h5 class="mb-0">Host</h5>
                             </div>
                         </a>
 
@@ -104,7 +104,7 @@
                            data-toggle="collapse"
                            href="#collapseModality">
                             <div class="card-header">
-                                <h6 class="mb-0">Modality</h6>
+                                <h5 class="mb-0">Modality</h5>
                             </div>
                         </a>
 
@@ -134,7 +134,7 @@
                            data-toggle="collapse"
                            href="#collapseTask">
                             <div class="card-header">
-                                <h6 class="mb-0">Task type</h6>
+                                <h5 class="mb-0">Task type</h5>
                             </div>
                         </a>
 
@@ -166,7 +166,7 @@
                            href="#collapseStructure"
                            id="headingStructure">
                             <div class="card-header">
-                                <h6 class="mb-0">Structure</h6>
+                                <h5 class="mb-0">Structure</h5>
                             </div>
                         </a>
 
@@ -229,7 +229,7 @@
 
                 <div class='row equal-height'>
                     {% for challenge in challenges %}
-                        <div class="col-12 col-md-6 col-lg-4 mb-3 px-2 projectlink {{ challenge.filter_classes|join:" " }} {{ challenge.year }}">
+                        <div class="col-12 col-md-6 col-lg-4 mb-3 px-2 projectlink {{ challenge.get_filter_classes|join:" " }} {{ challenge.year }}">
                             <div class="card">
                                 <a id="{{ challenge.short_name }}"
                                    title="{% firstof challenge.title challenge.short_name %}"
@@ -296,6 +296,30 @@
                                             ({{ challenge.cached_latest_result|naturaltime }})
                                         </a>
                                     {% endif %}
+
+                                    {% for task_type in challenge.task_types.all %}
+                                        <span class="badge badge-light"
+                                              title="{{ task_type }} challenge">
+                                            <i class="fas fa-tasks"></i>
+                                            {{ task_type.type }}
+                                        </span>
+                                    {% endfor %}
+
+                                    {% for modality in challenge.modalities.all %}
+                                        <span class="badge badge-secondary"
+                                              title="Uses {{ modality }} data">
+                                            <i class="fas fa-microscope"></i>
+                                            {{ modality.modality }}
+                                        </span>
+                                    {% endfor %}
+
+                                    {% for structure in challenge.structures.all %}
+                                        <span class="badge badge-dark"
+                                              title="Uses {{ structure }} data">
+                                            <i class="fas fa-child"></i>
+                                            {{ structure.structure }}
+                                        </span>
+                                    {% endfor %}
 
                                     {% if challenge.upcoming_workshop_date %}
                                         <a class="badge badge-info"
@@ -367,7 +391,8 @@
                 </div>
                 <div class="modal-body">
                     <p class="modal-challenge-description"></p>
-                    <p><a href="" class="modal-challenge-url">Go to this challenge</a></p>
+                    <p class="text-right"><a href="" class="modal-challenge-url">Go to this challenge</a>
+                    </p>
                 </div>
             </div>
         </div>

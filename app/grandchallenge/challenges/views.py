@@ -52,10 +52,14 @@ class ChallengeList(TemplateView):
         challenges = chain(
             Challenge.objects.filter(hidden=False)
             .order_by("-created")
-            .prefetch_related("creator"),
+            .prefetch_related(
+                "creator", "modalities", "task_types", "structures__region",
+            ),
             ExternalChallenge.objects.filter(hidden=False)
             .order_by("-created")
-            .prefetch_related("creator"),
+            .prefetch_related(
+                "creator", "modalities", "task_types", "structures__region",
+            ),
         )
 
         challenges_by_year = defaultdict(list)

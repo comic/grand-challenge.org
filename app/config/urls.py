@@ -110,6 +110,7 @@ urlpatterns = [
         include("grandchallenge.serving.urls", namespace="root-serving"),
     ),
 ]
+
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
     import debug_toolbar
 
