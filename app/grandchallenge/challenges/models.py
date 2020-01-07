@@ -14,6 +14,7 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils._os import safe_join
+from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
@@ -65,6 +66,16 @@ class TaskType(models.Model):
         cls = re.sub(r"\W+", "", self.type)
         return f"task-{cls}"
 
+    @property
+    def badge(self):
+        return format_html(
+            '<span class="badge badge-light" title="{0} challenge">'
+            '<i class="fas fa-tasks"></i>'
+            " {0}"
+            "</span>",
+            self.type,
+        )
+
 
 class ImagingModality(models.Model):
     """Store the modality options, eg, MR, CT, PET, XR."""
@@ -81,6 +92,16 @@ class ImagingModality(models.Model):
     def filter_tag(self):
         cls = re.sub(r"\W+", "", self.modality)
         return f"modality-{cls}"
+
+    @property
+    def badge(self):
+        return format_html(
+            '<span class="badge badge-secondary" title="Uses {0} data">'
+            '<i class="fas fa-microscope"></i>'
+            " {0}"
+            "</span>",
+            self.modality,
+        )
 
 
 class BodyRegion(models.Model):
@@ -118,6 +139,16 @@ class BodyStructure(models.Model):
     def filter_tag(self):
         cls = re.sub(r"\W+", "", self.structure)
         return f"structure-{cls}"
+
+    @property
+    def badge(self):
+        return format_html(
+            '<span class="badge badge-dark" title="Uses {0} data">'
+            '<i class="fas fa-child"></i>'
+            " {0}"
+            "</span>",
+            self.structure,
+        )
 
 
 class ChallengeBase(models.Model):

@@ -221,7 +221,7 @@
             <div class='row equal-height'>
                 {% for year, challenges in challenges_by_year.items %}
                     {% for challenge in challenges %}
-                        <div class="col-12 col-md-6 col-lg-4 mb-3 px-2 projectlink {{ challenge.get_filter_classes|join:" " }}">
+                        <div class="col-12 col-md-6 col-lg-4 mb-3 px-2 projectlink {{ challenge.filter_classes|join:" " }}">
                             <div class="card">
                                 <a id="{{ challenge.short_name }}"
                                    title="{% firstof challenge.title challenge.short_name %}"
@@ -289,28 +289,8 @@
                                         </a>
                                     {% endif %}
 
-                                    {% for task_type in challenge.task_types.all %}
-                                        <span class="badge badge-light"
-                                              title="{{ task_type }} challenge">
-                                            <i class="fas fa-tasks"></i>
-                                            {{ task_type.type }}
-                                        </span>
-                                    {% endfor %}
-
-                                    {% for modality in challenge.modalities.all %}
-                                        <span class="badge badge-secondary"
-                                              title="Uses {{ modality }} data">
-                                            <i class="fas fa-microscope"></i>
-                                            {{ modality.modality }}
-                                        </span>
-                                    {% endfor %}
-
-                                    {% for structure in challenge.structures.all %}
-                                        <span class="badge badge-dark"
-                                              title="Uses {{ structure.structure }} data">
-                                            <i class="fas fa-child"></i>
-                                            {{ structure.structure }}
-                                        </span>
+                                    {% for filter_tag in challenge.filter_tags %}
+                                        {{ filter_tag.badge }}
                                     {% endfor %}
 
                                     {% if challenge.upcoming_workshop_date %}
