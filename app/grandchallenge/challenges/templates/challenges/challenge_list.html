@@ -262,61 +262,65 @@
                                         {{ challenge.description|truncatewords:35 }}
                                     </p>
 
+                                    {% if challenge.educational %}
+                                        <span class="badge badge-info"
+                                              title="This is an educational challenge">
+                                            <i class="fas fa-university"></i>
+                                        </span>
+                                    {% endif %}
 
-                                    <dl class="card-text inline">
-                                        {% if challenge.educational %}
-                                            <dd>
-                                                <i class="fas fa-university fa-2x"></i>
-                                            </dd>
-                                        {% endif %}
+                                    {% if challenge.cached_num_participants %}
+                                        <span class="badge badge-info"
+                                              title="{{ challenge.cached_num_participants }} participant{{ challenge.cached_num_participants|pluralize }}">
+                                            <i class="fas fa-user"></i>
+                                            {{ challenge.cached_num_participants|intcomma }}
+                                        </span>
+                                    {% endif %}
 
-                                        {% if challenge.cached_num_participants %}
-                                            <dt>Participants</dt>
-                                            <dd>{{ challenge.cached_num_participants|intcomma }}</dd>
-                                        {% endif %}
+                                    {% if challenge.use_evaluation and challenge.cached_num_results %}
+                                        <a class="badge badge-info"
+                                           href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}"
+                                           title="{{ challenge.cached_num_results }} result{{ challenge.cached_num_results|pluralize }}, latest {{ challenge.cached_latest_result|naturaltime }}">
+                                            <i class="fas fa-trophy"></i>
+                                            {{ challenge.cached_num_results }} ({{ challenge.cached_latest_result|naturaltime }})
+                                        </a>
+                                    {% endif %}
 
-                                        {% if challenge.use_evaluation and challenge.cached_num_results %}
-                                            <dt>Results</dt>
-                                            <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_num_results }}</a>
-                                            </dd>
-                                            <dt>Latest Result</dt>
-                                            <dd>
-                                                <a href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">{{ challenge.cached_latest_result|naturaltime }}</a>
-                                            </dd>
-                                        {% endif %}
+                                    {% if challenge.upcoming_workshop_date %}
+                                        <a class="badge badge-info"
+                                           href="{% firstof challenge.event_url challenge.get_absolute_url %}"
+                                           title="There will be a workshop on {{ challenge.upcoming_workshop_date }}">
+                                            <i class="fas fa-calendar-day"></i>
+                                            {{ challenge.upcoming_workshop_date }}
+                                        </a>
+                                    {% endif %}
 
-                                        {% if challenge.upcoming_workshop_date %}
-                                            <dt>Workshop</dt>
-                                            <dd>
-                                                {{ challenge.upcoming_workshop_date }}
-                                            </dd>
-                                        {% endif %}
+                                    {% if challenge.event_name %}
+                                        <a class="badge badge-info"
+                                           href="{% firstof challenge.event_url challenge.get_absolute_url %}"
+                                           title="Associated with {{ challenge.event_name }}">
+                                            <i class="fas fa-globe"></i>
+                                            {{ challenge.event_name }}
+                                        </a>
+                                    {% endif %}
 
-                                        {% if challenge.event_name %}
-                                            <dt>Associated with</dt>
-                                            <dd>
-                                                <a
-                                                        href="{{ challenge.event_url }}">{{ challenge.event_name }}</a>
-                                            </dd>
-                                        {% endif %}
+                                    {% if challenge.publication_journal_name or challenge.publication_url %}
+                                        <a class="badge badge-info"
+                                           href="{% firstof challenge.publication_url '#' %}"
+                                           title="Article">
+                                            <i class="fas fa-file"></i>
+                                            {% firstof challenge.publication_journal_name challenge.publication_url %}
+                                        </a>
+                                    {% endif %}
 
-
-                                        {% if challenge.publication_journal_name or challenge.publication_url %}
-                                            <dt>Article</dt>
-                                            <dd>
-                                                <a
-                                                        href="{{ challenge.publication_url }}">{% firstof challenge.publication_journal_name challenge.publication_url %}</a>
-                                            </dd>
-                                        {% endif %}
-
-                                        {% if challenge.registered_domain %}
-                                            <dt>Hosted on</dt>
-                                            <dd>
-                                                <a href="{{ challenge.get_absolute_url }}">{{ challenge.registered_domain }}</a>
-                                            </dd>
-                                        {% endif %}
-                                    </dl>
+                                    {% if challenge.registered_domain %}
+                                        <a class="badge badge-info"
+                                           href="{{ challenge.get_absolute_url }}"
+                                           title="Hosted on {{ challenge.registered_domain }}">
+                                            <i class="fas fa-link"></i>
+                                            {{ challenge.registered_domain }}
+                                        </a>
+                                    {% endif %}
 
                                     {% if not challenge.is_self_hosted %}
                                         {% if request.user.is_staff %}
