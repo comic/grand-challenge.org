@@ -19,20 +19,25 @@ nav.navbar-top .nav-item {
     top: 1px;
 }
 
-.rounded-top-left {
-    border-top-left-radius: 3px;
-}
-
-.thumbnail {
-    width: 5rem; /* rendering bug with long titles */
-    height: 5rem;
-    object-fit:cover;
-}
-
 .navbar-toggle {
     margin-left: 15px;
     float: left;
     margin-right: 0;
+}
+
+/* for responsive card-decks */
+.row.equal-height {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.row.equal-height > [class*='col-'] {
+    display: flex;
+    flex-direction: column;
+}
+
+.row.equal-height > [class*='col-'] .card {
+    flex: 1;
 }
 
 /* definition lists */

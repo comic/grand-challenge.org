@@ -251,8 +251,9 @@ class ChallengeBase(models.Model):
     @property
     def gravatar_url(self):
         return (
-            f"https://www.gravatar.com/avatar/"
+            "https://www.gravatar.com/avatar/"
             f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
+            "?s=326"
         )
 
     def get_absolute_url(self):
