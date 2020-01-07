@@ -60,7 +60,7 @@ from grandchallenge.reader_studies.serializers import (
 )
 
 
-class ReaderStudyList(LoginRequiredMixin, PermissionListMixin, ListView):
+class ReaderStudyList(PermissionListMixin, ListView):
     model = ReaderStudy
     permission_required = (
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"

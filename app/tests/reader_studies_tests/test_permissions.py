@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from guardian.shortcuts import assign_perm, get_perms
 
 from tests.factories import UserFactory, WorkstationFactory
@@ -16,8 +15,8 @@ from tests.utils import get_view_for_user
 def test_rs_list_permissions(client):
     # Users should login
     response = get_view_for_user(viewname="reader-studies:list", client=client)
-    assert response.status_code == 302
-    assert response.url.startswith(settings.LOGIN_URL)
+    assert response.status_code == 200
+    assert "Add a new reader study" not in response.rendered_content
 
     creator = get_rs_creator()
 
@@ -65,13 +64,7 @@ def test_rs_list_permissions(client):
 
 @pytest.mark.django_db
 def test_rs_create_permissions(client):
-    # Users should login
-    response = get_view_for_user(viewname="reader-studies:list", client=client)
-    assert response.status_code == 302
-    assert response.url.startswith(settings.LOGIN_URL)
-
     creator = get_rs_creator()
-
     # Creators should be able to get the create view
     response = get_view_for_user(
         viewname="reader-studies:create", client=client, user=creator
