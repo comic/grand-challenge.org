@@ -52,30 +52,37 @@ class ChallengeList(TemplateView):
         challenges = chain(
             Challenge.objects.filter(hidden=False)
             .order_by("-created")
-            .prefetch_related(
-                "creator", "modalities", "task_types", "structures__region",
-            ),
+            .select_related("creator",),
             ExternalChallenge.objects.filter(hidden=False)
             .order_by("-created")
-            .prefetch_related(
-                "creator", "modalities", "task_types", "structures__region",
-            ),
+            .select_related("creator",),
         )
 
         challenges_by_year = defaultdict(list)
         hosts = set()
         host_count = defaultdict(int)
 
-        for c in challenges:
-            challenges_by_year[c.year].append(c)
-            hosts.add(c.host_filter)
-            host_count[c.host_filter.host] += 1
-
         modalities = ImagingModality.objects.all()
         task_types = TaskType.objects.all()
         regions = BodyRegion.objects.all().prefetch_related(
             "bodystructure_set"
         )
+
+        structures = {s for r in regions for s in r.bodystructure_set.all()}
+
+        tag_lookup = {
+            t.filter_tag: t for t in chain(modalities, task_types, structures)
+        }
+
+        for c in challenges:
+            c.filter_tags = [
+                tag_lookup[t]
+                for t in sorted(c.filter_classes)
+                if t in tag_lookup
+            ]
+            challenges_by_year[c.year].append(c)
+            hosts.add(c.host_filter)
+            host_count[c.host_filter.host] += 1
 
         # Cannot use a defaultdict in django template so convert to dict,
         # and this must be ordered by year for display

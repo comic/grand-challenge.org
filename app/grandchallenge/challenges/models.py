@@ -65,6 +65,15 @@ class TaskType(models.Model):
         cls = re.sub(r"\W+", "", self.type)
         return f"task-{cls}"
 
+    @property
+    def button(self):
+        return (
+            f'<span class="badge badge-light" title="{self.type} challenge">'
+            f'<i class="fas fa-tasks"></i>'
+            f" {self.type}"
+            f"</span>"
+        )
+
 
 class ImagingModality(models.Model):
     """Store the modality options, eg, MR, CT, PET, XR."""
@@ -81,6 +90,15 @@ class ImagingModality(models.Model):
     def filter_tag(self):
         cls = re.sub(r"\W+", "", self.modality)
         return f"modality-{cls}"
+
+    @property
+    def button(self):
+        return (
+            f'<span class="badge badge-secondary" title="Uses {self.modality} data">'
+            f'<i class="fas fa-microscope"></i>'
+            f" {self.modality}"
+            f"</span>"
+        )
 
 
 class BodyRegion(models.Model):
@@ -118,6 +136,15 @@ class BodyStructure(models.Model):
     def filter_tag(self):
         cls = re.sub(r"\W+", "", self.structure)
         return f"structure-{cls}"
+
+    @property
+    def button(self):
+        return (
+            f'<span class="badge badge-dark" title="Uses {self.structure} data">'
+            f'<i class="fas fa-child"></i>'
+            f" {self.structure}"
+            f"</span>"
+        )
 
 
 class ChallengeBase(models.Model):
