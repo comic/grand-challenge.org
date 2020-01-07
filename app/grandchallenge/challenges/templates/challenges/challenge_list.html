@@ -258,9 +258,18 @@
                                             {% firstof challenge.title|truncatewords:3 challenge.short_name|truncatewords:3 %}
                                         </a>
                                     </h5>
-                                    <p class="card-text">
-                                        {{ challenge.description|truncatewords:35 }}
-                                    </p>
+
+                                    {% if challenge.description %}
+                                        <a href="#challengeInfoModal"
+                                           class="badge badge-info"
+                                           data-toggle="modal"
+                                           data-target="#challengeInfoModal"
+                                           data-title="{% firstof challenge.title challenge.short_name %}"
+                                           data-description="{{ challenge.description }}"
+                                           title="Challenge Info">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                    {% endif %}
 
                                     {% if challenge.educational %}
                                         <span class="badge badge-info"
@@ -323,19 +332,17 @@
                                         </a>
                                     {% endif %}
 
-                                    {% if not challenge.is_self_hosted %}
-                                        {% if request.user.is_staff %}
-                                            <a class="badge badge-primary"
-                                               href="{% url 'challenges:external-update' challenge.short_name %}"
-                                               title="Edit Challenge">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a class="badge badge-danger"
-                                               href="{% url 'challenges:external-delete' challenge.short_name %}"
-                                               title="Delete Challenge">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        {% endif %}
+                                    {% if not challenge.is_self_hosted and request.user.is_staff %}
+                                        <a class="badge badge-primary"
+                                           href="{% url 'challenges:external-update' challenge.short_name %}"
+                                           title="Edit Challenge">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a class="badge badge-danger"
+                                           href="{% url 'challenges:external-delete' challenge.short_name %}"
+                                           title="Delete Challenge">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
                                     {% endif %}
                                 </div>
                             </div>
@@ -345,10 +352,38 @@
             {% endfor %}
         </div>
     </div>
+
+    <div class="modal fade" id="challengeInfoModal" tabindex="-1" role="dialog"
+         aria-labelledby="challengeInfoModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-challenge-description"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/challenges/challenge_list_filters.js" %}"></script>
+
+    <script type="text/javascript">
+        $('#challengeInfoModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var modal = $(this);
+            modal.find('.modal-title').text(button.data('title'));
+            modal.find('.modal-challenge-description').text(button.data('description'));
+        })
+    </script>
 {% endblock %}
