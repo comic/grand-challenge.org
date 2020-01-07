@@ -282,7 +282,8 @@
                                            href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}"
                                            title="{{ challenge.cached_num_results }} result{{ challenge.cached_num_results|pluralize }}, latest {{ challenge.cached_latest_result|naturaltime }}">
                                             <i class="fas fa-trophy"></i>
-                                            {{ challenge.cached_num_results }} ({{ challenge.cached_latest_result|naturaltime }})
+                                            {{ challenge.cached_num_results }}
+                                            ({{ challenge.cached_latest_result|naturaltime }})
                                         </a>
                                     {% endif %}
 
@@ -324,22 +325,16 @@
 
                                     {% if not challenge.is_self_hosted %}
                                         {% if request.user.is_staff %}
-                                            <div>
-                                                <a class="btn btn-primary btn-sm"
-                                                   href="{% url 'challenges:external-update' challenge.short_name %}"
-                                                   data-toggle="tooltip"
-                                                   data-placement="bottom"
-                                                   title="Edit Challenge">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a class="btn btn-danger btn-sm"
-                                                   href="{% url 'challenges:external-delete' challenge.short_name %}"
-                                                   data-toggle="tooltip"
-                                                   data-placement="bottom"
-                                                   title="Delete Challenge">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
+                                            <a class="badge badge-primary"
+                                               href="{% url 'challenges:external-update' challenge.short_name %}"
+                                               title="Edit Challenge">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a class="badge badge-danger"
+                                               href="{% url 'challenges:external-delete' challenge.short_name %}"
+                                               title="Delete Challenge">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
                                         {% endif %}
                                     {% endif %}
                                 </div>
@@ -356,11 +351,4 @@
     {{ block.super }}
     <script type="text/javascript"
             src="{% static "js/challenges/challenge_list_filters.js" %}"></script>
-
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
 {% endblock %}
