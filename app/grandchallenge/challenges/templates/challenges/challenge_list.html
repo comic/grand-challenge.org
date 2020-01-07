@@ -266,6 +266,7 @@
                                            data-target="#challengeInfoModal"
                                            data-title="{% firstof challenge.title challenge.short_name %}"
                                            data-description="{{ challenge.description }}"
+                                           data-absolute-url="{{ challenge.get_absolute_url }}"
                                            title="Challenge Info">
                                             <i class="fas fa-info-circle"></i>
                                         </a>
@@ -366,6 +367,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="modal-challenge-description"></p>
+                    <p><a href="" class="modal-challenge-url">Go to this challenge</a></p>
                 </div>
             </div>
         </div>
@@ -384,6 +386,7 @@
             var modal = $(this);
             modal.find('.modal-title').text(button.data('title'));
             modal.find('.modal-challenge-description').text(button.data('description'));
+            modal.find('.modal-challenge-url').attr('href', button.data('absolute-url'));
         })
     </script>
 {% endblock %}
