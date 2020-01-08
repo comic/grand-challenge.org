@@ -1,5 +1,4 @@
 import pytest
-from unittest import mock
 
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from tests.algorithms_tests.factories import AlgorithmImageFactory
