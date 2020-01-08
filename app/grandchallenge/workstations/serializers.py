@@ -12,5 +12,5 @@ class SessionSerializer(ModelSerializer):
         model = Session
         fields = ("pk", "status")
         swagger_schema_fields = swagger_schema_fields_for_charfield(
-            ("status",), (Session.STATUS_CHOICES,)
+            status=Session.status
         )

@@ -71,5 +71,5 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_display_plugin",
         ]
         swagger_schema_fields = swagger_schema_fields_for_charfield(
-            ("default_orientation",), (WorkstationConfig.ORIENTATION_CHOICES,)
+            default_orientation=WorkstationConfig.default_orientation
         )
