@@ -4,14 +4,14 @@ from drf_yasg.inspectors import FieldInspector
 from drf_yasg.openapi import Schema
 
 
-def add_manual_fields(self, serializer_or_field, schema):
+def _add_manual_fields(self, serializer_or_field, schema):
     meta = getattr(serializer_or_field, "Meta", None)
     swagger_schema_fields = getattr(meta, "swagger_schema_fields", {})
     if swagger_schema_fields:
-        update_swagger_schema_fields(schema, swagger_schema_fields)
+        _update_swagger_schema_fields(schema, swagger_schema_fields)
 
 
-def update_swagger_schema_fields(schema, swagger_schema_fields):
+def _update_swagger_schema_fields(schema, swagger_schema_fields):
     for attr, val in swagger_schema_fields.items():
         if isinstance(val, dict) and isinstance(
             getattr(schema, attr, None), dict
@@ -27,7 +27,7 @@ def update_swagger_schema_fields(schema, swagger_schema_fields):
 # This overrides the default behavior when the swagger_schema_fields attribute is set
 # in the serializers. Now dictionary attributes are updated instead of overwritten
 # for the swagger_schema_fields - Sil
-FieldInspector.add_manual_fields = add_manual_fields
+FieldInspector.add_manual_fields = _add_manual_fields
 
 
 def swagger_schema_fields_for_charfield(
