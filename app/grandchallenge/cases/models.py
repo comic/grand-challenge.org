@@ -107,6 +107,9 @@ class RawImageUploadSession(UUIDModel):
                 assign_perm(
                     f"view_{self._meta.model_name}", self.creator, self
                 )
+                assign_perm(
+                    f"change_{self._meta.model_name}", self.creator, self
+                )
 
             if not skip_processing:
                 self.process_images()

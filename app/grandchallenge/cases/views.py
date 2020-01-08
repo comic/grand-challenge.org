@@ -1,11 +1,15 @@
 from django.http import Http404
+from django.contrib import messages
 from django.views.generic import CreateView, DetailView
+
+from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
@@ -103,6 +107,15 @@ class RawImageUploadSessionViewSet(
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+
+    @action(detail=True, methods=["patch"])
+    def process_images(self, request, pk=None):
+        upload_session = self.get_object()
+        upload_session.process_images()
+        messages.add_message(
+            request, messages.SUCCESS, "Upload session re activated."
+        )
+        return Response({"status": "Images are uploaded."})
 
 
 class RawImageFileViewSet(
