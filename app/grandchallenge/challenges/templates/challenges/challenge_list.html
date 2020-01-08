@@ -4,11 +4,18 @@
 {% load humanize %}
 {% load thumbnail %}
 
-{% block title %}All Challenges{% endblock %}
+{% block title %}Challenges{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active" aria-current="page">Challenges</li>
+    </ol>
+{% endblock %}
 
 {% block content %}
 
-    <h1>All Challenges</h1>
+    <h1>Challenges</h1>
 
     <p>Here is an overview of all challenges that have been organized within
         the area of medical image analysis that we are aware of. If you know

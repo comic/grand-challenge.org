@@ -106,4 +106,12 @@ class AnswerSerializer(HyperlinkedModelSerializer):
 
     class Meta:
         model = Answer
-        fields = ("answer", "api_url", "creator", "images", "pk", "question")
+        fields = (
+            "answer",
+            "api_url",
+            "created",
+            "creator",
+            "images",
+            "pk",
+            "question",
+        )
