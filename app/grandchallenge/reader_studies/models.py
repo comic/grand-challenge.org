@@ -648,7 +648,7 @@ class Answer(UUIDModel):
     @property
     def csv_values(self):
         return self.question.csv_values + [
-            self.created,
+            self.created.isoformat(),
             self.answer,
             "; ".join(self.images.values_list("name", flat=True)),
             self.creator.username,
