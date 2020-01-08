@@ -626,7 +626,12 @@ class Answer(UUIDModel):
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = JSONField()
 
-    csv_headers = Question.csv_headers + ["Answer", "Images", "Creator"]
+    csv_headers = Question.csv_headers + [
+        "Created",
+        "Answer",
+        "Images",
+        "Creator",
+    ]
 
     class Meta:
         ordering = ("creator", "created")
@@ -643,6 +648,7 @@ class Answer(UUIDModel):
     @property
     def csv_values(self):
         return self.question.csv_values + [
+            self.created,
             self.answer,
             "; ".join(self.images.values_list("name", flat=True)),
             self.creator.username,
