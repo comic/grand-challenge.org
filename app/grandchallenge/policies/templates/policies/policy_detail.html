@@ -1,7 +1,15 @@
 {% extends "base.html" %}
+{% load url from grandchallenge_tags %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.title }}</li>
+    </ol>
 {% endblock %}
 
 {% block content %}

@@ -1,8 +1,17 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load static %}
+{% load url from grandchallenge_tags %}
 
 {% block title %}Update {{ object.short_name }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Update {{ object.short_name }}</li>
+    </ol>
+{% endblock %}
 
 {% block content %}
     <h2>Update {{ object.short_name }}</h2>

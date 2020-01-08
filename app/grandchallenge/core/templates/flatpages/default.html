@@ -2,23 +2,17 @@
 {% load grandchallenge_tags %}
 {% load static %}
 {% load clean from bleach %}
+{% load url from grandchallenge_tags %}
 
 {% block title %}
     {{ flatpage.title }} - {{ block.super }}
 {% endblock %}
 
-{% block jumbotron %}
-    <div class="row mb-3">
-        <div class="col-12">
-            <a class="w-100"
-               href="{% url 'home' %}">
-                <img alt="{{ request.site.name }} Banner"
-                     class="rounded w-100"
-                     src="{% static 'images/gcheader.png' %}"
-                >
-            </a>
-        </div>
-    </div>
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ flatpage.title }}</li>
+    </ol>
 {% endblock %}
 
 {% block content %}
