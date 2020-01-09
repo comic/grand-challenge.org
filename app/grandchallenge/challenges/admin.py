@@ -4,6 +4,7 @@ from grandchallenge.challenges.models import (
     BodyRegion,
     BodyStructure,
     Challenge,
+    ChallengeSeries,
     ExternalChallenge,
     ImagingModality,
     TaskType,
@@ -11,6 +12,7 @@ from grandchallenge.challenges.models import (
 
 admin.site.register(Challenge)
 admin.site.register(ExternalChallenge)
+admin.site.register(ChallengeSeries)
 admin.site.register(BodyRegion)
 admin.site.register(BodyStructure)
 admin.site.register(ImagingModality)
