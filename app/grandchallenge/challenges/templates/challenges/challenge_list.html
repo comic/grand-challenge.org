@@ -75,11 +75,11 @@
                     </form>
 
                     <div class="card">
-                        <a class="collapsed"
+                        <a class="collapsed card-link"
                            data-toggle="collapse"
                            href="#collapseYear">
                             <div class="card-header">
-                                <h5 class="mb-0">Year</h5>
+                                <h5 class="mb-0"><i class="fas fa-calendar-day fa-fw"></i> Year</h5>
                             </div>
                         </a>
 
@@ -106,11 +106,11 @@
                     </div>
 
                     <div class="card">
-                        <a class="collapsed"
+                        <a class="collapsed card-link"
                            data-toggle="collapse"
                            href="#collapseSeries">
                             <div class="card-header">
-                                <h5 class="mb-0">Series</h5>
+                                <h5 class="mb-0"><i class="fas fa-globe fa-fw"></i> Series</h5>
                             </div>
                         </a>
 
@@ -137,11 +137,11 @@
                     </div>
 
                     <div class="card">
-                        <a class="collapsed"
+                        <a class="collapsed card-link"
                            data-toggle="collapse"
                            href="#collapseHost">
                             <div class="card-header">
-                                <h5 class="mb-0">Host</h5>
+                                <h5 class="mb-0"><i class="fas fa-link fa-fw"></i> Host</h5>
                             </div>
                         </a>
 
@@ -168,11 +168,11 @@
                     </div>
 
                     <div class="card">
-                        <a class="collapsed"
+                        <a class="collapsed card-link"
                            data-toggle="collapse"
                            href="#collapseEducational">
                             <div class="card-header">
-                                <h5 class="mb-0">Educational</h5>
+                                <h5 class="mb-0"><i class="fas fa-university fa-fw"></i> Educational</h5>
                             </div>
                         </a>
 
@@ -197,11 +197,11 @@
                     </div>
 
                     <div class="card">
-                        <a class="collapsed"
+                        <a class="collapsed card-link"
                            data-toggle="collapse"
                            href="#collapseModality">
                             <div class="card-header">
-                                <h5 class="mb-0">Modality</h5>
+                                <h5 class="mb-0"><i class="fas fa-microscope fa-fw"></i> Modality</h5>
                             </div>
                         </a>
 
@@ -227,11 +227,11 @@
                     </div>
 
                     <div class="card">
-                        <a class="collapsed"
+                        <a class="collapsed card-link"
                            data-toggle="collapse"
                            href="#collapseTask">
                             <div class="card-header">
-                                <h5 class="mb-0">Task type</h5>
+                                <h5 class="mb-0"><i class="fas fa-tasks fa-fw"></i> Task type</h5>
                             </div>
                         </a>
 
@@ -258,12 +258,12 @@
                     </div>
 
                     <div class="card">
-                        <a class="collapsed"
+                        <a class="collapsed card-link"
                            data-toggle="collapse"
                            href="#collapseStructure"
                            id="headingStructure">
                             <div class="card-header">
-                                <h5 class="mb-0">Structure</h5>
+                                <h5 class="mb-0"><i class="fas fa-child fa-fw"></i> Structure</h5>
                             </div>
                         </a>
 
@@ -271,7 +271,6 @@
                              data-parent="#accordion">
                             <div class="card-body">
                                 {% for r in body_regions %}
-
                                     <label id="{{ r.filter_tag }}"
                                            class="checkbox-inline font-weight-bold">
                                         <input type="checkbox"
