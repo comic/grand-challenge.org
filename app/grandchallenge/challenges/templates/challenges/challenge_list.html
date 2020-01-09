@@ -77,6 +77,37 @@
                     <div class="card">
                         <a class="collapsed"
                            data-toggle="collapse"
+                           href="#collapseYear">
+                            <div class="card-header">
+                                <h5 class="mb-0">Year</h5>
+                            </div>
+                        </a>
+
+                        <div id="collapseYear" class="collapse"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <form>
+                                    {% for year in challenges_by_year %}
+                                        <label id="{{ series.filter_tag }}"
+                                               class="checkbox-inline font-weight-bold">
+                                            <input type="checkbox"
+                                                   class="filter"
+                                                   id="year-{{ year }}"
+                                                   value="{{ year }}">
+                                            <span>{{ year }}</span>
+                                            <span
+                                                    class="counter ml-1 badge badge-pill badge-info"
+                                                    id="year-{{ year }}"></span>
+                                        </label><br>
+                                    {% endfor %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <a class="collapsed"
+                           data-toggle="collapse"
                            href="#collapseSeries">
                             <div class="card-header">
                                 <h5 class="mb-0">Series</h5>

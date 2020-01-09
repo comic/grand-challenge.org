@@ -364,6 +364,8 @@ class ChallengeBase(models.Model):
         if self.educational:
             classes.add("educational")
 
+        classes.add(f"year-{self.year}")
+
         return list(classes)
 
     @property
