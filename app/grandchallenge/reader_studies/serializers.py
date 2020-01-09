@@ -33,9 +33,11 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "required",
         )
         swagger_schema_fields = swagger_schema_fields_for_charfield(
-            answer_type=model.answer_type,
-            form_direction=model.direction,  # model.direction gets remapped
-            image_port=model.image_port,
+            answer_type=model._meta.get_field("answer_type"),
+            form_direction=model._meta.get_field(
+                "direction"
+            ),  # model.direction gets remapped
+            image_port=model._meta.get_field("image_port"),
         )
 
 

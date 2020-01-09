@@ -5,7 +5,7 @@ from drf_yasg.inspectors import FieldInspector
 from drf_yasg.openapi import Schema
 
 
-def _add_manual_fields(self, serializer_or_field, schema):
+def _add_manual_fields(_, serializer_or_field, schema):
     meta = getattr(serializer_or_field, "Meta", None)
     swagger_schema_fields = getattr(meta, "swagger_schema_fields", {})
     if swagger_schema_fields:
@@ -32,7 +32,7 @@ FieldInspector.add_manual_fields = _add_manual_fields
 
 
 def swagger_schema_fields_for_charfield(
-    *_, **kwargs: Dict[str, CharField]
+    *_, **kwargs: CharField
 ) -> Dict[str, Dict[str, Schema]]:
     return {
         "properties": {
