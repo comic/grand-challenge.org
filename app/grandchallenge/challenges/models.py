@@ -164,7 +164,7 @@ class ChallengeSeries(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-dark" title="Associated with {0}">'
+            '<span class="badge badge-info" title="Associated with {0}">'
             '<i class="fas fa-globe"></i> {0}</span>',
             self.name,
         )
