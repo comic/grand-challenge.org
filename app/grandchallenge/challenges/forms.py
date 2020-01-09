@@ -85,6 +85,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
+            "series": Select2MultipleWidget,
             "registration_page_text": SummernoteInplaceWidget(),
         }
 
@@ -134,4 +135,5 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
+            "series": Select2MultipleWidget,
         }
