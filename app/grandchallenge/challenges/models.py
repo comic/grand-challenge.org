@@ -361,6 +361,9 @@ class ChallengeBase(models.Model):
         for series in self.series.all():
             classes.add(series.filter_tag)
 
+        if self.educational:
+            classes.add("educational")
+
         return list(classes)
 
     @property
