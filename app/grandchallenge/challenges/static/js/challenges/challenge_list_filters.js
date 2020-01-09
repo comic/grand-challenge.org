@@ -64,7 +64,7 @@ $(document).ready(function () {
         filterbuttons.each(function (i, d) {
             log("updating according to " + d.id);
             var checkbox = $(d);
-            if (checkbox.attr("class") === "filter" && checkbox.is(':checked')) {
+            if (checkbox.attr("class") === "filter form-check-input" && checkbox.is(':checked')) {
                 active_filters.push(checkbox);
             }
             projectlinks = modifyCollection(checkbox, projectlinks)
@@ -139,7 +139,7 @@ $(document).ready(function () {
             return collection;
         }
 
-        if (checkbox.attr("class") === "filter") {
+        if (checkbox.attr("class") === "filter form-check-input") {
             //filter checkbox will remove all others when checked
             if (checkbox.is(':checked')) {
                 log("hiding all non '." + name + "'");

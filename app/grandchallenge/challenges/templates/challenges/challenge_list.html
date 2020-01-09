@@ -67,7 +67,7 @@
 
                     <form class="d-none">
                         <!--Hidden checkbox to display all projectlinks by default -->
-                        <label class="checkbox-inline font-weight-bold">
+                        <label>
                             <input type="checkbox" class="include"
                                    checked disabled
                                    id="projectlink">
@@ -86,12 +86,12 @@
                         <div id="collapseYear" class="collapse"
                              data-parent="#accordion">
                             <div class="card-body">
-                                <form>
+                                <form class="form-check">
                                     {% for year in challenges_by_year %}
                                         <label id="{{ series.filter_tag }}"
-                                               class="checkbox-inline font-weight-bold">
+                                               class="form-check-label">
                                             <input type="checkbox"
-                                                   class="filter"
+                                                   class="filter form-check-input"
                                                    id="year-{{ year }}"
                                                    value="{{ year }}">
                                             <span>{{ year }}</span>
@@ -117,12 +117,12 @@
                         <div id="collapseSeries" class="collapse"
                              data-parent="#accordion">
                             <div class="card-body">
-                                <form>
+                                <form class="form-check">
                                     {% for series in challenge_series %}
                                         <label id="{{ series.filter_tag }}"
-                                               class="checkbox-inline font-weight-bold">
+                                               class="form-check-label">
                                             <input type="checkbox"
-                                                   class="filter"
+                                                   class="filter form-check-input"
                                                    id="{{ series.filter_tag }}"
                                                    value="{{ series.name }}">
                                             <span>{{ series.name }}</span>
@@ -148,13 +148,13 @@
                         <div id="collapseHost" class="collapse"
                              data-parent="#accordion">
                             <div class="card-body">
-                                <form>
+                                <form class="form-check">
                                     {% for host in hosts %}
                                         {# Note that the host filter works slightly differently as we have no filter_tag attribute #}
                                         <label id="{{ host.filter_tag }}"
-                                               class="checkbox-inline font-weight-bold">
+                                               class="form-check-label">
                                             <input type="checkbox"
-                                                   class="filter"
+                                                   class="filter form-check-input"
                                                    value="{{ host.host }}"
                                                    id="{{ host.filter_tag }}">
                                             <span>{{ host.host }}</span><span
@@ -179,11 +179,11 @@
                         <div id="collapseEducational" class="collapse"
                              data-parent="#accordion">
                             <div class="card-body">
-                                <form>
+                                <form class="form-check">
                                     <label id="educational"
-                                           class="checkbox-inline font-weight-bold">
+                                           class="form-check-label">
                                         <input type="checkbox"
-                                               class="filter"
+                                               class="filter form-check-input"
                                                id="educational"
                                                value="Educational">
                                         <span>Educational</span>
@@ -208,12 +208,12 @@
                         <div id="collapseModality" class="collapse"
                              data-parent="#accordion">
                             <div class="card-body">
-                                <form>
+                                <form class="form-check">
                                     {% for modality in modalities %}
                                         <label id="{{ modality.filter_tag }}"
-                                               class="checkbox-inline font-weight-bold">
+                                               class="form-check-label">
                                             <input type="checkbox"
-                                                   class="filter"
+                                                   class="filter form-check-input"
                                                    value="{{ modality.modality }}"
                                                    id="{{ modality.filter_tag }}">
                                             <span>{{ modality.modality }}</span><span
@@ -238,12 +238,12 @@
                         <div id="collapseTask" class="collapse"
                              data-parent="#accordion">
                             <div class="card-body">
-                                <form>
+                                <form class="form-check">
                                     {% for task in task_types %}
                                         <label id="{{ task.filter_tag }}"
-                                               class="checkbox-inline font-weight-bold">
+                                               class="form-check-label">
                                             <input type="checkbox"
-                                                   class="filter"
+                                                   class="filter form-check-input"
                                                    id="{{ task.filter_tag }}"
                                                    value="{{ task.type }}">
                                             <span>{{ task.type }}</span>
@@ -270,11 +270,12 @@
                         <div id="collapseStructure" class="collapse"
                              data-parent="#accordion">
                             <div class="card-body">
+                            <div class="form-check">
                                 {% for r in body_regions %}
                                     <label id="{{ r.filter_tag }}"
-                                           class="checkbox-inline font-weight-bold">
+                                           class="form-check-label">
                                         <input type="checkbox"
-                                               class="filter"
+                                               class="filter form-check-input"
                                                id="{{ r.filter_tag }}"
                                                value="{{ r.region }}">
                                         <span>{{ r.region }}</span>
@@ -282,13 +283,13 @@
                                                 class="counter ml-1 badge badge-pill badge-info"
                                                 id="{{ r.filter_tag }}"></span>
                                     </label>
-                                    <div class="ml-3">
-                                        <form>
+                                    <div class="ml-2">
+                                        <form class="form-check">
                                             {% for s in r.bodystructure_set.all %}
                                                 <label id="{{ s.filter_tag }}"
-                                                       class="checkbox-inline font-weight-bold">
+                                                       class="form-check-label">
                                                     <input type="checkbox"
-                                                           class="filter"
+                                                           class="filter form-check-input"
                                                            id="{{ s.filter_tag }}"
                                                            value="{{ s.structure }}">
                                                     <span>{{ s.structure }}</span>
@@ -301,7 +302,7 @@
                                         </form>
                                     </div>
                                 {% endfor %}
-
+                            </div>
                             </div>
                         </div>
                     </div>
