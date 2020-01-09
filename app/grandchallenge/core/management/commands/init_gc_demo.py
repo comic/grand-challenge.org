@@ -19,6 +19,7 @@ from grandchallenge.challenges.models import (
     BodyRegion,
     BodyStructure,
     Challenge,
+    ChallengeSeries,
     ExternalChallenge,
     ImagingModality,
     TaskType,
@@ -237,8 +238,11 @@ class Command(BaseCommand):
         for modality in modalities:
             ImagingModality.objects.create(modality=modality)
 
+        s = ChallengeSeries.objects.create(name="MICCAI")
+
         mr_modality = ImagingModality.objects.get(modality="MR")
         ex_challenge.modalities.add(mr_modality)
+        ex_challenge.series.add(s)
         ex_challenge.save()
 
     def _create_algorithm_demo(self):

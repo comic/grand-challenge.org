@@ -20,10 +20,12 @@ from grandchallenge.challenges.forms import (
 from grandchallenge.challenges.models import (
     BodyRegion,
     Challenge,
+    ChallengeSeries,
     ExternalChallenge,
     ImagingModality,
     TaskType,
 )
+from grandchallenge.challenges.tasks import update_filter_classes
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsNotAnonMixin,
@@ -67,11 +69,15 @@ class ChallengeList(TemplateView):
         regions = BodyRegion.objects.all().prefetch_related(
             "bodystructure_set"
         )
+        challenge_series = ChallengeSeries.objects.all()
 
         structures = {s for r in regions for s in r.bodystructure_set.all()}
 
         tag_lookup = {
-            t.filter_tag: t for t in chain(modalities, task_types, structures)
+            t.filter_tag: t
+            for t in chain(
+                modalities, task_types, structures, challenge_series
+            )
         }
 
         for c in challenges:
@@ -91,6 +97,7 @@ class ChallengeList(TemplateView):
                 "modalities": modalities,
                 "body_regions": regions,
                 "task_types": task_types,
+                "challenge_series": challenge_series,
                 "challenges_by_year": OrderedDict(
                     sorted(
                         challenges_by_year.items(),
@@ -138,6 +145,11 @@ class ChallengeUpdate(
     success_message = "Challenge successfully updated"
     template_name_suffix = "_update"
 
+    def form_valid(self, form):
+        result = super().form_valid(form=form)
+        update_filter_classes.apply_async()
+        return result
+
 
 class ExternalChallengeCreate(
     UserIsStaffMixin, SuccessMessageMixin, CreateView
@@ -169,6 +181,11 @@ class ExternalChallengeUpdate(
 
     def get_success_url(self):
         return reverse("challenges:list")
+
+    def form_valid(self, form):
+        result = super().form_valid(form=form)
+        update_filter_classes.apply_async()
+        return result
 
 
 class ExternalChallengeList(UserIsStaffMixin, ListView):
