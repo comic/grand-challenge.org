@@ -8,7 +8,8 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item active" aria-current="page">Challenges</li>
     </ol>
 {% endblock %}
@@ -72,6 +73,37 @@
                                    id="projectlink">
                         </label>
                     </form>
+
+                    <div class="card">
+                        <a class="collapsed"
+                           data-toggle="collapse"
+                           href="#collapseSeries">
+                            <div class="card-header">
+                                <h5 class="mb-0">Series</h5>
+                            </div>
+                        </a>
+
+                        <div id="collapseSeries" class="collapse"
+                             data-parent="#accordion">
+                            <div class="card-body">
+                                <form>
+                                    {% for series in challenge_series %}
+                                        <label id="{{ series.filter_tag }}"
+                                               class="checkbox-inline font-weight-bold">
+                                            <input type="checkbox"
+                                                   class="filter"
+                                                   id="{{ series.filter_tag }}"
+                                                   value="{{ series.name }}">
+                                            <span>{{ series.name }}</span>
+                                            <span
+                                                    class="counter ml-1 badge badge-pill badge-info"
+                                                    id="{{ series.filter_tag }}"></span>
+                                        </label><br>
+                                    {% endfor %}
+                                </form>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="card">
                         <a class="collapsed"

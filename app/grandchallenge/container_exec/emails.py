@@ -25,7 +25,7 @@ def send_invalid_dockerfile_email(*, container_image):
     recipients = list(get_user_model().objects.filter(is_staff=True))
 
     if creator:
-        recipients.apend(creator)
+        recipients.append(creator)
 
     for recipient in recipients:
         send_mail(

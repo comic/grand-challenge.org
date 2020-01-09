@@ -147,6 +147,7 @@ class BodyStructure(models.Model):
 
 class ChallengeSeries(models.Model):
     name = CICharField(max_length=64, blank=False, unique=True)
+    url = models.URLField(blank=True)
 
     class Meta:
         ordering = ("name",)
