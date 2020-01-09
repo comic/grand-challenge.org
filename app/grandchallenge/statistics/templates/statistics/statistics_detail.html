@@ -5,6 +5,13 @@
 
 {% block title %}Statistics{% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active" aria-current="page">Statistics</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
 
     <h1>Site Statistics</h1> <br/>

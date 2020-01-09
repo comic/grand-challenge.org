@@ -7,8 +7,10 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Workstation Configs</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Workstation
+            Configs</a></li>
         <li class="breadcrumb-item active" aria-current="page">{{ object.title }}
         </li>
     </ol>
@@ -25,7 +27,7 @@
 
     <table class="table table-hover my-3">
         <tr>
-            <td class="font-weight-bold">Window presets</div>
+            <td class="font-weight-bold">Window presets</td>
             <td>
                 {% for x in object.window_presets.all %}
                     <div>{{ preset }}</div>
@@ -58,27 +60,29 @@
         </tr>
         <tr>
             <td class="font-weight-bold">Image info plugin</td>
-            <td><i class="fas {% if object.show_image_info_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i></td>
+            <td>
+                <i class="fas {% if object.show_image_info_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
         </tr>
-         <tr>
+        <tr>
             <td class="font-weight-bold">Display plugin</td>
-            <td><i class="fas {% if object.show_display_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i></td>
+            <td>
+                <i class="fas {% if object.show_display_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
         </tr>
     </table>
 
-    <p>
-        {% if "change_workstationconfig" in config_perms %}
-            <div class="d-flex justify-content-start align-items-center">
-                <a class="btn btn-primary mr-1"
-                   href="{% url 'workstation-configs:update' slug=object.slug %}">
-                    <i class="fa fa-edit"></i> Edit this workstation config
-                </a>
-                <a href="{% url 'workstation-configs:delete' slug=object.slug %}"
-                   class="btn btn-danger">
-                    <i class="fa fa-times"></i> Delete this workstation config
-                </a>
-            </div>
-        {% endif %}
-    </p>
+    {% if "change_workstationconfig" in config_perms %}
+        <div class="d-flex justify-content-start align-items-center">
+            <a class="btn btn-primary mr-1"
+               href="{% url 'workstation-configs:update' slug=object.slug %}">
+                <i class="fa fa-edit"></i> Edit this workstation config
+            </a>
+            <a href="{% url 'workstation-configs:delete' slug=object.slug %}"
+               class="btn btn-danger">
+                <i class="fa fa-times"></i> Delete this workstation config
+            </a>
+        </div>
+    {% endif %}
 
 {% endblock %}
