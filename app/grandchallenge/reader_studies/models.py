@@ -1,4 +1,6 @@
+import copy
 from collections import Counter
+from typing import Dict, Union
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -282,11 +284,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         hanging_list_count = len(self.hanging_list)
 
         if answerable_question_count == 0 or hanging_list_count == 0:
-            return {
-                "questions": 0.0,
-                "hangings": 0.0,
-                "diff": 0.0,
-            }
+            return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
         expected = hanging_list_count * answerable_question_count
         answers = Answer.objects.filter(
@@ -433,7 +431,6 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
             "required": ["version", "type", "lines"],
         },
     },
-    "type": "object",
     "properties": {
         "version": {
             "type": "object",
@@ -445,8 +442,39 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
         {"$ref": "#/definitions/MDIS"},
+        {"type": "boolean"},
+        {"type": "string"},
     ],
 }
+
+
+def _filter_answer_type_annotation_schema(
+    *, type_name: str
+) -> Union[bool, Dict]:
+    """Yields a schema filtered for a specific answer type annotation."""
+    if "TXT" in type_name:
+        type_name = "string"
+    schema = copy.deepcopy(ANSWER_TYPE_ANNOTATIONS_SCHEMA)
+    filtered = [
+        {k: v}
+        for e in schema["anyOf"]
+        for k, v in e.items()
+        if type_name.lower() in v.lower()
+    ]
+    if len(filtered) == 0:
+        return False
+    schema["anyOf"] = filtered
+    return schema
+
+
+def get_answer_type_annotation_validation_method(*, type_name: str):
+    def _get_answer_type_annotation_validation_method(obj):
+        return validate_answer_json(
+            schema=_filter_answer_type_annotation_schema(type_name=type_name),
+            obj=obj,
+        )
+
+    return _get_answer_type_annotation_validation_method
 
 
 def validate_answer_json(schema: dict, obj: object) -> bool:
@@ -480,21 +508,12 @@ class Question(UUIDModel):
         ),
     )
 
-    # A callable for every answer type that would validate the given answer
+    # Generate a callable for every answer type that would validate the given answer
     ANSWER_TYPE_VALIDATOR = {
-        ANSWER_TYPE_SINGLE_LINE_TEXT: lambda o: isinstance(o, str),
-        ANSWER_TYPE_MULTI_LINE_TEXT: lambda o: isinstance(o, str),
-        ANSWER_TYPE_BOOL: lambda o: isinstance(o, bool),
-        ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
-        ANSWER_TYPE_2D_BOUNDING_BOX: lambda o: validate_answer_json(
-            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
-        ),
-        ANSWER_TYPE_DISTANCE_MEASUREMENT: lambda o: validate_answer_json(
-            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
-        ),
-        ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS: lambda o: validate_answer_json(
-            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
-        ),
+        answer_type_name: get_answer_type_annotation_validation_method(
+            type_name=answer_type_name
+        )
+        for answer_type_name, _ in ANSWER_TYPE_CHOICES
     }
 
     # What is the orientation of the question form when presented on the
