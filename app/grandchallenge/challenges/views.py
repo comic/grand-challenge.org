@@ -20,6 +20,7 @@ from grandchallenge.challenges.forms import (
 from grandchallenge.challenges.models import (
     BodyRegion,
     Challenge,
+    ChallengeSeries,
     ExternalChallenge,
     ImagingModality,
     TaskType,
@@ -67,11 +68,15 @@ class ChallengeList(TemplateView):
         regions = BodyRegion.objects.all().prefetch_related(
             "bodystructure_set"
         )
+        challenge_series = ChallengeSeries.objects.all()
 
         structures = {s for r in regions for s in r.bodystructure_set.all()}
 
         tag_lookup = {
-            t.filter_tag: t for t in chain(modalities, task_types, structures)
+            t.filter_tag: t
+            for t in chain(
+                modalities, task_types, structures, challenge_series
+            )
         }
 
         for c in challenges:
@@ -91,6 +96,7 @@ class ChallengeList(TemplateView):
                 "modalities": modalities,
                 "body_regions": regions,
                 "task_types": task_types,
+                "challenge_series": challenge_series,
                 "challenges_by_year": OrderedDict(
                     sorted(
                         challenges_by_year.items(),

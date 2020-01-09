@@ -70,9 +70,7 @@ class TaskType(models.Model):
     def badge(self):
         return format_html(
             '<span class="badge badge-light" title="{0} challenge">'
-            '<i class="fas fa-tasks"></i>'
-            " {0}"
-            "</span>",
+            '<i class="fas fa-tasks"></i> {0}</span>',
             self.type,
         )
 
@@ -97,9 +95,7 @@ class ImagingModality(models.Model):
     def badge(self):
         return format_html(
             '<span class="badge badge-secondary" title="Uses {0} data">'
-            '<i class="fas fa-microscope"></i>'
-            " {0}"
-            "</span>",
+            '<i class="fas fa-microscope"></i> {0}</span>',
             self.modality,
         )
 
@@ -144,10 +140,32 @@ class BodyStructure(models.Model):
     def badge(self):
         return format_html(
             '<span class="badge badge-dark" title="Uses {0} data">'
-            '<i class="fas fa-child"></i>'
-            " {0}"
-            "</span>",
+            '<i class="fas fa-child"></i> {0}</span>',
             self.structure,
+        )
+
+
+class ChallengeSeries(models.Model):
+    name = CICharField(max_length=64, blank=False, unique=True)
+
+    class Meta:
+        ordering = ("name",)
+        verbose_name_plural = "Challenge Series"
+
+    def __str__(self):
+        return f"{self.name}"
+
+    @property
+    def filter_tag(self):
+        cls = re.sub(r"\W+", "", self.name)
+        return f"series-{cls}"
+
+    @property
+    def badge(self):
+        return format_html(
+            '<span class="badge badge-dark" title="Associated with {0}">'
+            '<i class="fas fa-globe"></i> {0}</span>',
+            self.name,
         )
 
 
@@ -191,7 +209,11 @@ class ChallengeBase(models.Model):
             "used."
         ),
     )
-    logo = models.ImageField(upload_to=get_logo_path, blank=True)
+    logo = models.ImageField(
+        upload_to=get_logo_path,
+        blank=True,
+        help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
+    )
     hidden = models.BooleanField(
         default=True,
         help_text="Do not display this Project in any public overview",
@@ -267,6 +289,11 @@ class ChallengeBase(models.Model):
         blank=True,
         help_text="What structures are used in this challenge?",
     )
+    series = models.ManyToManyField(
+        ChallengeSeries,
+        blank=True,
+        help_text="Which challenge series is this associated with?",
+    )
 
     number_of_training_cases = models.IntegerField(blank=True, null=True)
     number_of_test_cases = models.IntegerField(blank=True, null=True)
@@ -284,7 +311,7 @@ class ChallengeBase(models.Model):
         return (
             "https://www.gravatar.com/avatar/"
             f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
-            "?s=326"
+            "?s=320"
         )
 
     def get_absolute_url(self):
@@ -328,6 +355,10 @@ class ChallengeBase(models.Model):
         # Filter by task type
         for tas in self.task_types.all():
             classes.add(tas.filter_tag)
+
+        # Filter by challenge series
+        for series in self.series.all():
+            classes.add(series.filter_tag)
 
         return list(classes)
 

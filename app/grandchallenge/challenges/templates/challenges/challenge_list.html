@@ -237,7 +237,7 @@
                                          alt="{{ challenge.short_name }} logo"
                                          src="{% static 'images/3697E1-0.8.png' %}"
                                             {% if challenge.logo %}
-                                                {% thumbnail challenge.logo "326x326" crop="center" as im %}
+                                                {% thumbnail challenge.logo "320x320" crop="center" as im %}
                                          data-src="{{ im.url }}"
                                          data-srcset="{{ im.url }} 1x,
                                                               {{ im.url|resolution:'1.5x' }} 1.5x,
