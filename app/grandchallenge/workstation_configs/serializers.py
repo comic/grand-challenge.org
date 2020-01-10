@@ -68,6 +68,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_overlay_alpha",
             "default_overlay_lut",
             "default_overlay_interpolation",
+            "default_zoom_scale",
             "show_image_info_plugin",
             "show_display_plugin",
         ]

@@ -94,6 +94,14 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
             MaxValueValidator(limit_value=1.00),
         ],
     )
+    # 4 digits, 2 decimal places, 0.01 min, 99.99 max
+    default_zoom_scale = models.DecimalField(
+        blank=True,
+        null=True,
+        max_digits=4,
+        decimal_places=2,
+        validators=[MinValueValidator(limit_value=0.01)],
+    )
 
     show_image_info_plugin = models.BooleanField(default=True)
     show_display_plugin = models.BooleanField(default=True)
