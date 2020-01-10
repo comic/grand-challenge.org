@@ -2,10 +2,10 @@ import pytest
 
 from grandchallenge.core.validators import JSONSchemaValidator, ValidationError
 from grandchallenge.reader_studies.models import (
-    ANSWER_TYPE_ANNOTATIONS_SCHEMA,
+    ANSWER_TYPE_SCHEMA,
     HANGING_LIST_SCHEMA,
     Question,
-    _filter_answer_type_annotation_schema,
+    _get_answer_schema_for_type,
 )
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
@@ -193,11 +193,8 @@ ANSWER_TYPE_TEST_NAMES = [e[1] for e in ANSWER_TYPE_TEST_ANSWERS_AND_NAMES]
     "answer, answer_type", ANSWER_TYPE_TEST_ANSWERS_AND_NAMES
 )
 def test_answer_type_annotation_schema(answer, answer_type):
-    assert (
-        JSONSchemaValidator(schema=ANSWER_TYPE_ANNOTATIONS_SCHEMA)(answer)
-        is None
-    )
-    schema = _filter_answer_type_annotation_schema(type_name=answer_type)
+    assert JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)(answer) is None
+    schema = _get_answer_schema_for_type(type_name=answer_type)
     assert JSONSchemaValidator(schema=schema)(answer) is None
     assert Question.ANSWER_TYPE_VALIDATOR[answer_type](answer)
 
@@ -206,8 +203,7 @@ def test_answer_type_annotation_schema(answer, answer_type):
 def test_answer_type_annotation_header_schema_fails(
     answer, answer_type: str = "HEAD"
 ):
-    schema = _filter_answer_type_annotation_schema(type_name=answer_type)
-    assert not schema
+    schema = _get_answer_schema_for_type(type_name=answer_type)
     with pytest.raises(ValidationError):
         JSONSchemaValidator(schema=schema)(answer)
     assert not Question.ANSWER_TYPE_VALIDATOR[answer_type](answer)
@@ -239,11 +235,8 @@ def test_answer_type_annotation_schema_mismatch(
     ]
     assert len(answer) == 1
     answer = answer[0]
-    assert (
-        JSONSchemaValidator(schema=ANSWER_TYPE_ANNOTATIONS_SCHEMA)(answer)
-        is None
-    )
-    schema = _filter_answer_type_annotation_schema(type_name=answer_type_check)
+    assert JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)(answer) is None
+    schema = _get_answer_schema_for_type(type_name=answer_type_check)
     with pytest.raises(ValidationError):
         JSONSchemaValidator(schema=schema)(answer)
     assert not Question.ANSWER_TYPE_VALIDATOR[answer_type_check](answer)

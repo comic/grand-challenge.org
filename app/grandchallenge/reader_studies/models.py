@@ -1,6 +1,5 @@
-import copy
 from collections import Counter
-from typing import Dict, Union
+from typing import Dict
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -350,9 +349,13 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
-ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
+ANSWER_TYPE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
+        "STXT": {"type": "string"},
+        "MTXT": {"type": "string"},
+        "BOOL": {"type": "boolean"},
+        "HEAD": {"type": "null"},
         "2DBB": {
             "type": "object",
             "properties": {
@@ -439,39 +442,29 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
         }
     },
     "anyOf": [
+        {"$ref": "#/definitions/STXT"},
+        {"$ref": "#/definitions/MTXT"},
+        {"$ref": "#/definitions/BOOL"},
+        {"$ref": "#/definitions/HEAD"},
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
         {"$ref": "#/definitions/MDIS"},
-        {"type": "boolean"},
-        {"type": "string"},
     ],
 }
 
 
-def _filter_answer_type_annotation_schema(
-    *, type_name: str
-) -> Union[bool, Dict]:
-    """Yields a schema filtered for a specific answer type annotation."""
-    if "TXT" in type_name:
-        type_name = "string"
-    schema = copy.deepcopy(ANSWER_TYPE_ANNOTATIONS_SCHEMA)
-    filtered = [
-        {k: v}
-        for e in schema["anyOf"]
-        for k, v in e.items()
-        if type_name.lower() in v.lower()
-    ]
-    if len(filtered) == 0:
-        return False
-    schema["anyOf"] = filtered
-    return schema
+def _get_answer_schema_for_type(*, type_name: str) -> Dict:
+    """Returns a schema filtered for a specific answer type annotation."""
+    return {
+        **ANSWER_TYPE_SCHEMA,
+        "anyOf": [{"$ref": f"#/definitions/" f"{type_name}"}],
+    }
 
 
 def get_answer_type_annotation_validation_method(*, type_name: str):
     def _get_answer_type_annotation_validation_method(obj):
         return validate_answer_json(
-            schema=_filter_answer_type_annotation_schema(type_name=type_name),
-            obj=obj,
+            schema=_get_answer_schema_for_type(type_name=type_name), obj=obj,
         )
 
     return _get_answer_type_annotation_validation_method
