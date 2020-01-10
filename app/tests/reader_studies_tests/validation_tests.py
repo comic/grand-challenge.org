@@ -2,7 +2,6 @@ import pytest
 
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.reader_studies.models import (
-    ANSWER_TYPE_SCHEMA,
     HANGING_LIST_SCHEMA,
     Question,
 )
@@ -143,60 +142,49 @@ def test_hanging_list_shuffle_per_user(client):
     assert response.json()["hanging_list_images"] == u1_list
 
 
-ANSWER_TYPE_TEST_ANSWERS_AND_NAMES = (
-    ("string test", "STXT"),
-    ("multiline string\ntest", "MTXT"),
-    (True, "BOOL"),
-    (
-        {
-            "version": {"major": 1, "minor": 0},
-            "type": "2D bounding box",
-            "name": "test_name",
-            "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
-        },
-        "2DBB",
-    ),
-    (
-        {
-            "version": {"major": 1, "minor": 0},
-            "type": "Distance measurement",
-            "name": "test_name",
-            "start": [0, 0, 0],
-            "end": [10, 0, 0],
-        },
-        "DIST",
-    ),
-    (
-        {
-            "version": {"major": 1, "minor": 0},
-            "type": "Multiple distance measurements",
-            "name": "test_name",
-            "lines": [
-                {
-                    "type": "object",
-                    "name": "segment1",
-                    "start": [0, 0, 0],
-                    "end": [10, 0, 0],
-                },
-                {"start": [0, 0, 0], "end": [10, 0, 0]},
-            ],
-        },
-        "MDIS",
-    ),
-)
-ANSWER_TYPE_TEST_ANSWERS = [e[0] for e in ANSWER_TYPE_TEST_ANSWERS_AND_NAMES]
-ANSWER_TYPE_TEST_NAMES = [e[1] for e in ANSWER_TYPE_TEST_ANSWERS_AND_NAMES]
+ANSWER_TYPE_NAMES_AND_ANSWERS = {
+    "STXT": "string test",
+    "MTXT": "multiline string\ntest",
+    "BOOL": True,
+    "2DBB": {
+        "version": {"major": 1, "minor": 0},
+        "type": "2D bounding box",
+        "name": "test_name",
+        "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+    },
+    "DIST": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Distance measurement",
+        "name": "test_name",
+        "start": [0, 0, 0],
+        "end": [10, 0, 0],
+    },
+    "MDIS": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple distance measurements",
+        "name": "test_name",
+        "lines": [
+            {
+                "type": "object",
+                "name": "segment1",
+                "start": [0, 0, 0],
+                "end": [10, 0, 0],
+            },
+            {"start": [0, 0, 0], "end": [10, 0, 0]},
+        ],
+    },
+}
 
 
 @pytest.mark.parametrize(
-    "answer, answer_type", ANSWER_TYPE_TEST_ANSWERS_AND_NAMES
+    "answer_type, answer", ANSWER_TYPE_NAMES_AND_ANSWERS.items()
 )
 def test_answer_type_annotation_schema(answer, answer_type):
     q = Question(answer_type=answer_type)
     assert q.is_answer_valid(answer=answer) is True
 
 
-@pytest.mark.parametrize("answer", ANSWER_TYPE_TEST_ANSWERS)
+@pytest.mark.parametrize("answer", ANSWER_TYPE_NAMES_AND_ANSWERS.values())
 def test_answer_type_annotation_header_schema_fails(
     answer, answer_type: str = "HEAD"
 ):
@@ -223,16 +211,12 @@ def test_answer_type_annotation_header_schema_fails(
 def test_answer_type_annotation_schema_mismatch(
     answer_type, answer_type_check
 ):
-    q = Question(answer_type=answer_type_check)
-    answer = [
-        answer
-        for answer, type_name in ANSWER_TYPE_TEST_ANSWERS_AND_NAMES
-        if type_name == answer_type
-    ]
-    assert len(answer) == 1
-    answer = answer[0]
-    assert JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)(answer) is None
-    assert not q.is_answer_valid(answer=answer)
+    a = ANSWER_TYPE_NAMES_AND_ANSWERS[answer_type]
+    assert Question(answer_type=answer_type).is_answer_valid(answer=a) is True
+    assert (
+        Question(answer_type=answer_type_check).is_answer_valid(answer=a)
+        is False
+    )
 
 
 def test_new_answer_type_listed():
