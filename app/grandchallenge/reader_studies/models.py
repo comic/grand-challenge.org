@@ -1,5 +1,4 @@
 from collections import Counter
-from typing import Dict
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -441,6 +440,7 @@ ANSWER_TYPE_SCHEMA = {
             "required": ["major", "minor"],
         }
     },
+    # anyOf should exist, check Question.is_answer_valid
     "anyOf": [
         {"$ref": "#/definitions/STXT"},
         {"$ref": "#/definitions/MTXT"},
@@ -451,32 +451,6 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MDIS"},
     ],
 }
-
-
-def _get_answer_schema_for_type(*, type_name: str) -> Dict:
-    """Returns a schema filtered for a specific answer type annotation."""
-    return {
-        **ANSWER_TYPE_SCHEMA,
-        "anyOf": [{"$ref": f"#/definitions/" f"{type_name}"}],
-    }
-
-
-def get_answer_type_annotation_validation_method(*, type_name: str):
-    def _get_answer_type_annotation_validation_method(obj):
-        return validate_answer_json(
-            schema=_get_answer_schema_for_type(type_name=type_name), obj=obj,
-        )
-
-    return _get_answer_type_annotation_validation_method
-
-
-def validate_answer_json(schema: dict, obj: object) -> bool:
-    """The answer type validators must return true or false."""
-    try:
-        JSONSchemaValidator(schema=schema)(obj)
-        return True
-    except ValidationError:
-        return False
 
 
 class Question(UUIDModel):
@@ -500,14 +474,6 @@ class Question(UUIDModel):
             "Multiple distance measurements",
         ),
     )
-
-    # Generate a callable for every answer type that would validate the given answer
-    ANSWER_TYPE_VALIDATOR = {
-        answer_type_name: get_answer_type_annotation_validation_method(
-            type_name=answer_type_name
-        )
-        for answer_type_name, _ in ANSWER_TYPE_CHOICES
-    }
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -629,13 +595,27 @@ class Question(UUIDModel):
             )
 
     def is_answer_valid(self, *, answer):
-        return self.ANSWER_TYPE_VALIDATOR[self.answer_type](answer)
+        try:
+            return (
+                JSONSchemaValidator(
+                    schema={
+                        **ANSWER_TYPE_SCHEMA,
+                        "anyOf": [
+                            {"$ref": f"#/definitions/" f"{self.answer_type}"}
+                        ],
+                    }
+                )(answer)
+                is None
+            )
+        except ValidationError:
+            return False
 
 
 class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
+    # TODO: add validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     answer = JSONField()
 
     csv_headers = Question.csv_headers + [
