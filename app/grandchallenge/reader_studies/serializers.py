@@ -6,6 +6,7 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
+from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 
@@ -30,6 +31,13 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "question_text",
             "reader_study",
             "required",
+        )
+        swagger_schema_fields = swagger_schema_fields_for_charfield(
+            answer_type=model._meta.get_field("answer_type"),
+            form_direction=model._meta.get_field(
+                "direction"
+            ),  # model.direction gets remapped
+            image_port=model._meta.get_field("image_port"),
         )
 
 
