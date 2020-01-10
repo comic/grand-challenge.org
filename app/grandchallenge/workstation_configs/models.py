@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
@@ -54,7 +58,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         related_name="workstation_default_window_presets",
     )
 
-    # 4 digits, 2 decimal places, 0.0 min, 99.99 max
+    # 4 digits, 2 decimal places, 0.01 min, 99.99 max
     default_slab_thickness_mm = models.DecimalField(
         blank=True,
         null=True,
@@ -78,6 +82,25 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         choices=IMAGE_INTERPOLATION_TYPE_CHOICES,
         default=IMAGE_INTERPOLATION_TYPE_NEAREST,
         blank=True,
+    )
+    # 3 digits, 2 decimal places, 0.00 min, 1.00 max
+    default_overlay_alpha = models.DecimalField(
+        blank=True,
+        null=True,
+        max_digits=3,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(limit_value=0.00),
+            MaxValueValidator(limit_value=1.00),
+        ],
+    )
+    # 4 digits, 2 decimal places, 0.01 min, 99.99 max
+    default_zoom_scale = models.DecimalField(
+        blank=True,
+        null=True,
+        max_digits=4,
+        decimal_places=2,
+        validators=[MinValueValidator(limit_value=0.01)],
     )
 
     show_image_info_plugin = models.BooleanField(default=True)
