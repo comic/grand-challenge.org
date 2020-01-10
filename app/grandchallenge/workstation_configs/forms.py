@@ -15,6 +15,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "default_slab_thickness_mm",
             "default_slab_render_method",
             "default_orientation",
+            "default_overlay_alpha",
             "default_overlay_lut",
             "default_overlay_interpolation",
             "show_image_info_plugin",
