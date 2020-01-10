@@ -110,7 +110,9 @@ class RawImageUploadSessionViewSet(
     @action(detail=True, methods=["patch"])
     def process_images(self, request, pk=None):
         upload_session = self.get_object()
-        upload_session.process_images()
+        rawi
+        if upload_session.session_state == UploadSessionState.stopped:
+            upload_session.process_images()
         messages.add_message(
             request, messages.SUCCESS, "Upload session re activated."
         )
