@@ -1,8 +1,14 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
+    RawImageFile,
+    RawImageUploadSession,
+)
 
 
 class ImageFileSerializer(serializers.ModelSerializer):
@@ -43,6 +49,15 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         view_name="api:algorithms-image-detail",
     )
 
+    def validate(self, attrs):
+        algorithm_image = attrs["algorithm_image"]
+        user = self.context.get("request").user
+        if not user.has_perm("view_algorithm", algorithm_image.algorithm):
+            raise ValidationError(
+                f"User {user} does not have permission to view this algorithm "
+            )
+        return attrs
+
     class Meta:
         model = RawImageUploadSession
         fields = [
@@ -53,3 +68,23 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "algorithm_image",
             "api_url",
         ]
+
+
+class RawImageFileSerializer(serializers.ModelSerializer):
+    upload_session = HyperlinkedRelatedField(
+        queryset=RawImageUploadSession.objects.all(),
+        view_name="api:upload-session-detail",
+    )
+
+    def validate(self, attrs):
+        upload_session = attrs["upload_session"]
+        user = self.context.get("request").user
+        if not user.has_perm("change_rawimageuploadsession", upload_session):
+            raise ValidationError(
+                f"User {user} does not have permission to change this raw image upload session "
+            )
+        return attrs
+
+    class Meta:
+        model = RawImageFile
+        fields = ["pk", "upload_session", "filename", "api_url"]

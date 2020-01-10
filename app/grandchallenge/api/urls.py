@@ -13,6 +13,7 @@ from grandchallenge.algorithms.views import (
 )
 from grandchallenge.cases.views import (
     ImageViewSet,
+    RawImageFileViewSet,
     RawImageUploadSessionViewSet,
 )
 from grandchallenge.jqfileupload.views import StagedFileViewSet
@@ -33,6 +34,9 @@ router.register(
     r"cases/upload-sessions",
     RawImageUploadSessionViewSet,
     basename="upload-session",
+)
+router.register(
+    r"cases/image-files", RawImageFileViewSet, basename="image-file"
 )
 router.register(r"cases/images", ImageViewSet, basename="image")
 router.register(r"workstations/sessions", SessionViewSet)

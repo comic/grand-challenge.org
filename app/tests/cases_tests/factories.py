@@ -1,7 +1,11 @@
 import factory
 from django.conf import settings
 
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    RawImageFile,
+    RawImageUploadSession,
+)
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import (
     ImageFactory,
@@ -184,3 +188,10 @@ class ImageFactoryWithImageFile3DLarge4Slices(ImageFactoryWithImageFile3D):
 class RawImageUploadSessionFactory(factory.DjangoModelFactory):
     class Meta:
         model = RawImageUploadSession
+
+
+class RawImageFileFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = RawImageFile
+
+    upload_session = factory.SubFactory(RawImageUploadSessionFactory)

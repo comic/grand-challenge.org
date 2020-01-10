@@ -1,11 +1,14 @@
+from django.contrib import messages
 from django.http import Http404
 from django.views.generic import CreateView, DetailView
+from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
@@ -19,9 +22,13 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.cases.serializers import (
     ImageSerializer,
+    RawImageFileSerializer,
     RawImageUploadSessionSerializer,
 )
 from grandchallenge.core.permissions.mixins import UserIsStaffMixin
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyWithCustomPostPermissions,
+)
 
 
 class UploadRawFiles(UserIsStaffMixin, CreateView):
@@ -94,6 +101,27 @@ class RawImageUploadSessionViewSet(
 ):
     serializer_class = RawImageUploadSessionSerializer
     queryset = RawImageUploadSession.objects.all()
+    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    filter_backends = [ObjectPermissionsFilter]
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+
+    @action(detail=True, methods=["patch"])
+    def process_images(self, request, pk=None):
+        upload_session = self.get_object()
+        if upload_session.session_state == UploadSessionState.stopped:
+            upload_session.process_images()
+        messages.add_message(
+            request, messages.SUCCESS, "Upload session re activated."
+        )
+        return Response({"status": "Images are uploaded."})
+
+
+class RawImageFileViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
+    serializer_class = RawImageFileSerializer
+    queryset = RawImageFile.objects.all()
+    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    filter_backends = [ObjectPermissionsFilter]
