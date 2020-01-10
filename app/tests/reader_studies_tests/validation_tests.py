@@ -233,3 +233,9 @@ def test_answer_type_annotation_schema_mismatch(
     answer = answer[0]
     assert JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)(answer) is None
     assert not q.is_answer_valid(answer=answer)
+
+
+def test_new_answer_type_listed():
+    q = Question(answer_type="TEST")
+    with pytest.raises(RuntimeError):
+        q.is_answer_valid(answer="foo")

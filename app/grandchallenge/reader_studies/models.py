@@ -10,6 +10,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
 
 from grandchallenge.cases.models import Image
@@ -601,7 +602,7 @@ class Question(UUIDModel):
                     schema={
                         **ANSWER_TYPE_SCHEMA,
                         "anyOf": [
-                            {"$ref": f"#/definitions/" f"{self.answer_type}"}
+                            {"$ref": f"#/definitions/{self.answer_type}"}
                         ],
                     }
                 )(answer)
@@ -609,6 +610,11 @@ class Question(UUIDModel):
             )
         except ValidationError:
             return False
+        except RefResolutionError:
+            raise RuntimeError(
+                f"#/definitions/{self.answer_type} needs to be defined in "
+                "ANSWER_TYPE_SCHEMA."
+            )
 
 
 class Answer(UUIDModel):
