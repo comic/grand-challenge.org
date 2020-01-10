@@ -1,7 +1,10 @@
 import pytest
 
 from grandchallenge.core.validators import JSONSchemaValidator
-from grandchallenge.reader_studies.models import HANGING_LIST_SCHEMA
+from grandchallenge.reader_studies.models import (
+    HANGING_LIST_SCHEMA,
+    Question,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
@@ -137,3 +140,86 @@ def test_hanging_list_shuffle_per_user(client):
     )
     assert response.status_code == 200
     assert response.json()["hanging_list_images"] == u1_list
+
+
+ANSWER_TYPE_NAMES_AND_ANSWERS = {
+    "STXT": "string test",
+    "MTXT": "multiline string\ntest",
+    "BOOL": True,
+    "2DBB": {
+        "version": {"major": 1, "minor": 0},
+        "type": "2D bounding box",
+        "name": "test_name",
+        "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+    },
+    "DIST": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Distance measurement",
+        "name": "test_name",
+        "start": [0, 0, 0],
+        "end": [10, 0, 0],
+    },
+    "MDIS": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple distance measurements",
+        "name": "test_name",
+        "lines": [
+            {
+                "type": "object",
+                "name": "segment1",
+                "start": [0, 0, 0],
+                "end": [10, 0, 0],
+            },
+            {"start": [0, 0, 0], "end": [10, 0, 0]},
+        ],
+    },
+}
+
+
+@pytest.mark.parametrize(
+    "answer_type, answer", ANSWER_TYPE_NAMES_AND_ANSWERS.items()
+)
+def test_answer_type_annotation_schema(answer, answer_type):
+    q = Question(answer_type=answer_type)
+    assert q.is_answer_valid(answer=answer) is True
+
+
+@pytest.mark.parametrize("answer", ANSWER_TYPE_NAMES_AND_ANSWERS.values())
+def test_answer_type_annotation_header_schema_fails(
+    answer, answer_type: str = "HEAD"
+):
+    q = Question(answer_type=answer_type)
+    assert not q.is_answer_valid(answer=answer)
+
+
+@pytest.mark.parametrize(
+    "answer_type, answer_type_check",
+    [
+        ("STXT", "2DBB"),
+        ("STXT", "DIST"),
+        ("MTXT", "MDIS"),
+        ("BOOL", "2DBB"),
+        ("BOOL", "STXT"),
+        ("2DBB", "DIST"),
+        ("2DBB", "STXT"),
+        ("DIST", "MDIS"),
+        ("DIST", "2DBB"),
+        ("MDIS", "2DBB"),
+        ("MDIS", "DIST"),
+    ],
+)
+def test_answer_type_annotation_schema_mismatch(
+    answer_type, answer_type_check
+):
+    a = ANSWER_TYPE_NAMES_AND_ANSWERS[answer_type]
+    assert Question(answer_type=answer_type).is_answer_valid(answer=a) is True
+    assert (
+        Question(answer_type=answer_type_check).is_answer_valid(answer=a)
+        is False
+    )
+
+
+def test_new_answer_type_listed():
+    q = Question(answer_type="TEST")
+    with pytest.raises(RuntimeError):
+        q.is_answer_valid(answer="foo")

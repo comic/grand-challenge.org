@@ -10,6 +10,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
 
 from grandchallenge.cases.models import Image
@@ -282,11 +283,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         hanging_list_count = len(self.hanging_list)
 
         if answerable_question_count == 0 or hanging_list_count == 0:
-            return {
-                "questions": 0.0,
-                "hangings": 0.0,
-                "diff": 0.0,
-            }
+            return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
         expected = hanging_list_count * answerable_question_count
         answers = Answer.objects.filter(
@@ -352,9 +349,13 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
-ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
+ANSWER_TYPE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
+        "STXT": {"type": "string"},
+        "MTXT": {"type": "string"},
+        "BOOL": {"type": "boolean"},
+        "HEAD": {"type": "null"},
         "2DBB": {
             "type": "object",
             "properties": {
@@ -433,7 +434,6 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
             "required": ["version", "type", "lines"],
         },
     },
-    "type": "object",
     "properties": {
         "version": {
             "type": "object",
@@ -441,21 +441,17 @@ ANSWER_TYPE_ANNOTATIONS_SCHEMA = {
             "required": ["major", "minor"],
         }
     },
+    # anyOf should exist, check Question.is_answer_valid
     "anyOf": [
+        {"$ref": "#/definitions/STXT"},
+        {"$ref": "#/definitions/MTXT"},
+        {"$ref": "#/definitions/BOOL"},
+        {"$ref": "#/definitions/HEAD"},
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
         {"$ref": "#/definitions/MDIS"},
     ],
 }
-
-
-def validate_answer_json(schema: dict, obj: object) -> bool:
-    """The answer type validators must return true or false."""
-    try:
-        JSONSchemaValidator(schema=schema)(obj)
-        return True
-    except ValidationError:
-        return False
 
 
 class Question(UUIDModel):
@@ -479,23 +475,6 @@ class Question(UUIDModel):
             "Multiple distance measurements",
         ),
     )
-
-    # A callable for every answer type that would validate the given answer
-    ANSWER_TYPE_VALIDATOR = {
-        ANSWER_TYPE_SINGLE_LINE_TEXT: lambda o: isinstance(o, str),
-        ANSWER_TYPE_MULTI_LINE_TEXT: lambda o: isinstance(o, str),
-        ANSWER_TYPE_BOOL: lambda o: isinstance(o, bool),
-        ANSWER_TYPE_HEADING: lambda o: False,  # Headings are not answerable
-        ANSWER_TYPE_2D_BOUNDING_BOX: lambda o: validate_answer_json(
-            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
-        ),
-        ANSWER_TYPE_DISTANCE_MEASUREMENT: lambda o: validate_answer_json(
-            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
-        ),
-        ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS: lambda o: validate_answer_json(
-            ANSWER_TYPE_ANNOTATIONS_SCHEMA, o
-        ),
-    }
 
     # What is the orientation of the question form when presented on the
     # front end?
@@ -617,13 +596,32 @@ class Question(UUIDModel):
             )
 
     def is_answer_valid(self, *, answer):
-        return self.ANSWER_TYPE_VALIDATOR[self.answer_type](answer)
+        try:
+            return (
+                JSONSchemaValidator(
+                    schema={
+                        **ANSWER_TYPE_SCHEMA,
+                        "anyOf": [
+                            {"$ref": f"#/definitions/{self.answer_type}"}
+                        ],
+                    }
+                )(answer)
+                is None
+            )
+        except ValidationError:
+            return False
+        except RefResolutionError:
+            raise RuntimeError(
+                f"#/definitions/{self.answer_type} needs to be defined in "
+                "ANSWER_TYPE_SCHEMA."
+            )
 
 
 class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
+    # TODO: add validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     answer = JSONField()
 
     csv_headers = Question.csv_headers + [
