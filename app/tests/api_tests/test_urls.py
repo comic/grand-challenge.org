@@ -8,6 +8,7 @@ from django.db.models import CharField
 from rest_framework.serializers import ModelSerializer
 
 import grandchallenge.api.urls
+from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 from grandchallenge.reader_studies.serializers import QuestionSerializer
 from grandchallenge.subdomains.utils import reverse
 from tests.utils import assert_viewname_status
@@ -29,9 +30,15 @@ def test_api_docs_generation(client, schema, schema_format):
     )
     if schema_format is not None:
         assert len(response.data["paths"]) > 0
+        check_answer_type_schema_from_response(response)
         check_response_schema_formatting(response)
     else:
         assert len(response.content) > 0
+
+
+def check_answer_type_schema_from_response(response):
+    schema = response.data["definitions"]["Answer"]["properties"]["answer"]
+    assert {"title": "Answer", **ANSWER_TYPE_SCHEMA} == schema
 
 
 def check_response_schema_formatting(response):

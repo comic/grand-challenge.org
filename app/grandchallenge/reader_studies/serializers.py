@@ -8,7 +8,12 @@ from rest_framework.serializers import (
 
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    ANSWER_TYPE_SCHEMA,
+    Answer,
+    Question,
+    ReaderStudy,
+)
 
 
 class QuestionSerializer(HyperlinkedModelSerializer):
@@ -123,3 +128,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "pk",
             "question",
         )
+        swagger_schema_fields = {
+            "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}
+        }
