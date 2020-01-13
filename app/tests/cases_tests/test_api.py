@@ -313,3 +313,24 @@ def test_process_images_api_view(client):
     )
     assert response.status_code == 200
     assert "Images are uploaded." in str(response.content)
+
+    RawImageFileFactory(upload_session=upload_session, state="processed")
+
+    response = get_view_for_user(
+        viewname="api:image-file-list",
+        client=client,
+        user=user,
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 1
+
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": upload_session.pk},
+        user=user,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+    )
+    assert response.status_code == 200
