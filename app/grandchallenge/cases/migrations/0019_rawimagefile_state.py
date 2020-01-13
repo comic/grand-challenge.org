@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('cases', '0018_auto_20191218_0936'),
-    ]
+    dependencies = [("cases", "0018_auto_20191218_0936")]
 
     operations = [
         migrations.AddField(
-            model_name='rawimagefile',
-            name='state',
-            field=models.CharField(default='created', max_length=16),
-        ),
+            model_name="rawimagefile",
+            name="state",
+            field=models.CharField(default="created", max_length=16),
+        )
     ]
