@@ -30,6 +30,7 @@ from grandchallenge.cases.models import (
     FolderUpload,
     Image,
     ImageFile,
+    ImageFileState,
     RawImageFile,
     RawImageUploadSession,
     UploadSessionState,
@@ -308,6 +309,9 @@ def build_images(upload_session_uuid: UUID):
     :class:`RawImageUploadSession` to indicate if it is running or has finished
     computing.
 
+    The task also updates the state-filed of the associated
+    :class:`RawImageFile` to indicate whether it has been processed or not.
+
     Results are stored in:
     - `RawImageUploadSession.error_message` if a general error occurred during
         processing.
@@ -349,6 +353,7 @@ def build_images(upload_session_uuid: UUID):
                     saf = StagedAjaxFile(duplicate.staged_file_id)
                     duplicate.staged_file_id = None
                     saf.delete()
+                    duplicate.state = ImageFileState.queued
                     duplicate.save()
 
                 populate_provisioning_directory(session_files, tmp_dir)
@@ -391,6 +396,7 @@ def build_images(upload_session_uuid: UUID):
                                 filename
                             ]  # type: RawImageFile
                             raw_image.error = None
+                            raw_image.state = ImageFileState.processed
                             raw_image.save()
                     for (
                         filename,
@@ -402,6 +408,7 @@ def build_images(upload_session_uuid: UUID):
                             ]  # type: RawImageFile
                             raw_image.error = raw_image.error or ""
                             raw_image.error += f"{msg}\n"
+                            raw_image.state = ImageFileState.queued
                             raw_image.save()
 
                 for image in collected_images:

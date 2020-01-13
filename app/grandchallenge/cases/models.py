@@ -26,6 +26,12 @@ class UploadSessionState:
     stopped = "stopped"
 
 
+class ImageFileState:
+    created = "created"
+    queued = "queued"
+    processed = "processed"
+
+
 class RawImageUploadSession(UUIDModel):
     """
     A session keeps track of uploaded files and forms the basis of a processing
@@ -159,6 +165,8 @@ class RawImageFile(UUIDModel):
     staged_file_id = models.UUIDField(blank=True, null=True)
 
     error = models.TextField(blank=False, null=True, default=None)
+
+    state = models.CharField(max_length=16, default=ImageFileState.created)
 
     @property
     def api_url(self):

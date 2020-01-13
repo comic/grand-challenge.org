@@ -16,6 +16,7 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
+    ImageFileState,
     RawImageFile,
     RawImageUploadSession,
     UploadSessionState,
@@ -110,7 +111,14 @@ class RawImageUploadSessionViewSet(
     @action(detail=True, methods=["patch"])
     def process_images(self, request, pk=None):
         upload_session = self.get_object()
-        if upload_session.session_state == UploadSessionState.stopped:
+        raw_image_files = RawImageFile.objects.filter(
+            upload_session=upload_session
+        ).all()
+        if (
+            upload_session.session_state == UploadSessionState.stopped
+            and raw_image_files
+            and raw_image_files[0].state != ImageFileState.processed
+        ):
             upload_session.process_images()
         messages.add_message(
             request, messages.SUCCESS, "Upload session re activated."
