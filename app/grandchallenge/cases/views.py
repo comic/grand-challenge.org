@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, HttpResponseBadRequest
 from django.views.generic import CreateView, DetailView
 from rest_framework.decorators import action
 from rest_framework.mixins import (
@@ -112,10 +112,14 @@ class RawImageUploadSessionViewSet(
         upload_session = self.get_object()
         if upload_session.session_state == UploadSessionState.stopped:
             upload_session.process_images()
+            messages.add_message(
+                request, messages.SUCCESS, "Upload session re activated."
+            )
+            return Response({"status": "Images are uploaded."})
         messages.add_message(
-            request, messages.SUCCESS, "Upload session re activated."
+            request, messages.ERROR, "Upload session can not be re activated."
         )
-        return Response({"status": "Images are uploaded."})
+        return HttpResponseBadRequest("Images can not be uploaded")
 
 
 class RawImageFileViewSet(

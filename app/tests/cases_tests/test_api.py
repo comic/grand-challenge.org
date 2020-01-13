@@ -302,7 +302,6 @@ def test_process_images_api_view(client):
     upload_session = RawImageUploadSessionFactory(
         creator=user, algorithm_image=ai
     )
-
     response = get_view_for_user(
         viewname="api:upload-session-process-images",
         reverse_kwargs={"pk": upload_session.pk},
@@ -311,5 +310,5 @@ def test_process_images_api_view(client):
         method=client.patch,
         content_type="application/json",
     )
-    assert response.status_code == 200
-    assert "Images are uploaded." in str(response.content)
+
+    assert response.status_code == 400
