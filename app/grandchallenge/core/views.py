@@ -24,9 +24,7 @@ def challenge_homepage(request):
     currentpage = get_rendered_page_if_allowed(currentpage, request)
 
     return render(
-        request,
-        "page.html",
-        {"challenge": challenge, "currentpage": currentpage, "pages": pages},
+        request, "pages/page_detail.html", {"currentpage": currentpage},
     )
 
 

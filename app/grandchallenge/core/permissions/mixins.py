@@ -3,7 +3,6 @@ from urllib.parse import urlparse, urlunparse
 from django.contrib import messages
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, QueryDict
 from guardian.utils import get_anonymous_user
 
@@ -13,13 +12,16 @@ from grandchallenge.subdomains.utils import reverse
 class UserAuthAndTestMixin(UserPassesTestMixin):
     """
     A mixin that is exactly like the UserPassesTest mixin, but ensures that
-    the user is logged in too.
+    the user is logged in if login_required is True.
 
     Requires that grandchallenge.core.middleware.project is installed
 
     NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
     See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
     """
+
+    login_required = True
+    raise_exception = True
 
     def get_login_url(self):
         return reverse("userena_signin")
@@ -43,7 +45,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
         return HttpResponseRedirect(urlunparse(login_url_parts))
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.request.user.is_authenticated:
+        if self.login_required and not self.request.user.is_authenticated:
             messages.add_message(
                 self.request,
                 messages.INFO,
@@ -54,10 +56,6 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
                 self.get_login_url(),
                 self.get_redirect_field_name(),
             )
-
-        user_test_result = self.get_test_func()()
-        if not user_test_result:
-            raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
 

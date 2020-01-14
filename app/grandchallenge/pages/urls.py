@@ -4,10 +4,10 @@ from grandchallenge.pages.views import (
     FaviconView,
     PageCreate,
     PageDelete,
+    PageDetail,
     PageList,
     PageUpdate,
     insertedpage,
-    page,
 )
 
 app_name = "pages"
@@ -41,7 +41,7 @@ urlpatterns = [
         FaviconView.as_view(rel="apple-touch-icon-precomposed"),
         name="apple-touch-icon-precomposed-sized",
     ),
-    path("<slug:page_title>/", page, name="detail"),
+    path("<slug:page_title>/", PageDetail.as_view(), name="detail"),
     path("<slug:page_title>/update/", PageUpdate.as_view(), name="update"),
     path("<slug:page_title>/delete/", PageDelete.as_view(), name="delete"),
     path(

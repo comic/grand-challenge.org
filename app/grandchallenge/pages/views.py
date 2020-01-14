@@ -11,16 +11,21 @@ from django.utils._os import safe_join
 from django.views.generic import (
     CreateView,
     DeleteView,
+    DetailView,
     ListView,
     RedirectView,
     UpdateView,
 )
 from favicon.models import Favicon
 
-from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
+from grandchallenge.core.permissions.mixins import (
+    UserAuthAndTestMixin,
+    UserIsChallengeAdminMixin,
+)
 from grandchallenge.core.views import (
     get_data_folder_path,
     get_rendered_page_if_allowed,
+    render_tags,
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import Page
@@ -57,6 +62,30 @@ class PageList(
     UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin, ListView
 ):
     model = Page
+
+
+class PageDetail(
+    UserAuthAndTestMixin, ChallengeFilteredQuerysetMixin, DetailView
+):
+    model = Page
+    slug_url_kwarg = "page_title"
+    slug_field = "title__iexact"
+    login_required = False
+
+    def test_func(self):
+        user = self.request.user
+        page = self.get_object()
+        return page.can_be_viewed_by(user=user)
+
+    def get_context_object_name(self, obj):
+        return "currentpage"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["currentpage"].html = render_tags(
+            request=self.request, p=context["currentpage"]
+        )
+        return context
 
 
 class PageUpdate(
@@ -99,21 +128,6 @@ class PageDelete(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Legacy methods, moved from core/views.py
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def page(request, page_title):
-    """Show a single page on a site."""
-    currentpage = get_rendered_page_if_allowed(page_title, request)
-
-    response = render(request, "page.html", {"currentpage": currentpage})
-
-    # TODO: THis has code smell. If page has to be checked like this, is it
-    # ok to use a page object for error messages?
-    if hasattr(currentpage, "is_error_page"):
-        if currentpage.is_error_page:
-            response.status_code = 403
-
-    return response
-
-
 def insertedpage(request, page_title, dropboxpath):
     """Display contents of a file from the media directory."""
     challenge = request.challenge
