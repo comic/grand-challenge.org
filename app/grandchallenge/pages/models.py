@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from grandchallenge.challenges.models import ComicSiteModel
 from grandchallenge.core.templatetags.bleach import clean
@@ -59,34 +59,35 @@ class Page(ComicSiteModel):
         out = clean(self.html)
 
         if "project_statistics" in out:
-            users = self.challenge.get_participants().select_related(
-                "user_profile"
-            )
-            country_data = (
-                users.exclude(user_profile__country="")
-                .annotate(country_count=Count("user_profile__country"))
-                .order_by("-country_count")
-                .values_list("user_profile__country", "country_count")
-            )
-            content = render_to_string(
-                "grandchallenge/partials/geochart.html",
-                {
-                    "user_count": users.count(),
-                    "country_data": json.dumps(
-                        [["Country", "#Participants"]] + list(country_data)
-                    ),
-                },
-            )
+            out = self._substitute_geochart(html=out)
 
-            s = Substitution(
-                tag_name="project_statistics",
-                content=f"<h1>Statistics</h1>{content}",
-            )
-            out = s.replace(out)
+        return out
 
-        # self.html has been cleaned at this point, and nothing new introduced by
-        # the substitutions so this is safe
-        return mark_safe(out)
+    def _substitute_geochart(self, *, html):
+        users = self.challenge.get_participants().select_related(
+            "user_profile"
+        )
+        country_data = (
+            users.exclude(user_profile__country="")
+            .annotate(country_count=Count("user_profile__country"))
+            .order_by("-country_count")
+            .values_list("user_profile__country", "country_count")
+        )
+        content = render_to_string(
+            "grandchallenge/partials/geochart.html",
+            {
+                "user_count": users.count(),
+                "country_data": json.dumps(
+                    [["Country", "#Participants"]] + list(country_data)
+                ),
+            },
+        )
+
+        s = Substitution(
+            tag_name="project_statistics",
+            content=format_html("<h1>Statistics</h1>{}", content),
+        )
+        return s.replace(html)
 
     def move(self, move):
         if move == self.UP:

@@ -1,4 +1,5 @@
 import pytest
+from django.utils.safestring import SafeString, mark_safe
 
 from grandchallenge.pages.substitutions import Substitution
 
@@ -28,3 +29,17 @@ def test_no_spaces(tag_name):
     with pytest.raises(ValueError) as e:
         Substitution(tag_name=tag_name, content="blah")
     assert "not a valid name" in str(e)
+
+
+@pytest.mark.parametrize(
+    "inp,content,typ",
+    [
+        ("{% foo %}", "<a>", str),
+        (mark_safe("{% foo %}"), "<a>", str),
+        ("{% foo %}", mark_safe("<a>"), str),
+        (mark_safe("{% foo %}"), mark_safe("<a>"), SafeString),
+    ],
+)
+def test_safe_substitutions(inp, content, typ):
+    s = Substitution(tag_name="foo", content=content)
+    assert isinstance(s.replace(inp), typ)
