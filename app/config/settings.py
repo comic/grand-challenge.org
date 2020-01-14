@@ -451,7 +451,6 @@ BLEACH_ALLOWED_TAGS = [
     "h6",
     "hr",
     "i",
-    "iframe",  # Allowed for now for continuous registration challenge
     "img",
     "li",
     "ol",
@@ -474,14 +473,6 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     "a": ["href", "title"],
     "abbr": ["title"],
     "acronym": ["title"],
-    "div": ["data-geochart"],  # Required for geocharts
-    "iframe": [
-        "src",
-        "sandbox",
-        "data-groupname",
-        "scrolling",
-        "height",
-    ],  # For continuous registration challenge and google group
     "img": ["height", "src", "width"],
     # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
     "th": ["scope", "colspan"],

@@ -14,7 +14,7 @@
         </div>
     {% endif %}
 
-    <div id=pageContainer>{{ currentpage.html|clean }}</div>
+    <div id=pageContainer>{{ currentpage.cleaned_html }}</div>
 
     {% if not currentpage.is_error_page %}
         {% block editlink %}

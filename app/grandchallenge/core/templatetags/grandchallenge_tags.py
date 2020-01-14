@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import random
@@ -8,92 +7,24 @@ import traceback
 from io import StringIO
 
 from django import template
-from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import DefaultStorage
-from django.db.models import Count
 from django.utils._os import safe_join
-from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
-from grandchallenge.profiles.models import UserProfile
 from grandchallenge.subdomains.utils import reverse
 
 register = library_plus.LibraryPlus()
 logger = logging.getLogger(__name__)
 
 
-def parse_key_value_token(token):
-    """
-    Parses token content string into a parameter dictionary.
-
-    Parameters
-    ----------
-        token (django.base.Token): Object representing the string content of
-            the template tag. Key values are expected to be of the format
-            key1:value1 key2:value2,...
-
-    Returns
-    -------
-        A dictionary of key:value pairs
-
-    Raises
-    ------
-        ValueError: if token contents are not in key:val1 key:val2 .. format
-
-    """
-    split = token.split_contents()
-    args = split[1:]
-    if "=" in "".join(args):
-        raise ValueError(
-            "Please use colon ':' instead of equals '=' to separate keys and values"
-        )
-
-    return dict([param.split(":") for param in args])
-
-
-def get_usagestr(function_name):
-    """
-    Return usage string for a registered template tag function. For displaying
-    this info in errors or tag overviews
-    """
-    if function_name in register.usagestrings:
-        usagestr = register.usagestrings[function_name]
-    else:
-        usagestr = ""
-    return sanitize_django_items(usagestr)
-
-
-@register.tag(
-    name="taglist",
-    usagestr="""
-              <% taglist %> :
-              show all available tags
-                       """,
-)
-def get_taglist(parser, token):
-    return TagListNode()
-
-
 @register.simple_tag()
 def url(view_name, *args, **kwargs):
     return reverse(view_name, args=args, kwargs=kwargs)
-
-
-def filter_by_extension(filenames, extensions):
-    """
-    Takes two lists of strings. Return only strings that end with any of
-    the strings in extensions.
-    """
-    filtered = []
-    for extension in extensions:
-        filtered = filtered + [f for f in filenames if f.endswith(extension)]
-    return filtered
 
 
 def resolve_path(path, parser, context):
@@ -167,149 +98,6 @@ def substitute(string, substitutions):
     for key, value in substitutions:
         string = re.sub(re.escape("{{" + key + "}}"), value, string)
     return string
-
-
-class TagListNode(template.Node):
-    """Print available tags as text."""
-
-    def __init__(self):
-        pass
-
-    def render(self, context):
-        html_out = '<table class ="taglist">'
-        html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
-        rowclass = "odd"
-        for key, val in register.usagestrings.items():
-            if not val == "":
-                html_out = (
-                    html_out
-                    + '<tr class="%s"><td>%s</td><td>%s</td></tr>\
-                        '
-                    % (rowclass, key, sanitize_django_items(val))
-                )
-                if rowclass == "odd":
-                    rowclass = "even"
-                else:
-                    rowclass = "odd"
-        html_out = html_out + "</table>"
-        return html_out
-
-
-def sanitize_django_items(string):
-    """Remove {{,{% and others which would be rendered as tags by django."""
-    out = string
-    out = out.replace("{{", "&#123;&#123;")
-    out = out.replace("}}", "&#125;&#125;")
-    out = out.replace("{%", "&#123;&#37;")
-    out = out.replace("%}", "&#37;&#125;")
-    out = out.replace(">", "&#62;")
-    out = out.replace("<", "&#60;")
-    out = out.replace("\n", "<br/>")
-    return out
-
-
-@register.simple_tag
-def google_group(group_name):
-    """Allows challenge admins to add google groups to pages."""
-    return mark_safe(
-        f"""
-    <iframe
-        class="w-100"
-        id="forum_embed"
-        data-groupname="{group_name}"
-        src="javascript:void(0)"
-        scrolling="no"
-        frameborder="0"
-        height="700px">
-    </iframe>
-    """
-    )
-
-
-@register.tag(
-    name="listdir",
-    usagestr="""Tag usage: {% listdir <path>:string  <extensionFilter>:ext1,ext2,ext3 %}
-
-              path: directory relative to this projects dropbox folder to list files from. Do not use leading slash.
-              extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
-              """,
-)
-def listdir(parser, token):
-    """Show all files in dir as a downloadable list."""
-    usagestr = get_usagestr("listdir")
-    try:
-        args = parse_key_value_token(token)
-    except ValueError:
-        errormsg = (
-            "Error rendering {% "
-            + token.contents
-            + " %}: Error parsing token. "
-            + usagestr
-        )
-        return TemplateErrorNode(errormsg)
-
-    if "path" not in args.keys():
-        errormsg = (
-            "Error rendering {% "
-            + token.contents
-            + " %}: 'path' argument is missing."
-            + usagestr
-        )
-        return TemplateErrorNode(errormsg)
-
-    return ListDirNode(args)
-
-
-class ListDirNode(template.Node):
-    """Show list of linked files for given directory."""
-
-    usagestr = get_usagestr("listdir")
-
-    def __init__(self, args):
-        self.path = args["path"]
-        self.args = args
-
-    def make_dataset_error_msg(self, msg):
-        logger.error("Error listing folder '" + self.path + "': " + msg)
-        errormsg = "Error listing folder"
-        return make_error_message_html(errormsg)
-
-    def render(self, context):
-        challenge: Challenge = context["currentpage"].challenge
-
-        try:
-            projectpath = safe_join(
-                challenge.get_project_data_folder(), self.path
-            )
-        except SuspiciousFileOperation:
-            return self.make_dataset_error_msg(
-                "path is outside the challenge folder."
-            )
-
-        storage = DefaultStorage()
-        try:
-            filenames = storage.listdir(projectpath)[1]
-        except OSError as e:
-            return self.make_dataset_error_msg(str(e))
-
-        filenames.sort()
-        # if extensionsFilter is given,  show only filenames with those extensions
-        if "extensionFilter" in self.args.keys():
-            extensions = self.args["extensionFilter"].split(",")
-            filenames = filter_by_extension(filenames, extensions)
-        links = []
-        for filename in filenames:
-            downloadlink = reverse(
-                "root-serving:challenge-file",
-                kwargs={
-                    "challenge_name": challenge.short_name,
-                    "path": f"{self.path}/{filename}",
-                },
-            )
-            links.append(
-                '<li><a href="' + downloadlink + '">' + filename + " </a></li>"
-            )
-        return '<ul class="dataset">' + "".join(links) + "</ul>"
 
 
 def add_quotes(s: str = ""):
@@ -640,13 +428,13 @@ def render_anode09_table(filename):
     table_id = id_generator()
     table_html = (
         """<table border=1 class = "csvtable sortable" id="%s">
-                    <thead><tr>
-                        <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
-                        <td align=center width='54'>1/4</td>
-                        <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
-                        <td align=center width='54'>2</td><td align=center width='54'>4</td>
-                        <td align=center width='54'>8</td><td align=center width='54'>average</td>
-                    </tr></thead>"""
+                        <thead><tr>
+                            <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
+                            <td align=center width='54'>1/4</td>
+                            <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
+                            <td align=center width='54'>2</td><td align=center width='54'>4</td>
+                            <td align=center width='54'>8</td><td align=center width='54'>average</td>
+                        </tr></thead>"""
         % table_id
     )
     table_html += "<tbody>"
@@ -809,97 +597,3 @@ def make_error_message_html(text):
         + html_encode_django_chars(text)
         + " </span></p>"
     )
-
-
-@register.tag(name="project_statistics")
-def display_project_statistics(parser, token):
-    return ProjectStatisticsNode()
-
-
-@register.tag(name="allusers_statistics")
-def display_allusers_statistics(parser, token):
-    try:
-        _, include_header = token.split_contents()
-        if include_header.lower() == "false":
-            include_header = False
-    except ValueError:
-        include_header = True
-    return ProjectStatisticsNode(allusers=True, include_header=include_header)
-
-
-class ProjectStatisticsNode(template.Node):
-    def __init__(self, allusers=False, include_header=True):
-        """
-        Allusers is meant to be used on the main website, and does not filter for
-        current project, but shows all registered users in the whole system
-        """
-        self.allusers = allusers
-        self.include_header = include_header
-
-    def render(self, context):
-        """
-        Render a map of users and statistics for the current project.
-
-        Parameters
-        ----------
-        context
-            The page context
-
-        Returns
-        -------
-            The map html
-
-        """
-        all_users = self.allusers
-
-        if all_users:
-            key = "ProjectStatisticsNode.AllUsers"
-        else:
-            key = "ProjectStatisticsNode.{}".format(
-                context["currentpage"].challenge.pk
-            )
-
-        content = cache.get(key)
-
-        if content is None:
-            content = self._get_map(context, all_users, self.include_header)
-            cache.set(key, content, 10 * 60)
-
-        return content
-
-    @classmethod
-    def _get_map(cls, context, all_users, include_header):
-        snippet_header = "<div class='statistics'>"
-        snippet_footer = "</div>"
-
-        if all_users:
-            User = get_user_model()  # noqa: N806
-            users = User.objects.all().distinct()
-        else:
-            users = context["currentpage"].challenge.get_participants()
-
-        country_counts = (
-            UserProfile.objects.filter(user__in=users)
-            .exclude(country="")
-            .values("country")
-            .annotate(dcount=Count("country"))
-            .order_by("-dcount")
-        )
-
-        chart_data = [[str(c["country"]), c["dcount"]] for c in country_counts]
-
-        snippet_geochart = "<div data-geochart='{data}'></div>".format(
-            data=json.dumps([["Country", "#Participants"]] + chart_data)
-        )
-
-        snippet = ""
-
-        if include_header:
-            snippet += "<h1>Statistics</h1><br/>\n"
-
-        if not all_users:
-            snippet += f"<p>Number of users: {len(users)}</p>\n"
-
-        snippet += snippet_geochart
-
-        return snippet_header + snippet + snippet_footer

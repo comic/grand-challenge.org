@@ -42,7 +42,7 @@ def test_registration_request_create_get(client, challenge_set):
     )
     # Make sure the link to register is in the challenge page
     url = reverse(
-        "challenge-homepage",
+        "pages:home",
         kwargs={"challenge_short_name": challenge_set.challenge.short_name},
     )
     response = get_view_for_user(url=url, client=client)

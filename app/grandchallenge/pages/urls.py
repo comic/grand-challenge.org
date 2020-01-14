@@ -1,13 +1,13 @@
 from django.urls import path
 
 from grandchallenge.pages.views import (
+    ChallengeHome,
     FaviconView,
     PageCreate,
     PageDelete,
+    PageDetail,
     PageList,
     PageUpdate,
-    insertedpage,
-    page,
 )
 
 app_name = "pages"
@@ -41,12 +41,8 @@ urlpatterns = [
         FaviconView.as_view(rel="apple-touch-icon-precomposed"),
         name="apple-touch-icon-precomposed-sized",
     ),
-    path("<slug:page_title>/", page, name="detail"),
+    path("", ChallengeHome.as_view(), name="home"),
+    path("<slug:page_title>/", PageDetail.as_view(), name="detail"),
     path("<slug:page_title>/update/", PageUpdate.as_view(), name="update"),
     path("<slug:page_title>/delete/", PageDelete.as_view(), name="delete"),
-    path(
-        "<slug:page_title>/insert/<path:dropboxpath>/",
-        insertedpage,
-        name="insert-detail",
-    ),
 ]

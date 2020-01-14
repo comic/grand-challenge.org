@@ -525,8 +525,7 @@ class Challenge(ChallengeBase):
 
     def get_absolute_url(self):
         return reverse(
-            "challenge-homepage",
-            kwargs={"challenge_short_name": self.short_name},
+            "pages:home", kwargs={"challenge_short_name": self.short_name},
         )
 
     def add_participant(self, user):

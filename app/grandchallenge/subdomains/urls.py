@@ -3,10 +3,8 @@ from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
 from grandchallenge.challenges.views import ChallengeUpdate
-from grandchallenge.core.views import challenge_homepage
 
 urlpatterns = [
-    path("", challenge_homepage, name="challenge-homepage"),
     path(
         "robots.txt/",
         TemplateView.as_view(

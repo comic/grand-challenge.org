@@ -1,48 +1,9 @@
-import uuid
-
 import pytest
-from django.template import Context, RequestContext, Template
+from django.template import RequestContext, Template
 from django.test import RequestFactory, override_settings
 
+from grandchallenge.pages.models import Page
 from tests.factories import ChallengeFactory, PageFactory
-
-
-@pytest.mark.django_db
-def test_taglist():
-    template = Template(
-        "{% load taglist from grandchallenge_tags %}{% taglist %}"
-    )
-    rendered = template.render(Context({}))
-    assert "<td>listdir</td>" in rendered
-
-
-@pytest.mark.django_db
-def test_allusers_statistics():
-    c = ChallengeFactory(short_name=str(uuid.uuid4()))
-    p = PageFactory(challenge=c)
-    template = Template(
-        "{% load allusers_statistics from grandchallenge_tags %}"
-        "{% allusers_statistics %}"
-    )
-    context = Context({"currentpage": p})
-    rendered = template.render(context)
-    assert '["Country", "#Participants"]' in rendered
-    assert "data-geochart" in rendered
-
-
-@pytest.mark.django_db
-def test_project_statistics():
-    c = ChallengeFactory(short_name=str(uuid.uuid4()))
-    p = PageFactory(challenge=c)
-    template = Template(
-        "{% load project_statistics from grandchallenge_tags %}"
-        "{% project_statistics %}"
-    )
-    context = Context({"currentpage": p})
-    rendered = template.render(context)
-    assert "Number of users: 0" in rendered
-    assert '["Country", "#Participants"]' in rendered
-    assert "data-geochart" in rendered
 
 
 @pytest.mark.django_db
@@ -80,10 +41,7 @@ def test_insert_graph(rf: RequestFactory, view_type):
         assert "tablecontainer" in rendered
 
 
-@pytest.mark.django_db
 def test_google_group():
-    template = Template(
-        "{% load google_group from grandchallenge_tags %}{% google_group 'my-group' %}"
-    )
-    rendered = template.render(Context({}))
+    p = Page(html="{% google_group 'my-group' %}")
+    rendered = p.cleaned_html()
     assert 'data-groupname="my-group"' in rendered

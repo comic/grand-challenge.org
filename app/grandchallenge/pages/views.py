@@ -1,31 +1,21 @@
-import mimetypes
-import posixpath
-
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
-from django.core.files import File
 from django.db.models import Q
-from django.http import Http404, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render
-from django.utils._os import safe_join
 from django.views.generic import (
     CreateView,
     DeleteView,
+    DetailView,
     ListView,
     RedirectView,
     UpdateView,
 )
 from favicon.models import Favicon
 
-from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.core.views import (
-    get_data_folder_path,
-    get_rendered_page_if_allowed,
+from grandchallenge.core.permissions.mixins import (
+    UserAuthAndTestMixin,
+    UserIsChallengeAdminMixin,
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
-from grandchallenge.pages.models import Page
-from grandchallenge.serving.api import serve_file
-from grandchallenge.serving.permissions import can_access
+from grandchallenge.pages.models import ErrorPage, Page
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -57,6 +47,37 @@ class PageList(
     UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin, ListView
 ):
     model = Page
+
+
+class PageDetail(
+    UserAuthAndTestMixin, ChallengeFilteredQuerysetMixin, DetailView
+):
+    model = Page
+    slug_url_kwarg = "page_title"
+    slug_field = "title__iexact"
+    login_required = False
+
+    def test_func(self):
+        user = self.request.user
+        page = self.get_object()
+        return page.can_be_viewed_by(user=user)
+
+    def get_context_object_name(self, obj):
+        return "currentpage"
+
+
+class ChallengeHome(PageDetail):
+    def get_object(self, queryset=None):
+        page = self.request.challenge.page_set.first()
+
+        if page is None:
+            page = ErrorPage(
+                challenge=self.request.challenge,
+                title="No Pages Found",
+                html="No pages found for this site. Please log in and add some pages.",
+            )
+
+        return page
 
 
 class PageUpdate(
@@ -94,96 +115,6 @@ class PageDelete(
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(request, *args, **kwargs)
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Legacy methods, moved from core/views.py
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def page(request, page_title):
-    """Show a single page on a site."""
-    currentpage = get_rendered_page_if_allowed(page_title, request)
-
-    response = render(request, "page.html", {"currentpage": currentpage})
-
-    # TODO: THis has code smell. If page has to be checked like this, is it
-    # ok to use a page object for error messages?
-    if hasattr(currentpage, "is_error_page"):
-        if currentpage.is_error_page:
-            response.status_code = 403
-
-    return response
-
-
-def insertedpage(request, page_title, dropboxpath):
-    """Display contents of a file from the media directory."""
-    challenge = request.challenge
-
-    (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
-    if mimetype is None:
-        # make the next statement not crash on non-existant mimetype
-        mimetype = "NoneType"
-
-    if (
-        mimetype.startswith("image")
-        or mimetype == "application/pdf"
-        or mimetype == "application/zip"
-    ):
-        return inserted_file(request, dropboxpath)
-
-    p = get_object_or_404(Page, challenge=challenge, title=page_title)
-
-    baselink = p.get_absolute_url()
-
-    msg = (
-        '<div class="breadcrumbtrail"> Displaying \''
-        + dropboxpath
-        + "' from local dropboxfolder, originally linked from\
-           page <a href=\""
-        + baselink
-        + '">'
-        + p.title
-        + "</a> </div>"
-    )
-    p.html = "{% insert_file " + dropboxpath + " %} <br/><br/>" + msg
-
-    currentpage = get_rendered_page_if_allowed(p, request)
-
-    return render(
-        request,
-        "dropboxpage.html",
-        {"challenge": challenge, "currentpage": currentpage},
-    )
-
-
-def inserted_file(request, filepath=""):
-    """Get a page from the media directory and serve."""
-    challenge_short_name = request.challenge.short_name
-
-    data_folder_root = get_data_folder_path(challenge_short_name)
-    filepath = posixpath.normpath(filepath).lstrip("/")
-    filename = safe_join(data_folder_root, filepath)
-    # can this location be served regularly (e.g. it is in public folder)?
-    serve_allowed = can_access(
-        request.user, filepath, challenge=request.challenge
-    )
-    if not serve_allowed:
-        raise PermissionDenied(
-            "You do not have the correct permissions to access this page."
-        )
-
-    if serve_allowed:
-        try:
-            file = open(filename, "rb")
-        except Exception:
-            raise Http404
-
-        django_file = File(file)
-        return serve_file(django_file)
-
-    else:
-        return HttpResponseForbidden(
-            "This file is not available without credentials."
-        )
 
 
 class FaviconView(RedirectView):
