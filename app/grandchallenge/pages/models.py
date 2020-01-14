@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Max
 
 from grandchallenge.challenges.models import ComicSiteModel
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
 from grandchallenge.subdomains.utils import reverse
 
@@ -48,6 +49,9 @@ class Page(ComicSiteModel):
             except TypeError:
                 self.order = 1
         super().save(*args, **kwargs)
+
+    def cleaned_html(self):
+        return clean(self.html)
 
     def move(self, move):
         if move == self.UP:

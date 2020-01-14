@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.db.models import Q
-from django.template import RequestContext, Template, TemplateSyntaxError
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -65,13 +64,6 @@ class PageDetail(
 
     def get_context_object_name(self, obj):
         return "currentpage"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["currentpage"].html = render_tags(
-            request=self.request, p=context["currentpage"]
-        )
-        return context
 
 
 class ChallengeHome(PageDetail):
@@ -150,44 +142,3 @@ class FaviconView(RedirectView):
         default_fav = fav.get_favicon(size=size, rel=self.rel)
 
         return default_fav.faviconImage.url
-
-
-def render_tags(request, p, recursecount=0):
-    """
-    Render page contents using django template system
-
-    This makes it possible to use tags like '{% dataset %}' in page content.
-    If a rendered tag results in another tag, this can be rendered recursively
-    as long as recurse limit is not exceeded.
-    """
-    recurselimit = 2
-    try:
-        t = Template("{% load grandchallenge_tags %}" + p.html)
-    except TemplateSyntaxError as e:
-        # when page contents cannot be rendered, just display raw contents and include error message on page
-        errormsg = (
-            '<span class="pageError"> Error rendering template: %s </span>' % e
-        )
-        pagecontents = p.html + errormsg
-        return pagecontents
-
-    # pass page to context here to be able to render tags based on which page does the rendering
-    context = RequestContext(request, {"currentpage": p})
-    pagecontents = t.render(context)
-
-    if (
-        "{%" in pagecontents or "{{" in pagecontents
-    ):  # if rendered tags results in another tag, try to render this as well
-        if recursecount < recurselimit:
-            p2 = Page(title=p.title, challenge=p.challenge, html=pagecontents)
-            return render_tags(request, p2, recursecount + 1)
-
-        else:
-            # when page contents cannot be rendered, just display raw contents and include error message on page
-            errormsg = (
-                '<span class="pageError"> Error rendering template: rendering recursed further than'
-                + str(recurselimit)
-                + " </span>"
-            )
-            pagecontents = p.html + errormsg
-    return pagecontents
