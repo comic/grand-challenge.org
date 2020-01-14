@@ -10,7 +10,6 @@ from django import template
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import DefaultStorage
 from django.utils._os import safe_join
-from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -99,24 +98,6 @@ def substitute(string, substitutions):
     for key, value in substitutions:
         string = re.sub(re.escape("{{" + key + "}}"), value, string)
     return string
-
-
-@register.simple_tag
-def google_group(group_name):
-    """Allows challenge admins to add google groups to pages."""
-    return mark_safe(
-        f"""
-    <iframe
-        class="w-100"
-        id="forum_embed"
-        data-groupname="{group_name}"
-        src="javascript:void(0)"
-        scrolling="no"
-        frameborder="0"
-        height="700px">
-    </iframe>
-    """
-    )
 
 
 def add_quotes(s: str = ""):
@@ -447,13 +428,13 @@ def render_anode09_table(filename):
     table_id = id_generator()
     table_html = (
         """<table border=1 class = "csvtable sortable" id="%s">
-                    <thead><tr>
-                        <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
-                        <td align=center width='54'>1/4</td>
-                        <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
-                        <td align=center width='54'>2</td><td align=center width='54'>4</td>
-                        <td align=center width='54'>8</td><td align=center width='54'>average</td>
-                    </tr></thead>"""
+                        <thead><tr>
+                            <td class ="firstcol">FPs/scan</td><td align=center width='54'>1/8</td>
+                            <td align=center width='54'>1/4</td>
+                            <td align=center width='54'>1/2</td><td align=center width='54'>1</td>
+                            <td align=center width='54'>2</td><td align=center width='54'>4</td>
+                            <td align=center width='54'>8</td><td align=center width='54'>average</td>
+                        </tr></thead>"""
         % table_id
     )
     table_html += "<tbody>"

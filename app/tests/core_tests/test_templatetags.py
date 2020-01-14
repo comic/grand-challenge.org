@@ -1,7 +1,8 @@
 import pytest
-from django.template import Context, RequestContext, Template
+from django.template import RequestContext, Template
 from django.test import RequestFactory, override_settings
 
+from grandchallenge.pages.models import Page
 from tests.factories import ChallengeFactory, PageFactory
 
 
@@ -40,10 +41,7 @@ def test_insert_graph(rf: RequestFactory, view_type):
         assert "tablecontainer" in rendered
 
 
-@pytest.mark.django_db
 def test_google_group():
-    template = Template(
-        "{% load google_group from grandchallenge_tags %}{% google_group 'my-group' %}"
-    )
-    rendered = template.render(Context({}))
+    p = Page(html="{% google_group 'my-group' %}")
+    rendered = p.cleaned_html()
     assert 'data-groupname="my-group"' in rendered

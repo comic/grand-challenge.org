@@ -61,6 +61,16 @@ class Page(ComicSiteModel):
         if "project_statistics" in out:
             out = self._substitute_geochart(html=out)
 
+        if "google_group" in out:
+            s = Substitution(
+                tag_name="google_group",
+                content=render_to_string(
+                    "grandchallenge/partials/google_group.html"
+                ),
+                use_args=True,
+            )
+            out = s.replace(out)
+
         return out
 
     def _substitute_geochart(self, *, html):
