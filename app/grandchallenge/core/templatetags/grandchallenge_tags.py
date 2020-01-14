@@ -23,61 +23,9 @@ register = library_plus.LibraryPlus()
 logger = logging.getLogger(__name__)
 
 
-def parse_key_value_token(token):
-    """
-    Parses token content string into a parameter dictionary.
-
-    Parameters
-    ----------
-        token (django.base.Token): Object representing the string content of
-            the template tag. Key values are expected to be of the format
-            key1:value1 key2:value2,...
-
-    Returns
-    -------
-        A dictionary of key:value pairs
-
-    Raises
-    ------
-        ValueError: if token contents are not in key:val1 key:val2 .. format
-
-    """
-    split = token.split_contents()
-    args = split[1:]
-    if "=" in "".join(args):
-        raise ValueError(
-            "Please use colon ':' instead of equals '=' to separate keys and values"
-        )
-
-    return dict([param.split(":") for param in args])
-
-
-def get_usagestr(function_name):
-    """
-    Return usage string for a registered template tag function. For displaying
-    this info in errors or tag overviews
-    """
-    if function_name in register.usagestrings:
-        usagestr = register.usagestrings[function_name]
-    else:
-        usagestr = ""
-    return sanitize_django_items(usagestr)
-
-
 @register.simple_tag()
 def url(view_name, *args, **kwargs):
     return reverse(view_name, args=args, kwargs=kwargs)
-
-
-def filter_by_extension(filenames, extensions):
-    """
-    Takes two lists of strings. Return only strings that end with any of
-    the strings in extensions.
-    """
-    filtered = []
-    for extension in extensions:
-        filtered = filtered + [f for f in filenames if f.endswith(extension)]
-    return filtered
 
 
 def resolve_path(path, parser, context):
@@ -153,19 +101,6 @@ def substitute(string, substitutions):
     return string
 
 
-def sanitize_django_items(string):
-    """Remove {{,{% and others which would be rendered as tags by django."""
-    out = string
-    out = out.replace("{{", "&#123;&#123;")
-    out = out.replace("}}", "&#125;&#125;")
-    out = out.replace("{%", "&#123;&#37;")
-    out = out.replace("%}", "&#37;&#125;")
-    out = out.replace(">", "&#62;")
-    out = out.replace("<", "&#60;")
-    out = out.replace("\n", "<br/>")
-    return out
-
-
 @register.simple_tag
 def google_group(group_name):
     """Allows challenge admins to add google groups to pages."""
@@ -182,92 +117,6 @@ def google_group(group_name):
     </iframe>
     """
     )
-
-
-@register.tag(
-    name="listdir",
-    usagestr="""Tag usage: {% listdir <path>:string  <extensionFilter>:ext1,ext2,ext3 %}
-
-              path: directory relative to this projects dropbox folder to list files from. Do not use leading slash.
-              extensionFilter: An include filter to specify the file types which should be displayd in the filebrowser.
-              """,
-)
-def listdir(parser, token):
-    """Show all files in dir as a downloadable list."""
-    usagestr = get_usagestr("listdir")
-    try:
-        args = parse_key_value_token(token)
-    except ValueError:
-        errormsg = (
-            "Error rendering {% "
-            + token.contents
-            + " %}: Error parsing token. "
-            + usagestr
-        )
-        return TemplateErrorNode(errormsg)
-
-    if "path" not in args.keys():
-        errormsg = (
-            "Error rendering {% "
-            + token.contents
-            + " %}: 'path' argument is missing."
-            + usagestr
-        )
-        return TemplateErrorNode(errormsg)
-
-    return ListDirNode(args)
-
-
-class ListDirNode(template.Node):
-    """Show list of linked files for given directory."""
-
-    usagestr = get_usagestr("listdir")
-
-    def __init__(self, args):
-        self.path = args["path"]
-        self.args = args
-
-    def make_dataset_error_msg(self, msg):
-        logger.error("Error listing folder '" + self.path + "': " + msg)
-        errormsg = "Error listing folder"
-        return make_error_message_html(errormsg)
-
-    def render(self, context):
-        challenge: Challenge = context["currentpage"].challenge
-
-        try:
-            projectpath = safe_join(
-                challenge.get_project_data_folder(), self.path
-            )
-        except SuspiciousFileOperation:
-            return self.make_dataset_error_msg(
-                "path is outside the challenge folder."
-            )
-
-        storage = DefaultStorage()
-        try:
-            filenames = storage.listdir(projectpath)[1]
-        except OSError as e:
-            return self.make_dataset_error_msg(str(e))
-
-        filenames.sort()
-        # if extensionsFilter is given,  show only filenames with those extensions
-        if "extensionFilter" in self.args.keys():
-            extensions = self.args["extensionFilter"].split(",")
-            filenames = filter_by_extension(filenames, extensions)
-        links = []
-        for filename in filenames:
-            downloadlink = reverse(
-                "root-serving:challenge-file",
-                kwargs={
-                    "challenge_name": challenge.short_name,
-                    "path": f"{self.path}/{filename}",
-                },
-            )
-            links.append(
-                '<li><a href="' + downloadlink + '">' + filename + " </a></li>"
-            )
-        return '<ul class="dataset">' + "".join(links) + "</ul>"
 
 
 def add_quotes(s: str = ""):
