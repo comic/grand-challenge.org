@@ -20,15 +20,15 @@ from grandchallenge.pages.substitutions import Substitution
     ],
 )
 def test_substitution(tag_name, content, inp, out):
-    s = Substitution(tag_name=tag_name, content=content)
-    assert s.replace(inp) == out
+    s = Substitution(tag_name=tag_name, replacement=content)
+    assert s.sub(inp) == out
 
 
 @pytest.mark.parametrize("tag_name", ["fo o", "fo\no", "'foo'", '"foo"'])
 def test_no_spaces(tag_name):
     with pytest.raises(ValueError) as e:
-        Substitution(tag_name=tag_name, content="blah")
-    assert "not a valid name" in str(e)
+        Substitution(tag_name=tag_name, replacement="blah")
+    assert "not a valid tag name" in str(e)
 
 
 @pytest.mark.parametrize(
@@ -41,8 +41,8 @@ def test_no_spaces(tag_name):
     ],
 )
 def test_safe_substitutions(inp, content, typ):
-    s = Substitution(tag_name="foo", content=content)
-    assert isinstance(s.replace(inp), typ)
+    s = Substitution(tag_name="foo", replacement=content)
+    assert isinstance(s.sub(inp), typ)
 
 
 @pytest.mark.parametrize(
@@ -55,6 +55,8 @@ def test_safe_substitutions(inp, content, typ):
     ],
 )
 def test_argument_substitution(inp, output):
-    s = Substitution(tag_name="foo", content=mark_safe("bar{}"), use_args=True)
-    assert s.replace(inp) == output
-    assert isinstance(s.replace(inp), type(inp))
+    s = Substitution(
+        tag_name="foo", replacement=mark_safe("bar{}"), use_arg=True
+    )
+    assert s.sub(inp) == output
+    assert isinstance(s.sub(inp), type(inp))

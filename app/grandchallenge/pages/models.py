@@ -64,12 +64,12 @@ class Page(ComicSiteModel):
         if "google_group" in out:
             s = Substitution(
                 tag_name="google_group",
-                content=render_to_string(
+                replacement=render_to_string(
                     "grandchallenge/partials/google_group.html"
                 ),
-                use_args=True,
+                use_arg=True,
             )
-            out = s.replace(out)
+            out = s.sub(out)
 
         return out
 
@@ -95,9 +95,9 @@ class Page(ComicSiteModel):
 
         s = Substitution(
             tag_name="project_statistics",
-            content=format_html("<h1>Statistics</h1>{}", content),
+            replacement=format_html("<h1>Statistics</h1>{}", content),
         )
-        return s.replace(html)
+        return s.sub(html)
 
     def move(self, move):
         if move == self.UP:
