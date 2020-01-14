@@ -43,3 +43,18 @@ def test_no_spaces(tag_name):
 def test_safe_substitutions(inp, content, typ):
     s = Substitution(tag_name="foo", content=content)
     assert isinstance(s.replace(inp), typ)
+
+
+@pytest.mark.parametrize(
+    "inp,output",
+    [
+        ("{% foo 23aZ-_ %}", "bar23aZ-_"),
+        (mark_safe("{% foo 23 %}"), "bar23"),
+        ("{% foo '23' %}", "bar23"),
+        ('{% foo "23" %}', "bar23"),
+    ],
+)
+def test_argument_substitution(inp, output):
+    s = Substitution(tag_name="foo", content=mark_safe("bar{}"), use_args=True)
+    assert s.replace(inp) == output
+    assert isinstance(s.replace(inp), type(inp))
