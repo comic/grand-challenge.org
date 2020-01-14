@@ -1,31 +1,10 @@
 from django.conf import settings
 from django.http import Http404
-from django.shortcuts import render
 from django.template import RequestContext, Template, TemplateSyntaxError
 from django.utils._os import safe_join
 from django.views.generic import TemplateView
 
 from grandchallenge.pages.models import ErrorPage, Page
-
-
-def challenge_homepage(request):
-    challenge = request.challenge
-    pages = challenge.page_set.all()
-
-    if len(pages) == 0:
-        currentpage = ErrorPage(
-            challenge=challenge,
-            title="no_pages_found",
-            html="No pages found for this site. Please log in and add some pages.",
-        )
-    else:
-        currentpage = pages[0]
-
-    currentpage = get_rendered_page_if_allowed(currentpage, request)
-
-    return render(
-        request, "pages/page_detail.html", {"currentpage": currentpage},
-    )
 
 
 def render_tags(request, p, recursecount=0):

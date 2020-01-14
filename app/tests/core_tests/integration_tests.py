@@ -568,7 +568,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         """Reproduces https://github.com/comic/grand-challenge.org/issues/219."""
         # main domain robots.txt
         non_existant_url = reverse(
-            "challenge-homepage",
+            "pages:home",
             kwargs={"challenge_short_name": "nonexistingproject"},
         )
         response, username = self._view_url(None, non_existant_url)

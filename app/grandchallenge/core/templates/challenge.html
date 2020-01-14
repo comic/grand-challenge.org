@@ -28,7 +28,7 @@
         <div class="row mb-3">
             <div class="col-12">
                 <a style="width: 100%;"
-                   href="{% url 'challenge-homepage' challenge_short_name=challenge.short_name %}">
+                   href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
                     <img alt="{% firstof challenge.title challenge.short_name %} Banner"
                          class="rounded w-100"
                             {% thumbnail challenge.banner "1110" as im %}

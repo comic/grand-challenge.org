@@ -28,7 +28,7 @@ from grandchallenge.core.views import (
     render_tags,
 )
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
-from grandchallenge.pages.models import Page
+from grandchallenge.pages.models import ErrorPage, Page
 from grandchallenge.serving.api import serve_file
 from grandchallenge.serving.permissions import can_access
 from grandchallenge.subdomains.utils import reverse
@@ -225,3 +225,23 @@ class FaviconView(RedirectView):
         default_fav = fav.get_favicon(size=size, rel=self.rel)
 
         return default_fav.faviconImage.url
+
+
+def challenge_homepage(request):
+    challenge = request.challenge
+    pages = challenge.page_set.all()
+
+    if len(pages) == 0:
+        currentpage = ErrorPage(
+            challenge=challenge,
+            title="no_pages_found",
+            html="No pages found for this site. Please log in and add some pages.",
+        )
+    else:
+        currentpage = pages[0]
+
+    currentpage = get_rendered_page_if_allowed(currentpage, request)
+
+    return render(
+        request, "pages/page_detail.html", {"currentpage": currentpage},
+    )
