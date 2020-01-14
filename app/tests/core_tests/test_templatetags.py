@@ -6,15 +6,6 @@ from tests.factories import ChallengeFactory, PageFactory
 
 
 @pytest.mark.django_db
-def test_taglist():
-    template = Template(
-        "{% load taglist from grandchallenge_tags %}{% taglist %}"
-    )
-    rendered = template.render(Context({}))
-    assert "<td>listdir</td>" in rendered
-
-
-@pytest.mark.django_db
 def test_url_parameter(rf: RequestFactory):
     r = rf.get("/who?me=john")
     template = Template(

@@ -64,17 +64,6 @@ def get_usagestr(function_name):
     return sanitize_django_items(usagestr)
 
 
-@register.tag(
-    name="taglist",
-    usagestr="""
-              <% taglist %> :
-              show all available tags
-                       """,
-)
-def get_taglist(parser, token):
-    return TagListNode()
-
-
 @register.simple_tag()
 def url(view_name, *args, **kwargs):
     return reverse(view_name, args=args, kwargs=kwargs)
@@ -162,32 +151,6 @@ def substitute(string, substitutions):
     for key, value in substitutions:
         string = re.sub(re.escape("{{" + key + "}}"), value, string)
     return string
-
-
-class TagListNode(template.Node):
-    """Print available tags as text."""
-
-    def __init__(self):
-        pass
-
-    def render(self, context):
-        html_out = '<table class ="taglist">'
-        html_out = html_out + "<tr><th>tagname</th><th>description</th></tr>"
-        rowclass = "odd"
-        for key, val in register.usagestrings.items():
-            if not val == "":
-                html_out = (
-                    html_out
-                    + '<tr class="%s"><td>%s</td><td>%s</td></tr>\
-                        '
-                    % (rowclass, key, sanitize_django_items(val))
-                )
-                if rowclass == "odd":
-                    rowclass = "even"
-                else:
-                    rowclass = "odd"
-        html_out = html_out + "</table>"
-        return html_out
 
 
 def sanitize_django_items(string):
