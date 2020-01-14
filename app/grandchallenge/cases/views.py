@@ -16,7 +16,6 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
-    ImageFileState,
     RawImageFile,
     RawImageUploadSession,
     UploadSessionState,
@@ -117,7 +116,7 @@ class RawImageUploadSessionViewSet(
         if (
             upload_session.session_state == UploadSessionState.stopped
             and raw_image_files
-            and raw_image_files[0].state != ImageFileState.processed
+            and not raw_image_files[0].state
         ):
             upload_session.process_images()
         messages.add_message(

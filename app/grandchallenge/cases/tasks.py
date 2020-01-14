@@ -30,7 +30,6 @@ from grandchallenge.cases.models import (
     FolderUpload,
     Image,
     ImageFile,
-    ImageFileState,
     RawImageFile,
     RawImageUploadSession,
     UploadSessionState,
@@ -209,7 +208,7 @@ def fix_mhd_file(file, prefix):
         with fileinput.input(file, inplace=True) as f:
             for line in f:
                 new_line = re.sub(
-                    r"(ElementDataFile)\s+=\s+(.*)", fr"\1 = {prefix}\2", line,
+                    r"(ElementDataFile)\s+=\s+(.*)", fr"\1 = {prefix}\2", line
                 )
                 print(new_line, end="")
     except Exception:
@@ -353,7 +352,7 @@ def build_images(upload_session_uuid: UUID):
                     saf = StagedAjaxFile(duplicate.staged_file_id)
                     duplicate.staged_file_id = None
                     saf.delete()
-                    duplicate.state = ImageFileState.queued
+                    duplicate.state = False
                     duplicate.save()
 
                 populate_provisioning_directory(session_files, tmp_dir)
@@ -361,7 +360,7 @@ def build_images(upload_session_uuid: UUID):
                 extract_files(tmp_dir)
                 session_files = [
                     RawImageFile.objects.get_or_create(
-                        filename=file.name, upload_session=upload_session,
+                        filename=file.name, upload_session=upload_session
                     )[0]
                     for file in tmp_dir.iterdir()
                 ]
@@ -396,7 +395,7 @@ def build_images(upload_session_uuid: UUID):
                                 filename
                             ]  # type: RawImageFile
                             raw_image.error = None
-                            raw_image.state = ImageFileState.processed
+                            raw_image.state = True
                             raw_image.save()
                     for (
                         filename,
@@ -408,7 +407,7 @@ def build_images(upload_session_uuid: UUID):
                             ]  # type: RawImageFile
                             raw_image.error = raw_image.error or ""
                             raw_image.error += f"{msg}\n"
-                            raw_image.state = ImageFileState.queued
+                            raw_image.state = False
                             raw_image.save()
 
                 for image in collected_images:
