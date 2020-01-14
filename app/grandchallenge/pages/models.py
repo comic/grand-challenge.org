@@ -79,6 +79,7 @@ class Page(ComicSiteModel):
         )
         country_data = (
             users.exclude(user_profile__country="")
+            .values("user_profile__country")
             .annotate(country_count=Count("user_profile__country"))
             .order_by("-country_count")
             .values_list("user_profile__country", "country_count")
