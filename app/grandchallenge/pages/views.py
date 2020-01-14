@@ -1,13 +1,6 @@
-import mimetypes
-import posixpath
-
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
-from django.core.files import File
 from django.db.models import Q
-from django.http import Http404, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, render
-from django.utils._os import safe_join
+from django.template import RequestContext, Template, TemplateSyntaxError
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -22,15 +15,8 @@ from grandchallenge.core.permissions.mixins import (
     UserAuthAndTestMixin,
     UserIsChallengeAdminMixin,
 )
-from grandchallenge.core.views import (
-    get_data_folder_path,
-    get_rendered_page_if_allowed,
-    render_tags,
-)
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import ErrorPage, Page
-from grandchallenge.serving.api import serve_file
-from grandchallenge.serving.permissions import can_access
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -139,81 +125,6 @@ class PageDelete(
         return super().delete(request, *args, **kwargs)
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Legacy methods, moved from core/views.py
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def insertedpage(request, page_title, dropboxpath):
-    """Display contents of a file from the media directory."""
-    challenge = request.challenge
-
-    (mimetype, encoding) = mimetypes.guess_type(dropboxpath)
-    if mimetype is None:
-        # make the next statement not crash on non-existant mimetype
-        mimetype = "NoneType"
-
-    if (
-        mimetype.startswith("image")
-        or mimetype == "application/pdf"
-        or mimetype == "application/zip"
-    ):
-        return inserted_file(request, dropboxpath)
-
-    p = get_object_or_404(Page, challenge=challenge, title=page_title)
-
-    baselink = p.get_absolute_url()
-
-    msg = (
-        '<div class="breadcrumbtrail"> Displaying \''
-        + dropboxpath
-        + "' from local dropboxfolder, originally linked from\
-           page <a href=\""
-        + baselink
-        + '">'
-        + p.title
-        + "</a> </div>"
-    )
-    p.html = "{% insert_file " + dropboxpath + " %} <br/><br/>" + msg
-
-    currentpage = get_rendered_page_if_allowed(p, request)
-
-    return render(
-        request,
-        "dropboxpage.html",
-        {"challenge": challenge, "currentpage": currentpage},
-    )
-
-
-def inserted_file(request, filepath=""):
-    """Get a page from the media directory and serve."""
-    challenge_short_name = request.challenge.short_name
-
-    data_folder_root = get_data_folder_path(challenge_short_name)
-    filepath = posixpath.normpath(filepath).lstrip("/")
-    filename = safe_join(data_folder_root, filepath)
-    # can this location be served regularly (e.g. it is in public folder)?
-    serve_allowed = can_access(
-        request.user, filepath, challenge=request.challenge
-    )
-    if not serve_allowed:
-        raise PermissionDenied(
-            "You do not have the correct permissions to access this page."
-        )
-
-    if serve_allowed:
-        try:
-            file = open(filename, "rb")
-        except Exception:
-            raise Http404
-
-        django_file = File(file)
-        return serve_file(django_file)
-
-    else:
-        return HttpResponseForbidden(
-            "This file is not available without credentials."
-        )
-
-
 class FaviconView(RedirectView):
     """
     Some browsers do not follow the favicon links in base.html, so do this
@@ -239,3 +150,44 @@ class FaviconView(RedirectView):
         default_fav = fav.get_favicon(size=size, rel=self.rel)
 
         return default_fav.faviconImage.url
+
+
+def render_tags(request, p, recursecount=0):
+    """
+    Render page contents using django template system
+
+    This makes it possible to use tags like '{% dataset %}' in page content.
+    If a rendered tag results in another tag, this can be rendered recursively
+    as long as recurse limit is not exceeded.
+    """
+    recurselimit = 2
+    try:
+        t = Template("{% load grandchallenge_tags %}" + p.html)
+    except TemplateSyntaxError as e:
+        # when page contents cannot be rendered, just display raw contents and include error message on page
+        errormsg = (
+            '<span class="pageError"> Error rendering template: %s </span>' % e
+        )
+        pagecontents = p.html + errormsg
+        return pagecontents
+
+    # pass page to context here to be able to render tags based on which page does the rendering
+    context = RequestContext(request, {"currentpage": p})
+    pagecontents = t.render(context)
+
+    if (
+        "{%" in pagecontents or "{{" in pagecontents
+    ):  # if rendered tags results in another tag, try to render this as well
+        if recursecount < recurselimit:
+            p2 = Page(title=p.title, challenge=p.challenge, html=pagecontents)
+            return render_tags(request, p2, recursecount + 1)
+
+        else:
+            # when page contents cannot be rendered, just display raw contents and include error message on page
+            errormsg = (
+                '<span class="pageError"> Error rendering template: rendering recursed further than'
+                + str(recurselimit)
+                + " </span>"
+            )
+            pagecontents = p.html + errormsg
+    return pagecontents
