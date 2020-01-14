@@ -1,5 +1,3 @@
-import uuid
-
 import pytest
 from django.template import Context, RequestContext, Template
 from django.test import RequestFactory, override_settings
@@ -14,35 +12,6 @@ def test_taglist():
     )
     rendered = template.render(Context({}))
     assert "<td>listdir</td>" in rendered
-
-
-@pytest.mark.django_db
-def test_allusers_statistics():
-    c = ChallengeFactory(short_name=str(uuid.uuid4()))
-    p = PageFactory(challenge=c)
-    template = Template(
-        "{% load allusers_statistics from grandchallenge_tags %}"
-        "{% allusers_statistics %}"
-    )
-    context = Context({"currentpage": p})
-    rendered = template.render(context)
-    assert '["Country", "#Participants"]' in rendered
-    assert "data-geochart" in rendered
-
-
-@pytest.mark.django_db
-def test_project_statistics():
-    c = ChallengeFactory(short_name=str(uuid.uuid4()))
-    p = PageFactory(challenge=c)
-    template = Template(
-        "{% load project_statistics from grandchallenge_tags %}"
-        "{% project_statistics %}"
-    )
-    context = Context({"currentpage": p})
-    rendered = template.render(context)
-    assert "Number of users: 0" in rendered
-    assert '["Country", "#Participants"]' in rendered
-    assert "data-geochart" in rendered
 
 
 @pytest.mark.django_db

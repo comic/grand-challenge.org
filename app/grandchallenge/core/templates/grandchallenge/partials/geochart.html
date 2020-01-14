@@ -1,0 +1,6 @@
+<div class="statistics">
+    {% if user_count %}
+        <p>Number of users: {{ user_count }}</p>
+    {% endif %}
+    <div data-geochart="{{ country_data }}"></div>
+</div>

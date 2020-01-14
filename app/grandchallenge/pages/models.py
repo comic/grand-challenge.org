@@ -1,10 +1,15 @@
+import json
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Max
+from django.db.models import Count, Max
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 
 from grandchallenge.challenges.models import ComicSiteModel
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
+from grandchallenge.pages.substitutions import Substitution
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -51,7 +56,37 @@ class Page(ComicSiteModel):
         super().save(*args, **kwargs)
 
     def cleaned_html(self):
-        return clean(self.html)
+        out = clean(self.html)
+
+        if "project_statistics" in out:
+            users = self.challenge.get_participants().select_related(
+                "user_profile"
+            )
+            country_data = (
+                users.exclude(user_profile__country="")
+                .annotate(country_count=Count("user_profile__country"))
+                .order_by("-country_count")
+                .values_list("user_profile__country", "country_count")
+            )
+            content = render_to_string(
+                "grandchallenge/partials/geochart.html",
+                {
+                    "user_count": users.count(),
+                    "country_data": json.dumps(
+                        [["Country", "#Participants"]] + list(country_data)
+                    ),
+                },
+            )
+
+            s = Substitution(
+                tag_name="project_statistics",
+                content=f"<h1>Statistics</h1>{content}",
+            )
+            out = s.replace(out)
+
+        # self.html has been cleaned at this point, and nothing new introduced by
+        # the substitutions so this is safe
+        return mark_safe(out)
 
     def move(self, move):
         if move == self.UP:

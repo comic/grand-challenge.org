@@ -15,6 +15,9 @@ class Substitution:
         self._replacement = content.strip()
         self._markers = [re.escape(m) for m in markers]
 
+        if not re.search(r"\A[a-zA-Z_\-]+\Z", self._tag_name):
+            raise ValueError(f"{self._tag_name} is not a valid name.")
+
     @property
     def regex(self) -> str:
         return rf"{self._markers[0]}\s*{self._tag_name}\s*{self._markers[1]}"

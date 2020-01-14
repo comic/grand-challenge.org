@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import random
@@ -8,11 +7,8 @@ import traceback
 from io import StringIO
 
 from django import template
-from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import DefaultStorage
-from django.db.models import Count
 from django.utils._os import safe_join
 from django.utils.safestring import mark_safe
 from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
@@ -21,7 +17,6 @@ from matplotlib.figure import Figure
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
-from grandchallenge.profiles.models import UserProfile
 from grandchallenge.subdomains.utils import reverse
 
 register = library_plus.LibraryPlus()
@@ -809,97 +804,3 @@ def make_error_message_html(text):
         + html_encode_django_chars(text)
         + " </span></p>"
     )
-
-
-@register.tag(name="project_statistics")
-def display_project_statistics(parser, token):
-    return ProjectStatisticsNode()
-
-
-@register.tag(name="allusers_statistics")
-def display_allusers_statistics(parser, token):
-    try:
-        _, include_header = token.split_contents()
-        if include_header.lower() == "false":
-            include_header = False
-    except ValueError:
-        include_header = True
-    return ProjectStatisticsNode(allusers=True, include_header=include_header)
-
-
-class ProjectStatisticsNode(template.Node):
-    def __init__(self, allusers=False, include_header=True):
-        """
-        Allusers is meant to be used on the main website, and does not filter for
-        current project, but shows all registered users in the whole system
-        """
-        self.allusers = allusers
-        self.include_header = include_header
-
-    def render(self, context):
-        """
-        Render a map of users and statistics for the current project.
-
-        Parameters
-        ----------
-        context
-            The page context
-
-        Returns
-        -------
-            The map html
-
-        """
-        all_users = self.allusers
-
-        if all_users:
-            key = "ProjectStatisticsNode.AllUsers"
-        else:
-            key = "ProjectStatisticsNode.{}".format(
-                context["currentpage"].challenge.pk
-            )
-
-        content = cache.get(key)
-
-        if content is None:
-            content = self._get_map(context, all_users, self.include_header)
-            cache.set(key, content, 10 * 60)
-
-        return content
-
-    @classmethod
-    def _get_map(cls, context, all_users, include_header):
-        snippet_header = "<div class='statistics'>"
-        snippet_footer = "</div>"
-
-        if all_users:
-            User = get_user_model()  # noqa: N806
-            users = User.objects.all().distinct()
-        else:
-            users = context["currentpage"].challenge.get_participants()
-
-        country_counts = (
-            UserProfile.objects.filter(user__in=users)
-            .exclude(country="")
-            .values("country")
-            .annotate(dcount=Count("country"))
-            .order_by("-dcount")
-        )
-
-        chart_data = [[str(c["country"]), c["dcount"]] for c in country_counts]
-
-        snippet_geochart = "<div data-geochart='{data}'></div>".format(
-            data=json.dumps([["Country", "#Participants"]] + chart_data)
-        )
-
-        snippet = ""
-
-        if include_header:
-            snippet += "<h1>Statistics</h1><br/>\n"
-
-        if not all_users:
-            snippet += f"<p>Number of users: {len(users)}</p>\n"
-
-        snippet += snippet_geochart
-
-        return snippet_header + snippet + snippet_footer

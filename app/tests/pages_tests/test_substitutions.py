@@ -7,6 +7,8 @@ from grandchallenge.pages.substitutions import Substitution
     "tag_name,content,inp,out",
     [
         ("foo", "bar", "{% foo %}", "bar"),
+        ("fo-o", "bar", "{% fo-o %}", "bar"),
+        ("fo_o", "bar", "{% fo_o %}", "bar"),
         ("foo", "bar", "foo{% foo %}", "foobar"),
         ("foo", "bar", "foo{%foo%}", "foobar"),
         ("foo", "bar", "foo{% foo %} {%foo%}", "foobar bar"),
@@ -19,3 +21,10 @@ from grandchallenge.pages.substitutions import Substitution
 def test_substitution(tag_name, content, inp, out):
     s = Substitution(tag_name=tag_name, content=content)
     assert s.replace(inp) == out
+
+
+@pytest.mark.parametrize("tag_name", ["fo o", "fo\no", "'foo'", '"foo"'])
+def test_no_spaces(tag_name):
+    with pytest.raises(ValueError) as e:
+        Substitution(tag_name=tag_name, content="blah")
+    assert "not a valid name" in str(e)
