@@ -308,7 +308,7 @@ def build_images(upload_session_uuid: UUID):
     :class:`RawImageUploadSession` to indicate if it is running or has finished
     computing.
 
-    The task also updates the state-filed of the associated
+    The task also updates the consumed field of the associated
     :class:`RawImageFile` to indicate whether it has been processed or not.
 
     Results are stored in:
