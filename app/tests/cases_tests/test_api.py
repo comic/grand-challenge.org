@@ -300,7 +300,7 @@ def test_process_images_api_view(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
     ai = AlgorithmImageFactory(creator=user)
     ai.algorithm.add_user(user)
     upload_session = RawImageUploadSessionFactory(
