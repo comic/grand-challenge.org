@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import Http404, HttpResponseBadRequest
+from django.http import Http404
 from django.views.generic import CreateView, DetailView
 from rest_framework.decorators import action
 from rest_framework.mixins import (
@@ -8,6 +8,7 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -115,11 +116,14 @@ class RawImageUploadSessionViewSet(
             messages.add_message(
                 request, messages.SUCCESS, "Upload session re activated."
             )
-            return Response({"status": "Images are uploaded."})
-        messages.add_message(
-            request, messages.ERROR, "Upload session can not be re activated."
-        )
-        return HttpResponseBadRequest("Images can not be uploaded")
+            return Response(status=status.HTTP_200_OK)
+        else:
+            messages.add_message(
+                request,
+                messages.ERROR,
+                "Upload session can not be re activated.",
+            )
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class RawImageFileViewSet(
