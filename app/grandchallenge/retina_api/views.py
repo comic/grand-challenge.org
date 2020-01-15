@@ -77,7 +77,9 @@ class ArchiveView(APIView):
         # Exclude archives to reduce load time
         exclude = ["AREDS - GA selection", "RS1", "RS2", "RS3"]
         archives = Archive.objects.exclude(name__in=exclude)
-        patients = Patient.objects.all().prefetch_related(
+        patients = Patient.objects.exclude(
+            study__image__archive__name__in=exclude
+        ).prefetch_related(
             "study_set",
             "study_set__image_set",
             "study_set__image_set__modality",
