@@ -110,13 +110,14 @@ class RawImageUploadSessionViewSet(
     @action(detail=True, methods=["patch"])
     def process_images(self, request, pk=None):
         upload_session = self.get_object()
-        raw_image_files = RawImageFile.objects.filter(
-            upload_session=upload_session
-        ).all()
+        unconsumed_raw_image_files_exist = (
+            RawImageFile.objects.filter(upload_session=upload_session)
+            .exclude(consumed=True)
+            .exists()
+        )
         if (
             upload_session.session_state == UploadSessionState.stopped
-            and raw_image_files
-            and not raw_image_files[0].state
+            and unconsumed_raw_image_files_exist
         ):
             upload_session.process_images()
         messages.add_message(

@@ -314,7 +314,7 @@ def test_process_images_api_view(client):
     assert response.status_code == 200
     assert "Images are uploaded." in str(response.content)
 
-    RawImageFileFactory(upload_session=upload_session, state=True)
+    RawImageFileFactory(upload_session=upload_session, consumed=True)
 
     response = get_view_for_user(
         viewname="api:image-file-list",

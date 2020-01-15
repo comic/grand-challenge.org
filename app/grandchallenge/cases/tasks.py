@@ -352,7 +352,7 @@ def build_images(upload_session_uuid: UUID):
                     saf = StagedAjaxFile(duplicate.staged_file_id)
                     duplicate.staged_file_id = None
                     saf.delete()
-                    duplicate.state = False
+                    duplicate.consumed = False
                     duplicate.save()
 
                 populate_provisioning_directory(session_files, tmp_dir)
@@ -395,7 +395,7 @@ def build_images(upload_session_uuid: UUID):
                                 filename
                             ]  # type: RawImageFile
                             raw_image.error = None
-                            raw_image.state = True
+                            raw_image.consumed = True
                             raw_image.save()
                     for (
                         filename,
@@ -407,7 +407,7 @@ def build_images(upload_session_uuid: UUID):
                             ]  # type: RawImageFile
                             raw_image.error = raw_image.error or ""
                             raw_image.error += f"{msg}\n"
-                            raw_image.state = False
+                            raw_image.consumed = False
                             raw_image.save()
 
                 for image in collected_images:

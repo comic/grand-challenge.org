@@ -160,7 +160,7 @@ class RawImageFile(UUIDModel):
 
     error = models.TextField(blank=False, null=True, default=None)
 
-    state = models.BooleanField(default=False)
+    consumed = models.BooleanField(default=False)
 
     @property
     def api_url(self):
