@@ -208,7 +208,7 @@ def fix_mhd_file(file, prefix):
         with fileinput.input(file, inplace=True) as f:
             for line in f:
                 new_line = re.sub(
-                    r"(ElementDataFile)\s+=\s+(.*)", fr"\1 = {prefix}\2", line
+                    r"(ElementDataFile)\s+=\s+(.*)", fr"\1 = {prefix}\2", line,
                 )
                 print(new_line, end="")
     except Exception:
@@ -360,7 +360,7 @@ def build_images(upload_session_uuid: UUID):
                 extract_files(tmp_dir)
                 session_files = [
                     RawImageFile.objects.get_or_create(
-                        filename=file.name, upload_session=upload_session
+                        filename=file.name, upload_session=upload_session,
                     )[0]
                     for file in tmp_dir.iterdir()
                 ]
