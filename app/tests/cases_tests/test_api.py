@@ -302,9 +302,7 @@ def test_process_images_api_view(client, settings):
 
     user = UserFactory()
 
-    upload_session = RawImageUploadSession(
-        creator=user
-    )
+    upload_session = RawImageUploadSession(creator=user)
     upload_session.save()
 
     response = get_view_for_user(
