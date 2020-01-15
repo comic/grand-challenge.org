@@ -1,5 +1,6 @@
 import pytest
 
+from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.cases_tests.factories import (
@@ -301,8 +302,9 @@ def test_process_images_api_view(client, settings):
     settings.task_always_eager = (True,)
 
     user = UserFactory()
-    ai = AlgorithmImageFactory(creator=user)
+    ai = AlgorithmImage(creator=user)
     ai.algorithm.add_user(user)
+    ai.save()
     upload_session = RawImageUploadSessionFactory(
         creator=user, algorithm_image=ai
     )
