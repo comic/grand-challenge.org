@@ -1,6 +1,5 @@
 import pytest
 
-from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.cases_tests.factories import (
@@ -302,12 +301,12 @@ def test_process_images_api_view(client, settings):
     settings.task_always_eager = (True,)
 
     user = UserFactory()
-    ai = AlgorithmImage(creator=user)
-    ai.algorithm.add_user(user)
-    ai.save()
-    upload_session = RawImageUploadSessionFactory(
-        creator=user, algorithm_image=ai
+
+    upload_session = RawImageUploadSession(
+        creator=user
     )
+    upload_session.save()
+
     response = get_view_for_user(
         viewname="api:upload-session-process-images",
         reverse_kwargs={"pk": upload_session.pk},
@@ -317,4 +316,4 @@ def test_process_images_api_view(client, settings):
         content_type="application/json",
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 200
