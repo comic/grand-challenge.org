@@ -302,18 +302,48 @@ def test_process_images_api_view(client, settings):
 
     user = UserFactory()
 
-    upload_session = RawImageUploadSession(creator=user)
-    upload_session.save()
-    ri = RawImageFile(upload_session=upload_session)
+    us = RawImageUploadSession(creator=user)
+    us.save()
+    ri = RawImageFile(upload_session=us)
     ri.save()
 
     response = get_view_for_user(
         viewname="api:upload-session-process-images",
-        reverse_kwargs={"pk": upload_session.pk},
+        reverse_kwargs={"pk": us.pk},
         user=user,
         client=client,
         method=client.patch,
         content_type="application/json",
     )
-
     assert response.status_code == 200
+
+    ri.refresh_from_db()
+    ri.consumed = True
+    ri.save()
+
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": us.pk},
+        user=user,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
+    ri.refresh_from_db()
+    ri.consumed = False
+    ri.save()
+    us.refresh_from_db()
+    us.session_state = "created"
+    us.save()
+
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": us.pk},
+        user=user,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+    )
+    assert response.status_code == 400
