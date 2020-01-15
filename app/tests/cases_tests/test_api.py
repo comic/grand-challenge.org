@@ -295,8 +295,12 @@ def test_image_file_post_permissions(client, is_active, expected_response):
 
 
 @pytest.mark.django_db
-def test_process_images_api_view(client):
-    user = UserFactory()
+def test_process_images_api_view(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    user = UserFactory(is_staff=True)
     ai = AlgorithmImageFactory(creator=user)
     ai.algorithm.add_user(user)
     upload_session = RawImageUploadSessionFactory(
