@@ -1,13 +1,13 @@
 from django.contrib import messages
 from django.http import Http404
 from django.views.generic import CreateView, DetailView
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
 )
-from rest_framework import status
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
