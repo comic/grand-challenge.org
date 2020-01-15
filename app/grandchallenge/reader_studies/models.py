@@ -251,6 +251,28 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         return hanging_list_images
 
+    @property
+    def image_groups(self):
+        return [sorted(x.values()) for x in self.hanging_list]
+
+    def add_ground_truth(self, *, data, user):
+        for gt in data:
+            images = self.images.filter(
+                name__in=gt["images"].split(";")
+            ).values_list("id", flat=True)
+            for key in gt.keys():
+                if key == "images":
+                    continue
+                question = self.questions.get(question_text=key)
+                answer = Answer.objects.create(
+                    creator=user,
+                    question=question,
+                    answer=gt[key],
+                    is_ground_truth=True,
+                )
+                answer.images.set(images)
+                answer.save()
+
     def get_hanging_list_images_for_user(self, *, user):
         """
         Returns a shuffled list of the hanging list images for a particular
@@ -623,6 +645,7 @@ class Answer(UUIDModel):
     images = models.ManyToManyField("cases.Image", related_name="answers")
     # TODO: add validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     answer = JSONField()
+    is_ground_truth = models.BooleanField(default=False)
 
     csv_headers = Question.csv_headers + [
         "Created",
@@ -656,6 +679,13 @@ class Answer(UUIDModel):
         adding = self._state.adding
 
         super().save(*args, **kwargs)
+
+        if self.is_ground_truth:
+            Answer.objects.filter(
+                question=self.question,
+                is_ground_truth=True,
+                images__in=self.images.values_list("id", flat=True),
+            ).exclude(pk=self.pk).update(is_ground_truth=False)
 
         if adding:
             self.assign_permissions()
