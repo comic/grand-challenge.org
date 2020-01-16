@@ -1,7 +1,8 @@
-from grandchallenge.core.templatetags import library_plus
+from django import template
+
 from grandchallenge.subdomains.utils import reverse
 
-register = library_plus.LibraryPlus()
+register = template.Library()
 
 
 @register.simple_tag()
