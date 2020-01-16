@@ -14,7 +14,6 @@ from matplotlib.backends.backend_svg import FigureCanvasSVG as FigureCanvas
 from matplotlib.figure import Figure
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.exceptions import PathResolutionException
 from grandchallenge.core.templatetags import library_plus
 from grandchallenge.subdomains.utils import reverse
 
@@ -25,64 +24,6 @@ logger = logging.getLogger(__name__)
 @register.simple_tag()
 def url(view_name, *args, **kwargs):
     return reverse(view_name, args=args, kwargs=kwargs)
-
-
-def resolve_path(path, parser, context):
-    """
-    Try to resolve all parameters in path
-
-    Paths in template tag parameters can include variables. Try to
-    resolve these and throw error if this is not possible.
-    path can be of three types:
-        * a raw filename like "stuff.html" or "results/table1.txt"
-        * a filename containing a variable like "results/{{teamid}}/table1.txt"
-        * a django template variable like "site.short_name"
-
-    Parameters
-    ----------
-        Path (string)
-        parser (django object)
-        context (django context given tag render function)
-
-    Returns
-    -------
-        resolved path (string)
-
-    Raises
-    ------
-        PathResolutionException when path cannot be resolved
-    """
-    # Find out what type it is:
-    # If it contains any / or {{ resolving as django var
-    # is going to throw an error. Prevent unneeded exception, just skip
-    # rendering as var in that case.
-    path_resolved = ""
-    if not in_list(["{", "}", "\\", "/"], path):
-        compiled_filter = parser.compile_filter(strip_quotes(path))
-        path_resolved = compiled_filter.resolve(context)
-    # if resolved filename is empty, resolution failed, just treat this
-    # param as a filepath
-    if path_resolved == "":
-        filename = strip_quotes(path)
-    else:
-        filename = path_resolved
-    # if there are {{}}'s in there, try to substitute this with url
-    # parameter given in the url
-    filename = substitute(filename, context["request"].GET.items())
-    # If any {{parameters}} are still in filename they were not replaced.
-    # This filename is missing information, show this as error text.
-    if re.search(r"{{\w+}}", str(filename)):
-        missed_parameters = re.findall(r"{{\w+}}", str(filename))
-        found_parameters = context["request"].GET.items()
-        if not found_parameters:
-            found_parameters = "None"
-        error_msg = (
-            "I am missing required url parameter(s) %s, url parameter(s) found: %s "
-            "" % (missed_parameters, found_parameters)
-        )
-        raise PathResolutionException(error_msg)
-
-    return filename
 
 
 def substitute(string, substitutions):
@@ -98,90 +39,6 @@ def substitute(string, substitutions):
     for key, value in substitutions:
         string = re.sub(re.escape("{{" + key + "}}"), value, string)
     return string
-
-
-def add_quotes(s: str = ""):
-    """Add quotes to string if they do not already exist."""
-    s = strip_quotes(s)
-    return "'" + s + "'"
-
-
-def strip_quotes(s: str = ""):
-    """Strip outermost quotes from string."""
-    if len(s) >= 2 and (s[0] == s[-1]) and s[0] in ("'", '"'):
-        return s[1:-1]
-
-    return s
-
-
-def in_list(needles, haystack):
-    """Determine if any of the needles are in the heystack."""
-    for needle in needles:
-        if needle in haystack:
-            return True
-    return False
-
-
-@register.tag(name="insert_file")
-def insert_file(parser, token):
-    """
-    Render the contents of a file from the local dropbox folder of the current
-    project
-    """
-    split = token.split_contents()
-    all_args = split[1:]
-    if len(all_args) != 1:
-        error_message = "Expected 1 argument, found " + str(len(all_args))
-        return TemplateErrorNode(error_message)
-
-    else:
-        args = {}
-        filename = all_args[0]
-        args["file"] = add_quotes(filename)
-
-    return InsertFileNode(args, parser)
-
-
-class InsertFileNode(template.Node):
-    def __init__(self, args, parser):
-        self.args = args
-        self.parser = parser
-
-    def make_error_msg(self, msg):
-        logger.error(
-            "Error including file '" + "," + self.args["file"] + "': " + msg
-        )
-        errormsg = "Error including file"
-        return make_error_message_html(errormsg)
-
-    def render(self, context):
-        # text typed in the tag
-        token = self.args["file"]
-        try:
-            filename = resolve_path(token, self.parser, context)
-        except PathResolutionException as e:
-            return self.make_error_msg(f"Path Resolution failed: {e}")
-
-        challenge = context["challenge"]
-
-        try:
-            filepath = safe_join(challenge.get_project_data_folder(), filename)
-        except SuspiciousFileOperation:
-            return self.make_error_msg(
-                f"'{filename}' cannot be opened because it is outside the current challenge."
-            )
-
-        storage = DefaultStorage()
-
-        try:
-            with storage.open(filepath, "r") as f:
-                contents = f.read()
-        except Exception as e:
-            return self.make_error_msg("error opening file:" + str(e))
-
-        # TODO check content safety
-
-        return contents
 
 
 @register.tag(name="insert_graph")

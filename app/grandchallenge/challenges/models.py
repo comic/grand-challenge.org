@@ -395,12 +395,8 @@ class Challenge(ChallengeBase):
     """
 
     public_folder = "public_html"
-    skin = models.CharField(
-        max_length=225,
-        default="",
-        blank=True,
-        help_text="css file to include throughout this"
-        " project. relative to project data folder",
+    skin = models.TextField(
+        default="", blank=True, help_text="CSS for this challenge.",
     )
     banner = models.ImageField(
         upload_to=get_banner_path,
