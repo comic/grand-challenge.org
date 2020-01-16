@@ -330,20 +330,3 @@ def test_process_images_api_view(client, settings):
         content_type="application/json",
     )
     assert response.status_code == 400
-
-    us.refresh_from_db()
-    us.session_state = "created"
-    us.save()
-    ri.refresh_from_db()
-    ri.consumed = False
-    ri.save()
-
-    response = get_view_for_user(
-        viewname="api:upload-session-process-images",
-        reverse_kwargs={"pk": us.pk},
-        user=user,
-        client=client,
-        method=client.patch,
-        content_type="application/json",
-    )
-    assert response.status_code == 400
