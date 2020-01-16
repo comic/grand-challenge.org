@@ -74,8 +74,12 @@ class ArchiveView(APIView):
 
     @staticmethod  # noqa: C901
     def create_response_object():
-        archives = Archive.objects.all()
-        patients = Patient.objects.all().prefetch_related(
+        # Exclude archives to reduce load time
+        exclude = ["AREDS - GA selection", "RS1", "RS2", "RS3"]
+        archives = Archive.objects.exclude(name__in=exclude)
+        patients = Patient.objects.exclude(
+            study__image__archive__name__in=exclude
+        ).prefetch_related(
             "study_set",
             "study_set__image_set",
             "study_set__image_set__modality",
