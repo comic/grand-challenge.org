@@ -257,13 +257,18 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     def add_ground_truth(self, *, data, user):
         for gt in data:
-            images = self.images.filter(
-                name__in=gt["images"].split(";")
-            ).values_list("id", flat=True)
+            images = self.images.filter(name__in=gt["images"].split(";"))
             for key in gt.keys():
                 if key == "images":
                     continue
                 question = self.questions.get(question_text=key)
+                Answer.validate(
+                    creator=user,
+                    question=question,
+                    images=images,
+                    answer=gt[key],
+                    is_ground_truth=True,
+                )
                 answer = Answer.objects.create(
                     creator=user,
                     question=question,
@@ -675,17 +680,53 @@ class Answer(UUIDModel):
             self.creator.username,
         ]
 
+    @staticmethod
+    def validate(*, creator, question, answer, images, is_ground_truth=False):
+        if len(images) == 0:
+            raise ValidationError(
+                "You must specify the images that this answer corresponds to."
+            )
+
+        reader_study_images = question.reader_study.images.all()
+        for im in images:
+            if im not in reader_study_images:
+                raise ValidationError(
+                    f"Image {im} does not belong to this reader study."
+                )
+
+        if is_ground_truth:
+            if Answer.objects.filter(
+                question=question,
+                is_ground_truth=True,
+                images__in=images.values_list("id", flat=True),
+            ).exists():
+                raise ValidationError(
+                    "Ground truth already added for this question/image combination"
+                )
+        else:
+            if Answer.objects.filter(
+                creator=creator, question=question, images__in=images
+            ).exists():
+                raise ValidationError(
+                    f"User {creator} has already answered this question "
+                    f"for at least 1 of these images."
+                )
+            if not question.reader_study.is_reader(user=creator):
+                raise ValidationError(
+                    "This user is not a reader for this study."
+                )
+
+        if not question.is_answer_valid(answer=answer):
+            raise ValidationError(
+                f"Your answer is not the correct type. "
+                f"{question.get_answer_type_display()} expected, "
+                f"{type(answer)} found."
+            )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
         super().save(*args, **kwargs)
-
-        if self.is_ground_truth:
-            Answer.objects.filter(
-                question=self.question,
-                is_ground_truth=True,
-                images__in=self.images.values_list("id", flat=True),
-            ).exclude(pk=self.pk).update(is_ground_truth=False)
 
         if adding:
             self.assign_permissions()

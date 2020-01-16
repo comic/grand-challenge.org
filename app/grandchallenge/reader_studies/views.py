@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.views.generic import (
@@ -248,10 +249,14 @@ class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        self.reader_study.add_ground_truth(
-            data=form.cleaned_data["ground_truth"], user=self.request.user,
-        )
-        return super().form_valid(form)
+        try:
+            self.reader_study.add_ground_truth(
+                data=form.cleaned_data["ground_truth"], user=self.request.user,
+            )
+            return super().form_valid(form)
+        except ValidationError as e:
+            form.errors["ground_truth"] = e
+            return self.form_invalid(form)
 
     def get_success_url(self):
         return self.reader_study.get_absolute_url()

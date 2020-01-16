@@ -478,5 +478,9 @@ def test_reader_study_add_ground_truth(client):
             user=editor,
         )
     assert response.status_code == 200
-    assert Answer.objects.all().count() == 6
+    assert (
+        "Ground truth already added for this question/image combination"
+        in response.rendered_content
+    )
+    assert Answer.objects.all().count() == 3
     assert Answer.objects.filter(is_ground_truth=True).count() == 3
