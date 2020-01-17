@@ -95,7 +95,7 @@ class RawImageUploadSession(UUIDModel):
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
-            f"({self.status}) "
+            f"({self.get_status_display()}) "
             f"{self.error_message or ''}"
         )
 

@@ -472,7 +472,7 @@ def _handle_unconsumed_files(
 
     if unconsumed_filenames:
         upload_session.error_message = (
-            f"Failed: {', '.join(unconsumed_filenames)}"
+            f"Files not imported: {', '.join(unconsumed_filenames)}"
         )
 
         if upload_session.creator and upload_session.creator.email:
