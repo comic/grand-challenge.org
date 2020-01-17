@@ -1,11 +1,10 @@
 import fileinput
 import os
 import re
-import shutil
 import tarfile
 import zipfile
 from pathlib import Path
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 from typing import Sequence, Tuple
 from uuid import UUID
 
@@ -32,7 +31,6 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageFile,
     RawImageUploadSession,
-    UploadSessionState,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
@@ -42,6 +40,22 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 
 class ProvisioningError(Exception):
     pass
+
+
+def _populate_tmp_dir(tmp_dir, upload_session):
+    session_files = upload_session.rawimagefile_set.all()
+    session_files, duplicates = remove_duplicate_files(session_files)
+
+    for duplicate in duplicates:  # type: RawImageFile
+        duplicate.error = "Filename not unique"
+        saf = StagedAjaxFile(duplicate.staged_file_id)
+        duplicate.staged_file_id = None
+        saf.delete()
+        duplicate.consumed = False
+        duplicate.save()
+
+    populate_provisioning_directory(session_files, tmp_dir)
+    extract_files(tmp_dir)
 
 
 def populate_provisioning_directory(
@@ -265,11 +279,11 @@ def check_compressed_and_extract(file_path, target_path, prefix=None):
         The file path to be checked and possibly extracted.
     target_path:
         The path to which the contents of `file_path` are to be extracted.
-    prefix, optional:
+    prefix:
         For compressed files containing a nested structure, the folder names of
         all containing folders are prepended to the filename. This is done to
         be able to flatten the contents of the compressed file, without
-        completely losing the information onthe original compressed folder's
+        completely losing the information on the original compressed folder's
         structure.
     """
     new_files = []
@@ -298,7 +312,7 @@ def extract_files(source_path: Path):
         check_compressed_and_extract(file_path, source_path)
 
 
-@shared_task  # noqa: C901
+@shared_task
 def build_images(upload_session_uuid: UUID):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -333,161 +347,160 @@ def build_images(upload_session_uuid: UUID):
         pk=upload_session_uuid
     )  # type: RawImageUploadSession
 
-    if upload_session.session_state == UploadSessionState.queued:
-        tmp_dir = Path(mkdtemp(prefix="construct_image_volumes-"))
-        try:
+    if (
+        not upload_session.status == upload_session.STARTED
+        and not upload_session.all_files_unconsumed
+    ):
+        upload_session.status = upload_session.STARTED
+        upload_session.save()
+
+        with TemporaryDirectory(prefix="construct_image_volumes-") as tmp_dir:
+            tmp_dir = Path(tmp_dir)
+
             try:
-                upload_session.session_state = UploadSessionState.running
+                _populate_tmp_dir(tmp_dir, upload_session)
+            except ProvisioningError as e:
+                upload_session.error_message = str(e)
+                upload_session.status = upload_session.FAILURE
                 upload_session.save()
 
-                session_files = RawImageFile.objects.filter(
-                    upload_session=upload_session.pk
-                ).all()  # type: Tuple[RawImageFile]
-
-                session_files, duplicates = remove_duplicate_files(
-                    session_files
-                )
-                for duplicate in duplicates:  # type: RawImageFile
-                    duplicate.error = "Filename not unique"
-                    saf = StagedAjaxFile(duplicate.staged_file_id)
-                    duplicate.staged_file_id = None
-                    saf.delete()
-                    duplicate.consumed = False
-                    duplicate.save()
-
-                populate_provisioning_directory(session_files, tmp_dir)
-
-                extract_files(tmp_dir)
-                session_files = [
-                    RawImageFile.objects.get_or_create(
-                        filename=file.name, upload_session=upload_session,
-                    )[0]
-                    for file in tmp_dir.iterdir()
-                ]
-                filename_lookup = {
-                    raw_image_file.staged_file_id
-                    and StagedAjaxFile(raw_image_file.staged_file_id).name
-                    or raw_image_file.filename: raw_image_file
-                    for raw_image_file in session_files
-                }
-                unconsumed_filenames = set(filename_lookup.keys())
-
-                collected_images = []
-                collected_associated_files = []
-                collected_associated_folders = []
-                for algorithm in IMAGE_BUILDER_ALGORITHMS:
-                    algorithm_result = algorithm(
-                        tmp_dir
-                    )  # type: ImageBuilderResult
-                    collected_images += list(algorithm_result.new_images)
-                    collected_associated_files += list(
-                        algorithm_result.new_image_files
-                    )
-
-                    collected_associated_folders += list(
-                        algorithm_result.new_folder_upload
-                    )
-
-                    for filename in algorithm_result.consumed_files:
-                        if filename in unconsumed_filenames:
-                            unconsumed_filenames.remove(filename)
-                            raw_image = filename_lookup[
-                                filename
-                            ]  # type: RawImageFile
-                            raw_image.error = None
-                            raw_image.consumed = True
-                            raw_image.save()
-                    for (
-                        filename,
-                        msg,
-                    ) in algorithm_result.file_errors_map.items():
-                        if filename in unconsumed_filenames:
-                            raw_image = filename_lookup[
-                                filename
-                            ]  # type: RawImageFile
-                            raw_image.error = raw_image.error or ""
-                            raw_image.error += f"{msg}\n"
-                            raw_image.consumed = False
-                            raw_image.save()
-
-                for image in collected_images:
-                    image.origin = upload_session
-                    store_image(
-                        image,
-                        collected_associated_files,
-                        collected_associated_folders,
-                    )
-
-                for unconsumed_filename in unconsumed_filenames:
-                    raw_file = filename_lookup[unconsumed_filename]
-                    error = raw_file.error or ""
-                    raw_file.error = (
-                        "File could not be processed by any image builder:\n\n"
-                        f"{error}"
-                    )
-
-                if unconsumed_filenames:
-                    upload_session.error_message = f"Failed: {', '.join(unconsumed_filenames)}"[
-                        : RawImageUploadSession.max_length_error_message
-                    ]
-                    if upload_session.creator and upload_session.creator.email:
-                        msg = (
-                            "The following image files could not be processed "
-                            f"in reader study {upload_session.reader_study}:"
-                            f"\n\n{', '.join(unconsumed_filenames)}\n\n"
-                            "The following file formats are supported: "
-                            ".mhd, .mha, .tiff"
-                        )
-                        send_mail(
-                            subject=(
-                                f"[{Site.objects.get_current().domain.lower()}] "
-                                f"Unable to process images"
-                            ),
-                            message=msg,
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=[upload_session.creator.email],
-                        )
-
-                if upload_session.imageset:
-                    upload_session.imageset.images.add(*collected_images)
-
-                if upload_session.annotationset:
-                    upload_session.annotationset.images.add(*collected_images)
-
-                if upload_session.algorithm_image:
-                    for image in collected_images:
-                        Job.objects.create(
-                            creator=upload_session.creator,
-                            algorithm_image=upload_session.algorithm_image,
-                            image=image,
-                        )
-
-                if upload_session.algorithm_result:
-                    upload_session.algorithm_result.images.add(
-                        *collected_images
-                    )
-
-                if upload_session.reader_study:
-                    upload_session.reader_study.images.add(*collected_images)
-
-                # Delete any touched file data
-                for file in session_files:
-                    try:
-                        if file.staged_file_id:
-                            saf = StagedAjaxFile(file.staged_file_id)
-                            file.staged_file_id = None
-                            saf.delete()
-                        file.save()
-                    except NotFoundError:
-                        pass
-
-            except Exception as e:
-                upload_session.error_message = str(e)[
-                    0 : upload_session.max_length_error_message - 1
-                ]
-        finally:
-            if tmp_dir is not None:
-                shutil.rmtree(tmp_dir)
-
-            upload_session.session_state = UploadSessionState.stopped
+            _handle_raw_image_files(tmp_dir, upload_session)
+            upload_session.status = upload_session.SUCCESS
             upload_session.save()
+    else:
+        upload_session.status = upload_session.FAILURE
+        upload_session.error_message = (
+            "Not starting job as some files were already consumed."
+        )
+        upload_session.save()
+
+
+def _handle_raw_image_files(tmp_dir, upload_session):
+    session_files = [
+        RawImageFile.objects.get_or_create(
+            filename=file.name, upload_session=upload_session,
+        )[0]
+        for file in tmp_dir.iterdir()
+    ]
+    filename_lookup = {
+        raw_image_file.staged_file_id
+        and StagedAjaxFile(raw_image_file.staged_file_id).name
+        or raw_image_file.filename: raw_image_file
+        for raw_image_file in session_files
+    }
+    unconsumed_filenames = set(filename_lookup.keys())
+
+    collected_images = []
+    collected_associated_files = []
+    collected_associated_folders = []
+
+    for algorithm in IMAGE_BUILDER_ALGORITHMS:
+        algorithm_result = algorithm(tmp_dir)  # type: ImageBuilderResult
+        collected_images += list(algorithm_result.new_images)
+        collected_associated_files += list(algorithm_result.new_image_files)
+
+        collected_associated_folders += list(
+            algorithm_result.new_folder_upload
+        )
+
+        for filename in algorithm_result.consumed_files:
+            if filename in unconsumed_filenames:
+                unconsumed_filenames.remove(filename)
+                raw_image = filename_lookup[filename]  # type: RawImageFile
+                raw_image.error = None
+                raw_image.consumed = True
+                raw_image.save()
+
+        for (filename, msg,) in algorithm_result.file_errors_map.items():
+            if filename in unconsumed_filenames:
+                raw_image = filename_lookup[filename]  # type: RawImageFile
+                raw_image.error = raw_image.error or ""
+                raw_image.error += f"{msg}\n"
+                raw_image.consumed = False
+                raw_image.save()
+
+    for image in collected_images:
+        image.origin = upload_session
+        store_image(
+            image, collected_associated_files, collected_associated_folders,
+        )
+
+    _handle_image_relations(
+        collected_images=collected_images, upload_session=upload_session
+    )
+
+    _handle_unconsumed_files(
+        filename_lookup=filename_lookup,
+        unconsumed_filenames=unconsumed_filenames,
+        upload_session=upload_session,
+    )
+
+    _delete_session_files(session_files=session_files)
+
+
+def _handle_image_relations(*, collected_images, upload_session):
+    if upload_session.imageset:
+        upload_session.imageset.images.add(*collected_images)
+
+    if upload_session.annotationset:
+        upload_session.annotationset.images.add(*collected_images)
+
+    if upload_session.algorithm_image:
+        for image in collected_images:
+            Job.objects.create(
+                creator=upload_session.creator,
+                algorithm_image=upload_session.algorithm_image,
+                image=image,
+            )
+
+    if upload_session.algorithm_result:
+        upload_session.algorithm_result.images.add(*collected_images)
+
+    if upload_session.reader_study:
+        upload_session.reader_study.images.add(*collected_images)
+
+
+def _handle_unconsumed_files(
+    *, filename_lookup, unconsumed_filenames, upload_session
+):
+    for unconsumed_filename in unconsumed_filenames:
+        raw_file = filename_lookup[unconsumed_filename]
+        error = raw_file.error or ""
+        raw_file.error = (
+            "File could not be processed by any image builder:\n\n" f"{error}"
+        )
+
+    if unconsumed_filenames:
+        upload_session.error_message = (
+            f"Files not imported: {', '.join(unconsumed_filenames)}"
+        )
+
+        if upload_session.creator and upload_session.creator.email:
+            msg = (
+                "The following image files could not be processed "
+                f"in reader study {upload_session.reader_study}:"
+                f"\n\n{', '.join(unconsumed_filenames)}\n\n"
+                "The following file formats are supported: "
+                ".mhd, .mha, .tiff"
+            )
+            send_mail(
+                subject=(
+                    f"[{Site.objects.get_current().domain.lower()}] "
+                    f"Unable to process images"
+                ),
+                message=msg,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[upload_session.creator.email],
+            )
+
+
+def _delete_session_files(*, session_files):
+    for file in session_files:
+        try:
+            if file.staged_file_id:
+                saf = StagedAjaxFile(file.staged_file_id)
+                file.staged_file_id = None
+                saf.delete()
+            file.save()
+        except NotFoundError:
+            pass

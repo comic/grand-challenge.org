@@ -301,32 +301,34 @@ def test_process_images_api_view(client, settings):
     settings.task_always_eager = (True,)
 
     user = UserFactory()
+    us = RawImageUploadSessionFactory(creator=user)
 
-    us = RawImageUploadSession(creator=user)
-    us.save()
-    ri = RawImageFile(upload_session=us)
-    ri.save()
+    def request_processing():
+        return get_view_for_user(
+            viewname="api:upload-session-process-images",
+            reverse_kwargs={"pk": us.pk},
+            user=user,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+        )
 
-    response = get_view_for_user(
-        viewname="api:upload-session-process-images",
-        reverse_kwargs={"pk": us.pk},
-        user=user,
-        client=client,
-        method=client.patch,
-        content_type="application/json",
-    )
+    response = request_processing()
     assert response.status_code == 200
 
-    ri.refresh_from_db()
-    ri.consumed = True
-    ri.save()
+    f = RawImageFileFactory(upload_session=us)
 
-    response = get_view_for_user(
-        viewname="api:upload-session-process-images",
-        reverse_kwargs={"pk": us.pk},
-        user=user,
-        client=client,
-        method=client.patch,
-        content_type="application/json",
-    )
+    response = request_processing()
+    assert response.status_code == 200
+
+    # Hack to get around fact that RawImageFileFactory does not create images
+    # to consume, this is quite tricky to add
+    f.consumed = True
+    f.save()
+
+    # Add a new file
+    RawImageFileFactory(upload_session=us)
+
+    # A file should have been consumed, so fail
+    response = request_processing()
     assert response.status_code == 400

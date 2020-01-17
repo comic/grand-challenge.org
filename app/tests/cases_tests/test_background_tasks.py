@@ -18,7 +18,6 @@ from grandchallenge.cases.models import (
     Image,
     RawImageFile,
     RawImageUploadSession,
-    UploadSessionState,
 )
 from grandchallenge.cases.tasks import (
     check_compressed_and_extract,
@@ -57,6 +56,7 @@ def create_raw_upload_image_session(
         ).delete()
 
     upload_session.save()
+    upload_session.process_images()
 
     return upload_session, uploaded_images
 
@@ -97,7 +97,7 @@ def test_image_file_creation(settings):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UploadSessionState.stopped
+    assert session.status == session.SUCCESS
     for image_name in invalid_images:
         assert image_name in session.error_message
 
@@ -128,7 +128,7 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     )
 
     session.refresh_from_db()
-    assert session.session_state == UploadSessionState.stopped
+    assert session.status == session.SUCCESS
     assert session.error_message is not None
 
 
@@ -148,7 +148,7 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UploadSessionState.stopped
+    assert session.status == session.SUCCESS
     assert session.error_message is None
 
     images = Image.objects.filter(origin=session).all()
@@ -186,7 +186,7 @@ def test_staged_mhd_upload_with_additional_headers(
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UploadSessionState.stopped
+    assert session.status == session.SUCCESS
     assert session.error_message is None
 
     images = Image.objects.filter(origin=session).all()
@@ -231,7 +231,7 @@ def test_no_convertible_file(settings):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UploadSessionState.stopped
+    assert session.status == session.SUCCESS
     for image_name in images:
         assert image_name in session.error_message
 
@@ -265,7 +265,7 @@ def test_errors_on_files_with_duplicate_file_names(settings):
     assert len(uploaded_images) == 4
 
     session.refresh_from_db()
-    assert session.session_state == UploadSessionState.stopped
+    assert session.status == session.SUCCESS
     assert session.error_message is None
 
     for raw_image in uploaded_images:
@@ -283,7 +283,7 @@ def test_mhd_file_annotation_creation(settings):
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
-    assert session.session_state == UploadSessionState.stopped
+    assert session.status == session.SUCCESS
     assert session.error_message is None
 
     images = Image.objects.filter(origin=session).all()

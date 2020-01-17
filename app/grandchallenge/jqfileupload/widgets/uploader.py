@@ -1,10 +1,8 @@
 import hashlib
-import os
 import uuid
 from io import BufferedIOBase
 
 from django import forms
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms.widgets import Widget
 from django.http.request import HttpRequest
@@ -300,18 +298,8 @@ class StagedAjaxFile:
 
     def delete(self):
         query = self._raise_if_missing()
-        dir_name = None
         for chunk in query:
-            if dir_name is None:
-                dir_name = os.path.dirname(
-                    os.path.join(settings.MEDIA_ROOT, chunk.file.name)
-                )
             chunk.file.delete()
-        if dir_name and os.path.isdir(dir_name):
-            try:
-                os.rmdir(dir_name)
-            except IOError:
-                pass  # Swallow all errors of rmdir
         query.delete()
 
 

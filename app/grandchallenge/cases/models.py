@@ -19,13 +19,6 @@ from grandchallenge.subdomains.utils import reverse
 logger = logging.getLogger(__name__)
 
 
-class UploadSessionState:
-    created = "created"
-    queued = "queued"
-    running = "running"
-    stopped = "stopped"
-
-
 class RawImageUploadSession(UUIDModel):
     """
     A session keeps track of uploaded files and forms the basis of a processing
@@ -33,7 +26,21 @@ class RawImageUploadSession(UUIDModel):
     images that can be fed to processing tasks.
     """
 
-    max_length_error_message = 256
+    PENDING = 0
+    STARTED = 1
+    RETRY = 2
+    FAILURE = 3
+    SUCCESS = 4
+    CANCELLED = 5
+
+    STATUS_CHOICES = (
+        (PENDING, "Queued"),
+        (STARTED, "Started"),
+        (RETRY, "Re-Queued"),
+        (FAILURE, "Failed"),
+        (SUCCESS, "Succeeded"),
+        (CANCELLED, "Cancelled"),
+    )
 
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
@@ -42,18 +49,13 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.SET_NULL,
     )
 
-    session_state = models.CharField(
-        max_length=16, default=UploadSessionState.created
+    status = models.PositiveSmallIntegerField(
+        choices=STATUS_CHOICES, default=PENDING
     )
 
     processing_task = models.UUIDField(null=True, default=None)
 
-    error_message = models.CharField(
-        max_length=max_length_error_message,
-        blank=False,
-        null=True,
-        default=None,
-    )
+    error_message = models.TextField(blank=False, null=True, default=None)
 
     imageset = models.ForeignKey(
         to="datasets.ImageSet",
@@ -93,26 +95,22 @@ class RawImageUploadSession(UUIDModel):
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
-            f"({self.session_state}) "
+            f"({self.get_status_display()}) "
             f"{self.error_message or ''}"
         )
 
-    def save(self, *args, skip_processing=False, **kwargs):
+    def save(self, *args, **kwargs):
         adding = self._state.adding
 
         super().save(*args, **kwargs)
 
-        if adding:
-            if self.creator:
-                assign_perm(
-                    f"view_{self._meta.model_name}", self.creator, self
-                )
-                assign_perm(
-                    f"change_{self._meta.model_name}", self.creator, self
-                )
+        if adding and self.creator:
+            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+            assign_perm(f"change_{self._meta.model_name}", self.creator, self)
 
-            if not skip_processing:
-                self.process_images()
+    @property
+    def all_files_unconsumed(self) -> bool:
+        return self.rawimagefile_set.filter(consumed=True).exists()
 
     def process_images(self):
         # Local import to avoid circular dependency
@@ -120,15 +118,13 @@ class RawImageUploadSession(UUIDModel):
 
         try:
             RawImageUploadSession.objects.filter(pk=self.pk).update(
-                session_state=UploadSessionState.queued,
-                processing_task=self.pk,
+                status=RawImageUploadSession.PENDING, processing_task=self.pk,
             )
-
             build_images.apply_async(args=(self.pk,))
 
         except Exception as e:
             RawImageUploadSession.objects.filter(pk=self.pk).update(
-                session_state=UploadSessionState.stopped,
+                status=RawImageUploadSession.FAILURE,
                 error_message=f"Could not start job: {e}",
             )
             raise e
