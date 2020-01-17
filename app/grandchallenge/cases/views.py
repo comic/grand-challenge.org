@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.http import Http404
-from django.views.generic import CreateView, DetailView
+from django.views.generic import DetailView
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import (
@@ -13,7 +13,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
@@ -26,27 +25,12 @@ from grandchallenge.cases.serializers import (
     RawImageFileSerializer,
     RawImageUploadSessionSerializer,
 )
-from grandchallenge.core.permissions.mixins import UserIsStaffMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyWithCustomPostPermissions,
 )
 
 
-class UploadRawFiles(UserIsStaffMixin, CreateView):
-    model = RawImageUploadSession
-    form_class = UploadRawImagesForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        return super().form_valid(form)
-
-
-class ShowUploadSessionState(UserIsStaffMixin, DetailView):
+class RawImageUploadSessionDetail(DetailView):
     model = RawImageUploadSession
 
     def get_context_data(self, **kwargs):
