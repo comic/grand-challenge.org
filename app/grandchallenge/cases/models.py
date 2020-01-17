@@ -160,6 +160,8 @@ class RawImageFile(UUIDModel):
 
     error = models.TextField(blank=False, null=True, default=None)
 
+    consumed = models.BooleanField(default=False)
+
     @property
     def api_url(self):
         return reverse("api:image-file-detail", kwargs={"pk": self.pk})

@@ -295,21 +295,38 @@ def test_image_file_post_permissions(client, is_active, expected_response):
 
 
 @pytest.mark.django_db
-def test_process_images_api_view(client):
+def test_process_images_api_view(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     user = UserFactory()
-    ai = AlgorithmImageFactory(creator=user)
-    ai.algorithm.add_user(user)
-    upload_session = RawImageUploadSessionFactory(
-        creator=user, algorithm_image=ai
-    )
+
+    us = RawImageUploadSession(creator=user)
+    us.save()
+    ri = RawImageFile(upload_session=us)
+    ri.save()
 
     response = get_view_for_user(
         viewname="api:upload-session-process-images",
-        reverse_kwargs={"pk": upload_session.pk},
+        reverse_kwargs={"pk": us.pk},
         user=user,
         client=client,
         method=client.patch,
         content_type="application/json",
     )
     assert response.status_code == 200
-    assert "Images are uploaded." in str(response.content)
+
+    ri.refresh_from_db()
+    ri.consumed = True
+    ri.save()
+
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": us.pk},
+        user=user,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+    )
+    assert response.status_code == 400
