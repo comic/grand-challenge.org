@@ -42,8 +42,6 @@ class RawImageUploadSession(UUIDModel):
         (CANCELLED, "Cancelled"),
     )
 
-    max_length_error_message = 256
-
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         null=True,
@@ -57,12 +55,7 @@ class RawImageUploadSession(UUIDModel):
 
     processing_task = models.UUIDField(null=True, default=None)
 
-    error_message = models.CharField(
-        max_length=max_length_error_message,
-        blank=False,
-        null=True,
-        default=None,
-    )
+    error_message = models.TextField(blank=False, null=True, default=None)
 
     imageset = models.ForeignKey(
         to="datasets.ImageSet",
