@@ -1,11 +1,10 @@
 import fileinput
 import os
 import re
-import shutil
 import tarfile
 import zipfile
 from pathlib import Path
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory
 from typing import Sequence, Tuple
 from uuid import UUID
 
@@ -339,9 +338,9 @@ def build_images(upload_session_uuid: UUID):
         upload_session.status = upload_session.STARTED
         upload_session.save()
 
-        tmp_dir = Path(mkdtemp(prefix="construct_image_volumes-"))
+        with TemporaryDirectory(prefix="construct_image_volumes-") as tmp_dir:
+            tmp_dir = Path(tmp_dir)
 
-        try:
             try:
                 session_files = upload_session.rawimagefile_set.all()
 
@@ -486,9 +485,6 @@ def build_images(upload_session_uuid: UUID):
                 upload_session.error_message = str(e)[
                     0 : upload_session.max_length_error_message - 1
                 ]
-        finally:
-            if tmp_dir is not None:
-                shutil.rmtree(tmp_dir)
 
             upload_session.status = upload_session.SUCCESS
             upload_session.save()
