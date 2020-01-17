@@ -2,7 +2,6 @@ import os
 import uuid
 
 from django.conf import settings
-from django.core.files.storage import DefaultStorage
 from django.db import models
 from django_summernote.models import AbstractAttachment
 
@@ -52,15 +51,6 @@ class UploadModel(ComicSiteModel):
     )
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-
-    @property
-    def filename(self):
-        return self.file.name.rsplit("/", 1)[-1]
-
-    @property
-    def localfileexists(self):
-        storage = DefaultStorage()
-        return storage.exists(self.file.path)
 
     class Meta(ComicSiteModel.Meta):
         verbose_name = "uploaded file"
