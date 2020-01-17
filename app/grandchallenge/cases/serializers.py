@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import CharField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
@@ -48,6 +50,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         queryset=AlgorithmImage.objects.all(),
         view_name="api:algorithms-image-detail",
     )
+    status = CharField(source="get_status_display", read_only=True)
 
     def validate(self, attrs):
         algorithm_image = attrs["algorithm_image"]
@@ -63,11 +66,14 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         fields = [
             "pk",
             "creator",
-            "session_state",
+            "status",
             "error_message",
             "algorithm_image",
             "api_url",
         ]
+        swagger_schema_fields = swagger_schema_fields_for_charfield(
+            status=model._meta.get_field("status")
+        )
 
 
 class RawImageFileSerializer(serializers.ModelSerializer):

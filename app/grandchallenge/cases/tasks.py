@@ -32,7 +32,6 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageFile,
     RawImageUploadSession,
-    UploadSessionState,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
@@ -333,11 +332,11 @@ def build_images(upload_session_uuid: UUID):
         pk=upload_session_uuid
     )  # type: RawImageUploadSession
 
-    if upload_session.session_state == UploadSessionState.queued:
+    if upload_session.status == upload_session.PENDING:
         tmp_dir = Path(mkdtemp(prefix="construct_image_volumes-"))
         try:
             try:
-                upload_session.session_state = UploadSessionState.running
+                upload_session.status = upload_session.STARTED
                 upload_session.save()
 
                 session_files = RawImageFile.objects.filter(
@@ -489,5 +488,5 @@ def build_images(upload_session_uuid: UUID):
             if tmp_dir is not None:
                 shutil.rmtree(tmp_dir)
 
-            upload_session.session_state = UploadSessionState.stopped
+            upload_session.status = upload_session.SUCCESS
             upload_session.save()

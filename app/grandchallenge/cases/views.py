@@ -18,7 +18,6 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageFile,
     RawImageUploadSession,
-    UploadSessionState,
 )
 from grandchallenge.cases.serializers import (
     ImageSerializer,
@@ -31,19 +30,8 @@ from grandchallenge.core.permissions.rest_framework import (
 
 
 class RawImageUploadSessionDetail(DetailView):
+    # TODO add permissions tests for this
     model = RawImageUploadSession
-
-    def get_context_data(self, **kwargs):
-        result = super().get_context_data(**kwargs)
-        result["upload_session"] = result["object"]
-        result["raw_files"] = RawImageFile.objects.filter(
-            upload_session=result["object"]
-        ).all()
-        result["images"] = Image.objects.filter(origin=result["object"]).all()
-        result["process_finished"] = (
-            result["object"].session_state == UploadSessionState.stopped
-        )
-        return result
 
 
 class ImageViewSet(ReadOnlyModelViewSet):
@@ -101,7 +89,8 @@ class RawImageUploadSessionViewSet(
             .exists()
         )
         if (
-            upload_session.session_state == UploadSessionState.stopped
+            upload_session.status
+            in [upload_session.SUCCESS, upload_session.FAILURE]
             and unconsumed_raw_image_files_exist
         ):
             upload_session.process_images()
