@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
+    RawImageFile,
+    RawImageUploadSession,
+)
 
 
 class ImageFileInline(admin.StackedInline):
@@ -58,3 +63,5 @@ class ImageFileAdmin(admin.ModelAdmin):
 
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageFile, ImageFileAdmin)
+admin.site.register(RawImageUploadSession)
+admin.site.register(RawImageFile)
