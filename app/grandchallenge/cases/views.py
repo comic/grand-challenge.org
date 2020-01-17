@@ -1,6 +1,10 @@
 from django.contrib import messages
 from django.http import Http404
 from django.views.generic import DetailView
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import (
@@ -29,9 +33,12 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 
 
-class RawImageUploadSessionDetail(DetailView):
-    # TODO add permissions tests for this
+class RawImageUploadSessionDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = RawImageUploadSession
+    permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
+    raise_exception = True
 
 
 class ImageViewSet(ReadOnlyModelViewSet):
