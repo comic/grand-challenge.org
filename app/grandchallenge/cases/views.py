@@ -89,16 +89,15 @@ class RawImageUploadSessionViewSet(
 
     @action(detail=True, methods=["patch"])
     def process_images(self, request, pk=None):
-        upload_session = self.get_object()
-        unconsumed_raw_image_files_exist = (
-            RawImageFile.objects.filter(upload_session=upload_session)
-            .exclude(consumed=True)
-            .exists()
-        )
+        upload_session: RawImageUploadSession = self.get_object()
         if (
             upload_session.status
-            in [upload_session.SUCCESS, upload_session.FAILURE]
-            and unconsumed_raw_image_files_exist
+            in [
+                upload_session.PENDING,
+                upload_session.SUCCESS,
+                upload_session.FAILURE,
+            ]
+            and not upload_session.all_files_unconsumed
         ):
             upload_session.process_images()
             messages.add_message(

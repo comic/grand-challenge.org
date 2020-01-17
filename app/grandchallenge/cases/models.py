@@ -106,22 +106,18 @@ class RawImageUploadSession(UUIDModel):
             f"{self.error_message or ''}"
         )
 
-    def save(self, *args, skip_processing=False, **kwargs):
+    def save(self, *args, **kwargs):
         adding = self._state.adding
 
         super().save(*args, **kwargs)
 
-        if adding:
-            if self.creator:
-                assign_perm(
-                    f"view_{self._meta.model_name}", self.creator, self
-                )
-                assign_perm(
-                    f"change_{self._meta.model_name}", self.creator, self
-                )
+        if adding and self.creator:
+            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+            assign_perm(f"change_{self._meta.model_name}", self.creator, self)
 
-            if not skip_processing:
-                self.process_images()
+    @property
+    def all_files_unconsumed(self) -> bool:
+        return self.rawimagefile_set.filter(consumed=True).exists()
 
     def process_images(self):
         # Local import to avoid circular dependency

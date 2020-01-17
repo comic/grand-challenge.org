@@ -56,6 +56,7 @@ def create_raw_upload_image_session(
         ).delete()
 
     upload_session.save()
+    upload_session.process_images()
 
     return upload_session, uploaded_images
 

@@ -56,7 +56,7 @@ class UploadRawImagesForm(forms.ModelForm):
         ]
 
         if commit:
-            instance.save(skip_processing=True)
+            instance.save()
             RawImageFile.objects.bulk_create(raw_files)
             instance.process_images()
 

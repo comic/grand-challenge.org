@@ -332,16 +332,18 @@ def build_images(upload_session_uuid: UUID):
         pk=upload_session_uuid
     )  # type: RawImageUploadSession
 
-    if upload_session.status == upload_session.PENDING:
+    if (
+        not upload_session.status == upload_session.STARTED
+        and not upload_session.all_files_unconsumed
+    ):
+        upload_session.status = upload_session.STARTED
+        upload_session.save()
+
         tmp_dir = Path(mkdtemp(prefix="construct_image_volumes-"))
+
         try:
             try:
-                upload_session.status = upload_session.STARTED
-                upload_session.save()
-
-                session_files = RawImageFile.objects.filter(
-                    upload_session=upload_session.pk
-                ).all()  # type: Tuple[RawImageFile]
+                session_files = upload_session.rawimagefile_set.all()
 
                 session_files, duplicates = remove_duplicate_files(
                     session_files
@@ -490,3 +492,9 @@ def build_images(upload_session_uuid: UUID):
 
             upload_session.status = upload_session.SUCCESS
             upload_session.save()
+    else:
+        upload_session.status = upload_session.FAILURE
+        upload_session.error_message = (
+            "Not starting job as some files were already consumed."
+        )
+        upload_session.save()

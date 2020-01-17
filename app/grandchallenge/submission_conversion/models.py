@@ -135,7 +135,7 @@ class SubmissionToAnnotationSetExecutor(Executor):
                     )
                 )
 
-            upload_session.save(skip_processing=True)
+            upload_session.save()
             RawImageFile.objects.bulk_create(images)
             upload_session.process_images()
 
