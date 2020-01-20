@@ -93,4 +93,11 @@ class RawImageFileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RawImageFile
-        fields = ["pk", "upload_session", "filename", "api_url", "consumed", "staged_file_id"]
+        fields = [
+            "pk",
+            "upload_session",
+            "filename",
+            "api_url",
+            "consumed",
+            "staged_file_id",
+        ]
