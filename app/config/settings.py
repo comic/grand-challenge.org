@@ -168,6 +168,23 @@ PROTECTED_S3_STORAGE_KWARGS = {
         "PROTECTED_S3_CUSTOM_DOMAIN", "gc.localhost/media"
     ),
 }
+PUBLIC_S3_STORAGE_KWARGS = {
+    "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
+    "secret_key": os.environ.get("PUBLIC_S3_STORAGE_SECRET_KEY", ""),
+    "bucket_name": os.environ.get(
+        "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
+    ),
+    "auto_create_bucket": True,
+    "endpoint_url": os.environ.get(
+        "PUBLIC_S3_STORAGE_ENDPOINT_URL", "http://minio-public:9000"
+    ),
+    # This is the domain where people will be able to go to download data
+    # from this bucket. Usually we would use reverse to find this out,
+    # but this needs to be defined before the database is populated
+    "custom_domain": os.environ.get(
+        "PUBLIC_S3_CUSTOM_DOMAIN", "localhost:9000"
+    ),
+}
 
 ##############################################################################
 #
