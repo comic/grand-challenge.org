@@ -6,6 +6,7 @@ from django.db import models
 from django_summernote.models import AbstractAttachment
 
 from grandchallenge.challenges.models import ComicSiteModel
+from grandchallenge.core.storage import public_s3_storage
 
 
 def give_file_upload_destination_path(uploadmodel, filename):
@@ -66,4 +67,6 @@ def summernote_upload_filepath(instance, filename):
 class SummernoteAttachment(AbstractAttachment):
     """Workaround for custom upload locations from summernote."""
 
-    file = models.FileField(upload_to=summernote_upload_filepath)
+    file = models.FileField(
+        upload_to=summernote_upload_filepath, storage=public_s3_storage
+    )

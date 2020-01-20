@@ -184,6 +184,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "custom_domain": os.environ.get(
         "PUBLIC_S3_CUSTOM_DOMAIN", "localhost:9000"
     ),
+    "secure_urls": not DEBUG,
 }
 
 ##############################################################################

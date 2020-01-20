@@ -46,7 +46,7 @@ class ProtectedS3Storage(S3Storage):
 
 @deconstructible
 class PublicS3Storage(S3Storage):
-    def __init(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(
             *args, config=settings.PUBLIC_S3_STORAGE_KWARGS, **kwargs
         )
