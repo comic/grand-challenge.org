@@ -167,11 +167,6 @@ def image_file_path(instance, filename):
     )
 
 
-def case_file_path(instance, filename):
-    # legacy method, but used in a migration so cannot delete.
-    return image_file_path(instance, filename)
-
-
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = "GRAY"
     COLOR_SPACE_RGB = "RGB"
