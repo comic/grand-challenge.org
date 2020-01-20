@@ -28,7 +28,7 @@ class RawImageUploadSession(UUIDModel):
 
     PENDING = 0
     STARTED = 1
-    RETRY = 2
+    REQUEUED = 2
     FAILURE = 3
     SUCCESS = 4
     CANCELLED = 5
@@ -36,7 +36,7 @@ class RawImageUploadSession(UUIDModel):
     STATUS_CHOICES = (
         (PENDING, "Queued"),
         (STARTED, "Started"),
-        (RETRY, "Re-Queued"),
+        (REQUEUED, "Re-Queued"),
         (FAILURE, "Failed"),
         (SUCCESS, "Succeeded"),
         (CANCELLED, "Cancelled"),
@@ -52,8 +52,6 @@ class RawImageUploadSession(UUIDModel):
     status = models.PositiveSmallIntegerField(
         choices=STATUS_CHOICES, default=PENDING
     )
-
-    processing_task = models.UUIDField(null=True, default=None)
 
     error_message = models.TextField(blank=False, null=True, default=None)
 
@@ -108,26 +106,14 @@ class RawImageUploadSession(UUIDModel):
             assign_perm(f"view_{self._meta.model_name}", self.creator, self)
             assign_perm(f"change_{self._meta.model_name}", self.creator, self)
 
-    @property
-    def all_files_unconsumed(self) -> bool:
-        return self.rawimagefile_set.filter(consumed=True).exists()
-
     def process_images(self):
         # Local import to avoid circular dependency
         from grandchallenge.cases.tasks import build_images
 
-        try:
-            RawImageUploadSession.objects.filter(pk=self.pk).update(
-                status=RawImageUploadSession.PENDING, processing_task=self.pk,
-            )
-            build_images.apply_async(args=(self.pk,))
-
-        except Exception as e:
-            RawImageUploadSession.objects.filter(pk=self.pk).update(
-                status=RawImageUploadSession.FAILURE,
-                error_message=f"Could not start job: {e}",
-            )
-            raise e
+        RawImageUploadSession.objects.filter(pk=self.pk).update(
+            status=RawImageUploadSession.REQUEUED,
+        )
+        build_images.apply_async(args=(self.pk,))
 
     def get_absolute_url(self):
         return reverse(
@@ -179,11 +165,6 @@ def image_file_path(instance, filename):
     return (
         f"{settings.IMAGE_FILES_SUBDIRECTORY}/{instance.image.pk}/{filename}"
     )
-
-
-def case_file_path(instance, filename):
-    # legacy method, but used in a migration so cannot delete.
-    return image_file_path(instance, filename)
 
 
 class Image(UUIDModel):

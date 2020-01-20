@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
                     "file",
                     models.FileField(
                         help_text="Select the file for this case.",
-                        upload_to=grandchallenge.cases.models.case_file_path,
+                        upload_to=grandchallenge.cases.models.image_file_path,
                         validators=[
                             grandchallenge.core.validators.ExtensionValidator(
                                 allowed_extensions=(".mhd", ".raw", ".zraw")

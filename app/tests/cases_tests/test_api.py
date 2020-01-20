@@ -302,6 +302,7 @@ def test_process_images_api_view(client, settings):
 
     user = UserFactory()
     us = RawImageUploadSessionFactory(creator=user)
+    RawImageFileFactory(upload_session=us)
 
     def request_processing():
         return get_view_for_user(
@@ -313,22 +314,10 @@ def test_process_images_api_view(client, settings):
             content_type="application/json",
         )
 
+    # First request should work
     response = request_processing()
     assert response.status_code == 200
 
-    f = RawImageFileFactory(upload_session=us)
-
-    response = request_processing()
-    assert response.status_code == 200
-
-    # Hack to get around fact that RawImageFileFactory does not create images
-    # to consume, this is quite tricky to add
-    f.consumed = True
-    f.save()
-
-    # Add a new file
-    RawImageFileFactory(upload_session=us)
-
-    # A file should have been consumed, so fail
+    # Jobs should only be run once
     response = request_processing()
     assert response.status_code == 400

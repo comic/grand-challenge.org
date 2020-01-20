@@ -98,8 +98,7 @@ def test_image_file_creation(settings):
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
-    for image_name in invalid_images:
-        assert image_name in session.error_message
+    assert f"{len(invalid_images)} file" in session.error_message
 
     assert Image.objects.filter(origin=session).count() == 5
 
@@ -128,7 +127,7 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
     )
 
     session.refresh_from_db()
-    assert session.status == session.SUCCESS
+    assert session.status == session.FAILURE
     assert session.error_message is not None
 
 
@@ -232,8 +231,7 @@ def test_no_convertible_file(settings):
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
-    for image_name in images:
-        assert image_name in session.error_message
+    assert f"{len(images)} file" in session.error_message
 
     no_image_image = list(uploaded_images.values())[0]
     no_image_image.refresh_from_db()
