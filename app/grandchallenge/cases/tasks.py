@@ -348,31 +348,33 @@ def build_images(upload_session_uuid: UUID):
     )  # type: RawImageUploadSession
 
     if (
-        not upload_session.status == upload_session.STARTED
-        and not upload_session.all_files_unconsumed
+        upload_session.status != upload_session.REQUEUED
+        or upload_session.rawimagefile_set.filter(consumed=True).exists()
     ):
-        upload_session.status = upload_session.STARTED
-        upload_session.save()
-
-        with TemporaryDirectory(prefix="construct_image_volumes-") as tmp_dir:
-            tmp_dir = Path(tmp_dir)
-
-            try:
-                _populate_tmp_dir(tmp_dir, upload_session)
-            except ProvisioningError as e:
-                upload_session.error_message = str(e)
-                upload_session.status = upload_session.FAILURE
-                upload_session.save()
-
-            _handle_raw_image_files(tmp_dir, upload_session)
-            upload_session.status = upload_session.SUCCESS
-            upload_session.save()
-    else:
         upload_session.status = upload_session.FAILURE
         upload_session.error_message = (
             "Not starting job as some files were already consumed."
         )
         upload_session.save()
+        return
+
+    upload_session.status = upload_session.STARTED
+    upload_session.save()
+
+    with TemporaryDirectory(prefix="construct_image_volumes-") as tmp_dir:
+        tmp_dir = Path(tmp_dir)
+
+        try:
+            _populate_tmp_dir(tmp_dir, upload_session)
+            _handle_raw_image_files(tmp_dir, upload_session)
+        except ProvisioningError as e:
+            upload_session.error_message = str(e)
+            upload_session.status = upload_session.FAILURE
+            upload_session.save()
+            return
+
+    upload_session.status = upload_session.SUCCESS
+    upload_session.save()
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):
@@ -472,7 +474,7 @@ def _handle_unconsumed_files(
 
     if unconsumed_filenames:
         upload_session.error_message = (
-            f"Files not imported: {', '.join(unconsumed_filenames)}"
+            f"{len(unconsumed_filenames)} file(s) could not be imported"
         )
 
         if upload_session.creator and upload_session.creator.email:

@@ -7,7 +7,7 @@
 
     <h2>Session state</h2>
 
-    <p>Job id: {{ object.processing_task }}</p>
+    <p>Job id: {{ object.pk }}</p>
     <p>Status: {{ object.get_status_display }}</p>
     <p>Error message: {{ object.error_message }}</p>
     <p>Creation date: {{ object.created }}</p>

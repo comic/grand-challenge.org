@@ -91,24 +91,21 @@ class RawImageUploadSessionViewSet(
     def process_images(self, request, pk=None):
         upload_session: RawImageUploadSession = self.get_object()
         if (
-            upload_session.status
-            in [
-                upload_session.PENDING,
-                upload_session.SUCCESS,
-                upload_session.FAILURE,
-            ]
-            and not upload_session.all_files_unconsumed
+            upload_session.status == upload_session.PENDING
+            and not upload_session.rawimagefile_set.filter(
+                consumed=True
+            ).exists()
         ):
             upload_session.process_images()
             messages.add_message(
-                request, messages.SUCCESS, "Upload session re activated."
+                request, messages.SUCCESS, "Image processing job queued."
             )
             return Response(status=status.HTTP_200_OK)
         else:
             messages.add_message(
                 request,
                 messages.ERROR,
-                "Upload session can not be re activated.",
+                "Image processing job could not be queued.",
             )
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
