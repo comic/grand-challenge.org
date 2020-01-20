@@ -174,17 +174,6 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
-    "auto_create_bucket": True,
-    "endpoint_url": os.environ.get(
-        "PUBLIC_S3_STORAGE_ENDPOINT_URL", "http://minio-public:9000"
-    ),
-    # This is the domain where people will be able to go to download data
-    # from this bucket. Usually we would use reverse to find this out,
-    # but this needs to be defined before the database is populated
-    "custom_domain": os.environ.get(
-        "PUBLIC_S3_CUSTOM_DOMAIN", "localhost:9000"
-    ),
-    "secure_urls": not DEBUG,
 }
 
 ##############################################################################
@@ -735,6 +724,15 @@ if DEBUG:
     CORS_ORIGIN_REGEX_WHITELIST += [r"^http://localhost:8888$"]
 
     LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
+
+    PUBLIC_S3_STORAGE_KWARGS.update(
+        {
+            "custom_domain": f"localhost:9000/{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}",
+            "auto_create_bucket": True,
+            "secure_urls": False,
+            "endpoint_url": "http://minio-public:9000",
+        }
+    )
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)

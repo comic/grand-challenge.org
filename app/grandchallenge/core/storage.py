@@ -1,5 +1,8 @@
 import copy
+import json
 
+import boto3
+from botocore.exceptions import NoCredentialsError
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.deconstruct import deconstructible
@@ -60,3 +63,61 @@ storages = [private_s3_storage, protected_s3_storage, public_s3_storage]
 
 if len({s.bucket_name for s in storages}) != len(storages):
     raise ImproperlyConfigured("Storage bucket names are not unique")
+
+if settings.DEBUG:
+
+    def setup_public_storage():
+        bucket_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": "s3:GetBucketLocation",
+                    "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}",
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": "s3:ListBucket",
+                    "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}",
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": "s3:GetObject",
+                    "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}/*",
+                },
+            ],
+        }
+        bucket_policy = json.dumps(bucket_policy)
+
+        # Get or create the bucket
+        try:
+            _ = public_s3_storage.bucket
+        except NoCredentialsError:
+            return
+
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=public_s3_storage.access_key,
+            aws_secret_access_key=public_s3_storage.secret_key,
+            aws_session_token=public_s3_storage.security_token,
+            region_name=public_s3_storage.region_name,
+            use_ssl=public_s3_storage.use_ssl,
+            endpoint_url=public_s3_storage.endpoint_url,
+            config=public_s3_storage.config,
+            verify=public_s3_storage.verify,
+        )
+
+        try:
+            s3.put_bucket_policy(
+                Bucket=public_s3_storage.bucket_name, Policy=bucket_policy
+            )
+        except NoCredentialsError:
+            pass
+
+    setup_public_storage()
