@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.views.generic import (
@@ -47,6 +48,7 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.reader_studies.forms import (
     EditorsForm,
+    GroundTruthForm,
     QuestionForm,
     ReaderStudyCreateForm,
     ReaderStudyUpdateForm,
@@ -195,8 +197,8 @@ class QuestionUpdate(
         return self.object.reader_study.get_absolute_url()
 
 
-class AddObjectToReaderStudyMixin(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+class BaseAddObjectToReaderStudyMixin(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin
 ):
     """
     Mixin that adds an object that has a foreign key to a reader study and a
@@ -225,6 +227,8 @@ class AddObjectToReaderStudyMixin(
         )
         return context
 
+
+class AddObjectToReaderStudyMixin(BaseAddObjectToReaderStudyMixin, CreateView):
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.reader_study = self.reader_study
@@ -232,6 +236,30 @@ class AddObjectToReaderStudyMixin(
 
     def get_success_url(self):
         return self.object.reader_study.get_absolute_url()
+
+
+class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
+    form_class = GroundTruthForm
+    template_name = "reader_studies/readerstudy_add_object.html"
+    type_to_add = "ground truth"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"reader_study": self.reader_study})
+        return kwargs
+
+    def form_valid(self, form):
+        try:
+            self.reader_study.add_ground_truth(
+                data=form.cleaned_data["ground_truth"], user=self.request.user,
+            )
+            return super().form_valid(form)
+        except ValidationError as e:
+            form.errors["ground_truth"] = e
+            return self.form_invalid(form)
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
 
 
 class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):

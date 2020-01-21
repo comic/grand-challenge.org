@@ -1,7 +1,8 @@
 import pytest
 
-from grandchallenge.reader_studies.models import Question, ReaderStudy
-from tests.factories import UserFactory, WorkstationFactory
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from tests.factories import ImageFactory, UserFactory, WorkstationFactory
+from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     QuestionFactory,
@@ -355,3 +356,131 @@ def test_reader_study_delete(client):
 
     assert response.status_code == 200
     assert ReaderStudy.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_reader_study_add_ground_truth(client):
+    rs = ReaderStudyFactory()
+    q = QuestionFactory(
+        reader_study=rs,
+        question_text="bar",
+        answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
+    )
+    im1, im2, im3, im4 = (
+        ImageFactory(name="im1"),
+        ImageFactory(name="im2"),
+        ImageFactory(name="im3"),
+        ImageFactory(name="im4"),
+    )
+    rs.images.set([im1.pk, im2.pk, im3.pk, im4.pk])
+    rs.hanging_list = [
+        {"primary": "im1"},
+        {"primary": "im2"},
+        {"primary": "im3"},
+        {"secondary": "im4"},
+    ]
+    rs.save()
+    assert rs.hanging_list_valid
+
+    editor = UserFactory()
+    reader = UserFactory()
+    rs.editors_group.user_set.add(editor)
+    rs.readers_group.user_set.add(reader)
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-ground-truth",
+        client=client,
+        method=client.get,
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        user=reader,
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:add-ground-truth",
+        client=client,
+        method=client.get,
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        user=editor,
+    )
+
+    assert response.status_code == 200
+    assert Answer.objects.all().count() == 0
+
+    with open(RESOURCE_PATH / "ground_truth.csv") as gt:
+        response = get_view_for_user(
+            viewname="reader-studies:add-ground-truth",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"ground_truth": gt},
+            follow=True,
+            user=editor,
+        )
+    assert response.status_code == 200
+    assert (
+        "Fields provided do not match with reader study"
+        in response.rendered_content
+    )
+
+    q.question_text = "foo"
+    q.save()
+
+    with open(RESOURCE_PATH / "ground_truth.csv") as gt:
+        response = get_view_for_user(
+            viewname="reader-studies:add-ground-truth",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"ground_truth": gt},
+            follow=True,
+            user=editor,
+        )
+    assert response.status_code == 200
+    assert (
+        "Images provided do not match hanging protocol"
+        in response.rendered_content
+    )
+
+    rs.hanging_list = [
+        {"primary": "im1"},
+        {"primary": "im2"},
+        {"primary": "im3", "secondary": "im4"},
+    ]
+    rs.save()
+    assert rs.hanging_list_valid
+
+    with open(RESOURCE_PATH / "ground_truth.csv") as gt:
+        response = get_view_for_user(
+            viewname="reader-studies:add-ground-truth",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"ground_truth": gt},
+            follow=True,
+            user=editor,
+        )
+    assert response.status_code == 200
+    assert Answer.objects.all().count() == 3
+    assert Answer.objects.filter(is_ground_truth=True).count() == 3
+
+    with open(RESOURCE_PATH / "ground_truth.csv") as gt:
+        response = get_view_for_user(
+            viewname="reader-studies:add-ground-truth",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"ground_truth": gt},
+            follow=True,
+            user=editor,
+        )
+    assert response.status_code == 200
+    assert (
+        "Ground truth already added for this question/image combination"
+        in response.rendered_content
+    )
+    assert Answer.objects.all().count() == 3
+    assert Answer.objects.filter(is_ground_truth=True).count() == 3
