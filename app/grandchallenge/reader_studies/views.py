@@ -177,6 +177,17 @@ class ReaderStudyLeaderBoard(
     template_name = "reader_studies/readerstudy_leaderboard.html"
 
 
+class ReaderStudyStatistics(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_statistics.html"
+
+
 class QuestionUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):

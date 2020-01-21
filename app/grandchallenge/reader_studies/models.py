@@ -381,6 +381,35 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "grouped_scores": grouped_scores,
         }
 
+    @property
+    def statistics(self):
+        question_count = float(self.answerable_question_count) * len(
+            self.hanging_list
+        )
+        scores_by_question = (
+            Answer.objects.filter(
+                question__reader_study=self, is_ground_truth=False
+            )
+            .order_by("question_id")
+            .values("question__question_text")
+            .annotate(Sum("score"), Avg("score"))
+            .order_by("-score__avg")
+        )
+        scores_by_case = (
+            Answer.objects.filter(
+                question__reader_study=self, is_ground_truth=False
+            )
+            .order_by("images__name")
+            .values("images__name")
+            .annotate(Sum("score"), Avg("score"))
+            .order_by("score__avg")
+        )
+        return {
+            "question_count": question_count,
+            "scores_by_question": scores_by_question,
+            "scores_by_case": scores_by_case,
+        }
+
 
 @receiver(post_delete, sender=ReaderStudy)
 def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):

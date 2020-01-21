@@ -11,6 +11,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyDetail,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
+    ReaderStudyStatistics,
     ReaderStudyUpdate,
     ReaderStudyUserAutocomplete,
     ReadersUpdate,
@@ -33,6 +34,11 @@ urlpatterns = [
         "<slug>/leaderboard/",
         ReaderStudyLeaderBoard.as_view(),
         name="leaderboard",
+    ),
+    path(
+        "<slug>/statistics/",
+        ReaderStudyStatistics.as_view(),
+        name="statistics",
     ),
     path(
         "<slug>/ground-truth/add/",
