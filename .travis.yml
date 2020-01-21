@@ -25,7 +25,7 @@ install:
   - docker-compose up -d
 
 script:
-  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=."
+  - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=. -n 2 -r w"
   - docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.transactions pytest --cov-report= --cov=. --transactions"
 
 after_success:
