@@ -1,7 +1,9 @@
 import base64
+import json
 import logging
 from io import BytesIO
 
+import boto3
 from PIL import Image
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -24,6 +26,7 @@ from grandchallenge.challenges.models import (
     ImagingModality,
     TaskType,
 )
+from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import Job, Method, Result, Submission
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -46,6 +49,8 @@ def get_temporary_image():
 
 
 class Command(BaseCommand):
+    users = None
+
     def handle(self, *args, **options):
         """Creates the main project, demo user and demo challenge."""
         if not settings.DEBUG:
@@ -85,8 +90,10 @@ class Command(BaseCommand):
         self._create_algorithm_demo()
         self._create_reader_studies()
         self._log_tokens()
+        self._setup_public_storage()
 
-    def _create_flatpages(self, site):
+    @staticmethod
+    def _create_flatpages(site):
         page = FlatPage.objects.create(
             url="/about/",
             title="About",
@@ -313,3 +320,58 @@ class Command(BaseCommand):
     def _log_tokens():
         out = [f"\t{t.user} token is: {t}\n" for t in Token.objects.all()]
         logger.debug(f"{'*' * 80}\n{''.join(out)}{'*' * 80}")
+
+    @staticmethod
+    def _setup_public_storage():
+        """
+        Add anonymous read only to public S3 storage.
+
+        Only used in development, in production, set a similar policy manually
+        on the S3 bucket.
+        """
+        bucket_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": "s3:GetBucketLocation",
+                    "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}",
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": "s3:ListBucket",
+                    "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}",
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": "s3:GetObject",
+                    "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}/*",
+                },
+            ],
+        }
+        bucket_policy = json.dumps(bucket_policy)
+
+        # Get or create the bucket
+        _ = public_s3_storage.bucket
+
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=public_s3_storage.access_key,
+            aws_secret_access_key=public_s3_storage.secret_key,
+            aws_session_token=public_s3_storage.security_token,
+            region_name=public_s3_storage.region_name,
+            use_ssl=public_s3_storage.use_ssl,
+            endpoint_url=public_s3_storage.endpoint_url,
+            config=public_s3_storage.config,
+            verify=public_s3_storage.verify,
+        )
+
+        s3.put_bucket_policy(
+            Bucket=public_s3_storage.bucket_name, Policy=bucket_policy
+        )
