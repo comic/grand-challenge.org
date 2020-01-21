@@ -348,6 +348,7 @@ def submission_file_path(instance, filename):
         f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
         f"{instance.challenge.pk}/"
         f"submissions/"
+        f"{instance.creator.pk}/"
         f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
     )
