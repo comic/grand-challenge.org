@@ -166,6 +166,17 @@ class ReaderStudyDelete(
         return super().delete(request, *args, **kwargs)
 
 
+class ReaderStudyLeaderBoard(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_leaderboard.html"
+
+
 class QuestionUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Leaderboard</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h1>Reader Study {{ object.title }} - Leaderboard</h1>
+
+    <div class="table-responsive mt-3">
+        <table class="table table-hover table-striped table-sm">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Total score / max score</th>
+                    <th>Average score</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for entry in object.leaderboard.grouped_scores %}
+                <tr>
+                    <td>{{ forloop.counter }}. {{ entry.creator__username }}</td>
+                    <td>{{ entry.score__sum }} / {{ object.leaderboard.question_count }}</td>
+                    <td>{{ entry.score__avg }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
