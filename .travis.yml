@@ -11,7 +11,7 @@ services:
 language: python
 
 python:
-  - 3.6
+  - 3.7
 
 before_install:
   - export TRAVIS_BRANCH_SAFE=$(echo $TRAVIS_BRANCH | sed "s/[/]/-/")
