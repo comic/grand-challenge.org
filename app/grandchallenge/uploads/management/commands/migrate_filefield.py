@@ -13,7 +13,7 @@ challenges.externalchallenge.logo grandchallenge.challenges.models.get_logo_path
 reader_studies.readerstudy.logo grandchallenge.challenges.models.get_logo_path
 workstations.workstation.logo grandchallenge.challenges.models.get_logo_path
 challenges.challenge.banner grandchallenge.challenges.models.get_banner_path
-
+evaluation.submission.supplementary_file grandchallenge.evaluation.models.submission_supplementary_file_path
 """
 
 

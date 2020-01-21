@@ -25,16 +25,9 @@ urlpatterns = [
         ),
         serve_submissions,
     ),
-    path("logos/<path:path>", serve_folder, {"folder": "logos"}),
-    path("banners/<path:path>", serve_folder, {"folder": "banners"}),
     path("mugshots/<path:path>", serve_folder, {"folder": "mugshots"}),
     path("favicon/<path:path>", serve_folder, {"folder": "favicon"}),
     path("cache/<path:path>", serve_folder, {"folder": "cache"}),
-    path(
-        "evaluation-supplementary/<path:path>",
-        serve_folder,
-        {"folder": "evaluation-supplementary"},
-    ),
     path(
         "<slug:challenge_name>/<path:path>",
         serve_folder,
