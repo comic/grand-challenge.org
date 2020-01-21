@@ -5,6 +5,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import BooleanField
+from django.utils.text import get_valid_filename
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.container_exec.backends.docker import Executor, put_file
@@ -349,7 +350,7 @@ def submission_file_path(instance, filename):
         f"submissions/"
         f"{instance.creator.pk}/"
         f"{instance.pk}/"
-        f"{filename}"
+        f"{get_valid_filename(filename)}"
     )
 
 
@@ -359,7 +360,7 @@ def submission_supplementary_file_path(instance, filename):
         f"{instance.challenge.pk}/"
         f"{instance.creator.pk}/"
         f"{instance.pk}/"
-        f"{filename}"
+        f"{get_valid_filename(filename)}"
     )
 
 
