@@ -14,7 +14,7 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import protected_s3_storage
+from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONSchemaValidator,
@@ -358,7 +358,6 @@ def submission_supplementary_file_path(instance, filename):
     return (
         f"evaluation-supplementary/"
         f"{instance.challenge.pk}/"
-        f"{instance.creator.pk}/"
         f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
     )
@@ -381,6 +380,7 @@ class Submission(UUIDModel):
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
+        storage=public_s3_storage,
         validators=[
             MimeTypeValidator(allowed_types=("text/plain", "application/pdf"))
         ],

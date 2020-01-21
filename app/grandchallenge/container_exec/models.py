@@ -4,7 +4,6 @@ from typing import Tuple, Type
 from django.conf import settings
 from django.core.files import File
 from django.db import models
-from django.utils.text import get_valid_filename
 
 from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
@@ -105,7 +104,7 @@ def docker_image_path(instance, filename):
         f"{instance._meta.app_label.lower()}/"
         f"{instance._meta.model_name.lower()}/"
         f"{instance.pk}/"
-        f"{get_valid_filename(filename)}"
+        f"{filename}"
     )
 
 
