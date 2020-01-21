@@ -176,6 +176,8 @@ PUBLIC_S3_STORAGE_KWARGS = {
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
     "file_overwrite": False,
+    # Public bucket so do not use querystring_auth
+    "querystring_auth": False,
 }
 
 ##############################################################################

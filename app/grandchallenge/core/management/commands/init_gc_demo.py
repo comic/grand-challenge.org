@@ -333,28 +333,15 @@ class Command(BaseCommand):
             "Version": "2012-10-17",
             "Statement": [
                 {
-                    "Sid": "",
+                    "Sid": "PublicReadGetObject",
                     "Effect": "Allow",
-                    "Principal": {"AWS": "*"},
-                    "Action": "s3:GetBucketLocation",
-                    "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}",
-                },
-                {
-                    "Sid": "",
-                    "Effect": "Allow",
-                    "Principal": {"AWS": "*"},
-                    "Action": "s3:ListBucket",
-                    "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}",
-                },
-                {
-                    "Sid": "",
-                    "Effect": "Allow",
-                    "Principal": {"AWS": "*"},
+                    "Principal": "*",
                     "Action": "s3:GetObject",
                     "Resource": f"arn:aws:s3:::{public_s3_storage.bucket_name}/*",
-                },
+                }
             ],
         }
+
         bucket_policy = json.dumps(bucket_policy)
 
         # Get or create the bucket
