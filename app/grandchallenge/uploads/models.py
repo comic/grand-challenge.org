@@ -1,11 +1,14 @@
 import os
-import uuid
 
 from django.conf import settings
 from django.db import models
+from django.utils.datetime_safe import strftime
+from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django_summernote.models import AbstractAttachment
 
 from grandchallenge.challenges.models import ComicSiteModel
+from grandchallenge.core.storage import public_s3_storage
 
 
 def give_file_upload_destination_path(uploadmodel, filename):
@@ -30,9 +33,13 @@ def give_file_upload_destination_path(uploadmodel, filename):
 
     # If permission is ALL, upload this file to the public_html folder
     if permission_lvl == ComicSiteModel.ALL:
-        path = os.path.join(challenge.public_upload_dir_rel(), filename)
+        path = os.path.join(
+            challenge.public_upload_dir_rel(), get_valid_filename(filename)
+        )
     else:
-        path = os.path.join(challenge.upload_dir_rel(), filename)
+        path = os.path.join(
+            challenge.upload_dir_rel(), get_valid_filename(filename)
+        )
 
     # replace remove double slashes because this can mess up django's url
     # system
@@ -58,12 +65,14 @@ class UploadModel(ComicSiteModel):
 
 
 def summernote_upload_filepath(instance, filename):
-    ext = filename.split(".")[-1]
-    filename = "{}.{}".format(str(uuid.uuid4())[:8], ext)
-    return os.path.join("i", filename)
+    return os.path.join(
+        strftime(now(), "i/%Y/%m/%d"), get_valid_filename(filename),
+    )
 
 
 class SummernoteAttachment(AbstractAttachment):
     """Workaround for custom upload locations from summernote."""
 
-    file = models.FileField(upload_to=summernote_upload_filepath)
+    file = models.FileField(
+        upload_to=summernote_upload_filepath, storage=public_s3_storage
+    )

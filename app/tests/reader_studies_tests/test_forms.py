@@ -1,5 +1,8 @@
 import pytest
 
+from grandchallenge.core.management.commands.init_gc_demo import (
+    get_temporary_image,
+)
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests import RESOURCE_PATH
@@ -9,7 +12,7 @@ from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
-from tests.utils import get_temporary_image, get_view_for_user
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -216,7 +219,7 @@ def test_question_update(client):
     assert question.direction == Question.DIRECTION_HORIZONTAL
     assert question.order == 100
 
-    response = get_view_for_user(
+    get_view_for_user(
         viewname="reader-studies:question-update",
         client=client,
         method=client.post,

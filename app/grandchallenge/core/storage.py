@@ -44,10 +44,19 @@ class ProtectedS3Storage(S3Storage):
         super().__init__(*args, config=config, **kwargs)
 
 
+@deconstructible
+class PublicS3Storage(S3Storage):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args, config=settings.PUBLIC_S3_STORAGE_KWARGS, **kwargs
+        )
+
+
 private_s3_storage = PrivateS3Storage()
 protected_s3_storage = ProtectedS3Storage()
+public_s3_storage = PublicS3Storage()
 
-if protected_s3_storage.bucket_name == private_s3_storage.bucket_name:
-    raise ImproperlyConfigured(
-        "Private and Protected storage point to the same bucket"
-    )
+storages = [private_s3_storage, protected_s3_storage, public_s3_storage]
+
+if len({s.bucket_name for s in storages}) != len(storages):
+    raise ImproperlyConfigured("Storage bucket names are not unique")

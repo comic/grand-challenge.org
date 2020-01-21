@@ -3,6 +3,9 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
+from grandchallenge.core.management.commands.init_gc_demo import (
+    get_temporary_image,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
@@ -12,7 +15,7 @@ from tests.factories import (
     WorkstationFactory,
     WorkstationImageFactory,
 )
-from tests.utils import get_temporary_image, get_view_for_user
+from tests.utils import get_view_for_user
 
 
 @pytest.fixture

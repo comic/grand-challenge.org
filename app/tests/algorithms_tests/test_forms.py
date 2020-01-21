@@ -4,13 +4,16 @@ from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmPermissionRequest,
 )
+from grandchallenge.core.management.commands.init_gc_demo import (
+    get_temporary_image,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmPermissionRequestFactory,
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.factories import UserFactory, WorkstationFactory
-from tests.utils import get_temporary_image, get_view_for_user
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db

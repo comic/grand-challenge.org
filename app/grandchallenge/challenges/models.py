@@ -15,6 +15,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils._os import safe_join
 from django.utils.html import format_html
+from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
@@ -41,13 +42,11 @@ def validate_short_name(value):
 
 
 def get_logo_path(instance, filename):
-    return (
-        f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{filename}"
-    )
+    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
 
 
 def get_banner_path(instance, filename):
-    return f"banners/{instance.pk}/{filename}"
+    return f"banners/{instance.pk}/{get_valid_filename(filename)}"
 
 
 class TaskType(models.Model):
