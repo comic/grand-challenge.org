@@ -1,9 +1,11 @@
 from os.path import basename
 
+from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
 from django.core.management import BaseCommand
 
+from grandchallenge.pages.models import Page
 from grandchallenge.uploads.models import (
     SummernoteAttachment,
     summernote_upload_filepath,
@@ -19,12 +21,25 @@ class Command(BaseCommand):
         upload_to = summernote_upload_filepath
 
         for attachment in attachments:
-            old_path = attachment.file.name
-            filename = basename(old_path)
-            new_path = upload_to(attachment.file, filename)
+            filefield = attachment.file
+            old_url = f"{settings.MEDIA_URL}{filefield.name}"
+            filename = basename(filefield.name)
+            new_path = upload_to(attachment, filename)
 
             if old_storage.exists(
-                old_path
-            ) and not attachment.file.storage.exists(new_path):
-                old_f = File(old_storage.open(old_path))
-                attachment.file.save(filename, old_f)
+                filefield.name
+            ) and not filefield.storage.exists(new_path):
+                print(f"Migrating {filefield.url}")
+                filefield.save(
+                    filename, File(old_storage.open(filefield.name))
+                )
+
+                for p in Page.objects.filter(html__contains=old_url):
+                    print(
+                        f"Updating {filefield.url} in {p.get_absolute_url()}"
+                    )
+                    p.html = p.html.replace(old_url, filefield.url)
+                    p.save()
+
+            else:
+                print(f"Not migrating {filefield.url}")

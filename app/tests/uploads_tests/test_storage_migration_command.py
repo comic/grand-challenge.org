@@ -9,6 +9,7 @@ from django.db.migrations.executor import MigrationExecutor
 from grandchallenge.core.management.commands.init_gc_demo import (
     get_temporary_image,
 )
+from tests.factories import PageFactory
 
 
 @pytest.mark.django_db(transaction=True)
@@ -42,8 +43,13 @@ def test_summernote_file_migration():
     assert FileSystemStorage().path(new_sa.file.name) == old_file_path
     assert not new_sa.file.storage.exists(new_sa.file.name)
 
+    page = PageFactory(html=f'<img src="{old_sa.file.url}" width=100px></img>')
+
     call_command("migrate_summernote_attachments")
 
+    page.refresh_from_db()
+
+    assert page.html == f'<img src="{new_sa.file.url}" width=100px></img>'
     assert new_sa.file.storage.exists(new_sa.file.name)
 
     os.remove(old_file_path)
