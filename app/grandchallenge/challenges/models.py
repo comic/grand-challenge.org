@@ -20,6 +20,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
 
+from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -211,6 +212,7 @@ class ChallengeBase(models.Model):
     )
     logo = models.ImageField(
         upload_to=get_logo_path,
+        storage=public_s3_storage,
         blank=True,
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
     )
