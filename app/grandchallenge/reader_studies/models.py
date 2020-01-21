@@ -12,6 +12,7 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
+from sklearn.metrics import accuracy_score
 
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
@@ -520,6 +521,13 @@ class Question(UUIDModel):
         (IMAGE_PORT_SECONDARY, "Secondary"),
     )
 
+    SCORING_FUNCTION_ACCURACY = "ACC"
+    SCORING_FUNCTION_CHOICES = ((SCORING_FUNCTION_ACCURACY, "Accuracy score"),)
+
+    SCORING_FUNCTIONS = {
+        SCORING_FUNCTION_ACCURACY: accuracy_score,
+    }
+
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
     )
@@ -536,6 +544,11 @@ class Question(UUIDModel):
     required = models.BooleanField(default=True)
     direction = models.CharField(
         max_length=1, choices=DIRECTION_CHOICES, default=DIRECTION_HORIZONTAL
+    )
+    scoring_function = models.CharField(
+        max_length=3,
+        choices=SCORING_FUNCTION_CHOICES,
+        default=SCORING_FUNCTION_ACCURACY,
     )
     order = models.PositiveSmallIntegerField(default=100)
 
@@ -579,6 +592,11 @@ class Question(UUIDModel):
         if not self.is_fully_editable:
             return ["question_text", "answer_type", "image_port", "required"]
         return []
+
+    def calculate_score(self, answer, ground_truth):
+        return self.SCORING_FUNCTIONS[self.scoring_function](
+            [answer], [ground_truth], normalize=True
+        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -651,6 +669,7 @@ class Answer(UUIDModel):
     # TODO: add validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     answer = JSONField()
     is_ground_truth = models.BooleanField(default=False)
+    score = models.FloatField(null=True)
 
     csv_headers = Question.csv_headers + [
         "Created",
@@ -723,9 +742,12 @@ class Answer(UUIDModel):
                 f"{type(answer)} found."
             )
 
+    def calculate_score(self, ground_truth):
+        self.score = self.question.calculate_score(self.answer, ground_truth)
+        self.save()
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
         super().save(*args, **kwargs)
 
         if adding:

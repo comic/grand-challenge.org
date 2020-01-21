@@ -57,6 +57,7 @@ django-speedinfo = "*"
 drf-yasg = {version = "*", extras = ["validation"]}
 pydicom = "*"
 docutils = "0.15.2" # We do not depend on this directly, but required for Boto resolution
+sklearn = "^0.0"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
