@@ -7,6 +7,7 @@ from typing import List
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
+from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.image_builders.metaio_utils import load_sitk_image
@@ -162,9 +163,7 @@ class RawImageFile(UUIDModel):
 
 
 def image_file_path(instance, filename):
-    return (
-        f"{settings.IMAGE_FILES_SUBDIRECTORY}/{instance.image.pk}/{filename}"
-    )
+    return f"{settings.IMAGE_FILES_SUBDIRECTORY}/{instance.image.pk}/{get_valid_filename(filename)}"
 
 
 class Image(UUIDModel):
