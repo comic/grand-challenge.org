@@ -401,6 +401,7 @@ class Challenge(ChallengeBase):
     )
     banner = models.ImageField(
         upload_to=get_banner_path,
+        storage=public_s3_storage,
         blank=True,
         help_text=(
             "Image that gets displayed at the top of each page. "
