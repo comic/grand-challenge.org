@@ -1,4 +1,3 @@
-from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
@@ -85,36 +84,9 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         answer = attrs["answer"]
         creator = self.context.get("request").user
 
-        if not question.reader_study.is_reader(user=creator):
-            raise ValidationError("This user is not a reader for this study.")
-
-        if not question.is_answer_valid(answer=answer):
-            raise ValidationError(
-                f"You answer is not the correct type. "
-                f"{question.get_answer_type_display()} expected, "
-                f"{type(answer)} found."
-            )
-
-        if len(images) == 0:
-            raise ValidationError(
-                "You must specify the images that this answer corresponds to."
-            )
-
-        reader_study_images = question.reader_study.images.all()
-        for im in images:
-            if im not in reader_study_images:
-                raise ValidationError(
-                    f"Image {im} does not belong to this reader study."
-                )
-
-        if Answer.objects.filter(
-            creator=creator, question=question, images__in=images
-        ).exists():
-            raise ValidationError(
-                f"User {creator} has already answered this question "
-                f"for at least 1 of these images."
-            )
-
+        Answer.validate(
+            creator=creator, question=question, answer=answer, images=images
+        )
         return attrs
 
     class Meta:

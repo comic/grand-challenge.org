@@ -1,9 +1,13 @@
+import csv
+import io
+
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import (
     ChoiceField,
+    FileField,
     Form,
     HiddenInput,
     ModelChoiceField,
@@ -193,3 +197,46 @@ class EditorsForm(UserGroupForm):
 
 class ReadersForm(UserGroupForm):
     role = "reader"
+
+
+class GroundTruthForm(SaveFormInitMixin, Form):
+    ground_truth = FileField(
+        required=True,
+        help_text="A csv file with a headers row containing the header `images`"
+        " and the question text for each of the questions in this study."
+        " The subsequent rows should then be filled with the image file"
+        " names (separated by semicolons) and the answer corresponding to"
+        " the question text provided in the header.",
+    )
+
+    def __init__(self, *args, reader_study, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.reader_study = reader_study
+
+    def clean_ground_truth(self):
+        csv_file = self.cleaned_data.get("ground_truth")
+        csv_file.seek(0)
+        rdr = csv.DictReader(io.StringIO(csv_file.read().decode("utf-8")))
+        headers = rdr.fieldnames
+        if sorted(headers) != sorted(
+            ["images"]
+            + list(
+                self.reader_study.questions.values_list(
+                    "question_text", flat=True
+                )
+            )
+        ):
+            raise ValidationError(
+                "Fields provided do not match with reader study"
+            )
+
+        values = [x for x in rdr]
+
+        if sorted([sorted(x["images"].split(";")) for x in values]) != sorted(
+            self.reader_study.image_groups
+        ):
+            raise ValidationError(
+                "Images provided do not match hanging protocol"
+            )
+
+        return values
