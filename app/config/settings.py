@@ -167,6 +167,7 @@ PROTECTED_S3_STORAGE_KWARGS = {
     "custom_domain": os.environ.get(
         "PROTECTED_S3_CUSTOM_DOMAIN", "gc.localhost/media"
     ),
+    "file_overwrite": False,
 }
 PUBLIC_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
@@ -174,6 +175,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
+    "file_overwrite": False,
 }
 
 ##############################################################################

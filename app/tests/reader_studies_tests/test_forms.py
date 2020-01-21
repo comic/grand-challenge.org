@@ -1,5 +1,8 @@
 import pytest
 
+from grandchallenge.core.management.commands.init_gc_demo import (
+    get_temporary_image,
+)
 from grandchallenge.reader_studies.models import Question, ReaderStudy
 from tests.factories import UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
@@ -8,7 +11,7 @@ from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
-from tests.utils import get_temporary_image, get_view_for_user
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db

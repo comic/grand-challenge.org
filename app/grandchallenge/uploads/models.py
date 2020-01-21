@@ -1,8 +1,10 @@
 import os
-import uuid
 
 from django.conf import settings
 from django.db import models
+from django.utils.datetime_safe import strftime
+from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django_summernote.models import AbstractAttachment
 
 from grandchallenge.challenges.models import ComicSiteModel
@@ -59,9 +61,9 @@ class UploadModel(ComicSiteModel):
 
 
 def summernote_upload_filepath(instance, filename):
-    ext = filename.split(".")[-1]
-    filename = "{}.{}".format(str(uuid.uuid4())[:8], ext)
-    return os.path.join("i", filename)
+    return os.path.join(
+        strftime(now(), "i/%Y/%m/%d"), get_valid_filename(filename),
+    )
 
 
 class SummernoteAttachment(AbstractAttachment):
