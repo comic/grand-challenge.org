@@ -5,8 +5,6 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import grandchallenge.uploads.models
-
 
 class Migration(migrations.Migration):
 
@@ -45,10 +43,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "file",
-                    models.FileField(
-                        max_length=255,
-                        upload_to=grandchallenge.uploads.models.give_file_upload_destination_path,
-                    ),
+                    models.FileField(max_length=255, upload_to="uploads/",),
                 ),
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("modified", models.DateTimeField(auto_now=True)),

@@ -27,9 +27,4 @@ urlpatterns = [
     ),
     path("mugshots/<path:path>", serve_folder, {"folder": "mugshots"}),
     path("favicon/<path:path>", serve_folder, {"folder": "favicon"}),
-    path(
-        "<slug:challenge_name>/<path:path>",
-        serve_folder,
-        name="challenge-file",
-    ),
 ]
