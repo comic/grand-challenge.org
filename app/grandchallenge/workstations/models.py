@@ -19,6 +19,7 @@ from grandchallenge.container_exec.backends.docker import Service
 from grandchallenge.container_exec.models import ContainerImageModel
 from grandchallenge.container_exec.tasks import start_service, stop_service
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 
 __doc__ = """
@@ -40,7 +41,9 @@ logger = logging.getLogger(__name__)
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
     """Store the title and description of a workstation."""
 
-    logo = models.ImageField(upload_to=get_logo_path)
+    logo = models.ImageField(
+        upload_to=get_logo_path, storage=public_s3_storage
+    )
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,

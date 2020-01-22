@@ -58,6 +58,21 @@ services:
         target: /data
     restart: always
 
+  minio-public:
+    # This is for public data and is directly exposed to the internet (in dev)
+    image: minio/minio:RELEASE.2019-08-14T20-37-41Z
+    environment:
+      MINIO_ACCESS_KEY: miniopublic
+      MINIO_SECRET_KEY: miniopublic12345
+    ports:
+      - "9000:9000"
+    command: "--compat server /data"
+    volumes:
+      - type: volume
+        source: minio-public-data
+        target: /data
+    restart: always
+
   web:
     image: grandchallenge/web-test:latest
     environment:
@@ -71,6 +86,8 @@ services:
       <<: &protected_storage_connections
         PROTECTED_S3_STORAGE_BUCKET_NAME: grand-challenge-protected
         PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected:9000
+      PUBLIC_S3_STORAGE_ACCESS_KEY: miniopublic
+      PUBLIC_S3_STORAGE_SECRET_KEY: miniopublic12345
       GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
@@ -86,6 +103,8 @@ services:
       postgres:
         condition: service_healthy
       memcached:
+        condition: service_started
+      minio-public:
         condition: service_started
     volumes:
       - type: volume
@@ -291,6 +310,7 @@ volumes:
   media:
   minio-private-data:
   minio-protected-data:
+  minio-public-data:
 
 networks:
   default:

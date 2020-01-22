@@ -167,6 +167,17 @@ PROTECTED_S3_STORAGE_KWARGS = {
     "custom_domain": os.environ.get(
         "PROTECTED_S3_CUSTOM_DOMAIN", "gc.localhost/media"
     ),
+    "file_overwrite": False,
+}
+PUBLIC_S3_STORAGE_KWARGS = {
+    "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
+    "secret_key": os.environ.get("PUBLIC_S3_STORAGE_SECRET_KEY", ""),
+    "bucket_name": os.environ.get(
+        "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
+    ),
+    "file_overwrite": False,
+    # Public bucket so do not use querystring_auth
+    "querystring_auth": False,
 }
 
 ##############################################################################
@@ -717,6 +728,15 @@ if DEBUG:
     CORS_ORIGIN_REGEX_WHITELIST += [r"^http://localhost:8888$"]
 
     LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
+
+    PUBLIC_S3_STORAGE_KWARGS.update(
+        {
+            "custom_domain": f"localhost:9000/{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}",
+            "auto_create_bucket": True,
+            "secure_urls": False,
+            "endpoint_url": "http://minio-public:9000",
+        }
+    )
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)

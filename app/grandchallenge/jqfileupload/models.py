@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
+from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.storage import private_s3_storage
@@ -14,7 +15,7 @@ def generate_upload_filename(instance, filename):
     return os.path.join(
         settings.JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
         f"{instance.file_id}",
-        filename,
+        get_valid_filename(filename),
     )
 
 

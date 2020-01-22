@@ -3,8 +3,10 @@ from django.contrib.auth.models import Group
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
+from grandchallenge.core.management.commands.init_gc_demo import (
+    get_temporary_image,
+)
 from tests.factories import UserFactory
-from tests.utils import get_temporary_image
 
 
 @pytest.mark.django_db(transaction=True)

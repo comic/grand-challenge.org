@@ -5,6 +5,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import BooleanField
+from django.utils.text import get_valid_filename
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.container_exec.backends.docker import Executor, put_file
@@ -13,7 +14,7 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import protected_s3_storage
+from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONSchemaValidator,
@@ -349,7 +350,7 @@ def submission_file_path(instance, filename):
         f"submissions/"
         f"{instance.creator.pk}/"
         f"{instance.pk}/"
-        f"{filename}"
+        f"{get_valid_filename(filename)}"
     )
 
 
@@ -357,9 +358,8 @@ def submission_supplementary_file_path(instance, filename):
     return (
         f"evaluation-supplementary/"
         f"{instance.challenge.pk}/"
-        f"{instance.creator.pk}/"
         f"{instance.pk}/"
-        f"{filename}"
+        f"{get_valid_filename(filename)}"
     )
 
 
@@ -380,6 +380,7 @@ class Submission(UUIDModel):
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
+        storage=public_s3_storage,
         validators=[
             MimeTypeValidator(allowed_types=("text/plain", "application/pdf"))
         ],

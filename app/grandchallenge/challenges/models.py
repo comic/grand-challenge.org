@@ -15,10 +15,12 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils._os import safe_join
 from django.utils.html import format_html
+from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
 
+from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -41,13 +43,11 @@ def validate_short_name(value):
 
 
 def get_logo_path(instance, filename):
-    return (
-        f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{filename}"
-    )
+    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
 
 
 def get_banner_path(instance, filename):
-    return f"banners/{instance.pk}/{filename}"
+    return f"banners/{instance.pk}/{get_valid_filename(filename)}"
 
 
 class TaskType(models.Model):
@@ -212,6 +212,7 @@ class ChallengeBase(models.Model):
     )
     logo = models.ImageField(
         upload_to=get_logo_path,
+        storage=public_s3_storage,
         blank=True,
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
     )
@@ -400,6 +401,7 @@ class Challenge(ChallengeBase):
     )
     banner = models.ImageField(
         upload_to=get_banner_path,
+        storage=public_s3_storage,
         blank=True,
         help_text=(
             "Image that gets displayed at the top of each page. "

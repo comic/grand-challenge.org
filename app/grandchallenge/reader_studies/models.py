@@ -18,6 +18,7 @@ from sklearn.metrics import accuracy_score
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
@@ -96,7 +97,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    logo = models.ImageField(upload_to=get_logo_path)
+    logo = models.ImageField(
+        upload_to=get_logo_path, storage=public_s3_storage
+    )
 
     # A hanging_list is a list of dictionaries where the keys are the
     # view names, and the values are the filenames to place there.

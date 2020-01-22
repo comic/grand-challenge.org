@@ -2,7 +2,6 @@
 {% load url %}
 {% load guardian_tags %}
 {% load admin_urls %}
-{% load thumbnail %}
 
 {% block style %}
     {{ block.super }}
@@ -31,12 +30,7 @@
                    href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
                     <img alt="{% firstof challenge.title challenge.short_name %} Banner"
                          class="rounded w-100"
-                            {% thumbnail challenge.banner "1110" as im %}
-                         src="{{ im.url }}"
-                         srcset="{{ im.url }} 1x,
-                                    {{ im.url|resolution:'1.5x' }} 1.5x,
-                                    {{ im.url|resolution:'2x' }} 2x"
-                            {% endthumbnail %}
+                         src="{{ challenge.banner.url }}"
                     >
                 </a>
             </div>

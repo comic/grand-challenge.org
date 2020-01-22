@@ -28,6 +28,7 @@ from grandchallenge.container_exec.models import (
     ContainerImageModel,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
+from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
@@ -49,7 +50,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         editable=False,
         related_name=f"users_of_algorithm",
     )
-    logo = models.ImageField(upload_to=get_logo_path)
+    logo = models.ImageField(
+        upload_to=get_logo_path, storage=public_s3_storage
+    )
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE
     )
