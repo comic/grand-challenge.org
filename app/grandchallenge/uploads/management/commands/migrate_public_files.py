@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
@@ -56,7 +57,10 @@ class Command(BaseCommand):
 
                 if old_storage.exists(fullpath):
                     new_file = PublicMedia.objects.create(challenge=challenge,)
-                    new_file.file = File(old_storage.open(fullpath, "rb"))
+                    new_file.file = File(
+                        old_storage.open(fullpath, "rb"),
+                        name=Path(fullpath).name,
+                    )
                     new_file.save()
                 else:
                     print(f"    >> Could not find {fullpath}")
@@ -64,5 +68,9 @@ class Command(BaseCommand):
 
                 html_out = html_out.replace(url, new_file.file.url)
 
+                print("    Done")
+
             page.html = html_out
             page.save()
+
+            print(f"Saved {page.get_absolute_url()}")
