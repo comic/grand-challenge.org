@@ -285,5 +285,5 @@ def test_score_for_user(reader_study_with_gt):
 
     score = rs.score_for_user(r1)
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
-    assert score['score__sum'] == 3.0
-    assert score['score__avg'] == 0.5
+    assert score["score__sum"] == 3.0
+    assert score["score__avg"] == 0.5
