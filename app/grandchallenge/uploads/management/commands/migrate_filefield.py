@@ -36,11 +36,7 @@ class Command(BaseCommand):
         for obj in objects:
             filefield = getattr(obj, field_name)
 
-            try:
-                _ = filefield.file
-            except IOError:
-                pass
-            except ValueError:
+            if not filefield:
                 print(f"No file for {obj}")
                 continue
 
