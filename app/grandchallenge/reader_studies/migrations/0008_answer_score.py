@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("reader_studies", "0007_question_scoring_function"),
+        ("reader_studies", "0007_auto_20200121_1554"),
     ]
 
     operations = [
