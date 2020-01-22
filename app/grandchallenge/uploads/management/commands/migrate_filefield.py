@@ -38,6 +38,8 @@ class Command(BaseCommand):
 
             try:
                 _ = filefield.file
+            except IOError:
+                pass
             except ValueError:
                 print(f"No file for {obj}")
                 continue
