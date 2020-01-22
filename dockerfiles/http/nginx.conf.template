@@ -120,10 +120,6 @@ http {
     # Required for minio proxy
     ignore_invalid_headers off;
 
-    location ~* ^/site/([^/]*)/serve/(.*)$ {
-      return 302 $scheme://$1.${SERVER_NAME}/media/$1/$2;
-    }
-
     location ~* ^/all_challenges/?$ {
       return 301 $scheme://${SERVER_NAME}/challenges/;
     }
