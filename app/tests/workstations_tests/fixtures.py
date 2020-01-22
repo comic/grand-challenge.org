@@ -1,6 +1,5 @@
 from typing import NamedTuple
 
-import pytest
 from django.contrib.auth.models import User
 
 from grandchallenge.workstations.models import Workstation, WorkstationImage
@@ -32,8 +31,3 @@ def workstation_set():
     wss.workstation.add_editor(user=e)
     wss.workstation.add_user(user=u)
     return wss
-
-
-@pytest.fixture
-def two_workstation_sets() -> TwoWorkstationSets:
-    return TwoWorkstationSets(ws1=workstation_set(), ws2=workstation_set())
