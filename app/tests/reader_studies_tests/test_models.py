@@ -1,13 +1,56 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 
-from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
+
+
+@pytest.fixture
+def reader_study_with_gt():
+    rs = ReaderStudyFactory()
+    im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
+    q1, q2, q3 = [
+        QuestionFactory(
+            reader_study=rs,
+            answer_type=Question.ANSWER_TYPE_BOOL,
+            question_text="q1",
+        ),
+        QuestionFactory(
+            reader_study=rs,
+            answer_type=Question.ANSWER_TYPE_BOOL,
+            question_text="q2",
+        ),
+        QuestionFactory(
+            reader_study=rs,
+            answer_type=Question.ANSWER_TYPE_BOOL,
+            question_text="q3",
+        ),
+    ]
+
+    r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
+    rs.add_reader(r1)
+    rs.add_reader(r2)
+    rs.add_editor(editor)
+    rs.images.set([im1, im2])
+    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
+    rs.save()
+
+    for question in [q1, q2, q3]:
+        for im in [im1, im2]:
+            ans = AnswerFactory(
+                question=question,
+                creator=editor,
+                answer=True,
+                is_ground_truth=True,
+            )
+            ans.images.add(im)
+
+    return rs
 
 
 @pytest.mark.django_db
@@ -133,3 +176,109 @@ def test_progress_for_user():
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 50
     assert progress["questions"] == pytest.approx(question_perc * 4)
+
+
+@pytest.mark.django_db
+def test_leaderboard(reader_study_with_gt):
+    rs = reader_study_with_gt
+    r1, r2 = rs.readers_group.user_set.all()
+
+    for question in rs.questions.all():
+        for im in rs.images.all():
+            ans = AnswerFactory(question=question, creator=r1, answer=True)
+            ans.images.add(im)
+
+    leaderboard = rs.leaderboard
+    assert Answer.objects.filter(is_ground_truth=False).count() == 6
+    assert leaderboard["question_count"] == 6.0
+    scores = leaderboard["grouped_scores"]
+    assert len(scores) == 1
+    user_score = scores[0]
+    assert user_score["creator__username"] == r1.username
+    assert user_score["score__sum"] == 6.0
+    assert user_score["score__avg"] == 1.0
+
+    for i, question in enumerate(rs.questions.all()):
+        for j, im in enumerate(rs.images.all()):
+            ans = AnswerFactory(
+                question=question, creator=r2, answer=(i + j) % 2 == 0
+            )
+            ans.images.add(im)
+
+    leaderboard = rs.leaderboard
+    assert Answer.objects.filter(is_ground_truth=False).count() == 12
+    assert leaderboard["question_count"] == 6.0
+    scores = leaderboard["grouped_scores"]
+    assert len(scores) == 2
+    for user_score in scores:
+        if user_score["creator__username"] != r2.username:
+            continue
+        assert user_score["score__sum"] == 3.0
+        assert user_score["score__avg"] == 0.5
+
+
+@pytest.mark.django_db  # noqa - C901
+def test_statistics_by_question(reader_study_with_gt):
+    rs = reader_study_with_gt
+    r1, r2 = rs.readers_group.user_set.all()
+
+    for question in rs.questions.all():
+        for im in rs.images.all():
+            ans = AnswerFactory(question=question, creator=r1, answer=True)
+            ans.images.add(im)
+
+    statistics = rs.statistics
+    assert Answer.objects.filter(is_ground_truth=False).count() == 6
+    assert statistics["question_count"] == 6.0
+    scores = statistics["scores_by_question"]
+    assert len(scores) == rs.questions.count()
+    questions = set(rs.questions.values_list("question_text", flat=True))
+    for score in scores:
+        questions -= {score["question__question_text"]}
+        assert score["score__sum"] == 2.0
+        assert score["score__avg"] == 1.0
+    assert questions == set()
+
+    scores = statistics["scores_by_case"]
+    assert len(scores) == rs.images.count()
+    images = set(rs.images.values_list("name", flat=True))
+    for score in scores:
+        images -= {score["images__name"]}
+        assert score["score__sum"] == 3.0
+        assert score["score__avg"] == 1.0
+    assert images == set()
+
+    for question in rs.questions.all():
+        for im in rs.images.all():
+            answer = question.question_text == "q1" and im.name == "im1"
+            ans = AnswerFactory(question=question, creator=r2, answer=answer)
+            ans.images.add(im)
+
+    statistics = rs.statistics
+    assert Answer.objects.filter(is_ground_truth=False).count() == 12
+    assert statistics["question_count"] == 6.0
+    scores = statistics["scores_by_question"]
+    assert len(scores) == rs.questions.count()
+    questions = set(rs.questions.values_list("question_text", flat=True))
+    for score in scores:
+        questions -= {score["question__question_text"]}
+        if score["question__question_text"] == "q1":
+            assert score["score__sum"] == 3.0
+            assert score["score__avg"] == 0.75
+        else:
+            assert score["score__sum"] == 2.0
+            assert score["score__avg"] == 0.5
+    assert questions == set()
+
+    scores = statistics["scores_by_case"]
+    assert len(scores) == rs.images.count()
+    images = set(rs.images.values_list("name", flat=True))
+    for score in scores:
+        images -= {score["images__name"]}
+        if score["images__name"] == "im1":
+            assert score["score__sum"] == 4.0
+            assert score["score__avg"] == pytest.approx(2.0 / 3)
+        else:
+            assert score["score__sum"] == 3.0
+            assert score["score__avg"] == 0.5
+    assert images == set()
