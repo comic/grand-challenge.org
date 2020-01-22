@@ -1,4 +1,5 @@
 import re
+from html import unescape
 from pathlib import Path
 
 from django.conf import settings
@@ -52,6 +53,8 @@ class Command(BaseCommand):
                         settings.MEDIA_ROOT, challenge.short_name
                     )
                     fullpath = safe_join(document_root, filepath)
+                    if not old_storage.exists(fullpath):
+                        fullpath = safe_join(document_root, unescape(filepath))
                 except SuspiciousFileOperation:
                     print(f"    >> Path not in MEDIA_ROOT {filepath}")
                     continue
