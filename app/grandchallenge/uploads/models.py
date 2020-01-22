@@ -68,12 +68,12 @@ class UploadModel(ComicSiteModel):
 
 def public_media_filepath(instance, filename):
     if instance.challenge:
-        subfolder = os.path.join("challenge", instance.challenge.pk)
+        subfolder = os.path.join("challenge", str(instance.challenge.pk))
     else:
         subfolder = "none"
 
     return os.path.join(
-        "f", subfolder, instance.pk, get_valid_filename(filename)
+        "f", subfolder, str(instance.pk), get_valid_filename(filename)
     )
 
 
@@ -82,7 +82,7 @@ class PublicMedia(UUIDModel):
         upload_to=public_media_filepath, storage=public_s3_storage
     )
     challenge = models.ForeignKey(
-        Challenge, null=True, default=None, on_delete=SET_NULL
+        Challenge, null=True, blank=True, default=None, on_delete=SET_NULL
     )
 
 
