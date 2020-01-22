@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-from grandchallenge.uploads.models import PublicMedia, UploadModel
+from grandchallenge.uploads.models import PublicMedia
 
-admin.site.register(UploadModel)
 admin.site.register(PublicMedia)

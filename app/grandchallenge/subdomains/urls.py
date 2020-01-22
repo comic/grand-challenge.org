@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.urls import include, path
-from django.views.generic import RedirectView, TemplateView
+from django.views.generic import TemplateView
 
 from grandchallenge.challenges.views import ChallengeUpdate
 
@@ -24,26 +24,11 @@ urlpatterns = [
     ),
     path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
     path(
-        "uploads/", include("grandchallenge.uploads.urls", namespace="uploads")
-    ),
-    path(
         "datasets/",
         include("grandchallenge.datasets.urls", namespace="datasets"),
     ),
     path("update/", ChallengeUpdate.as_view(), name="update"),
     path("summernote/", include("django_summernote.urls")),
-    #################
-    #
-    # Legacy apps
-    #
-    path(
-        "files/",
-        RedirectView.as_view(pattern_name="uploads:create", permanent=False),
-    ),
-    #
-    # End Legacy
-    #
-    #################
     # If nothing specific matches, try to resolve the url as project/pagename
     path("", include("grandchallenge.pages.urls", namespace="pages")),
     path(

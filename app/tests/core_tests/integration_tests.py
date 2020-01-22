@@ -1,23 +1,19 @@
 import re
-from random import choice, randint
+from random import choice
 
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.sites.shortcuts import get_current_site
 from django.core import mail
 from django.core.files.storage import DefaultStorage
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase
-from django.test.client import RequestFactory
 from django.test.utils import override_settings
 from userena.models import UserenaSignup
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.uploads.views import upload_handler
 from tests.factories import PageFactory, RegistrationRequestFactory
 from tests.utils import get_http_host
 
@@ -581,103 +577,6 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
             "'%s' to give 302, instead found %s"
             % (non_existant_url, response.status_code),
         )
-
-
-class UploadTest(GrandChallengeFrameworkTestCase):
-    def set_up_extra(self):
-        """
-        Create some objects to work with, In part this is done through
-        admin views, meaning admin views are also tested here.
-        """
-        [
-            self.testproject,
-            self.root,
-            self.projectadmin,
-            self.participant,
-            self.signedup_user,
-        ] = self._create_dummy_project("test-project")
-        self.participant2 = self._create_random_user("participant2")
-        self._register(self.participant2, self.testproject)
-
-    def test_file_upload_page_shows(self):
-        """
-        The /files page should show to admin, signedin and root, but not
-        to others.
-        """
-        url = reverse(
-            "uploads:create",
-            kwargs={"challenge_short_name": self.testproject.short_name},
-        )
-        self._test_url_can_be_viewed(self.root, url)
-
-    def _upload_test_file(self, user, project, testfilename=""):
-        """
-        Upload a very small text file as user to project, through standard
-        upload view at /files.
-        """
-        if testfilename == "":
-            testfilename = self.giverandomfilename(user)
-        url = reverse(
-            "uploads:create",
-            kwargs={"challenge_short_name": self.testproject.short_name},
-        )
-        factory = RequestFactory()
-        request = factory.get(url)
-        request.user = user
-        request.challenge = self.testproject
-        request.site = get_current_site(request)
-        fakecontent = "some uploaded content for" + testfilename
-        request.FILES["file"] = SimpleUploadedFile(
-            name=testfilename, content=fakecontent.encode()
-        )
-        request.method = "POST"
-
-        # Some magic code to fix a bug with middleware not being found,
-        # don't know what this does but if fixes the bug.
-        from django.contrib.messages.storage.fallback import FallbackStorage
-
-        request.session = "session"
-        messages = FallbackStorage(request)
-        request._messages = messages
-        response = upload_handler(request)
-
-        self.assertEqual(
-            response.status_code,
-            302,
-            "Uploading file %s as "
-            "user %s to project %s did not load to expected 302 "
-            % (testfilename, user.username, project.short_name),
-        )
-        errors = self._find_errors_in_page(response)
-        if errors:
-            self.assertFalse(
-                errors,
-                "Error uploading file '%s':\n %s"
-                % (testfilename, errors.group(1)),
-            )
-        return response
-
-    def giverandomfilename(self, user, postfix=""):
-        """
-        Create a filename where you can see from which user is came, but
-        you don't get any nameclashes when creating a few
-        """
-        return "{}_{}_{}".format(
-            user.username,
-            str(randint(10000, 99999)),
-            "testfile%s.txt" % postfix,
-        )
-
-    def test_file_can_be_uploaded(self):
-        """Upload a fake file, see if correct users can see this file."""
-        name1 = self.giverandomfilename(self.root)
-        name2 = self.giverandomfilename(self.projectadmin)
-        name3 = self.giverandomfilename(self.participant)
-        name4 = self.giverandomfilename(self.participant2)
-        self._upload_test_file(self.root, self.testproject, name1)
-        self._upload_test_file(self.projectadmin, self.testproject, name2)
-        self._upload_test_file(self.participant, self.testproject, name3)
-        self._upload_test_file(self.participant2, self.testproject, name4)
 
 
 class ProjectLoginTest(GrandChallengeFrameworkTestCase):
