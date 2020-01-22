@@ -270,15 +270,20 @@ def test_statistics_by_question(reader_study_with_gt):
             assert score["score__avg"] == 0.5
     assert questions == set()
 
-    scores = statistics["scores_by_case"]
-    assert len(scores) == rs.images.count()
-    images = set(rs.images.values_list("name", flat=True))
-    for score in scores:
-        images -= {score["images__name"]}
-        if score["images__name"] == "im1":
-            assert score["score__sum"] == 4.0
-            assert score["score__avg"] == pytest.approx(2.0 / 3)
-        else:
-            assert score["score__sum"] == 3.0
-            assert score["score__avg"] == 0.5
-    assert images == set()
+
+@pytest.mark.django_db  # noqa - C901
+def test_score_for_user(reader_study_with_gt):
+    rs = reader_study_with_gt
+    r1 = rs.readers_group.user_set.first()
+
+    for i, question in enumerate(rs.questions.all()):
+        for j, im in enumerate(rs.images.all()):
+            ans = AnswerFactory(
+                question=question, creator=r1, answer=(i + j) % 2 == 0
+            )
+            ans.images.add(im)
+
+    score = rs.score_for_user(r1)
+    assert Answer.objects.filter(is_ground_truth=False).count() == 6
+    assert score['score__sum'] == 3.0
+    assert score['score__avg'] == 0.5

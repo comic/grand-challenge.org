@@ -362,6 +362,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "diff": questions - hangings,
         }
 
+    def score_for_user(self, user):
+        return Answer.objects.filter(
+            creator=user, question__reader_study=self, is_ground_truth=False
+        ).aggregate(Sum('score'), Avg('score'))
+
     @property
     def leaderboard(self):
         question_count = float(self.answerable_question_count) * len(
