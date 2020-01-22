@@ -1,7 +1,6 @@
 import os
 from io import BytesIO, StringIO
 
-from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
 
@@ -20,8 +19,6 @@ class MockStorage(FileSystemStorage):
     # For testing, any dir in FAKE DIRS will exist and contain FAKE_FILES
     FAKE_DIRS = [
         "fake_test_dir",
-        settings.COMIC_PUBLIC_FOLDER_NAME,
-        settings.COMIC_REGISTERED_ONLY_FOLDER_NAME,
     ]
 
     FAKE_FILES = [

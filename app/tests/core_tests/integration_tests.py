@@ -2,7 +2,6 @@ import re
 from random import choice
 
 from bs4 import BeautifulSoup
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.files.storage import DefaultStorage
@@ -325,9 +324,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
     ):
         url = reverse("challenges:create")
         storage = DefaultStorage()
-        banner = storage._open(
-            settings.COMIC_PUBLIC_FOLDER_NAME + "/fakefile2.jpg"
-        )
+        banner = storage._open("fake_test_dir/fakefile2.jpg")
         data = {
             "short_name": short_name,
             "description": description,

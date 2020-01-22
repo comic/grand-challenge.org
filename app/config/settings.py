@@ -122,15 +122,6 @@ MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
 MEDIA_URL = "/media/"
 
-# In each challenge there can be a single directory out of which files can be
-# downloaded without logging in.
-COMIC_PUBLIC_FOLDER_NAME = "public_html"
-COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
-
-# In each challenge there can be a single directory from which files can only
-# be downloaded by registered participants of that project
-COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
-
 # Subdirectories on root for various files
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 IMAGE_FILES_SUBDIRECTORY = "images"
@@ -701,7 +692,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "evaluation-supplementary",
     "favicon",
     "i",
-    "cache",  # for sorl-thumbnails
+    "cache",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
 ]
@@ -744,22 +735,6 @@ if DEBUG:
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"
         }
-
-if not COMIC_PUBLIC_FOLDER_NAME:
-    raise ImproperlyConfigured(
-        "Don't know from which folder serving publiv files"
-        "is allowed. Please add a setting like "
-        '\'COMIC_PUBLIC_FOLDER_NAME = "public_html"'
-        " to your .conf file."
-    )
-
-if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
-    raise ImproperlyConfigured(
-        "Don't know from which folder serving protected files"
-        "is allowed. Please add a setting like "
-        '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
-        " to your .conf file."
-    )
 
 # Modality name constants
 MODALITY_OCT = "OCT"  # Optical coherence tomography
