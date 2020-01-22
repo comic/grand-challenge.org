@@ -24,7 +24,6 @@ CELERY_BROKER_URL = "memory://"
 DEBUG = False
 TEMPLATE_DEBUG = False
 DEBUG_LOGGING = False
-THUMBNAIL_DEBUG = False
 
 # Disable non-critical logging in tests
 logging.disable(logging.CRITICAL)
