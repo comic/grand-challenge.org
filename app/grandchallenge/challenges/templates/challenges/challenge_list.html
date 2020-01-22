@@ -2,7 +2,6 @@
 {% load static %}
 {% load url %}
 {% load humanize %}
-{% load thumbnail %}
 
 {% block title %}Challenges{% endblock %}
 
@@ -339,12 +338,7 @@
                                          alt="{{ challenge.short_name }} logo"
                                          src="{% static 'images/3697E1-0.8.png' %}"
                                             {% if challenge.logo %}
-                                                {% thumbnail challenge.logo "320x320" crop="center" as im %}
-                                         data-src="{{ im.url }}"
-                                         data-srcset="{{ im.url }} 1x,
-                                                              {{ im.url|resolution:'1.5x' }} 1.5x,
-                                                              {{ im.url|resolution:'2x' }} 2x"
-                                                {% endthumbnail %}
+                                         data-src="{{ challenge.logo.url }}"
                                             {% else %}
                                          data-src="{{ challenge.gravatar_url }}"
                                             {% endif %}
