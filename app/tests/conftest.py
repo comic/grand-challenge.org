@@ -193,6 +193,7 @@ def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
         ),
         tag="test_evaluation:latest",
     )
+    assert im.id in [x.id for x in docker_client.images.list()]
     image = docker_api_client.get_image("test_evaluation:latest")
     outfile = tmpdir_factory.mktemp("docker").join("evaluation-latest.tar")
 
@@ -200,8 +201,11 @@ def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
         for chunk in image:
             f.write(chunk)
 
+    docker_client.images.remove(image=im.id)
+
     call(["gzip", outfile])
 
+    assert im.id not in [x.id for x in docker_client.images.list()]
     return f"{outfile}.gz", im.id
 
 
