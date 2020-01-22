@@ -54,6 +54,7 @@ def assign_score(instance, action, reverse, model, pk_set, **_):
             images__in=pk_set,
         ):
             answer.calculate_score(instance.answer)
+            answer.save()
     else:
         ground_truth = Answer.objects.filter(
             question=instance.question,
@@ -62,3 +63,4 @@ def assign_score(instance, action, reverse, model, pk_set, **_):
         ).first()
         if ground_truth:
             instance.calculate_score(ground_truth.answer)
+            instance.save()

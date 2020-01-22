@@ -802,7 +802,7 @@ class Answer(UUIDModel):
 
     def calculate_score(self, ground_truth):
         self.score = self.question.calculate_score(self.answer, ground_truth)
-        self.save()
+        return self.score
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
