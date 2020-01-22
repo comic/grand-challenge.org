@@ -36,7 +36,7 @@ class Command(BaseCommand):
         for obj in objects:
             filefield = getattr(obj, field_name)
 
-            if filefield is None:
+            if filefield.file is None:
                 print(f"No logo for {obj}")
                 continue
 
