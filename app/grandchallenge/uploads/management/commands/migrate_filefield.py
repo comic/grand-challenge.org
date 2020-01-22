@@ -36,8 +36,10 @@ class Command(BaseCommand):
         for obj in objects:
             filefield = getattr(obj, field_name)
 
-            if filefield.file is None:
-                print(f"No logo for {obj}")
+            try:
+                _ = filefield.file
+            except ValueError:
+                print(f"No file for {obj}")
                 continue
 
             filename = basename(filefield.name)
