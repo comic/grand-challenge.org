@@ -17,7 +17,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         old_storage = FileSystemStorage()
 
-        for page in Page.objects.filter(html__contains="/public_html/"):
+        for page in Page.objects.filter(html__contains="/media/"):
             print(f"Processing {page.get_absolute_url()}")
 
             matches = {
@@ -26,7 +26,8 @@ class Command(BaseCommand):
                     "filepath": m.group(2),
                 }
                 for m in re.finditer(
-                    r"/media/([^/]+)/(public_html/[^\'^\"\s>]+)/?", page.html
+                    r"/media/([^/]+)/((?:public_html|results/public)/[^\'^\"\s>]+)/?",
+                    page.html,
                 )
             }
 
