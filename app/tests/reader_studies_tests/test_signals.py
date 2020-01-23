@@ -1,6 +1,11 @@
 import pytest
 
-from tests.factories import ImageFactory
+from tests.factories import ImageFactory, UserFactory
+from tests.reader_studies_tests.factories import (
+    AnswerFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 from tests.reader_studies_tests.utils import TwoReaderStudies
 from tests.utils import get_view_for_user
 
@@ -73,3 +78,31 @@ def test_reader_can_download_images(client, reverse):
     )
     assert response.status_code == 200
     assert response.json()["count"] == 0
+
+
+@pytest.mark.django_db
+def test_assign_score():
+    rs = ReaderStudyFactory()
+    im = ImageFactory()
+    q = QuestionFactory(reader_study=rs)
+    e, r1, r2 = UserFactory(), UserFactory(), UserFactory()
+
+    rs.images.add(im)
+    rs.add_editor(e)
+    rs.add_reader(r1)
+    rs.add_reader(r2)
+
+    a1 = AnswerFactory(question=q, creator=r1, answer="foo")
+    a1.images.add(im)
+    assert a1.score is None
+
+    gt = AnswerFactory(
+        question=q, creator=e, answer="foo", is_ground_truth=True
+    )
+    gt.images.add(im)
+    a1.refresh_from_db()
+    assert a1.score == 1.0
+
+    a2 = AnswerFactory(question=q, creator=r2, answer="foo")
+    a2.images.add(im)
+    assert a2.score == 1.0

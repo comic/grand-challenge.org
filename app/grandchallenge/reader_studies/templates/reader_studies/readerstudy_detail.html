@@ -64,6 +64,14 @@
 
     <p>{{ object.description }}</p>
 
+    {% if user_score.score__sum is not None %}
+        <div class="h3">
+            You have completed this reader study. You have scored {{ user_score.score__sum|floatformat }} points
+            out of a possible {{ answerable_questions|floatformat }} points,
+            giving you an average score of {{ user_score.score__avg|floatformat }}.
+        </div>
+    {% endif %}
+
     <p>
         {% if user_is_reader and object.is_valid %}
             <a class="btn btn-primary"
@@ -232,7 +240,19 @@
             </a>
         </div>
 
+        <div class="mt-3 d-lg-flex justify-content-end">
+            <a class="btn btn-primary mb-1 ml-1"
+               href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
+                <i class="fas fa-trophy mr-1"></i>View leaderboard
+            </a>
+            <a class="btn btn-primary mb-1 ml-1"
+               href="{% url 'reader-studies:statistics' slug=object.slug %}">
+                <i class="fas fa-signal mr-1"></i> View statistics
+            </a>
+        </div>
+
     {% endif %}
+
     <!-- Modal -->
     <div class="modal fade" id="hangingListModal" tabindex="-1" role="dialog"
          aria-labelledby="hangingListModalLabel" aria-hidden="true">

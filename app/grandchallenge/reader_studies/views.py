@@ -122,6 +122,8 @@ class ReaderStudyDetail(
         editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
         context.update(
             {
+                "user_score": self.object.score_for_user(self.request.user),
+                "answerable_questions": self.object.answerable_question_count,
                 "editor_remove_form": editor_remove_form,
                 "reader_remove_form": reader_remove_form,
                 "user_is_reader": self.object.is_reader(
@@ -164,6 +166,28 @@ class ReaderStudyDelete(
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(request, *args, **kwargs)
+
+
+class ReaderStudyLeaderBoard(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_leaderboard.html"
+
+
+class ReaderStudyStatistics(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_statistics.html"
 
 
 class QuestionUpdate(

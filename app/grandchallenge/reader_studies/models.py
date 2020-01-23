@@ -5,13 +5,15 @@ from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
-from django.db.models import Count
+from django.db.models import Avg, Count, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
+from sklearn.metrics import accuracy_score
 
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
@@ -258,6 +260,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def image_groups(self):
         return [sorted(x.values()) for x in self.hanging_list]
 
+    @cached_property
+    def answerable_questions(self):
+        return self.questions.exclude(answer_type=Question.ANSWER_TYPE_HEADING)
+
+    @cached_property
+    def answerable_question_count(self):
+        return self.answerable_questions.count()
+
     def add_ground_truth(self, *, data, user):
         for gt in data:
             images = self.images.filter(name__in=gt["images"].split(";"))
@@ -306,30 +316,26 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         if not self.is_valid or not self.hanging_list:
             return
 
-        answerable_questions = self.questions.exclude(
-            answer_type=Question.ANSWER_TYPE_HEADING
-        )
-        answerable_question_count = answerable_questions.count()
         hanging_list_count = len(self.hanging_list)
 
-        if answerable_question_count == 0 or hanging_list_count == 0:
+        if self.answerable_question_count == 0 or hanging_list_count == 0:
             return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
-        expected = hanging_list_count * answerable_question_count
+        expected = hanging_list_count * self.answerable_question_count
         answers = Answer.objects.filter(
-            question__in=answerable_questions, creator_id=user.id
+            question__in=self.answerable_questions, creator_id=user.id
         ).distinct()
         answer_count = answers.count()
 
         # There are unanswered questions
-        if answer_count % answerable_question_count != 0:
+        if answer_count % self.answerable_question_count != 0:
             # Group the answers by images and filter out the images that
             # have an inadequate amount of answers
             unanswered_images = (
                 answers.order_by("images__name")
                 .values("images__name")
                 .annotate(answer_count=Count("images__name"))
-                .filter(answer_count__lt=answerable_question_count)
+                .filter(answer_count__lt=self.answerable_question_count)
             )
             image_names = set(
                 unanswered_images.values_list("images__name", flat=True)
@@ -349,7 +355,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             ]
             completed_hangings = len(completed_hangings)
         else:
-            completed_hangings = answer_count / answerable_question_count
+            completed_hangings = answer_count / self.answerable_question_count
 
         hangings = completed_hangings / hanging_list_count * 100
         questions = answer_count / expected * 100
@@ -357,6 +363,59 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "questions": questions,
             "hangings": hangings,
             "diff": questions - hangings,
+        }
+
+    def score_for_user(self, user):
+        return Answer.objects.filter(
+            creator=user, question__reader_study=self, is_ground_truth=False
+        ).aggregate(Sum("score"), Avg("score"))
+
+    @property
+    def leaderboard(self):
+        question_count = float(self.answerable_question_count) * len(
+            self.hanging_list
+        )
+        grouped_scores = (
+            Answer.objects.filter(
+                question__reader_study=self, is_ground_truth=False
+            )
+            .order_by("creator_id")
+            .values("creator__username")
+            .annotate(Sum("score"), Avg("score"))
+            .order_by("-score__sum")
+        )
+        return {
+            "question_count": question_count,
+            "grouped_scores": grouped_scores,
+        }
+
+    @property
+    def statistics(self):
+        question_count = float(self.answerable_question_count) * len(
+            self.hanging_list
+        )
+        scores_by_question = (
+            Answer.objects.filter(
+                question__reader_study=self, is_ground_truth=False
+            )
+            .order_by("question_id")
+            .values("question__question_text")
+            .annotate(Sum("score"), Avg("score"))
+            .order_by("-score__avg")
+        )
+        scores_by_case = (
+            Answer.objects.filter(
+                question__reader_study=self, is_ground_truth=False
+            )
+            .order_by("images__name")
+            .values("images__name")
+            .annotate(Sum("score"), Avg("score"))
+            .order_by("score__avg")
+        )
+        return {
+            "question_count": question_count,
+            "scores_by_question": scores_by_question,
+            "scores_by_case": scores_by_case,
         }
 
 
@@ -523,6 +582,13 @@ class Question(UUIDModel):
         (IMAGE_PORT_SECONDARY, "Secondary"),
     )
 
+    SCORING_FUNCTION_ACCURACY = "ACC"
+    SCORING_FUNCTION_CHOICES = ((SCORING_FUNCTION_ACCURACY, "Accuracy score"),)
+
+    SCORING_FUNCTIONS = {
+        SCORING_FUNCTION_ACCURACY: accuracy_score,
+    }
+
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
     )
@@ -539,6 +605,11 @@ class Question(UUIDModel):
     required = models.BooleanField(default=True)
     direction = models.CharField(
         max_length=1, choices=DIRECTION_CHOICES, default=DIRECTION_HORIZONTAL
+    )
+    scoring_function = models.CharField(
+        max_length=3,
+        choices=SCORING_FUNCTION_CHOICES,
+        default=SCORING_FUNCTION_ACCURACY,
     )
     order = models.PositiveSmallIntegerField(default=100)
 
@@ -582,6 +653,11 @@ class Question(UUIDModel):
         if not self.is_fully_editable:
             return ["question_text", "answer_type", "image_port", "required"]
         return []
+
+    def calculate_score(self, answer, ground_truth):
+        return self.SCORING_FUNCTIONS[self.scoring_function](
+            [answer], [ground_truth], normalize=True
+        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -654,6 +730,7 @@ class Answer(UUIDModel):
     # TODO: add validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     answer = JSONField()
     is_ground_truth = models.BooleanField(default=False)
+    score = models.FloatField(null=True)
 
     csv_headers = Question.csv_headers + [
         "Created",
@@ -726,9 +803,12 @@ class Answer(UUIDModel):
                 f"{type(answer)} found."
             )
 
+    def calculate_score(self, ground_truth):
+        self.score = self.question.calculate_score(self.answer, ground_truth)
+        return self.score
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
         super().save(*args, **kwargs)
 
         if adding:
