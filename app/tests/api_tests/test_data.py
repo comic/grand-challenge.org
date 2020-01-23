@@ -11,7 +11,7 @@ class DataFileTest(APITestCase):
         token, created = Token.objects.get_or_create(user=user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + str(token))
         data_file = DataFileFactory(creator=user, name='random file')
-        assign_perm('eyra_data.view_datafile', user)
+        assign_perm('eyra.view_datafile', user)
 
         url = f'/api/v1/data_files/{data_file.id}/'
         response = self.client.get(url, format="json")
@@ -22,7 +22,7 @@ class DataFileTest(APITestCase):
         token, created = Token.objects.get_or_create(user=user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + str(token))
         data_file = DataFileFactory(creator=user, name='random file')
-        assign_perm('eyra_data.view_datafile', user)
+        assign_perm('eyra.view_datafile', user)
 
         url = f'/api/v1/data_files/'
         response = self.client.get(url, format="json")

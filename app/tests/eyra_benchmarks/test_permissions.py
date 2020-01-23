@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
 
-from comic.eyra_benchmarks.models import Benchmark
+from comic.eyra.models import Benchmark
 from tests.factories import BenchmarkFactory, UserFactory
 
 

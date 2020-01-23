@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from django.test.testcases import TestCase
 
-from comic.eyra_algorithms.models import Algorithm
+from comic.eyra.models import Algorithm
 from tests.factories import AlgorithmFactory, UserFactory
 
 

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import Group
 from django.test.testcases import TestCase
-from comic.eyra_benchmarks.models import Benchmark
+
+from comic.eyra.models import Benchmark
 from tests.factories import BenchmarkFactory, UserFactory
 
 

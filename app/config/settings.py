@@ -137,7 +137,9 @@ SECURE_CONTENT_TYPE_NOSNIFF = strtobool(
 SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
-SECURE_SSL_REDIRECT = True
+
+SECURE_SSL_REDIRECT = not DEBUG
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
@@ -214,11 +216,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "comic.api",
-    "comic.core",
-    "comic.eyra_benchmarks",
-    "comic.eyra_algorithms",
-    "comic.eyra_data",
-    "comic.eyra_users",
+    "comic.eyra",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS

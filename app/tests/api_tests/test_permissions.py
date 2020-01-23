@@ -26,7 +26,7 @@ class AnonymousUserTest(APITestCase):
     def test_anon_get_benchmark_model_permission_gives_200(self):
         benchmark = BenchmarkFactory()
         anon_user=User.get_anonymous()
-        assign_perm('eyra_benchmarks.view_benchmark', anon_user)
+        assign_perm('eyra.view_benchmark', anon_user)
         url = f'/api/v1/benchmarks/{benchmark.pk}/'
         response = self.client.get(url, format="json")
         self.assertEqual(200, response.status_code)

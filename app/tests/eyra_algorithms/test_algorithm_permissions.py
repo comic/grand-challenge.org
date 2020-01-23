@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
 
-from comic.eyra_algorithms.models import Algorithm
+from comic.eyra.models import Algorithm
 from tests.factories import AlgorithmFactory, UserFactory
 
 
@@ -32,6 +32,5 @@ class AlgorithmAdminTest(APITestCase):
 
     def test_default_user_permissions(self):
         user = UserFactory()
-        self.assertTrue(user.has_perm('eyra_algorithms.add_algorithm'))
-        self.assertTrue(user.has_perm('eyra_algorithms.add_implementation'))
-        self.assertTrue(user.has_perm('eyra_benchmarks.add_submission'))
+        self.assertTrue(user.has_perm('eyra.add_algorithm'))
+        self.assertTrue(user.has_perm('eyra.add_submission'))

@@ -6,9 +6,10 @@ from kubernetes.client.rest import ApiException
 
 from django.conf import settings
 
-from comic.eyra_algorithms.models import Job
 
 # override service token mounts when running with telepresence
+from comic.eyra.models import Job
+
 if settings.K8S_USE_CLUSTER_CONFIG:
     kubernetes_config.SERVICE_TOKEN_FILENAME = \
         os.environ.get('TELEPRESENCE_ROOT', '') + kubernetes_config.SERVICE_TOKEN_FILENAME
@@ -87,7 +88,7 @@ pip install s3cmd --quiet
 {s3cmd}
 echo "Done"
 """
-
+    # todo: fix for new db without implementation
     # run this job on K8S. Does not wait for completion
     def run(self):
         self.load_kubeconfig()
