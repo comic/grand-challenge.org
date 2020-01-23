@@ -107,9 +107,6 @@ services:
       minio-public:
         condition: service_started
     volumes:
-      - type: volume
-        source: media
-        target: /dbox/Dropbox/media/
       # Bind the app directory for live reloading in development
       - type: bind
         source: ./app
@@ -148,11 +145,6 @@ services:
         condition: service_healthy
       workstation-proxy:
         condition: service_started
-    volumes:
-      - type: volume
-        source: media
-        target: /dbox/Dropbox/media/
-        read_only: true
 
   memcached:
     image: memcached:1.5
@@ -307,7 +299,6 @@ services:
     restart: always
 
 volumes:
-  media:
   minio-private-data:
   minio-protected-data:
   minio-public-data:

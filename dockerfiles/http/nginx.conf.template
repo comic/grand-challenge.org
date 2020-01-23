@@ -184,11 +184,6 @@ http {
       proxy_pass ${PROTECTED_S3_STORAGE_ENDPOINT_URL};
     }
     
-    location /dbox/ {
-      internal;
-      alias   /dbox/;
-    }
-
     location / {
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Proto $scheme;
