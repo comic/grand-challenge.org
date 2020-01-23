@@ -36,10 +36,10 @@ class Page(models.Model):
     title = models.SlugField(max_length=64, blank=False)
     challenge = models.ForeignKey(
         Challenge,
-        help_text="To which comicsite does this object belong?",
+        help_text="Which challenge does this page belong to?",
         on_delete=models.CASCADE,
     )
-    permission_lvl = models.CharField(
+    permission_level = models.CharField(
         max_length=3, choices=PERMISSIONS_CHOICES, default=ALL
     )
     order = models.IntegerField(
@@ -81,34 +81,40 @@ class Page(models.Model):
 
         super().save(*args, **kwargs)
 
-        self.set_permissions(self.permission_lvl)
+        self.assign_permissions()
 
-    def set_permissions(self, lvl):
+    def assign_permissions(self):
         """Give the right groups permissions to this object."""
         admins_group = self.challenge.admins_group
         participants_group = self.challenge.participants_group
 
-        if lvl == self.ALL:
-            assign_perm("view_ComicSiteModel", admins_group, self)
-            assign_perm("view_ComicSiteModel", participants_group, self)
-        elif lvl == self.REGISTERED_ONLY:
-            assign_perm("view_ComicSiteModel", admins_group, self)
-            assign_perm("view_ComicSiteModel", participants_group, self)
-        elif lvl == self.ADMIN_ONLY:
-            assign_perm("view_ComicSiteModel", admins_group, self)
-            remove_perm("view_ComicSiteModel", participants_group, self)
+        if self.permission_level == self.ALL:
+            assign_perm(f"view_{self._meta.model_name}", admins_group, self)
+            assign_perm(
+                f"view_{self._meta.model_name}", participants_group, self
+            )
+        elif self.permission_level == self.REGISTERED_ONLY:
+            assign_perm(f"view_{self._meta.model_name}", admins_group, self)
+            assign_perm(
+                f"view_{self._meta.model_name}", participants_group, self
+            )
+        elif self.permission_level == self.ADMIN_ONLY:
+            assign_perm(f"view_{self._meta.model_name}", admins_group, self)
+            remove_perm(
+                f"view_{self._meta.model_name}", participants_group, self
+            )
         else:
             raise ValueError(
-                f"Unknown permissions level '{lvl}'. "
+                f"Unknown permissions level '{self.permission_level}'. "
                 "I don't know which groups to give permissions to this object"
             )
 
     def can_be_viewed_by(self, user):
         """Is user allowed to view this?"""
-        if self.permission_lvl == self.ALL:
+        if self.permission_level == self.ALL:
             return True
         else:
-            return user.has_perm("view_ComicSiteModel", self)
+            return user.has_perm(f"view_{self._meta.model_name}", self)
 
     def cleaned_html(self):
         out = clean(self.html)
@@ -211,7 +217,6 @@ class Page(models.Model):
         unique_together = (("challenge", "title"),)
         # when getting a list of these objects this ordering is used
         ordering = ["challenge", "order"]
-        permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)
 
 
 class ErrorPage(Page):

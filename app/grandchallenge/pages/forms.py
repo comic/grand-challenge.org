@@ -38,7 +38,13 @@ class PageCreateForm(forms.ModelForm):
 
     class Meta:
         model = Page
-        fields = ("title", "permission_lvl", "display_title", "hidden", "html")
+        fields = (
+            "title",
+            "permission_level",
+            "display_title",
+            "hidden",
+            "html",
+        )
         widgets = {"html": SummernoteInplaceWidget()}
         help_texts = {
             "html": (

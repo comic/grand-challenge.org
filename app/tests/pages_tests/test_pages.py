@@ -83,7 +83,7 @@ def test_page_create(client, two_challenge_sets):
         data={
             "title": page_title,
             "html": page_html,
-            "permission_lvl": Page.ALL,
+            "permission_level": Page.ALL,
         },
     )
     assert response.status_code == 302
@@ -138,7 +138,7 @@ def test_page_update(client, two_challenge_sets):
         reverse_kwargs={"page_title": p1.title},
         data={
             "title": "editedtitle",
-            "permission_lvl": Page.ALL,
+            "permission_level": Page.ALL,
             "html": "newhtml",
         },
     )
@@ -235,7 +235,7 @@ def test_page_move(
         reverse_kwargs={"page_title": pages[page_to_move].title},
         data={
             "title": pages[page_to_move].title,
-            "permission_lvl": pages[page_to_move].permission_lvl,
+            "permission_level": pages[page_to_move].permission_level,
             "html": pages[page_to_move].html,
             "move": move_op,
         },
@@ -257,7 +257,7 @@ def test_create_page_with_same_title(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.challenge_set_1.admin,
-        data={"title": "page1", "html": "hello", "permission_lvl": Page.ALL},
+        data={"title": "page1", "html": "hello", "permission_level": Page.ALL},
     )
     assert response.status_code == 200
     assert "A page with that title already exists" in response.rendered_content
@@ -268,7 +268,7 @@ def test_create_page_with_same_title(client, two_challenge_sets):
         method=client.post,
         challenge=two_challenge_sets.challenge_set_2.challenge,
         user=two_challenge_sets.challenge_set_2.admin,
-        data={"title": "page1", "html": "hello", "permission_lvl": Page.ALL},
+        data={"title": "page1", "html": "hello", "permission_level": Page.ALL},
     )
     assert response.status_code == 302
     # Check the updating
@@ -285,7 +285,7 @@ def test_create_page_with_same_title(client, two_challenge_sets):
         data={
             "title": "page1",
             "html": " ",
-            "permission_lvl": Page.ALL,
+            "permission_level": Page.ALL,
             "move": BLANK_CHOICE_DASH[0],
         },
     )

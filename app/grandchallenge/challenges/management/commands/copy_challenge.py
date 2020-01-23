@@ -56,7 +56,7 @@ class Command(BaseCommand):
 
     page_fields = [
         "title",
-        "permission_lvl",
+        "permission_level",
         "order",
         "display_title",
         "hidden",
