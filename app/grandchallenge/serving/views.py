@@ -1,10 +1,7 @@
-import os
 import posixpath
 import re
 
 from django.conf import settings
-from django.core.files import File
-from django.core.files.storage import DefaultStorage
 from django.http import Http404, HttpResponse
 from django.utils._os import safe_join
 from rest_framework.authentication import TokenAuthentication
@@ -13,27 +10,10 @@ from rest_framework.exceptions import AuthenticationFailed
 from grandchallenge.cases.models import Image
 from grandchallenge.core.storage import ProtectedS3Storage
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.serving.api import serve_file
 from grandchallenge.serving.permissions import (
     user_can_download_image,
     user_can_download_submission,
 )
-
-
-def serve_fullpath(*, fullpath):
-    storage = DefaultStorage()
-
-    if not (os.path.abspath(fullpath) == fullpath) or not storage.exists(
-        fullpath
-    ):
-        raise Http404("File not found.")
-
-    try:
-        f = storage.open(fullpath, "rb")
-        file = File(f)
-        return serve_file(file, save_as=True)
-    except IOError:
-        raise Http404("File not found.")
 
 
 def protected_storage_redirect(*, name):
@@ -55,15 +35,6 @@ def protected_storage_redirect(*, name):
     response["X-Accel-Redirect"] = external_url
 
     return response
-
-
-def serve_folder(request, *, folder, path):
-    """Serve static files in a folder."""
-    path = posixpath.normpath(path).lstrip("/")
-    document_root = safe_join(settings.MEDIA_ROOT, folder)
-    fullpath = safe_join(document_root, path)
-
-    return serve_fullpath(fullpath=fullpath)
 
 
 def serve_images(request, *, pk, path):
