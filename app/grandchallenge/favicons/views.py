@@ -22,7 +22,7 @@ class FaviconView(RedirectView):
         else:
             # This is the largest icon from
             # https://github.com/audreyr/favicon-cheat-sheet
-            size = kwargs.get("size", 228)
+            size = kwargs.get("size", 180)
 
         default_fav = fav.get_favicon(size=size, rel=self.rel)
 
