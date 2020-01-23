@@ -6,7 +6,6 @@ from distutils.util import strtobool as strtobool_i
 import sentry_sdk
 from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
-from django.core.exceptions import ImproperlyConfigured
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -114,10 +113,6 @@ USE_TZ = True
 #
 ##############################################################################
 DEFAULT_FILE_STORAGE = "grandchallenge.core.storage.PublicS3Storage"
-
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
 
 # Subdirectories on root for various files
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
@@ -693,14 +688,6 @@ DISALLOWED_CHALLENGE_NAMES = [
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
 ]
-
-if MEDIA_ROOT[-1] != "/":
-    msg = (
-        "MEDIA_ROOT setting should end in a slash. Found '"
-        + MEDIA_ROOT
-        + "'. Please add a slash"
-    )
-    raise ImproperlyConfigured(msg)
 
 ENABLE_DEBUG_TOOLBAR = False
 
