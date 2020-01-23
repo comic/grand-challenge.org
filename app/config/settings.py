@@ -36,6 +36,8 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/gen204.*"),
     re.compile(r"^/wp-content.*"),
     re.compile(r".*/trackback.*"),
+    re.compile(r"^/site/.*"),
+    re.compile(r"^/media/cache/.*"),
 ]
 
 # Used as starting points for various other paths. realpath(__file__) starts in
@@ -111,16 +113,11 @@ USE_TZ = True
 # Storage
 #
 ##############################################################################
-DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+DEFAULT_FILE_STORAGE = "grandchallenge.core.storage.PublicS3Storage"
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash.
-# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = "/media/"
 
 # Subdirectories on root for various files
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
