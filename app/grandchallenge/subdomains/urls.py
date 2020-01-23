@@ -18,7 +18,6 @@ urlpatterns = [
             "grandchallenge.favicons.urls", namespace="subdomain-favicons"
         ),
     ),
-    # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
     path(
         "evaluation/",
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
@@ -35,7 +34,6 @@ urlpatterns = [
     ),
     path("update/", ChallengeUpdate.as_view(), name="update"),
     path("summernote/", include("django_summernote.urls")),
-    # If nothing specific matches, try to resolve the url as project/pagename
     path("", include("grandchallenge.pages.urls", namespace="pages")),
 ]
 
