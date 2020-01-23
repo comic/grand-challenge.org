@@ -8,14 +8,20 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
+@pytest.mark.xfail(
+    reason="Flaky test on travis, see https://github.com/comic/grand-challenge.org/issues/1107"
+)
 @pytest.mark.parametrize("participant_review", [True, False])
 def test_new_registration_email(participant_review, client, challenge_set):
     user = UserFactory()
+
     challenge_set.challenge.require_participant_review = participant_review
     challenge_set.challenge.save()
+
     assert not RegistrationRequest.objects.filter(
         user=user, challenge=challenge_set.challenge
     ).exists()
+
     response = get_view_for_user(
         viewname="participants:registration-create",
         client=client,
@@ -23,10 +29,12 @@ def test_new_registration_email(participant_review, client, challenge_set):
         user=user,
         challenge=challenge_set.challenge,
     )
+
     assert response.status_code == 302
     assert RegistrationRequest.objects.filter(
         user=user, challenge=challenge_set.challenge
     ).exists()
+
     if participant_review:
         email = mail.outbox[-1]
         approval_link = reverse(
@@ -35,6 +43,7 @@ def test_new_registration_email(participant_review, client, challenge_set):
                 "challenge_short_name": challenge_set.challenge.short_name
             },
         )
+
         assert challenge_set.admin.email in email.to
         assert "new participation request" in email.subject.lower()
         assert challenge_set.challenge.short_name in email.subject

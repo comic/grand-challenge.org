@@ -12,6 +12,12 @@ urlpatterns = [
         ),
         name="subdomain_robots_txt",
     ),
+    path(
+        "",
+        include(
+            "grandchallenge.favicons.urls", namespace="subdomain-favicons"
+        ),
+    ),
     # Note: add new namespaces to comic_URLNode(defaulttags.URLNode)
     path(
         "evaluation/",
