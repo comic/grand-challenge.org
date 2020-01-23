@@ -115,9 +115,6 @@
                             <a class="dropdown-item"
                                href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">Participation
                                 Requests</a>
-                            <a class="dropdown-item"
-                               href="{% url 'uploads:list' challenge_short_name=challenge.short_name %}">Uploaded
-                                Files</a>
                             {% if challenge.use_evaluation %}
                                 <hr/>
                                 <a class="dropdown-item"

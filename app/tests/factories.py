@@ -20,7 +20,6 @@ from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
 from grandchallenge.teams.models import Team, TeamMember
-from grandchallenge.uploads.models import UploadModel
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import (
     Session,
@@ -74,16 +73,6 @@ class PageFactory(factory.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
     title = factory.Sequence(lambda n: f"page_{n}")
     html = factory.LazyAttribute(lambda t: f"<h2>{t.title}</h2>")
-
-
-class UploadFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = UploadModel
-
-    challenge = factory.SubFactory(ChallengeFactory)
-    file = factory.django.FileField()
-    user = factory.SubFactory(UserFactory)
-    title = factory.Sequence(lambda n: f"file_{n}")
 
 
 class RegistrationRequestFactory(factory.DjangoModelFactory):

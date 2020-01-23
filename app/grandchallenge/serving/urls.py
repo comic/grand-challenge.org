@@ -2,7 +2,6 @@ from django.conf import settings
 from django.urls import path
 
 from grandchallenge.serving.views import (
-    serve_folder,
     serve_images,
     serve_submissions,
 )
@@ -24,13 +23,5 @@ urlpatterns = [
             f"<path:path>"
         ),
         serve_submissions,
-    ),
-    path("mugshots/<path:path>", serve_folder, {"folder": "mugshots"}),
-    path("favicon/<path:path>", serve_folder, {"folder": "favicon"}),
-    path("cache/<path:path>", serve_folder, {"folder": "cache"}),
-    path(
-        "<slug:challenge_name>/<path:path>",
-        serve_folder,
-        name="challenge-file",
     ),
 ]

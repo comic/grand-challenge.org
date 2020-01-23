@@ -18,12 +18,12 @@ RUN apt-get update && \
 
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir -p /opt/poetry /app /static /opt/static /dbox/Dropbox/media
+RUN mkdir -p /opt/poetry /app /static /opt/static
 RUN python -m pip install -U "pip!=20.0"
 RUN python -m pip install -U poetry
 
 RUN groupadd -g 2001 -r django && useradd -m -u 2001 -r -g django django
-RUN chown django:django /opt/poetry /app /static /opt/static /dbox/Dropbox/media
+RUN chown django:django /opt/poetry /app /static /opt/static
 USER django:django
 
 # Install base python packages

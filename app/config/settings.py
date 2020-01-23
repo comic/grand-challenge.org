@@ -6,7 +6,6 @@ from distutils.util import strtobool as strtobool_i
 import sentry_sdk
 from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
-from django.core.exceptions import ImproperlyConfigured
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -36,6 +35,8 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/gen204.*"),
     re.compile(r"^/wp-content.*"),
     re.compile(r".*/trackback.*"),
+    re.compile(r"^/site/.*"),
+    re.compile(r"^/media/cache/.*"),
 ]
 
 # Used as starting points for various other paths. realpath(__file__) starts in
@@ -111,25 +112,7 @@ USE_TZ = True
 # Storage
 #
 ##############################################################################
-DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/dbox/Dropbox/media/")
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash.
-# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = "/media/"
-
-# In each challenge there can be a single directory out of which files can be
-# downloaded without logging in.
-COMIC_PUBLIC_FOLDER_NAME = "public_html"
-COMIC_ADDITIONAL_PUBLIC_FOLDER_NAMES = ["results/public"]
-
-# In each challenge there can be a single directory from which files can only
-# be downloaded by registered participants of that project
-COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"
+DEFAULT_FILE_STORAGE = "grandchallenge.core.storage.PublicS3Storage"
 
 # Subdirectories on root for various files
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
@@ -330,7 +313,6 @@ THIRD_PARTY_APPS = [
     "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
-    "sorl.thumbnail",  # for dynamic thumbnails
     "dal",  # for autocompletion of selection fields
     "dal_select2",  # for autocompletion of selection fields
     "django_extensions",  # custom extensions
@@ -437,10 +419,6 @@ SUMMERNOTE_CONFIG = {
         ],
     },
 }
-
-# sorl.thumbnail settings
-THUMBNAIL_FORMAT = "PNG"
-THUMBNAIL_ALTERNATIVE_RESOLUTIONS = [1.5, 2]
 
 # Settings for allowed HTML
 BLEACH_ALLOWED_TAGS = [
@@ -706,18 +684,10 @@ DISALLOWED_CHALLENGE_NAMES = [
     "evaluation-supplementary",
     "favicon",
     "i",
-    "cache",  # for sorl-thumbnails
+    "cache",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
 ]
-
-if MEDIA_ROOT[-1] != "/":
-    msg = (
-        "MEDIA_ROOT setting should end in a slash. Found '"
-        + MEDIA_ROOT
-        + "'. Please add a slash"
-    )
-    raise ImproperlyConfigured(msg)
 
 ENABLE_DEBUG_TOOLBAR = False
 
@@ -749,22 +719,6 @@ if DEBUG:
         DEBUG_TOOLBAR_CONFIG = {
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"
         }
-
-if not COMIC_PUBLIC_FOLDER_NAME:
-    raise ImproperlyConfigured(
-        "Don't know from which folder serving publiv files"
-        "is allowed. Please add a setting like "
-        '\'COMIC_PUBLIC_FOLDER_NAME = "public_html"'
-        " to your .conf file."
-    )
-
-if not COMIC_REGISTERED_ONLY_FOLDER_NAME:
-    raise ImproperlyConfigured(
-        "Don't know from which folder serving protected files"
-        "is allowed. Please add a setting like "
-        '\'COMIC_REGISTERED_ONLY_FOLDER_NAME = "datasets"'
-        " to your .conf file."
-    )
 
 # Modality name constants
 MODALITY_OCT = "OCT"  # Optical coherence tomography

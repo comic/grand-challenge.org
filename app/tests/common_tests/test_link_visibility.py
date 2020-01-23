@@ -7,12 +7,7 @@ from tests.utils import validate_admin_only_text_in_page
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "view",
-    [
-        "participants:registration-list",
-        "participants:list",
-        "admins:list",
-        "uploads:list",
-    ],
+    ["participants:registration-list", "participants:list", "admins:list"],
 )
 def test_admins_see_links(view, client, two_challenge_sets):
     url = reverse(

@@ -1364,7 +1364,7 @@ description = "A tool to automatically upgrade syntax for newer versions."
 name = "pyupgrade"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
-version = "1.26.1"
+version = "1.26.2"
 
 [package.dependencies]
 tokenize-rt = ">=3.2.0"
@@ -1622,14 +1622,6 @@ allpy3 = ["cryptography (>=2.1.1)", "defusedxml (>=0.5.0rc1)", "pyjwt (>=1.7.1)"
 azuread = ["cryptography (>=2.1.1)"]
 openidconnect = ["pyjwt (>=1.7.1)", "python-jose (>=3.0.0)"]
 saml = ["python-saml (>=2.2.0)", "python3-saml (>=1.2.1)"]
-
-[[package]]
-category = "main"
-description = "Thumbnails for Django"
-name = "sorl-thumbnail"
-optional = false
-python-versions = "*"
-version = "12.5.0"
 
 [[package]]
 category = "main"
@@ -1969,17 +1961,16 @@ marker = "python_version < \"3.8\""
 name = "zipp"
 optional = false
 python-versions = ">=3.6"
-version = "2.0.0"
+version = "2.0.1"
 
 [package.dependencies]
 more-itertools = "*"
 
 [package.extras]
 docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
-testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "4a9517aa5474619bc33b83ee2b6afc3fe1f2f4667ab5aac776fa4b6ad2eb56db"
+content-hash = "fa1c8985174f13fab971e9be68ecaeea589b265bd057aa60650145e835c430d4"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -2632,8 +2623,8 @@ pytz = [
     {file = "pytz-2019.3.tar.gz", hash = "sha256:b02c06db6cf09c12dd25137e563b31700d3b80fcc4ad23abb7a315f2789819be"},
 ]
 pyupgrade = [
-    {file = "pyupgrade-1.26.1-py2.py3-none-any.whl", hash = "sha256:576b1833bee0eab270610a47b8019faf4ad482aa1badbab6c94c45cf7e2e6970"},
-    {file = "pyupgrade-1.26.1.tar.gz", hash = "sha256:8c6f1b8771dabcaa1976d877550c2c63b4a9ee27f2585b4aaee538238b5d83a4"},
+    {file = "pyupgrade-1.26.2-py2.py3-none-any.whl", hash = "sha256:2e15ee41e0c9f267033face1128a0e50701cb6945c4fbc82364dd1392b98a800"},
+    {file = "pyupgrade-1.26.2.tar.gz", hash = "sha256:62e651d8ce309a5b43b196d0953d1f3190f6b4e789641c4c4b344949a309b9e0"},
 ]
 pyvips = [
     {file = "pyvips-2.1.11.tar.gz", hash = "sha256:5e90526d177c7373d64d050bc9e5864a8d764ec83d83bb855c496ed06dba76ce"},
@@ -2833,10 +2824,6 @@ social-auth-core = [
     {file = "social_auth_core-3.2.0-py2-none-any.whl", hash = "sha256:d81ed681e3c0722300b61a0792c5db5d21206793f95ca810f010c1cc931c8d89"},
     {file = "social_auth_core-3.2.0-py3-none-any.whl", hash = "sha256:47cd2458c8fefd02466b0c514643e02ad8b61d8b4b69f7573e80882e3a97b0f0"},
 ]
-sorl-thumbnail = [
-    {file = "sorl-thumbnail-12.5.0.tar.gz", hash = "sha256:8dfe5fda91a5047d1d35a0b9effe7b000764a01d648e15ca076f44e9c34b6dbd"},
-    {file = "sorl_thumbnail-12.5.0-py2.py3-none-any.whl", hash = "sha256:d9e3f018d19293824803e4ffead96b19dfcd44fa7987cea392f50436817bef34"},
-]
 soupsieve = [
     {file = "soupsieve-1.9.5-py2.py3-none-any.whl", hash = "sha256:bdb0d917b03a1369ce964056fc195cfdff8819c40de04695a80bc813c3cfa1f5"},
     {file = "soupsieve-1.9.5.tar.gz", hash = "sha256:e2c1c5dee4a1c36bcb790e0fabd5492d874b8ebd4617622c4f6a731701060dda"},
@@ -2978,6 +2965,6 @@ whitenoise = [
     {file = "whitenoise-5.0.1.tar.gz", hash = "sha256:0f9137f74bd95fa54329ace88d8dc695fbe895369a632e35f7a136e003e41d73"},
 ]
 zipp = [
-    {file = "zipp-2.0.0-py3-none-any.whl", hash = "sha256:57147f6b0403b59f33fd357f169f860e031303415aeb7d04ede4839d23905ab8"},
-    {file = "zipp-2.0.0.tar.gz", hash = "sha256:7ae5ccaca427bafa9760ac3cd8f8c244bfc259794b5b6bb9db4dda2241575d09"},
+    {file = "zipp-2.0.1-py3-none-any.whl", hash = "sha256:e013e7800f60ec4dde789ebf4e9f7a54236e4bbf5df2a1a4e20ce9e1d9609d67"},
+    {file = "zipp-2.0.1.tar.gz", hash = "sha256:b338014b9bc7102ca69e0fb96ed07215a8954d2989bc5d83658494ab2ba634af"},
 ]

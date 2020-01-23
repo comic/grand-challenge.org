@@ -315,6 +315,9 @@ class TestArchiveIndexAPIEndpoints:
 
         assert response_data == expected_response_data
 
+    @pytest.mark.xfail(
+        reason="Flaky test on travis, see https://github.com/comic/grand-challenge.org/issues/1107"
+    )
     def test_caching(self, client):
         # Clear cache manually
         cache.clear()

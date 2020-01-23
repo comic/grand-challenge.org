@@ -33,10 +33,10 @@ from tests.factories import (
 )
 from tests.patients_tests.factories import PatientFactory
 from tests.studies_tests.factories import StudyFactory
-
-# Import fixtures that are used throughout a module
-# noinspection PyUnresolvedReferences
-from tests.workstations_tests.fixtures import two_workstation_sets  # noqa
+from tests.workstations_tests.fixtures import (
+    TwoWorkstationSets,
+    workstation_set,
+)
 
 
 def pytest_addoption(parser):
@@ -61,6 +61,11 @@ def pytest_runtest_setup(item):
         #  - it (does not) require transactions
         #  - and we're (not) running transaction tests
         pytest.skip("Skipping (non) transaction tests.")
+
+
+@pytest.fixture
+def two_workstation_sets() -> TwoWorkstationSets:
+    return TwoWorkstationSets(ws1=workstation_set(), ws2=workstation_set())
 
 
 @pytest.fixture(scope="session")
