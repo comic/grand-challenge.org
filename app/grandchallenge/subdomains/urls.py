@@ -31,10 +31,6 @@ urlpatterns = [
     path("summernote/", include("django_summernote.urls")),
     # If nothing specific matches, try to resolve the url as project/pagename
     path("", include("grandchallenge.pages.urls", namespace="pages")),
-    path(
-        "media/",
-        include("grandchallenge.serving.urls", namespace="challenge-serving"),
-    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
