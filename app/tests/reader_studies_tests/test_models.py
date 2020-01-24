@@ -179,7 +179,10 @@ def test_progress_for_user():
 
 
 @pytest.mark.django_db
-def test_leaderboard(reader_study_with_gt):
+def test_leaderboard(reader_study_with_gt, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
 
@@ -218,7 +221,10 @@ def test_leaderboard(reader_study_with_gt):
 
 
 @pytest.mark.django_db  # noqa - C901
-def test_statistics_by_question(reader_study_with_gt):
+def test_statistics_by_question(reader_study_with_gt, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
 
@@ -272,7 +278,10 @@ def test_statistics_by_question(reader_study_with_gt):
 
 
 @pytest.mark.django_db  # noqa - C901
-def test_score_for_user(reader_study_with_gt):
+def test_score_for_user(reader_study_with_gt, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = reader_study_with_gt
     r1 = rs.readers_group.user_set.first()
 
