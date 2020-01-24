@@ -26,6 +26,7 @@ jobs:
         with:
           python-version: 3.7
       - run: python -m pip install codecov pytest-cov
+      - uses: actions/checkout@v1
       - run: |
           export TRAVIS_BUILD_NUMBER=$(git describe --always --dirty)
           export TRAVIS_BRANCH_SAFE=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//" | sed "s/[/]/-/")
