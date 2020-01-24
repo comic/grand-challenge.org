@@ -269,6 +269,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return self.answerable_questions.count()
 
     def add_ground_truth(self, *, data, user):
+        answers = []
         for gt in data:
             images = self.images.filter(name__in=gt["images"].split(";"))
             for key in gt.keys():
@@ -290,14 +291,21 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     answer=_answer,
                     is_ground_truth=True,
                 )
-                answer = Answer.objects.create(
-                    creator=user,
-                    question=question,
-                    answer=_answer,
-                    is_ground_truth=True,
+                answers.append(
+                    {
+                        "answer": Answer(
+                            creator=user,
+                            question=question,
+                            answer=_answer,
+                            is_ground_truth=True,
+                        ),
+                        "images": images,
+                    }
                 )
-                answer.images.set(images)
-                answer.save()
+        for answer in answers:
+            answer["answer"].save()
+            answer["answer"].images.set(answer["images"])
+            answer["answer"].save()
 
     def get_hanging_list_images_for_user(self, *, user):
         """
