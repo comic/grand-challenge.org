@@ -206,7 +206,8 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         " and the question text for each of the questions in this study."
         " The subsequent rows should then be filled with the image file"
         " names (separated by semicolons) and the answer corresponding to"
-        " the question text provided in the header.",
+        " the question text provided in the header. For Boolean type answers,"
+        " use `0` for False and `1` for True.",
     )
 
     def __init__(self, *args, reader_study, **kwargs):

@@ -369,6 +369,11 @@ def test_reader_study_add_ground_truth(client):
         question_text="bar",
         answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
     )
+    QuestionFactory(
+        reader_study=rs,
+        question_text="bool",
+        answer_type=Question.ANSWER_TYPE_BOOL,
+    )
     im1, im2, im3, im4 = (
         ImageFactory(name="im1"),
         ImageFactory(name="im2"),
@@ -456,6 +461,19 @@ def test_reader_study_add_ground_truth(client):
     rs.save()
     assert rs.hanging_list_valid
 
+    with open(RESOURCE_PATH / "ground_truth_wrong_boolean.csv") as gt:
+        response = get_view_for_user(
+            viewname="reader-studies:add-ground-truth",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"ground_truth": gt},
+            follow=True,
+            user=editor,
+        )
+    assert response.status_code == 200
+    assert "Expected 1 or 0 for answer type BOOL." in response.rendered_content
+
     with open(RESOURCE_PATH / "ground_truth.csv") as gt:
         response = get_view_for_user(
             viewname="reader-studies:add-ground-truth",
@@ -467,8 +485,8 @@ def test_reader_study_add_ground_truth(client):
             user=editor,
         )
     assert response.status_code == 200
-    assert Answer.objects.all().count() == 3
-    assert Answer.objects.filter(is_ground_truth=True).count() == 3
+    assert Answer.objects.all().count() == 6
+    assert Answer.objects.filter(is_ground_truth=True).count() == 6
 
     with open(RESOURCE_PATH / "ground_truth.csv") as gt:
         response = get_view_for_user(
@@ -485,5 +503,5 @@ def test_reader_study_add_ground_truth(client):
         "Ground truth already added for this question/image combination"
         in response.rendered_content
     )
-    assert Answer.objects.all().count() == 3
-    assert Answer.objects.filter(is_ground_truth=True).count() == 3
+    assert Answer.objects.all().count() == 6
+    assert Answer.objects.filter(is_ground_truth=True).count() == 6

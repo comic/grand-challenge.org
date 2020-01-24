@@ -1,0 +1,4 @@
+images,foo,bool
+im1,yes,true
+im2,no,false
+im3;im4,yes,false

@@ -275,17 +275,25 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 if key == "images":
                     continue
                 question = self.questions.get(question_text=key)
+                if question.answer_type == Question.ANSWER_TYPE_BOOL:
+                    if gt[key] not in ["1", "0"]:
+                        raise ValidationError(
+                            "Expected 1 or 0 for answer type BOOL."
+                        )
+                    _answer = bool(int(gt[key]))
+                else:
+                    _answer = gt[key]
                 Answer.validate(
                     creator=user,
                     question=question,
                     images=images,
-                    answer=gt[key],
+                    answer=_answer,
                     is_ground_truth=True,
                 )
                 answer = Answer.objects.create(
                     creator=user,
                     question=question,
-                    answer=gt[key],
+                    answer=_answer,
                     is_ground_truth=True,
                 )
                 answer.images.set(images)
