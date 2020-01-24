@@ -16,3 +16,23 @@ jobs:
           pre-commit install
       - name: Run static code inspections
         run: pre-commit run --all-files
+
+  non-transaction-tests:
+    needs: [precommit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1.1.1
+        with:
+          python-version: 3.7
+      - run: python -m pip install codecov pytest-cov
+      - run: |
+          export TRAVIS_BUILD_NUMBER=$(git describe --always --dirty)
+          export TRAVIS_BRANCH_SAFE=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//" | sed "s/[/]/-/")
+          docker pull crccheck/hello-world
+          make -j2 build
+          docker-compose run --rm web python manage.py migrate
+          docker-compose up -d
+          docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=."
+          docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.transactions pytest --cov-report= --cov=. --transactions"
+          coverage combine /tmp/coverage/
