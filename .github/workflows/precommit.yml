@@ -34,6 +34,8 @@ jobs:
           make -j2 build
           docker-compose run --rm web python manage.py migrate
           docker-compose up -d
+          mkdir -p /tmp/coverage
+          chmod a+w /tmp/coverage
           docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=."
           docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.transactions pytest --cov-report= --cov=. --transactions"
           coverage combine /tmp/coverage/
