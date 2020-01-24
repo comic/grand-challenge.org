@@ -44,23 +44,10 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
 
 @receiver(m2m_changed, sender=Answer.images.through)
 def assign_score(instance, action, reverse, model, pk_set, **_):
+    from grandchallenge.reader_studies.tasks import add_scores
+
     if action != "post_add":
         return
-
-    if instance.is_ground_truth:
-        for answer in Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=False,
-            images__in=pk_set,
-        ):
-            answer.calculate_score(instance.answer)
-            answer.save()
-    else:
-        ground_truth = Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=True,
-            images__in=pk_set,
-        ).first()
-        if ground_truth:
-            instance.calculate_score(ground_truth.answer)
-            instance.save()
+    add_scores.apply_async(
+        kwargs={"instance_pk": instance.pk, "pk_set": list(pk_set)}
+    )
