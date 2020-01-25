@@ -55,7 +55,8 @@ jobs:
           codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      - name: Push the containers to docker hub
+      - name: Push the containers to docker hub on master
+        if: ${{ github.ref }} == 'refs/heads/master'
         run: |
           echo $DOCKER_PASSWORD | docker login --username $DOCKER_USER --password-stdin
           make push
