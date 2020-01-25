@@ -104,6 +104,10 @@ services:
         condition: service_healthy
       memcached:
         condition: service_started
+      minio-private:
+        condition: service_started
+      minio-protected:
+        condition: service_started
       minio-public:
         condition: service_started
     volumes:
