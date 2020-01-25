@@ -32,14 +32,16 @@ jobs:
           mkdir -p /tmp/coverage
           chmod a+w /tmp/coverage
       - uses: actions/checkout@v1
+      - name: Set the environment
+        run: |
+          echo ::set-env name=TRAVIS_BUILD_NUMBER::$(git describe --always --dirty)
+          echo ::set-env name=TRAVIS_BRANCH_SAFE::$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//" | sed "s/[/]/-/")
+          echo ::set-env name=DOCKER_GID::$(getent group docker | cut -d: -f3)
       - name: Build the containers
         run: |
-          export TRAVIS_BUILD_NUMBER=$(git describe --always --dirty)
-          export TRAVIS_BRANCH_SAFE=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//" | sed "s/[/]/-/")
           make -j2 build
       - name: Test the containers
         run: |
-          export DOCKER_GID=$(getent group docker | cut -d: -f3)
           docker pull crccheck/hello-world
           docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=."
           docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.transactions pytest --cov-report= --cov=. --transactions"
