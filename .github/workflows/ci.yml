@@ -31,16 +31,16 @@ jobs:
           python -m pip install codecov pytest-cov
           mkdir -p /tmp/coverage
           chmod a+w /tmp/coverage
-      - run: docker pull crccheck/hello-world
       - uses: actions/checkout@v1
-      - name: Build and test the containers
+      - name: Build the containers
         run: |
           export TRAVIS_BUILD_NUMBER=$(git describe --always --dirty)
           export TRAVIS_BRANCH_SAFE=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//" | sed "s/[/]/-/")
-          export DOCKER_GID=$(getent group docker | cut -d: -f3)
           make -j2 build
-          docker-compose run --rm web python manage.py migrate
-          docker-compose up -d
+      - name: Test the containers
+        run: |
+          export DOCKER_GID=$(getent group docker | cut -d: -f3)
+          docker pull crccheck/hello-world
           docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=."
           docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.transactions pytest --cov-report= --cov=. --transactions"
       - run: coverage combine /tmp/coverage/
