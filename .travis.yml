@@ -12,6 +12,7 @@ python:
 
 before_install:
   - export TRAVIS_BRANCH_SAFE=$(echo $TRAVIS_BRANCH | sed "s/[/]/-/")
+  - 'export DOCKER_GID=$(getent group docker | cut -d: -f3)'
   - sudo docker pull crccheck/hello-world
   - pip install codecov pytest-cov
   - sudo mkdir -p /tmp/coverage
