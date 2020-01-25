@@ -11,7 +11,7 @@ python:
   - 3.7
 
 before_install:
-  - export TRAVIS_BRANCH_SAFE=$(echo $TRAVIS_BRANCH | sed "s/[/]/-/")
+  - export GIT_BRANCH_NAME=$(echo $TRAVIS_BRANCH | sed "s/[/]/-/")
   - 'export DOCKER_GID=$(getent group docker | cut -d: -f3)'
   - sudo docker pull crccheck/hello-world
   - pip install codecov pytest-cov
