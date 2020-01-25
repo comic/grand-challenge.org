@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-python@v1.1.1
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      -name: Install codecov dependencies
+      - name: Install codecov dependencies
         run: |
           python -m pip install codecov pytest-cov
           mkdir -p /tmp/coverage
