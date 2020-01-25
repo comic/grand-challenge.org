@@ -2,15 +2,18 @@ name: CI
 
 on: [push, pull_request]
 
+env:
+  PYTHON_VERSION: '3.7'
+
 jobs:
 
   precommit:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Python 3.7
+      - name: Install Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v1.1.1
         with:
-          python-version: 3.7
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: actions/checkout@v1
       - name: Install pre-commit
         run: |
@@ -23,10 +26,10 @@ jobs:
     needs: [precommit]
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Python 3.7
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v1.1.1
         with:
-          python-version: 3.7
+          python-version: ${{ env.PYTHON_VERSION }}
       -name: Install codecov dependencies
         run: |
           python -m pip install codecov pytest-cov
