@@ -59,9 +59,6 @@ def test_submission_evaluation(
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Flaky test on travis, see https://github.com/comic/grand-challenge.org/issues/1107"
-)
 def test_method_validation(evaluation_image):
     """The validator should set the correct sha256 and set the ready bit."""
     container, sha256 = evaluation_image

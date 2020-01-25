@@ -46,8 +46,9 @@ class TestTokenAuthentication:
             response = client.get(url)
             assert response.status_code == status.HTTP_200_OK
         except ValueError as e:
-            # On Travis a ValueError will be raised because django can't find all static files
-            # since the static files are in a closed source submodule (DIAGNijmegen/retina-frontend)
+            # In CI a ValueError will be raised because django can't find all
+            # static files since the static files are in a closed source
+            # submodule (DIAGNijmegen/retina-frontend)
             assert "Missing staticfiles manifest entry for" in str(e)
 
 
