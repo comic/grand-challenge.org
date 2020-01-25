@@ -89,7 +89,7 @@ Running Grand-Challenge within a Windows environment requires additional steps b
 Running the Tests
 -----------------
 
-TravisCI_ is used to run the test suite on every new commit. 
+GitHub actions is used to run the test suite on every new commit.
 You can also run the tests locally by 
 
 1. In a console window make sure the database is running
