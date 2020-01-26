@@ -18,9 +18,9 @@ class UploadRawImagesForm(forms.ModelForm):
         widget=uploader.AjaxUploadWidget(multifile=True, auto_commit=False),
         label="Image files",
         help_text=(
-            "Upload images for creating a new archive<br/><br/>"
+            "The total size of all uploaded files cannot exceed 10 GB.<br>"
             "The following file formats are supported: "
-            ".mha, .mhd, .raw, .zraw, .tiff"
+            ".mha, .mhd, .raw, .zraw, .tiff."
         ),
     )
 
@@ -35,6 +35,11 @@ class UploadRawImagesForm(forms.ModelForm):
 
         if len({f.name for f in files}) != len(files):
             raise ValidationError("Filenames must be unique.")
+
+        if sum([f.size for f in files]) > 15_000_000_000:
+            raise ValidationError(
+                "Total size of all files exceeds the upload limit."
+            )
 
         return files
 
