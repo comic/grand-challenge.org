@@ -61,7 +61,48 @@ class ImageFileAdmin(admin.ModelAdmin):
     list_filter = (MhdOrRawFilter,)
 
 
+class RawImageUploadSessionAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "creator",
+        "status",
+        "error_message",
+        "algorithm",
+        "reader_study",
+    )
+    readonly_fields = (
+        "creator",
+        "algorithm_image",
+        "imageset",
+        "annotationset",
+        "algorithm_result",
+        "reader_study",
+        "status",
+    )
+    list_select_related = (
+        "algorithm_image__algorithm",
+        "algorithm_result__job__algorithm_image__algorithm",
+    )
+    list_filter = ("status",)
+    search_fields = (
+        "creator__username",
+        "algorithm_image__algorithm__title",
+        "algorithm_result__job__algorithm_image__algorithm__title",
+        "reader_study__title",
+        "pk",
+        "error_message",
+    )
+
+    def algorithm(self, obj):
+        if obj.algorithm_image:
+            return obj.algorithm_image.algorithm
+        elif obj.algorithm_result:
+            return obj.algorithm_result.job.algorithm_image.algorithm
+
+
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageFile, ImageFileAdmin)
-admin.site.register(RawImageUploadSession)
+admin.site.register(RawImageUploadSession, RawImageUploadSessionAdmin)
 admin.site.register(RawImageFile)

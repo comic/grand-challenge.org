@@ -1,8 +1,8 @@
 grand-challenge.org
 ===================
 
-.. image:: https://travis-ci.org/comic/grand-challenge.org.svg?branch=master
-   :target: https://travis-ci.org/comic/grand-challenge.org
+.. image:: https://github.com/comic/grand-challenge.org/workflows/CI/badge.svg
+   :target: https://github.com/comic/grand-challenge.org/workflows/CI/badge.svg
    :alt: Build Status
 .. image:: https://codecov.io/gh/comic/grand-challenge.org/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/comic/grand-challenge.org

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Statistics</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h1>Reader Study {{ object.title }} - Statistics</h1>
+
+    <div class="table-responsive mt-3">
+        <h2 class="h3">Statistics per case</h2>
+        <table class="table table-hover table-striped table-sm mb-3">
+            <thead>
+                <tr>
+                    <th>Image name</th>
+                    <th>Total score / max score</th>
+                    <th>Average score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in object.statistics.scores_by_case %}
+                <tr>
+                        <td>{{ entry.images__name }}</td>
+                        <td>{{ entry.score__sum }} / {{ object.statistics.question_count }}</td>
+                        <td>{{ entry.score__avg }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 class="h3">Statistics per question</h2>
+        <table class="table table-hover table-striped table-sm">
+             <thead>
+                <tr>
+                    <th>Question</th>
+                    <th>Total score / max score</th>
+                    <th>Average score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in object.statistics.scores_by_question %}
+                    <tr>
+                        <td>{{ entry.question__question_text }}</td>
+                        <td>{{ entry.score__sum }} / {{ object.statistics.question_count }}</td>
+                        <td>{{ entry.score__avg }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

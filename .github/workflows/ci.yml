@@ -1,0 +1,67 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  PYTHON_VERSION: '3.7'
+
+jobs:
+
+  precommit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v1.1.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/checkout@v1
+      - name: Install pre-commit
+        run: |
+          python -m pip install pre-commit
+          pre-commit install
+      - name: Run static code inspections
+        run: pre-commit run --all-files
+
+  django-tests:
+    needs: [precommit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v1.1.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install codecov dependencies
+        run: |
+          python -m pip install codecov pytest-cov
+          mkdir -p /tmp/coverage
+          chmod a+w /tmp/coverage
+      - uses: actions/checkout@v1
+      - name: Set the environment
+        run: |
+          echo ::set-env name=GIT_COMMIT_ID::$(git describe --always --dirty)
+          echo ::set-env name=GIT_BRANCH_NAME::$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//" | sed "s/[/]/-/")
+          echo ::set-env name=DOCKER_GID::$(getent group docker | cut -d: -f3)
+      - name: Build the containers
+        run: |
+          make -j2 build
+      - name: Run the non-transaction tests
+        run: |
+          docker pull crccheck/hello-world
+          docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.non-transactions pytest --cov-report= --cov=."
+      - name: Run the transaction tests
+        run: |
+          docker-compose run --rm -v /tmp/coverage:/tmp/coverage web bash -c "COVERAGE_FILE=/tmp/coverage/.coverage.transactions pytest --cov-report= --cov=. --transactions"
+      - name: Upload coverage report to codecov
+        run: |
+          coverage combine /tmp/coverage/
+          codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Push the containers if we're on master
+        if: github.ref == 'refs/heads/master'
+        run: |
+          echo $DOCKER_PASSWORD | docker login --username $DOCKER_USER --password-stdin
+          make push
+        env:
+          DOCKER_USER: grandchallenge
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
