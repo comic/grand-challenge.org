@@ -27,10 +27,10 @@
             </thead>
             <tbody>
                 {% for entry in object.statistics.scores_by_case %}
-                <tr>
-                        <td>{{ entry.images__name }}</td>
-                        <td>{{ entry.score__sum }} / {{ object.statistics.question_count }}</td>
-                        <td>{{ entry.score__avg }}</td>
+                    <tr>
+                        <td data-order="{{ entry.images__name }}">{{ entry.images__name }}</td>
+                        <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.statistics.max_score_cases }}</td>
+                        <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -48,12 +48,31 @@
             <tbody>
                 {% for entry in object.statistics.scores_by_question %}
                     <tr>
-                        <td>{{ entry.question__question_text }}</td>
-                        <td>{{ entry.score__sum }} / {{ object.statistics.question_count }}</td>
-                        <td>{{ entry.score__avg }}</td>
+                        <td data-order="{{ entry.question__question_text }}">{{ entry.question__question_text }}</td>
+                        <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.statistics.max_score_questions }}</td>
+                        <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 {% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').each(function() {
+                $(this).DataTable({
+                    pageLength: 100,
+                });
+            });
+        });
+        $(window).resize(function () {
+            $('.table').each(function() {
+                $(this).DataTable().columns.adjust();
+            });
+        });
+    </script>
+{% endblock %}
+
