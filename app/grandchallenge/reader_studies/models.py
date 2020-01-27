@@ -370,12 +370,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             creator=user, question__reader_study=self, is_ground_truth=False
         ).aggregate(Sum("score"), Avg("score"))
 
-    @property
-    def leaderboard(self):
-        question_count = float(self.answerable_question_count) * len(
-            self.hanging_list
-        )
-        grouped_scores = (
+    @cached_property
+    def scores_by_user(self):
+        return (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
             )
@@ -384,16 +381,19 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .annotate(Sum("score"), Avg("score"))
             .order_by("-score__sum")
         )
+
+    @property
+    def leaderboard(self):
+        question_count = float(self.answerable_question_count) * len(
+            self.hanging_list
+        )
         return {
             "question_count": question_count,
-            "grouped_scores": grouped_scores,
+            "grouped_scores": self.scores_by_user,
         }
 
     @property
     def statistics(self):
-        question_count = float(self.answerable_question_count) * len(
-            self.hanging_list
-        )
         scores_by_question = (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
@@ -413,8 +413,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .order_by("score__avg")
         )
         return {
-            "question_count": question_count,
+            "max_score_questions": float(len(self.hanging_list))
+            * self.scores_by_user.count(),
             "scores_by_question": scores_by_question,
+            "max_score_cases": float(self.answerable_question_count)
+            * self.scores_by_user.count(),
             "scores_by_case": scores_by_case,
         }
 
