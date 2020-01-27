@@ -269,27 +269,43 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return self.answerable_questions.count()
 
     def add_ground_truth(self, *, data, user):
+        answers = []
         for gt in data:
             images = self.images.filter(name__in=gt["images"].split(";"))
             for key in gt.keys():
                 if key == "images":
                     continue
                 question = self.questions.get(question_text=key)
+                if question.answer_type == Question.ANSWER_TYPE_BOOL:
+                    if gt[key] not in ["1", "0"]:
+                        raise ValidationError(
+                            "Expected 1 or 0 for answer type BOOL."
+                        )
+                    _answer = bool(int(gt[key]))
+                else:
+                    _answer = gt[key]
                 Answer.validate(
                     creator=user,
                     question=question,
                     images=images,
-                    answer=gt[key],
+                    answer=_answer,
                     is_ground_truth=True,
                 )
-                answer = Answer.objects.create(
-                    creator=user,
-                    question=question,
-                    answer=gt[key],
-                    is_ground_truth=True,
+                answers.append(
+                    {
+                        "answer": Answer(
+                            creator=user,
+                            question=question,
+                            answer=_answer,
+                            is_ground_truth=True,
+                        ),
+                        "images": images,
+                    }
                 )
-                answer.images.set(images)
-                answer.save()
+        for answer in answers:
+            answer["answer"].save()
+            answer["answer"].images.set(answer["images"])
+            answer["answer"].save()
 
     def get_hanging_list_images_for_user(self, *, user):
         """

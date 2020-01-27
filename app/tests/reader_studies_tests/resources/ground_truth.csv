@@ -1,4 +1,4 @@
-images,foo
-im1,yes
-im2,no
-im3;im4,yes
+images,foo,bool
+im1,yes,1
+im2,no,0
+im3;im4,yes,1
