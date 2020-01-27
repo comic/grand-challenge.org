@@ -205,6 +205,7 @@ def test_leaderboard(reader_study_with_gt):
             )
             ans.images.add(im)
 
+    del rs.scores_by_user
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 12
     assert leaderboard["question_count"] == 6.0
