@@ -199,6 +199,17 @@ class ReaderStudyStatistics(
     # If the permission is changed to 'read', we need to filter these values out.
 
 
+class ReaderStudyImages(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_images.html"
+
+
 class QuestionUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):

@@ -263,6 +263,10 @@
                        href="{% url 'reader-studies:add-images' slug=object.slug %}">
                         <i class="fas fa-plus"></i> Add Cases
                     </a>
+                     <a class="btn btn-primary ml-1"
+                       href="{% url 'reader-studies:images' slug=object.slug %}">
+                        <i class="fas fa-eye mr-1"></i> View / delete images
+                    </a>
                 </p>
             </div>
 
@@ -358,7 +362,6 @@
                         <i class="fas fa-plus"></i> Add Readers
                     </a>
                 </p>
-
             </div>
 
             <div class="tab-pane fade"
@@ -461,35 +464,6 @@
 
     </div>
 
-      <div class="modal fade" id="removeImageModal" tabindex="-1" role="dialog"
-         aria-labelledby="removeImageModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="removeImageModalLabel">Remoove
-                        image</h5>
-                    <button type="button" class="close" data-dismiss="modal"
-                            aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Removing an image cannot be undone. By removing an image, the current
-                        hanging list will become invalid.</p>
-
-                    <p><b>Are you sure that you want to continue?</b></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                            data-dismiss="modal">Cancel
-                    </button>
-                    <button type="button" class="btn btn-danger" id="removeImage">
-                        <i class="fa fa-trash"></i> Remove
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 {% endblock %}
 
 {% block script %}
@@ -517,23 +491,7 @@
                     }
                 })
             });
-                 $('#removeImage').on('click', (e) => {
-                    $.ajax({
-                        type: 'PATCH',
-                        url: "{% url 'api:reader-study-remove-image' pk=object.pk %}",
-                        data: JSON.stringify({image: $(e.currentTarget).data("image")}),
-                        contentType: 'application/json',
-                        accept: 'application/json',
-                        complete: (response) => {
-                            window.location.replace(window.location.href);
-                        }
-                    })
-                })
-                $('.remove-image').on('click', (e) => {
-                    $('#removeImage').data('image', $(e.currentTarget).data('id'));
-                    $('#removeImageModal').modal('show');
-                })
-            });
-        </script>
-        <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+        });
+    </script>
+    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
 {% endblock %}
