@@ -470,12 +470,11 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             )
             return Response({"status": "Image removed from reader study."},)
         except Image.DoesNotExist:
-            pass
-        messages.add_message(
-            request,
-            messages.ERROR,
-            "Image could not be removed from reader study.",
-        )
+            messages.add_message(
+                request,
+                messages.ERROR,
+                "Image could not be removed from reader study.",
+            )
         return Response(
             {"status": "Image could not be removed from reader study."},
         )
