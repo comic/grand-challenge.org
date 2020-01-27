@@ -5,7 +5,7 @@ echo "Press Ctrl+C (once) to stop"
 sleep 1
 
 export GIT_COMMIT_ID=$(git describe --always --dirty)
-export GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//" | sed "s/[/]/-/")
+export GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[a-zA-Z0-9]]//")
 export DOCKER_GID=$(getent group docker | cut -d: -f3)
 
 make -j2 build
