@@ -508,8 +508,22 @@ def test_generate_hanging_list_api_view(generate_hanging_list, client):
 @pytest.mark.django_db
 def test_remove_image_api_view(client):
     rs = ReaderStudyFactory()
-    editor = UserFactory()
+    reader, editor = UserFactory(), UserFactory()
+    rs.add_reader(reader)
     rs.add_editor(editor)
+
+    response = get_view_for_user(
+        viewname="api:reader-study-remove-image",
+        reverse_kwargs={"pk": rs.pk},
+        user=reader,
+        client=client,
+        method=client.patch,
+        data={"image": 1},
+        content_type="application/json",
+        follow=True,
+    )
+
+    assert response.status_code == 403
 
     response = get_view_for_user(
         viewname="api:reader-study-remove-image",
