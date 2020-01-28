@@ -122,49 +122,7 @@ services:
     group_add:
       - ${DOCKER_GID-999} # The docker group is only needed for testing
     healthcheck:
-      test: ["CMD-SHELL", "exit 0"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  web_ai:
-    image: grandchallenge/web_ai-test:latest
-    environment:
-      <<: *postgresenv
-      <<: *private_storage_credentials
-      <<: *protected_storage_credentials
-      <<: *protected_storage_connections
-      SITE_ID: 1
-      GOOGLE_ANALYTICS_ID: UA-XXXXX-Y
-    # Use werkzeug debugger in dev, this should never be used in production!
-    # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
-    command: >-
-      bash -c "
-      python manage.py migrate
-      && python manage.py runserver 0.0.0.0:8002 --settings=config.settings_ai
-      "
-    restart: always
-    depends_on:
-      postgres:
-        condition: service_healthy
-      memcached:
-        condition: service_started
-    volumes:
-      - type: volume
-        source: media
-        target: /dbox/Dropbox/media/
-      # Bind the app directory for live reloading in development
-      - type: bind
-        source: ./app
-        target: /app/
-      # The docker socket is only needed for testing
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-    group_add:
-      - 999 # The docker group is only needed for testing
-    healthcheck:
-      test: ["CMD-SHELL", "exit 0"]
+      test: ["CMD-SHELL", "curl http://web:8000/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -188,8 +146,6 @@ services:
       - "443:443"
     depends_on:
       web:
-        condition: service_healthy
-      web_ai:
         condition: service_healthy
       workstation-proxy:
         condition: service_started

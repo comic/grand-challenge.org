@@ -79,11 +79,6 @@ http {
     server web:8000;
   }
 
-  upstream ai_app_server {
-    server web_ai:8002;
-  }
-
-
   upstream workstations_http {
     server ${WORKSTATION_PROXY_HOSTNAME}:${WORKSTATION_PROXY_HTTP_PORT};
   }
@@ -97,7 +92,7 @@ http {
     listen 80;
     listen [::]:80;
 
-    server_name .${SERVER_NAME} example.localhost;
+    server_name .${SERVER_NAME};
 
     return 301 https://$host$request_uri;
   }
@@ -112,25 +107,11 @@ http {
     return 301 $scheme://${SERVER_NAME}$request_uri;
   }
 
-  server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    server_name example.localhost;
-
-    location / {
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
-      proxy_set_header Host $host;
-      proxy_redirect off;
-      proxy_pass http://ai_app_server;
-    }
-
-  }
 
   server {
     # Try to serve files, otherwise proxy to app
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl http2 default_server;
+    listen [::]:443 ssl http2 default_server;
 
     client_body_buffer_size 16m;
     client_max_body_size 16m;
