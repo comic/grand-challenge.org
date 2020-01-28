@@ -208,6 +208,7 @@ def test_leaderboard(reader_study_with_gt, settings):
             )
             ans.images.add(im)
 
+    del rs.scores_by_user
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 12
     assert leaderboard["question_count"] == 6.0
@@ -235,7 +236,7 @@ def test_statistics_by_question(reader_study_with_gt, settings):
 
     statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
-    assert statistics["question_count"] == 6.0
+    assert statistics["max_score_questions"] == 2.0
     scores = statistics["scores_by_question"]
     assert len(scores) == rs.questions.count()
     questions = set(rs.questions.values_list("question_text", flat=True))
@@ -262,7 +263,7 @@ def test_statistics_by_question(reader_study_with_gt, settings):
 
     statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 12
-    assert statistics["question_count"] == 6.0
+    assert statistics["max_score_cases"] == 6.0
     scores = statistics["scores_by_question"]
     assert len(scores) == rs.questions.count()
     questions = set(rs.questions.values_list("question_text", flat=True))

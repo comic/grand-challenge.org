@@ -27,12 +27,31 @@
             <tbody>
             {% for entry in object.leaderboard.grouped_scores %}
                 <tr>
-                    <td>{{ forloop.counter }}. {{ entry.creator__username }}</td>
-                    <td>{{ entry.score__sum }} / {{ object.leaderboard.question_count }}</td>
-                    <td>{{ entry.score__avg }}</td>
+                    <td data-order="{{ entry.creator__username }}">{{ forloop.counter }}. {{ entry.creator__username }}</td>
+                    <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.leaderboard.question_count }}</td>
+                    <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 {% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').each(function() {
+                $(this).DataTable({
+                    pageLength: 100,
+                });
+            });
+        });
+        $(window).resize(function () {
+            $('.table').each(function() {
+                $(this).DataTable().columns.adjust();
+            });
+        });
+    </script>
+{% endblock %}
+
