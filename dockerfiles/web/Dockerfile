@@ -56,7 +56,6 @@ WORKDIR /app
 COPY --chown=django:django ./app/ /app/
 COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 RUN python manage.py collectstatic --noinput
-RUN python manage.py collectstatic --noinput --settings=config.settings_ai
 
 ##################
 # Dist Container #
