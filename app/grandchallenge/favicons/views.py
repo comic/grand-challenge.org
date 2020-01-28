@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.views.generic import RedirectView
 from favicon.models import Favicon
 
@@ -15,7 +16,7 @@ class FaviconView(RedirectView):
         fav = Favicon.objects.filter(isFavicon=True).first()
 
         if not fav:
-            return None
+            raise Http404
 
         if self.rel == "shortcut icon":
             size = 32
