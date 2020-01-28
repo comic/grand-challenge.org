@@ -408,7 +408,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 question__reader_study=self, is_ground_truth=False
             )
             .order_by("images__name")
-            .values("images__name")
+            .values("images__name", "images__pk")
             .annotate(Sum("score"), Avg("score"))
             .order_by("score__avg")
         )

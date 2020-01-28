@@ -15,10 +15,18 @@ def workstation_query(
     Supports setting the image with overlay or a reader_study.
     """
     if image:
-        query = {settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM: image.pk}
+        query = {
+            settings.WORKSTATIONS_BASE_IMAGE_QUERY_PARAM: getattr(
+                image, "pk", image
+            )
+        }
         if overlay:
             query.update(
-                {settings.WORKSTATIONS_OVERLAY_QUERY_PARAM: overlay.pk}
+                {
+                    settings.WORKSTATIONS_OVERLAY_QUERY_PARAM: getattr(
+                        overlay, "pk", overlay
+                    )
+                }
             )
     elif reader_study:
         query = {
@@ -29,7 +37,13 @@ def workstation_query(
 
     if config:
         # Explicit configs have precedence
-        query.update({settings.WORKSTATIONS_CONFIG_QUERY_PARAM: config.pk})
+        query.update(
+            {
+                settings.WORKSTATIONS_CONFIG_QUERY_PARAM: getattr(
+                    config, "pk", config
+                )
+            }
+        )
     elif reader_study and reader_study.workstation_config:
         query.update(
             {
