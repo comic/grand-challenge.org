@@ -4,6 +4,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.cases.models import Image
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.reader_studies.tasks import add_scores
 
 
 @receiver(m2m_changed, sender=ReaderStudy.images.through)
@@ -44,8 +45,6 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
 
 @receiver(m2m_changed, sender=Answer.images.through)
 def assign_score(instance, action, reverse, model, pk_set, **_):
-    from grandchallenge.reader_studies.tasks import add_scores
-
     if action != "post_add":
         return
     add_scores.apply_async(
