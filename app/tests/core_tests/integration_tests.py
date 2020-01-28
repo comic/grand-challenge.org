@@ -19,14 +19,16 @@ from tests.utils import get_http_host
 PI_LINE_END_REGEX = "(\r\n|\n)"
 
 
-def create_page(challenge, title, content="testcontent", permission_lvl=None):
-    if permission_lvl is None:
-        permission_lvl = Page.ALL
+def create_page(
+    challenge, title, content="testcontent", permission_level=None
+):
+    if permission_level is None:
+        permission_level = Page.ALL
     return PageFactory(
         title=title,
         challenge=challenge,
         html=content,
-        permission_lvl=permission_lvl,
+        permission_level=permission_level,
     )
 
 
@@ -497,15 +499,15 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         correct users.
         """
         adminonlypage = create_page(
-            self.testproject, "adminonlypage", permission_lvl=Page.ADMIN_ONLY
+            self.testproject, "adminonlypage", permission_level=Page.ADMIN_ONLY
         )
         registeredonlypage = create_page(
             self.testproject,
             "registeredonlypage",
-            permission_lvl=Page.REGISTERED_ONLY,
+            permission_level=Page.REGISTERED_ONLY,
         )
         publicpage = create_page(
-            self.testproject, "publicpage", permission_lvl=Page.ALL
+            self.testproject, "publicpage", permission_level=Page.ALL
         )
         self._test_page_can_be_viewed(self.projectadmin, adminonlypage)
         self._test_page_can_not_be_viewed(self.participant, adminonlypage)

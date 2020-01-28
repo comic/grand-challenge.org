@@ -269,27 +269,43 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return self.answerable_questions.count()
 
     def add_ground_truth(self, *, data, user):
+        answers = []
         for gt in data:
             images = self.images.filter(name__in=gt["images"].split(";"))
             for key in gt.keys():
                 if key == "images":
                     continue
                 question = self.questions.get(question_text=key)
+                if question.answer_type == Question.ANSWER_TYPE_BOOL:
+                    if gt[key] not in ["1", "0"]:
+                        raise ValidationError(
+                            "Expected 1 or 0 for answer type BOOL."
+                        )
+                    _answer = bool(int(gt[key]))
+                else:
+                    _answer = gt[key]
                 Answer.validate(
                     creator=user,
                     question=question,
                     images=images,
-                    answer=gt[key],
+                    answer=_answer,
                     is_ground_truth=True,
                 )
-                answer = Answer.objects.create(
-                    creator=user,
-                    question=question,
-                    answer=gt[key],
-                    is_ground_truth=True,
+                answers.append(
+                    {
+                        "answer": Answer(
+                            creator=user,
+                            question=question,
+                            answer=_answer,
+                            is_ground_truth=True,
+                        ),
+                        "images": images,
+                    }
                 )
-                answer.images.set(images)
-                answer.save()
+        for answer in answers:
+            answer["answer"].save()
+            answer["answer"].images.set(answer["images"])
+            answer["answer"].save()
 
     def get_hanging_list_images_for_user(self, *, user):
         """
@@ -370,12 +386,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             creator=user, question__reader_study=self, is_ground_truth=False
         ).aggregate(Sum("score"), Avg("score"))
 
-    @property
-    def leaderboard(self):
-        question_count = float(self.answerable_question_count) * len(
-            self.hanging_list
-        )
-        grouped_scores = (
+    @cached_property
+    def scores_by_user(self):
+        return (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
             )
@@ -384,16 +397,19 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .annotate(Sum("score"), Avg("score"))
             .order_by("-score__sum")
         )
+
+    @property
+    def leaderboard(self):
+        question_count = float(self.answerable_question_count) * len(
+            self.hanging_list
+        )
         return {
             "question_count": question_count,
-            "grouped_scores": grouped_scores,
+            "grouped_scores": self.scores_by_user,
         }
 
     @property
     def statistics(self):
-        question_count = float(self.answerable_question_count) * len(
-            self.hanging_list
-        )
         scores_by_question = (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
@@ -408,13 +424,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 question__reader_study=self, is_ground_truth=False
             )
             .order_by("images__name")
-            .values("images__name")
+            .values("images__name", "images__pk")
             .annotate(Sum("score"), Avg("score"))
             .order_by("score__avg")
         )
         return {
-            "question_count": question_count,
+            "max_score_questions": float(len(self.hanging_list))
+            * self.scores_by_user.count(),
             "scores_by_question": scores_by_question,
+            "max_score_cases": float(self.answerable_question_count)
+            * self.scores_by_user.count(),
             "scores_by_case": scores_by_case,
         }
 

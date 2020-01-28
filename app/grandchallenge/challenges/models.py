@@ -14,7 +14,6 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
-from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
 
@@ -569,74 +568,3 @@ class ExternalChallenge(ChallengeBase):
     @property
     def is_self_hosted(self):
         return False
-
-
-class ComicSiteModel(models.Model):
-    """
-    An object which can be shown or used in the framework.
-
-    This base class should handle common functions such as authorization.
-    """
-
-    title = models.SlugField(max_length=64, blank=False)
-    challenge = models.ForeignKey(
-        Challenge,
-        help_text="To which comicsite does this object belong?",
-        on_delete=models.CASCADE,
-    )
-    ALL = "ALL"
-    REGISTERED_ONLY = "REG"
-    ADMIN_ONLY = "ADM"
-    STAFF_ONLY = "STF"
-    PERMISSIONS_CHOICES = (
-        (ALL, "All"),
-        (REGISTERED_ONLY, "Registered users only"),
-        (ADMIN_ONLY, "Administrators only"),
-    )
-    PERMISSION_WEIGHTS = ((ALL, 0), (REGISTERED_ONLY, 1), (ADMIN_ONLY, 2))
-    permission_lvl = models.CharField(
-        max_length=3, choices=PERMISSIONS_CHOICES, default=ALL
-    )
-
-    def __str__(self):
-        return self.title
-
-    def can_be_viewed_by(self, user):
-        """Is user allowed to view this?"""
-        if self.permission_lvl == self.ALL:
-            return True
-        else:
-            return user.has_perm("view_ComicSiteModel", self)
-
-    def setpermissions(self, lvl):
-        """Give the right groups permissions to this object."""
-        admingroup = self.challenge.admins_group
-        participantsgroup = self.challenge.participants_group
-        self.persist_if_needed()
-        if lvl == self.ALL:
-            assign_perm("view_ComicSiteModel", admingroup, self)
-            assign_perm("view_ComicSiteModel", participantsgroup, self)
-        elif lvl == self.REGISTERED_ONLY:
-            assign_perm("view_ComicSiteModel", admingroup, self)
-            assign_perm("view_ComicSiteModel", participantsgroup, self)
-        elif lvl == self.ADMIN_ONLY:
-            assign_perm("view_ComicSiteModel", admingroup, self)
-            remove_perm("view_ComicSiteModel", participantsgroup, self)
-        else:
-            raise ValueError(
-                f"Unknown permissions level '{lvl}'. "
-                "I don't know which groups to give permissions to this object"
-            )
-
-    def persist_if_needed(self):
-        """Save the model if it has not been done so already."""
-        if not self.id:
-            super().save()
-
-    def save(self, *args, **kwargs):
-        self.setpermissions(self.permission_lvl)
-        super().save()
-
-    class Meta:
-        abstract = True
-        permissions = (("view_ComicSiteModel", "Can view Comic Site Model"),)

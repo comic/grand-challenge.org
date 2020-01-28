@@ -179,7 +179,10 @@ def test_progress_for_user():
 
 
 @pytest.mark.django_db
-def test_leaderboard(reader_study_with_gt):
+def test_leaderboard(reader_study_with_gt, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
 
@@ -205,6 +208,7 @@ def test_leaderboard(reader_study_with_gt):
             )
             ans.images.add(im)
 
+    del rs.scores_by_user
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 12
     assert leaderboard["question_count"] == 6.0
@@ -218,7 +222,10 @@ def test_leaderboard(reader_study_with_gt):
 
 
 @pytest.mark.django_db  # noqa - C901
-def test_statistics_by_question(reader_study_with_gt):
+def test_statistics_by_question(reader_study_with_gt, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
 
@@ -229,7 +236,7 @@ def test_statistics_by_question(reader_study_with_gt):
 
     statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
-    assert statistics["question_count"] == 6.0
+    assert statistics["max_score_questions"] == 2.0
     scores = statistics["scores_by_question"]
     assert len(scores) == rs.questions.count()
     questions = set(rs.questions.values_list("question_text", flat=True))
@@ -256,7 +263,7 @@ def test_statistics_by_question(reader_study_with_gt):
 
     statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 12
-    assert statistics["question_count"] == 6.0
+    assert statistics["max_score_cases"] == 6.0
     scores = statistics["scores_by_question"]
     assert len(scores) == rs.questions.count()
     questions = set(rs.questions.values_list("question_text", flat=True))
@@ -272,7 +279,10 @@ def test_statistics_by_question(reader_study_with_gt):
 
 
 @pytest.mark.django_db  # noqa - C901
-def test_score_for_user(reader_study_with_gt):
+def test_score_for_user(reader_study_with_gt, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = reader_study_with_gt
     r1 = rs.readers_group.user_set.first()
 

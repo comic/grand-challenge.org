@@ -159,9 +159,15 @@ class Command(BaseCommand):
         )
         demo.add_participant(self.users["demop"])
 
-        Page.objects.create(challenge=demo, title="all", permission_lvl="ALL")
-        Page.objects.create(challenge=demo, title="reg", permission_lvl="REG")
-        Page.objects.create(challenge=demo, title="adm", permission_lvl="ADM")
+        Page.objects.create(
+            challenge=demo, title="all", permission_level="ALL"
+        )
+        Page.objects.create(
+            challenge=demo, title="reg", permission_level="REG"
+        )
+        Page.objects.create(
+            challenge=demo, title="adm", permission_level="ADM"
+        )
 
         method = Method(challenge=demo, creator=self.users["demo"])
         container = ContentFile(base64.b64decode(b""))

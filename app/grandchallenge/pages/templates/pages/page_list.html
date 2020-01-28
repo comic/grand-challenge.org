@@ -44,11 +44,11 @@
                             <i class="fa fa-eye text-success"
                                title="Page is listed in the challenge menu"></i>
                         {% endif %}
-                        {% if page.permission_lvl == page.ADMIN_ONLY %}
+                        {% if page.permission_level == page.ADMIN_ONLY %}
                             <span class="badge badge-danger">Admins Only</span>
-                        {% elif page.permission_lvl == page.REGISTERED_ONLY %}
+                        {% elif page.permission_level == page.REGISTERED_ONLY %}
                             <span class="badge badge-warning">Participants Only</span>
-                        {% elif page.permission_lvl == page.ALL %}
+                        {% elif page.permission_level == page.ALL %}
                             <span class="badge badge-success">Everyone</span>
                         {% endif %}
                     </td>
