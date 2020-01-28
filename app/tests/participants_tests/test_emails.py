@@ -8,9 +8,6 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Flaky test on travis, see https://github.com/comic/grand-challenge.org/issues/1107"
-)
 @pytest.mark.parametrize("participant_review", [True, False])
 def test_new_registration_email(participant_review, client, challenge_set):
     user = UserFactory()
