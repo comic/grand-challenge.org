@@ -133,6 +133,7 @@ PRIVATE_S3_STORAGE_KWARGS = {
     ),
     # Do not overwrite files, we get problems with jqfileupload otherwise
     "file_overwrite": False,
+    "default_acl": "private",
 }
 PROTECTED_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
@@ -151,6 +152,7 @@ PROTECTED_S3_STORAGE_KWARGS = {
         "PROTECTED_S3_CUSTOM_DOMAIN", "gc.localhost/media"
     ),
     "file_overwrite": False,
+    "default_acl": "private",
 }
 PUBLIC_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
@@ -161,6 +163,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "file_overwrite": False,
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
+    "default_acl": "public-read",
 }
 
 ##############################################################################
