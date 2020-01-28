@@ -39,7 +39,7 @@ jobs:
       - name: Set the environment
         run: |
           echo ::set-env name=GIT_COMMIT_ID::$(git describe --always --dirty)
-          echo ::set-env name=GIT_BRANCH_NAME::$(echo ${{ github.ref }} | cut -d/ -f3- | sed "s/[^[a-zA-Z0-9]]//")
+          echo ::set-env name=GIT_BRANCH_NAME::$(echo ${{ github.ref }} | cut -d/ -f3- | sed "s/[^[:alnum:]]//g")
           echo ::set-env name=DOCKER_GID::$(getent group docker | cut -d: -f3)
       - name: Build the containers
         run: |

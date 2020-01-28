@@ -53,7 +53,7 @@ class Archive(UUIDModel):
         images_to_remove = (
             Image.objects.annotate(num_archives=Count("archive"))
             .filter(archive__id=self.id, num_archives=1)
-            .all()
+            .order_by("name")
         )
 
         (

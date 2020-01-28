@@ -31,7 +31,7 @@ WORKDIR /opt/poetry
 COPY poetry.toml /opt/poetry
 COPY pyproject.toml /opt/poetry
 COPY poetry.lock /opt/poetry
-RUN poetry install --no-dev
+RUN poetry install --no-dev --no-root
 ENV PATH="/opt/poetry/.venv/bin:$PATH"
 
 ###################
@@ -49,7 +49,7 @@ RUN npm install && npm run build
 ###################
 FROM base as test
 
-RUN poetry install
+RUN poetry install --no-root
 COPY --chown=django:django setup.cfg /home/django
 
 WORKDIR /app

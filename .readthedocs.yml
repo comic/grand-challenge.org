@@ -3,15 +3,15 @@
 
 version: 2
 
-# Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
 
-# Optionally build your docs in additional formats such as PDF and ePub
 formats: all
 
-# Optionally set the version of Python and requirements required to build your docs
 python:
   version: 3.7
   install:
-    - requirements: docs/requirements.txt
+    - method: pip
+      path: .
+    # TODO: Remove this requirements file once rtd fully supports dev-dependencies
+    - requirements: docs/requirements.docs.txt
