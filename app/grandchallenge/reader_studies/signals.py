@@ -48,5 +48,8 @@ def assign_score(instance, action, reverse, model, pk_set, **_):
     if action != "post_add":
         return
     add_scores.apply_async(
-        kwargs={"instance_pk": str(instance.pk), "pk_set": list(map(str, pk_set))}
+        kwargs={
+            "instance_pk": str(instance.pk),
+            "pk_set": list(map(str, pk_set)),
+        }
     )
