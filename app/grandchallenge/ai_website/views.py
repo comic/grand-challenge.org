@@ -11,6 +11,7 @@ from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.ai_website.forms import ImportForm
 from grandchallenge.ai_website.models import CompanyEntry, ProductEntry
+from grandchallenge.ai_website.utils import import_data
 
 # Create your views here.
 
@@ -170,8 +171,7 @@ class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
         response = super().form_valid(*args, **kwargs)
         form = self.get_form()
         if form.is_valid():
-            call_command(
-                "import_data",
+            import_data(
                 form.cleaned_data["products_file"],
                 form.cleaned_data["companies_file"],
             )

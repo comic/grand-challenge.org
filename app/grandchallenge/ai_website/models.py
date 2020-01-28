@@ -19,7 +19,7 @@ class CompanyEntry(models.Model):
     hq = models.CharField(max_length=100)
     email = models.EmailField(max_length=500)
     logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage, blank=True
+        upload_to=get_logo_path, storage=public_s3_storage, blank=True, null=True
     )
     description = models.CharField(
         max_length=500,
@@ -82,7 +82,8 @@ class ProductBasic(models.Model):
 
 # Create your models here.
 class ProductEntry(ProductBasic):
-    ce_status = models.CharField(max_length=10, default="no")
+    verified = models.CharField(max_length=5, default='no')
+    ce_status = models.CharField(max_length=500, default="no")
     ce_class = models.CharField(max_length=500, default="unknown")
     fda_status = models.CharField(max_length=500, default="unknown")
     fda_class = models.CharField(max_length=500, default="unknown")
@@ -106,6 +107,7 @@ class ProductEntry(ProductBasic):
 
     tech_papers = models.CharField(max_length=500, default="unknown")
     clin_papers = models.CharField(max_length=500, default="unknown")
+    images = models.ManyToManyField(ProductImage)
 
     def __str__(self):
         return self.short_name

@@ -5,8 +5,8 @@
     <div class="row py-4 border-top">
         <div class="col-sm-3">
             <div class="d-flex justify-content-between flex-column h-100">
-                <a href="{% url 'company_page' pk=product.company.pk %}" title="{{product.company.company_name}}">
-                    <img src="{{ product.company.logo.url }}" alt="Logo" style="width:70%">
+                <a href="{% url 'ai-website:company_page' pk=product.company.pk %}" title="{{product.company.company_name}}">
+               logo
                 </a>
                 <!--          {% if product.product_img %}-->
                 <!--            <a href={{company.website}} title= {{product.company_name}} target="_blank" class="w3-hover-opacity"> <img src={{product.product_img.url}} alt="Logo" style="width:95%" class="w3-hover-opacity"></a>-->
@@ -20,14 +20,14 @@
             </div>
         </div>
         <div class="col-sm-6">
-          <div class="h6 pb-2"> <a href= "{% url 'company_page' pk=product.company.pk %}" title={{product.company.company_name}} >{{ product.company.company_name }}</a></div>
-          <div class="h3 font-weight-bold mb-1"> <a href= "{% url 'product_page' pk=product.pk %}" title={{product.product_name}}>{{product.product_name}}</a></div>
+          <div class="h6 pb-2"> <a href= "{% url 'ai-website:company_page' pk=product.company.pk %}" title={{product.company.company_name}} >{{ product.company.company_name }}</a></div>
+          <div class="h3 font-weight-bold mb-1"> <a href= "{% url 'ai-website:product_page' pk=product.pk %}" title={{product.product_name}}>{{product.product_name}}</a></div>
           <div class="text-muted">
             <p>{{product.key_features_short}}</p></div>
           <p>{{product.description_short}}</p>
 <!--      #TODO: truncate instead of artificial truncation?      https://getbootstrap.com/docs/4.0/utilities/text/-->
           <div class="pt-1 pb-2">
-              <a href="{% url 'product_page' pk=product.pk %}" title="{{product.product_name}}" class="btn btn-square btn-radboud">Read more</a>
+              <a href="{% url 'ai-website:product_page' pk=product.pk %}" title="{{product.product_name}}" class="btn btn-square btn-radboud">Read more</a>
           </div>
         </div>
 
