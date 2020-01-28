@@ -19,7 +19,7 @@ class ProductList(ListView):
     model = ProductEntry
     template_name = "ai_website/product_list.html"
     context_object_name = "products"
-    queryset = ProductEntry.objects.order_by("-verified", "product_name")
+    queryset = ProductEntry.objects.order_by("product_name")
 
     def get_queryset(self):
         queryset = super().get_queryset()

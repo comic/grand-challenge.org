@@ -34,7 +34,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for subspec in subspecialities %}
-            <a class="dropdown-item " href="{% url 'product_list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}">{{ subspec }}</a>
+            <a class="dropdown-item " href="{% url 'ai-website:product_list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}">{{ subspec }}</a>
           {% endfor %}
         </div>
       </div>
@@ -49,7 +49,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for modality in modalities %}
-            <a class="dropdown-item " href="{% url 'product_list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}">{{ modality }}</a>
+            <a class="dropdown-item " href="{% url 'ai-website:product_list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}">{{ modality }}</a>
           {% endfor %}
         </div>
       </div>
@@ -72,20 +72,6 @@
   </div>
 
 
-
-<!--    <div class="h6">Subspeciality:</div>-->
-<!--    <div class="mb-2">-->
-<!--      {% for subspec in subspecialities %}-->
-<!--&lt;!&ndash;      dropdown-item ipv btn&ndash;&gt;-->
-<!--        <a href="{% url 'product_list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}" class="btn btn-square {% if subspec == selected_subspeciality %}btn-dark{% else %}btn-outline-light text-dark{% endif %}">{{ subspec }}</a>-->
-<!--      {% endfor %}-->
-<!--    </div>-->
-<!--    <div class="h6">Modality:</div>-->
-<!--    <div>-->
-<!--      {% for modality in modalities %}-->
-<!--        <a href="{% url 'product_list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}" class="btn btn-square {% if modality == selected_modality %}btn-dark{% else %}btn-outline-light text-dark{% endif %}">{{ modality }}</a>-->
-<!--      {% endfor %}-->
-<!--    </div>-->
     <div>
       <p class="text-right text-muted">
         {{product_total}} results
