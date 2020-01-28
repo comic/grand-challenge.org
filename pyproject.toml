@@ -11,9 +11,6 @@ name = "grand-challenge.org"
 version = "0.1.0"
 description = "A framework to objectively evaluate the performance of machine learning algorithms in biomedical imaging"
 authors = ["James Meakin <code@jmsmkn.com>"]
-packages = [
-    { include = "app" },
-]
 
 [tool.poetry.dependencies]
 python = "^3.7"

@@ -13,3 +13,5 @@ python:
   install:
     - method: pip
       path: .
+      # TODO: Remove this requirements file once rtd fully supports dev-dependencies
+      requirements: docs/requirements_docs.txt

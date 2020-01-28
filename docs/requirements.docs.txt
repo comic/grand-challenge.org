@@ -1,0 +1,5 @@
+# Support for building on readthedocs
+sphinx
+sphinx-autobuild
+sphinx-rtd-theme
+sphinx_autodoc_typehints
