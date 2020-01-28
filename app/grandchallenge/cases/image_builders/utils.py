@@ -30,7 +30,7 @@ def convert_itk_to_internal(
         if not name:
             name = str(pk)
         SimpleITK.WriteImage(
-            simple_itk_image, str(work_dir / f"{pk}.mhd"), True
+            simple_itk_image, str(work_dir / f"{pk}.mha"), True
         )
 
         if simple_itk_image.GetDimension() == 4:

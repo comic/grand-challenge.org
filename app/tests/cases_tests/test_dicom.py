@@ -11,7 +11,6 @@ from grandchallenge.cases.image_builders.dicom_4dct import (
 )
 from tests.cases_tests import RESOURCE_PATH
 
-
 DICOM_DIR = RESOURCE_PATH / "dicom"
 
 
@@ -48,11 +47,11 @@ def test_image_builder_dicom_4dct():
 
     image = result.new_images[0]
     assert image.shape == [19, 4, 2, 3]
-    assert len(result.new_image_files) == 2
-    mhd_file_obj = [
-        x for x in result.new_image_files if x.file.name.endswith("mhd")
+    assert len(result.new_image_files) == 1
+    mha_file_obj = [
+        x for x in result.new_image_files if x.file.name.endswith("mha")
     ][0]
-    mhd_file = mhd_file_obj.file
+    mhd_file = mha_file_obj.file
     with mhd_file.open("r") as f:
         headers = f.read()
     headers = headers.decode("utf-8")
