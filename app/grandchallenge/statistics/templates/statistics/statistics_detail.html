@@ -7,7 +7,8 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item active" aria-current="page">Statistics</li>
     </ol>
 {% endblock %}
@@ -98,6 +99,45 @@
         (top {{ max_num_results }})</h3>
 
     <canvas id="submissionsChart"></canvas>
+
+    <h2>Algorithms</h2>
+
+    <dl class="inline">
+        <dt>Public algorithms</dt>
+        <dd>{{ public_algorithms }}</dd>
+
+        <dt>Hidden algorithms</dt>
+        <dd>{{ hidden_algorithms }}</dd>
+
+        <dt>Number of algorithm runs</dt>
+        <dd>{{ algorithm_jobs }}</dd>
+    </dl>
+
+    <h2>Reader Studies</h2>
+
+    <dl class="inline">
+        <dt>Number of reader studies</dt>
+        <dd>{{ reader_studies }}</dd>
+
+        <dt>Number of questions</dt>
+        <dd>{{ questions }}</dd>
+
+        <dt>Number of answers</dt>
+        <dd>{{ answers }}</dd>
+    </dl>
+
+    <h2>Workstations</h2>
+
+    <dl class="inline">
+        <dt>Number of workstations</dt>
+        <dd>{{ workstations }}</dd>
+
+        <dt>Number of sessions</dt>
+        <dd>{{ workstation_sessions }}</dd>
+
+        <dt>Total session duration</dt>
+        <dd>{{ total_session_duration }}</dd>
+    </dl>
 {% endblock %}
 
 {% block script %}

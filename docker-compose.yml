@@ -120,7 +120,7 @@ services:
         source: /var/run/docker.sock
         target: /var/run/docker.sock
     group_add:
-      - ${DOCKER_GID:?err} # The docker group is only needed for testing
+      - ${DOCKER_GID-999} # The docker group is only needed for testing
     healthcheck:
       test: ["CMD-SHELL", "curl http://web:8000/ || exit 1"]
       interval: 10s
@@ -213,7 +213,7 @@ services:
         source: ./app
         target: /app/
     group_add:
-      - ${DOCKER_GID:?err}
+      - ${DOCKER_GID-999}
 
   celery_worker_gpu:
     image: grandchallenge/web-test:latest

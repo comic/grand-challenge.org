@@ -353,6 +353,7 @@ LOCAL_APPS = [
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
+    "grandchallenge.favicons",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS

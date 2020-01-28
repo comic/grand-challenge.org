@@ -279,7 +279,6 @@ If you want to run this in a production environment you will need to make severa
 2. `Disable mounting of the docker socket <https://docs.docker.com/engine/security/https/>`_
 3. Removing the users that are created by ``init_gc_demo``
 
-.. _TravisCI: https://travis-ci.org/comic/grand-challenge.org
 .. _Docker: https://docs.docker.com/install/
 .. _`Docker Compose`: https://docs.docker.com/compose/install/
 .. _`Docker for Windows`: https://docs.docker.com/docker-for-windows/install/

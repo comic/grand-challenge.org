@@ -5,21 +5,43 @@ from django.db import models
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.challenges.models import ComicSiteModel
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
 from grandchallenge.pages.substitutions import Substitution
 from grandchallenge.subdomains.utils import reverse
 
 
-class Page(ComicSiteModel):
+class Page(models.Model):
     """Customisable content that belongs to a challenge."""
 
     UP = "UP"
     DOWN = "DOWN"
     FIRST = "FIRST"
     LAST = "LAST"
+
+    ALL = "ALL"
+    REGISTERED_ONLY = "REG"
+    ADMIN_ONLY = "ADM"
+    STAFF_ONLY = "STF"
+
+    PERMISSIONS_CHOICES = (
+        (ALL, "All"),
+        (REGISTERED_ONLY, "Registered users only"),
+        (ADMIN_ONLY, "Administrators only"),
+    )
+
+    title = models.SlugField(max_length=64, blank=False)
+    challenge = models.ForeignKey(
+        Challenge,
+        help_text="Which challenge does this page belong to?",
+        on_delete=models.CASCADE,
+    )
+    permission_level = models.CharField(
+        max_length=3, choices=PERMISSIONS_CHOICES, default=ALL
+    )
     order = models.IntegerField(
         editable=False,
         default=1,
@@ -39,6 +61,9 @@ class Page(ComicSiteModel):
     )
     html = models.TextField(blank=True, default="")
 
+    def __str__(self):
+        return self.title
+
     def save(self, *args, **kwargs):
         # when saving for the first time only, put this page last in order
         if not self.id:
@@ -53,7 +78,43 @@ class Page(ComicSiteModel):
                 self.order = max_order["order__max"] + 1
             except TypeError:
                 self.order = 1
+
         super().save(*args, **kwargs)
+
+        self.assign_permissions()
+
+    def assign_permissions(self):
+        """Give the right groups permissions to this object."""
+        admins_group = self.challenge.admins_group
+        participants_group = self.challenge.participants_group
+
+        if self.permission_level == self.ALL:
+            assign_perm(f"view_{self._meta.model_name}", admins_group, self)
+            assign_perm(
+                f"view_{self._meta.model_name}", participants_group, self
+            )
+        elif self.permission_level == self.REGISTERED_ONLY:
+            assign_perm(f"view_{self._meta.model_name}", admins_group, self)
+            assign_perm(
+                f"view_{self._meta.model_name}", participants_group, self
+            )
+        elif self.permission_level == self.ADMIN_ONLY:
+            assign_perm(f"view_{self._meta.model_name}", admins_group, self)
+            remove_perm(
+                f"view_{self._meta.model_name}", participants_group, self
+            )
+        else:
+            raise ValueError(
+                f"Unknown permissions level '{self.permission_level}'. "
+                "I don't know which groups to give permissions to this object"
+            )
+
+    def can_be_viewed_by(self, user):
+        """Is user allowed to view this?"""
+        if self.permission_level == self.ALL:
+            return True
+        else:
+            return user.has_perm(f"view_{self._meta.model_name}", self)
 
     def cleaned_html(self):
         out = clean(self.html)
@@ -150,9 +211,7 @@ class Page(ComicSiteModel):
         )
         return url
 
-    class Meta(ComicSiteModel.Meta):
-        """special class holding meta info for this class"""
-
+    class Meta:
         # make sure a single site never has two pages with the same name
         # because page names are used as keys in urls
         unique_together = (("challenge", "title"),)

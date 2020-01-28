@@ -6,7 +6,6 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from grandchallenge.core.views import HomeTemplate
-from grandchallenge.pages.views import FaviconView
 
 admin.autodiscover()
 
@@ -25,32 +24,7 @@ urlpatterns = [
             template_name="robots.txt", content_type="text/plain"
         ),
     ),
-    # Favicons
-    path(
-        "favicon.ico/",
-        FaviconView.as_view(rel="shortcut icon"),
-        name="favicon",
-    ),
-    path(
-        "apple-touch-icon.png/",
-        FaviconView.as_view(rel="apple-touch-icon"),
-        name="apple-touch-icon",
-    ),
-    path(
-        "apple-touch-icon-precomposed.png/",
-        FaviconView.as_view(rel="apple-touch-icon-precomposed"),
-        name="apple-touch-icon-precomposed",
-    ),
-    path(
-        "apple-touch-icon-<int:size>x<int>.png/",
-        FaviconView.as_view(rel="apple-touch-icon"),
-        name="apple-touch-icon-sized",
-    ),
-    path(
-        "apple-touch-icon-<int:size>x<int>-precomposed.png/",
-        FaviconView.as_view(rel="apple-touch-icon-precomposed"),
-        name="apple-touch-icon-precomposed-sized",
-    ),
+    path("", include("grandchallenge.favicons.urls", namespace="favicons")),
     path(settings.ADMIN_URL, admin.site.urls),
     path(
         "stats/",
@@ -106,8 +80,7 @@ urlpatterns = [
         include("grandchallenge.policies.urls", namespace="policies"),
     ),
     path(
-        "media/",
-        include("grandchallenge.serving.urls", namespace="root-serving"),
+        "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
 ]
 

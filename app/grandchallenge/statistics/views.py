@@ -3,12 +3,15 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.utils import timezone
 from django.views.generic import TemplateView
 
+from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Result, Submission
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.workstations.models import Session, Workstation
 
 
 class StatisticsDetail(TemplateView):
@@ -92,6 +95,23 @@ class StatisticsDetail(TemplateView):
             ),
             "using_auto_eval": (
                 Challenge.objects.filter(use_evaluation=True).count()
+            ),
+            "public_algorithms": (
+                Algorithm.objects.filter(visible_to_public=True).count()
+            ),
+            "hidden_algorithms": (
+                Algorithm.objects.filter(visible_to_public=False).count()
+            ),
+            "algorithm_jobs": Job.objects.count(),
+            "reader_studies": ReaderStudy.objects.count(),
+            "questions": Question.objects.count(),
+            "answers": Answer.objects.count(),
+            "workstations": Workstation.objects.count(),
+            "workstation_sessions": Session.objects.count(),
+            "total_session_duration": (
+                Session.objects.aggregate(Sum("maximum_duration"))[
+                    "maximum_duration__sum"
+                ]
             ),
         }
 
