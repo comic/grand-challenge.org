@@ -120,7 +120,6 @@ IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 
 # This is for storing files that should not be served to the public
-AWS_DEFAULT_ACL = None
 PRIVATE_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
     "secret_key": os.environ.get("PRIVATE_S3_STORAGE_SECRET_KEY", ""),
