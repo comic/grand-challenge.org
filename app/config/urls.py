@@ -76,7 +76,7 @@ urlpatterns = [
         ),
     ),
     path(
-        "ai-products", include("grandchallenge.ai_website.urls", namespace="ai-website")
+        "ai-products/", include("grandchallenge.ai_website.urls", namespace="ai-website")
     ),
     path(
         "policies/",
