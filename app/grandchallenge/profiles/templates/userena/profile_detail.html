@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}{% blocktrans with profile.user.username as username %}
-    {{ username }}'s profile.
+    {{ username }}'s profile
 {% endblocktrans %}{% endblock %}
 {% block content_title %}
     <h2>{{ profile.user.username }} {% if profile.user.get_full_name %}(
