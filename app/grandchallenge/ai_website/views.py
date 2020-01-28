@@ -19,7 +19,7 @@ class ProductList(ListView):
     model = ProductEntry
     template_name = "ai_website/product_list.html"
     context_object_name = "products"
-    queryset = ProductEntry.objects.order_by("product_name")
+    queryset = ProductEntry.objects.order_by("-verified", "product_name")
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -45,12 +45,13 @@ class ProductList(ListView):
                 Q(),
             )
             queryset = queryset.filter(q)
-        elif subspeciality_query and subspeciality_query != "All":
+        if subspeciality_query and subspeciality_query != "All":
             queryset = queryset.filter(
                 Q(subspeciality__icontains=subspeciality_query)
             )
-        elif modality_query and modality_query != "All":
+        if modality_query and modality_query != "All":
             queryset = queryset.filter(Q(modality__icontains=modality_query))
+        self.queryset = queryset
         return queryset
 
     def get_context_data(self, *args, **kwargs):
@@ -87,6 +88,8 @@ class ProductList(ListView):
                 "modalities": modalities,
                 "selected_subspeciality": subspeciality_query,
                 "selected_modality": modality_query,
+                "products_selected_page": True,
+                "product_total": len(self.queryset),
             }
         )
         return context
@@ -127,18 +130,11 @@ class CompanyList(ListView):
         context = super().get_context_data(*args, **kwargs)
         search_query = self.request.GET.get("search", "")
 
-        # TODO: fix that all products from company are returned as variable, preferably to be called as: company.product_by_company
-        products_by_companies = set()
-        for company in self.queryset:
-            products_by_companies.add(
-                ProductEntry.objects.filter(
-                    company__company_name__contains=company.company_name
-                )
-            )
         context.update(
             {
                 "q_search": search_query,
-                "products_by_companies": products_by_companies,
+                "companies_selected_page": True,
+                "company_total": len(self.queryset),
             }
         )
         return context

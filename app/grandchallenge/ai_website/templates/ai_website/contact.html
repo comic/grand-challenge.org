@@ -4,7 +4,19 @@
     Contact - {{ block.super }}
 {% endblock %}
 
+{% block breadcrumbs %}
+  <li class="breadcrumb-item active" aria-current="page">Contact</li>
+{% endblock %}
+
 {% block content %}
-  <h1>Contact</h1>
+    <div>
+        <h1>Contact us</h1>
+        <p>Contact us if you have questions, ideas, would like to update information, or if you believe your product is missing from this overview. <br>
+        Please send an e-mail to:</p>
+        <div class='text-black'>
+            Kicky van Leeuwen <br>
+            <a href = "mailto: kicky.vanleeuwen@radboudumc.com" class="text-radboud">kicky.vanleeuwen@radboudumc.com</a>
+        </div>
+    </div>
 
 {% endblock %}

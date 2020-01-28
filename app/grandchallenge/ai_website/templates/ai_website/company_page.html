@@ -8,20 +8,22 @@
 
   <div class="container pl-0">
     <div class="row">
-      <div class="col-sm-6">
+      <div class="col-sm-6 pb-3 border-bottom">
           <a href={{company.website}} title={{company.company_name}} target="_blank">
-            <img src="/Werk/website/screenpoint-medical.png" alt="Logo" style="width:100%">
+            <img src="{{company.logo.url}}" alt="Logo" style="width:80%">
           </a>
-          <h1 class="text-muted">{{company.company_name}}</h1>
+          <h1 class="mb-1 pt-5">{{company.company_name}}</h1>
           <p>{{company.description}}</p>
       </div>
+    </div>
 
+    <div class="row pt-3 pb-5">
       <div class="col-sm-6">
-        <h2 class="h4">Company specifications</h2>
+        <h2 class="h4 pb-2 text-radboud">Company specifications</h2>
         <table class="table">
           <thead class="thead-light">
             <tr>
-              <th colspan="2">Market presence</th>
+              <th colspan="2">General</th>
             </tr>
           </thead>
           <tr>
@@ -49,7 +51,7 @@
     </div>
   </div>
 
-  <h2 class="h4">Products by this company</h2>
+  <h2 class="h4 text-radboud">Products by this company</h2>
   {% include "ai_website/partials/product_list.html" with products=products_by_company %}
 
 {% endblock %}

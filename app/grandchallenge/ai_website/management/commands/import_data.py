@@ -1,15 +1,20 @@
+import glob
+import os
+
 import pandas as pd
+from django.core.files.images import ImageFile
 from django.core.management import BaseCommand
 
 from grandchallenge.ai_website.models import (
     CompanyEntry,
     ProductBasic,
     ProductEntry,
+    ProductImage,
 )
 
 
 class Command(BaseCommand):
-    help = "Reads csv databaslse and creates sqlite database"
+    help = "Reads excel database and creates sqlite database"
 
     def add_arguments(self, parser):
         parser.add_argument("dir_products", type=str)
@@ -24,14 +29,22 @@ class Command(BaseCommand):
         for i, c_row in df_c.iterrows():
             c = self._create_company(c_row)
             df_filter = df_p.loc[df_p["Company name"] == c_row["Company name"]]
-            for j, p_row in df_filter.iterrows():
+            for _, p_row in df_filter.iterrows():
                 # pb = self._create_product_basic(p_row, c)
-                p = self._create_product(p_row, c)
-                # c.products.add(p)
+                i = self._create_product_images(p_row)
+                self._create_product(p_row, c, i)
 
     def _read_data(self, data_dir):
         df = pd.read_excel(data_dir)
+        df = df.fillna(value="")
         return df
+
+    def _split(self, string, max_char):
+        if len(string) > max_char:
+            short_string = string[:max_char].rsplit(" ", 1)[0] + " ..."
+        else:
+            return string
+        return short_string
 
     def _create_company(self, row):
         c = CompanyEntry(
@@ -42,18 +55,32 @@ class Command(BaseCommand):
             hq=row["Head office"],
             email=row["Email address (public)"],
             description=row["Company description"],
+            description_short=self._split(row["Company description"], 200),
         )
+
+        image_name = row["Company name"]
+        for ch in [" ", ".", "-"]:
+            image_name = image_name.replace(ch, "")
+        img_file = glob.glob(f"products/media/logo/{image_name}.*")
+        if img_file:
+            if os.path.isfile(img_file[0]):
+                c.logo = ImageFile(open(img_file[0], "rb"))
+            else:
+                c.logo = ""
+
         c.save()
         return c
 
-    def _create_product(self, row, c):
-        # p = ProductEntry.objects.create(
+    def _create_product(self, row, c, i):
         p = ProductEntry(
+            verified=row["Verified"],
             product_name=row["Product name"],
             company=c,
+            # images=i,
             modified_date=row["Timestamp"],
             short_name=row["Short name"],
             description=row["Product description"],
+            description_short=self._split(row["Product description"], 200),
             modality=row["Modality"],
             subspeciality=row["Subspeciality"],
             input_data=row["Input data"],
@@ -61,6 +88,7 @@ class Command(BaseCommand):
             output_data=row["Output data"],
             file_format_output=row["File format of output data"],
             key_features=row["Key-feature(s)"],
+            key_features_short=self._split(row["Key-feature(s)"], 100),
             ce_status=row["CE-certified"],
             ce_class=row["If CE-certified, what class"],
             fda_status=row["FDA approval/clearance"],
@@ -86,11 +114,47 @@ class Command(BaseCommand):
                 "Name relevant (white)papers regarding the implementation of the software (clinical validation)"
             ],
         )
-        try:
-            p.save()
-            return p
-        except:
-            pass
+        p.save()
+        p.images.set(i)
+
+        img_file = glob.glob(
+            "products/media/product_images/{}.*".format(row["Short name"])
+        )
+        if img_file:
+            if os.path.isfile(img_file[0]):
+                p.product_img = ImageFile(open(img_file[0], "rb"))
+            else:
+                p.product_img = ""
+
+        if p.ce_status == "Certified":
+            p.ce_status_icon = "images/icon_check.png"
+        elif p.ce_status == "No or not yet":
+            p.ce_status_icon = "images/icon_no.png"
+        elif p.ce_status == "Not applicable":
+            p.ce_status_icon = "images/icon_na.png"
+        else:
+            p.ce_status_icon = "images/icon_question.png"
+
+        if (
+            p.fda_status == "510(k) cleared"
+            or p.fda_status == "de novo 510(k) cleared"
+            or p.fda_status == "PMA approved"
+        ):
+            p.fda_status_icon = "images/icon_check.png"
+        elif p.fda_status == "No or not yet":
+            p.fda_status_icon = "images/icon_no.png"
+        elif p.fda_status == "Not applicable":
+            p.fda_status_icon = "images/icon_na.png"
+        else:
+            p.fda_status_icon = "images/icon_question.png"
+
+        if p.verified == "Yes":
+            p.verified_icon = "images/icon_check.png"
+        else:
+            p.verified_icon = "images/icon_no.png"
+
+        p.save()
+        return p
 
     def _create_product_basic(self, row, c):
         p = ProductBasic(
@@ -99,6 +163,7 @@ class Command(BaseCommand):
             modified_date=row["Timestamp"],
             short_name=row["Short name"],
             description=row["Product description"],
+            description_short=self._split(row["Product description"], 200),
             modality=row["Modality"],
             subspeciality=row["Subspeciality"],
             input_data=row["Input data"],
@@ -106,29 +171,26 @@ class Command(BaseCommand):
             output_data=row["Output data"],
             file_format_output=row["File format of output data"],
             key_features=row["Key-feature(s)"],
+            key_features_short=self._split(row["Key-feature(s)"], 75),
+            verified=row["Verified"],
         )
+
+        if p.verified == "Yes":
+            p.verified_icon = "images/icon_check.png"
+        else:
+            p.verified_icon = "images/icon_no.png"
         p.save()
         return p
 
-
-# For company in df_companies:
-# c1 = CompanyEntry(company_name=company.name)
-# c1.save()
-# For product in df_products:
-# p1 = ProductEntry(product_name=product.name, company_name= product.company)
-# p1.save()
-# c = CompanyEntry.objects.get(company_name=p1.company_name)
-# c.products.add(p1)
-#
-#
-# c1 = CompanyEntry(company_name=ScreenPoint-Medical)
-# c1.save()
-
-# def _create_new_challenge(self, *, src_challenge, dest_name):
-#     new_challenge = Challenge(
-#         short_name=dest_name,
-#         **{f: getattr(src_challenge, f) for f in self.challenge_fields},
-#     )
-#     new_challenge.full_clean()
-#     new_challenge.save()
-#     return new_challenge
+    def _create_product_images(self, row):
+        images = []
+        for k in range(1, 10):
+            img_file = "products/media/product_images/{}_{}.png".format(
+                row["Short name"], k
+            )
+            if os.path.isfile(img_file):
+                img = ImageFile(open(img_file, "rb"))
+                i = ProductImage(img=img)
+                i.save()
+                images.append(i)
+        return images
