@@ -81,7 +81,10 @@ def test_reader_can_download_images(client, reverse):
 
 
 @pytest.mark.django_db
-def test_assign_score():
+def test_assign_score(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = ReaderStudyFactory()
     im = ImageFactory()
     q = QuestionFactory(reader_study=rs)
@@ -105,4 +108,5 @@ def test_assign_score():
 
     a2 = AnswerFactory(question=q, creator=r2, answer="foo")
     a2.images.add(im)
+    a2.refresh_from_db()
     assert a2.score == 1.0
