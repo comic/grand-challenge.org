@@ -23,10 +23,7 @@ class CompanyEntry(models.Model):
     hq = models.CharField(max_length=100)
     email = models.EmailField(max_length=500)
     logo = models.ImageField(
-        upload_to=get_logo_path,
-        storage=public_s3_storage,
-        blank=True,
-        null=True,
+        upload_to=get_logo_path, storage=public_s3_storage, null=True,
     )
     description = models.CharField(
         max_length=500,
@@ -46,7 +43,7 @@ class CompanyEntry(models.Model):
 
 class ProductImage(models.Model):
     img = models.ImageField(
-        upload_to=get_images_path, storage=public_s3_storage, blank=True,
+        upload_to=get_images_path, storage=public_s3_storage
     )
 
 
@@ -128,14 +125,14 @@ class ProductEntry(ProductBasic):
     }
 
     verified = models.CharField(
-        choices=VERFIFIED_CHOICES, max_length=3, default="no"
+        choices=VERFIFIED_CHOICES, max_length=3, default=STATUS_NO
     )
     ce_status = models.CharField(
-        choices=CE_STATUS_CHOICES, max_length=3, default="no"
+        choices=CE_STATUS_CHOICES, max_length=3, default=STATUS_NO
     )
     ce_class = models.CharField(max_length=500, default="unknown")
     fda_status = models.CharField(
-        choices=FDA_STATUS_CHOICES, max_length=3, default="unknown"
+        choices=FDA_STATUS_CHOICES, max_length=3, default=STATUS_UNKNOWN
     )
     fda_class = models.CharField(max_length=500, default="unknown")
 

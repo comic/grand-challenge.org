@@ -32,7 +32,9 @@
           <div class="col-sm-3">
             <div class="d-flex justify-content-between flex-column h-100">
                 <a href="{% url 'ai-website:company_page' pk=company.pk %}" title="{{ company.company_name }}">
-                  <img src="{{ company.logo.url }}" alt="Logo" style="width:70%">
+                  {% if company.logo %}
+                    <img src="{{ company.logo.url }}" alt="Logo" style="width:70%">
+                  {% endif %}
                 </a>
                 <br><br>
                 <div class="h6">
