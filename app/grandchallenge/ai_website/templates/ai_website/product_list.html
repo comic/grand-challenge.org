@@ -7,28 +7,12 @@
 {% block content %}
   <div class="d-flex justify-content-between align-items-center">
     <h1>Products</h1>
-<!--    <div class="">-->
-<!--      <form action="" method="GET">-->
-<!--        <div class="form-row justify-content-end">-->
-<!--          <div class="col-auto">-->
-<!--            <input hidden name="subspeciality" value="{{ selected_subspeciality }}">-->
-<!--            <input hidden name="modality" value="{{ selected_modality }}">-->
-<!--            <input class="form-control" name="search" type="text" placeholder="Search..." value={{ q_search }} >-->
-<!--          </div>-->
-<!--          <div class="col-auto">-->
-<!--            <input type="submit" class="btn btn-dark btn-square" value="Search">-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </form>-->
-<!--    </div>-->
   </div>
-
-<!--change into buttons instead of <a> and get aligned next to each other-->
   <div class="row align-items-end">
     <div class="col-sm-2">
       <div class="dropdown">
         <div class="h6 text-muted">Subspeciality:</div>
-        <button class="btn btn-square dropdown-toggle" type="button" id="dropdownSubspec" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <button class="btn btn-light btn-square dropdown-toggle" type="button" id="dropdownSubspec" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {{ selected_subspeciality }}
         </button>
 
@@ -43,7 +27,7 @@
     <div class="col-sm-2">
       <div class="dropdown">
         <div class="h6 text-muted">Modality:</div>
-        <button class="btn btn-square dropdown-toggle" type="button" id="dropdownModality" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <button class="btn btn-light btn-square dropdown-toggle" type="button" id="dropdownModality" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {{ selected_modality }}
         </button>
 

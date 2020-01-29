@@ -1,5 +1,3 @@
-import glob
-import os
 import shutil
 import tempfile
 import zipfile
@@ -17,21 +15,20 @@ from grandchallenge.ai_website.models import (
 
 
 STATUS_MAPPING = {
-    'Certified': ProductEntry.STATUS_CERTIFIED,
-    'No or not yet': ProductEntry.STATUS_NO,
-    'Not applicable': ProductEntry.STATUS_NA,
-    '510(k) cleared': ProductEntry.STATUS_CLEARED,
-    'de novo 510(k) cleared': ProductEntry.STATUS_DE_NOVO_CLEARED,
-    'PMA approved': ProductEntry.STATUS_PMA_APPROVED,
-    'Yes': ProductEntry.STATUS_YES,
-    'No': ProductEntry.STATUS_NO,
+    "Certified": ProductEntry.STATUS_CERTIFIED,
+    "No or not yet": ProductEntry.STATUS_NO,
+    "Not applicable": ProductEntry.STATUS_NA,
+    "510(k) cleared": ProductEntry.STATUS_CLEARED,
+    "de novo 510(k) cleared": ProductEntry.STATUS_DE_NOVO_CLEARED,
+    "PMA approved": ProductEntry.STATUS_PMA_APPROVED,
+    "Yes": ProductEntry.STATUS_YES,
+    "No": ProductEntry.STATUS_NO,
 }
 
 
 class DataImporter(object):
-
     def __init__(self):
-        self.images_path = Path('.')
+        self.images_path = Path(".")
 
     def _read_data(self, data_dir):
         df = pd.read_excel(data_dir)
@@ -102,11 +99,17 @@ class DataImporter(object):
             file_format_output=row["File format of output data"],
             key_features=row["Key-feature(s)"],
             # key_features_short=_split(row["Key-feature(s)"], 100),
-            ce_status=STATUS_MAPPING.get(row["CE-certified"], ProductEntry.STATUS_UNKNOWN),
+            ce_status=STATUS_MAPPING.get(
+                row["CE-certified"], ProductEntry.STATUS_UNKNOWN
+            ),
             ce_class=row["If CE-certified, what class"],
-            fda_status=STATUS_MAPPING.get(row["FDA approval/clearance"], ProductEntry.STATUS_UNKNOWN),
+            fda_status=STATUS_MAPPING.get(
+                row["FDA approval/clearance"], ProductEntry.STATUS_UNKNOWN
+            ),
             fda_class=row["If FDA approval/clearance, what class"],
-            verified=STATUS_MAPPING.get(row["Verified"], ProductEntry.STATUS_UNKNOWN),
+            verified=STATUS_MAPPING.get(
+                row["Verified"], ProductEntry.STATUS_UNKNOWN
+            ),
             integration=row["Integration"],
             hosting=row["Hosting"],
             hardware=row["Hardware requirements"],
@@ -131,7 +134,9 @@ class DataImporter(object):
         p.save()
         p.images.set(i)
 
-        img_file = self.images_path.glob("**/product_images/{}.*".format(row["Short name"].lower()))
+        img_file = self.images_path.glob(
+            "**/product_images/{}.*".format(row["Short name"].lower())
+        )
         for file in img_file:
             p.product_img = ImageFile(open(file, "rb"))
 
@@ -161,9 +166,9 @@ class DataImporter(object):
 
     def _create_product_images(self, row):
         images = []
-        img_files = self.images_path.glob("**/product_images/{}_*.png".format(
-            row["Short name"]
-        ))
+        img_files = self.images_path.glob(
+            "**/product_images/{}_*.png".format(row["Short name"])
+        )
         for file in img_files:
             img = ImageFile(open(file, "rb"))
             i = ProductImage(img=img)

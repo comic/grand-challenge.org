@@ -76,7 +76,8 @@ urlpatterns = [
         ),
     ),
     path(
-        "ai-products/", include("grandchallenge.ai_website.urls", namespace="ai-website")
+        "ai-products/",
+        include("grandchallenge.ai_website.urls", namespace="ai-website"),
     ),
     path(
         "policies/",
@@ -85,7 +86,6 @@ urlpatterns = [
     path(
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
-
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
