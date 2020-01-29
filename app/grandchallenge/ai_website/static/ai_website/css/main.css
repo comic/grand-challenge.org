@@ -26,3 +26,8 @@ a {color: #212529;}
 a:hover {
   color: #007896;
 }
+
+.logo img {
+  max-width: 100%;
+  max-height: 80px;
+}
