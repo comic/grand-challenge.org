@@ -1,4 +1,5 @@
 {% load static %}
+{% load ai_website_tags %}
 
 <div class="container">
   {% for product in products %}
@@ -36,17 +37,17 @@
         <div class="col-sm-3 bg-light pt-2">
           <div class="d-flex justify-content-between pb-1">
             <div class="h6">Verified by supplier:</div>
-              <img src="{% static product.verified_icon %}" alt="Logo" style="width:10%; height:10%">
+              <img src="{% icon product 'verified' %}" alt="Logo" style="width:10%; height:10%">
 <!--            <div>Yes</div>-->
           </div>
           <div class="d-flex justify-content-between pb-1">
             <div class="h6">CE:</div>
-              <img src="{% static product.ce_status_icon %}" alt="Logo" style="width:10%; height:10%">
+              <img src="{% icon product 'ce_status' %}" alt="Logo" style="width:10%; height:10%">
 <!--            <div>{{product.ce_status}} {{product.ce_class}}</div>-->
           </div>
           <div class="d-flex justify-content-between pb-1">
             <div class="h6">FDA:</div>
-              <img src="{% static product.fda_status_icon %}" alt="Logo" style="width:10%; height:10%">
+              <img src="{% icon product 'fda_status' %}" alt="Logo" style="width:10%; height:10%">
 <!--            <div>{{product.fda_status}} {{product.fda_class}}</div>-->
           </div>
 
