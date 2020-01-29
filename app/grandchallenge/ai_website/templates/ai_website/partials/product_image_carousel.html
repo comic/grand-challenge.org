@@ -1,24 +1,13 @@
-<script>
-$(function(){
-  $('#product_img_carousel').carousel();
-});
-</script>
-
-
 {% if product.images.all %}
   <div id="product_img_carousel" class="carousel slide" data-ride="carousel" data-interval="false">
     <ol class="carousel-indicators">
-      <li data-target="#product_img_carousel" data-slide-to="0" class="active"></li>
       {% for image in product.images.all %}
-        <li data-target="#product_img_carousel" data-slide-to={{ forloop.counter }}></li>
+        <li data-target="#product_img_carousel" data-slide-to={{ forloop.counter0 }} {% if forloop.counter0 == 0%}class="active"{% endif %}></li>
       {% endfor %}
     </ol>
     <div class="carousel-inner">
-      <div class="carousel-item active">
-        <img class="d-block w-100" src={{product.product_img.url}}>
-      </div>
       {% for image in product.images.all %}
-        <div class="carousel-item">
+        <div class="carousel-item {% if forloop.counter0 == 0 %}active{% endif %}">
           <img class="d-block w-100" src={{ image.img.url }}>
         </div>
       {% endfor %}
@@ -38,3 +27,4 @@ $(function(){
 {% elif product.product_img %}
   <img src={{product.product_img.url}} style="width:100%;"><br><br>
 {% endif %}
+

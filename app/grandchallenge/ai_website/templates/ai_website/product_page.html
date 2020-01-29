@@ -11,7 +11,7 @@
       <div class="col-sm-6">
         <header id={{product.product_name}}>
           <h1 class="mb-1">{{product.product_name}}</h1>
-          <a href= "{% url 'company_page' pk=product.company.pk %}" title={{product.company.company_name}} class="h5">by {{ product.company.company_name }}</a>
+          <a href= "{% url 'ai-website:company_page' pk=product.company.pk %}" title={{product.company.company_name}} class="h5">by {{ product.company.company_name }}</a>
           <br><br>
           {% include "ai_website/partials/product_image_carousel.html" %}
         </header>
@@ -157,4 +157,17 @@
   </div>
 
 
+{% endblock %}
+
+
+
+
+{% block script %}
+    {{ block.super }}
+    {# enable tooltips #}
+    <script>
+        $(function(){
+          $('#product_img_carousel').carousel();
+        });
+    </script>
 {% endblock %}

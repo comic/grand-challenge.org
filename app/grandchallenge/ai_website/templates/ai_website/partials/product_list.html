@@ -6,7 +6,9 @@
         <div class="col-sm-3">
             <div class="d-flex justify-content-between flex-column h-100">
                 <a href="{% url 'ai-website:company_page' pk=product.company.pk %}" title="{{product.company.company_name}}">
-               logo
+                  {% if product.company.logo %}
+                    <img src="{{ product.company.logo.url }}" alt="Logo" style="width:70%">
+                  {% endif %}
                 </a>
                 <!--          {% if product.product_img %}-->
                 <!--            <a href={{company.website}} title= {{product.company_name}} target="_blank" class="w3-hover-opacity"> <img src={{product.product_img.url}} alt="Logo" style="width:95%" class="w3-hover-opacity"></a>-->
