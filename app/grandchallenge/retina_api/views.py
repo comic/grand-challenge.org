@@ -73,7 +73,7 @@ class ArchiveView(APIView):
     pagination_class = None
 
     @staticmethod  # noqa: C901
-    def create_response_object():
+    def create_response_object():  # noqa: C901
         # Exclude archives to reduce load time
         exclude = ["AREDS - GA selection", "RS1", "RS2", "RS3"]
         archives = Archive.objects.exclude(name__in=exclude)
@@ -591,7 +591,7 @@ class DataView(APIView):
         return Response(response_data)
 
     @method_decorator(ensure_csrf_cookie)  # noqa: C901
-    def put(
+    def put(  # noqa: C901
         self,
         request,
         data_type,
