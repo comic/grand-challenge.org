@@ -1,3 +1,5 @@
+default_language_version:
+  python: python3.8
 repos:
   - repo: https://github.com/asottile/pyupgrade
     rev: v1.5.1
@@ -8,7 +10,6 @@ repos:
     rev: 19.10b0
     hooks:
       - id: black
-        language_version: python3.6
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.7.9
     hooks:
