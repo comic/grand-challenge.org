@@ -1,7 +1,6 @@
-import pandas as pd
 from django.core.management import BaseCommand
 
-from grandchallenge.ai_website.utils import import_data
+from grandchallenge.ai_website.utils import DataImporter
 
 
 class Command(BaseCommand):
@@ -15,4 +14,5 @@ class Command(BaseCommand):
         data_source_p = options.pop("dir_products")
         data_source_c = options.pop("dir_companies")
 
-        import_data(data_source_p, data_source_c)
+        di = DataImporter()
+        di.import_data(product_data=data_source_p, company_data=data_source_c)

@@ -2,7 +2,6 @@ from functools import reduce
 from operator import or_
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.core.management import call_command
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, reverse
 from django.views.generic import ListView, TemplateView
@@ -11,7 +10,7 @@ from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.ai_website.forms import ImportForm
 from grandchallenge.ai_website.models import CompanyEntry, ProductEntry
-from grandchallenge.ai_website.utils import import_data
+from grandchallenge.ai_website.utils import DataImporter
 
 # Create your views here.
 
@@ -171,9 +170,11 @@ class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
         response = super().form_valid(*args, **kwargs)
         form = self.get_form()
         if form.is_valid():
-            import_data(
-                form.cleaned_data["products_file"],
-                form.cleaned_data["companies_file"],
+            di = DataImporter()
+            di.import_data(
+                product_data=form.cleaned_data["products_file"],
+                company_data=form.cleaned_data["companies_file"],
+                images_zip=form.cleaned_data["images_zip"],
             )
         return response
 
