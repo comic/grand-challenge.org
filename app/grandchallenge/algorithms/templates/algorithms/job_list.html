@@ -12,8 +12,10 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
@@ -47,7 +49,7 @@
                 <th>Input Image</th>
                 <th>Status</th>
                 <th>Result</th>
-                <th>Output Image(s)</th>
+                <th>Output Images</th>
             </tr>
             </thead>
             <tbody>
@@ -66,7 +68,7 @@
                             <li>
                                 <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image config=algorithm.workstation_config %}">
                                     <span class="badge badge-primary">
-                                        <i class="fa fa-eye"></i> View input
+                                        <i class="fa fa-eye"></i> View Input
                                     </span>
                                 </a>
                             </li>
@@ -74,7 +76,7 @@
                                 <li>
                                     <a href="{{ file.file.url }}">
                                         <span class="badge badge-primary">
-                                            <i class="fa fa-download"></i> input ({{ file.file|suffix }})
+                                            <i class="fa fa-download"></i> Input ({{ file.file|suffix }})
                                         </span>
                                     </a>
                                 </li>
@@ -97,13 +99,13 @@
                     </td>
                     <td>{{ job.result.output }}</td>
                     <td>
-                        {% if job.result.images.all %}
+                        {% if not job.result.images.all %}
                             <ul class="list-unstyled">
                                 {% for image in job.result.images.all %}
                                     <li>
                                         <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image config=algorithm.workstation_config %}">
                                             <span class="badge badge-primary">
-                                                <i class="fa fa-eye"></i> View input &amp; output
+                                                <i class="fa fa-eye"></i> View Input &amp; Output
                                             </span>
                                         </a>
                                     </li>
@@ -111,13 +113,18 @@
                                         <li>
                                             <a href="{{ file.file.url }}">
                                             <span class="badge badge-primary">
-                                                <i class="fa fa-download"></i> output ({{ file.file|suffix }})
+                                                <i class="fa fa-download"></i> Output ({{ file.file|suffix }})
                                             </span>
                                             </a>
                                         </li>
                                     {% endfor %}
                                 {% endfor %}
                             </ul>
+                        {% elif job.status != job.SUCCESS %}
+                            <span class="badge badge-warning"
+                                  title="No output images were found">
+                               <i class="fa fa-eye-slash"></i>
+                           </span>
                         {% endif %}
                     </td>
                 </tr>
