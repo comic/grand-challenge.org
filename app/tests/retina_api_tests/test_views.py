@@ -8,7 +8,6 @@ import pytest
 from PIL import Image as PILImage
 from django.conf import settings
 from django.core.cache import cache
-from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
@@ -105,8 +104,7 @@ class TestArchiveIndexAPIEndpoints:
         # Set cached data
         test_data = {"test": "data", "object": 1}
         ArchiveDataModel.objects.update_or_create(
-            pk=1,
-            defaults={"value": json.dumps(test_data, cls=DjangoJSONEncoder)},
+            pk=1, defaults={"value": test_data},
         )
 
         # login client
