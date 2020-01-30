@@ -49,6 +49,8 @@ class WorkstationConfigSerializer(ModelSerializer):
     default_overlay_interpolation = CharField(
         source="get_default_overlay_interpolation_display"
     )
+    default_overlay_alpha = FloatField()
+    default_zoom_scale = FloatField()
 
     class Meta:
         model = WorkstationConfig
