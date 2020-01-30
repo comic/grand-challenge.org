@@ -3,9 +3,9 @@ from enum import Enum
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.core.exceptions import (
     MultipleObjectsReturned,
+    ObjectDoesNotExist,
     ValidationError,
 )
 from django.http import HttpResponse
@@ -57,6 +57,7 @@ from grandchallenge.retina_api.mixins import (
     RetinaAdminAPIPermission,
     RetinaOwnerAPIPermission,
 )
+from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.renderers import Base64Renderer
 from grandchallenge.retina_api.serializers import (
     BytesImageSerializer,
@@ -74,8 +75,9 @@ class ArchiveView(APIView):
     pagination_class = None
 
     def get(self, request):
-        archive_data = cache.get(settings.RETINA_ARCHIVE_DATA_CACHE_KEY)
-        if archive_data is None:
+        try:
+            archive_data_object = ArchiveDataModel.objects.get(pk=1)
+        except ObjectDoesNotExist:
             cache_archive_data.delay()
             return Response(
                 {
@@ -85,7 +87,8 @@ class ArchiveView(APIView):
                     ]
                 }
             )
-        return Response(archive_data)
+
+        return Response(json.loads(archive_data_object.value))
 
 
 class ImageView(RetinaAPIPermissionMixin, View):
