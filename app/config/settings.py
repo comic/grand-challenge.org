@@ -631,6 +631,10 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
     },
+    "cache_retina_archive_data": {
+        "task": "grandchallenge.retina_api.tasks.cache_archive_data",
+        "schedule": timedelta(hours=1),
+    },
 }
 
 CELERY_TASK_ROUTES = {
@@ -744,3 +748,5 @@ RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 RETINA_IMPORT_USER_NAME = "retina_import_user"
 RETINA_EXCEPTION_ARCHIVE = "Australia"
+
+RETINA_ARCHIVE_DATA_CACHE_KEY = "retina_archive_data"
