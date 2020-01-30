@@ -9,8 +9,7 @@ sphinx:
 formats: all
 
 python:
-  # TODO: Move to 3.8 when supported by rtd https://github.com/readthedocs/readthedocs.org/issues/6324
-  version: 3.7
+  version: 3.8
   install:
     - method: pip
       path: .
