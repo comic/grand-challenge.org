@@ -4,6 +4,7 @@
 {% load workstations %}
 {% load guardian_tags %}
 {% load suffix from pathlib %}
+{% load humanize %}
 
 {% block title %}
     Algorithm Jobs - {{ block.super }}
@@ -54,7 +55,7 @@
                 <tr>
                     {# pk included for test support #}
                     <!-- {{ job.pk }} -->
-                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                    <td data-order="{{ job.created|date:"U" }}">{{ job.created|naturaltime }}</td>
                     <td>
                         {% if job.creator %}
                             {{ job.creator|user_profile_link }}
