@@ -748,5 +748,3 @@ RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 RETINA_IMPORT_USER_NAME = "retina_import_user"
 RETINA_EXCEPTION_ARCHIVE = "Australia"
-
-RETINA_ARCHIVE_DATA_CACHE_KEY = "retina_archive_data"
