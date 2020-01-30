@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
+{% load random_encode %}
 
 {% block title %}Reader Studies - {{ block.super }}{% endblock %}
 
@@ -16,8 +17,10 @@
 
     <p>
         A Reader Study can be used to collect annotations or score algorithm
-        results for a set of medical images. Please email us if you would like
-        to set up your own reader study.
+        results for a set of medical images. Please
+        <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}">
+            contact us</a>
+        if you would like to set up your own reader study.
     </p>
 
     <div class="card-columns">
