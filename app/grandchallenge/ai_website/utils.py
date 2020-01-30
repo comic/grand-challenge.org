@@ -8,7 +8,6 @@ from django.core.files.images import ImageFile
 
 from grandchallenge.ai_website.models import (
     CompanyEntry,
-    ProductBasic,
     ProductEntry,
     ProductImage,
 )
@@ -140,27 +139,6 @@ class DataImporter(object):
         for file in img_file:
             p.product_img = ImageFile(open(file, "rb"))
 
-        p.save()
-        return p
-
-    def _create_product_basic(self, row, c):
-        p = ProductBasic(
-            product_name=row["Product name"],
-            company=c,
-            modified_date=row["Timestamp"],
-            short_name=row["Short name"],
-            description=row["Product description"],
-            description_short=self._split(row["Product description"], 200),
-            modality=row["Modality"],
-            subspeciality=row["Subspeciality"],
-            input_data=row["Input data"],
-            file_format_input=row["File format of input data"],
-            output_data=row["Output data"],
-            file_format_output=row["File format of output data"],
-            key_features=row["Key-feature(s)"],
-            key_features_short=self._split(row["Key-feature(s)"], 75),
-            verified=row["Verified"],
-        )
         p.save()
         return p
 

@@ -47,45 +47,8 @@ class ProductImage(models.Model):
     )
 
 
-class ProductBasic(models.Model):
-    created_date = models.DateField(default=timezone.now)
-    modified_date = models.DateField(auto_now=True)
-    product_name = models.CharField(max_length=200)
-    company = models.ForeignKey(CompanyEntry, on_delete=models.CASCADE)
-    short_name = models.CharField(
-        max_length=500,
-        blank=False,
-        help_text=(
-            "short name used in url, specific css, files etc. No spaces allowed"
-        ),
-        unique=True,
-    )
-    description = models.CharField(
-        max_length=300,
-        default="",
-        blank=True,
-        help_text="Short summary of this project, max 300 characters.",
-    )
-    description_short = models.CharField(
-        max_length=250,
-        blank=True,
-        help_text="Short summary of this project, max 250 characters.",
-    )
-    modality = models.CharField(max_length=64)
-    subspeciality = models.CharField(max_length=300)
-
-    input_data = models.CharField(max_length=150)
-    file_format_input = models.CharField(max_length=500)
-    output_data = models.CharField(max_length=150)
-    file_format_output = models.CharField(max_length=500)
-    key_features = models.CharField(max_length=150)
-
-    def __str__(self):
-        return self.short_name
-
-
 # Create your models here.
-class ProductEntry(ProductBasic):
+class ProductEntry(models.Model):
     STATUS_CERTIFIED = "cer"
     STATUS_YES = "yes"
     STATUS_NO = "no"
@@ -124,6 +87,37 @@ class ProductEntry(ProductBasic):
         STATUS_UNKNOWN: "icon_question.png",
     }
 
+    created_date = models.DateField(default=timezone.now)
+    modified_date = models.DateField(auto_now=True)
+    product_name = models.CharField(max_length=200)
+    company = models.ForeignKey(CompanyEntry, on_delete=models.CASCADE)
+    short_name = models.CharField(
+        max_length=500,
+        blank=False,
+        help_text=(
+            "short name used in url, specific css, files etc. No spaces allowed"
+        ),
+        unique=True,
+    )
+    description = models.CharField(
+        max_length=300,
+        default="",
+        blank=True,
+        help_text="Short summary of this project, max 300 characters.",
+    )
+    description_short = models.CharField(
+        max_length=250,
+        blank=True,
+        help_text="Short summary of this project, max 250 characters.",
+    )
+    modality = models.CharField(max_length=64)
+    subspeciality = models.CharField(max_length=300)
+
+    input_data = models.CharField(max_length=150)
+    file_format_input = models.CharField(max_length=500)
+    output_data = models.CharField(max_length=150)
+    file_format_output = models.CharField(max_length=500)
+    key_features = models.CharField(max_length=150)
     verified = models.CharField(
         choices=VERFIFIED_CHOICES, max_length=3, default=STATUS_NO
     )
