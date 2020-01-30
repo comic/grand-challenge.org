@@ -92,7 +92,7 @@ class TestArchiveIndexAPIEndpoints:
         assert response_data == {
             "error": [
                 1,
-                "Archive data task triggered. Try again in 30 seconds.",
+                "Archive data task triggered. Try again in 2 minutes.",
             ]
         }
         assert is_called
