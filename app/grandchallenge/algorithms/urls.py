@@ -50,7 +50,9 @@ urlpatterns = [
         AlgorithmExecutionSessionCreate.as_view(),
         name="execution-session-create",
     ),
-    path("<slug:slug>/jobs/", AlgorithmJobsList.as_view(), name="jobs-list"),
+    path(
+        "<slug:slug>/results/", AlgorithmJobsList.as_view(), name="jobs-list"
+    ),
     path(
         "<slug>/editors/update/",
         EditorsUpdate.as_view(),

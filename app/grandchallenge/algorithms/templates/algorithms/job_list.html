@@ -18,13 +18,13 @@
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a>
         <li class="breadcrumb-item active"
-            aria-current="page">Jobs
+            aria-current="page">Results
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Jobs for this algorithm</h2>
+    <h2>Results for {{ algorithm.title }}</h2>
 
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
 
