@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from grandchallenge.retina_api.models import ArchiveDataModel
@@ -23,8 +21,7 @@ class TestCacheArchiveDataTaks:
 
         # Check cached data
         archive_data_object, _ = ArchiveDataModel.objects.get_or_create(pk=1)
-        archive_data_json = archive_data_object.value
-        archive_data = json.loads(archive_data_json)
+        archive_data = archive_data_object.value
 
         expected_archive_data = {
             "subfolders": {

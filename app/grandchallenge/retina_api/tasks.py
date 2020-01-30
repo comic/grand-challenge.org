@@ -1,9 +1,6 @@
-import json
-
 from celery import shared_task
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.serializers.json import DjangoJSONEncoder
 
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
@@ -14,8 +11,7 @@ from grandchallenge.retina_api.models import ArchiveDataModel
 def cache_archive_data():
     archive_data = create_archive_data_object()
     ArchiveDataModel.objects.update_or_create(
-        pk=1,
-        defaults={"value": json.dumps(archive_data, cls=DjangoJSONEncoder)},
+        pk=1, defaults={"value": archive_data},
     )
 
 

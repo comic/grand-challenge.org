@@ -88,7 +88,7 @@ class ArchiveView(APIView):
                 }
             )
 
-        return Response(json.loads(archive_data_object.value))
+        return Response(archive_data_object.value)
 
 
 class ImageView(RetinaAPIPermissionMixin, View):
