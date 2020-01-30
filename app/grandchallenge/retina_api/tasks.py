@@ -1,35 +1,42 @@
+import json
+
 from celery import shared_task
 from django.conf import settings
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
 
 from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
+from grandchallenge.retina_api.models import ArchiveDataModel
 
 
 @shared_task
 def cache_archive_data():
-    def create_archive_data_object():
-        archives = Archive.objects.all()
-        patients = Patient.objects.prefetch_related(
-            "study_set",
-            "study_set__image_set",
-            "study_set__image_set__modality",
-            "study_set__image_set__obs_image",
-            "study_set__image_set__oct_image",
-            "study_set__image_set__archive_set",
-        )
-
-        return {
-            "subfolders": dict(generate_archives(archives, patients)),
-            "info": "level 2",
-            "name": "Archives",
-            "id": "none",
-            "images": {},
-        }
-
     archive_data = create_archive_data_object()
-    cache.set(settings.RETINA_ARCHIVE_DATA_CACHE_KEY, archive_data, None)
+    ArchiveDataModel.objects.update_or_create(
+        pk=1,
+        defaults={"value": json.dumps(archive_data, cls=DjangoJSONEncoder)},
+    )
+
+
+def create_archive_data_object():
+    archives = Archive.objects.all()
+    patients = Patient.objects.prefetch_related(
+        "study_set",
+        "study_set__image_set",
+        "study_set__image_set__modality",
+        "study_set__image_set__obs_image",
+        "study_set__image_set__oct_image",
+        "study_set__image_set__archive_set",
+    )
+
+    return {
+        "subfolders": dict(generate_archives(archives, patients)),
+        "info": "level 2",
+        "name": "Archives",
+        "id": "none",
+        "images": {},
+    }
 
 
 def generate_archives(archive_list, patients):

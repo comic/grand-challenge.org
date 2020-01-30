@@ -1,7 +1,8 @@
-import pytest
-from django.conf import settings
-from django.core.cache import cache
+import json
 
+import pytest
+
+from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.tasks import cache_archive_data
 from tests.retina_api_tests.helpers import create_datastructures_data
 
@@ -21,7 +22,9 @@ class TestCacheArchiveDataTaks:
         cache_archive_data()
 
         # Check cached data
-        archive_data = cache.get(settings.RETINA_ARCHIVE_DATA_CACHE_KEY)
+        archive_data_object, _ = ArchiveDataModel.objects.get_or_create(pk=1)
+        archive_data_json = archive_data_object.value
+        archive_data = json.loads(archive_data_json)
 
         expected_archive_data = {
             "subfolders": {
@@ -35,14 +38,18 @@ class TestCacheArchiveDataTaks:
                                         datastructures["image_oct"].name: {
                                             "images": {
                                                 "trc_000": "no info",
-                                                "obs_000": datastructures[
-                                                    "image_obs"
-                                                ].id,
+                                                "obs_000": str(
+                                                    datastructures[
+                                                        "image_obs"
+                                                    ].id
+                                                ),
                                                 "mot_comp": "no info",
                                                 "trc_001": "no info",
-                                                "oct": datastructures[
-                                                    "image_oct"
-                                                ].id,
+                                                "oct": str(
+                                                    datastructures[
+                                                        "image_oct"
+                                                    ].id
+                                                ),
                                             },
                                             "info": {
                                                 "voxel_size": {
@@ -63,30 +70,30 @@ class TestCacheArchiveDataTaks:
                                         }
                                     },
                                     "name": datastructures["study_oct"].name,
-                                    "id": datastructures["study_oct"].id,
+                                    "id": str(datastructures["study_oct"].id),
                                     "subfolders": {},
                                 },
                                 datastructures["study"].name: {
                                     "info": "level 5",
                                     "images": {
-                                        datastructures["image_cf"].name: (
+                                        datastructures["image_cf"].name: str(
                                             datastructures["image_cf"].id
                                         )
                                     },
                                     "name": datastructures["study"].name,
-                                    "id": (datastructures["study"].id),
+                                    "id": str(datastructures["study"].id),
                                     "subfolders": {},
                                 },
                             },
                             "info": "level 4",
                             "name": datastructures["patient"].name,
-                            "id": (datastructures["patient"].id),
+                            "id": str(datastructures["patient"].id),
                             "images": {},
                         }
                     },
                     "info": "level 3",
                     "name": datastructures["archive"].name,
-                    "id": (datastructures["archive"].id),
+                    "id": str(datastructures["archive"].id),
                     "images": {},
                 },
                 datastructures_aus["archive"].name: {
@@ -95,17 +102,17 @@ class TestCacheArchiveDataTaks:
                             "subfolders": {},
                             "info": "level 4",
                             "name": datastructures_aus["patient"].name,
-                            "id": (datastructures_aus["patient"].id),
+                            "id": str(datastructures_aus["patient"].id),
                             "images": {
                                 datastructures_aus["image_oct"].name: {
                                     "images": {
                                         "trc_000": "no info",
-                                        "obs_000": (
+                                        "obs_000": str(
                                             datastructures_aus["image_obs"].id
                                         ),
                                         "mot_comp": "no info",
                                         "trc_001": "no info",
-                                        "oct": (
+                                        "oct": str(
                                             datastructures_aus["image_oct"].id
                                         ),
                                     },
@@ -126,7 +133,7 @@ class TestCacheArchiveDataTaks:
                                         },
                                     },
                                 },
-                                datastructures_aus["image_cf"].name: (
+                                datastructures_aus["image_cf"].name: str(
                                     datastructures_aus["image_cf"].id
                                 ),
                             },
@@ -134,7 +141,7 @@ class TestCacheArchiveDataTaks:
                     },
                     "info": "level 3",
                     "name": datastructures_aus["archive"].name,
-                    "id": (datastructures_aus["archive"].id),
+                    "id": str(datastructures_aus["archive"].id),
                     "images": {},
                 },
             },
