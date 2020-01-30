@@ -49,15 +49,6 @@
                        title="View Algorithm">
                         <i class="fa fa-eye"></i>
                     </a>
-                    {% if algorithm.latest_ready_image %}
-                        <a href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}"
-                           class="btn btn-primary"
-                           data-toggle="tooltip"
-                           data-placement="bottom"
-                           title="Try Out This Algorithm">
-                            <i class="fa fa-flask"></i>
-                        </a>
-                    {% endif %}
                 </div>
             </div>
         {% endfor %}
