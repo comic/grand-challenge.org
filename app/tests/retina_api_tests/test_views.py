@@ -14,6 +14,7 @@ from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
 from rest_framework.utils import encoders
 
+from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.serializers import (
     TreeImageSerializer,
     TreeObjectSerializer,
@@ -102,7 +103,9 @@ class TestArchiveIndexAPIEndpoints:
         cache.clear()
         # Set cached data
         test_data = {"test": "data", "object": 1}
-        cache.set(settings.RETINA_ARCHIVE_DATA_CACHE_KEY, test_data, 60)
+        ArchiveDataModel.objects.update_or_create(
+            pk=1, defaults={"value": test_data},
+        )
 
         # login client
         client, _ = client_login(client, user="retina_user")
