@@ -99,7 +99,7 @@
                     </td>
                     <td>{{ job.result.output }}</td>
                     <td>
-                        {% if not job.result.images.all %}
+                        {% if job.result.images.all %}
                             <ul class="list-unstyled">
                                 {% for image in job.result.images.all %}
                                     <li>
@@ -120,7 +120,7 @@
                                     {% endfor %}
                                 {% endfor %}
                             </ul>
-                        {% elif job.status != job.SUCCESS %}
+                        {% elif job.status == job.SUCCESS %}
                             <span class="badge badge-warning"
                                   title="No output images were found">
                                <i class="fa fa-eye-slash"></i>
