@@ -81,7 +81,7 @@ class ArchiveView(APIView):
                 {
                     "error": [
                         1,
-                        "Archive data task triggered. Try again in 30 seconds.",
+                        "Archive data task triggered. Try again in 2 minutes.",
                     ]
                 }
             )
