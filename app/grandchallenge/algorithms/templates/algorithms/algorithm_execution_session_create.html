@@ -8,8 +8,10 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
@@ -28,7 +30,10 @@
 
     {% crispy form %}
 
-    By running this algorithm you agree to the <a href="{% url 'policies:detail' slug='terms-of-service' %}"> general terms of service</a>{% if algorithm.additional_terms %}, as well as the algorithm's specific terms of service:
+    By running this algorithm you agree to the
+    <a href="{% url 'policies:detail' slug='terms-of-service' %}"> General Terms of
+        Service</a>{% if algorithm.additional_terms %},
+        as well as the algorithm's specific Terms of Service:
         <p>{{ algorithm.additional_terms }}</p>
     {% else %}.
     {% endif %}
