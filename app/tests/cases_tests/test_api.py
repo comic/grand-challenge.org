@@ -139,7 +139,7 @@ def test_image_file_list(client):
     RawImageFileFactory(upload_session=us1)
 
     response = get_view_for_user(
-        viewname="api:image-file-list",
+        viewname="api:upload-session-file-list",
         client=client,
         user=u1,
         content_type="application/json",
@@ -148,7 +148,7 @@ def test_image_file_list(client):
     assert response.json()["count"] == 1
 
     response = get_view_for_user(
-        viewname="api:image-file-list",
+        viewname="api:upload-session-file-list",
         client=client,
         user=u2,
         content_type="application/json",
@@ -164,7 +164,7 @@ def test_image_file_detail(client):
     rif = RawImageFileFactory(upload_session=us)
 
     response = get_view_for_user(
-        viewname="api:image-file-detail",
+        viewname="api:upload-session-file-detail",
         reverse_kwargs={"pk": rif.pk},
         client=client,
         user=u1,
@@ -172,7 +172,7 @@ def test_image_file_detail(client):
     assert response.status_code == 200
 
     response = get_view_for_user(
-        viewname="api:image-file-detail",
+        viewname="api:upload-session-file-detail",
         reverse_kwargs={"pk": rif.pk},
         client=client,
         user=u2,
@@ -190,7 +190,7 @@ def test_image_file_create(client):
     )
 
     response = get_view_for_user(
-        viewname="api:image-file-list",
+        viewname="api:upload-session-file-list",
         user=user,
         client=client,
         method=client.post,
@@ -208,7 +208,7 @@ def test_image_file_create(client):
     upload_session = RawImageUploadSessionFactory()
 
     response = get_view_for_user(
-        viewname="api:image-file-list",
+        viewname="api:upload-session-file-list",
         user=user,
         client=client,
         method=client.post,
@@ -226,7 +226,7 @@ def test_invalid_image_file_post(client):
     user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        viewname="api:image-file-list",
+        viewname="api:upload-session-file-list",
         user=user,
         client=client,
         method=client.post,
@@ -240,7 +240,7 @@ def test_invalid_image_file_post(client):
 
     upload_session = RawImageUploadSessionFactory()
     response = get_view_for_user(
-        viewname="api:image-file-list",
+        viewname="api:upload-session-file-list",
         user=user,
         client=client,
         method=client.post,
@@ -256,7 +256,7 @@ def test_empty_data_image_files(client):
     user = UserFactory(is_staff=True)
 
     response = get_view_for_user(
-        viewname="api:image-file-list",
+        viewname="api:upload-session-file-list",
         user=user,
         client=client,
         method=client.post,
@@ -281,7 +281,7 @@ def test_image_file_post_permissions(client, is_active, expected_response):
         creator=user, algorithm_image=algo
     )
     response = get_view_for_user(
-        viewname="api:image-file-list",
+        viewname="api:upload-session-file-list",
         user=user,
         client=client,
         method=client.post,
