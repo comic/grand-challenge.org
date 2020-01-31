@@ -147,7 +147,9 @@ class RawImageFile(UUIDModel):
 
     @property
     def api_url(self):
-        return reverse("api:image-file-detail", kwargs={"pk": self.pk})
+        return reverse(
+            "api:upload-session-file-detail", kwargs={"pk": self.pk}
+        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

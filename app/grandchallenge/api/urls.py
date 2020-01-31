@@ -30,30 +30,34 @@ from grandchallenge.workstations.views import SessionViewSet
 app_name = "api"
 
 router = routers.DefaultRouter()
+
+# Algorithms
 router.register(
-    r"cases/upload-sessions",
-    RawImageUploadSessionViewSet,
-    basename="upload-session",
-)
-router.register(
-    r"cases/image-files", RawImageFileViewSet, basename="image-file"
-)
-router.register(r"cases/images", ImageViewSet, basename="image")
-router.register(r"workstations/sessions", SessionViewSet)
-router.register(
-    r"workstations/configs",
-    WorkstationConfigViewSet,
-    basename="workstations-config",
+    r"algorithms/images", AlgorithmImageViewSet, basename="algorithms-image"
 )
 router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")
 router.register(
     r"algorithms/results", ResultViewSet, basename="algorithms-result"
 )
-router.register(
-    r"algorithms/images", AlgorithmImageViewSet, basename="algorithms-image"
-)
 router.register(r"algorithms", AlgorithmViewSet, basename="algorithm")
 
+# Cases
+router.register(r"cases/images", ImageViewSet, basename="image")
+router.register(
+    r"cases/upload-sessions/files",
+    RawImageFileViewSet,
+    basename="upload-session-file",
+)
+router.register(
+    r"cases/upload-sessions",
+    RawImageUploadSessionViewSet,
+    basename="upload-session",
+)
+
+# Chunked uploads
+router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
+
+# Reader studies
 router.register(
     r"reader-studies/answers", AnswerViewSet, basename="reader-studies-answer"
 )
@@ -63,15 +67,23 @@ router.register(
     basename="reader-studies-question",
 )
 router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
-router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
+# Retina
 router.register(
     r"retina/landmark-annotation",
     LandmarkAnnotationSetViewSet,
     basename="landmark-annotation",
 )
 
-# TODO: add terms_of_service and contact
+# Workstations
+router.register(
+    r"workstations/configs",
+    WorkstationConfigViewSet,
+    basename="workstations-config",
+)
+router.register(r"workstations/sessions", SessionViewSet)
+
+
 schema_view = get_schema_view(
     openapi.Info(
         title=f"{settings.SESSION_COOKIE_DOMAIN.lstrip('.')} API",
