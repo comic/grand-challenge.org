@@ -87,7 +87,7 @@ class DataImporter(object):
             product_name=row["Product name"],
             company=c,
             modified_date=row["Timestamp"],
-            short_name=row["Short name"],
+            short_name=row["Short name"][:50],
             description=row["Product description"][:300],
             description_short=self._split(row["Product description"], 200),
             modality=row["Modality"],
@@ -109,12 +109,18 @@ class DataImporter(object):
             verified=STATUS_MAPPING.get(
                 row["Verified"], ProductEntry.STATUS_UNKNOWN
             ),
+            ce_verified=STATUS_MAPPING.get(
+                row["CE verified"], ProductEntry.STATUS_UNKNOWN
+            ),
             integration=row["Integration"],
-            hosting=row["Hosting"],
-            hardware=row["Hardware requirements"],
+            deployment=row["Deployment"],
+            process_time=row["Algorithm processing time per study"],
+            trigger=row["Trigger for the analysis of data"],
             market_since=str(row["Product on the market since"]),
             countries=str(row["Number of countries present"]),
-            distribution=str(row["Distribution platforms or partners"]),
+            distribution=str(
+                row["Distribution platforms/marketplaces availability"]
+            ),
             institutes_research=str(
                 row["Number of institutes using the product for research"]
             ),
@@ -123,13 +129,17 @@ class DataImporter(object):
             ),
             pricing_model=row["Pricing model"],
             pricing_basis=row["Pricing model based on"],
-            tech_papers=row[
-                "Name relevant (white)papers regarding the performance of the software (analytical validation)"
+            tech_peer_papers=row[
+                "Name peer reviewed papers that describe the performance of the software as is commercially available."
             ],
-            clin_papers=row[
-                "Name relevant (white)papers regarding the implementation of the software (clinical validation)"
+            tech_other_papers=row[
+                "Name other (white)papers that describe the performance of the software as is commercially available."
+            ],
+            all_other_papers=row[
+                "Name other relevant (white)papers regarding the performance or implementation of the software not mentioned above."
             ],
         )
+
         p.save()
         p.images.set(i)
 
