@@ -166,6 +166,11 @@ class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
         f"{ProductEntry._meta.app_label}.add_{ProductEntry._meta.model_name}"
     )
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     def form_valid(self, *args, **kwargs):
         response = super().form_valid(*args, **kwargs)
         form = self.get_form()
@@ -174,7 +179,7 @@ class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
             di.import_data(
                 product_data=form.cleaned_data["products_file"],
                 company_data=form.cleaned_data["companies_file"],
-                images_zip=form.cleaned_data["images_zip"],
+                images_zip=form.cleaned_data["images_zip"][0].open(),
             )
         return response
 
