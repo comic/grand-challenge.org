@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class AlgorithmsConfig(AppConfig):
+class AIWebsiteConfig(AppConfig):
     name = "grandchallenge.ai-website"
