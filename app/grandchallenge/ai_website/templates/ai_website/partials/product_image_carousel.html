@@ -23,7 +23,9 @@
       <span class="sr-only">Next</span>
     </a>
   </div>
+  <div class="text-muted small"> Source: {{product.company.website}}</div>
 
 {% elif product.product_img %}
-  <img src={{product.product_img.url}} style="width:100%;"><br><br>
+  <img src={{product.product_img.url}} style="width:100%;">
+  <div class="text-muted small"> Source: {{product.company.website}}</div>
 {% endif %}

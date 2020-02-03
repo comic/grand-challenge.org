@@ -31,17 +31,19 @@
       <div class="row py-4 border-top">
           <div class="col-sm-3">
             <div class="d-flex justify-content-between flex-column h-100">
-                <a href="{% url 'ai-website:company_page' pk=company.pk %}" title="{{ company.company_name }}">
-                  {% if company.logo %}
-                    <img src="{{ company.logo.url }}" alt="Logo" style="width:70%">
-                  {% endif %}
+                <a class="pb-5" href="{% url 'ai-website:company_page' pk=company.pk %}" title="{{ company.company_name }}">
+                  <img src="{{ company.logo.url }}" alt="Logo" style="width:70%">
                 </a>
-                <br><br>
-                <div class="h6">
-                  <span class="text-muted">HQ:</span>
-                  <span>{{company.hq}}</span><br>
-                  <span class="text-muted">Founded:</span>
-                  <span>{{company.founded}}</span>
+
+                <div>
+                 <div>
+                    <span class="text-muted">HQ: </span>
+                    <span class="ml-auto">{{company.hq}}</span>
+                 </div>
+                 <div>
+                    <span class="text-muted">Founded:</span>
+                    <span class="ml-auto">{{company.founded}}</span>
+                 </div>
                 </div>
             </div>
           </div>
@@ -55,7 +57,7 @@
           </div>
           <div class="col-sm-3 bg-light pt-2">
             <p><b>Products:</b></p>
-            {% for product in company.productbasic_set.all %}
+            {% for product in company.productentry_set.all %}
               <div>
                 <a href= "{% url 'ai-website:product_page' pk=product.pk %}" title={{product.product_name}} target="_blank">
                     {{product.product_name}}</a>

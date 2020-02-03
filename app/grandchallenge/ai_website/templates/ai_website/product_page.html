@@ -4,14 +4,21 @@
     {{product.product_name}} - {{product.company.company_name}}
 {% endblock %}
 
+{% block breadcrumbs %}
+  <li class="breadcrumb-item"><a href="{% url 'ai-website:product_list' %}">Products</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{product.product_name}}</li>
+{% endblock %}
+
 {% block content %}
-    <div class="container pl-0 pt-4">
+
+
+  <div class="container pl-0 pt-4">
 
     <div class="row pb-2">
       <div class="col-sm-6">
-        <header id={{product.product_name}}>
+        <header id="{{product.product_name}}">
           <h1 class="mb-1">{{product.product_name}}</h1>
-          <a href= "{% url 'ai-website:company_page' pk=product.company.pk %}" title={{product.company.company_name}} class="h5">by {{ product.company.company_name }}</a>
+          <a href= "{% url 'ai-website:company_page' pk=product.company.pk %}" title={{product.company.company_name}} class="h5 u"><u>{{ product.company.company_name }}</u></a>
           <br><br>
           {% include "ai_website/partials/product_image_carousel.html" %}
         </header>
@@ -29,8 +36,20 @@
     <div class="row">
       <div class="col-sm-9 py-2 border-top">
         <table class="table table-borderless">
-          <td class="h4 pl-0 text-radboud align-bottom">Product specifications</td>
-          <td class="text-right pr-0 align-bottom h6 text-muted">Last updated: {{product.modified_date}}</td>
+          <tr>
+            <td class="h4 pl-0 text-radboud align-bottom">Product specifications</td>
+            <td class="text-right pr-0 align-bottom"><small>
+              <span class="text-muted">Information source:</span>
+              {% if product.verified == 'Yes' %}
+                <span>Vendor</span>
+              {% else %}
+                <span>Public</span>
+              {% endif %}<br>
+              <span class="text-muted">Last updated:</span>
+              <span>{{product.modified_date}}</span>
+            </small></td>
+          </tr>
+
         </table>
         <table class="table">
           <thead class="thead-light">
@@ -43,6 +62,10 @@
             <td>{{product.product_name}}</td>
           </tr>
           <tr>
+            <td class="text-muted">Company</td>
+            <td><a href= "{% url 'ai-website:company_page' pk=product.company.pk %}" title={{product.company.company_name}}><u>{{ product.company.company_name }}</u></a></td>
+          </tr>
+          <tr>
             <td class="text-muted">Subspeciality</td>
             <td>{{product.subspeciality}}</td>
           </tr>
@@ -51,8 +74,25 @@
             <td>{{product.modality}}</td>
           </tr>
           <tr>
+            <td class="text-muted">Disease targeted</td>
+            <td>{{product.diseases}}</td>
+          </tr>
+          <tr>
             <td class="text-muted">Key-features</td>
             <td>{{product.key_features}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Suggested use</td>
+            <td>{{product.software_usage}}</td>
+          </tr>
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Data characteristics</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Population</td>
+            <td>{{product.population}}</td>
           </tr>
           <tr>
             <td class="text-muted">Input</td>
@@ -80,12 +120,16 @@
             <td>{{product.integration}}</td>
           </tr>
           <tr>
-            <td class="text-muted">Hosting</td>
-            <td>{{product.hosting}}</td>
+            <td class="text-muted">Deployment</td>
+            <td>{{product.deployment}}</td>
           </tr>
           <tr>
-            <td class="text-muted">Specialized hardware required</td>
-            <td>{{product.hardware}}</td>
+            <td class="text-muted">Trigger for analysis</td>
+            <td>{{product.trigger}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Processing time</td>
+            <td>{{product.process_time}}</td>
           </tr>
           <thead class="thead-light">
             <tr>
@@ -94,11 +138,15 @@
           </thead>
           <tr>
             <td class="text-muted">CE</td>
-            <td>{{product.get_ce_status_display}} {{product.ce_class}}</td>
+            <td>
+              {{product.get_ce_status_display}}{% if product.ce_class %}, {{product.ce_class}}{% endif %}
+            </td>
           </tr>
           <tr>
             <td class="text-muted">FDA</td>
-            <td>{{product.get_fda_status_display }} {{product.fda_class}}</td>
+            <td>
+              {{product.get_fda_status_display}}{% if product.fda_class %}, {{product.fda_class}}{% endif %}
+            </td>
           </tr>
           <thead class="thead-light">
             <tr>
@@ -118,11 +166,11 @@
             <td>{{product.countries}}</td>
           </tr>
           <tr>
-            <td class="text-muted">Number of paying clinical customers (institutes) </td>
+            <td class="text-muted">Paying clinical customers (institutes) </td>
             <td>{{product.institutes_research}}</td>
           </tr>
           <tr>
-            <td class="text-muted">Number of research/test users (institutes) </td>
+            <td class="text-muted">Research/test users (institutes) </td>
             <td>{{product.institutes_clinical}}</td>
           </tr>
           <thead class="thead-light">
@@ -144,29 +192,20 @@
             </tr>
           </thead>
           <tr>
-            <td class="text-muted">Relevant peer reviewed papers regarding performance</td>
-            <td>{{product.tech_papers}}</td>
+            <td class="text-muted">Peer reviewed papers regarding performance as commercially available</td>
+            <td>{{product.tech_peer_papers}}</td>
           </tr>
           <tr>
-            <td class="text-muted">Relevant peer reviewed papers regarding implementation</td>
-            <td>{{product.clin_papers}}</td>
+            <td class="text-muted">Other papers regarding performance as commercially available</td>
+            <td>{{product.tech_other_papers}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Other relevant papers</td>
+            <td>{{product.all_other_papers}}</td>
           </tr>
         </table>
       </div>
     </div>
   </div>
 
-
-{% endblock %}
-
-
-
-
-{% block script %}
-    {{ block.super }}
-    <script>
-        $(function(){
-          $('#product_img_carousel').carousel();
-        });
-    </script>
 {% endblock %}
