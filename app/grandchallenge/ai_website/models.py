@@ -88,9 +88,12 @@ class ProductEntry(models.Model):
     }
 
     created_date = models.DateField(default=timezone.now)
-    modified_date = models.DateField(auto_now=True)
+    modified_date = models.DateField(default=timezone.now)
+    published_date = models.DateField(blank=True, null=True)
     product_name = models.CharField(max_length=200)
-    company = models.ForeignKey(CompanyEntry, on_delete=models.CASCADE)
+    company = models.ForeignKey(
+        CompanyEntry, on_delete=models.CASCADE
+    )  # product.company.company_name
     short_name = models.CharField(
         max_length=500,
         blank=False,
@@ -100,24 +103,30 @@ class ProductEntry(models.Model):
         unique=True,
     )
     description = models.CharField(
-        max_length=300,
+        max_length=400,
         default="",
         blank=True,
         help_text="Short summary of this project, max 300 characters.",
     )
     description_short = models.CharField(
         max_length=250,
+        default="",
         blank=True,
         help_text="Short summary of this project, max 250 characters.",
     )
-    modality = models.CharField(max_length=64)
+    modality = models.CharField(max_length=100)
     subspeciality = models.CharField(max_length=300)
+    diseases = models.CharField(max_length=200)
+    population = models.CharField(max_length=200)
 
     input_data = models.CharField(max_length=150)
     file_format_input = models.CharField(max_length=500)
     output_data = models.CharField(max_length=150)
     file_format_output = models.CharField(max_length=500)
-    key_features = models.CharField(max_length=150)
+    key_features = models.CharField(max_length=200)
+    key_features_short = models.CharField(max_length=120)
+    software_usage = models.CharField(max_length=300)
+
     verified = models.CharField(
         choices=VERFIFIED_CHOICES, max_length=3, default=STATUS_NO
     )
@@ -129,18 +138,20 @@ class ProductEntry(models.Model):
         choices=FDA_STATUS_CHOICES, max_length=3, default=STATUS_UNKNOWN
     )
     fda_class = models.CharField(max_length=500, default="unknown")
+    ce_verified = models.CharField(
+        choices=VERFIFIED_CHOICES, max_length=3, default=STATUS_NO
+    )
 
     integration = models.CharField(max_length=500, default="unknown")
-    hosting = models.CharField(max_length=500, default="unknown")
-    hardware = models.CharField(max_length=150, default=" ")
+    deployment = models.CharField(max_length=500, default="unknown")
+    process_time = models.CharField(max_length=500)
+    trigger = models.CharField(max_length=100)
 
     market_since = models.CharField(
         max_length=500, default="unknown"
     )  # choose only month year in datefield?
     countries = models.CharField(max_length=500, default="unknown")
-    distribution = models.CharField(
-        max_length=100, default="unknown"
-    )  # or list?
+    distribution = models.CharField(max_length=100, default="unknown")
     institutes_research = models.CharField(max_length=500, default="unknown")
     institutes_clinic = models.CharField(max_length=500, default="unknown")
 
@@ -149,6 +160,10 @@ class ProductEntry(models.Model):
 
     tech_papers = models.CharField(max_length=500, default="unknown")
     clin_papers = models.CharField(max_length=500, default="unknown")
+    tech_peer_papers = models.CharField(max_length=500, default="unknown")
+    tech_other_papers = models.CharField(max_length=500, default="unknown")
+    all_other_papers = models.CharField(max_length=500, default="unknown")
+
     images = models.ManyToManyField(ProductImage)
 
     def __str__(self):
