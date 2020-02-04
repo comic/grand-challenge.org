@@ -16,9 +16,9 @@ def test_initdemo(settings):
     call_command("init_gc_demo")
 
     # It should create a number of users
-    assert get_user_model().objects.all().count() == 10
+    assert get_user_model().objects.all().count() == 11
 
     # Should be able to run it twice without changing the db
     call_command("init_gc_demo")
 
-    assert get_user_model().objects.all().count() == 10
+    assert get_user_model().objects.all().count() == 11

@@ -79,6 +79,7 @@ class Command(BaseCommand):
             "readerstudy",
             "workstation",
             "algorithm",
+            "algorithmuser",
         ]
         self.users = self._create_users(usernames=default_users)
 
@@ -147,6 +148,10 @@ class Command(BaseCommand):
         Token.objects.get_or_create(
             user=self.users["retina"],
             key="f1f98a1733c05b12118785ffd995c250fe4d90da",
+        )
+        Token.objects.get_or_create(
+            user=self.users["algorithmuser"],
+            key="dc3526c2008609b429514b6361a33f8516541464",
         )
 
     def _create_demo_challenge(self):
@@ -272,6 +277,7 @@ class Command(BaseCommand):
             title="Test Algorithm", logo=get_temporary_image()
         )
         algorithm.editors_group.user_set.add(self.users["algorithm"])
+        algorithm.users_group.user_set.add(self.users["algorithmuser"])
 
         algorithm_image = AlgorithmImage(
             creator=self.users["algorithm"], algorithm=algorithm
