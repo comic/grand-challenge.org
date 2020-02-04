@@ -188,6 +188,8 @@ class ReaderStudyStatistics(
     )
     raise_exception = True
     template_name = "reader_studies/readerstudy_statistics.html"
+    # TODO: this view also contains the ground truth answer values.
+    # If the permission is changed to 'read', we need to filter these values out.
 
 
 class QuestionUpdate(

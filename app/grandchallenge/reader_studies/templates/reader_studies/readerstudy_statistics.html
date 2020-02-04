@@ -24,6 +24,7 @@
                     <th>Image name</th>
                     <th>Total score / max score</th>
                     <th>Average score</th>
+                    <th>Ground truth</th>
                     <th>View image</th>
                 </tr>
             </thead>
@@ -32,7 +33,9 @@
                     <tr>
                         <td data-order="{{ entry.images__name }}">{{ entry.images__name }}</td>
                         <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.statistics.max_score_cases }}</td>
-                        <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg }}</td>
+                        <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg|floatformat:4 }}</td>
+
+                        <td data-order="{{ ground_truth }}">{{ entry.ground_truth }}</td>
                         <td data-order="{{ entry.images__name }}">
                             <a href="{% url 'workstations:workstation-session-redirect' slug=object.workstation.slug %}?{% workstation_query image=entry.images__pk config=object.workstation_config %}">
                                 <span class="badge badge-primary">
@@ -59,7 +62,7 @@
                     <tr>
                         <td data-order="{{ entry.question__question_text }}">{{ entry.question__question_text }}</td>
                         <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.statistics.max_score_questions }}</td>
-                        <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg }}</td>
+                        <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg|floatformat:4 }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -74,6 +77,7 @@
             $('.table').each(function() {
                 $(this).DataTable({
                     pageLength: 100,
+                    "order": [[ 1, "asc" ]]
                 });
             });
         });
