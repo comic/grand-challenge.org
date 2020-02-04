@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count, OuterRef, Subquery, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -419,13 +419,25 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .annotate(Sum("score"), Avg("score"))
             .order_by("-score__avg")
         )
+        # TODO: the ground truth only works correctly when there is one question
+        # per image.
         scores_by_case = (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
             )
             .order_by("images__name")
             .values("images__name", "images__pk")
-            .annotate(Sum("score"), Avg("score"))
+            .annotate(
+                Sum("score"),
+                Avg("score"),
+                ground_truth=Subquery(
+                    Answer.objects.filter(
+                        is_ground_truth=True,
+                        images=OuterRef("images"),
+                        question=OuterRef("question"),
+                    ).values_list("answer")[:1]
+                ),
+            )
             .order_by("score__avg")
         )
         return {

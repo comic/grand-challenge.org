@@ -28,5 +28,5 @@ def user_profile_link(user: AbstractUser) -> str:
 
 @register.filter
 def user_profile_link_username(username: str) -> str:
-    User = get_user_model()
+    User = get_user_model()  # noqa: N806
     return user_profile_link(User.objects.get(username=username))
