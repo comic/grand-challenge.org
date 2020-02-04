@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
+{% load humanize %}
+{% load user_profile_link_username from profiles %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -19,6 +21,7 @@
         <table class="table table-hover table-striped table-sm">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>User</th>
                     <th>Total score / max score</th>
                     <th>Average score</th>
@@ -27,9 +30,10 @@
             <tbody>
             {% for entry in object.leaderboard.grouped_scores %}
                 <tr>
-                    <td data-order="{{ entry.creator__username }}">{{ forloop.counter }}. {{ entry.creator__username }}</td>
+                    <td data-order="{{ forloop.counter|stringformat:'020f' }}">{{ forloop.counter|ordinal }}</td>
+                    <td data-order="{{ entry.creator__username }}">{{ entry.creator__username|user_profile_link_username }}</td>
                     <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.leaderboard.question_count }}</td>
-                    <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg }}</td>
+                    <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg|floatformat:4 }}</td>
                 </tr>
             {% endfor %}
             </tbody>
