@@ -5,6 +5,7 @@
 {% load guardian_tags %}
 {% load suffix from pathlib %}
 {% load humanize %}
+{% load user_error from evaluation_extras %}
 
 {% block title %}
     Algorithm Jobs - {{ block.super }}
@@ -84,18 +85,26 @@
                         </ul>
                     </td>
                     <td>
-                    <span class="badge
-                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
-                        badge-danger
-                    {% elif job.status == job.RETRY %}
-                        badge-warning
-                    {% elif job.status == job.SUCCESS %}
-                        badge-success
-                    {% else %}
-                        badge-info
-                    {% endif %}">
-                        {{ job.get_status_display }}
-                    </span>
+                        {% if job.status == job.FAILURE %}
+                            <a href="#jobInfoModal"
+                               class="badge
+                            {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                                badge-danger
+                            {% elif job.status == job.RETRY %}
+                                badge-warning
+                            {% elif job.status == job.SUCCESS %}
+                                badge-success
+                            {% else %}
+                                badge-info
+                            {% endif %}"
+                               data-toggle="modal"
+                               data-target="#jobInfoModal"
+                               data-title="Job {{ job.pk }}"
+                               data-output="{% firstof job.output|user_error job.get_status_display %}"
+                               title="Job Info">
+                                {{ job.get_status_display }}
+                            </a>
+                        {% endif %}
                     </td>
                     <td>{{ job.result.output }}</td>
                     <td>
@@ -132,10 +141,31 @@
             </tbody>
         </table>
     </div>
+
+
+    <div class="modal fade" id="jobInfoModal" tabindex="-1" role="dialog"
+         aria-labelledby="jobInfoModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-job-output"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
+
     <script type="text/javascript">
         $(document).ready(function () {
             $('.table').DataTable({
@@ -144,5 +174,14 @@
                 ordering: true
             });
         });
+    </script>
+
+    <script type="text/javascript">
+        $('#jobInfoModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var modal = $(this);
+            modal.find('.modal-title').text(button.data('title'));
+            modal.find('.modal-job-output').text(button.data('output'));
+        })
     </script>
 {% endblock %}
