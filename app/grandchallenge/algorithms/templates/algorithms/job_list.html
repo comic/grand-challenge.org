@@ -85,9 +85,8 @@
                         </ul>
                     </td>
                     <td>
-                        {% if job.status == job.FAILURE %}
-                            <a href="#jobInfoModal"
-                               class="badge
+                        <a href="#jobInfoModal"
+                           class="badge
                             {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
                                 badge-danger
                             {% elif job.status == job.RETRY %}
@@ -97,14 +96,13 @@
                             {% else %}
                                 badge-info
                             {% endif %}"
-                               data-toggle="modal"
-                               data-target="#jobInfoModal"
-                               data-title="Job {{ job.pk }}"
-                               data-output="{% firstof job.output|user_error job.get_status_display %}"
-                               title="Job Info">
-                                {{ job.get_status_display }}
-                            </a>
-                        {% endif %}
+                           data-toggle="modal"
+                           data-target="#jobInfoModal"
+                           data-title="Job {{ job.pk }}"
+                           data-output="{% firstof job.output|user_error job.get_status_display %}"
+                           title="Job Info">
+                            {{ job.get_status_display }}
+                        </a>
                     </td>
                     <td>{{ job.result.output }}</td>
                     <td>
