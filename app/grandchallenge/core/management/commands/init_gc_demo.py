@@ -151,7 +151,7 @@ class Command(BaseCommand):
         )
         Token.objects.get_or_create(
             user=self.users["user"],
-            key="3d280ffee91e713f67fb66302562642b2d9021dd",
+            key="dc3526c2008609b429514b6361a33f8516541464",
         )
 
     def _create_demo_challenge(self):
