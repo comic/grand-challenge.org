@@ -631,6 +631,10 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
     },
+    "cache_retina_archive_data": {
+        "task": "grandchallenge.retina_api.tasks.cache_archive_data",
+        "schedule": timedelta(hours=1),
+    },
 }
 
 CELERY_TASK_ROUTES = {

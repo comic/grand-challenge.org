@@ -14,10 +14,12 @@ from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
 from rest_framework.utils import encoders
 
+from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.serializers import (
     TreeImageSerializer,
     TreeObjectSerializer,
 )
+from grandchallenge.retina_api.tasks import cache_archive_data
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
@@ -66,16 +68,44 @@ class TestArchiveIndexAPIEndpoints:
         response = client.get(url, HTTP_ACCEPT="application/json")
         assert response.status_code == status.HTTP_200_OK
 
-    def test_archive_view_returns_correct_data(self, client):
-        # Clear cache manually (this is not done by pytest-django for some reason...)
+    def test_archive_view_returns_correct_error_on_empty_cache(
+        self, client, monkeypatch
+    ):
+        # Clear cache manually
         cache.clear()
-        # Create data
-        (
-            datastructures,
-            datastructures_aus,
-            oct_obs_registration,
-            oct_obs_registration_aus,
-        ) = create_datastructures_data()
+
+        # Mock celery task
+        is_called = False
+
+        def call_task():
+            nonlocal is_called
+            is_called = True
+
+        monkeypatch.setattr(cache_archive_data, "delay", call_task)
+
+        # login client
+        client, _ = client_login(client, user="retina_user")
+
+        url = reverse("retina:api:archives-api-view")
+        response = client.get(url, HTTP_ACCEPT="application/json")
+        response_data = json.loads(response.content)
+        # check if correct error is sent
+        assert response_data == {
+            "error": [
+                1,
+                "Archive data task triggered. Try again in 2 minutes.",
+            ]
+        }
+        assert is_called
+
+    def test_archive_view_returns_correct_data_from_cache(self, client):
+        # Clear cache manually
+        cache.clear()
+        # Set cached data
+        test_data = {"test": "data", "object": 1}
+        ArchiveDataModel.objects.update_or_create(
+            pk=1, defaults={"value": test_data},
+        )
 
         # login client
         client, _ = client_login(client, user="retina_user")
@@ -84,251 +114,7 @@ class TestArchiveIndexAPIEndpoints:
         response = client.get(url, HTTP_ACCEPT="application/json")
         response_data = json.loads(response.content)
         # check if correct data is sent
-        expected_response_data = {
-            "subfolders": {
-                datastructures["archive"].name: {
-                    "subfolders": {
-                        datastructures["patient"].name: {
-                            "subfolders": {
-                                datastructures["study_oct"].name: {
-                                    "info": "level 5",
-                                    "images": {
-                                        datastructures["image_oct"].name: {
-                                            "images": {
-                                                "trc_000": "no info",
-                                                "obs_000": str(
-                                                    datastructures[
-                                                        "image_obs"
-                                                    ].id
-                                                ),
-                                                "mot_comp": "no info",
-                                                "trc_001": "no info",
-                                                "oct": str(
-                                                    datastructures[
-                                                        "image_oct"
-                                                    ].id
-                                                ),
-                                            },
-                                            "info": {
-                                                "voxel_size": {
-                                                    "axial": 0,
-                                                    "lateral": 0,
-                                                    "transversal": 0,
-                                                },
-                                                "date": datastructures[
-                                                    "study_oct"
-                                                ].datetime.strftime(
-                                                    "%Y/%m/%d %H:%M:%S"
-                                                ),
-                                                "registration": {
-                                                    "obs": "Checked separately",
-                                                    "trc": [0, 0, 0, 0],
-                                                },
-                                            },
-                                        }
-                                    },
-                                    "name": datastructures["study_oct"].name,
-                                    "id": str(datastructures["study_oct"].id),
-                                    "subfolders": {},
-                                },
-                                datastructures["study"].name: {
-                                    "info": "level 5",
-                                    "images": {
-                                        datastructures["image_cf"].name: str(
-                                            datastructures["image_cf"].id
-                                        )
-                                    },
-                                    "name": datastructures["study"].name,
-                                    "id": str(datastructures["study"].id),
-                                    "subfolders": {},
-                                },
-                            },
-                            "info": "level 4",
-                            "name": datastructures["patient"].name,
-                            "id": str(datastructures["patient"].id),
-                            "images": {},
-                        }
-                    },
-                    "info": "level 3",
-                    "name": datastructures["archive"].name,
-                    "id": str(datastructures["archive"].id),
-                    "images": {},
-                },
-                datastructures_aus["archive"].name: {
-                    "subfolders": {
-                        datastructures_aus["patient"].name: {
-                            "subfolders": {},
-                            "info": "level 4",
-                            "name": datastructures_aus["patient"].name,
-                            "id": str(datastructures_aus["patient"].id),
-                            "images": {
-                                datastructures_aus["image_oct"].name: {
-                                    "images": {
-                                        "trc_000": "no info",
-                                        "obs_000": str(
-                                            datastructures_aus["image_obs"].id
-                                        ),
-                                        "mot_comp": "no info",
-                                        "trc_001": "no info",
-                                        "oct": str(
-                                            datastructures_aus["image_oct"].id
-                                        ),
-                                    },
-                                    "info": {
-                                        "voxel_size": {
-                                            "axial": 0,
-                                            "lateral": 0,
-                                            "transversal": 0,
-                                        },
-                                        "date": datastructures_aus[
-                                            "study_oct"
-                                        ].datetime.strftime(
-                                            "%Y/%m/%d %H:%M:%S"
-                                        ),
-                                        "registration": {
-                                            "obs": "Checked separately",
-                                            "trc": [0, 0, 0, 0],
-                                        },
-                                    },
-                                },
-                                datastructures_aus["image_cf"].name: str(
-                                    datastructures_aus["image_cf"].id
-                                ),
-                            },
-                        }
-                    },
-                    "info": "level 3",
-                    "name": datastructures_aus["archive"].name,
-                    "id": str(datastructures_aus["archive"].id),
-                    "images": {},
-                },
-            },
-            "info": "level 2",
-            "name": "Archives",
-            "id": "none",
-            "images": {},
-        }
-
-        # Compare floats separately because of intricacies of floating-point arithmetic in python
-        try:
-            # Get info objects of both archives in response data
-            response_archive_info = (
-                response_data.get("subfolders")
-                .get(datastructures["archive"].name)
-                .get("subfolders")
-                .get(datastructures["patient"].name)
-                .get("subfolders")
-                .get(datastructures["study_oct"].name)
-                .get("images")
-                .get(datastructures["image_oct"].name)
-                .get("info")
-            )
-            response_archive_australia_info = (
-                response_data.get("subfolders")
-                .get(datastructures_aus["archive"].name)
-                .get("subfolders")
-                .get(datastructures_aus["patient"].name)
-                .get("images")
-                .get(datastructures_aus["image_oct"].name)
-                .get("info")
-            )
-
-            floats_to_compare = (
-                []
-            )  # list of (response_float, expected_float, name) tuples
-            for archive, response_info, oor in (
-                ("Rotterdam", response_archive_info, oct_obs_registration),
-                (
-                    "Australia",
-                    response_archive_australia_info,
-                    oct_obs_registration_aus,
-                ),
-            ):
-                # oct obs registration
-                response_obs = response_info.get("registration").get("obs")
-                rv = oor.registration_values
-                floats_to_compare.append(
-                    (
-                        response_obs[0],
-                        rv[0][0],
-                        archive + " obs oct registration top left x",
-                    )
-                )
-                floats_to_compare.append(
-                    (
-                        response_obs[1],
-                        rv[0][1],
-                        archive + " obs oct registration top left y",
-                    )
-                )
-                floats_to_compare.append(
-                    (
-                        response_obs[2],
-                        rv[1][0],
-                        archive + " obs oct registration bottom right x",
-                    )
-                )
-                floats_to_compare.append(
-                    (
-                        response_obs[3],
-                        rv[1][1],
-                        archive + " obs oct registration bottom right y",
-                    )
-                )
-
-            # Compare floats
-            for result, expected, name in floats_to_compare:
-                if result != pytest.approx(expected):
-                    pytest.fail(name + " does not equal expected value")
-
-            # Clear voxel and obs registration objects before response object to expected object comparison
-            response_data["subfolders"][datastructures["archive"].name][
-                "subfolders"
-            ][datastructures["patient"].name]["subfolders"][
-                datastructures["study_oct"].name
-            ][
-                "images"
-            ][
-                datastructures["image_oct"].name
-            ][
-                "info"
-            ][
-                "registration"
-            ][
-                "obs"
-            ] = "Checked separately"
-
-            response_data["subfolders"][datastructures_aus["archive"].name][
-                "subfolders"
-            ][datastructures_aus["patient"].name]["images"][
-                datastructures_aus["image_oct"].name
-            ][
-                "info"
-            ][
-                "registration"
-            ][
-                "obs"
-            ] = "Checked separately"
-
-        except (AttributeError, KeyError, TypeError):
-            pytest.fail("Response object structure is not correct")
-
-        assert response_data == expected_response_data
-
-    def test_caching(self, client):
-        # Clear cache manually
-        cache.clear()
-        # Perform normal request
-        datastructures, _, _, _ = create_datastructures_data()
-        client, _ = client_login(client, user="retina_user")
-        url = reverse("retina:api:archives-api-view")
-        response = client.get(url, HTTP_ACCEPT="application/json")
-        response_data = json.loads(response.content)
-        # Remove archive and perform request again
-        datastructures["archive"].delete()
-        response = client.get(url, HTTP_ACCEPT="application/json")
-        # Check that response is cached so it is not changed
-        assert json.loads(response.content) == response_data
+        assert response_data == test_data
 
 
 @pytest.mark.django_db
