@@ -79,6 +79,7 @@ class Command(BaseCommand):
             "readerstudy",
             "workstation",
             "algorithm",
+            "algorithmuser",
         ]
         self.users = self._create_users(usernames=default_users)
 
@@ -138,7 +139,6 @@ class Command(BaseCommand):
             name=settings.ALGORITHMS_CREATORS_GROUP_NAME
         )
         self.users["algorithm"].groups.add(algorithm_group)
-        self.users["user"].groups.add(algorithm_group)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
@@ -150,7 +150,7 @@ class Command(BaseCommand):
             key="f1f98a1733c05b12118785ffd995c250fe4d90da",
         )
         Token.objects.get_or_create(
-            user=self.users["user"],
+            user=self.users["algorithmuser"],
             key="dc3526c2008609b429514b6361a33f8516541464",
         )
 
@@ -277,7 +277,7 @@ class Command(BaseCommand):
             title="Test Algorithm", logo=get_temporary_image()
         )
         algorithm.editors_group.user_set.add(self.users["algorithm"])
-        algorithm.users_group.user_set.add(self.users["user"])
+        algorithm.users_group.user_set.add(self.users["algorithmuser"])
 
         algorithm_image = AlgorithmImage(
             creator=self.users["algorithm"], algorithm=algorithm
