@@ -54,20 +54,28 @@ def get_auth_token_header(user, token=None):
 
 
 # helper functions
-def create_test_images():
+def create_test_images(mha=False):
     """
     Create image for testing purposes
     :return: file
     """
     files = {}
-    for file_type in ("mhd", "zraw"):
-        files[file_type] = BytesIO()
-        with open(RESOURCE_PATH / f"image5x6x7.{file_type}", "rb") as fh:
-            files[file_type].name = fh.name
-            files[file_type].write(fh.read())
-        files[file_type].seek(0)
-
+    if mha:
+        types = ("mha",)
+    else:
+        types = ("mhd", "zraw")
+    for file_type in types:
+        files[file_type] = load_test_image(file_type)
     return files
+
+
+def load_test_image(file_type):
+    img = BytesIO()
+    with open(RESOURCE_PATH / f"image10x10x10.{file_type}", "rb") as fh:
+        img.name = fh.name
+        img.write(fh.read())
+    img.seek(0)
+    return img
 
 
 def read_json_file(path_to_file):
@@ -88,9 +96,11 @@ def read_json_file(path_to_file):
     return None
 
 
-def create_upload_image_test_data(data_type="default", with_image=True):
+def create_upload_image_test_data(
+    data_type="default", with_image=True, mha=False
+):
     # create image
-    files = create_test_images()
+    files = create_test_images(mha=mha)
     if data_type == "kappa":
         data = read_json_file("upload_image_valid_data_kappa.json")
     elif data_type == "areds":
@@ -100,13 +110,16 @@ def create_upload_image_test_data(data_type="default", with_image=True):
 
     if with_image:
         # create request payload
-        data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
+        if mha:
+            data.update({"image_mha": files["mha"]})
+        else:
+            data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
 
 
-def create_upload_image_invalid_test_data(data_type="default"):
+def create_upload_image_invalid_test_data(data_type="default", mha=False):
     # create image
-    files = create_test_images()
+    files = create_test_images(mha=mha)
     if data_type == "kappa":
         data = read_json_file("upload_image_invalid_data_kappa.json")
     elif data_type == "areds":
@@ -114,7 +127,10 @@ def create_upload_image_invalid_test_data(data_type="default"):
     else:
         data = read_json_file("upload_image_invalid_data.json")
     # create request payload
-    data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
+    if mha:
+        data.update({"image_mha": files["mha"]})
+    else:
+        data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
 
 

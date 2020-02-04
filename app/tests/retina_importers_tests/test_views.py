@@ -10,11 +10,11 @@ from tests.retina_importers_tests.helpers import (
     create_upload_image_test_data,
     get_auth_token_header,
     get_response_status,
-    read_json_file,
 )
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("mha", [True, False])
 @pytest.mark.parametrize("valid", [True, False])
 @pytest.mark.parametrize(
     "user,status_valid,status_invalid",
@@ -47,18 +47,15 @@ class TestCustomUploadEndpoints:
         status_valid,
         status_invalid,
         valid,
+        mha,
     ):
-        if "upload_image" in endpoint_type:
-            data_type = endpoint_type.replace("upload_image_", "")
-            if valid:
-                data = create_upload_image_test_data(data_type=data_type)
-            else:
-                data = create_upload_image_invalid_test_data(
-                    data_type=data_type
-                )
+        data_type = endpoint_type.replace("upload_image_", "")
+        if valid:
+            data = create_upload_image_test_data(data_type=data_type, mha=mha)
         else:
-            valid_str = "valid" if valid else "invalid"
-            data = read_json_file(f"{endpoint_type}_{valid_str}_data.json")
+            data = create_upload_image_invalid_test_data(
+                data_type=data_type, mha=mha
+            )
 
         response_status = get_response_status(client, reverse_name, data, user)
         if valid:
