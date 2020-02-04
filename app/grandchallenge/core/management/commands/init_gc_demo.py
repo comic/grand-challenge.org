@@ -138,6 +138,7 @@ class Command(BaseCommand):
             name=settings.ALGORITHMS_CREATORS_GROUP_NAME
         )
         self.users["algorithm"].groups.add(algorithm_group)
+        self.users["user"].groups.add(algorithm_group)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
@@ -147,6 +148,10 @@ class Command(BaseCommand):
         Token.objects.get_or_create(
             user=self.users["retina"],
             key="f1f98a1733c05b12118785ffd995c250fe4d90da",
+        )
+        Token.objects.get_or_create(
+            user=self.users["user"],
+            key="3d280ffee91e713f67fb66302562642b2d9021dd",
         )
 
     def _create_demo_challenge(self):
@@ -272,6 +277,7 @@ class Command(BaseCommand):
             title="Test Algorithm", logo=get_temporary_image()
         )
         algorithm.editors_group.user_set.add(self.users["algorithm"])
+        algorithm.users_group.user_set.add(self.users["user"])
 
         algorithm_image = AlgorithmImage(
             creator=self.users["algorithm"], algorithm=algorithm
