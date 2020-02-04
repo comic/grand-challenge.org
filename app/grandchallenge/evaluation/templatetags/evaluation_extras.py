@@ -2,7 +2,6 @@ import json
 
 from django import template
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 
 from grandchallenge.teams.models import Team
 
@@ -71,7 +70,7 @@ def json_dumps(obj: dict):
     :return:
     """
     try:
-        return mark_safe(json.dumps(obj, indent=2))
+        return json.dumps(obj, indent=2)
 
     except TypeError:
         # Not json encodable

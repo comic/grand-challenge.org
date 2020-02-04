@@ -98,13 +98,25 @@
                             {% endif %}"
                            data-toggle="modal"
                            data-target="#jobInfoModal"
-                           data-title="Job {{ job.pk }}"
+                           data-title="Job Info"
                            data-output="{% firstof job.output|user_error job.get_status_display %}"
+                           data-pk="{{ job.pk }}"
                            title="Job Info">
                             {{ job.get_status_display }}
                         </a>
                     </td>
-                    <td>{{ job.result.output }}</td>
+                    <td>
+                        <a href="#jobInfoModal"
+                           class="badge badge-primary"
+                           data-toggle="modal"
+                           data-target="#jobInfoModal"
+                           data-title="Result Info"
+                           data-output="{% firstof job.result.output 'No output produced.' %}"
+                           data-pk="{{ job.result.pk }}"
+                           title="Result Info">
+                         <i class="fa fa-eye"></i> Result Info
+                        </a>
+                    </td>
                     <td>
                         {% if job.result.images.all %}
                             <ul class="list-unstyled">
@@ -154,6 +166,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="modal-job-output"></p>
+                    <p id="footerText" class="small text-muted"></p>
                 </div>
             </div>
         </div>
@@ -180,6 +193,7 @@
             var modal = $(this);
             modal.find('.modal-title').text(button.data('title'));
             modal.find('.modal-job-output').text(button.data('output'));
+            modal.find('#footerText').text("ID: " + button.data('pk'));
         })
     </script>
 {% endblock %}
