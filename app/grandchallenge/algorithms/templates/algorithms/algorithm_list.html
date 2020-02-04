@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
+{% load random_encode %}
 {% load user_profile_link from profiles %}
 
 {% block title %}
@@ -8,7 +9,8 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item active" aria-current="page">Algorithms
         </li>
     </ol>
@@ -23,7 +25,10 @@
         imaging. If you are granted access to an algorithm you will be able to try
         the algorithm out by uploading your own anonymised medical imaging data.
         Several web-based workstations are available for interacting with the results.
-        Please contact us if you would like to make your own algorithm available here.
+        Please
+        <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}">
+            contact us</a>
+        if you would like to make your own algorithm available here.
     </p>
 
     <div class="card-columns">
@@ -44,15 +49,6 @@
                        title="View Algorithm">
                         <i class="fa fa-eye"></i>
                     </a>
-                    {% if algorithm.latest_ready_image %}
-                        <a href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}"
-                           class="btn btn-primary"
-                           data-toggle="tooltip"
-                           data-placement="bottom"
-                           title="Try Out This Algorithm">
-                            <i class="fa fa-flask"></i>
-                        </a>
-                    {% endif %}
                 </div>
             </div>
         {% endfor %}

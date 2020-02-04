@@ -88,19 +88,23 @@ def send_failed_job_email(job):
         f"Unfortunately your job for algorithm "
         f"'{algorithm.title}' failed with an error. "
         f"The error message is:\n\n"
-        f"{user_error(job.output)}\n\n"
-        f"You may wish to try and correct this, or contact the challenge "
-        f"organizers. The following information may help them:\n"
+        "{}\n\n"
+        f"You may wish to try and correct this, or contact the algorithm "
+        f"editors. The following information may help them:\n"
         f"User: {job.creator.username}\n"
         f"Job ID: {job.pk}\n"
         f"Submission ID: {job.pk}"
     )
-    recipient_emails = [
-        o.email for o in algorithm.editors_group.user_set.all()
-    ]
-    recipient_emails.append(job.creator.email)
 
-    for email in {*recipient_emails}:
+    emails = {job.creator.email: message.format(user_error(job.output))}
+    emails.update(
+        {
+            o.email: message.format(job.output)
+            for o in algorithm.editors_group.user_set.all()
+        }
+    )
+
+    for email, message in emails.items():
         send_mail(
             subject=(
                 f"[{Site.objects.get_current().domain.lower()}] "

@@ -18,7 +18,8 @@ class UploadRawImagesForm(forms.ModelForm):
         widget=uploader.AjaxUploadWidget(multifile=True, auto_commit=False),
         label="Image files",
         help_text=(
-            "The total size of all uploaded files cannot exceed 10 GB.<br>"
+            "The total size of all files uploaded in a single session"
+            "cannot exceed 10 GB.<br>"
             "The following file formats are supported: "
             ".mha, .mhd, .raw, .zraw, .tiff."
         ),

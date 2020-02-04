@@ -4,6 +4,8 @@
 {% load workstations %}
 {% load guardian_tags %}
 {% load suffix from pathlib %}
+{% load humanize %}
+{% load user_error from evaluation_extras %}
 
 {% block title %}
     Algorithm Jobs - {{ block.super }}
@@ -11,20 +13,22 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a>
         <li class="breadcrumb-item active"
-            aria-current="page">Jobs
+            aria-current="page">Results
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Jobs for this algorithm</h2>
+    <h2>Results for {{ algorithm.title }}</h2>
 
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
 
@@ -46,7 +50,7 @@
                 <th>Input Image</th>
                 <th>Status</th>
                 <th>Result</th>
-                <th>Output Image(s)</th>
+                <th>Output Images</th>
             </tr>
             </thead>
             <tbody>
@@ -54,7 +58,7 @@
                 <tr>
                     {# pk included for test support #}
                     <!-- {{ job.pk }} -->
-                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
+                    <td data-order="{{ job.created|date:"U" }}">{{ job.created|naturaltime }}</td>
                     <td>
                         {% if job.creator %}
                             {{ job.creator|user_profile_link }}
@@ -65,7 +69,7 @@
                             <li>
                                 <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image config=algorithm.workstation_config %}">
                                     <span class="badge badge-primary">
-                                        <i class="fa fa-eye"></i> View input
+                                        <i class="fa fa-eye"></i> View Input
                                     </span>
                                 </a>
                             </li>
@@ -73,7 +77,7 @@
                                 <li>
                                     <a href="{{ file.file.url }}">
                                         <span class="badge badge-primary">
-                                            <i class="fa fa-download"></i> input ({{ file.file|suffix }})
+                                            <i class="fa fa-download"></i> Input ({{ file.file|suffix }})
                                         </span>
                                     </a>
                                 </li>
@@ -81,20 +85,38 @@
                         </ul>
                     </td>
                     <td>
-                    <span class="badge
-                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
-                        badge-danger
-                    {% elif job.status == job.RETRY %}
-                        badge-warning
-                    {% elif job.status == job.SUCCESS %}
-                        badge-success
-                    {% else %}
-                        badge-info
-                    {% endif %}">
-                        {{ job.get_status_display }}
-                    </span>
+                        <a href="#jobInfoModal"
+                           class="badge
+                            {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                                badge-danger
+                            {% elif job.status == job.RETRY %}
+                                badge-warning
+                            {% elif job.status == job.SUCCESS %}
+                                badge-success
+                            {% else %}
+                                badge-info
+                            {% endif %}"
+                           data-toggle="modal"
+                           data-target="#jobInfoModal"
+                           data-title="Job Info"
+                           data-output="{% firstof job.output|user_error job.get_status_display %}"
+                           data-pk="{{ job.pk }}"
+                           title="Job Info">
+                            {{ job.get_status_display }}
+                        </a>
                     </td>
-                    <td>{{ job.result.output }}</td>
+                    <td>
+                        <a href="#jobInfoModal"
+                           class="badge badge-primary"
+                           data-toggle="modal"
+                           data-target="#jobInfoModal"
+                           data-title="Result Info"
+                           data-output="{% firstof job.result.output 'No output produced.' %}"
+                           data-pk="{{ job.result.pk }}"
+                           title="Result Info">
+                         <i class="fa fa-eye"></i> Result Info
+                        </a>
+                    </td>
                     <td>
                         {% if job.result.images.all %}
                             <ul class="list-unstyled">
@@ -102,7 +124,7 @@
                                     <li>
                                         <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image config=algorithm.workstation_config %}">
                                             <span class="badge badge-primary">
-                                                <i class="fa fa-eye"></i> View input &amp; output
+                                                <i class="fa fa-eye"></i> View Input &amp; Output
                                             </span>
                                         </a>
                                     </li>
@@ -110,13 +132,18 @@
                                         <li>
                                             <a href="{{ file.file.url }}">
                                             <span class="badge badge-primary">
-                                                <i class="fa fa-download"></i> output ({{ file.file|suffix }})
+                                                <i class="fa fa-download"></i> Output ({{ file.file|suffix }})
                                             </span>
                                             </a>
                                         </li>
                                     {% endfor %}
                                 {% endfor %}
                             </ul>
+                        {% elif job.status == job.SUCCESS %}
+                            <span class="badge badge-warning"
+                                  title="No output images were found">
+                               <i class="fa fa-eye-slash"></i>
+                           </span>
                         {% endif %}
                     </td>
                 </tr>
@@ -124,10 +151,32 @@
             </tbody>
         </table>
     </div>
+
+
+    <div class="modal fade" id="jobInfoModal" tabindex="-1" role="dialog"
+         aria-labelledby="jobInfoModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-job-output"></p>
+                    <p id="footerText" class="small text-muted"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
+
     <script type="text/javascript">
         $(document).ready(function () {
             $('.table').DataTable({
@@ -136,5 +185,15 @@
                 ordering: true
             });
         });
+    </script>
+
+    <script type="text/javascript">
+        $('#jobInfoModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var modal = $(this);
+            modal.find('.modal-title').text(button.data('title'));
+            modal.find('.modal-job-output').text(button.data('output'));
+            modal.find('#footerText').text("ID: " + button.data('pk'));
+        })
     </script>
 {% endblock %}
