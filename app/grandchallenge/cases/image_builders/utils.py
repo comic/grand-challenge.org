@@ -4,6 +4,7 @@ from typing import AnyStr, Optional, Sequence, Tuple
 from uuid import uuid4
 
 import SimpleITK
+from django.conf import settings
 from django.core.files import File
 
 from grandchallenge.cases.models import Image, ImageFile
@@ -30,7 +31,9 @@ def convert_itk_to_internal(
         if not name:
             name = str(pk)
         SimpleITK.WriteImage(
-            simple_itk_image, str(work_dir / f"{pk}.mhd"), True
+            simple_itk_image,
+            str(work_dir / f"{pk}.{settings.ITK_INTERNAL_FILE_FORMAT}"),
+            True,
         )
 
         if simple_itk_image.GetDimension() == 4:

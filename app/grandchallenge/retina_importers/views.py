@@ -137,8 +137,11 @@ class UploadImage(generics.CreateAPIView):
                 # Image does not exist yet, create it.
                 img = Image.objects.create(study=study, **image_dict)
 
-                # Save mhd and raw files
-                self.save_mhd_and_raw_files(request, img)
+                # Save mhd and raw or mha files
+                if "image_mha" in request.data:
+                    self.save_mha_files(request, img)
+                else:
+                    self.save_mhd_and_raw_files(request, img)
 
                 # Link images to archive
                 if archive is not None:
@@ -260,3 +263,12 @@ class UploadImage(generics.CreateAPIView):
             extension = "zraw" if image_key == "image_raw" else "mhd"
             image_name = f"{file_name}.{extension}"
             img_file_model.file.save(image_name, image_file, save=True)
+
+    @staticmethod
+    def save_mha_files(request, img):
+        # Save MHA files to Image.files model
+        img_file_model = ImageFile(image=img)
+        # Save image fieldfile into ImageFile, also triggers ImageFile model save method
+        image_file = File(request.data["image_mha"])
+        image_name = "out.mha"
+        img_file_model.file.save(image_name, image_file, save=True)

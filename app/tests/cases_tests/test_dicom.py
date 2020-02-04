@@ -1,4 +1,3 @@
-import re
 from unittest import mock
 
 import numpy as np
@@ -9,8 +8,8 @@ from grandchallenge.cases.image_builders.dicom_4dct import (
     _validate_dicom_files,
     image_builder_dicom_4dct,
 )
+from grandchallenge.cases.image_builders.metaio_utils import parse_mh_header
 from tests.cases_tests import RESOURCE_PATH
-
 
 DICOM_DIR = RESOURCE_PATH / "dicom"
 
@@ -48,29 +47,18 @@ def test_image_builder_dicom_4dct():
 
     image = result.new_images[0]
     assert image.shape == [19, 4, 2, 3]
-    assert len(result.new_image_files) == 2
-    mhd_file_obj = [
-        x for x in result.new_image_files if x.file.name.endswith("mhd")
+    assert len(result.new_image_files) == 1
+    mha_file_obj = [
+        x for x in result.new_image_files if x.file.name.endswith("mha")
     ][0]
-    mhd_file = mhd_file_obj.file
-    with mhd_file.open("r") as f:
-        headers = f.read()
-    headers = headers.decode("utf-8")
-    reg_exp = re.match(
-        r".*TransformMatrix = (?P<direction>[^\n]*)"
-        ".*Offset = (?P<origin>[^\n]*)"
-        ".*ElementSpacing = (?P<spacing>[^\n]*)"
-        ".*ContentTimes = (?P<content_times>[^\n]*)"
-        ".*Exposures = (?P<exposures>[^\n]*).*",
-        headers,
-        flags=re.DOTALL,
-    )
 
-    direction = reg_exp.group("direction").split()
-    origin = reg_exp.group("origin").split()
-    spacing = reg_exp.group("spacing").split()
-    exposures = reg_exp.group("exposures").split()
-    content_times = reg_exp.group("content_times").split()
+    headers = parse_mh_header(mha_file_obj.file)
+
+    direction = headers["TransformMatrix"].split()
+    origin = headers["Offset"].split()
+    spacing = headers["ElementSpacing"].split()
+    exposures = headers["Exposures"].split()
+    content_times = headers["ContentTimes"].split()
 
     assert len(exposures) == 19
     assert exposures == [str(x) for x in range(100, 2000, 100)]

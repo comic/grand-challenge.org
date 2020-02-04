@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Mapping, Pattern, Tuple, Union
 
 import SimpleITK
 import SimpleITK._SimpleITK as _SimpleITK
+from django.core.files import File
 
 METAIO_IMAGE_TYPES = {
     "MET_NONE": None,
@@ -78,7 +79,7 @@ EXPECTED_HEADERS: List[str] = [
 ]
 
 
-def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
+def parse_mh_header(file: File) -> Mapping[str, Union[str, None]]:
     """
     Attempts to parse the headers of an mhd file.
 
@@ -104,7 +105,7 @@ def parse_mh_header(filename: Path) -> Mapping[str, Union[str, None]]:
     read_line_limit = 10000
 
     result = {}
-    with open(str(filename), "rb") as f:
+    with file.open("rb") as f:
         bin_line = True
         while bin_line is not None:
             read_line_limit -= 1

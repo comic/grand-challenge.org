@@ -6,6 +6,7 @@ from typing import List
 
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm
@@ -322,11 +323,24 @@ class Image(UUIDModel):
             A SimpleITK image
         """
         # self.files should contain 1 .mhd file
-        mhd_file = self.files.get(file__endswith=".mhd")
-        raw_file = self.files.get(file__endswith="raw")
+
+        try:
+            mhd_file = self.files.get(
+                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mha"
+            )
+            files = [mhd_file]
+        except ObjectDoesNotExist:
+            # Fallback to files that are still stored as mhd/(z)raw
+            mhd_file = self.files.get(
+                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mhd"
+            )
+            raw_file = self.files.get(
+                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith="raw"
+            )
+            files = [mhd_file, raw_file]
 
         file_size = 0
-        for file in (mhd_file, raw_file):
+        for file in files:
             if not file.file.storage.exists(name=file.file.name):
                 raise FileNotFoundError(f"No file found for {file.file}")
 
@@ -340,7 +354,7 @@ class Image(UUIDModel):
             )
 
         with TemporaryDirectory() as tempdirname:
-            for file in (mhd_file, raw_file):
+            for file in files:
                 with file.file.open("rb") as infile, open(
                     Path(tempdirname) / Path(file.file.name).name, "wb"
                 ) as outfile:
