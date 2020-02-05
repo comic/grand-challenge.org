@@ -361,7 +361,19 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             unanswered_images.values_list("images__name", flat=True)
         ).union(
             set(
-                Image.objects.filter(readerstudies=self, answers__isnull=True)
+                Image.objects.filter(readerstudies=self)
+                .annotate(
+                    answers_for_user=Count(
+                        Subquery(
+                            Answer.objects.filter(
+                                creator=user,
+                                images=OuterRef("pk"),
+                                is_ground_truth=False,
+                            ).values("pk")[:1]
+                        )
+                    )
+                )
+                .filter(answers_for_user=0)
                 .distinct()
                 .values_list("name", flat=True)
             )

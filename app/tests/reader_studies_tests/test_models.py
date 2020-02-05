@@ -130,7 +130,10 @@ def test_generate_hanging_list():
 
 
 @pytest.mark.django_db
-def test_progress_for_user():
+def test_progress_for_user(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     q1, q2, q3 = [
@@ -144,7 +147,11 @@ def test_progress_for_user():
 
     question_perc = 100 / 6
 
-    assert rs.get_progress_for_user(reader) is None
+    assert rs.get_progress_for_user(reader) == {
+        "diff": 0.0,
+        "hangings": 0.0,
+        "questions": 0.0,
+    }
 
     rs.images.set([im1, im2])
     rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
@@ -176,6 +183,32 @@ def test_progress_for_user():
     progress = rs.get_progress_for_user(reader)
     assert progress["hangings"] == 50
     assert progress["questions"] == pytest.approx(question_perc * 4)
+
+    editor = UserFactory()
+    rs.add_reader(editor)
+    rs.add_editor(editor)
+
+    for q in [q1, q2, q3]:
+        for im in [im1, im2]:
+            a = AnswerFactory(
+                question=q, answer="foo", creator=editor, is_ground_truth=True
+            )
+            a.images.add(im)
+
+    progress = rs.get_progress_for_user(editor)
+    assert progress["hangings"] == 0
+    assert progress["questions"] == 0
+
+    for q in [q1, q2, q3]:
+        for im in [im1, im2]:
+            a = AnswerFactory(
+                question=q, answer="foo", creator=editor, is_ground_truth=False
+            )
+            a.images.add(im)
+
+    progress = rs.get_progress_for_user(editor)
+    assert progress["hangings"] == 100.0
+    assert progress["questions"] == 100.0
 
 
 @pytest.mark.django_db
