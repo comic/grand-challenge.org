@@ -410,7 +410,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .order_by("-score__sum")
         )
 
-    @property
+    @cached_property
     def leaderboard(self):
         question_count = float(self.answerable_question_count) * len(
             self.hanging_list
@@ -420,7 +420,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "grouped_scores": self.scores_by_user,
         }
 
-    @property
+    @cached_property
     def statistics(self):
         scores_by_question = (
             Answer.objects.filter(
