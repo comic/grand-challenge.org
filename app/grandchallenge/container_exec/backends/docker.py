@@ -147,8 +147,8 @@ class Executor(DockerConnection):
         return self._get_result()
 
     def _pull_images(self):
-        super()._pull_images()
         self._client.images.pull(repository=self._io_image)
+        super()._pull_images()
 
     def _create_io_volumes(self):
         for volume in [self._input_volume, self._output_volume]:
