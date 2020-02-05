@@ -330,7 +330,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     def get_progress_for_user(self, user):
         if not self.is_valid or not self.hanging_list:
-            return
+            return {
+                "questions": 0.0,
+                "hangings": 0.0,
+                "diff": 0.0,
+            }
 
         hanging_list_count = len(self.hanging_list)
 
