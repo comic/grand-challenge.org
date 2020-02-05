@@ -343,7 +343,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         expected = hanging_list_count * self.answerable_question_count
         answers = Answer.objects.filter(
-            question__in=self.answerable_questions, creator_id=user.id
+            question__in=self.answerable_questions,
+            creator_id=user.id,
+            is_ground_truth=False,
         ).distinct()
         answer_count = answers.count()
 
