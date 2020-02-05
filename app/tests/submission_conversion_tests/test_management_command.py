@@ -6,6 +6,9 @@ from django.db.models.signals import post_save
 from factory.django import mute_signals
 
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
+from grandchallenge.submission_conversion.models import (
+    SubmissionToAnnotationSetJob,
+)
 from tests.factories import ChallengeFactory, SubmissionFactory
 
 
@@ -29,6 +32,8 @@ def test_submission_conversion(capsys, submission_file, settings):
     _, err = capsys.readouterr()
 
     assert err == ""
+    job = SubmissionToAnnotationSetJob.objects.first()
+    assert job.output == ""
 
     annotation_set = AnnotationSet.objects.all()[0]
 
