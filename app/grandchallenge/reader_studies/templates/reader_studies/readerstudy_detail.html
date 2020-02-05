@@ -65,10 +65,10 @@
     <p>{{ object.description }}</p>
 
     {% if user_score.score__sum is not None %}
-        <div class="h3">
+        <div class="alert alert-info" role="alert">
             You have completed this reader study. You have scored {{ user_score.score__sum|floatformat }} points
             out of a possible {{ answerable_questions|floatformat }} points,
-            giving you an average score of {{ user_score.score__avg|floatformat }}.
+            giving you an average score of {{ user_score.score__avg|floatformat:4 }}.
         </div>
     {% endif %}
 
@@ -315,4 +315,3 @@
         </script>
         <script src="{% static "rest_framework/js/csrf.js" %}"></script>
 {% endblock %}
-
