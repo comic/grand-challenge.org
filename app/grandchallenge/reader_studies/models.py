@@ -431,27 +431,30 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .annotate(Sum("score"), Avg("score"))
             .order_by("-score__avg")
         )
-        # TODO: the ground truth only works correctly when there is one question
-        # per image.
+
         scores_by_case = (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
             )
             .order_by("images__name")
             .values("images__name", "images__pk")
-            .annotate(
-                Sum("score"),
-                Avg("score"),
-                ground_truth=Subquery(
-                    Answer.objects.filter(
-                        is_ground_truth=True,
-                        images=OuterRef("images"),
-                        question=OuterRef("question"),
-                    ).values_list("answer")[:1]
-                ),
-            )
+            .annotate(Sum("score"), Avg("score"),)
             .order_by("score__avg")
         )
+
+        ground_truths = {}
+        questions = set()
+        for gt in Answer.objects.filter(
+            question__reader_study=self, is_ground_truth=True
+        ).values("images__name", "answer", "question__question_text"):
+            ground_truths[gt["images__name"]] = ground_truths.get(
+                gt["images__name"], {}
+            )
+            ground_truths[gt["images__name"]][
+                gt["question__question_text"]
+            ] = gt["answer"]
+            questions.add(gt["question__question_text"])
+
         return {
             "max_score_questions": float(len(self.hanging_list))
             * self.scores_by_user.count(),
@@ -459,6 +462,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "max_score_cases": float(self.answerable_question_count)
             * self.scores_by_user.count(),
             "scores_by_case": scores_by_case,
+            "ground_truths": ground_truths,
+            "questions": questions,
         }
 
 

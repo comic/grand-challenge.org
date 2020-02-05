@@ -1,56 +1,13 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
-
-
-@pytest.fixture
-def reader_study_with_gt():
-    rs = ReaderStudyFactory()
-    im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
-    q1, q2, q3 = [
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
-            question_text="q1",
-        ),
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
-            question_text="q2",
-        ),
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
-            question_text="q3",
-        ),
-    ]
-
-    r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
-    rs.add_reader(r1)
-    rs.add_reader(r2)
-    rs.add_editor(editor)
-    rs.images.set([im1, im2])
-    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
-    rs.save()
-
-    for question in [q1, q2, q3]:
-        for im in [im1, im2]:
-            ans = AnswerFactory(
-                question=question,
-                creator=editor,
-                answer=True,
-                is_ground_truth=True,
-            )
-            ans.images.add(im)
-
-    return rs
 
 
 @pytest.mark.django_db
@@ -275,12 +232,14 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa - C901
 
 
 @pytest.mark.django_db  # noqa - C901
-def test_statistics_by_question(reader_study_with_gt, settings):
+def test_statistics(reader_study_with_gt, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
+
+    rs_questions = rs.questions.values_list("question_text", flat=True)
 
     for question in rs.questions.all():
         for im in rs.images.all():
@@ -292,7 +251,7 @@ def test_statistics_by_question(reader_study_with_gt, settings):
     assert statistics["max_score_questions"] == 2.0
     scores = statistics["scores_by_question"]
     assert len(scores) == rs.questions.count()
-    questions = set(rs.questions.values_list("question_text", flat=True))
+    questions = set(rs_questions)
     for score in scores:
         questions -= {score["question__question_text"]}
         assert score["score__sum"] == 2.0
@@ -320,7 +279,7 @@ def test_statistics_by_question(reader_study_with_gt, settings):
     assert statistics["max_score_cases"] == 6.0
     scores = statistics["scores_by_question"]
     assert len(scores) == rs.questions.count()
-    questions = set(rs.questions.values_list("question_text", flat=True))
+    questions = set(rs_questions)
     for score in scores:
         questions -= {score["question__question_text"]}
         if score["question__question_text"] == "q1":
@@ -330,6 +289,12 @@ def test_statistics_by_question(reader_study_with_gt, settings):
             assert score["score__sum"] == 2.0
             assert score["score__avg"] == 0.5
     assert questions == set()
+
+    assert sorted(statistics["questions"]) == sorted(rs_questions)
+    for im in rs.images.all():
+        assert sorted(statistics["ground_truths"][im.name].keys()) == sorted(
+            rs_questions
+        )
 
 
 @pytest.mark.django_db  # noqa - C901
