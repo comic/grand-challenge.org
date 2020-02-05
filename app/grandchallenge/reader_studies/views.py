@@ -435,7 +435,7 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             )
             .select_related("creator")
             .prefetch_related("images")
-            .filter(question__reader_study=reader_study)
+            .filter(question__reader_study=reader_study, is_ground_truth=False)
         ]
 
         return self._create_csv_response(
