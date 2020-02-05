@@ -123,7 +123,8 @@ class ReaderStudyDetail(
         context.update(
             {
                 "user_score": self.object.score_for_user(self.request.user),
-                "answerable_questions": self.object.answerable_question_count,
+                "answerable_questions": self.object.answerable_question_count
+                * len(self.object.hanging_list),
                 "editor_remove_form": editor_remove_form,
                 "reader_remove_form": reader_remove_form,
                 "user_is_reader": self.object.is_reader(
