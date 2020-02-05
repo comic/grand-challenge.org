@@ -1,6 +1,7 @@
 "use strict";
 
 const timeout = 1000;
+const max_attempts = 60;
 
 function getSessionStatus(statusUrl, statusButton, workstationUrl) {
     // Checks on the status of the Session (queued, running, started, etc)
@@ -16,7 +17,7 @@ function handleSessionStatus(statusUrl, statusButton, status, workstationUrl) {
             setButtonLoadingMessage(statusButton, "Starting the workstation container...");
             setTimeout(function () {
                 getSessionStatus(statusUrl, statusButton, workstationUrl)
-            }, timeout);
+            }, Math.floor(Math.random() * timeout) + 100);
             break;
         case "running":
         case "started":
@@ -32,26 +33,27 @@ function handleSessionStatus(statusUrl, statusButton, status, workstationUrl) {
     }
 }
 
-function redirectWhenReady(url, statusButton) {
+function redirectWhenReady(url, statusButton, attempts = 0) {
     // Redirects to the url if the status code is 200. Used to poll if the
     // workstation http server is up and running yet.
+
+    attempts = Number(attempts);
+    if (attempts === max_attempts) {
+        setButtonError(statusButton, "Could not connect to workstation");
+        return
+    }
 
     fetch(url)
         .then(response => response.status)
         .then(
             function (status) {
-                switch (status) {
-                    case 200:
-                        window.location.replace(url);
-                        break;
-                    case 502:
-                        // Workstation not responding yet
-                        setTimeout(function () {
-                            redirectWhenReady(url, statusButton)
-                        }, timeout);
-                        break;
-                    default:
-                        setButtonError(statusButton, "Could not connect to workstation");
+                if (status === 200) {
+                    window.location.replace(url);
+                } else {
+                    // Workstation not responding yet
+                    setTimeout(function () {
+                        redirectWhenReady(url, statusButton, attempts + 1)
+                    }, Math.floor(Math.random() * timeout) + 100);
                 }
             }
         )
