@@ -816,7 +816,10 @@ class Answer(UUIDModel):
                 )
         else:
             if Answer.objects.filter(
-                creator=creator, question=question, images__in=images
+                creator=creator,
+                question=question,
+                images__in=images,
+                is_ground_truth=False,
             ).exists():
                 raise ValidationError(
                     f"User {creator} has already answered this question "

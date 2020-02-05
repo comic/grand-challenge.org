@@ -483,7 +483,9 @@ class AnswerViewSet(
         the current user.
         """
         queryset = self.filter_queryset(
-            self.get_queryset().filter(creator=request.user)
+            self.get_queryset().filter(
+                creator=request.user, is_ground_truth=False
+            )
         )
 
         page = self.paginate_queryset(queryset)
