@@ -212,12 +212,13 @@ def test_progress_for_user(settings):
 
 
 @pytest.mark.django_db
-def test_leaderboard(reader_study_with_gt, settings):
+def test_leaderboard(reader_study_with_gt, settings):  # noqa - C901
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
+    e = rs.editors_group.user_set.first()
 
     for question in rs.questions.all():
         for im in rs.images.all():
@@ -252,6 +253,23 @@ def test_leaderboard(reader_study_with_gt, settings):
             continue
         assert user_score["score__sum"] == 3.0
         assert user_score["score__avg"] == 0.5
+
+    for question in rs.questions.all():
+        for im in rs.images.all():
+            ans = AnswerFactory(question=question, creator=e, answer=True)
+            ans.images.add(im)
+
+    del rs.scores_by_user
+    leaderboard = rs.leaderboard
+    assert Answer.objects.filter(is_ground_truth=False).count() == 18
+    assert leaderboard["question_count"] == 6.0
+    scores = leaderboard["grouped_scores"]
+    assert len(scores) == 3
+    for user_score in scores:
+        if user_score["creator__username"] != e.username:
+            continue
+        assert user_score["score__sum"] == 6.0
+        assert user_score["score__avg"] == 1.0
 
 
 @pytest.mark.django_db  # noqa - C901
