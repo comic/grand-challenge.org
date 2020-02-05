@@ -347,35 +347,29 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         ).distinct()
         answer_count = answers.count()
 
-        # There are unanswered questions
-        if answer_count % self.answerable_question_count != 0:
-            # Group the answers by images and filter out the images that
-            # have an inadequate amount of answers
-            unanswered_images = (
-                answers.order_by("images__name")
-                .values("images__name")
-                .annotate(answer_count=Count("images__name"))
-                .filter(answer_count__lt=self.answerable_question_count)
+        # Group the answers by images and filter out the images that
+        # have an inadequate amount of answers
+        unanswered_images = (
+            answers.order_by("images__name")
+            .values("images__name")
+            .annotate(answer_count=Count("images__name"))
+            .filter(answer_count__lt=self.answerable_question_count)
+        )
+        image_names = set(
+            unanswered_images.values_list("images__name", flat=True)
+        ).union(
+            set(
+                Image.objects.filter(readerstudies=self, answers__isnull=True)
+                .distinct()
+                .values_list("name", flat=True)
             )
-            image_names = set(
-                unanswered_images.values_list("images__name", flat=True)
-            ).union(
-                set(
-                    Image.objects.filter(
-                        readerstudies=self, answers__isnull=True
-                    )
-                    .distinct()
-                    .values_list("name", flat=True)
-                )
-            )
-            # Determine which hangings have images with unanswered questions
-            hanging_list = [set(x.values()) for x in self.hanging_list]
-            completed_hangings = [
-                x for x in hanging_list if len(x - image_names) == len(x)
-            ]
-            completed_hangings = len(completed_hangings)
-        else:
-            completed_hangings = answer_count / self.answerable_question_count
+        )
+        # Determine which hangings have images with unanswered questions
+        hanging_list = [set(x.values()) for x in self.hanging_list]
+        completed_hangings = [
+            x for x in hanging_list if len(x - image_names) == len(x)
+        ]
+        completed_hangings = len(completed_hangings)
 
         hangings = completed_hangings / hanging_list_count * 100
         questions = answer_count / expected * 100
