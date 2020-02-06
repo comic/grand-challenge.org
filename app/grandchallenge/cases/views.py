@@ -51,7 +51,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
         filters = {
             "worklist": self.request.query_params.get("worklist", None),
             "study": self.request.query_params.get("study", None),
-            "origin__pk": self.request.query_params.get("origin__pk", None),
+            "origin": self.request.query_params.get("origin", None),
         }
         filters = {k: v for k, v in filters.items() if v is not None}
 

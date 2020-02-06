@@ -355,7 +355,7 @@ def test_filter_images_api_view(client):
         client=client,
         user=user,
         viewname="api:image-list",
-        data={"origin__pk": str(im.origin.pk)},
+        data={"origin": str(im.origin.pk)},
         content_type="application/json",
     )
     assert response.status_code == 200
