@@ -1,7 +1,6 @@
 import pytest
 
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
-from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
