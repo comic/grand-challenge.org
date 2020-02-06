@@ -1,6 +1,8 @@
 import pytest
 
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.subdomains.utils import reverse
+
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -348,13 +350,12 @@ def test_filter_images_api_view(client):
         content_type="application/json",
     )
     assert response.status_code == 200
-    assert response.json()["count"] == 3  # [alg_result.job.image, im1, im2]
+    assert {r["pk"] for r in response.json()["results"]} == {str(i.pk) for i in [alg_result.job.image, im1, im2]}
 
     response = get_view_for_user(
-        viewname="api:image-detail",
         client=client,
         user=user,
-        params={"origin__pk": im1.origin.pk},
+        url=reverse("api:image-list")+f"?origin__pk={str(im1.origin.pk)}",
         content_type="application/json",
     )
     assert response.status_code == 200
