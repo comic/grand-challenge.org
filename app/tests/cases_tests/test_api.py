@@ -336,10 +336,8 @@ def test_filter_images_api_view(client):
     alg_result = AlgorithmResultFactory(
         job__algorithm_image__algorithm=alg, job__creator=user
     )
-    rs1 = RawImageUploadSessionFactory(creator=user)
-    rs2 = RawImageUploadSessionFactory(creator=user)
 
-    im1, im2 = ImageFactory(origin=rs1), ImageFactory(origin=rs2)
+    im1, im2 = ImageFactory(), ImageFactory()
     alg_result.images.add(im1)
     alg_result.images.add(im2)
 
@@ -353,51 +351,12 @@ def test_filter_images_api_view(client):
     assert response.json()["count"] == 3  # [alg_result.job.image, im1, im2]
 
     response = get_view_for_user(
-        viewname="api:image-list",
+        viewname="api:image-detail",
         client=client,
         user=user,
-        params={"origin__pk": rs1.pk},
+        params={"origin__pk": im1.origin.pk},
         content_type="application/json",
     )
     assert response.status_code == 200
     assert response.json()["count"] == 1
     assert response.json()["results"][0]["pk"] == im1.pk
-
-    # user1, user2 = UserFactory(), UserFactory()
-    # image1, image2 = ImageFactory(), ImageFactory()
-    # rs1, rs2 = RawImageUploadSessionFactory(creator=user1), RawImageUploadSessionFactory(creator=user2)
-    # image1.origin = rs1
-    # image2.origin = rs2
-    # image1.refresh_from_db()
-    # image2.refresh_from_db()
-    # response = get_view_for_user(
-    #     viewname="api:image-list",
-    #     client=client,
-    #     user=user1,
-    #     # content_type="application/json",
-    # )
-    # # assert response == ""
-    # print(response)
-    # assert response.status_code == 200
-    # assert response.json()["count"] == 1
-    #
-    # response = get_view_for_user(
-    #     viewname="api:image-list",
-    #     client=client,
-    #     user=user2,
-    #     params={"origin__pk": image1.origin.pk},
-    #     content_type="application/json",
-    # )
-    # assert response.status_code == 200
-    # assert response.json()["count"] == 1
-    # assert response.json()["results"][0]["pk"] == image1.pk
-    # response = get_view_for_user(
-    #     viewname="api:image-list",
-    #     client=client,
-    #     user=user1,
-    #     params={"origin__pk": image2.origin.pk},
-    #     content_type="application/json",
-    # )
-    # assert response.status_code == 200
-    # assert response.json()["count"] == 1
-    # assert response.json()["results"][0]["pk"] == image2.pk
