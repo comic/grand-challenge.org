@@ -518,6 +518,7 @@ SENTRY_DSN = os.environ.get("DJANGO_SENTRY_DSN", "")
 SENTRY_ENABLE_JS_REPORTING = strtobool(
     os.environ.get("SENTRY_ENABLE_JS_REPORTING", "False")
 )
+WORKSTATION_SENTRY_DSN = os.environ.get("WORKSTATION_SENTRY_DSN", "")
 
 sentry_sdk.init(
     dsn=SENTRY_DSN,
