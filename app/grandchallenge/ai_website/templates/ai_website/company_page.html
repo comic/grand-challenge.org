@@ -12,6 +12,8 @@
           <a href="{{company.website}}" title="{{company.company_name}}" target="_blank">
             {% if company.logo %}
               <img src="{{company.logo.url}}" alt="Logo" style="width:80%">
+            {% else %}
+              <img src="{% static 'ai_website/images/error.png' %}" alt="Logo" style="width:80%">
             {% endif %}
           </a>
           <h1 class="mb-1 pt-5">{{company.company_name}}</h1>

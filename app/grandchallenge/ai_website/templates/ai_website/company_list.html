@@ -1,4 +1,5 @@
 {% extends 'ai_website/base.html' %}
+{% load static %}
 
 {% block title %}
     Companies
@@ -32,7 +33,10 @@
           <div class="col-sm-3">
             <div class="d-flex justify-content-between flex-column h-100">
                 <a class="pb-5" href="{% url 'ai-website:company_page' pk=company.pk %}" title="{{ company.company_name }}">
-                  <img src="{{ company.logo.url }}" alt="Logo" style="width:70%">
+                  {% if company.logo %}
+                    <img src="{{ company.logo.url }}" alt="Logo" style="width:70%">
+                  {% else %}
+                    <img src="{% static 'ai_website/images/error.png' %}" alt="Logo" style="width:70%">
                 </a>
 
                 <div>
