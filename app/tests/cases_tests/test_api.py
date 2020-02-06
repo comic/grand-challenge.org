@@ -338,9 +338,8 @@ def test_filter_images_api_view(client):
         job__algorithm_image__algorithm=alg, job__creator=user
     )
 
-    im1, im2 = ImageFactory(), ImageFactory()
-    alg_result.images.add(im1)
-    alg_result.images.add(im2)
+    im = ImageFactory()
+    alg_result.images.add(im)
 
     response = get_view_for_user(
         viewname="api:image-list",
@@ -350,15 +349,16 @@ def test_filter_images_api_view(client):
     )
     assert response.status_code == 200
     assert {r["pk"] for r in response.json()["results"]} == {
-        str(i.pk) for i in [alg_result.job.image, im1, im2]
+        str(i.pk) for i in [alg_result.job.image, im]
     }
 
     response = get_view_for_user(
         client=client,
         user=user,
-        url=reverse("api:image-list") + f"?origin__pk={str(im1.origin.pk)}",
+        viewname="api:image-list",
+        data={"origin__pk": str(im.origin.pk)},
         content_type="application/json",
     )
     assert response.status_code == 200
     assert response.json()["count"] == 1
-    assert response.json()["results"][0]["pk"] == im1.pk
+    assert response.json()["results"][0]["pk"] == str(im.pk)
