@@ -24,9 +24,11 @@ build: build_web build_http
 
 push_web:
 	docker push grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)
+	docker push grandchallenge/web:latest
 
 push_http:
 	docker push grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)
+	docker push grandchallenge/http:latest
 
 push: push_web push_http
 
