@@ -1,12 +1,16 @@
 import pytest
 
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
-from tests.algorithms_tests.factories import AlgorithmImageFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+    AlgorithmResultFactory,
+)
 from tests.cases_tests.factories import (
     RawImageFileFactory,
     RawImageUploadSessionFactory,
 )
-from tests.factories import UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -321,3 +325,39 @@ def test_process_images_api_view(client, settings):
     # Jobs should only be run once
     response = request_processing()
     assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_filter_images_api_view(client):
+    alg = AlgorithmFactory()
+    user = UserFactory()
+    alg.add_editor(user=user)
+
+    alg_result = AlgorithmResultFactory(
+        job__algorithm_image__algorithm=alg, job__creator=user
+    )
+
+    im = ImageFactory()
+    alg_result.images.add(im)
+
+    response = get_view_for_user(
+        viewname="api:image-list",
+        client=client,
+        user=user,
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert {r["pk"] for r in response.json()["results"]} == {
+        str(i.pk) for i in [alg_result.job.image, im]
+    }
+
+    response = get_view_for_user(
+        client=client,
+        user=user,
+        viewname="api:image-list",
+        data={"origin": str(im.origin.pk)},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    assert response.json()["count"] == 1
+    assert response.json()["results"][0]["pk"] == str(im.pk)
