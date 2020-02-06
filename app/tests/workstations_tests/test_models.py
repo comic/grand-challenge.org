@@ -33,6 +33,8 @@ def test_session_environ(settings, debug):
         Token.objects.get(user=s.creator).key
         in env["GRAND_CHALLENGE_AUTHORIZATION"]
     )
+    assert env["WORKSTATION_SESSION_ID"] == str(s.pk)
+    assert "WORKSTATION_SENTRY_DSN" in env
 
     if debug:
         assert "GRAND_CHALLENGE_UNSAFE" in env
