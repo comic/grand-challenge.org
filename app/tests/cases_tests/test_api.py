@@ -350,12 +350,14 @@ def test_filter_images_api_view(client):
         content_type="application/json",
     )
     assert response.status_code == 200
-    assert {r["pk"] for r in response.json()["results"]} == {str(i.pk) for i in [alg_result.job.image, im1, im2]}
+    assert {r["pk"] for r in response.json()["results"]} == {
+        str(i.pk) for i in [alg_result.job.image, im1, im2]
+    }
 
     response = get_view_for_user(
         client=client,
         user=user,
-        url=reverse("api:image-list")+f"?origin__pk={str(im1.origin.pk)}",
+        url=reverse("api:image-list") + f"?origin__pk={str(im1.origin.pk)}",
         content_type="application/json",
     )
     assert response.status_code == 200
