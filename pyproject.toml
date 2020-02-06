@@ -61,7 +61,7 @@ drf-yasg = {version = "*", extras = ["validation"]}
 pydicom = "*"
 docutils = "0.15.2" # We do not depend on this directly, but required for Boto resolution
 scikit-learn = "==0.22.1"
-pandas = "^0.25.3"
+pandas = "^1.0.1"
 xlrd = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
