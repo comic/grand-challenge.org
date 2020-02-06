@@ -303,6 +303,40 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 
 
 @pytest.mark.django_db
+def test_ground_truth_is_excluded(client):
+    im = ImageFactory()
+    rs = ReaderStudyFactory()
+    rs.images.add(im)
+
+    editor = UserFactory()
+    rs.add_editor(editor)
+    rs.add_reader(editor)
+
+    q = QuestionFactory(reader_study=rs, answer_type=Question.ANSWER_TYPE_BOOL)
+
+    a1 = AnswerFactory(
+        question=q, creator=editor, answer=True, is_ground_truth=True
+    )
+    a1.images.add(im)
+
+    a2 = AnswerFactory(
+        question=q, creator=editor, answer=True, is_ground_truth=False
+    )
+    a2.images.add(im)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-mine",
+        user=editor,
+        client=client,
+        method=client.get,
+        content_type="application/json",
+    )
+    results = response.json()["results"]
+    assert len(results) == 1
+    assert results[0]["pk"] == str(a2.pk)
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "answer_type,answer",
     (

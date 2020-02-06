@@ -435,7 +435,7 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             )
             .select_related("creator")
             .prefetch_related("images")
-            .filter(question__reader_study=reader_study)
+            .filter(question__reader_study=reader_study, is_ground_truth=False)
         ]
 
         return self._create_csv_response(
@@ -483,7 +483,9 @@ class AnswerViewSet(
         the current user.
         """
         queryset = self.filter_queryset(
-            self.get_queryset().filter(creator=request.user)
+            self.get_queryset().filter(
+                creator=request.user, is_ground_truth=False
+            )
         )
 
         page = self.paginate_queryset(queryset)

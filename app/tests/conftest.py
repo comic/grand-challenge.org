@@ -12,6 +12,7 @@ from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 
 from grandchallenge.cases.models import Image
+from grandchallenge.reader_studies.models import Question
 from tests.annotations_tests.factories import (
     BooleanClassificationAnnotationFactory,
     CoordinateListAnnotationFactory,
@@ -32,6 +33,11 @@ from tests.factories import (
     UserFactory,
 )
 from tests.patients_tests.factories import PatientFactory
+from tests.reader_studies_tests.factories import (
+    AnswerFactory,
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 from tests.studies_tests.factories import StudyFactory
 from tests.workstations_tests.fixtures import (
     TwoWorkstationSets,
@@ -620,3 +626,46 @@ def archive_patient_study_images_set():
     and 4 images.
     """
     return generate_archive_patient_study_image_set()
+
+
+@pytest.fixture
+def reader_study_with_gt():
+    rs = ReaderStudyFactory()
+    im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
+    q1, q2, q3 = [
+        QuestionFactory(
+            reader_study=rs,
+            answer_type=Question.ANSWER_TYPE_BOOL,
+            question_text="q1",
+        ),
+        QuestionFactory(
+            reader_study=rs,
+            answer_type=Question.ANSWER_TYPE_BOOL,
+            question_text="q2",
+        ),
+        QuestionFactory(
+            reader_study=rs,
+            answer_type=Question.ANSWER_TYPE_BOOL,
+            question_text="q3",
+        ),
+    ]
+
+    r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
+    rs.add_reader(r1)
+    rs.add_reader(r2)
+    rs.add_editor(editor)
+    rs.images.set([im1, im2])
+    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
+    rs.save()
+
+    for question in [q1, q2, q3]:
+        for im in [im1, im2]:
+            ans = AnswerFactory(
+                question=question,
+                creator=editor,
+                answer=True,
+                is_ground_truth=True,
+            )
+            ans.images.add(im)
+
+    return rs

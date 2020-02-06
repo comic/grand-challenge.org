@@ -1,56 +1,13 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
-
-
-@pytest.fixture
-def reader_study_with_gt():
-    rs = ReaderStudyFactory()
-    im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
-    q1, q2, q3 = [
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
-            question_text="q1",
-        ),
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
-            question_text="q2",
-        ),
-        QuestionFactory(
-            reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
-            question_text="q3",
-        ),
-    ]
-
-    r1, r2, editor = UserFactory(), UserFactory(), UserFactory()
-    rs.add_reader(r1)
-    rs.add_reader(r2)
-    rs.add_editor(editor)
-    rs.images.set([im1, im2])
-    rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
-    rs.save()
-
-    for question in [q1, q2, q3]:
-        for im in [im1, im2]:
-            ans = AnswerFactory(
-                question=question,
-                creator=editor,
-                answer=True,
-                is_ground_truth=True,
-            )
-            ans.images.add(im)
-
-    return rs
 
 
 @pytest.mark.django_db
@@ -130,7 +87,10 @@ def test_generate_hanging_list():
 
 
 @pytest.mark.django_db
-def test_progress_for_user():
+def test_progress_for_user(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     q1, q2, q3 = [
@@ -144,7 +104,11 @@ def test_progress_for_user():
 
     question_perc = 100 / 6
 
-    assert rs.get_progress_for_user(reader) is None
+    assert rs.get_progress_for_user(reader) == {
+        "diff": 0.0,
+        "hangings": 0.0,
+        "questions": 0.0,
+    }
 
     rs.images.set([im1, im2])
     rs.hanging_list = [{"main": im1.name}, {"main": im2.name}]
@@ -177,14 +141,41 @@ def test_progress_for_user():
     assert progress["hangings"] == 50
     assert progress["questions"] == pytest.approx(question_perc * 4)
 
+    editor = UserFactory()
+    rs.add_reader(editor)
+    rs.add_editor(editor)
+
+    for q in [q1, q2, q3]:
+        for im in [im1, im2]:
+            a = AnswerFactory(
+                question=q, answer="foo", creator=editor, is_ground_truth=True
+            )
+            a.images.add(im)
+
+    progress = rs.get_progress_for_user(editor)
+    assert progress["hangings"] == 0
+    assert progress["questions"] == 0
+
+    for q in [q1, q2, q3]:
+        for im in [im1, im2]:
+            a = AnswerFactory(
+                question=q, answer="foo", creator=editor, is_ground_truth=False
+            )
+            a.images.add(im)
+
+    progress = rs.get_progress_for_user(editor)
+    assert progress["hangings"] == 100.0
+    assert progress["questions"] == 100.0
+
 
 @pytest.mark.django_db
-def test_leaderboard(reader_study_with_gt, settings):
+def test_leaderboard(reader_study_with_gt, settings):  # noqa - C901
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
+    e = rs.editors_group.user_set.first()
 
     for question in rs.questions.all():
         for im in rs.images.all():
@@ -209,6 +200,7 @@ def test_leaderboard(reader_study_with_gt, settings):
             ans.images.add(im)
 
     del rs.scores_by_user
+    del rs.leaderboard
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 12
     assert leaderboard["question_count"] == 6.0
@@ -220,14 +212,34 @@ def test_leaderboard(reader_study_with_gt, settings):
         assert user_score["score__sum"] == 3.0
         assert user_score["score__avg"] == 0.5
 
+    for question in rs.questions.all():
+        for im in rs.images.all():
+            ans = AnswerFactory(question=question, creator=e, answer=True)
+            ans.images.add(im)
+
+    del rs.scores_by_user
+    del rs.leaderboard
+    leaderboard = rs.leaderboard
+    assert Answer.objects.filter(is_ground_truth=False).count() == 18
+    assert leaderboard["question_count"] == 6.0
+    scores = leaderboard["grouped_scores"]
+    assert len(scores) == 3
+    for user_score in scores:
+        if user_score["creator__username"] != e.username:
+            continue
+        assert user_score["score__sum"] == 6.0
+        assert user_score["score__avg"] == 1.0
+
 
 @pytest.mark.django_db  # noqa - C901
-def test_statistics_by_question(reader_study_with_gt, settings):
+def test_statistics(reader_study_with_gt, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
+
+    rs_questions = rs.questions.values_list("question_text", flat=True)
 
     for question in rs.questions.all():
         for im in rs.images.all():
@@ -239,7 +251,7 @@ def test_statistics_by_question(reader_study_with_gt, settings):
     assert statistics["max_score_questions"] == 2.0
     scores = statistics["scores_by_question"]
     assert len(scores) == rs.questions.count()
-    questions = set(rs.questions.values_list("question_text", flat=True))
+    questions = set(rs_questions)
     for score in scores:
         questions -= {score["question__question_text"]}
         assert score["score__sum"] == 2.0
@@ -261,12 +273,13 @@ def test_statistics_by_question(reader_study_with_gt, settings):
             ans = AnswerFactory(question=question, creator=r2, answer=answer)
             ans.images.add(im)
 
+    del rs.statistics
     statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 12
     assert statistics["max_score_cases"] == 6.0
     scores = statistics["scores_by_question"]
     assert len(scores) == rs.questions.count()
-    questions = set(rs.questions.values_list("question_text", flat=True))
+    questions = set(rs_questions)
     for score in scores:
         questions -= {score["question__question_text"]}
         if score["question__question_text"] == "q1":
@@ -276,6 +289,12 @@ def test_statistics_by_question(reader_study_with_gt, settings):
             assert score["score__sum"] == 2.0
             assert score["score__avg"] == 0.5
     assert questions == set()
+
+    assert sorted(statistics["questions"]) == sorted(rs_questions)
+    for im in rs.images.all():
+        assert sorted(statistics["ground_truths"][im.name].keys()) == sorted(
+            rs_questions
+        )
 
 
 @pytest.mark.django_db  # noqa - C901

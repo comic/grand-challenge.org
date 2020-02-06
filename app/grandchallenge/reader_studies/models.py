@@ -330,7 +330,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     def get_progress_for_user(self, user):
         if not self.is_valid or not self.hanging_list:
-            return
+            return {
+                "questions": 0.0,
+                "hangings": 0.0,
+                "diff": 0.0,
+            }
 
         hanging_list_count = len(self.hanging_list)
 
@@ -339,39 +343,47 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         expected = hanging_list_count * self.answerable_question_count
         answers = Answer.objects.filter(
-            question__in=self.answerable_questions, creator_id=user.id
+            question__in=self.answerable_questions,
+            creator_id=user.id,
+            is_ground_truth=False,
         ).distinct()
         answer_count = answers.count()
 
-        # There are unanswered questions
-        if answer_count % self.answerable_question_count != 0:
-            # Group the answers by images and filter out the images that
-            # have an inadequate amount of answers
-            unanswered_images = (
-                answers.order_by("images__name")
-                .values("images__name")
-                .annotate(answer_count=Count("images__name"))
-                .filter(answer_count__lt=self.answerable_question_count)
-            )
-            image_names = set(
-                unanswered_images.values_list("images__name", flat=True)
-            ).union(
-                set(
-                    Image.objects.filter(
-                        readerstudies=self, answers__isnull=True
+        # Group the answers by images and filter out the images that
+        # have an inadequate amount of answers
+        unanswered_images = (
+            answers.order_by("images__name")
+            .values("images__name")
+            .annotate(answer_count=Count("images__name"))
+            .filter(answer_count__lt=self.answerable_question_count)
+        )
+        image_names = set(
+            unanswered_images.values_list("images__name", flat=True)
+        ).union(
+            set(
+                Image.objects.filter(readerstudies=self)
+                .annotate(
+                    answers_for_user=Count(
+                        Subquery(
+                            Answer.objects.filter(
+                                creator=user,
+                                images=OuterRef("pk"),
+                                is_ground_truth=False,
+                            ).values("pk")[:1]
+                        )
                     )
-                    .distinct()
-                    .values_list("name", flat=True)
                 )
+                .filter(answers_for_user=0)
+                .distinct()
+                .values_list("name", flat=True)
             )
-            # Determine which hangings have images with unanswered questions
-            hanging_list = [set(x.values()) for x in self.hanging_list]
-            completed_hangings = [
-                x for x in hanging_list if len(x - image_names) == len(x)
-            ]
-            completed_hangings = len(completed_hangings)
-        else:
-            completed_hangings = answer_count / self.answerable_question_count
+        )
+        # Determine which hangings have images with unanswered questions
+        hanging_list = [set(x.values()) for x in self.hanging_list]
+        completed_hangings = [
+            x for x in hanging_list if len(x - image_names) == len(x)
+        ]
+        completed_hangings = len(completed_hangings)
 
         hangings = completed_hangings / hanging_list_count * 100
         questions = answer_count / expected * 100
@@ -398,7 +410,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .order_by("-score__sum")
         )
 
-    @property
+    @cached_property
     def leaderboard(self):
         question_count = float(self.answerable_question_count) * len(
             self.hanging_list
@@ -408,7 +420,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "grouped_scores": self.scores_by_user,
         }
 
-    @property
+    @cached_property
     def statistics(self):
         scores_by_question = (
             Answer.objects.filter(
@@ -419,27 +431,30 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .annotate(Sum("score"), Avg("score"))
             .order_by("-score__avg")
         )
-        # TODO: the ground truth only works correctly when there is one question
-        # per image.
+
         scores_by_case = (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
             )
             .order_by("images__name")
             .values("images__name", "images__pk")
-            .annotate(
-                Sum("score"),
-                Avg("score"),
-                ground_truth=Subquery(
-                    Answer.objects.filter(
-                        is_ground_truth=True,
-                        images=OuterRef("images"),
-                        question=OuterRef("question"),
-                    ).values_list("answer")[:1]
-                ),
-            )
+            .annotate(Sum("score"), Avg("score"),)
             .order_by("score__avg")
         )
+
+        ground_truths = {}
+        questions = set()
+        for gt in Answer.objects.filter(
+            question__reader_study=self, is_ground_truth=True
+        ).values("images__name", "answer", "question__question_text"):
+            ground_truths[gt["images__name"]] = ground_truths.get(
+                gt["images__name"], {}
+            )
+            ground_truths[gt["images__name"]][
+                gt["question__question_text"]
+            ] = gt["answer"]
+            questions.add(gt["question__question_text"])
+
         return {
             "max_score_questions": float(len(self.hanging_list))
             * self.scores_by_user.count(),
@@ -447,6 +462,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "max_score_cases": float(self.answerable_question_count)
             * self.scores_by_user.count(),
             "scores_by_case": scores_by_case,
+            "ground_truths": ground_truths,
+            "questions": questions,
         }
 
 
@@ -816,7 +833,10 @@ class Answer(UUIDModel):
                 )
         else:
             if Answer.objects.filter(
-                creator=creator, question=question, images__in=images
+                creator=creator,
+                question=question,
+                images__in=images,
+                is_ground_truth=False,
             ).exists():
                 raise ValidationError(
                     f"User {creator} has already answered this question "

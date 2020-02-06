@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load workstations %}
+{% load get_ground_truth %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -24,7 +25,9 @@
                     <th>Image name</th>
                     <th>Total score / max score</th>
                     <th>Average score</th>
-                    <th>Ground truth</th>
+                    {% for question in object.statistics.questions %}
+                        <th>{{ question}} (GT)</th>
+                    {% endfor %}
                     <th>View image</th>
                 </tr>
             </thead>
@@ -34,8 +37,10 @@
                         <td data-order="{{ entry.images__name }}">{{ entry.images__name }}</td>
                         <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.statistics.max_score_cases }}</td>
                         <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg|floatformat:4 }}</td>
-
-                        <td data-order="{{ ground_truth }}">{{ entry.ground_truth }}</td>
+                        {% for question in object.statistics.questions %}
+                            {% get_ground_truth object entry.images__name question as ground_truth %}
+                            <td data-order="{{ ground_truth }}">{{ ground_truth }}</td>
+                        {% endfor %}
                         <td data-order="{{ entry.images__name }}">
                             <a href="{% url 'workstations:workstation-session-redirect' slug=object.workstation.slug %}?{% workstation_query image=entry.images__pk config=object.workstation_config %}">
                                 <span class="badge badge-primary">
