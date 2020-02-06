@@ -44,7 +44,7 @@ class DataImporter(object):
                 zipf.extractall(tmpdir)
             self.images_path = Path(tmpdir)
 
-        for i, c_row in df_c.iterrows():
+        for _, c_row in df_c.iterrows():
             c = self._create_company(c_row)
             df_filter = df_p.loc[df_p["Company name"] == c_row["Company name"]]
             for _, p_row in df_filter.iterrows():
@@ -88,7 +88,10 @@ class DataImporter(object):
 
     def _create_product(self, row, c):
         try:
-            return ProductEntry.objects.get(short_name=row["Short name"][:50]), False
+            return (
+                ProductEntry.objects.get(short_name=row["Short name"][:50]),
+                False,
+            )
         except ProductEntry.DoesNotExist:
             p = ProductEntry(
                 product_name=row["Product name"],
@@ -132,7 +135,9 @@ class DataImporter(object):
                     row["Number of institutes using the product for research"]
                 ),
                 institutes_clinic=str(
-                    ["Number of institutes using the product in clinical practice"]
+                    [
+                        "Number of institutes using the product in clinical practice"
+                    ]
                 ),
                 pricing_model=row["Pricing model"],
                 pricing_basis=row["Pricing model based on"],
