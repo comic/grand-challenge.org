@@ -12,7 +12,7 @@ from tests.cases_tests.factories import (
     RawImageFileFactory,
     RawImageUploadSessionFactory,
 )
-from tests.factories import UserFactory, ImageFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
