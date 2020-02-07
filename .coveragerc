@@ -2,6 +2,3 @@
 source =
     ./app/
     /app/
-[run]
-omit =
-    */ai_website/*
