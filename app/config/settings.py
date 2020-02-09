@@ -207,6 +207,9 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
+SECURE_REFERRER_POLICY = os.environ.get(
+    "SECURE_REFERRER_POLICY", "same-origin"
+)
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
