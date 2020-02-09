@@ -200,6 +200,7 @@ SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = strtobool(
     os.environ.get("SECURE_HSTS_INCLUDE_SUBDOMAINS", "False")
 )
+SECURE_HSTS_PRELOAD = strtobool(os.environ.get("SECURE_HSTS_PRELOAD", "True"))
 SECURE_CONTENT_TYPE_NOSNIFF = strtobool(
     os.environ.get("SECURE_CONTENT_TYPE_NOSNIFF", "False")
 )
