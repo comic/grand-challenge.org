@@ -14,4 +14,4 @@ def test_make_migration(capsys):
 
 @pytest.mark.django_db
 def test_all_users_group_exists(settings):
-    assert Group.objects.get(name=settings.ALL_USERS_GROUP_NAME)
+    assert Group.objects.get(name=settings.REG_AND_ANON_USERS_GROUP_NAME)

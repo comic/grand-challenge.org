@@ -67,8 +67,7 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 
 ANONYMOUS_USER_NAME = "AnonymousUser"
-# The all users group contains all of the registered users plus the anonymous user
-ALL_USERS_GROUP_NAME = "__all_users__"
+REG_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
