@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import Group
 from django.core.management import call_command
 
 
@@ -9,3 +10,8 @@ def test_make_migration(capsys):
     out, err = capsys.readouterr()
     assert out == "No changes detected\n"
     assert err == ""
+
+
+@pytest.mark.django_db
+def test_all_users_group_exists(settings):
+    assert Group.objects.get(name=settings.ALL_USERS_GROUP_NAME)
