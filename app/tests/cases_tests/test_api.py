@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
@@ -10,7 +12,7 @@ from tests.cases_tests.factories import (
     RawImageFileFactory,
     RawImageUploadSessionFactory,
 )
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import ImageFactory, StagedFileFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -84,7 +86,7 @@ def test_upload_sessions_create(client):
 
 @pytest.mark.django_db
 def test_invalid_upload_sessions(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
 
     response = get_view_for_user(
         viewname="api:upload-session-list",
@@ -102,7 +104,7 @@ def test_invalid_upload_sessions(client):
 
 @pytest.mark.django_db
 def test_empty_data_upload_sessions(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
 
     response = get_view_for_user(
         viewname="api:upload-session-list",
@@ -186,7 +188,7 @@ def test_image_file_detail(client):
 
 @pytest.mark.django_db
 def test_image_file_create(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
     ai = AlgorithmImageFactory()
     ai.algorithm.add_user(user)
     upload_session = RawImageUploadSessionFactory(
@@ -227,7 +229,7 @@ def test_image_file_create(client):
 
 @pytest.mark.django_db
 def test_invalid_image_file_post(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
 
     response = get_view_for_user(
         viewname="api:upload-session-file-list",
@@ -242,7 +244,7 @@ def test_invalid_image_file_post(client):
         "upload_session": ["This field may not be null."]
     }
 
-    upload_session = RawImageUploadSessionFactory()
+    upload_session = RawImageUploadSessionFactory(creator=user)
     response = get_view_for_user(
         viewname="api:upload-session-file-list",
         user=user,
@@ -257,7 +259,7 @@ def test_invalid_image_file_post(client):
 
 @pytest.mark.django_db
 def test_empty_data_image_files(client):
-    user = UserFactory(is_staff=True)
+    user = UserFactory()
 
     response = get_view_for_user(
         viewname="api:upload-session-file-list",
@@ -306,7 +308,14 @@ def test_process_images_api_view(client, settings):
 
     user = UserFactory()
     us = RawImageUploadSessionFactory(creator=user)
-    RawImageFileFactory(upload_session=us)
+
+    f = StagedFileFactory(
+        file__from_path=Path(__file__).parent
+        / "resources"
+        / "image10x10x10.mha"
+    )
+
+    RawImageFileFactory(upload_session=us, staged_file_id=f.file_id)
 
     def request_processing():
         return get_view_for_user(

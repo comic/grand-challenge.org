@@ -28,10 +28,12 @@ def test_algorithm_groups_permissions_are_assigned():
     editors_perms = get_group_perms(alg.editors_group, alg)
     assert "view_algorithm" in editors_perms
     assert "change_algorithm" in editors_perms
+    assert "execute_algorithm" in editors_perms
 
     users_perms = get_group_perms(alg.users_group, alg)
     assert "view_algorithm" in users_perms
     assert "change_algorithm" not in users_perms
+    assert "execute_algorithm" in users_perms
 
 
 @pytest.mark.django_db

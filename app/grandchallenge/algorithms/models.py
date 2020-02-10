@@ -105,6 +105,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
+        permissions = [("execute_algorithm", "Can execute algorithm")]
 
     def __str__(self):
         return f"{self.title}"
@@ -144,6 +145,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         # Editors and users can view this algorithm
         assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
         assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+        # Editors and users can execute this algorithm
+        assign_perm(
+            f"execute_{self._meta.model_name}", self.editors_group, self
+        )
+        assign_perm(f"execute_{self._meta.model_name}", self.users_group, self)
         # Editors can change this algorithm
         assign_perm(
             f"change_{self._meta.model_name}", self.editors_group, self
