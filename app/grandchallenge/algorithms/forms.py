@@ -40,7 +40,7 @@ class AlgorithmForm(SaveFormInitMixin, ModelForm):
             "title",
             "description",
             "logo",
-            "visible_to_public",
+            "public",
             "workstation",
             "workstation_config",
             "contact_information",

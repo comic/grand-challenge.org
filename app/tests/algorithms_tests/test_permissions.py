@@ -479,12 +479,12 @@ def test_visible_to_public_group_permissions():
 
     assert "view_algorithm" not in get_perms(g_reg_anon, algorithm)
 
-    algorithm.visible_to_public = True
+    algorithm.public = True
     algorithm.save()
 
     assert "view_algorithm" in get_perms(g_reg_anon, algorithm)
 
-    algorithm.visible_to_public = False
+    algorithm.public = False
     algorithm.save()
 
     assert "view_algorithm" not in get_perms(g_reg_anon, algorithm)

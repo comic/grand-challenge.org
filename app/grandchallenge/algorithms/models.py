@@ -62,7 +62,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    visible_to_public = models.BooleanField(
+    public = models.BooleanField(
         default=False,
         help_text=(
             "Should this algorithm be visible to all users on the algorithm "
@@ -157,7 +157,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
 
-        if self.visible_to_public:
+        if self.public:
             assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
         else:
             remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
@@ -292,6 +292,14 @@ class Result(UUIDModel):
     job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
     images = models.ManyToManyField(
         to="cases.Image", related_name="algorithm_results"
+    )
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "If True, allow all logged in users to view this result along "
+            "with the input image. Otherwise, only the job creator and "
+            "algorithm editor will have permission to view this."
+        ),
     )
     output = JSONField(default=dict)
 
