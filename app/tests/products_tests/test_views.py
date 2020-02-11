@@ -1,16 +1,16 @@
 import pytest
 from guardian.utils import get_anonymous_user
 
-from tests.ai_website_tests.factories import (
-    CompanyEntryFactory,
-    ProductEntryFactory,
+from tests.products_tests.factories import (
+    CompanyFactory,
+    ProductFactory,
 )
 from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
 def test_product_list(client):
-    product = ProductEntryFactory()
+    product = ProductFactory()
 
     response = get_view_for_user(
         viewname="ai-website:product_list",
@@ -25,7 +25,7 @@ def test_product_list(client):
 
 @pytest.mark.django_db
 def test_product_detail(client):
-    product = ProductEntryFactory()
+    product = ProductFactory()
 
     response = get_view_for_user(
         viewname="ai-website:product_page",
@@ -41,7 +41,7 @@ def test_product_detail(client):
 
 @pytest.mark.django_db
 def test_company_list(client):
-    company = CompanyEntryFactory()
+    company = CompanyFactory()
 
     response = get_view_for_user(
         viewname="ai-website:company_list",
@@ -56,7 +56,7 @@ def test_company_list(client):
 
 @pytest.mark.django_db
 def test_company_detail(client):
-    company = CompanyEntryFactory()
+    company = CompanyFactory()
 
     response = get_view_for_user(
         viewname="ai-website:company_page",

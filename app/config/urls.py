@@ -77,7 +77,7 @@ urlpatterns = [
     ),
     path(
         "aiforradiology/",
-        include("grandchallenge.ai_website.urls", namespace="ai-website"),
+        include("grandchallenge.products.urls", namespace="ai-website"),
     ),
     path(
         "policies/",

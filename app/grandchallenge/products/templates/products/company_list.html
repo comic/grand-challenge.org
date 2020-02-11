@@ -1,4 +1,4 @@
-{% extends 'ai_website/base.html' %}
+{% extends 'products/base.html' %}
 {% load static %}
 
 {% block title %}
@@ -36,7 +36,7 @@
                   {% if company.logo %}
                     <img src="{{ company.logo.url }}" alt="Logo" style="width:70%">
                   {% else %}
-                    <img src="{% static 'ai_website/images/error.png' %}" alt="Logo" style="width:70%">
+                    <img src="{% static 'products/images/error.png' %}" alt="Logo" style="width:70%">
                   {% endif %}
                 </a>
 
@@ -62,7 +62,7 @@
           </div>
           <div class="col-sm-3 bg-light pt-2">
             <p><b>Products:</b></p>
-            {% for product in company.productentry_set.all %}
+            {% for product in company.Product_set.all %}
               <div>
                 <a href= "{% url 'ai-website:product_page' pk=product.pk %}" title={{product.product_name}} target="_blank">
                     {{product.product_name}}</a>

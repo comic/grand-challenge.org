@@ -6,22 +6,22 @@ from pathlib import Path
 import pandas as pd
 from django.core.files.images import ImageFile
 
-from grandchallenge.ai_website.models import (
-    CompanyEntry,
-    ProductEntry,
+from grandchallenge.products.models import (
+    Company,
+    Product,
     ProductImage,
 )
 
 
 STATUS_MAPPING = {
-    "Certified": ProductEntry.STATUS_CERTIFIED,
-    "No or not yet": ProductEntry.STATUS_NO,
-    "Not applicable": ProductEntry.STATUS_NA,
-    "510(k) cleared": ProductEntry.STATUS_CLEARED,
-    "de novo 510(k) cleared": ProductEntry.STATUS_DE_NOVO_CLEARED,
-    "PMA approved": ProductEntry.STATUS_PMA_APPROVED,
-    "Yes": ProductEntry.STATUS_YES,
-    "No": ProductEntry.STATUS_NO,
+    "Certified": Product.STATUS_CERTIFIED,
+    "No or not yet": Product.STATUS_NO,
+    "Not applicable": Product.STATUS_NA,
+    "510(k) cleared": Product.STATUS_CLEARED,
+    "de novo 510(k) cleared": Product.STATUS_DE_NOVO_CLEARED,
+    "PMA approved": Product.STATUS_PMA_APPROVED,
+    "Yes": Product.STATUS_YES,
+    "No": Product.STATUS_NO,
 }
 
 
@@ -64,9 +64,9 @@ class DataImporter(object):
 
     def _create_company(self, row):
         try:
-            return CompanyEntry.objects.get(company_name=row["Company name"])
-        except CompanyEntry.DoesNotExist:
-            c = CompanyEntry(
+            return Company.objects.get(company_name=row["Company name"])
+        except Company.DoesNotExist:
+            c = Company(
                 company_name=row["Company name"],
                 modified_date=row["Timestamp"],
                 website=row["Company website url"],
@@ -89,11 +89,11 @@ class DataImporter(object):
     def _create_product(self, row, c):
         try:
             return (
-                ProductEntry.objects.get(short_name=row["Short name"][:50]),
+                Product.objects.get(short_name=row["Short name"][:50]),
                 False,
             )
-        except ProductEntry.DoesNotExist:
-            p = ProductEntry(
+        except Product.DoesNotExist:
+            p = Product(
                 product_name=row["Product name"],
                 company=c,
                 modified_date=row["Timestamp"],
@@ -109,18 +109,18 @@ class DataImporter(object):
                 key_features=row["Key-feature(s)"],
                 # key_features_short=_split(row["Key-feature(s)"], 100),
                 ce_status=STATUS_MAPPING.get(
-                    row["CE-certified"], ProductEntry.STATUS_UNKNOWN
+                    row["CE-certified"], Product.STATUS_UNKNOWN
                 ),
                 ce_class=row["If CE-certified, what class"],
                 fda_status=STATUS_MAPPING.get(
-                    row["FDA approval/clearance"], ProductEntry.STATUS_UNKNOWN
+                    row["FDA approval/clearance"], Product.STATUS_UNKNOWN
                 ),
                 fda_class=row["If FDA approval/clearance, what class"],
                 verified=STATUS_MAPPING.get(
-                    row["Verified"], ProductEntry.STATUS_UNKNOWN
+                    row["Verified"], Product.STATUS_UNKNOWN
                 ),
                 ce_verified=STATUS_MAPPING.get(
-                    row["CE verified"], ProductEntry.STATUS_UNKNOWN
+                    row["CE verified"], Product.STATUS_UNKNOWN
                 ),
                 integration=row["Integration"],
                 deployment=row["Deployment"],

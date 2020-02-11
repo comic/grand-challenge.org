@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from grandchallenge.ai_website.utils import DataImporter
+from grandchallenge.products.utils import DataImporter
 
 
 class Command(BaseCommand):

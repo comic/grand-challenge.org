@@ -1,6 +1,6 @@
 from django.urls import path
 
-from grandchallenge.ai_website.views import (
+from grandchallenge.products.views import (
     AboutPage,
     CompanyList,
     CompanyPage,

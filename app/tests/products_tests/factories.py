@@ -1,27 +1,27 @@
 import factory
 
-from grandchallenge.ai_website.models import (
-    CompanyEntry,
-    ProductEntry,
+from grandchallenge.products.models import (
+    Company,
+    Product,
     ProductImage,
 )
 
 
-class CompanyEntryFactory(factory.DjangoModelFactory):
+class CompanyFactory(factory.DjangoModelFactory):
     class Meta:
-        model = CompanyEntry
+        model = Company
 
     company_name = factory.Sequence(lambda n: f"Company {n}")
     founded = 2010
 
 
-class ProductEntryFactory(factory.DjangoModelFactory):
+class ProductFactory(factory.DjangoModelFactory):
     class Meta:
-        model = ProductEntry
+        model = Product
 
     product_name = factory.Sequence(lambda n: f"Product {n}")
     short_name = factory.Sequence(lambda n: f"product-{n}")
-    company = factory.SubFactory(CompanyEntryFactory)
+    company = factory.SubFactory(CompanyFactory)
 
 
 class ProductImageFactory(factory.DjangoModelFactory):

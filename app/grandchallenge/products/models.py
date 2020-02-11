@@ -13,8 +13,7 @@ def get_images_path(instance, filename):
     return f"product_images/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
 
 
-class CompanyEntry(models.Model):
-    # author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+class Company(models.Model):
     created_date = models.DateField(default=timezone.now)
     modified_date = models.DateField(auto_now=True)
     company_name = models.CharField(max_length=200)
@@ -47,8 +46,7 @@ class ProductImage(models.Model):
     )
 
 
-# Create your models here.
-class ProductEntry(models.Model):
+class Product(models.Model):
     STATUS_CERTIFIED = "cer"
     STATUS_YES = "yes"
     STATUS_NO = "no"
@@ -92,8 +90,8 @@ class ProductEntry(models.Model):
     published_date = models.DateField(blank=True, null=True)
     product_name = models.CharField(max_length=200)
     company = models.ForeignKey(
-        CompanyEntry, on_delete=models.CASCADE
-    )  # product.company.company_name
+        Company, on_delete=models.CASCADE
+    )
     short_name = models.CharField(
         max_length=500,
         blank=False,
@@ -149,7 +147,7 @@ class ProductEntry(models.Model):
 
     market_since = models.CharField(
         max_length=500, default="unknown"
-    )  # choose only month year in datefield?
+    )
     countries = models.CharField(max_length=500, default="unknown")
     distribution = models.CharField(max_length=100, default="unknown")
     institutes_research = models.CharField(max_length=500, default="unknown")

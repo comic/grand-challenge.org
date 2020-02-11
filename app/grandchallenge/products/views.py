@@ -8,18 +8,18 @@ from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import FormView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.ai_website.forms import ImportForm
-from grandchallenge.ai_website.models import CompanyEntry, ProductEntry
-from grandchallenge.ai_website.utils import DataImporter
+from grandchallenge.products.forms import ImportForm
+from grandchallenge.products.models import Company, Product
+from grandchallenge.products.utils import DataImporter
 
 # Create your views here.
 
 
 class ProductList(ListView):
-    model = ProductEntry
-    template_name = "ai_website/product_list.html"
+    model = Product
+    template_name = "products/product_list.html"
     context_object_name = "products"
-    queryset = ProductEntry.objects.order_by("product_name")
+    queryset = Product.objects.order_by("product_name")
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -96,18 +96,18 @@ class ProductList(ListView):
 
 
 class ProductPage(TemplateView):
-    template_name = "ai_website/product_page.html"
+    template_name = "products/product_page.html"
 
     def get_context_data(self, pk):
-        product = get_object_or_404(ProductEntry, pk=pk)
+        product = get_object_or_404(Product, pk=pk)
         return {"product": product}
 
 
 class CompanyList(ListView):
-    template_name = "ai_website/company_list.html"
-    model = CompanyEntry
+    template_name = "products/company_list.html"
+    model = Company
     context_object_name = "companies"
-    queryset = CompanyEntry.objects.order_by("company_name")
+    queryset = Company.objects.order_by("company_name")
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -141,29 +141,29 @@ class CompanyList(ListView):
 
 
 class CompanyPage(TemplateView):
-    template_name = "ai_website/company_page.html"
+    template_name = "products/company_page.html"
 
     def get_context_data(self, pk):
-        company = get_object_or_404(CompanyEntry, pk=pk)
-        products_by_company = ProductEntry.objects.filter(
+        company = get_object_or_404(Company, pk=pk)
+        products_by_company = Product.objects.filter(
             company__company_name__contains=company.company_name
         ).order_by("product_name")
         return {"company": company, "products_by_company": products_by_company}
 
 
 class AboutPage(TemplateView):
-    template_name = "ai_website/about.html"
+    template_name = "products/about.html"
 
 
 class ContactPage(TemplateView):
-    template_name = "ai_website/contact.html"
+    template_name = "products/contact.html"
 
 
 class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
-    template_name = "ai_website/import_data.html"
+    template_name = "products/import_data.html"
     form_class = ImportForm
     permission_required = (
-        f"{ProductEntry._meta.app_label}.add_{ProductEntry._meta.model_name}"
+        f"{Product._meta.app_label}.add_{Product._meta.model_name}"
     )
 
     def get_form_kwargs(self):
