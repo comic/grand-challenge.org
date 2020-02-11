@@ -15,14 +15,11 @@ from grandchallenge.ai_website.utils import DataImporter
 # Create your views here.
 
 
-class ProductList(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class ProductList(ListView):
     model = ProductEntry
     template_name = "ai_website/product_list.html"
     context_object_name = "products"
     queryset = ProductEntry.objects.order_by("product_name")
-    permission_required = (
-        f"{ProductEntry._meta.app_label}.view_{ProductEntry._meta.model_name}"
-    )
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -100,23 +97,17 @@ class ProductList(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
 class ProductPage(TemplateView):
     template_name = "ai_website/product_page.html"
-    permission_required = (
-        f"{ProductEntry._meta.app_label}.view_{ProductEntry._meta.model_name}"
-    )
 
     def get_context_data(self, pk):
         product = get_object_or_404(ProductEntry, pk=pk)
         return {"product": product}
 
 
-class CompanyList(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class CompanyList(ListView):
     template_name = "ai_website/company_list.html"
     model = CompanyEntry
     context_object_name = "companies"
     queryset = CompanyEntry.objects.order_by("company_name")
-    permission_required = (
-        f"{ProductEntry._meta.app_label}.view_{ProductEntry._meta.model_name}"
-    )
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -149,11 +140,8 @@ class CompanyList(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         return context
 
 
-class CompanyPage(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+class CompanyPage(TemplateView):
     template_name = "ai_website/company_page.html"
-    permission_required = (
-        f"{ProductEntry._meta.app_label}.view_{ProductEntry._meta.model_name}"
-    )
 
     def get_context_data(self, pk):
         company = get_object_or_404(CompanyEntry, pk=pk)
@@ -163,18 +151,12 @@ class CompanyPage(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
         return {"company": company, "products_by_company": products_by_company}
 
 
-class AboutPage(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+class AboutPage(TemplateView):
     template_name = "ai_website/about.html"
-    permission_required = (
-        f"{ProductEntry._meta.app_label}.view_{ProductEntry._meta.model_name}"
-    )
 
 
-class ContactPage(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+class ContactPage(TemplateView):
     template_name = "ai_website/contact.html"
-    permission_required = (
-        f"{ProductEntry._meta.app_label}.view_{ProductEntry._meta.model_name}"
-    )
 
 
 class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
