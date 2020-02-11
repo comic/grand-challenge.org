@@ -1,4 +1,5 @@
 {% extends 'products/base.html' %}
+{% load random_encode %}
 
 {% block title %}
   Contact
@@ -14,6 +15,6 @@
     <p>Contact us if you have questions, ideas, would like to update information, or if you believe your product is missing from this overview. <br>
     Please send an e-mail to:
       <div class='text-black'> Kicky van Leeuwen <br>
-      <a href = "mailto: kicky.vanleeuwen@radboudumc.com" class="text-radboud">kicky.vanleeuwen@radboudumc.com</a> </div>
+      <a href="{{ 'mailto:kicky.vanleeuwen@radboudumc.nl'|random_encode }}" class="text-radboud">kicky.vanleeuwen@radboudumc.com</a> </div>
   </div>
 {% endblock %}
