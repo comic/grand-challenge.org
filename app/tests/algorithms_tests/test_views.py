@@ -165,7 +165,7 @@ def test_algorithm_run(client):
 @pytest.mark.django_db
 def test_algorithm_permission_request_create(client):
     user = UserFactory()
-    alg = AlgorithmFactory(visible_to_public=True)
+    alg = AlgorithmFactory(visible_to_public=False)
 
     response = get_view_for_user(
         viewname="algorithms:detail",

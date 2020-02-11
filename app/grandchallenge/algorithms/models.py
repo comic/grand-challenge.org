@@ -128,9 +128,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
         super().save(*args, **kwargs)
 
-        if adding:
-            self.assign_permissions()
-
+        self.assign_permissions()
         self.assign_workstation_permissions()
 
     def create_groups(self):
@@ -154,6 +152,15 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         assign_perm(
             f"change_{self._meta.model_name}", self.editors_group, self
         )
+
+        reg_and_anon = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.visible_to_public:
+            assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
 
     def assign_workstation_permissions(self):
         """Allow the editors and users group to view the workstation."""

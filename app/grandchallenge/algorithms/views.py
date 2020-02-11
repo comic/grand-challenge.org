@@ -84,13 +84,6 @@ class AlgorithmList(PermissionListMixin, ListView):
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     }
 
-    def get_queryset(self, *args, **kwargs):
-        # Add algorithms that are publicly visible
-        qs = super().get_queryset(*args, **kwargs)
-        qs |= Algorithm.objects.filter(visible_to_public=True)
-
-        return qs
-
 
 class AlgorithmDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView

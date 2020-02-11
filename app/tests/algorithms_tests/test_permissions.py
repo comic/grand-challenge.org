@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_group_perms, get_perms
 
@@ -467,3 +468,23 @@ def test_workstation_changes(client, group):
 
     assert "view_workstation" not in get_perms(user, ws1)
     assert "view_workstation" in get_perms(user, ws2)
+
+
+@pytest.mark.django_db
+def test_visible_to_public_group_permissions():
+    g_reg_anon = Group.objects.get(
+        name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+    )
+    algorithm = AlgorithmFactory()
+
+    assert "view_algorithm" not in get_perms(g_reg_anon, algorithm)
+
+    algorithm.visible_to_public = True
+    algorithm.save()
+
+    assert "view_algorithm" in get_perms(g_reg_anon, algorithm)
+
+    algorithm.visible_to_public = False
+    algorithm.save()
+
+    assert "view_algorithm" not in get_perms(g_reg_anon, algorithm)
