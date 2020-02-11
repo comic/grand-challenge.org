@@ -29,43 +29,45 @@ class ProductImage(models.Model):
     img = models.ImageField(upload_to=get_logo_path)
 
 
+class Status(object):
+    CERTIFIED = "cer"
+    YES = "yes"
+    NO = "no"
+    NA = "na"
+    CLEARED = "cle"
+    DE_NOVO_CLEARED = "dnc"
+    PMA_APPROVED = "pma"
+    UNKNOWN = "unk"
+
+
 class Product(models.Model):
-    STATUS_CERTIFIED = "cer"
-    STATUS_YES = "yes"
-    STATUS_NO = "no"
-    STATUS_NA = "na"
-    STATUS_CLEARED = "cle"
-    STATUS_DE_NOVO_CLEARED = "dnc"
-    STATUS_PMA_APPROVED = "pma"
-    STATUS_UNKNOWN = "unk"
+    class Verified(models.TextChoices):
+        YES = Status.YES, "Yes"
+        NO = Status.NO, "No"
 
-    VERFIFIED_CHOICES = ((STATUS_YES, "Yes"), (STATUS_NO, "No"))
+    class CEStatus(models.TextChoices):
+        CERTIFIED = Status.CERTIFIED, "Certified"
+        NO = Status.NO, "No or not yet"
+        NA = Status.NA, "Not applicable"
+        UNKNOWN = Status.UNKNOWN, "Unknown"
 
-    CE_STATUS_CHOICES = (
-        (STATUS_CERTIFIED, "Certified"),
-        (STATUS_NO, "No or not yet"),
-        (STATUS_NA, "Not applicable"),
-        (STATUS_UNKNOWN, "Unknown"),
-    )
-
-    FDA_STATUS_CHOICES = (
-        (STATUS_CLEARED, "510(k) cleared"),
-        (STATUS_DE_NOVO_CLEARED, "De novo 510(k) cleared"),
-        (STATUS_PMA_APPROVED, "PMA approved"),
-        (STATUS_NO, "No or not yet"),
-        (STATUS_NA, "Not applicable"),
-        (STATUS_UNKNOWN, "Unknown"),
-    )
+    class FDAStatus(models.TextChoices):
+        CLEARED = Status.CLEARED, "510(k) cleared"
+        DE_NOVO_CLEARED = Status.DE_NOVO_CLEARED, "De novo 510(k) cleared"
+        PMA_APPROVED = Status.PMA_APPROVED, "PMA approved"
+        NO = Status.UNKNOWN, "No or not yet"
+        NA = Status.NO, "Not applicable"
+        UNKNOWN = Status.NA, "Unknown"
 
     ICONS = {
-        STATUS_CERTIFIED: "icon_check.png",
-        STATUS_YES: "icon_check.png",
-        STATUS_NO: "icon_no.png",
-        STATUS_NA: "icon_na.png",
-        STATUS_CLEARED: "icon_check.png",
-        STATUS_DE_NOVO_CLEARED: "icon_check.png",
-        STATUS_PMA_APPROVED: "icon_check.png",
-        STATUS_UNKNOWN: "icon_question.png",
+        Status.CERTIFIED: "icon_check.png",
+        Status.YES: "icon_check.png",
+        Status.NO: "icon_no.png",
+        Status.NA: "icon_na.png",
+        Status.CLEARED: "icon_check.png",
+        Status.DE_NOVO_CLEARED: "icon_check.png",
+        Status.PMA_APPROVED: "icon_check.png",
+        Status.UNKNOWN: "icon_question.png",
     }
 
     created = models.DateTimeField(auto_now_add=True)
@@ -103,18 +105,18 @@ class Product(models.Model):
     software_usage = models.TextField()
 
     verified = models.CharField(
-        choices=VERFIFIED_CHOICES, max_length=3, default=STATUS_NO
+        choices=Verified.choices, max_length=3, default=Verified.NO
     )
     ce_status = models.CharField(
-        choices=CE_STATUS_CHOICES, max_length=3, default=STATUS_NO
+        choices=CEStatus.choices, max_length=3, default=CEStatus.NO
     )
     ce_class = models.CharField(max_length=500, default="unknown")
     fda_status = models.CharField(
-        choices=FDA_STATUS_CHOICES, max_length=3, default=STATUS_UNKNOWN
+        choices=FDAStatus.choices, max_length=3, default=FDAStatus.UNKNOWN
     )
     fda_class = models.CharField(max_length=500, default="unknown")
     ce_verified = models.CharField(
-        choices=VERFIFIED_CHOICES, max_length=3, default=STATUS_NO
+        choices=Verified.choices, max_length=3, default=Verified.NO
     )
 
     integration = models.TextField()

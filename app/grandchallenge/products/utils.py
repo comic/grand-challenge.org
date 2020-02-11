@@ -10,18 +10,19 @@ from grandchallenge.products.models import (
     Company,
     Product,
     ProductImage,
+    Status,
 )
 
 
 STATUS_MAPPING = {
-    "Certified": Product.STATUS_CERTIFIED,
-    "No or not yet": Product.STATUS_NO,
-    "Not applicable": Product.STATUS_NA,
-    "510(k) cleared": Product.STATUS_CLEARED,
-    "de novo 510(k) cleared": Product.STATUS_DE_NOVO_CLEARED,
-    "PMA approved": Product.STATUS_PMA_APPROVED,
-    "Yes": Product.STATUS_YES,
-    "No": Product.STATUS_NO,
+    "Certified": Status.CERTIFIED,
+    "No or not yet": Status.NO,
+    "Not applicable": Status.NA,
+    "510(k) cleared": Status.CLEARED,
+    "de novo 510(k) cleared": Status.DE_NOVO_CLEARED,
+    "PMA approved": Status.PMA_APPROVED,
+    "Yes": Status.YES,
+    "No": Status.NO,
 }
 
 
@@ -109,18 +110,16 @@ class DataImporter(object):
                 key_features=row["Key-feature(s)"],
                 # key_features_short=_split(row["Key-feature(s)"], 100),
                 ce_status=STATUS_MAPPING.get(
-                    row["CE-certified"], Product.STATUS_UNKNOWN
+                    row["CE-certified"], Status.UNKNOWN
                 ),
                 ce_class=row["If CE-certified, what class"],
                 fda_status=STATUS_MAPPING.get(
-                    row["FDA approval/clearance"], Product.STATUS_UNKNOWN
+                    row["FDA approval/clearance"], Status.UNKNOWN
                 ),
                 fda_class=row["If FDA approval/clearance, what class"],
-                verified=STATUS_MAPPING.get(
-                    row["Verified"], Product.STATUS_UNKNOWN
-                ),
+                verified=STATUS_MAPPING.get(row["Verified"], Status.UNKNOWN),
                 ce_verified=STATUS_MAPPING.get(
-                    row["CE verified"], Product.STATUS_UNKNOWN
+                    row["CE verified"], Status.UNKNOWN
                 ),
                 integration=row["Integration"],
                 deployment=row["Deployment"],
