@@ -1,34 +1,19 @@
 from django.db import models
-from django.utils import timezone
-from django.utils.text import get_valid_filename
 
-from grandchallenge.core.storage import public_s3_storage
-
-
-def get_logo_path(instance, filename):
-    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
-
-
-def get_images_path(instance, filename):
-    return f"product_images/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
+from grandchallenge.challenges.models import get_logo_path
 
 
 class Company(models.Model):
-    created_date = models.DateField(default=timezone.now)
-    modified_date = models.DateField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
     company_name = models.CharField(max_length=200)
-    website = models.URLField(max_length=500)
+    website = models.URLField()
     founded = models.IntegerField()
     hq = models.CharField(max_length=100)
-    email = models.EmailField(max_length=500)
-    logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage, null=True,
-    )
-    description = models.CharField(
-        max_length=500,
-        default="",
-        blank=True,
-        help_text="Short summary of this project, max 500 characters.",
+    email = models.EmailField()
+    logo = models.ImageField(upload_to=get_logo_path, null=True,)
+    description = models.TextField(
+        blank=True, help_text="Short summary of this project.",
     )
     description_short = models.CharField(
         max_length=250,
@@ -41,9 +26,7 @@ class Company(models.Model):
 
 
 class ProductImage(models.Model):
-    img = models.ImageField(
-        upload_to=get_images_path, storage=public_s3_storage
-    )
+    img = models.ImageField(upload_to=get_logo_path)
 
 
 class Product(models.Model):
@@ -85,13 +68,10 @@ class Product(models.Model):
         STATUS_UNKNOWN: "icon_question.png",
     }
 
-    created_date = models.DateField(default=timezone.now)
-    modified_date = models.DateField(default=timezone.now)
-    published_date = models.DateField(blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
     product_name = models.CharField(max_length=200)
-    company = models.ForeignKey(
-        Company, on_delete=models.CASCADE
-    )
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     short_name = models.CharField(
         max_length=500,
         blank=False,
@@ -100,11 +80,8 @@ class Product(models.Model):
         ),
         unique=True,
     )
-    description = models.CharField(
-        max_length=400,
-        default="",
-        blank=True,
-        help_text="Short summary of this project, max 300 characters.",
+    description = models.TextField(
+        blank=True, help_text="Short summary of this project.",
     )
     description_short = models.CharField(
         max_length=250,
@@ -118,12 +95,12 @@ class Product(models.Model):
     population = models.CharField(max_length=200)
 
     input_data = models.CharField(max_length=150)
-    file_format_input = models.CharField(max_length=500)
+    file_format_input = models.TextField()
     output_data = models.CharField(max_length=150)
-    file_format_output = models.CharField(max_length=500)
+    file_format_output = models.TextField()
     key_features = models.CharField(max_length=200)
     key_features_short = models.CharField(max_length=120)
-    software_usage = models.CharField(max_length=300)
+    software_usage = models.TextField()
 
     verified = models.CharField(
         choices=VERFIFIED_CHOICES, max_length=3, default=STATUS_NO
@@ -140,27 +117,25 @@ class Product(models.Model):
         choices=VERFIFIED_CHOICES, max_length=3, default=STATUS_NO
     )
 
-    integration = models.CharField(max_length=500, default="unknown")
-    deployment = models.CharField(max_length=500, default="unknown")
-    process_time = models.CharField(max_length=500)
+    integration = models.TextField()
+    deployment = models.TextField()
+    process_time = models.TextField()
     trigger = models.CharField(max_length=100)
 
-    market_since = models.CharField(
-        max_length=500, default="unknown"
-    )
-    countries = models.CharField(max_length=500, default="unknown")
-    distribution = models.CharField(max_length=100, default="unknown")
-    institutes_research = models.CharField(max_length=500, default="unknown")
-    institutes_clinic = models.CharField(max_length=500, default="unknown")
+    market_since = models.TextField()
+    countries = models.TextField()
+    distribution = models.CharField(max_length=100, blank=True)
+    institutes_research = models.TextField()
+    institutes_clinic = models.TextField()
 
-    pricing_model = models.CharField(max_length=500, default="unknown")
-    pricing_basis = models.CharField(max_length=500, default="unknown")
+    pricing_model = models.TextField()
+    pricing_basis = models.TextField()
 
-    tech_papers = models.CharField(max_length=500, default="unknown")
-    clin_papers = models.CharField(max_length=500, default="unknown")
-    tech_peer_papers = models.CharField(max_length=500, default="unknown")
-    tech_other_papers = models.CharField(max_length=500, default="unknown")
-    all_other_papers = models.CharField(max_length=500, default="unknown")
+    tech_papers = models.TextField()
+    clin_papers = models.TextField()
+    tech_peer_papers = models.TextField()
+    tech_other_papers = models.TextField()
+    all_other_papers = models.TextField()
 
     images = models.ManyToManyField(ProductImage)
 

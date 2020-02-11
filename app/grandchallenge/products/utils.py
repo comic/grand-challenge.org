@@ -68,7 +68,7 @@ class DataImporter(object):
         except Company.DoesNotExist:
             c = Company(
                 company_name=row["Company name"],
-                modified_date=row["Timestamp"],
+                modified=row["Timestamp"],
                 website=row["Company website url"],
                 founded=row["Founded"],
                 hq=row["Head office"],
@@ -96,7 +96,7 @@ class DataImporter(object):
             p = Product(
                 product_name=row["Product name"],
                 company=c,
-                modified_date=row["Timestamp"],
+                modified=row["Timestamp"],
                 short_name=row["Short name"][:50],
                 description=row["Product description"][:300],
                 description_short=self._split(row["Product description"], 200),
