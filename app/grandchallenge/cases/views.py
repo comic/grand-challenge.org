@@ -97,7 +97,7 @@ class RawImageUploadSessionViewSet(
             f.staged_file_id for f in upload_session.rawimagefile_set.all()
         ]
 
-        if not all(f_id is not None for f_id in file_ids):
+        if any(f_id is None for f_id in file_ids):
             raise ValidationError("File has not been staged")
 
         files = [StagedAjaxFile(f_id) for f_id in file_ids]
