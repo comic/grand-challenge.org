@@ -85,9 +85,7 @@ class AlgorithmList(PermissionListMixin, ListView):
     }
 
 
-class AlgorithmDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
+class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
     model = Algorithm
     permission_required = (
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
