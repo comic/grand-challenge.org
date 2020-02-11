@@ -67,6 +67,8 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", "root@localhost")
 
 ANONYMOUS_USER_NAME = "AnonymousUser"
+REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
+REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
@@ -708,7 +710,10 @@ MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
 MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
-MAX_SITK_FILE_SIZE = 268435456  # == 256 mb
+MAX_SITK_FILE_SIZE = 268_435_456  # == 256 mb
+
+# The maximum size of all the files in an upload session in bytes
+UPLOAD_SESSION_MAX_BYTES = 15_000_000_000
 
 # Internal format to use for metaimages
 ITK_INTERNAL_FILE_FORMAT = os.environ.get(

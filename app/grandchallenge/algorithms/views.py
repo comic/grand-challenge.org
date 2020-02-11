@@ -84,17 +84,8 @@ class AlgorithmList(PermissionListMixin, ListView):
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     }
 
-    def get_queryset(self, *args, **kwargs):
-        # Add algorithms that are publicly visible
-        qs = super().get_queryset(*args, **kwargs)
-        qs |= Algorithm.objects.filter(visible_to_public=True)
 
-        return qs
-
-
-class AlgorithmDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
+class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
     model = Algorithm
     permission_required = (
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
@@ -298,7 +289,7 @@ class AlgorithmExecutionSessionCreate(
         "please check back here to see the processing status."
     )
     permission_required = (
-        f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
+        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
     )
     raise_exception = True
 

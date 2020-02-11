@@ -3,6 +3,7 @@ from typing import List
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
@@ -37,7 +38,7 @@ class UploadRawImagesForm(forms.ModelForm):
         if len({f.name for f in files}) != len(files):
             raise ValidationError("Filenames must be unique.")
 
-        if sum([f.size for f in files]) > 15_000_000_000:
+        if sum([f.size for f in files]) > settings.UPLOAD_SESSION_MAX_BYTES:
             raise ValidationError(
                 "Total size of all files exceeds the upload limit."
             )

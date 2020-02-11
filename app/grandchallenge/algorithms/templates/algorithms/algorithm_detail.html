@@ -146,25 +146,33 @@
         </p>
     {% endif %}
 
-    {% if object.latest_ready_image %}
+    {% if "execute_algorithm" in algorithm_perms %}
+        {% if object.latest_ready_image %}
+            <p>
+                <a class="btn btn-primary"
+                   href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
+                    <i class="fa fa-flask"></i> Try out this algorithm
+                </a>
+            </p>
+        {% else %}
+            <div class="alert alert-warning">
+                Algorithm is not ready to be used yet. Please try again later.
+            </div>
+        {% endif %}
+
         <p>
             <a class="btn btn-primary"
-               href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                <i class="fa fa-flask"></i> Try out this algorithm
+               href="{% url 'algorithms:jobs-list' slug=object.slug %}">
+                <i class="fa fa-cogs"></i> View the results for this algorithm
             </a>
         </p>
     {% else %}
-        <div class="alert alert-warning">
-            Algorithm is not ready to be used yet. Please try again later.
-        </div>
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:permission-request-create' slug=object.slug %}">
+                <i class="fa fa-question-circle"></i> Request access to this algorithm
+            </a>
+        </p>
     {% endif %}
 
-    <p>
-        <a class="btn btn-primary"
-           href="{% url 'algorithms:jobs-list' slug=object.slug %}">
-            <i class="fa fa-cogs"></i> View the results for this algorithm
-        </a>
-    </p>
 {% endblock %}
-
-

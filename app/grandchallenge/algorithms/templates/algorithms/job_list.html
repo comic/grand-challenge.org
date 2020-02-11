@@ -32,7 +32,7 @@
 
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
 
-    {% if "view_algorithm" in algorithm_perms and algorithm.latest_ready_image %}
+    {% if "execute_algorithm" in algorithm_perms and algorithm.latest_ready_image %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}">
