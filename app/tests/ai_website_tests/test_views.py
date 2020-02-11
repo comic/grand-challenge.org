@@ -1,11 +1,10 @@
 import pytest
-
 from guardian.utils import get_anonymous_user
+
 from tests.ai_website_tests.factories import (
     CompanyEntryFactory,
     ProductEntryFactory,
 )
-from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
 
