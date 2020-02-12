@@ -69,7 +69,17 @@ class JobSerializer(serializers.ModelSerializer):
         queryset=Image.objects.all(), view_name="api:image-detail"
     )
     status = CharField(source="get_status_display", read_only=True)
+    result = HyperlinkedRelatedField(
+        read_only=True, view_name="api:algorithms-result-detail"
+    )
 
     class Meta:
         model = Job
-        fields = ["pk", "api_url", "algorithm_image", "image", "status"]
+        fields = [
+            "pk",
+            "api_url",
+            "algorithm_image",
+            "image",
+            "status",
+            "result",
+        ]
