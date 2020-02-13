@@ -19,7 +19,7 @@ def navbar(context):
             },
             {
                 "url": "company_list",
-                "active": url in ["company_list", "company_page"],
+                "active": url in ["company_list", "company-detail"],
                 "icon": "fa-th-large",
                 "title": "Companies",
             },

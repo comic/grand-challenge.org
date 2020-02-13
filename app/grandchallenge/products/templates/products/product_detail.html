@@ -18,7 +18,7 @@
       <div class="col-sm-6">
         <header id="{{product.product_name}}">
           <h1 class="mb-1">{{product.product_name}}</h1>
-          <a href= "{% url 'products:company_page' pk=product.company.pk %}" title={{product.company.company_name}} class="h5 u"><u>{{ product.company.company_name }}</u></a>
+          <a href= "{% url 'products:company-detail' pk=product.company.pk %}" title={{product.company.company_name}} class="h5 u"><u>{{ product.company.company_name }}</u></a>
           <br><br>
           {% include "products/partials/product_image_carousel.html" %}
         </header>
@@ -63,7 +63,7 @@
           </tr>
           <tr>
             <td class="text-muted">Company</td>
-            <td><a href= "{% url 'products:company_page' pk=product.company.pk %}" title={{product.company.company_name}}><u>{{ product.company.company_name }}</u></a></td>
+            <td><a href= "{% url 'products:company-detail' pk=product.company.pk %}" title={{product.company.company_name}}><u>{{ product.company.company_name }}</u></a></td>
           </tr>
           <tr>
             <td class="text-muted">Subspeciality</td>

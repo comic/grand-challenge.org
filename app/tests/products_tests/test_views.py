@@ -59,7 +59,7 @@ def test_company_detail(client):
     company = CompanyFactory()
 
     response = get_view_for_user(
-        viewname="products:company_page",
+        viewname="products:company-detail",
         reverse_kwargs={"pk": company.pk},
         client=client,
         follow=True,

@@ -24,6 +24,9 @@ class Company(models.Model):
     def __str__(self):
         return self.company_name
 
+    class Meta:
+        verbose_name_plural = "companies"
+
 
 class ProductImage(models.Model):
     img = models.ImageField(upload_to=get_logo_path)

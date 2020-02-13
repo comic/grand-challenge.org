@@ -3,7 +3,7 @@ from operator import or_
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, reverse
+from django.shortcuts import reverse
 from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import FormView
 from guardian.mixins import LoginRequiredMixin
@@ -13,12 +13,8 @@ from grandchallenge.products.models import Company, Product
 from grandchallenge.products.utils import DataImporter
 
 
-# Create your views here.
-
-
 class ProductList(ListView):
     model = Product
-    template_name = "products/product_list.html"
     context_object_name = "products"
     queryset = Product.objects.order_by("product_name")
 
@@ -96,12 +92,11 @@ class ProductList(ListView):
         return context
 
 
-class ProductPage(DetailView):
+class ProductDetail(DetailView):
     model = Product
 
 
 class CompanyList(ListView):
-    template_name = "products/company_list.html"
     model = Company
     context_object_name = "companies"
     queryset = Company.objects.order_by("company_name")
@@ -137,15 +132,19 @@ class CompanyList(ListView):
         return context
 
 
-class CompanyPage(TemplateView):
-    template_name = "products/company_page.html"
+class CompanyDetail(DetailView):
+    model = Company
+    context_object_name = "company"
 
-    def get_context_data(self, pk):
-        company = get_object_or_404(Company, pk=pk)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
         products_by_company = Product.objects.filter(
-            company__company_name__contains=company.company_name
+            company=context["company"]
         ).order_by("product_name")
-        return {"company": company, "products_by_company": products_by_company}
+        context.update({"products_by_company": products_by_company})
+
+        return context
 
 
 class AboutPage(TemplateView):
