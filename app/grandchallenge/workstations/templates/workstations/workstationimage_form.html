@@ -8,6 +8,9 @@
         <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
         </li>
+        <li class="breadcrumb-item"><a
+                href="{{ workstation.get_absolute_url }}">{{ workstation.title }}</a>
+        </li>
         <li class="breadcrumb-item active"
             aria-current="page">{% firstof object.title "New Workstation Image" %}</li>
     </ol>

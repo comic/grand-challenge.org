@@ -310,7 +310,7 @@ class Command(BaseCommand):
     def _create_reader_studies(self):
         reader_study = ReaderStudy.objects.create(
             title="Reader Study",
-            workstation=Workstation.objects.first(),
+            workstation=Workstation.objects.last(),
             logo=get_temporary_image(),
         )
         reader_study.editors_group.user_set.add(self.users["readerstudy"])

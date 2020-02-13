@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 from rest_framework.authtoken.models import Token
 from simple_history.models import HistoricalRecords
 
@@ -62,6 +62,13 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "If True, all logged in users can use this workstation, "
+            "otherwise, only the users group can use this workstation."
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created", "title")
@@ -80,7 +87,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         )
 
     def __str__(self):
-        return f"Workstation {self.title}"
+        return f"Workstation {self.title}" + " (Public)" if self.public else ""
 
     def get_absolute_url(self):
         return reverse("workstations:detail", kwargs={"slug": self.slug})
@@ -93,6 +100,16 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
         )
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.create_groups()
+
+        super().save(*args, **kwargs)
+
+        self.assign_permissions()
+
     def assign_permissions(self):
         # Allow the editors and users groups to view this workstation
         assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
@@ -102,16 +119,12 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
             f"change_{self._meta.model_name}", self.editors_group, self
         )
 
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
+        g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-        if adding:
-            self.create_groups()
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", g_reg, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", g_reg, self)
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()

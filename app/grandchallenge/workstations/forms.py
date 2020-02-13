@@ -21,7 +21,7 @@ from grandchallenge.workstations.models import Workstation, WorkstationImage
 class WorkstationForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = Workstation
-        fields = ("title", "logo", "description")
+        fields = ("title", "logo", "description", "public")
 
 
 class WorkstationImageForm(ModelForm):

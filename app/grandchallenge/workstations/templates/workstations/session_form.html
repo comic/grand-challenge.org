@@ -9,7 +9,7 @@
         <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ object.workstation_image.workstation.get_absolute_url }}">{{ object.workstation_image.workstation }}</a>
+                href="{{ object.workstation_image.workstation.get_absolute_url }}">{{ object.workstation_image.workstation.title }}</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ object.workstation_image.get_absolute_url }}">{{ object.workstation_image }}</a>
