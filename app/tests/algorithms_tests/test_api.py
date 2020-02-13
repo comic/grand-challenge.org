@@ -1,5 +1,6 @@
-import pytest
 from urllib.parse import urlparse
+
+import pytest
 
 from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
