@@ -6,7 +6,7 @@
     <div class="row py-4 border-top">
       <div class="col-sm-3">
         <div class="d-flex justify-content-between flex-column h-100">
-          <a href="{% url 'ai-website:company_page' pk=product.company.pk %}" title="{{product.company.company_name}}">
+          <a href="{% url 'products:company_page' pk=product.company.pk %}" title="{{product.company.company_name}}">
             {% if product.company.logo %}
               <img src="{{ product.company.logo.url }}" alt="Logo" style="width:70%">
             {% endif %}
@@ -20,14 +20,14 @@
         </div>
       </div>
       <div class="col-sm-6">
-        <div class="h6 pb-2"> <a href= "{% url 'ai-website:company_page' pk=product.company.pk %}" title={{product.company.company_name}} >{{ product.company.company_name }}</a></div>
-        <div class="h3 font-weight-bold mb-1"> <a href= "{% url 'ai-website:product_page' pk=product.pk %}" title={{product.product_name}}>{{product.product_name}}</a></div>
+        <div class="h6 pb-2"> <a href= "{% url 'products:company_page' pk=product.company.pk %}" title={{product.company.company_name}} >{{ product.company.company_name }}</a></div>
+        <div class="h3 font-weight-bold mb-1"> <a href= "{% url 'products:product_page' pk=product.pk %}" title={{product.product_name}}>{{product.product_name}}</a></div>
         <div class="text-muted">
           <p>{{product.key_features_short}}</p>
         </div>
         <p>{{product.description_short}}</p>
         <div class="pt-1 pb-2">
-          <a href="{% url 'ai-website:product_page' pk=product.pk %}" title="{{product.product_name}}" class="btn btn-square btn-radboud">Read more</a>
+          <a href="{% url 'products:product_page' pk=product.pk %}" title="{{product.product_name}}" class="btn btn-square btn-radboud">Read more</a>
         </div>
       </div>
 

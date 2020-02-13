@@ -12,6 +12,7 @@ from grandchallenge.products.forms import ImportForm
 from grandchallenge.products.models import Company, Product
 from grandchallenge.products.utils import DataImporter
 
+
 # Create your views here.
 
 
@@ -184,4 +185,4 @@ class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
         return response
 
     def get_success_url(self):
-        return reverse("ai-website:product_list")
+        return reverse("products:product_list")

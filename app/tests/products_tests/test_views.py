@@ -13,7 +13,7 @@ def test_product_list(client):
     product = ProductFactory()
 
     response = get_view_for_user(
-        viewname="ai-website:product_list",
+        viewname="products:product_list",
         client=client,
         follow=True,
         user=get_anonymous_user(),
@@ -28,7 +28,7 @@ def test_product_detail(client):
     product = ProductFactory()
 
     response = get_view_for_user(
-        viewname="ai-website:product_page",
+        viewname="products:product_page",
         reverse_kwargs={"pk": product.pk},
         client=client,
         follow=True,
@@ -44,7 +44,7 @@ def test_company_list(client):
     company = CompanyFactory()
 
     response = get_view_for_user(
-        viewname="ai-website:company_list",
+        viewname="products:company_list",
         client=client,
         follow=True,
         user=get_anonymous_user(),
@@ -59,7 +59,7 @@ def test_company_detail(client):
     company = CompanyFactory()
 
     response = get_view_for_user(
-        viewname="ai-website:company_page",
+        viewname="products:company_page",
         reverse_kwargs={"pk": company.pk},
         client=client,
         follow=True,

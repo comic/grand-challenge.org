@@ -10,8 +10,7 @@ from grandchallenge.products.views import (
     ProductPage,
 )
 
-
-app_name = "ai-website"
+app_name = "products"
 
 urlpatterns = [
     path("", ProductList.as_view(), name="product_list"),
