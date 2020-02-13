@@ -488,3 +488,27 @@ def test_visible_to_public_group_permissions():
     algorithm.save()
 
     assert "view_algorithm" not in get_perms(g_reg_anon, algorithm)
+
+
+@pytest.mark.django_db
+def test_public_result_group_permissions():
+    g_reg_anon = Group.objects.get(
+        name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+    )
+    g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
+    algorithm_result = AlgorithmResultFactory()
+
+    assert "view_result" not in get_perms(g_reg, algorithm_result)
+    assert "view_result" not in get_perms(g_reg_anon, algorithm_result)
+
+    algorithm_result.public = True
+    algorithm_result.save()
+
+    assert "view_result" not in get_perms(g_reg, algorithm_result)
+    assert "view_result" in get_perms(g_reg_anon, algorithm_result)
+
+    algorithm_result.public = False
+    algorithm_result.save()
+
+    assert "view_result" not in get_perms(g_reg, algorithm_result)
+    assert "view_result" not in get_perms(g_reg_anon, algorithm_result)

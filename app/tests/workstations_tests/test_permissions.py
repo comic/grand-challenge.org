@@ -303,7 +303,7 @@ def test_session_api_patch_permissions(client, two_workstation_sets):
 
 
 @pytest.mark.django_db
-def test_visible_to_public_group_permissions():
+def test_public_group_permissions():
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )

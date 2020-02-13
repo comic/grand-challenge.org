@@ -296,7 +296,7 @@ class Result(UUIDModel):
     public = models.BooleanField(
         default=False,
         help_text=(
-            "If True, allow all logged in users to view this result along "
+            "If True, allow anyone to view this result along "
             "with the input image. Otherwise, only the job creator and "
             "algorithm editor will have permission to view this."
         ),
@@ -311,12 +311,8 @@ class Result(UUIDModel):
         return reverse("api:algorithms-result-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
-        adding = self._state.adding
-
         super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
+        self.assign_permissions()
 
     def assign_permissions(self):
         # Algorithm editors and job creators can view this result
@@ -326,6 +322,15 @@ class Result(UUIDModel):
             self,
         )
         assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
+
+        g = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", g, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", g, self)
 
 
 class AlgorithmExecutor(Executor):
