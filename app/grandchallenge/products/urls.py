@@ -13,8 +13,8 @@ from grandchallenge.products.views import (
 app_name = "products"
 
 urlpatterns = [
-    path("", ProductList.as_view(), name="product_list"),
-    path("companies/", CompanyList.as_view(), name="company_list"),
+    path("", ProductList.as_view(), name="product-list"),
+    path("companies/", CompanyList.as_view(), name="company-list"),
     path("about/", AboutPage.as_view(), name="about"),
     path("contact/", ContactPage.as_view(), name="contact"),
     path("product/<int:pk>/", ProductDetail.as_view(), name="product-detail"),

@@ -18,7 +18,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for subspec in subspecialities %}
-            <a class="dropdown-item " href="{% url 'products:product_list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}&search={{ q_search }}">{{ subspec }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}&search={{ q_search }}">{{ subspec }}</a>
           {% endfor %}
         </div>
       </div>
@@ -33,7 +33,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for modality in modalities %}
-            <a class="dropdown-item " href="{% url 'products:product_list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}&search={{ q_search }}">{{ modality }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}&search={{ q_search }}">{{ modality }}</a>
           {% endfor %}
         </div>
       </div>

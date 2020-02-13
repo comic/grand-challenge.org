@@ -180,4 +180,4 @@ class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
         return response
 
     def get_success_url(self):
-        return reverse("products:product_list")
+        return reverse("products:product-list")

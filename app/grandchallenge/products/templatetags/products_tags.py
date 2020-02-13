@@ -12,14 +12,14 @@ def navbar(context):
     return {
         "items": [
             {
-                "url": "product_list",
-                "active": url in ["product_list", "product-detail"],
+                "url": "product-list",
+                "active": url in ["product-list", "product-detail"],
                 "icon": "fa-th-large",
                 "title": "Products",
             },
             {
-                "url": "company_list",
-                "active": url in ["company_list", "company-detail"],
+                "url": "company-list",
+                "active": url in ["company-list", "company-detail"],
                 "icon": "fa-th-large",
                 "title": "Companies",
             },

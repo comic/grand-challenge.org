@@ -13,7 +13,7 @@ def test_product_list(client):
     product = ProductFactory()
 
     response = get_view_for_user(
-        viewname="products:product_list",
+        viewname="products:product-list",
         client=client,
         follow=True,
         user=get_anonymous_user(),
@@ -44,7 +44,7 @@ def test_company_list(client):
     company = CompanyFactory()
 
     response = get_view_for_user(
-        viewname="products:company_list",
+        viewname="products:company-list",
         client=client,
         follow=True,
         user=get_anonymous_user(),
