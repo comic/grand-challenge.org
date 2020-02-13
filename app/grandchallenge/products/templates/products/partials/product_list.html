@@ -23,7 +23,7 @@
         <div class="h6 pb-2"> <a href= "{% url 'products:company-detail' pk=product.company.pk %}" title={{product.company.company_name}} >{{ product.company.company_name }}</a></div>
         <div class="h3 font-weight-bold mb-1"> <a href= "{% url 'products:product-detail' pk=product.pk %}" title={{product.product_name}}>{{product.product_name}}</a></div>
         <div class="text-muted">
-          <p>{{product.key_features_short}}</p>
+          <p>{{ product.key_features|short:100 }}</p>
         </div>
         <p>{{product.description_short}}</p>
         <div class="pt-1 pb-2">

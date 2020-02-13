@@ -1,4 +1,5 @@
 from django import template
+from django.template.defaultfilters import stringfilter
 from django.templatetags.static import static
 
 from grandchallenge.products.models import Product
@@ -45,3 +46,11 @@ def icon(obj, field):
     icon = Product.ICONS.get(value)
     if icon:
         return static(f"products/images/{icon}")
+
+
+@register.filter
+@stringfilter
+def short(value, max_char):
+    if len(value) > max_char:
+        return value[:max_char].rsplit(" ", 1)[0] + " ..."
+    return value
