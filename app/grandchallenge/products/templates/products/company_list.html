@@ -62,7 +62,7 @@
           </div>
           <div class="col-sm-3 bg-light pt-2">
             <p><b>Products:</b></p>
-            {% for product in company.Product_set.all %}
+            {% for product in company.product_set.all %}
               <div>
                 <a href= "{% url 'products:product-detail' pk=product.pk %}" title={{product.product_name}} target="_blank">
                     {{product.product_name}}</a>
