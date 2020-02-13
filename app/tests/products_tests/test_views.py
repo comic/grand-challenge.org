@@ -28,7 +28,7 @@ def test_product_detail(client):
     product = ProductFactory()
 
     response = get_view_for_user(
-        viewname="products:product_page",
+        viewname="products:product-detail",
         reverse_kwargs={"pk": product.pk},
         client=client,
         follow=True,

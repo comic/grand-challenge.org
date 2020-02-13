@@ -13,7 +13,7 @@ def navbar(context):
         "items": [
             {
                 "url": "product_list",
-                "active": url in ["product_list", "product_page"],
+                "active": url in ["product_list", "product-detail"],
                 "icon": "fa-th-large",
                 "title": "Products",
             },

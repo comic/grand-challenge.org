@@ -4,7 +4,7 @@ from operator import or_
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, reverse
-from django.views.generic import ListView, TemplateView
+from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import FormView
 from guardian.mixins import LoginRequiredMixin
 
@@ -96,12 +96,8 @@ class ProductList(ListView):
         return context
 
 
-class ProductPage(TemplateView):
-    template_name = "products/product_page.html"
-
-    def get_context_data(self, pk):
-        product = get_object_or_404(Product, pk=pk)
-        return {"product": product}
+class ProductPage(DetailView):
+    model = Product
 
 
 class CompanyList(ListView):

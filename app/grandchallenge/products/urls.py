@@ -17,7 +17,7 @@ urlpatterns = [
     path("companies/", CompanyList.as_view(), name="company_list"),
     path("about/", AboutPage.as_view(), name="about"),
     path("contact/", ContactPage.as_view(), name="contact"),
-    path("product/<int:pk>/", ProductPage.as_view(), name="product_page"),
+    path("product/<int:pk>/", ProductPage.as_view(), name="product-detail"),
     path("company/<int:pk>/", CompanyPage.as_view(), name="company_page"),
     path("import-data/", ImportDataView.as_view(), name="import-data"),
 ]

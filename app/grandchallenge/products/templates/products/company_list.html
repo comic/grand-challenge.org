@@ -64,7 +64,7 @@
             <p><b>Products:</b></p>
             {% for product in company.Product_set.all %}
               <div>
-                <a href= "{% url 'products:product_page' pk=product.pk %}" title={{product.product_name}} target="_blank">
+                <a href= "{% url 'products:product-detail' pk=product.pk %}" title={{product.product_name}} target="_blank">
                     {{product.product_name}}</a>
               </div>
             {% endfor %}
