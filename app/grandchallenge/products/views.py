@@ -16,7 +16,7 @@ from grandchallenge.products.utils import DataImporter
 class ProductList(ListView):
     model = Product
     context_object_name = "products"
-    queryset = Product.objects.order_by('-verified', 'product_name')
+    queryset = Product.objects.order_by("-verified", "product_name")
 
     def get_queryset(self):
         queryset = super().get_queryset()
