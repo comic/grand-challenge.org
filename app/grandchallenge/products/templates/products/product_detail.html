@@ -1,0 +1,211 @@
+{% extends 'products/base.html' %}
+
+{% block title %}
+    {{product.product_name}} - {{product.company.company_name}}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item"><a href="{% url 'products:product-list' %}">Products</a></li>
+  <li class="breadcrumb-item active" aria-current="page">{{product.product_name}}</li>
+{% endblock %}
+
+{% block content %}
+
+
+  <div class="container pl-0 pt-4">
+
+    <div class="row pb-2">
+      <div class="col-sm-6">
+        <header id="{{product.product_name}}">
+          <h1 class="mb-1">{{product.product_name}}</h1>
+          <a href= "{% url 'products:company-detail' pk=product.company.pk %}" title={{product.company.company_name}} class="h5 u"><u>{{ product.company.company_name }}</u></a>
+          <br><br>
+          {% include "products/partials/product_image_carousel.html" %}
+        </header>
+      </div>
+    </div>
+
+    <div class="row py-2">
+      <div class="col-sm-9 py-2 ">
+        <table class="table table-borderless">
+          <tr>{{ product.description }} </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-9 py-2 border-top">
+        <table class="table table-borderless">
+          <tr>
+            <td class="h4 pl-0 text-radboud align-bottom">Product specifications</td>
+            <td class="text-right pr-0 align-bottom"><small>
+              <span class="text-muted">Information source:</span>
+              {% if product.verified == 'Yes' %}
+                <span>Vendor</span>
+              {% else %}
+                <span>Public</span>
+              {% endif %}<br>
+              <span class="text-muted">Last updated:</span>
+              <span>{{product.modified}}</span>
+            </small></td>
+          </tr>
+
+        </table>
+        <table class="table">
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">General</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Product name</td>
+            <td>{{product.product_name}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Company</td>
+            <td><a href= "{% url 'products:company-detail' pk=product.company.pk %}" title={{product.company.company_name}}><u>{{ product.company.company_name }}</u></a></td>
+          </tr>
+          <tr>
+            <td class="text-muted">Subspeciality</td>
+            <td>{{product.subspeciality}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Modality</td>
+            <td>{{product.modality}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Disease targeted</td>
+            <td>{{product.diseases}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Key-features</td>
+            <td>{{product.key_features}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Suggested use</td>
+            <td>{{product.software_usage}}</td>
+          </tr>
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Data characteristics</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Population</td>
+            <td>{{product.population}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Input</td>
+            <td>{{product.input_data}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Input format</td>
+            <td>{{product.file_format_input}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Output</td>
+            <td>{{product.output_data}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Output format</td>
+            <td>{{product.file_format_output}}</td>
+          </tr>
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Technology</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Integration</td>
+            <td>{{product.integration}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Deployment</td>
+            <td>{{product.deployment}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Trigger for analysis</td>
+            <td>{{product.trigger}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Processing time</td>
+            <td>{{product.process_time}}</td>
+          </tr>
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Certification</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">CE</td>
+            <td>
+              {{product.get_ce_status_display}}{% if product.ce_class %}, {{product.ce_class}}{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td class="text-muted">FDA</td>
+            <td>
+              {{product.get_fda_status_display}}{% if product.fda_class %}, {{product.fda_class}}{% endif %}
+            </td>
+          </tr>
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Market presence</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">On market since</td>
+            <td>{{product.market_since}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Distribution channels</td>
+            <td>{{product.distribution}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Countries present (clinical, non-research use)</td>
+            <td>{{product.countries}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Paying clinical customers (institutes) </td>
+            <td>{{product.institutes_research}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Research/test users (institutes) </td>
+            <td>{{product.institutes_clinical}}</td>
+          </tr>
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Pricing</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Pricing model</td>
+            <td>{{product.pricing_model}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Based on</td>
+            <td>{{product.pricing_basis}}</td>
+          </tr>
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Evidence</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Peer reviewed papers regarding performance as commercially available</td>
+            <td>{{product.tech_peer_papers}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Other papers regarding performance as commercially available</td>
+            <td>{{product.tech_other_papers}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Other relevant papers</td>
+            <td>{{product.all_other_papers}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

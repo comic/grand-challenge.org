@@ -1,0 +1,62 @@
+{% extends 'products/base.html' %}
+{% load static %}
+
+{% block title %}
+    {{company.company_name}} - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="container pl-0">
+    <div class="row">
+      <div class="col-sm-6 pb-3 border-bottom">
+          <a href="{{company.website}}" title="{{company.company_name}}" target="_blank">
+            {% if company.logo %}
+              <img src="{{company.logo.url}}" alt="Logo" style="width:80%">
+            {% else %}
+              <img src="{% static 'products/images/error.png' %}" alt="Logo" style="width:80%">
+            {% endif %}
+          </a>
+          <h1 class="mb-1 pt-5">{{company.company_name}}</h1>
+          <p>{{company.description}}</p>
+      </div>
+    </div>
+
+    <div class="row pt-3 pb-5">
+      <div class="col-sm-6">
+        <h2 class="h4 pb-2 text-radboud">Company specifications</h2>
+        <table class="table">
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">General</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Company name</td>
+            <td>{{company.company_name}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Founded</td>
+            <td>{{company.founded}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Head office</td>
+            <td>{{company.hq}}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Website</td>
+            <td><a href={{company.website}} target="_blank">{{company.website}}</a></td>
+          </tr>
+          <tr>
+            <td class="text-muted">Contact</td>
+            <td>{{company.email}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h4 text-radboud">Products by this company</h2>
+  {% include "products/partials/product_list.html" with products=products_by_company %}
+
+{% endblock %}

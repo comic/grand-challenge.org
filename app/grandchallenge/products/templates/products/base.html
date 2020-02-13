@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+{% load products_tags %}
+{% load random_encode %}
+
+{% block style %}
+  <link rel="stylesheet"
+      href="{% static 'vendor/css/bootstrap.min.css' %}">
+  <link href="{% static 'vendor/fa/css/all.css' %}" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'products/css/main.css' %}">
+  <link rel="icon" href="{% static 'products/images/logo_16.ico' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+  <style>
+    body,h1,h2,h3,h4,h5,h6 {font-family: "Raleway", sans-serif}
+  </style>
+{% endblock %}
+
+{% block body %}
+  <body class="d-flex flex-column min-vh-100">
+
+    {% navbar %}
+
+    <main role="main" class="flex-fill">
+        <div id="page" class="container pb-3">
+
+            <div class="row">
+                <div class="col">
+                    <nav aria-label="breadcrumb">
+                      <ol class="breadcrumb bg-white pl-0">
+                        {% block breadcrumbs %}
+                        {% endblock %}
+                      </ol>
+                    </nav>
+                </div>
+            </div>
+
+            {% block outerContent %}
+              <div class="row">
+                {% block sidebar %}{% endblock %}
+                <div class="col">
+                  {% block content %}
+                  {% endblock %}
+                </div>
+              </div>
+            {% endblock %}
+        </div>
+    </main>
+
+   <footer class="bg-secondary text-white small">
+    <div class="container py-5 px-4">
+      <div class="row">
+        <div class="col-md-3">
+          <img src="{% static 'products/images/banner2.png' %}" alt="Logo" style="width:100%">
+        </div>
+
+        <div class="col-md-6 px-4">
+          <div class="h4">About</div>
+          <div>
+            This is an initiative of the <a href="http://diagnijmegen.nl/" title="DIAG" target="_blank" class="text-radboud">Diagnostic Image Analysis Group</a>,
+            part of the Department of Radiology and Nuclear Medicine at the <a href="https://www.radboudumc.nl/en/" title="Radboudumc" target="_blank" class="text-radboud">Radboud University Medical Center</a>, Nijmegen, the Netherlands.
+          </div>
+        </div>
+
+        <div class="col-md-3 px-4">
+          <div class="h4">Contact</div>
+          <div>Radboud University Medical Center </div>
+          <div>Geert Grooteplein Zuid 10 </div>
+          <div>6525 GA, Nijmegen </div>
+          <div>The Netherlands</div>
+          <div><a href="{{ 'mailto:kicky.vanleeuwen@radboudumc.nl'|random_encode }}" class="text-radboud">kicky.vanleeuwen@radboudumc.nl</a></div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-dark text-white">
+      <div class="container">
+        <div class="text-center py-4">
+        <a href="https://www.radboudumc.nl/en/" title="Radboudumc" target="_blank" class="text-white">
+          Radboud University Medical Center</a>, {% now "Y" %}
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  {% block script %}
+    {% include "grandchallenge/partials/script.html" %}
+  {% endblock %}
+{% endblock %}

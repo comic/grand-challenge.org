@@ -1,0 +1,35 @@
+.btn-square {
+    border-radius: 0;
+}
+
+html {
+    overflow-y: scroll;
+    position: relative;
+    min-height: 100%;
+}
+
+.btn-radboud {
+    color: #fff;
+    background-color: #00afdc;
+    border-color: #00afdc;
+}
+.text-radboud {
+    color: #00afdc!important
+}
+
+.btn:hover {
+  background-color: #007896;
+  border-color: #007896;
+  color: white;
+}
+
+a {color: #212529;}
+
+a:hover {
+  color: #007896;
+}
+
+.logo img {
+  max-width: 100%;
+  max-height: 80px;
+}

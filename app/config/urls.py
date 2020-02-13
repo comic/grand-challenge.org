@@ -76,6 +76,10 @@ urlpatterns = [
         ),
     ),
     path(
+        "aiforradiology/",
+        include("grandchallenge.products.urls", namespace="products"),
+    ),
+    path(
         "policies/",
         include("grandchallenge.policies.urls", namespace="policies"),
     ),
