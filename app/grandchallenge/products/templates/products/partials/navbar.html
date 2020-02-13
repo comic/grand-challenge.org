@@ -1,0 +1,28 @@
+{% load static %}
+
+<nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-dark mb-3">
+  <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="logo">
+          <a class="navbar-brand mr-md-2 text-capitalize"
+             href="{% url 'products:product-list' %}">
+              <img src="{% static 'products/images/banner2.png' %}" alt="Logo">
+          </a>
+        </div>
+        <button class="navbar-toggler" type="button" data-toggle="collapse"
+                data-target="#collapsibleNavbar">
+            <div class="navbar-toggler-icon"></div>
+        </button>
+      </div>
+
+      <div class="collapse navbar-collapse" id="collapsibleNavbar">
+        <ul class="navbar-nav mr-auto">
+          {% for item in items %}
+            <li class="nav-item">
+              <a href="{% url 'products:'|add:item.url %}" class="nav-link {% if item.active %}text-radboud{% endif %}"><i class="fa {{ item.icon }} fa-fw mr-1"></i>{{ item.title }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+    </div>
+  </div>
+</nav>

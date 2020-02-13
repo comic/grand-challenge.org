@@ -1,0 +1,14 @@
+{% extends 'products/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Import data - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+  <h1>Import data</h1>
+  {% crispy form %}
+
+
+{% endblock %}

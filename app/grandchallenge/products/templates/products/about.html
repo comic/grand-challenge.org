@@ -1,0 +1,98 @@
+{% extends 'products/base.html' %}
+
+{% block title %}
+    About - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item active" aria-current="page">About</li>
+{% endblock %}
+
+{% block content %}
+  <div class="container pl-0">
+    <div class="row pb-4">
+      <div class="col-sm-8">
+          <h1 class="h2">About the initiative</h1>
+          <h2 class="h4">Why:</h2>
+          <p>The first commercial software, CE certified products based on artificial intelligence for radiology, are now
+              for sale. For the potential customers, it might not always be clear what is out there, at what maturity
+              level and what experience users have with it. Therefore, we want to increase transparency in the available
+              AI software for radiology in Europe and aid the selection and implementation of such software.
+          </p>
+
+          <h2 class="h4">How:</h2>
+          <p> We aim to provide a complete overview of available AI based software for clinical radiology practice. The
+              focus is on the European market, therefore CE certification is a requirement for software to be on the
+              main product page. The website will be extended with more information on how to select the right software
+              product for your situation.
+          </p>
+
+          <h2 class="h4">What:</h2>
+          <p> Software suppliers have been asked to provide information about their products to be placed on the website.
+              If not provided, the company and product profile will be more limited and consisting of public information
+              (from e.g. websites, news articles, etc.). It will be notified whether or not the data was verified for
+              this purpose by the company. Also the date of most recent update will be mentioned. Every six months we
+              will ask suppliers to update or verify their information.
+          </p>
+
+          <h2 class="h4">Who:</h2>
+          <p> The data aggregation and maintenance of this website is performed by the
+              <a href="http://diagnijmegen.nl/" title="DIAG" target="_blank">Diagnostic Image Analysis Group</a> (DIAG)
+              from the <a href="https://www.radboudumc.nl/en/" class="w3-hover-opacity" target="_blank">Radboud University Medical Center</a>
+              in the Netherlands. DIAG is a research group and we have no commercial interest in this project.
+          </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-8">
+        <h2>Your product missing?</h2>
+        <p>Do you think your software product meets our criteria? Please, get in touch so we can keep the overview
+        as complete as possible.</p>
+      </div>
+    </div>
+
+    <div class="row pb-4">
+      <div class="col-sm-4">
+        <table class="table">
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Inclusion</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Intended for radiology or nuclear medicine</td>
+          <tr>
+            <td class="text-muted">Contains machine learning components</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Main intend is clinical use</td>
+          </tr>
+        </table>
+      </div>
+      <div class="col-sm-4">
+        <table class="table">
+          <thead class="thead-light">
+            <tr>
+              <th colspan="2">Exclusion</th>
+            </tr>
+          </thead>
+          <tr>
+            <td class="text-muted">Distribution platforms or market places</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Research software</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Imaging software applied during acquistion, intervention or surgery</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Dictation software</td>
+            <td><a href={{company.website}} target="_blank">{{company.website}}</a></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
