@@ -14,9 +14,7 @@ from django.db import transaction
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.image_builders.dicom_4dct import (
-    image_builder_dicom_4dct,
-)
+from grandchallenge.cases.image_builders.dicom import image_builder_dicom
 from grandchallenge.cases.image_builders.fallback import image_builder_fallback
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
@@ -160,7 +158,7 @@ def store_image(
 IMAGE_BUILDER_ALGORITHMS = [
     image_builder_mhd,
     image_builder_tiff,
-    image_builder_dicom_4dct,
+    image_builder_dicom,
     image_builder_fallback,
 ]
 

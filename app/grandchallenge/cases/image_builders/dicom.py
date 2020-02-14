@@ -52,15 +52,18 @@ def _get_headers_by_study(path):
                 ds = pydicom.filereader.read_partial(
                     f, stop_when=pixel_data_reached
                 )
-                studies[ds.StudyID] = studies.get(ds.StudyID, {})
-                headers = studies[ds.StudyID].get("headers", [])
+                studies[ds.StudyInstanceUID] = studies.get(
+                    ds.StudyInstanceUID, {}
+                )
+                headers = studies[ds.StudyInstanceUID].get("headers", [])
                 headers.append({"file": file, "data": ds})
-                studies[ds.StudyID]["headers"] = headers
+                studies[ds.StudyInstanceUID]["headers"] = headers
             except Exception:
                 continue
+
     for key in studies:
         studies[key]["headers"].sort(
-            key=lambda x: x["data"].InStackPositionNumber
+            key=lambda x: int(x["data"].InstanceNumber)
         )
     return studies
 
@@ -93,7 +96,15 @@ def _validate_dicom_files(path):
         headers = studies[key]["headers"]
         if not headers:
             continue
-        n_time = headers[-1]["data"].TemporalPositionIndex
+        n_time = getattr(headers[-1]["data"], "TemporalPositionIndex", None)
+        # Not a 4d dicom file
+        if n_time is None:
+            result.append(
+                dicom_dataset(
+                    headers=headers, n_time=n_time, n_slices=len(headers)
+                )
+            )
+            continue
         if len(headers) % n_time > 0:
             continue
         n_slices = len(headers) // n_time
@@ -104,7 +115,36 @@ def _validate_dicom_files(path):
     return result
 
 
-def image_builder_dicom_4dct(path: Path) -> ImageBuilderResult:
+def _extract_direction(dicom_ds, direction):
+    try:
+        # Try to extract the direction from the file
+        sitk_ref = SimpleITK.ReadImage(str(dicom_ds.headers[0]["file"]))
+        # The direction per slice is a 3x3 matrix, so we add the time
+        # dimension ourselves
+        dims = sitk_ref.GetDimension()
+        _direction = np.reshape(sitk_ref.GetDirection(), (dims, dims))
+        direction[:dims, :dims] = _direction
+    except Exception:
+        pass
+    return direction
+
+
+def _create_sitk_image(dcm_array):
+    shape = dcm_array.shape[::-1]
+    # Write the numpy array to a file, so there is no need to keep it in memory
+    # anymore. Then create a SimpleITK image from it.
+    with tempfile.NamedTemporaryFile() as temp:
+        temp.seek(0)
+        temp.write(dcm_array.tostring())
+        temp.flush()
+        temp.seek(0)
+        del dcm_array
+        img = SimpleITK.Image(shape, SimpleITK.sitkFloat32, 1)
+        SimpleITK._SimpleITK._SetImageFromArray(temp.read(), img)
+        return img
+
+
+def image_builder_dicom(path: Path) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -130,26 +170,17 @@ def image_builder_dicom_4dct(path: Path) -> ImageBuilderResult:
 
         consumed_files += [d["file"].name for d in dicom_ds.headers]
         ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
-
-        direction = np.eye(4, dtype=np.float)
-        try:
-            # Try to extract the direction from the file
-            sitk_ref = SimpleITK.ReadImage(str(dicom_ds.headers[0]["file"]))
-            # The direction per slice is a 3x3 matrix, so we add the time
-            # dimension ourselves
-            dims = sitk_ref.GetDimension()
-            _direction = np.reshape(sitk_ref.GetDirection(), (dims, dims))
-            direction[:dims, :dims] = _direction
-        except Exception:
-            pass
+        dimensions = 4 if dicom_ds.n_time else 3
+        direction = np.eye(dimensions, dtype=np.float)
+        direction = _extract_direction(dicom_ds, direction)
         pixel_dims = (
-            dicom_ds.n_time,
             dicom_ds.n_slices,
             int(ref_file.Rows),
             int(ref_file.Columns),
         )
-        dtype = ref_file.pixel_array.dtype
-        dcm_array = np.zeros(pixel_dims, dtype=dtype)
+        if dicom_ds.n_time:
+            pixel_dims = (dicom_ds.n_time,) + pixel_dims
+        dcm_array = np.zeros(pixel_dims, dtype=np.float32)
 
         # Additional Meta data Contenttimes and Exposures
         content_times = []
@@ -157,27 +188,25 @@ def image_builder_dicom_4dct(path: Path) -> ImageBuilderResult:
 
         for index, partial in enumerate(dicom_ds.headers):
             ds = pydicom.dcmread(str(partial["file"]))
-            dcm_array[
-                index // dicom_ds.n_slices, index % dicom_ds.n_slices, :, :
-            ] = ds.pixel_array
-            if index % dicom_ds.n_slices == 0:
-                content_times.append(str(ds.ContentTime))
-                exposures.append(str(ds.Exposure))
+            # Apply RescaleSlope and RescaleIntercept
+            pixel_array = float(
+                getattr(ds, "RescaleSlope", 1)
+            ) * ds.pixel_array + float(getattr(ds, "RescaleIntercept", 0))
+            if len(ds.pixel_array.shape) == dimensions:
+                dcm_array = pixel_array
+                break
+            if dimensions == 4:
+                dcm_array[
+                    index // dicom_ds.n_slices, index % dicom_ds.n_slices, :, :
+                ] = pixel_array
+                if index % dicom_ds.n_slices == 0:
+                    content_times.append(str(ds.ContentTime))
+                    exposures.append(str(ds.Exposure))
+            else:
+                dcm_array[index % dicom_ds.n_slices, :, :] = pixel_array
             del ds
 
-        shape = dcm_array.shape[::-1]
-
-        # Write the numpy array to a file, so there is no need to keep it in memory
-        # anymore. Then create a SimpleITK image from it.
-        with tempfile.NamedTemporaryFile() as temp:
-            temp.seek(0)
-            temp.write(dcm_array.tostring())
-            temp.flush()
-            temp.seek(0)
-            del dcm_array
-            img = SimpleITK.Image(shape, NUMPY_IMAGE_TYPES[dtype.name], 1)
-            SimpleITK._SimpleITK._SetImageFromArray(temp.read(), img)
-
+        img = _create_sitk_image(dcm_array)
         # Set Image Spacing, Origin and Direction
         sitk_origin = tuple(
             (float(i) for i in ref_file.ImagePositionPatient)
@@ -185,16 +214,19 @@ def image_builder_dicom_4dct(path: Path) -> ImageBuilderResult:
         sitk_direction = tuple(direction.flatten())
         x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
         z_i = float(ref_file.SliceThickness)
-        sitk_spacing = (x_i, y_i, z_i, 1.0)
-
+        sitk_spacing = (x_i, y_i, z_i)
+        if dicom_ds.n_time:
+            sitk_spacing += (1.0,)
         img.SetDirection(sitk_direction)
         img.SetSpacing(sitk_spacing)
         img.SetOrigin(sitk_origin)
 
-        # Set Additional Meta Data
-        img.SetMetaData("ContentTimes", " ".join(content_times))
-        img.SetMetaData("Exposures", " ".join(exposures))
+        if dimensions == 4:
+            # Set Additional Meta Data
+            img.SetMetaData("ContentTimes", " ".join(content_times))
+            img.SetMetaData("Exposures", " ".join(exposures))
         # Convert the SimpleITK image to our internal representation
+
         n_image, n_image_files = convert_itk_to_internal(img)
         new_images.append(n_image)
         new_image_files += n_image_files

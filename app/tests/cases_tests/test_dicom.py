@@ -3,10 +3,10 @@ from unittest import mock
 import numpy as np
 import pydicom
 
-from grandchallenge.cases.image_builders.dicom_4dct import (
+from grandchallenge.cases.image_builders.dicom import (
     _get_headers_by_study,
     _validate_dicom_files,
-    image_builder_dicom_4dct,
+    image_builder_dicom,
 )
 from grandchallenge.cases.image_builders.metaio_utils import parse_mh_header
 from tests.cases_tests import RESOURCE_PATH
@@ -34,15 +34,15 @@ def test_validate_dicom_files():
         assert study.n_time == 19
         assert study.n_slices == 4
     with mock.patch(
-        "grandchallenge.cases.image_builders.dicom_4dct._get_headers_by_study",
+        "grandchallenge.cases.image_builders.dicom._get_headers_by_study",
         return_value={"foo": {"headers": headers[1:], "file": "bar"}},
     ):
         studies = _validate_dicom_files(DICOM_DIR)
         assert len(studies) == 0
 
 
-def test_image_builder_dicom_4dct():
-    result = image_builder_dicom_4dct(DICOM_DIR)
+def test_image_builder_dicom():
+    result = image_builder_dicom(DICOM_DIR)
     assert result.consumed_files == [f"{x}.dcm" for x in range(1, 77)]
 
     image = result.new_images[0]
