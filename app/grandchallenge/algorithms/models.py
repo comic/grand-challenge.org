@@ -289,9 +289,7 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
 
 
 class Result(UUIDModel):
-    job = models.OneToOneField(
-        "Job", null=True, on_delete=models.CASCADE, editable=False
-    )
+    job = models.OneToOneField("Job", on_delete=models.CASCADE, editable=False)
     images = models.ManyToManyField(
         to="cases.Image", related_name="algorithm_results", editable=False
     )

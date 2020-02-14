@@ -171,7 +171,7 @@
                             </a>
                         {% endif %}
                         {# TODO: This should be change_result but is expensive to lookup here, do this when moving to results list #}
-                        {% if "change_algorithm" in algorithm_perms %}
+                        {% if "change_algorithm" in algorithm_perms and job.result %}
                             <a href="{% url 'algorithms:result-update' slug=job.algorithm_image.algorithm.slug pk=job.result.pk %}">
                                 <span class="badge badge-primary" title="Edit result">
                                     <i class="fa fa-edit"></i>

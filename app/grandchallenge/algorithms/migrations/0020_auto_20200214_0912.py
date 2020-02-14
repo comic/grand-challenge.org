@@ -45,7 +45,6 @@ class Migration(migrations.Migration):
             name="job",
             field=models.OneToOneField(
                 editable=False,
-                null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 to="algorithms.Job",
             ),
