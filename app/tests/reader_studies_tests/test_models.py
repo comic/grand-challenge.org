@@ -169,7 +169,7 @@ def test_progress_for_user(settings):
 
 
 @pytest.mark.django_db  # noqa: C901
-def test_leaderboard(reader_study_with_gt, settings):
+def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
