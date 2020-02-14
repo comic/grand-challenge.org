@@ -15,19 +15,19 @@ DICOM_DIR = RESOURCE_PATH / "dicom"
 
 
 def test_get_headers_by_study():
-    studies = _get_headers_by_study(DICOM_DIR)
+    studies, _ = _get_headers_by_study(DICOM_DIR)
     assert len(studies) == 1
     for key in studies:
         assert [str(x["file"]) for x in studies[key]["headers"]] == [
             f"{DICOM_DIR}/{x}.dcm" for x in range(1, 77)
         ]
 
-    studies = _get_headers_by_study(RESOURCE_PATH)
+    studies, _ = _get_headers_by_study(RESOURCE_PATH)
     assert len(studies) == 0
 
 
 def test_validate_dicom_files():
-    studies = _validate_dicom_files(DICOM_DIR)
+    studies, _ = _validate_dicom_files(DICOM_DIR)
     assert len(studies) == 1
     for study in studies:
         headers = study.headers
@@ -35,10 +35,15 @@ def test_validate_dicom_files():
         assert study.n_slices == 4
     with mock.patch(
         "grandchallenge.cases.image_builders.dicom._get_headers_by_study",
-        return_value={"foo": {"headers": headers[1:], "file": "bar"}},
+        return_value=({"foo": {"headers": headers[1:], "file": "bar"}}, {}),
     ):
-        studies = _validate_dicom_files(DICOM_DIR)
+        studies, errors = _validate_dicom_files(DICOM_DIR)
         assert len(studies) == 0
+        for header in headers[1:]:
+            assert (
+                errors[header["file"].name]
+                == "Number of slices per time point differs"
+            )
 
 
 def test_image_builder_dicom():

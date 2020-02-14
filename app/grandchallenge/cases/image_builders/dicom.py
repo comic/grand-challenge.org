@@ -44,6 +44,7 @@ def _get_headers_by_study(path):
     grouped by study id.
     """
     studies = {}
+    errors = {}
     for file in path.iterdir():
         if not file.is_file():
             continue
@@ -58,14 +59,14 @@ def _get_headers_by_study(path):
                 headers = studies[ds.StudyInstanceUID].get("headers", [])
                 headers.append({"file": file, "data": ds})
                 studies[ds.StudyInstanceUID]["headers"] = headers
-            except Exception:
-                continue
+            except Exception as e:
+                errors[file.name] = str(e)
 
     for key in studies:
         studies[key]["headers"].sort(
             key=lambda x: int(x["data"].InstanceNumber)
         )
-    return studies
+    return studies, errors
 
 
 def _validate_dicom_files(path):
@@ -87,7 +88,7 @@ def _validate_dicom_files(path):
 
     Any study with an inconsistent amount of slices per time point is discarded.
     """
-    studies = _get_headers_by_study(path)
+    studies, errors = _get_headers_by_study(path)
     result = []
     dicom_dataset = namedtuple(
         "dicom_dataset", ["headers", "n_time", "n_slices"]
@@ -106,13 +107,17 @@ def _validate_dicom_files(path):
             )
             continue
         if len(headers) % n_time > 0:
+            for d in headers:
+                errors[
+                    d["file"].name
+                ] = "Number of slices per time point differs"
             continue
         n_slices = len(headers) // n_time
         result.append(
             dicom_dataset(headers=headers, n_time=n_time, n_slices=n_slices)
         )
     del studies
-    return result
+    return result, errors
 
 
 def _extract_direction(dicom_ds, direction):
@@ -144,6 +149,68 @@ def _create_sitk_image(dcm_array):
         return img
 
 
+def _process_dicom_file(dicom_ds):
+    ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
+    dimensions = 4 if dicom_ds.n_time else 3
+    direction = np.eye(dimensions, dtype=np.float)
+    direction = _extract_direction(dicom_ds, direction)
+    pixel_dims = (
+        dicom_ds.n_slices,
+        int(ref_file.Rows),
+        int(ref_file.Columns),
+    )
+    if dicom_ds.n_time:
+        pixel_dims = (dicom_ds.n_time,) + pixel_dims
+    dcm_array = np.zeros(pixel_dims, dtype=np.float32)
+
+    # Additional Meta data Contenttimes and Exposures
+    content_times = []
+    exposures = []
+
+    for index, partial in enumerate(dicom_ds.headers):
+        ds = pydicom.dcmread(str(partial["file"]))
+        # Apply RescaleSlope and RescaleIntercept
+        pixel_array = float(
+            getattr(ds, "RescaleSlope", 1)
+        ) * ds.pixel_array + float(getattr(ds, "RescaleIntercept", 0))
+        if len(ds.pixel_array.shape) == dimensions:
+            dcm_array = pixel_array
+            break
+        if dimensions == 4:
+            dcm_array[
+                index // dicom_ds.n_slices, index % dicom_ds.n_slices, :, :
+            ] = pixel_array
+            if index % dicom_ds.n_slices == 0:
+                content_times.append(str(ds.ContentTime))
+                exposures.append(str(ds.Exposure))
+        else:
+            dcm_array[index % dicom_ds.n_slices, :, :] = pixel_array
+        del ds
+
+    img = _create_sitk_image(dcm_array)
+    # Set Image Spacing, Origin and Direction
+    sitk_origin = tuple((float(i) for i in ref_file.ImagePositionPatient)) + (
+        0.0,
+    )
+    sitk_direction = tuple(direction.flatten())
+    x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
+    z_i = float(ref_file.SliceThickness)
+    sitk_spacing = (x_i, y_i, z_i)
+    if dicom_ds.n_time:
+        sitk_spacing += (1.0,)
+    img.SetDirection(sitk_direction)
+    img.SetSpacing(sitk_spacing)
+    img.SetOrigin(sitk_origin)
+
+    if dimensions == 4:
+        # Set Additional Meta Data
+        img.SetMetaData("ContentTimes", " ".join(content_times))
+        img.SetMetaData("Exposures", " ".join(exposures))
+
+    # Convert the SimpleITK image to our internal representation
+    return convert_itk_to_internal(img)
+
+
 def image_builder_dicom(path: Path) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -162,78 +229,23 @@ def image_builder_dicom(path: Path) -> ImageBuilderResult:
      - a list files associated with the detected images
      - path->error message map describing what is wrong with a given file
     """
-    studies = _validate_dicom_files(path)
+    studies, file_errors_map = _validate_dicom_files(path)
     new_images = []
     new_image_files = []
     consumed_files = []
     for dicom_ds in studies:
-
-        consumed_files += [d["file"].name for d in dicom_ds.headers]
-        ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
-        dimensions = 4 if dicom_ds.n_time else 3
-        direction = np.eye(dimensions, dtype=np.float)
-        direction = _extract_direction(dicom_ds, direction)
-        pixel_dims = (
-            dicom_ds.n_slices,
-            int(ref_file.Rows),
-            int(ref_file.Columns),
-        )
-        if dicom_ds.n_time:
-            pixel_dims = (dicom_ds.n_time,) + pixel_dims
-        dcm_array = np.zeros(pixel_dims, dtype=np.float32)
-
-        # Additional Meta data Contenttimes and Exposures
-        content_times = []
-        exposures = []
-
-        for index, partial in enumerate(dicom_ds.headers):
-            ds = pydicom.dcmread(str(partial["file"]))
-            # Apply RescaleSlope and RescaleIntercept
-            pixel_array = float(
-                getattr(ds, "RescaleSlope", 1)
-            ) * ds.pixel_array + float(getattr(ds, "RescaleIntercept", 0))
-            if len(ds.pixel_array.shape) == dimensions:
-                dcm_array = pixel_array
-                break
-            if dimensions == 4:
-                dcm_array[
-                    index // dicom_ds.n_slices, index % dicom_ds.n_slices, :, :
-                ] = pixel_array
-                if index % dicom_ds.n_slices == 0:
-                    content_times.append(str(ds.ContentTime))
-                    exposures.append(str(ds.Exposure))
-            else:
-                dcm_array[index % dicom_ds.n_slices, :, :] = pixel_array
-            del ds
-
-        img = _create_sitk_image(dcm_array)
-        # Set Image Spacing, Origin and Direction
-        sitk_origin = tuple(
-            (float(i) for i in ref_file.ImagePositionPatient)
-        ) + (0.0,)
-        sitk_direction = tuple(direction.flatten())
-        x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
-        z_i = float(ref_file.SliceThickness)
-        sitk_spacing = (x_i, y_i, z_i)
-        if dicom_ds.n_time:
-            sitk_spacing += (1.0,)
-        img.SetDirection(sitk_direction)
-        img.SetSpacing(sitk_spacing)
-        img.SetOrigin(sitk_origin)
-
-        if dimensions == 4:
-            # Set Additional Meta Data
-            img.SetMetaData("ContentTimes", " ".join(content_times))
-            img.SetMetaData("Exposures", " ".join(exposures))
-        # Convert the SimpleITK image to our internal representation
-
-        n_image, n_image_files = convert_itk_to_internal(img)
-        new_images.append(n_image)
-        new_image_files += n_image_files
+        try:
+            n_image, n_image_files = _process_dicom_file(dicom_ds)
+            new_images.append(n_image)
+            new_image_files += n_image_files
+            consumed_files += [d["file"].name for d in dicom_ds.headers]
+        except Exception as e:
+            for d in dicom_ds.headers:
+                file_errors_map[d["file"].name] = str(e)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map={},
+        file_errors_map=file_errors_map,
         new_images=new_images,
         new_image_files=new_image_files,
         new_folder_upload=[],
