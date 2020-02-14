@@ -9,7 +9,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.text import get_valid_filename
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.cases.image_builders.metaio_utils import load_sitk_image
 from grandchallenge.challenges.models import ImagingModality
@@ -277,6 +277,10 @@ class Image(UUIDModel):
     def __str__(self):
         return f"Image {self.name} {self.shape_without_color}"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.update_public_group_permissions()
+
     @property
     def shape_without_color(self) -> List[int]:
         """
@@ -382,6 +386,38 @@ class Image(UUIDModel):
         ):
             group = Group.objects.get(name=group_name)
             assign_perm("view_image", group, self)
+
+    def update_public_group_permissions(self, *, exclude_results=None):
+        """
+        Update the permissions for the REGISTERED_AND_ANON_USERS_GROUP to
+        view this image.
+
+        Parameters
+        ----------
+        exclude_results
+            Exclude these results from being considered. This is useful
+            when a many to many relationship is being cleared to remove this
+            image from the results image set, and is used when the pre_clear
+            signal is sent.
+        """
+        if exclude_results is None:
+            exclude_results = []
+
+        should_be_public = (
+            self.algorithm_results.filter(public=True)
+            .exclude(pk__in=[r.pk for r in exclude_results])
+            .exists()
+            or self.job_set.filter(result__public=True).exists()
+        )
+
+        g = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if should_be_public:
+            assign_perm("view_image", g, self)
+        else:
+            remove_perm("view_image", g, self)
 
     @property
     def api_url(self):

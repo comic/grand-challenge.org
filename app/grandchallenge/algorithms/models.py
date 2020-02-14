@@ -332,6 +332,12 @@ class Result(UUIDModel):
         else:
             remove_perm(f"view_{self._meta.model_name}", g, self)
 
+        for image in self.images.all():
+            image.update_public_group_permissions()
+
+        if self.job:
+            self.job.image.update_public_group_permissions()
+
 
 class AlgorithmExecutor(Executor):
     def __init__(self, *args, **kwargs):
@@ -431,6 +437,10 @@ class Job(UUIDModel, ContainerExecJobModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_image = self.image
+
     @property
     def container(self):
         return self.algorithm_image
@@ -462,6 +472,10 @@ class Job(UUIDModel, ContainerExecJobModel):
 
         if adding:
             self.assign_permissions()
+
+        if self._original_image and self.image != self._original_image:
+            self.image.update_public_group_permissions()
+            self._original_image.update_public_group_permissions()
 
     def assign_permissions(self):
         # Editors and creators can view this job and the related image

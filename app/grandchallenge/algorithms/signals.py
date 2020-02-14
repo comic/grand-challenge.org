@@ -53,6 +53,14 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
         )
         op("view_image", alg_result.job.creator, images)
 
+    for image in images:
+        if action == "pre_clear":
+            exclude_results = algorithm_results
+        else:
+            exclude_results = []
+
+        image.update_public_group_permissions(exclude_results=exclude_results)
+
 
 @receiver(pre_save, sender=AlgorithmPermissionRequest)
 def process_algorithm_permission_request(sender, instance, *_, **__):
