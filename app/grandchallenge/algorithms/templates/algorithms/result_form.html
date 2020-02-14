@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+
+{% block title %}
+    Update Algorithm Result - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.job.algorithm_image.algorithm.get_absolute_url }}">{{ object.job.algorithm_image.algorithm.title }}
+        </a>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:jobs-list' slug=object.job.algorithm_image.algorithm.slug %}">Results</a>
+        <li class="breadcrumb-item"><a href="">{{ object.pk }}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Update
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Update Result {{ object.pk }}</h2>
+
+    {% crispy form %}
+
+{% endblock %}

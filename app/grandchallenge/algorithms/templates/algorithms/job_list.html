@@ -50,7 +50,9 @@
                 <th>Input Image</th>
                 <th>Status</th>
                 <th>Result</th>
+                <th>Visibility</th>
                 <th>Output Images</th>
+                <th>Comment</th>
             </tr>
             </thead>
             <tbody>
@@ -114,8 +116,17 @@
                            data-output="{% firstof job.result.output 'No output produced.' %}"
                            data-pk="{{ job.result.pk }}"
                            title="Result Info">
-                         <i class="fa fa-eye"></i> Result Info
+                            <i class="fa fa-eye"></i> Result Info
                         </a>
+                    </td>
+                    <td>
+                        {% if job.result.public %}
+                            <i class="fa fa-eye text-success"
+                               title="Result is public"></i>
+                        {% else %}
+                            <i class="fa fa-eye-slash text-danger"
+                               title="Result is private"></i>
+                        {% endif %}
                     </td>
                     <td>
                         {% if job.result.images.all %}
@@ -144,6 +155,28 @@
                                   title="No output images were found">
                                <i class="fa fa-eye-slash"></i>
                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if job.result.comment %}
+                            <a href="#jobInfoModal"
+                               class="badge badge-primary"
+                               data-toggle="modal"
+                               data-target="#jobInfoModal"
+                               data-title="Result Comment"
+                               data-output="{{ job.result.comment }}"
+                               data-pk="{{ job.result.pk }}"
+                               title="Result Comment">
+                                <i class="fa fa-file"></i>
+                            </a>
+                        {% endif %}
+                        {# TODO: This should be change_result but is expensive to lookup here, do this when moving to results list #}
+                        {% if "change_algorithm" in algorithm_perms and job.result %}
+                            <a href="{% url 'algorithms:result-update' slug=job.algorithm_image.algorithm.slug pk=job.result.pk %}">
+                                <span class="badge badge-primary" title="Edit result">
+                                    <i class="fa fa-edit"></i>
+                                </span>
+                            </a>
                         {% endif %}
                     </td>
                 </tr>

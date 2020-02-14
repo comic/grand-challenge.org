@@ -3,9 +3,10 @@ from datetime import timedelta
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
+from guardian.shortcuts import get_perms
 
 from grandchallenge.workstations.models import Session
-from tests.factories import SessionFactory, UserFactory
+from tests.factories import SessionFactory, UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
 
 
@@ -299,3 +300,27 @@ def test_session_api_patch_permissions(client, two_workstation_sets):
         s.refresh_from_db()
         assert s.status == s.QUEUED  # Read only, always unchanged
         assert (s.maximum_duration == timedelta(minutes=10)) is not test[2]
+
+
+@pytest.mark.django_db
+def test_public_group_permissions():
+    g_reg_anon = Group.objects.get(
+        name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+    )
+    g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
+    workstation = WorkstationFactory()
+
+    assert "view_workstation" not in get_perms(g_reg, workstation)
+    assert "view_workstation" not in get_perms(g_reg_anon, workstation)
+
+    workstation.public = True
+    workstation.save()
+
+    assert "view_workstation" in get_perms(g_reg, workstation)
+    assert "view_workstation" not in get_perms(g_reg_anon, workstation)
+
+    workstation.public = False
+    workstation.save()
+
+    assert "view_workstation" not in get_perms(g_reg, workstation)
+    assert "view_workstation" not in get_perms(g_reg_anon, workstation)

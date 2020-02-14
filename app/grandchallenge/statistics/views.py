@@ -97,10 +97,10 @@ class StatisticsDetail(TemplateView):
                 Challenge.objects.filter(use_evaluation=True).count()
             ),
             "public_algorithms": (
-                Algorithm.objects.filter(visible_to_public=True).count()
+                Algorithm.objects.filter(public=True).count()
             ),
             "hidden_algorithms": (
-                Algorithm.objects.filter(visible_to_public=False).count()
+                Algorithm.objects.filter(public=False).count()
             ),
             "algorithm_jobs": Job.objects.count(),
             "reader_studies": ReaderStudy.objects.count(),

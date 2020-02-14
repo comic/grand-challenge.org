@@ -37,6 +37,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     EditorsForm,
+    ResultForm,
     UsersForm,
 )
 from grandchallenge.algorithms.models import (
@@ -343,6 +344,23 @@ class AlgorithmJobsList(LoginRequiredMixin, PermissionListMixin, ListView):
         """Filter the jobs for this algorithm."""
         qs = super().get_queryset(*args, **kwargs)
         return qs.filter(algorithm_image__algorithm=self.algorithm)
+
+
+class AlgorithmResultUpdate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
+    model = Result
+    form_class = ResultForm
+    permission_required = (
+        f"{Result._meta.app_label}.change_{Result._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:jobs-list",
+            kwargs={"slug": self.object.job.algorithm_image.algorithm.slug},
+        )
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):

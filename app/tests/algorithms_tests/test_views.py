@@ -65,7 +65,7 @@ def test_algorithm_list_view_filter(client):
     alg1, alg2, pubalg = (
         AlgorithmFactory(),
         AlgorithmFactory(),
-        AlgorithmFactory(visible_to_public=True),
+        AlgorithmFactory(public=True),
     )
     alg1.add_user(user)
 
@@ -165,7 +165,7 @@ def test_algorithm_run(client):
 @pytest.mark.django_db
 def test_algorithm_permission_request_create(client):
     user = UserFactory()
-    alg = AlgorithmFactory(visible_to_public=False)
+    alg = AlgorithmFactory(public=False)
 
     response = get_view_for_user(
         viewname="algorithms:detail",
@@ -212,7 +212,7 @@ def test_algorithm_permission_request_update(client):
     user = UserFactory()
     editor = UserFactory()
 
-    alg = AlgorithmFactory(visible_to_public=True)
+    alg = AlgorithmFactory(public=True)
     alg.add_editor(editor)
 
     pr = AlgorithmPermissionRequestFactory(algorithm=alg, user=user)
@@ -306,7 +306,7 @@ def test_algorithm_permission_request_list(client):
     user = UserFactory()
     editor = UserFactory()
 
-    alg = AlgorithmFactory(visible_to_public=True)
+    alg = AlgorithmFactory(public=True)
     alg.add_editor(editor)
 
     pr = AlgorithmPermissionRequestFactory(algorithm=alg, user=user)

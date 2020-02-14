@@ -11,7 +11,7 @@
         </li>
         {% if object %}
             <li class="breadcrumb-item"><a
-                    href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+                    href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
         {% endif %}
         <li class="breadcrumb-item active"
             aria-current="page">{{ object|yesno:"Update,Create" }}</li>

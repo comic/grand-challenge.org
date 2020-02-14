@@ -7,11 +7,12 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object }}</li>
+            aria-current="page">{{ object.title }}</li>
     </ol>
 {% endblock %}
 
@@ -51,82 +52,92 @@
             </a>
         </p>
 
-        <h4>Workstation Users Group</h4>
-        <p>The following users are able to use this workstation:</p>
+        {% if object.public %}
 
-        <ul>
-            {% for user in object.users_group.user_set.all %}
-                <li>{{ user|user_profile_link }}</li>
+            <div class="alert alert-danger">
+                This is a public workstation, all logged-in users are able
+                to use it!
+            </div>
+
+        {% else %}
+            <h4>Workstation Users Group</h4>
+            <p>The following users are able to use this workstation:</p>
+
+            <ul>
+                {% for user in object.users_group.user_set.all %}
+                    <li>{{ user|user_profile_link }}</li>
+                {% empty %}
+                    <li>There are no users in this workstations user group.</li>
+                {% endfor %}
+            </ul>
+
+            <p>
+                <a class="btn btn-primary"
+                   href="{% url 'workstations:users-update' slug=object.slug %}">
+                    <i class="fa fa-plus"></i> Add a user for this workstation
+                </a>
+            </p>
+
+            <h4>Reader Study Groups</h4>
+
+            <p>
+                The following reader studies are using this workstation,
+                which allows their readers to use this workstation.
+            </p>
+
+            {% for rs in object.readerstudy_set.all %}
+                <h5>{{ rs }}</h5>
+                <ul>
+                    {% for user in rs.readers_group.user_set.all %}
+                        <li>{{ user|user_profile_link }}</li>
+                    {% empty %}
+                        <li>There are no readers for <a
+                                href="{{ rs.get_absolute_url }}">{{ rs }}</a>.
+                        </li>
+                    {% endfor %}
+                </ul>
             {% empty %}
-                <li>There are no users in this workstations user group.</li>
+                <ul>
+                    <li>No reader studies are using this workstation.</li>
+                </ul>
             {% endfor %}
-        </ul>
 
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'workstations:users-update' slug=object.slug %}">
-                <i class="fa fa-plus"></i> Add a user for this workstation
-            </a>
-        </p>
+            <h4>Algorithm Groups</h4>
 
-        <h4>Reader Study Groups</h4>
+            <p>
+                The following algorithms are using this workstation,
+                which allows their users to use this workstation.
+            </p>
 
-        <p>
-            The following reader studies are using this workstation,
-            which allows their readers to use this workstation.
-        </p>
+            {% for alg in object.algorithm_set.all %}
+                <h5>{{ alg }} Editors</h5>
+                <ul>
+                    {% for user in alg.editors_group.user_set.all %}
+                        <li>{{ user|user_profile_link }}</li>
+                    {% empty %}
+                        <li>There are no editors for <a
+                                href="{{ alg.get_absolute_url }}">{{ alg }}</a>.
+                        </li>
+                    {% endfor %}
+                </ul>
 
-        {% for rs in object.readerstudy_set.all %}
-            <h5>{{ rs }}</h5>
-            <ul>
-                {% for user in rs.readers_group.user_set.all %}
-                    <li>{{ user|user_profile_link }}</li>
-                {% empty %}
-                    <li>There are no readers for <a
-                            href="{{ rs.get_absolute_url }}">{{ rs }}</a>.
-                    </li>
-                {% endfor %}
-            </ul>
-        {% empty %}
-            <ul>
-                <li>No reader studies are using this workstation.</li>
-            </ul>
-        {% endfor %}
+                <h5>{{ alg }} Users</h5>
+                <ul>
+                    {% for user in alg.users_group.user_set.all %}
+                        <li>{{ user|user_profile_link }}</li>
+                    {% empty %}
+                        <li>There are no users for <a
+                                href="{{ alg.get_absolute_url }}">{{ alg }}</a>.
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% empty %}
+                <ul>
+                    <li>No algorithms are using this workstation.</li>
+                </ul>
+            {% endfor %}
 
-        <h4>Algorithm Groups</h4>
-
-        <p>
-            The following algorithms are using this workstation,
-            which allows their users to use this workstation.
-        </p>
-
-        {% for alg in object.algorithm_set.all %}
-            <h5>{{ alg }} Editors</h5>
-            <ul>
-                {% for user in alg.editors_group.user_set.all %}
-                    <li>{{ user|user_profile_link }}</li>
-                {% empty %}
-                    <li>There are no editors for <a
-                            href="{{ alg.get_absolute_url }}">{{ alg }}</a>.
-                    </li>
-                {% endfor %}
-            </ul>
-
-            <h5>{{ alg }} Users</h5>
-            <ul>
-                {% for user in alg.users_group.user_set.all %}
-                    <li>{{ user|user_profile_link }}</li>
-                {% empty %}
-                    <li>There are no users for <a
-                            href="{{ alg.get_absolute_url }}">{{ alg }}</a>.
-                    </li>
-                {% endfor %}
-            </ul>
-        {% empty %}
-            <ul>
-                <li>No algorithms are using this workstation.</li>
-            </ul>
-        {% endfor %}
+        {% endif %}
 
         <h3>Container Images</h3>
 

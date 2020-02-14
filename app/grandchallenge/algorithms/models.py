@@ -62,7 +62,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    visible_to_public = models.BooleanField(
+    public = models.BooleanField(
         default=False,
         help_text=(
             "Should this algorithm be visible to all users on the algorithm "
@@ -157,7 +157,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
 
-        if self.visible_to_public:
+        if self.public:
             assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
         else:
             remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
@@ -289,26 +289,37 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
 
 
 class Result(UUIDModel):
-    job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
+    job = models.OneToOneField("Job", on_delete=models.CASCADE, editable=False)
     images = models.ManyToManyField(
-        to="cases.Image", related_name="algorithm_results"
+        to="cases.Image", related_name="algorithm_results", editable=False
     )
-    output = JSONField(default=dict)
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "If True, allow anyone to view this result along "
+            "with the input image. Otherwise, only the job creator and "
+            "algorithm editor will have permission to view this."
+        ),
+    )
+    output = JSONField(default=dict, editable=False)
+    comment = models.TextField(blank=True, default="")
 
     def get_absolute_url(self):
-        return reverse("algorithms:results-detail", kwargs={"pk": self.pk})
+        return reverse(
+            "algorithms:result-detail",
+            kwargs={
+                "pk": self.pk,
+                "slug": self.job.algorithm_image.algorithm.slug,
+            },
+        )
 
     @property
     def api_url(self):
         return reverse("api:algorithms-result-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
-        adding = self._state.adding
-
         super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
+        self.assign_permissions()
 
     def assign_permissions(self):
         # Algorithm editors and job creators can view this result
@@ -318,6 +329,28 @@ class Result(UUIDModel):
             self,
         )
         assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
+
+        # Algorithm editors can change this result
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.job.algorithm_image.algorithm.editors_group,
+            self,
+        )
+
+        g = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", g, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", g, self)
+
+        for image in self.images.all():
+            image.update_public_group_permissions()
+
+        if self.job:
+            self.job.image.update_public_group_permissions()
 
 
 class AlgorithmExecutor(Executor):
@@ -418,6 +451,10 @@ class Job(UUIDModel, ContainerExecJobModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_image = self.image
+
     @property
     def container(self):
         return self.algorithm_image
@@ -449,6 +486,10 @@ class Job(UUIDModel, ContainerExecJobModel):
 
         if adding:
             self.assign_permissions()
+
+        if self._original_image and self.image != self._original_image:
+            self.image.update_public_group_permissions()
+            self._original_image.update_public_group_permissions()
 
     def assign_permissions(self):
         # Editors and creators can view this job and the related image
