@@ -21,6 +21,5 @@ repos:
           - flake8-bugbear
           - flake8-import-order
           - pep8-naming
-          # The following is disabled due to a runtime error
-          # - flake8-docstrings
+          - flake8-docstrings
           - mccabe
