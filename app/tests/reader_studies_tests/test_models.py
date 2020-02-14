@@ -168,8 +168,8 @@ def test_progress_for_user(settings):
     assert progress["questions"] == 100.0
 
 
-@pytest.mark.django_db
-def test_leaderboard(reader_study_with_gt, settings):  # noqa - C901
+@pytest.mark.django_db  # noqa: C901
+def test_leaderboard(reader_study_with_gt, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
