@@ -289,9 +289,11 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
 
 
 class Result(UUIDModel):
-    job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
+    job = models.OneToOneField(
+        "Job", null=True, on_delete=models.CASCADE, editable=False
+    )
     images = models.ManyToManyField(
-        to="cases.Image", related_name="algorithm_results"
+        to="cases.Image", related_name="algorithm_results", editable=False
     )
     public = models.BooleanField(
         default=False,
@@ -301,10 +303,17 @@ class Result(UUIDModel):
             "algorithm editor will have permission to view this."
         ),
     )
-    output = JSONField(default=dict)
+    output = JSONField(default=dict, editable=False)
+    comment = models.TextField(blank=True, default="")
 
     def get_absolute_url(self):
-        return reverse("algorithms:results-detail", kwargs={"pk": self.pk})
+        return reverse(
+            "algorithms:result-detail",
+            kwargs={
+                "pk": self.pk,
+                "slug": self.job.algorithm_image.algorithm.slug,
+            },
+        )
 
     @property
     def api_url(self):
@@ -322,6 +331,13 @@ class Result(UUIDModel):
             self,
         )
         assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
+
+        # Algorithm editors can change this result
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.job.algorithm_image.algorithm.editors_group,
+            self,
+        )
 
         g = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME

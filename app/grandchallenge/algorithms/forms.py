@@ -17,6 +17,7 @@ from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
     AlgorithmPermissionRequest,
+    Result,
 )
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.validators import ExtensionValidator
@@ -137,3 +138,9 @@ class UsersForm(UserGroupForm):
         else:
             permission_request.status = AlgorithmPermissionRequest.ACCEPTED
         permission_request.save()
+
+
+class ResultForm(SaveFormInitMixin, ModelForm):
+    class Meta:
+        model = Result
+        fields = ("comment", "public")
