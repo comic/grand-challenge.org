@@ -74,7 +74,7 @@ class Product(models.Model):
     }
 
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
+    modified = models.DateTimeField()
     product_name = models.CharField(max_length=200)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     short_name = models.CharField(
@@ -96,14 +96,14 @@ class Product(models.Model):
     )
     modality = models.CharField(max_length=100)
     subspeciality = models.CharField(max_length=300)
-    diseases = models.CharField(max_length=200)
-    population = models.CharField(max_length=200)
+    diseases = models.TextField()
+    population = models.TextField()
 
     input_data = models.CharField(max_length=150)
     file_format_input = models.TextField()
     output_data = models.CharField(max_length=150)
     file_format_output = models.TextField()
-    key_features = models.CharField(max_length=200)
+    key_features = models.TextField()
     key_features_short = models.CharField(max_length=120)
     software_usage = models.TextField()
 
