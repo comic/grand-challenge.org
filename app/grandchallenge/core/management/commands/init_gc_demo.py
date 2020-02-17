@@ -6,7 +6,7 @@ from io import BytesIO
 import boto3
 from PIL import Image
 from django.conf import settings
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.files.base import ContentFile
@@ -80,6 +80,7 @@ class Command(BaseCommand):
             "workstation",
             "algorithm",
             "algorithmuser",
+            "air",
         ]
         self.users = self._create_users(usernames=default_users)
 
@@ -139,6 +140,9 @@ class Command(BaseCommand):
             name=settings.ALGORITHMS_CREATORS_GROUP_NAME
         )
         self.users["algorithm"].groups.add(algorithm_group)
+
+        add_product_perm = Permission.objects.get(codename="add_product")
+        self.users["air"].user_permissions.add(add_product_perm)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
