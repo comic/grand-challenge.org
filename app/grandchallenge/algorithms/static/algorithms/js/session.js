@@ -2,76 +2,122 @@
 
 const timeout = 1000;
 
-function getUploadSessionStatus(statusUrl, statusButton) {
+function getUploadSessionStatus(statusUrl, cards) {
     // Checks on the status of the Session (queued, running, started, etc)
     fetch(statusUrl)
         .then(response => response.json())
-        .then(session => handleUploadSessionStatus(statusUrl, statusButton, session.status, session.image_set));
+        .then(session => handleUploadSessionStatus(statusUrl, cards, session.status, session.image_set));
 }
 
-function handleUploadSessionStatus(statusUrl, statusButton, status, imageSet) {
+function handleUploadSessionStatus(statusUrl, cards, status, imageSet) {
     switch (status.toLowerCase()) {
         case "queued":
         case "re-queued":
-            setButtonLoadingMessage(statusButton, "Awaiting Resources...");
+            setCardAwaitingMessage(cards.imageImport, status);
             setTimeout(function () {
-                getUploadSessionStatus(statusUrl, statusButton)
+                getUploadSessionStatus(statusUrl, cards.imageImport)
             }, Math.floor(Math.random() * timeout) + 100);
             break;
         case "started":
-            setButtonLoadingMessage(statusButton, "Importing Images...");
+            setCardActiveMessage(cards.imageImport, status);
             setTimeout(function () {
-                getUploadSessionStatus(statusUrl, statusButton)
+                getUploadSessionStatus(statusUrl, cards.imageImport)
             }, Math.floor(Math.random() * timeout) + 100);
             break;
         case "succeeded":
-            console.log("Created images: " + imageSet);
-            getJobsForImages(imageSet);
+            var msg = "Imported " + imageSet.length + " Image";
+            if (imageSet.length < 1) {
+                setCardErrorMessage(cards.imageImport, "No Images Imported");
+                return;
+            } else if (imageSet.length > 1 ) {
+                msg += "s"
+            }
+            setCardCompleteMessage(cards.imageImport, msg);
+            getJobsForImages(imageSet, cards);
             break;
         case "failed":
         case "cancelled":
-            setButtonError(statusButton, "This session has " + status.toLowerCase() + ".");
+            setCardErrorMessage(cards.imageImport, status);
             break;
         default:
-            setButtonError(statusButton, "Workstation is in an unknown state.");
+            setCardErrorMessage(cards.imageImport, "Import error");
     }
 }
 
-function getJobsForImages(imageSet) {
+function getJobsForImages(imageSet, cards) {
+    setCardAwaitingMessage(cards.job, "Fetching Status");
+
     Promise.all(imageSet.map(url => fetch(url).then(response => response.json()))
     ).then(images => {
-        getJobStatus(images.map(i => i.job_set).flat());
+        getJobStatus(images.map(i => i.job_set).flat(), cards);
     });
 }
 
-function getJobStatus(jobSet) {
+function getJobStatus(jobSet, cards) {
     Promise.all(jobSet.map(url => fetch(url).then(response => response.json()))
     ).then(jobs => {
-        getResults(jobs.map(j => j.result));
-        // TODO check that all the jobs have succeeded
+        handleJobStatus(jobs, cards);
     });
 }
 
-function getResults(resultSet) {
+function handleJobStatus(jobSet, cards) {
+    var jobStatuses = jobSet.map(j => j.status.toLowerCase());
+
+    if (jobStatuses.every(s => s === "succeeded")) {
+        setCardCompleteMessage(cards.job, "");
+        getResults(jobSet.map(j => j.result), cards);
+    }
+
+    // TODO: handle queued and failed jobs
+}
+
+function getResults(resultSet, cards) {
+    setCardAwaitingMessage(cards.resultImport, "Fetching Status");
+
     Promise.all(resultSet.map(url => fetch(url).then(response => response.json()))
     ).then(results => {
-        getResultImportStatus(results.map(r => r.rawimageuploadsession));
+        getResultImportStatus(results.map(r => r.rawimageuploadsession), cards);
     });
+
+    // TODO: Handle results without import sessions
 }
 
-function getResultImportStatus(resultImportSessionSet) {
+function getResultImportStatus(resultImportSessionSet, cards) {
     Promise.all(resultImportSessionSet.map(url => fetch(url).then(response => response.json()))
     ).then(importSessionSet => {
-        console.log(importSessionSet);
+        handleImportSessionsStatus(importSessionSet, cards);
     });
 }
 
-function setButtonLoadingMessage(statusButton, msg) {
+function handleImportSessionsStatus(importSessionsSet, cards) {
+    var importSessionStatuses = importSessionsSet.map(j => j.status.toLowerCase());
+
+    if (importSessionStatuses.every(s => s === "succeeded")) {
+        setCardCompleteMessage(cards.resultImport, "");
+    }
+
+    // TODO: handle queued and failed import jobs
+}
+
+function setCardAwaitingMessage(card, msg) {
+    card.classList.replace("border-light", "border-primary");
+    card.classList.remove("text-muted");
+    card.querySelector(".statusMessage").innerHTML = msg;
+    card.querySelector(".statusSymbol").innerHTML = "<i class=\"far fa-hourglass fa-2x\"></i>";
+}
+
+function setCardActiveMessage(card, msg) {
     console.log(msg);
     //statusButton.querySelector("#sessionStateMsg").innerHTML = msg;
 }
 
-function setButtonError(statusButton, msg) {
+function setCardCompleteMessage(card, msg) {
+    card.classList.replace("border-primary", "border-success");
+    card.querySelector(".statusMessage").innerHTML = msg;
+    card.querySelector(".statusSymbol").innerHTML = "<i class=\"fa fa-check fa-2x\"></i>";
+}
+
+function setCardErrorMessage(card, msg) {
     console.log(msg);
     //statusButton.querySelector("#sessionStateBody").innerHTML = "<b>" + msg + "</b>";
     //statusButton.querySelector("#sessionStateFooter").classList.remove("d-none");

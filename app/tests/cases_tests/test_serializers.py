@@ -42,6 +42,7 @@ class TestRetinaImageSerializers:
                     "voxel_width_mm",
                     "voxel_height_mm",
                     "voxel_depth_mm",
+                    "job_set",
                 ),
                 "no_valid_check": True,
                 # This check is done manually because of the need to skip the image in the check
