@@ -1,6 +1,6 @@
 "use strict";
 
-const timeout = 1000;
+const timeout = 5000;
 
 function getUploadSessionStatus(statusUrl, cards) {
     // Checks on the status of the Session (queued, running, started, etc)
@@ -9,31 +9,31 @@ function getUploadSessionStatus(statusUrl, cards) {
         .then(session => handleUploadSessionStatus(statusUrl, cards, session.status, session.image_set));
 }
 
-function handleUploadSessionStatus(statusUrl, cards, status, imageSet) {
+function handleUploadSessionStatus(statusUrl, cards, status, imageUrls) {
     switch (status.toLowerCase()) {
         case "queued":
         case "re-queued":
             setCardAwaitingMessage(cards.imageImport, status);
             setTimeout(function () {
-                getUploadSessionStatus(statusUrl, cards.imageImport)
+                getUploadSessionStatus(statusUrl, cards)
             }, Math.floor(Math.random() * timeout) + 100);
             break;
         case "started":
             setCardActiveMessage(cards.imageImport, status);
             setTimeout(function () {
-                getUploadSessionStatus(statusUrl, cards.imageImport)
+                getUploadSessionStatus(statusUrl, cards)
             }, Math.floor(Math.random() * timeout) + 100);
             break;
         case "succeeded":
-            var msg = "Imported " + imageSet.length + " Image";
-            if (imageSet.length < 1) {
+            var msg = "Imported " + imageUrls.length + " Image";
+            if (imageUrls.length < 1) {
                 setCardErrorMessage(cards.imageImport, "No Images Imported");
                 return;
-            } else if (imageSet.length > 1 ) {
+            } else if (imageUrls.length > 1) {
                 msg += "s"
             }
             setCardCompleteMessage(cards.imageImport, msg);
-            getJobsForImages(imageSet, cards);
+            getJobsForImages(imageUrls, cards);
             break;
         case "failed":
         case "cancelled":
@@ -44,37 +44,48 @@ function handleUploadSessionStatus(statusUrl, cards, status, imageSet) {
     }
 }
 
-function getJobsForImages(imageSet, cards) {
+function getJobsForImages(imageUrls, cards) {
     setCardAwaitingMessage(cards.job, "Fetching Status");
 
-    Promise.all(imageSet.map(url => fetch(url).then(response => response.json()))
+    Promise.all(imageUrls.map(url => fetch(url).then(response => response.json()))
     ).then(images => {
         getJobStatus(images.map(i => i.job_set).flat(), cards);
     });
 }
 
-function getJobStatus(jobSet, cards) {
-    Promise.all(jobSet.map(url => fetch(url).then(response => response.json()))
+function getJobStatus(jobUrls, cards) {
+    Promise.all(jobUrls.map(url => fetch(url).then(response => response.json()))
     ).then(jobs => {
         handleJobStatus(jobs, cards);
     });
 }
 
-function handleJobStatus(jobSet, cards) {
-    var jobStatuses = jobSet.map(j => j.status.toLowerCase());
+function handleJobStatus(jobs, cards) {
+    var jobStatuses = jobs.map(j => j.status.toLowerCase());
+    var jobUrls = jobs.map(j => j.api_url);
 
     if (jobStatuses.every(s => s === "succeeded")) {
         setCardCompleteMessage(cards.job, "");
-        getResults(jobSet.map(j => j.result), cards);
+        getResults(jobs.map(j => j.result), cards);
+    } else if (jobStatuses.some(s => s === "started")) {
+        setCardActiveMessage(cards.job, "Started");
+        setTimeout(function () {
+            getJobStatus(jobUrls, cards)
+        }, Math.floor(Math.random() * timeout) + 100);
+    } else if (jobStatuses.some(s => s === "queued") || jobStatuses.some(s => s === "re-queued")) {
+        setCardAwaitingMessage(cards.job, "Queued");
+        setTimeout(function () {
+            getJobStatus(jobUrls, cards)
+        }, Math.floor(Math.random() * timeout) + 100);
+    } else {
+        setCardErrorMessage(cards.job, "Errored");
     }
-
-    // TODO: handle queued and failed jobs
 }
 
-function getResults(resultSet, cards) {
+function getResults(resultUrls, cards) {
     setCardAwaitingMessage(cards.resultImport, "Fetching Status");
 
-    Promise.all(resultSet.map(url => fetch(url).then(response => response.json()))
+    Promise.all(resultUrls.map(url => fetch(url).then(response => response.json()))
     ).then(results => {
         getResultImportStatus(results.map(r => r.rawimageuploadsession), cards);
     });
@@ -82,43 +93,59 @@ function getResults(resultSet, cards) {
     // TODO: Handle results without import sessions
 }
 
-function getResultImportStatus(resultImportSessionSet, cards) {
-    Promise.all(resultImportSessionSet.map(url => fetch(url).then(response => response.json()))
-    ).then(importSessionSet => {
-        handleImportSessionsStatus(importSessionSet, cards);
+function getResultImportStatus(resultImportSessionUrls, cards) {
+    Promise.all(resultImportSessionUrls.map(url => fetch(url).then(response => response.json()))
+    ).then(importSessions => {
+        handleImportSessionsStatus(importSessions, cards);
     });
 }
 
-function handleImportSessionsStatus(importSessionsSet, cards) {
-    var importSessionStatuses = importSessionsSet.map(j => j.status.toLowerCase());
+function handleImportSessionsStatus(resultImportSessions, cards) {
+    var importSessionStatuses = resultImportSessions.map(s => s.status.toLowerCase());
+    var importSessionUrls = resultImportSessions.map(s => s.api_url);
 
     if (importSessionStatuses.every(s => s === "succeeded")) {
         setCardCompleteMessage(cards.resultImport, "");
+    } else if (importSessionStatuses.some(s => s === "started")) {
+        setCardActiveMessage(cards.resultImport, "Started");
+        setTimeout(function () {
+            getResultImportStatus(importSessionUrls, cards)
+        }, Math.floor(Math.random() * timeout) + 100);
+    } else if (importSessionStatuses.some(s => s === "queued") || importSessionStatuses.some(s => s === "re-queued")) {
+        setCardAwaitingMessage(cards.resultImport, "Queued");
+        setTimeout(function () {
+            getResultImportStatus(importSessionUrls, cards)
+        }, Math.floor(Math.random() * timeout) + 100);
+    } else {
+        setCardErrorMessage(cards.resultImport, "Errored");
     }
-
-    // TODO: handle queued and failed import jobs
 }
 
 function setCardAwaitingMessage(card, msg) {
     card.classList.replace("border-light", "border-primary");
-    card.classList.remove("text-muted");
+    card.classList.remove("text-muted", "active");
     card.querySelector(".statusMessage").innerHTML = msg;
-    card.querySelector(".statusSymbol").innerHTML = "<i class=\"far fa-hourglass fa-2x\"></i>";
+    card.querySelector(".statusSymbol").innerHTML = "<div class=\"spinner-grow\" role=\"status\"><span class=\"sr-only\">Loading...</span></div>";
 }
 
 function setCardActiveMessage(card, msg) {
-    console.log(msg);
-    //statusButton.querySelector("#sessionStateMsg").innerHTML = msg;
+    if (!card.classList.contains("active")) {
+        card.classList.add("active");
+        card.querySelector(".statusSymbol").innerHTML = "<div class=\"spinner-border\" role=\"status\"><span class=\"sr-only\">Loading...</span></div>";
+    }
+    card.querySelector(".statusMessage").innerHTML = msg;
 }
 
 function setCardCompleteMessage(card, msg) {
+    card.classList.remove("active");
     card.classList.replace("border-primary", "border-success");
     card.querySelector(".statusMessage").innerHTML = msg;
     card.querySelector(".statusSymbol").innerHTML = "<i class=\"fa fa-check fa-2x\"></i>";
 }
 
 function setCardErrorMessage(card, msg) {
-    console.log(msg);
-    //statusButton.querySelector("#sessionStateBody").innerHTML = "<b>" + msg + "</b>";
-    //statusButton.querySelector("#sessionStateFooter").classList.remove("d-none");
+    card.classList.remove("active", "text-muted", "border-primary", "border-success");
+    card.classList.add("border-danger");
+    card.querySelector(".statusMessage").innerHTML = msg;
+    card.querySelector(".statusSymbol").innerHTML = "<i class=\"fa fa-times fa-2x\"></i>";
 }
