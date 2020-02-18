@@ -9,7 +9,7 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_job_list(client):
+def test_job_detail(client):
     user = UserFactory()
     result = AlgorithmResultFactory(job__creator=user)
     job = Job.objects.get(pk=result.job.pk)
