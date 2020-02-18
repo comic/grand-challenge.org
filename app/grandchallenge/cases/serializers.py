@@ -21,6 +21,9 @@ class ImageFileSerializer(serializers.ModelSerializer):
 
 class ImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
+    job_set = HyperlinkedRelatedField(
+        read_only=True, many=True, view_name="api:algorithms-job-detail"
+    )
 
     class Meta:
         model = Image
@@ -29,6 +32,7 @@ class ImageSerializer(serializers.ModelSerializer):
             "name",
             "study",
             "files",
+            "job_set",
             "width",
             "height",
             "depth",
@@ -50,6 +54,9 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         queryset=AlgorithmImage.objects.all(),
         view_name="api:algorithms-image-detail",
     )
+    image_set = HyperlinkedRelatedField(
+        read_only=True, many=True, view_name="api:image-detail"
+    )
     status = CharField(source="get_status_display", read_only=True)
 
     def validate_algorithm_image(self, value):
@@ -69,6 +76,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             "creator",
             "status",
             "error_message",
+            "image_set",
             "algorithm_image",
             "api_url",
         ]

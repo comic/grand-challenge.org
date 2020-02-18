@@ -277,18 +277,11 @@ class AlgorithmImageUpdate(
 
 
 class AlgorithmExecutionSessionCreate(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    CreateView,
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView,
 ):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "algorithms/algorithm_execution_session_create.html"
-    success_message = (
-        "Your images have been uploaded, "
-        "please check back here to see the processing status."
-    )
     permission_required = (
         f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
     )
