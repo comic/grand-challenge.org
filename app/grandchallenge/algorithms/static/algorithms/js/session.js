@@ -87,10 +87,13 @@ function getResults(resultUrls, cards) {
 
     Promise.all(resultUrls.map(url => fetch(url).then(response => response.json()))
     ).then(results => {
-        getResultImportStatus(results.map(r => r.rawimageuploadsession), cards);
+        var resultImportSessionUrls = results.map(r => r.rawimageuploadsession).filter(s => s !== null);
+        if (resultImportSessionUrls.length > 0) {
+            getResultImportStatus(resultImportSessionUrls, cards);
+        } else {
+            setCardCompleteMessage(cards.resultImport, "");
+        }
     });
-
-    // TODO: Handle results without import sessions
 }
 
 function getResultImportStatus(resultImportSessionUrls, cards) {
