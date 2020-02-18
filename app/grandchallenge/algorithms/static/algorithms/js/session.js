@@ -25,7 +25,7 @@ function handleUploadSessionStatus(statusUrl, cards, status, imageUrls) {
             }, Math.floor(Math.random() * timeout) + 100);
             break;
         case "succeeded":
-            var msg = "Imported " + imageUrls.length + " Image";
+            let msg = "Imported " + imageUrls.length + " Image";
             if (imageUrls.length < 1) {
                 setCardErrorMessage(cards.imageImport, "No Images Imported");
                 return;
@@ -61,8 +61,8 @@ function getJobStatus(jobUrls, cards) {
 }
 
 function handleJobStatus(jobs, cards) {
-    var jobStatuses = jobs.map(j => j.status.toLowerCase());
-    var jobUrls = jobs.map(j => j.api_url);
+    let jobStatuses = jobs.map(j => j.status.toLowerCase());
+    let jobUrls = jobs.map(j => j.api_url);
 
     if (jobStatuses.every(s => s === "succeeded")) {
         setCardCompleteMessage(cards.job, "");
@@ -87,7 +87,7 @@ function getResults(resultUrls, cards) {
 
     Promise.all(resultUrls.map(url => fetch(url).then(response => response.json()))
     ).then(results => {
-        var resultImportSessionUrls = results.map(r => r.rawimageuploadsession).filter(s => s !== null);
+        let resultImportSessionUrls = results.map(r => r.rawimageuploadsession).filter(s => s !== null);
         if (resultImportSessionUrls.length > 0) {
             getResultImportStatus(resultImportSessionUrls, cards);
         } else {
@@ -104,8 +104,8 @@ function getResultImportStatus(resultImportSessionUrls, cards) {
 }
 
 function handleImportSessionsStatus(resultImportSessions, cards) {
-    var importSessionStatuses = resultImportSessions.map(s => s.status.toLowerCase());
-    var importSessionUrls = resultImportSessions.map(s => s.api_url);
+    let importSessionStatuses = resultImportSessions.map(s => s.status.toLowerCase());
+    let importSessionUrls = resultImportSessions.map(s => s.api_url);
 
     if (importSessionStatuses.every(s => s === "succeeded")) {
         setCardCompleteMessage(cards.resultImport, "");
