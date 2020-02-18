@@ -2,30 +2,28 @@ from urllib.parse import urlparse
 
 import pytest
 
-from tests.algorithms_tests.factories import (
-    AlgorithmJobFactory,
-    AlgorithmResultFactory,
-)
+from grandchallenge.algorithms.models import Job
+from tests.algorithms_tests.factories import AlgorithmResultFactory
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
 def test_job_list(client):
-    u = UserFactory()
-    j = AlgorithmJobFactory(creator=u)
-    r = AlgorithmResultFactory(job=j)
+    user = UserFactory()
+    result = AlgorithmResultFactory(job__creator=user)
+    job = Job.objects.get(pk=result.job.pk)
     response = get_view_for_user(
-        viewname="api:algorithms-job-list",
+        viewname="api:algorithms-job-detail",
         client=client,
-        user=u,
+        user=user,
+        reverse_kwargs={"pk": result.job.pk},
         content_type="application/json",
     )
     assert response.status_code == 200
-    assert response.json()["count"] == 1
-    assert j.status == 0
-    assert response.json()["results"][0]["status"] == "Queued"
+    assert job.status == 0
+    assert response.json()["status"] == "Queued"
     assert (
-        urlparse(response.json()["results"][0]["result"]).path
-        == urlparse(r.api_url).path
+        urlparse(response.json()["result"]).path
+        == urlparse(result.api_url).path
     )
