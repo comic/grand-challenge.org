@@ -128,13 +128,13 @@ function setCardAwaitingMessage(card, msg) {
     card.classList.replace("border-light", "border-primary");
     card.classList.remove("text-muted", "active");
     card.querySelector(".statusMessage").innerHTML = msg;
-    card.querySelector(".statusSymbol").innerHTML = "<div class=\"spinner-grow\" role=\"status\"><span class=\"sr-only\">Loading...</span></div>";
+    card.querySelector(".statusSymbol").innerHTML = "<div class=\"text-secondary spinner-grow\" role=\"status\"><span class=\"sr-only\">Loading...</span></div>";
 }
 
 function setCardActiveMessage(card, msg) {
     if (!card.classList.contains("active")) {
         card.classList.add("active");
-        card.querySelector(".statusSymbol").innerHTML = "<div class=\"spinner-border\" role=\"status\"><span class=\"sr-only\">Loading...</span></div>";
+        card.querySelector(".statusSymbol").innerHTML = "<div class=\"text-primary spinner-border\" role=\"status\"><span class=\"sr-only\">Loading...</span></div>";
     }
     card.querySelector(".statusMessage").innerHTML = msg;
 }
@@ -143,12 +143,12 @@ function setCardCompleteMessage(card, msg) {
     card.classList.remove("active");
     card.classList.replace("border-primary", "border-success");
     card.querySelector(".statusMessage").innerHTML = msg;
-    card.querySelector(".statusSymbol").innerHTML = "<i class=\"fa fa-check fa-2x\"></i>";
+    card.querySelector(".statusSymbol").innerHTML = "<i class=\"text-success fa fa-check fa-2x\"></i>";
 }
 
 function setCardErrorMessage(card, msg) {
     card.classList.remove("active", "text-muted", "border-primary", "border-success");
     card.classList.add("border-danger");
     card.querySelector(".statusMessage").innerHTML = msg;
-    card.querySelector(".statusSymbol").innerHTML = "<i class=\"fa fa-times fa-2x\"></i>";
+    card.querySelector(".statusSymbol").innerHTML = "<i class=\"text-danger fa fa-times fa-2x\"></i>";
 }

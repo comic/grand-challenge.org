@@ -34,7 +34,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Upload Images</h5>
                     <div class="text-center p-3">
-                        <i class="fa fa-check fa-2x"></i>
+                        <i class="text-success fa fa-check fa-2x"></i>
                     </div>
                 </div>
                 <a href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}" class="stretched-link"></a>
@@ -45,7 +45,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Importing Images</h5>
                     <div class="text-center p-3 statusSymbol">
-                        <i class="far fa-hourglass fa-2x"></i>
+                        <div class="text-secondary spinner-grow" role="status"><span class="sr-only">Loading...</span></div>
                     </div>
                     <p class="card-text statusMessage">Queued</p>
                 </div>
