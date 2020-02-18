@@ -37,6 +37,7 @@
                         <i class="fa fa-check fa-2x"></i>
                     </div>
                 </div>
+                <a href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}" class="stretched-link"></a>
             </div>
         </div>
         <div class="col-md-3 mb-3">
@@ -48,6 +49,7 @@
                     </div>
                     <p class="card-text statusMessage">Queued</p>
                 </div>
+                <a href="{{ object.get_absolute_url }}" class="stretched-link"></a>
             </div>
         </div>
         <div class="col-md-3 mb-3">
@@ -59,6 +61,7 @@
                     <p class="card-text statusMessage"></p>
                 </div>
             </div>
+            <a href="{% url 'algorithms:jobs-list' slug=algorithm.slug %}" class="stretched-link"></a>
         </div>
         <div class="col-md-3 mb-3">
             <div id="resultImportCard"
@@ -70,6 +73,7 @@
                     <p class="card-text statusMessage"></p>
                 </div>
             </div>
+            <a href="{% url 'algorithms:jobs-list' slug=algorithm.slug %}" class="stretched-link"></a>
         </div>
 
     </div>
