@@ -9,6 +9,8 @@ from typing import Sequence, Tuple
 from uuid import UUID
 
 from celery import shared_task
+from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db import transaction
 
 from grandchallenge.algorithms.models import Job
@@ -485,10 +487,20 @@ def _handle_unconsumed_files(
 
 
 def _delete_session_files(*, session_files):
+    dicom_group = Group.objects.get(
+        name=settings.DICOM_DATA_CREATORS_GROUP_NAME
+    )
+    users = dicom_group.user_set.values_list("username", flat=True)
     for file in session_files:
         try:
             if file.staged_file_id:
                 saf = StagedAjaxFile(file.staged_file_id)
+                if (
+                    not file.consumed
+                    and Path(file.filename).suffix == ".dcm"
+                    and file.creator.username in users
+                ):
+                    continue
                 file.staged_file_id = None
                 saf.delete()
             file.save()

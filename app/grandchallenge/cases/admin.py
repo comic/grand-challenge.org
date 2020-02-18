@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.safestring import mark_safe
 
 from grandchallenge.cases.models import (
     Image,
@@ -6,6 +7,7 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
+from grandchallenge.subdomains.utils import reverse
 
 
 class ImageFileInline(admin.StackedInline):
@@ -102,7 +104,35 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
             return obj.algorithm_result.job.algorithm_image.algorithm
 
 
+class DownloadableFilter(admin.SimpleListFilter):
+    """Allow filtering on downloadable files."""
+
+    title = "Downloadable"
+    parameter_name = "downloadable"
+
+    def lookups(self, request, model_admin):
+        return (("yes", "Yes"),)
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.filter(staged_file_id__isnull=False)
+        return queryset
+
+
+class RawImageFileAdmin(admin.ModelAdmin):
+    list_filter = (DownloadableFilter,)
+    list_display = ("filename", "upload_session", "download")
+    readonly_fields = ("download",)
+
+    def download(self, instance):
+        if not instance.staged_file_id:
+            return
+        return mark_safe(
+            f'<a class="button" href={reverse("api:upload-session-file-download", kwargs={"pk": instance.pk})}>Download</a>'
+        )
+
+
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageFile, ImageFileAdmin)
 admin.site.register(RawImageUploadSession, RawImageUploadSessionAdmin)
-admin.site.register(RawImageFile)
+admin.site.register(RawImageFile, RawImageFileAdmin)

@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.views.generic import DetailView
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -13,7 +13,7 @@ from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
 )
-from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.permissions import DjangoObjectPermissions, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -146,3 +146,26 @@ class RawImageFileViewSet(
     queryset = RawImageFile.objects.all()
     permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
     filter_backends = [ObjectPermissionsFilter]
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action == "download":
+            return [IsAdminUser()]
+        return super().get_permissions()
+
+    @action(detail=True, methods=["get"])
+    def download(self, request, pk=None):
+        rif = self.get_object()
+        try:
+            saf = StagedAjaxFile(rif.staged_file_id).open()
+            response = HttpResponse(
+                saf.read(), content_type="application/dicom"
+            )
+            response[
+                "Content-Disposition"
+            ] = f'attachment; filename="{rif.filename}"'
+            return response
+        except Exception:
+            raise Http404("File not found")
