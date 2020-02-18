@@ -127,9 +127,14 @@ class DataImporter(object):
                 trigger=row["Trigger for the analysis of data"],
                 market_since=str(row["Product on the market since"]),
                 countries=str(row["Number of countries present"]),
+                diseases=row["Disease(s) targeted"],
+                population=row["Population on which analysis is applied"],
                 distribution=str(
                     row["Distribution platforms/marketplaces availability"]
                 ),
+                software_usage=row[
+                    "Suggested use of software (before, during or after study assessment)"
+                ],
                 institutes_research=str(
                     row["Number of institutes using the product for research"]
                 ),

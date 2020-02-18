@@ -9,14 +9,16 @@ from django.views.generic.edit import FormView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.products.forms import ImportForm
-from grandchallenge.products.models import Company, Product
+from grandchallenge.products.models import Company, Product, Status
 from grandchallenge.products.utils import DataImporter
 
 
 class ProductList(ListView):
     model = Product
     context_object_name = "products"
-    queryset = Product.objects.order_by("-verified", "product_name")
+    queryset = Product.objects.filter(ce_status=Status.CERTIFIED).order_by(
+        "-verified", "company__company_name"
+    )
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -71,7 +73,7 @@ class ProductList(ListView):
             "All",
             "X-ray",
             "CT",
-            "MRI",
+            "MR",
             "Ultrasound",
             "Mammography",
             "PET",
@@ -139,9 +141,9 @@ class CompanyDetail(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        products_by_company = Product.objects.filter(
-            company=context["company"]
-        ).order_by("product_name")
+        products_by_company = self.object.product_set.order_by(
+            "ce_status", "product_name"
+        )
         context.update({"products_by_company": products_by_company})
 
         return context

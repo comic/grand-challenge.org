@@ -18,7 +18,7 @@
       <div class="col-sm-6">
         <header id="{{product.product_name}}">
           <h1 class="mb-1">{{product.product_name}}</h1>
-          <a href= "{% url 'products:company-detail' pk=product.company.pk %}" title={{product.company.company_name}} class="h5 u"><u>{{ product.company.company_name }}</u></a>
+          <a href= "{% url 'products:company-detail' pk=product.company.pk %}" title="{{product.company.company_name}}" class="h5 u"><u>{{ product.company.company_name }}</u></a>
           <br><br>
           {% include "products/partials/product_image_carousel.html" %}
         </header>
@@ -28,7 +28,7 @@
     <div class="row py-2">
       <div class="col-sm-9 py-2 ">
         <table class="table table-borderless">
-          <tr>{{ product.description }} </tr>
+          <tr>{{ product.description|linebreaksbr }} </tr>
         </table>
       </div>
     </div>
@@ -40,13 +40,13 @@
             <td class="h4 pl-0 text-radboud align-bottom">Product specifications</td>
             <td class="text-right pr-0 align-bottom"><small>
               <span class="text-muted">Information source:</span>
-              {% if product.verified == 'Yes' %}
+              {% if product.verified == 'yes' %}
                 <span>Vendor</span>
               {% else %}
                 <span>Public</span>
               {% endif %}<br>
               <span class="text-muted">Last updated:</span>
-              <span>{{product.modified}}</span>
+              <span>{{ product.modified }}</span>
             </small></td>
           </tr>
 
@@ -63,7 +63,7 @@
           </tr>
           <tr>
             <td class="text-muted">Company</td>
-            <td><a href= "{% url 'products:company-detail' pk=product.company.pk %}" title={{product.company.company_name}}><u>{{ product.company.company_name }}</u></a></td>
+            <td><a href= "{% url 'products:company-detail' pk=product.company.pk %}" title="{{product.company.company_name}}"><u>{{ product.company.company_name }}</u></a></td>
           </tr>
           <tr>
             <td class="text-muted">Subspeciality</td>
@@ -83,7 +83,7 @@
           </tr>
           <tr>
             <td class="text-muted">Suggested use</td>
-            <td>{{product.software_usage}}</td>
+            <td>{{product.software_usage|linebreaksbr}}</td>
           </tr>
           <thead class="thead-light">
             <tr>
@@ -193,15 +193,15 @@
           </thead>
           <tr>
             <td class="text-muted">Peer reviewed papers regarding performance as commercially available</td>
-            <td>{{product.tech_peer_papers}}</td>
+            <td>{{ product.tech_peer_papers|linebreaksbr }}</td>
           </tr>
           <tr>
             <td class="text-muted">Other papers regarding performance as commercially available</td>
-            <td>{{product.tech_other_papers}}</td>
+            <td>{{ product.tech_other_papers|linebreaksbr }}</td>
           </tr>
           <tr>
             <td class="text-muted">Other relevant papers</td>
-            <td>{{product.all_other_papers}}</td>
+            <td>{{ product.all_other_papers|linebreaksbr }}</td>
           </tr>
         </table>
       </div>
