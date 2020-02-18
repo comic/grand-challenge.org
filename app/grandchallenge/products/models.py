@@ -1,11 +1,12 @@
 from django.db import models
+from django.utils import timezone
 
 from grandchallenge.challenges.models import get_logo_path
 
 
 class Company(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
+    modified = models.DateTimeField(default=timezone.now)
     company_name = models.CharField(max_length=200)
     website = models.URLField()
     founded = models.IntegerField()
@@ -74,7 +75,7 @@ class Product(models.Model):
     }
 
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField()
+    modified = models.DateTimeField(default=timezone.now)
     product_name = models.CharField(max_length=200)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     short_name = models.CharField(
