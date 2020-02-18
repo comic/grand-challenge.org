@@ -149,9 +149,6 @@ class RawImageFileViewSet(
     filter_backends = [ObjectPermissionsFilter]
 
     def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
         if self.action == "download":
             return [IsAdminUser()]
         return super().get_permissions()
