@@ -321,9 +321,13 @@ class AlgorithmExecutionSessionCreate(
         )
 
 
-class AlgorithmExecutionSessionDetail(DetailView):
+class AlgorithmExecutionSessionDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = RawImageUploadSession
     template_name = "algorithms/executionsession_detail.html"
+    permission_required = "cases.view_rawimageuploadsession"
+    raise_exception = True
 
     @property
     def algorithm(self) -> Algorithm:
