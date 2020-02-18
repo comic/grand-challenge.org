@@ -161,6 +161,10 @@ class RawImageFile(UUIDModel):
     consumed = models.BooleanField(default=False)
 
     @property
+    def creator(self):
+        return self.upload_session.creator
+
+    @property
     def api_url(self):
         return reverse(
             "api:upload-session-file-detail", kwargs={"pk": self.pk}

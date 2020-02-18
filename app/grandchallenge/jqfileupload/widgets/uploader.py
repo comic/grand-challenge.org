@@ -247,11 +247,6 @@ class StagedAjaxFile:
         return chunks_query.first().client_filename
 
     @property
-    def creator(self):
-        chunks_query = self._raise_if_missing()
-        return chunks_query.first().creator
-
-    @property
     def exists(self):
         """True if the file has not been cleaned up yet."""
         return StagedFile.objects.filter(file_id=self.__uuid).exists()

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -157,7 +158,7 @@ class RawImageFileViewSet(
 
     @action(detail=True, methods=["get"])
     def download(self, request, pk=None):
-        rif = self.get_object()
+        rif = get_object_or_404(RawImageFile, pk=pk)
         try:
             saf = StagedAjaxFile(rif.staged_file_id).open()
             response = HttpResponse(

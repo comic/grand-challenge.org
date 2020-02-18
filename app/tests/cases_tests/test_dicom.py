@@ -46,7 +46,7 @@ def test_validate_dicom_files():
             )
 
 
-def test_image_builder_dicom():
+def test_image_builder_dicom_4dct():
     result = image_builder_dicom(DICOM_DIR)
     assert result.consumed_files == [f"{x}.dcm" for x in range(1, 77)]
 

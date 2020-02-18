@@ -498,7 +498,7 @@ def _delete_session_files(*, session_files):
                 if (
                     not file.consumed
                     and Path(file.filename).suffix == ".dcm"
-                    and file.creator.username in users
+                    and getattr(file.creator, "username", None) in users
                 ):
                     continue
                 file.staged_file_id = None
