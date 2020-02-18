@@ -1,6 +1,7 @@
 import pytest
 from guardian.utils import get_anonymous_user
 
+from grandchallenge.products.models import Status
 from tests.products_tests.factories import (
     CompanyFactory,
     ProductFactory,
@@ -10,7 +11,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_product_list(client):
-    product = ProductFactory()
+    product = ProductFactory(ce_status=Status.CERTIFIED)
 
     response = get_view_for_user(
         viewname="products:product-list",
