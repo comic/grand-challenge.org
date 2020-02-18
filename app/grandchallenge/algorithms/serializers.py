@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.fields import SerializerMethodField
+from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.algorithms.models import (
@@ -68,7 +68,18 @@ class JobSerializer(serializers.ModelSerializer):
     image = HyperlinkedRelatedField(
         queryset=Image.objects.all(), view_name="api:image-detail"
     )
+    status = CharField(source="get_status_display", read_only=True)
+    result = HyperlinkedRelatedField(
+        read_only=True, view_name="api:algorithms-result-detail"
+    )
 
     class Meta:
         model = Job
-        fields = ["pk", "api_url", "algorithm_image", "image"]
+        fields = [
+            "pk",
+            "api_url",
+            "algorithm_image",
+            "image",
+            "status",
+            "result",
+        ]
