@@ -323,8 +323,23 @@ class AlgorithmExecutionSessionCreate(
 
     def get_success_url(self):
         return reverse(
-            "algorithms:jobs-list", kwargs={"slug": self.kwargs["slug"]}
+            "algorithms:execution-session-detail",
+            kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
+
+
+class AlgorithmExecutionSessionDetail(DetailView):
+    model = RawImageUploadSession
+    template_name = "algorithms/executionsession_detail.html"
+
+    @property
+    def algorithm(self) -> Algorithm:
+        return Algorithm.objects.get(slug=self.kwargs["slug"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
 
 
 class AlgorithmJobsList(LoginRequiredMixin, PermissionListMixin, ListView):
