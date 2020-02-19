@@ -25,7 +25,7 @@ function handleUploadSessionStatus(statusUrl, cards, status, imageUrls) {
             }, Math.floor(Math.random() * timeout) + 100);
             break;
         case "succeeded":
-            let msg = "Imported " + imageUrls.length + " Image";
+            let msg = `Imported ${imageUrls.length} Image`;
             if (imageUrls.length < 1) {
                 setCardErrorMessage(cards.imageImport, "No Images Imported");
                 return;
