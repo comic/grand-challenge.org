@@ -37,7 +37,8 @@
                         <i class="text-success fa fa-check fa-2x"></i>
                     </div>
                 </div>
-                <a href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}" class="stretched-link"></a>
+                <a href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}"
+                   class="stretched-link"></a>
             </div>
         </div>
         <div class="col-md-3 mb-3">
@@ -45,11 +46,14 @@
                 <div class="card-body">
                     <h5 class="card-title">Importing Images</h5>
                     <div class="text-center p-3 statusSymbol">
-                        <div class="text-secondary spinner-grow" role="status"><span class="sr-only">Loading...</span></div>
+                        <div class="text-secondary spinner-grow" role="status"><span
+                                class="sr-only">Loading...</span></div>
                     </div>
-                    <p class="card-text statusMessage">Queued</p>
+                    <p class="card-text">
+                        <a href="{% url 'algorithms:jobs-list' slug=algorithm.slug %}"
+                           class="stretched-link statusMessage"></a>
+                    </p>
                 </div>
-                <a href="{{ object.get_absolute_url }}" class="stretched-link"></a>
             </div>
         </div>
         <div class="col-md-3 mb-3">
@@ -58,10 +62,12 @@
                     <h5 class="card-title">Running Algorithm</h5>
                     <div class="text-center p-3 statusSymbol">
                     </div>
-                    <p class="card-text statusMessage"></p>
+                    <p class="card-text">
+                        <a href="{% url 'algorithms:jobs-list' slug=algorithm.slug %}"
+                           class="stretched-link statusMessage"></a>
+                    </p>
                 </div>
             </div>
-            <a href="{% url 'algorithms:jobs-list' slug=algorithm.slug %}" class="stretched-link"></a>
         </div>
         <div class="col-md-3 mb-3">
             <div id="resultImportCard"
@@ -70,10 +76,12 @@
                     <h5 class="card-title">Importing Results</h5>
                     <div class="text-center p-3 statusSymbol">
                     </div>
-                    <p class="card-text statusMessage"></p>
+                    <p class="card-text">
+                        <a href="{% url 'algorithms:jobs-list' slug=algorithm.slug %}"
+                           class="stretched-link statusMessage"></a>
+                    </p>
                 </div>
             </div>
-            <a href="{% url 'algorithms:jobs-list' slug=algorithm.slug %}" class="stretched-link"></a>
         </div>
 
     </div>
@@ -88,7 +96,7 @@
     </script>
     <script type="text/javascript">
         (function () {
-            let cards = {
+            const cards = {
                 "imageImport": document.getElementById("imageImportCard"),
                 "job": document.getElementById("jobCard"),
                 "resultImport": document.getElementById("resultImportCard")

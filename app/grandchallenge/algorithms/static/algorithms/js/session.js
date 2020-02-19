@@ -108,7 +108,7 @@ function handleImportSessionsStatus(resultImportSessions, cards) {
     let importSessionUrls = resultImportSessions.map(s => s.api_url);
 
     if (importSessionStatuses.every(s => s === "succeeded")) {
-        setCardCompleteMessage(cards.resultImport, "");
+        setCardCompleteMessage(cards.resultImport, "View Results");
     } else if (importSessionStatuses.some(s => s === "started")) {
         setCardActiveMessage(cards.resultImport, "Started");
         setTimeout(function () {
