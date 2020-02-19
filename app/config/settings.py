@@ -232,6 +232,8 @@ STATICFILES_FINDERS = (
 )
 
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
+COMPRESS_OFFLINE = True
+LIBSASS_OUTPUT_STYLE = "compressed"
 
 # Vendored static files will be put here
 STATICFILES_DIRS = ["/opt/static/"]
