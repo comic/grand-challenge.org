@@ -56,8 +56,7 @@ WORKDIR /app
 COPY --chown=django:django ./app/ /app/
 COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 RUN python manage.py collectstatic --noinput \
-    && python manage.py compress --force \
-    && python manage.py collectstatic --noinput
+    && python manage.py compress --force
 
 ##################
 # Dist Container #
@@ -68,5 +67,4 @@ WORKDIR /app
 COPY --chown=django:django ./app/ /app/
 COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 RUN python manage.py collectstatic --noinput \
-    && python manage.py compress --force \
-    python manage.py collectstatic --noinput
+    && python manage.py compress --force

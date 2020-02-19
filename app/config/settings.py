@@ -226,15 +226,22 @@ STATIC_URL = f"{STATIC_HOST}/static/"
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
-    "compressor.finders.CompressorFinder",
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",
 )
 
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
-LIBSASS_OUTPUT_STYLE = "compressed"
+COMPRESS_STORAGE = "compressor.storage.BrotliCompressorFileStorage"
+COMPRESS_FILTERS = {
+    "css": [
+        "compressor.filters.css_default.CssAbsoluteFilter",
+        "compressor.filters.cssmin.rCSSMinFilter",
+    ],
+    "js": ["compressor.filters.jsmin.JSMinFilter"],
+}
 
 # Vendored static files will be put here
 STATICFILES_DIRS = ["/opt/static/"]
