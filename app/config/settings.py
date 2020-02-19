@@ -228,20 +228,7 @@ STATIC_URL = f"{STATIC_HOST}/static/"
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    "compressor.finders.CompressorFinder",
 )
-
-COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = True
-COMPRESS_STORAGE = "compressor.storage.BrotliCompressorFileStorage"
-COMPRESS_FILTERS = {
-    "css": [
-        "compressor.filters.css_default.CssAbsoluteFilter",
-        "compressor.filters.cssmin.rCSSMinFilter",
-    ],
-    "js": ["compressor.filters.jsmin.JSMinFilter"],
-}
 
 # Vendored static files will be put here
 STATICFILES_DIRS = ["/opt/static/"]
@@ -341,7 +328,6 @@ THIRD_PARTY_APPS = [
     "corsheaders",  # to allow api communication from subdomains
     "speedinfo",  # for profiling views
     "drf_yasg",
-    "compressor",  # for scss support
 ]
 
 LOCAL_APPS = [

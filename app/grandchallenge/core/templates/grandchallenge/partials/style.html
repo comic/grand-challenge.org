@@ -1,10 +1,7 @@
 {% load static %}
-{% load compress %}
 {% load placeFavicon from favtags %}
 
-{% compress css %}
-    <link type="text/x-scss" href="{% static 'css/base.scss' %}" rel="stylesheet" media="screen">
-{% endcompress %}
+<link type="text/css" href="{% static 'vendor/css/bootstrap.min.css' %}" rel="stylesheet" media="screen">
 
 <link rel="stylesheet" type="text/css"
       href="https://cdn.datatables.net/v/bs4/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/datatables.min.css"
