@@ -17,8 +17,9 @@
     "lazysizes": "^4.1.5"
   },
   "scripts": {
-    "build": "mkdir -p dist/js dist/css dist/fa/css dist/fa/webfonts && npm run copy:jquery && npm run copy:bootstrap && npm run copy:fontawesome",
-    "copy:bootstrap": "cp ./node_modules/bootstrap/dist/css/*.css ./dist/css/ && cp ./node_modules/bootstrap/dist/js/*.js ./dist/js/ ",
+    "build": "mkdir -p dist/js dist/css dist/scss/bootstrap dist/scss/flatly dist/fa/css dist/fa/webfonts && npm run copy:jquery && npm run copy:bootstrap && npm run copy:fontawesome && npm run copy:bootswatch",
+    "copy:bootstrap": "cp ./node_modules/bootstrap/dist/css/*.css ./dist/css/ && cp ./node_modules/bootstrap/dist/js/*.js ./dist/js/ && cp -r ./node_modules/bootstrap/scss/ ./dist/scss/bootstrap",
+    "copy:bootswatch": "cp ./node_modules/bootswatch/dist/flatly/*.scss ./dist/scss/flatly/",
     "copy:jquery": "cp ./node_modules/jquery/dist/jquery*.js ./dist/js/",
     "copy:fontawesome": "cp ./node_modules/@fortawesome/fontawesome-free/css/*.css ./dist/fa/css/ && cp ./node_modules/@fortawesome/fontawesome-free/webfonts/*.* ./dist/fa/webfonts/"
   },

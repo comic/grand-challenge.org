@@ -64,6 +64,8 @@ pandas = "^1.0.1"
 xlrd = "^1.2.0"
 django-celery-beat = "!=1.6.0"
 django-guardian = "!=2.2.0"
+django_compressor = "^2.4"
+django-libsass = "^0.8"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

@@ -226,9 +226,12 @@ STATIC_URL = f"{STATIC_HOST}/static/"
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = (
+    "compressor.finders.CompressorFinder",
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 )
+
+COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 # Vendored static files will be put here
 STATICFILES_DIRS = ["/opt/static/"]
@@ -328,6 +331,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",  # to allow api communication from subdomains
     "speedinfo",  # for profiling views
     "drf_yasg",
+    "compressor",  # for scss support
 ]
 
 LOCAL_APPS = [
