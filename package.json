@@ -20,8 +20,8 @@
     "sass": "^1.25.0"
   },
   "scripts": {
-    "build": "mkdir -p dist/js dist/fa/css dist/fa/webfonts && npm run copy:jquery && npm run copy:bootstrap && npm run copy:fontawesome && npm run sass:build",
-    "copy:bootstrap": "cp ./node_modules/bootstrap/dist/js/*.js ./dist/js/",
+    "build": "mkdir -p dist/js dist/css dist/fa/css dist/fa/webfonts && npm run copy:jquery && npm run copy:bootstrap && npm run copy:fontawesome && npm run sass:build",
+    "copy:bootstrap": "cp ./node_modules/bootstrap/dist/css/*.css ./dist/css/ && cp ./node_modules/bootstrap/dist/js/*.js ./dist/js/",
     "copy:jquery": "cp ./node_modules/jquery/dist/jquery*.js ./dist/js/",
     "copy:fontawesome": "cp ./node_modules/@fortawesome/fontawesome-free/css/*.css ./dist/fa/css/ && cp ./node_modules/@fortawesome/fontawesome-free/webfonts/*.* ./dist/fa/webfonts/",
     "sass:build": "sass /src/base.scss ./dist/css/base.min.css -s compressed"
