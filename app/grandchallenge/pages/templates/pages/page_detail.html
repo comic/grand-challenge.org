@@ -23,8 +23,6 @@
                     <br>
                     <a class="btn btn-primary"
                        href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}"
-                       data-toggle="tooltip"
-                       data-placement="bottom"
                        title="Edit this page"
                     >
                         <i class="fas fa-edit"></i>
@@ -53,11 +51,4 @@
     {# render embeddable google forums #}
     <script type="text/javascript"
             src="{% static "js/embed_forums.js" %}"></script>
-
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
 {% endblock %}

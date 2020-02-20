@@ -56,8 +56,6 @@
                         <p class="card-text">{{ algorithm.description }}</p>
                         <a href="{{ algorithm.get_absolute_url }}"
                            class="btn btn-primary mt-auto mr-auto"
-                           data-toggle="tooltip"
-                           data-placement="bottom"
                            title="View Algorithm">
                             <i class="fa fa-eye"></i>
                         </a>
@@ -71,14 +69,4 @@
         <p>You do not have permission to view any of the algorithms.</p>
     {% endif %}
 
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
 {% endblock %}
