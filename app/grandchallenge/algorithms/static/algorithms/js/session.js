@@ -87,7 +87,7 @@ function getResults(resultUrls, cards) {
 
     Promise.all(resultUrls.map(url => fetch(url).then(response => response.json()))
     ).then(results => {
-        let resultImportSessionUrls = results.map(r => r.rawimageuploadsession).filter(s => s !== null);
+        let resultImportSessionUrls = results.map(r => r.import_session).filter(s => s !== null);
         if (resultImportSessionUrls.length > 0) {
             getResultImportStatus(resultImportSessionUrls, cards);
         } else {

@@ -1,11 +1,11 @@
 // Defined in flatly/variables
-$gray-600: #95a5a6 !default;
+$gray-500: #b4bcc2 !default;
 $blue:    #2C3E50 !default;
 $cyan: #3498DB !default;
 
 // Override flatly success colours
 $link-color: $cyan !default;
-$navbar-dark-hover-color: $gray-600 !default;
+$navbar-dark-hover-color: $gray-500 !default;
 $pagination-bg: $blue !default;
 $pagination-hover-bg: darken($blue, 15%) !default;
 $pagination-disabled-bg: lighten($blue, 15%) !default;

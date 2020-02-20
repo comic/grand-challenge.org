@@ -55,8 +55,10 @@ class ResultSerializer(serializers.ModelSerializer):
     images = HyperlinkedRelatedField(
         many=True, read_only=True, view_name="api:image-detail"
     )
-    rawimageuploadsession = HyperlinkedRelatedField(
-        read_only=True, view_name="api:upload-session-detail"
+    import_session = HyperlinkedRelatedField(
+        source="rawimageuploadsession",
+        read_only=True,
+        view_name="api:upload-session-detail",
     )
 
     class Meta:
@@ -67,7 +69,7 @@ class ResultSerializer(serializers.ModelSerializer):
             "job",
             "images",
             "output",
-            "rawimageuploadsession",
+            "import_session",
         ]
 
 
