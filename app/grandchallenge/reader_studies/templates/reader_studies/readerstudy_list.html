@@ -6,7 +6,8 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item active" aria-current="page">Reader Studies
         </li>
     </ol>
@@ -26,11 +27,13 @@
     <div class="card-columns">
         {% for reader_study in object_list %}
             <div class="card">
-                <a href="{{ reader_study.get_absolute_url }}">
-                    <img class="card-img-top img-fluid"
-                         src="{{ reader_study.logo.url }}"
-                         alt="{{ reader_study }} Logo">
-                </a>
+                <div class="embed-responsive embed-responsive-1by1">
+                    <a href="{{ reader_study.get_absolute_url }}">
+                        <img class="card-img-top embed-responsive-item"
+                             src="{{ reader_study.logo.url }}"
+                             alt="{{ reader_study }} Logo">
+                    </a>
+                </div>
                 <div class="card-body">
                     <h5 class="card-title">{{ reader_study.title }}</h5>
                     <p class="card-text">{{ reader_study.description }}</p>
