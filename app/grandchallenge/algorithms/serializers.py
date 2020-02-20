@@ -8,6 +8,7 @@ from grandchallenge.algorithms.models import (
     Job,
     Result,
 )
+from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
 
 
@@ -93,3 +94,6 @@ class JobSerializer(serializers.ModelSerializer):
             "result",
             "status",
         ]
+        swagger_schema_fields = swagger_schema_fields_for_charfield(
+            status=model._meta.get_field("status")
+        )
