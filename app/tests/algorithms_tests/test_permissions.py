@@ -10,6 +10,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmResultFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.factories import UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
 
@@ -67,6 +68,29 @@ def test_algorithm_create_page(client, settings):
         viewname="algorithms:create", client=client, user=user
     )
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_algorithm_execution_session_detail(client):
+    u1, u2 = UserFactory(), UserFactory()
+    a = AlgorithmImageFactory()
+    s = RawImageUploadSessionFactory(algorithm_image=a, creator=u1)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="algorithms:execution-session-detail",
+        reverse_kwargs={"slug": a.algorithm.slug, "pk": s.pk},
+        user=u1,
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        client=client,
+        viewname="algorithms:execution-session-detail",
+        reverse_kwargs={"slug": a.algorithm.slug, "pk": s.pk},
+        user=u2,
+    )
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db
