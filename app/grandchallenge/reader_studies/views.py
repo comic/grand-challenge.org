@@ -12,6 +12,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import (
     CreateView,
@@ -209,7 +210,7 @@ class QuestionUpdate(
 
     @property
     def reader_study(self):
-        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -245,7 +246,7 @@ class BaseAddObjectToReaderStudyMixin(
 
     @property
     def reader_study(self):
-        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -353,7 +354,7 @@ class ReaderStudyUserGroupUpdateMixin(
 
     @property
     def reader_study(self):
-        return ReaderStudy.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

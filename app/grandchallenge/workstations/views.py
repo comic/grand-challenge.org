@@ -170,7 +170,7 @@ class WorkstationGroupUpdateMixin(
 
     @property
     def workstation(self):
-        return Workstation.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Workstation, slug=self.kwargs["slug"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -219,7 +219,7 @@ class WorkstationImageCreate(
 
     @property
     def workstation(self):
-        return Workstation.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Workstation, slug=self.kwargs["slug"])
 
     def get_permission_object(self):
         return self.workstation
@@ -291,7 +291,7 @@ class SessionCreate(
 
     @property
     def workstation(self):
-        return Workstation.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Workstation, slug=self.kwargs["slug"])
 
     def get_permission_object(self):
         return self.workstation

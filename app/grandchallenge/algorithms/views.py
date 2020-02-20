@@ -15,7 +15,7 @@ from django.core.exceptions import (
 )
 from django.forms.utils import ErrorList
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -190,7 +190,7 @@ class AlgorithmUserGroupUpdateMixin(
 
     @property
     def algorithm(self):
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -234,7 +234,7 @@ class AlgorithmImageCreate(
 
     @property
     def algorithm(self):
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_permission_object(self):
         return self.algorithm
@@ -289,7 +289,7 @@ class AlgorithmExecutionSessionCreate(
 
     @property
     def algorithm(self) -> Algorithm:
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_permission_object(self):
         return self.algorithm
@@ -331,7 +331,7 @@ class AlgorithmExecutionSessionDetail(
 
     @property
     def algorithm(self) -> Algorithm:
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -345,7 +345,7 @@ class AlgorithmJobsList(LoginRequiredMixin, PermissionListMixin, ListView):
 
     @property
     def algorithm(self) -> Algorithm:
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -411,7 +411,7 @@ class AlgorithmPermissionRequestCreate(
 
     @property
     def algorithm(self):
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_success_url(self):
         return self.algorithm.get_absolute_url()
@@ -453,7 +453,7 @@ class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
 
     @property
     def algorithm(self):
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_permission_object(self):
         return self.algorithm
@@ -475,7 +475,7 @@ class AlgorithmPermissionRequestUpdate(SuccessMessageMixin, UpdateView):
 
     @property
     def algorithm(self) -> Algorithm:
-        return Algorithm.objects.get(slug=self.kwargs["slug"])
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def form_valid(self, form):
         permission_request = self.get_object()
