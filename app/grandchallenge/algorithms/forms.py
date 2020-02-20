@@ -28,7 +28,7 @@ from grandchallenge.workstations.models import Workstation
 
 
 class AlgorithmForm(SaveFormInitMixin, ModelForm):
-    description = MarkdownxFormField()
+    description = MarkdownxFormField(required=False)
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)

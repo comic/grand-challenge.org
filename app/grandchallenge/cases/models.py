@@ -166,7 +166,13 @@ class RawImageFile(UUIDModel):
 
 
 def image_file_path(instance, filename):
-    return f"{settings.IMAGE_FILES_SUBDIRECTORY}/{instance.image.pk}/{get_valid_filename(filename)}"
+    return (
+        f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
+        f"{str(instance.image.pk)[0:2]}/"
+        f"{str(instance.image.pk)[2:4]}/"
+        f"{instance.image.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
 
 
 class Image(UUIDModel):
@@ -456,8 +462,13 @@ class FolderUpload:
 
     def destination_filename(self, file_path):
         return (
-            f"{settings.IMAGE_FILES_SUBDIRECTORY}/{self.image.pk}/"
-            f"{file_path.parent.parent.stem}/{file_path.parent.stem}/{file_path.name}"
+            f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
+            f"{str(self.image.pk)[0:2]}/"
+            f"{str(self.image.pk)[2:4]}/"
+            f"{self.image.pk}/"
+            f"{file_path.parent.parent.stem}/"
+            f"{file_path.parent.stem}/"
+            f"{file_path.name}"
         )
 
     def save(self):
