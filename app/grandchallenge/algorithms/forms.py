@@ -12,6 +12,7 @@ from django.forms import (
 )
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
+from markdownx.fields import MarkdownxFormField
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -27,6 +28,8 @@ from grandchallenge.workstations.models import Workstation
 
 
 class AlgorithmForm(SaveFormInitMixin, ModelForm):
+    description = MarkdownxFormField()
+
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["workstation"].queryset = get_objects_for_user(

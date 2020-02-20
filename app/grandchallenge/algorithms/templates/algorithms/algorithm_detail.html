@@ -4,6 +4,7 @@
 {% load url %}
 {% load user_profile_link from profiles %}
 {% load guardian_tags %}
+{% load bleach %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -25,7 +26,7 @@
 
     <h2>{{ object.title }}</h2>
 
-    <p>{{ object.description }}</p>
+    {{ object.description|md2html }}
 
     {% if object.contact_information %}
         <h3 class="h4">Contact information</h3>

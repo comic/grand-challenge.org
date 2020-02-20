@@ -328,6 +328,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",  # to allow api communication from subdomains
     "speedinfo",  # for profiling views
     "drf_yasg",
+    "markdownx",  # for editing markdown
 ]
 
 LOCAL_APPS = [
@@ -480,6 +481,11 @@ BLEACH_ALLOWED_ATTRIBUTES = {
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
+
+# The markdown processor
+MARKDOWNX_MARKDOWNIFY_FUNCTION = (
+    "grandchallenge.core.templatetags.bleach.md2html"
+)
 
 AUTH_PASSWORD_VALIDATORS = [
     {

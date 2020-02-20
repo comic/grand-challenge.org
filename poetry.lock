@@ -459,6 +459,19 @@ version = "2.1.0"
 
 [[package]]
 category = "main"
+description = "A comprehensive Markdown editor built for Django."
+name = "django-markdownx"
+optional = false
+python-versions = "*"
+version = "3.0.1"
+
+[package.dependencies]
+Django = "*"
+Markdown = "*"
+Pillow = "*"
+
+[[package]]
+category = "main"
 description = "Select2 option fields for Django"
 name = "django-select2"
 optional = false
@@ -856,6 +869,20 @@ version = "2.6.1"
 [package.dependencies]
 six = "*"
 tornado = "*"
+
+[[package]]
+category = "main"
+description = "Python implementation of Markdown."
+name = "markdown"
+optional = false
+python-versions = ">=3.5"
+version = "3.2.1"
+
+[package.dependencies]
+setuptools = ">=36"
+
+[package.extras]
+testing = ["coverage", "pyyaml"]
 
 [[package]]
 category = "main"
@@ -1855,7 +1882,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "90594ec431744aec215b6b480e20f0f3b9adc6ca35b8e5b96e24828fa5b25acb"
+content-hash = "a7dcaddfc6d62b180f80faf2a8afc82fa74e888e7d9251ebe889fa59de1266e5"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -2100,6 +2127,10 @@ django-guardian = [
     {file = "django-guardian-2.1.0.tar.gz", hash = "sha256:8cf4efd67a863eb32beafd4335a38ffb083630f8ab2045212d27f8f9c3abe5a6"},
     {file = "django_guardian-2.1.0-py3-none-any.whl", hash = "sha256:e638c9a23eeac534bb68b133975539ed8782f733ab6f35c0b23b4c39cd06b1bb"},
 ]
+django-markdownx = [
+    {file = "django-markdownx-3.0.1.tar.gz", hash = "sha256:e18e395cad0ade96afbb250a81cad15618e417ac3c0d9c37d964be3d8fd57bcf"},
+    {file = "django_markdownx-3.0.1-py2.py3-none-any.whl", hash = "sha256:f4d8998618c0548bf5349713d805e7440684d70116de0f10413932286c4e375f"},
+]
 django-select2 = [
     {file = "django-select2-7.2.0.tar.gz", hash = "sha256:4c531cb7e9eb4152c7e5f8ab83be386f46978b3d80e91e55ad1fb46382222a0b"},
     {file = "django_select2-7.2.0-py2.py3-none-any.whl", hash = "sha256:d17bb0e64503a7e52ba405f73a187664906cefda5f1c33971c67ab0b3891e91c"},
@@ -2258,6 +2289,10 @@ kombu = [
 livereload = [
     {file = "livereload-2.6.1-py2.py3-none-any.whl", hash = "sha256:78d55f2c268a8823ba499305dcac64e28ddeb9a92571e12d543cd304faf5817b"},
     {file = "livereload-2.6.1.tar.gz", hash = "sha256:89254f78d7529d7ea0a3417d224c34287ebfe266b05e67e51facaf82c27f0f66"},
+]
+markdown = [
+    {file = "Markdown-3.2.1-py2.py3-none-any.whl", hash = "sha256:e4795399163109457d4c5af2183fbe6b60326c17cfdf25ce6e7474c6624f725d"},
+    {file = "Markdown-3.2.1.tar.gz", hash = "sha256:90fee683eeabe1a92e149f7ba74e5ccdc81cd397bd6c516d93a8da0ef90b6902"},
 ]
 markupsafe = [
     {file = "MarkupSafe-1.1.1-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:09027a7803a62ca78792ad89403b1b7a73a01c8cb65909cd876f7fcebd79b161"},
