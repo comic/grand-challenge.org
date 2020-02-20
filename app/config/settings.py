@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
 
 import sentry_sdk
@@ -483,6 +483,11 @@ BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
 BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
 
 # The markdown processor
+MARKDOWNX_MEDIA_PATH = datetime.now().strftime("i/%Y/%m/%d/")
+MARKDOWNX_MARKDOWN_EXTENSIONS = [
+    "markdown.extensions.fenced_code",
+    "markdown.extensions.tables",
+]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"
 )
