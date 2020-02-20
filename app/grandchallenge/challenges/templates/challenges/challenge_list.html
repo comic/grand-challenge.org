@@ -415,7 +415,7 @@
                                            href="{% firstof challenge.publication_url '#' %}"
                                            title="Article">
                                             <i class="fas fa-file fa-fw"></i>
-                                            {% firstof challenge.publication_journal_name challenge.publication_url %}
+                                            {% firstof challenge.publication_journal_name "Article" %}
                                         </a>
                                     {% endif %}
 
