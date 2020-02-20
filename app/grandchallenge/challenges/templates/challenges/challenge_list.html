@@ -335,19 +335,21 @@
                     {% for challenge in challenges %}
                         <div class="col-12 col-md-6 col-lg-4 mb-3 px-2 projectlink {{ challenge.filter_classes|join:" " }}">
                             <div class="card">
-                                <a id="{{ challenge.short_name }}"
-                                   title="{% firstof challenge.title challenge.short_name %}"
-                                   href="{{ challenge.get_absolute_url }}">
-                                    <img class="card-img-top img-fluid lazyload"
-                                         alt="{{ challenge.short_name }} logo"
-                                         src="{% static 'images/3697E1-0.8.png' %}"
-                                            {% if challenge.logo %}
-                                         data-src="{{ challenge.logo.url }}"
-                                            {% else %}
-                                         data-src="{{ challenge.gravatar_url }}"
-                                            {% endif %}
-                                    >
-                                </a>
+                                <div class="embed-responsive embed-responsive-1by1">
+                                    <a id="{{ challenge.short_name }}"
+                                       title="{% firstof challenge.title challenge.short_name %}"
+                                       href="{{ challenge.get_absolute_url }}">
+                                        <img class="card-img-top embed-responsive-item lazyload"
+                                             alt="{{ challenge.short_name }} logo"
+                                             src="{% static 'images/3697E1-0.8.png' %}"
+                                                {% if challenge.logo %}
+                                             data-src="{{ challenge.logo.url }}"
+                                                {% else %}
+                                             data-src="{{ challenge.gravatar_url }}"
+                                                {% endif %}
+                                        >
+                                    </a>
+                                </div>
 
                                 <div class="card-body">
                                     <h5 class="card-title text-truncate mb-0">

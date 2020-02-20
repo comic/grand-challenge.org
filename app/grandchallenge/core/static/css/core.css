@@ -15,6 +15,11 @@ html {
     margin-right: 0;
 }
 
+/* for square images */
+.embed-responsive .card-img-top {
+    object-fit: cover;
+}
+
 /* for responsive card-decks */
 .row.equal-height {
     display: flex;

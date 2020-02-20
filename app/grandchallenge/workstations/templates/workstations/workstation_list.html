@@ -7,7 +7,8 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item active" aria-current="page">Workstations
         </li>
     </ol>
@@ -19,11 +20,13 @@
     <div class="card-columns">
         {% for workstation in workstation_list %}
             <div class="card">
-                <a href="{{ workstation.get_absolute_url }}">
-                    <img class="card-img-top img-fluid"
-                         src="{{ workstation.logo.url }}"
-                         alt="{{ workstation }} Logo">
-                </a>
+                <div class="embed-responsive embed-responsive-1by1">
+                    <a href="{{ workstation.get_absolute_url }}">
+                        <img class="card-img-top embed-responsive-item"
+                             src="{{ workstation.logo.url }}"
+                             alt="{{ workstation }} Logo">
+                    </a>
+                </div>
                 <div class="card-body">
                     <h5 class="card-title">{{ workstation.title }}</h5>
                     <p class="card-text">{{ workstation.description }}</p>
