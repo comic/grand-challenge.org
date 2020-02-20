@@ -68,6 +68,7 @@ class ReaderStudyList(PermissionListMixin, ListView):
     permission_required = (
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
+    ordering = "-created"
 
 
 class ReaderStudyCreate(

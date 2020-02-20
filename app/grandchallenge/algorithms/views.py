@@ -84,6 +84,7 @@ class AlgorithmList(PermissionListMixin, ListView):
     permission_required = {
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     }
+    ordering = "-created"
 
 
 class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):

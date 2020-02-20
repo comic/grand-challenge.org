@@ -26,6 +26,12 @@ html {
     flex-wrap: wrap;
 }
 
+/* Alignment for card columns with px-2 cards */
+.row.equal-height.no-gutters {
+    margin-left: -8px;
+    margin-right: -8px;
+}
+
 .row.equal-height > [class*='col-'] {
     display: flex;
     flex-direction: column;
