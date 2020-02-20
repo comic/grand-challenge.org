@@ -40,6 +40,7 @@ ENV PATH="/opt/poetry/.venv/bin:$PATH"
 FROM node:11-alpine as npm
 RUN mkdir /src
 COPY package.json /src/
+COPY ./app/grandchallenge/core/static/css/base.scss /src/base.scss
 WORKDIR /src
 
 RUN npm install && npm run build

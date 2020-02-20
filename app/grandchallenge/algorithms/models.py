@@ -405,7 +405,9 @@ class AlgorithmExecutor(Executor):
 
         # Create the upload session but do not save it until we have the
         # files
-        upload_session = RawImageUploadSession(algorithm_result=result)
+        upload_session = RawImageUploadSession(
+            algorithm_result=result, creator=result.job.creator
+        )
 
         images = []
 

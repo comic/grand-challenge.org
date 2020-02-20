@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from grandchallenge.cases.forms import UploadRawImagesForm
@@ -31,13 +32,15 @@ class AddImagesToImageSet(UserIsStaffMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        imageset = ImageSet.objects.get(pk=self.kwargs["pk"])
+        imageset = get_object_or_404(ImageSet, pk=self.kwargs["pk"])
         context.update({"phase_display": imageset.get_phase_display()})
         return context
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.imageset = ImageSet.objects.get(pk=self.kwargs["pk"])
+        form.instance.imageset = get_object_or_404(
+            ImageSet, pk=self.kwargs["pk"]
+        )
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -68,7 +71,9 @@ class AnnotationSetCreate(UserIsStaffMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.base = ImageSet.objects.get(pk=self.kwargs["base_pk"])
+        form.instance.base = get_object_or_404(
+            ImageSet, pk=self.kwargs["base_pk"]
+        )
         return super().form_valid(form=form)
 
     def get_success_url(self):
@@ -84,7 +89,7 @@ class AnnotationSetCreate(UserIsStaffMixin, CreateView):
 class AnnotationSetUpdateContextMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        annotationset = AnnotationSet.objects.get(pk=self.kwargs["pk"])
+        annotationset = get_object_or_404(AnnotationSet, pk=self.kwargs["pk"])
         context.update(
             {
                 "kind_display": annotationset.get_kind_display(),
@@ -108,7 +113,7 @@ class AddImagesToAnnotationSet(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        annotationset = AnnotationSet.objects.get(pk=self.kwargs["pk"])
+        annotationset = get_object_or_404(AnnotationSet, pk=self.kwargs["pk"])
         context.update(
             {
                 "kind_display": annotationset.get_kind_display(),
@@ -119,8 +124,8 @@ class AddImagesToAnnotationSet(
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.annotationset = AnnotationSet.objects.get(
-            pk=self.kwargs["pk"]
+        form.instance.annotationset = get_object_or_404(
+            AnnotationSet, pk=self.kwargs["pk"]
         )
         return super().form_valid(form)
 

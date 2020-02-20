@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db.models import Q
 from django.forms.utils import ErrorList
+from django.shortcuts import get_object_or_404
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -94,7 +95,7 @@ class TeamMemberCreate(UserIsChallengeParticipantOrAdminMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        form.instance.team = Team.objects.get(pk=self.kwargs["pk"])
+        form.instance.team = get_object_or_404(Team, pk=self.kwargs["pk"])
         try:
             return super().form_valid(form)
 

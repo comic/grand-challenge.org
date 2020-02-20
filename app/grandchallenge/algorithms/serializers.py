@@ -8,6 +8,7 @@ from grandchallenge.algorithms.models import (
     Job,
     Result,
 )
+from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
 
 
@@ -54,10 +55,22 @@ class ResultSerializer(serializers.ModelSerializer):
     images = HyperlinkedRelatedField(
         many=True, read_only=True, view_name="api:image-detail"
     )
+    import_session = HyperlinkedRelatedField(
+        source="rawimageuploadsession",
+        read_only=True,
+        view_name="api:upload-session-detail",
+    )
 
     class Meta:
         model = Result
-        fields = ["pk", "api_url", "job", "images", "output"]
+        fields = [
+            "pk",
+            "api_url",
+            "job",
+            "images",
+            "output",
+            "import_session",
+        ]
 
 
 class JobSerializer(serializers.ModelSerializer):
@@ -80,6 +93,9 @@ class JobSerializer(serializers.ModelSerializer):
             "api_url",
             "algorithm_image",
             "image",
-            "status",
             "result",
+            "status",
         ]
+        swagger_schema_fields = swagger_schema_fields_for_charfield(
+            status=model._meta.get_field("status")
+        )
