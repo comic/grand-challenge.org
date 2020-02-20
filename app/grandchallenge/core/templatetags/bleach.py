@@ -1,3 +1,5 @@
+from typing import Union
+
 import bleach
 from django import template
 from django.conf import settings
@@ -23,6 +25,6 @@ def clean(html: str):
 
 
 @register.filter
-def md2html(html: str):
+def md2html(html: Union[str, None]):
     """Convert markdown to clean html"""
-    return clean(markdownify(html))
+    return clean(markdownify(html or ""))
