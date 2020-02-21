@@ -83,6 +83,7 @@ urlpatterns = [
         "policies/",
         include("grandchallenge.policies.urls", namespace="policies"),
     ),
+    path("markdownx/", include("markdownx.urls")),
     path(
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),

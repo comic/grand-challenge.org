@@ -31,26 +31,35 @@
         if you would like to make your own algorithm available here.
     </p>
 
-    <div class="card-columns">
+    {% if perms.algorithms.add_algorithm %}
+        <p>
+            <a href="{% url "algorithms:create" %}"
+               class="btn btn-primary">
+                <i class="fa fa-plus"></i> Add a new algorithm
+            </a>
+        </p>
+    {% endif %}
+
+    <div class="row equal-height mx-n2">
         {% for algorithm in object_list %}
-            <div class="card">
-                <div class="embed-responsive embed-responsive-1by1">
-                    <a href="{{ algorithm.get_absolute_url }}">
-                        <img class="card-img-top embed-responsive-item"
-                             src="{{ algorithm.logo.url }}"
-                             alt="{{ algorithm }} Logo">
-                    </a>
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ algorithm.title }}</h5>
-                    <p class="card-text">{{ algorithm.description }}</p>
-                    <a href="{{ algorithm.get_absolute_url }}"
-                       class="btn btn-primary"
-                       data-toggle="tooltip"
-                       data-placement="bottom"
-                       title="View Algorithm">
-                        <i class="fa fa-eye"></i>
-                    </a>
+            <div class="col-12 col-md-6 col-lg-4 mb-3 px-2">
+                <div class="card">
+                    <div class="embed-responsive embed-responsive-1by1">
+                        <a href="{{ algorithm.get_absolute_url }}">
+                            <img class="card-img-top embed-responsive-item"
+                                 src="{{ algorithm.logo.url }}"
+                                 alt="{{ algorithm }} Logo">
+                        </a>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ algorithm.title }}</h5>
+                        <p class="card-text">{{ algorithm.description }}</p>
+                        <a href="{{ algorithm.get_absolute_url }}"
+                           class="btn btn-primary mt-auto mr-auto"
+                           title="View Algorithm">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         {% endfor %}
@@ -60,23 +69,4 @@
         <p>You do not have permission to view any of the algorithms.</p>
     {% endif %}
 
-    {% if perms.algorithms.add_algorithm %}
-        <p class="mt-3">
-            <a href="{% url "algorithms:create" %}"
-               class="btn btn-primary">
-                <i class="fa fa-plus"></i> Add a new algorithm
-            </a>
-        </p>
-    {% endif %}
-
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
 {% endblock %}

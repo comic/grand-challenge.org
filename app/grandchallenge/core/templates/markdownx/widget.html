@@ -1,0 +1,29 @@
+<div class="markdownx row">
+
+    <div class="col-md-6">
+        <markdown-toolbar for="{{ widget.attrs.id }}">
+            <md-header class="btn btn-sm" title="Heading"><i class="fas fa-heading"></i></md-header>
+            <md-bold class="btn btn-sm" title="Bold"><i class="fas fa-bold"></i></md-bold>
+            <md-italic class="btn btn-sm" title="Italic"><i class="fas fa-italic"></i></md-italic>
+            <md-unordered-list class="btn btn-sm" title="Unordered List"><i class="fas fa-list-ul"></i>
+            </md-unordered-list>
+            <md-ordered-list class="btn btn-sm" title="Ordered List"><i class="fas fa-list-ol"></i>
+            </md-ordered-list>
+            <md-code class="btn btn-sm" title="Inline Code"><i class="fas fa-code"></i></md-code>
+            <md-link class="btn btn-sm" title="Link"><i class="fas fa-link"></i></md-link>
+        </markdown-toolbar>
+
+        {% include 'django/forms/widgets/textarea.html' %}
+
+        <p class="text-muted m-0 small">
+            You can use
+            <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet" target="_blank">markdown syntax</a>
+            here. Drag and drop images to upload them to the server.
+        </p>
+    </div>
+
+    <div class="col-md-6">
+        <h5 class="p-0">Preview</h5>
+        <div class="markdownx-preview"></div>
+    </div>
+</div>

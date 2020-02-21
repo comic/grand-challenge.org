@@ -24,26 +24,35 @@
         if you would like to set up your own reader study.
     </p>
 
-    <div class="card-columns">
+    {% if perms.reader_studies.add_readerstudy %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'reader-studies:create' %}">
+                <i class="fas fa-plus"></i> Add a new reader study
+            </a>
+        </p>
+    {% endif %}
+
+    <div class="row equal-height mx-n2">
         {% for reader_study in object_list %}
-            <div class="card">
-                <div class="embed-responsive embed-responsive-1by1">
-                    <a href="{{ reader_study.get_absolute_url }}">
-                        <img class="card-img-top embed-responsive-item"
-                             src="{{ reader_study.logo.url }}"
-                             alt="{{ reader_study }} Logo">
-                    </a>
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ reader_study.title }}</h5>
-                    <p class="card-text">{{ reader_study.description }}</p>
-                    <a href="{{ reader_study.get_absolute_url }}"
-                       class="btn btn-primary"
-                       data-toggle="tooltip"
-                       data-placement="bottom"
-                       title="View Reader Study">
-                        <i class="fa fa-eye"></i>
-                    </a>
+            <div class="col-12 col-md-6 col-lg-4 mb-3 px-2">
+                <div class="card">
+                    <div class="embed-responsive embed-responsive-1by1">
+                        <a href="{{ reader_study.get_absolute_url }}">
+                            <img class="card-img-top embed-responsive-item"
+                                 src="{{ reader_study.logo.url }}"
+                                 alt="{{ reader_study }} Logo">
+                        </a>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ reader_study.title }}</h5>
+                        <p class="card-text">{{ reader_study.description }}</p>
+                        <a href="{{ reader_study.get_absolute_url }}"
+                           class="btn btn-primary mt-auto mr-auto"
+                           title="View Reader Study">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         {% endfor %}
@@ -53,23 +62,4 @@
         <p>You do not have permission to view any of the reader studies.</p>
     {% endif %}
 
-    {% if perms.reader_studies.add_readerstudy %}
-        <p class="mt-3">
-            <a class="btn btn-primary"
-               href="{% url 'reader-studies:create' %}">
-                <i class="fas fa-plus"></i> Add a new reader study
-            </a>
-        </p>
-    {% endif %}
-
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
 {% endblock %}

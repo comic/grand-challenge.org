@@ -35,8 +35,6 @@
                     </div>
                     <a href="{{ config.get_absolute_url }}"
                        class="btn btn-primary"
-                       data-toggle="tooltip"
-                       data-placement="bottom"
                        title="View Workstation Config">
                         <i class="fa fa-eye"></i> View
                     </a>
@@ -56,14 +54,4 @@
         </p>
     {% endif %}
 
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
 {% endblock %}

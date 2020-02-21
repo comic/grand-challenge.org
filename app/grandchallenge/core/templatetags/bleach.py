@@ -1,7 +1,10 @@
+from typing import Union
+
 import bleach
 from django import template
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from markdownx.utils import markdownify
 
 register = template.Library()
 
@@ -19,3 +22,9 @@ def clean(html: str):
     )
 
     return mark_safe(cleaned_html)
+
+
+@register.filter
+def md2html(html: Union[str, None]):
+    """Convert markdown to clean html"""
+    return clean(markdownify(html or ""))

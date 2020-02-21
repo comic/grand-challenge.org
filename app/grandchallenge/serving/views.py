@@ -37,8 +37,10 @@ def protected_storage_redirect(*, name):
     return response
 
 
-def serve_images(request, *, pk, path):
-    document_root = safe_join(f"/{settings.IMAGE_FILES_SUBDIRECTORY}", str(pk))
+def serve_images(request, *, pk, path, pa="", pb=""):
+    document_root = safe_join(
+        f"/{settings.IMAGE_FILES_SUBDIRECTORY}", pa, pb, str(pk)
+    )
     path = posixpath.normpath(path).lstrip("/")
     name = safe_join(document_root, path)
 

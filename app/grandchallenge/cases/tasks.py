@@ -372,6 +372,11 @@ def build_images(upload_session_uuid: UUID):
             upload_session.status = upload_session.FAILURE
             upload_session.save()
             return
+        except Exception:
+            upload_session.error_message = "An unknown error occurred"
+            upload_session.status = upload_session.FAILURE
+            upload_session.save()
+            raise
 
     upload_session.status = upload_session.SUCCESS
     upload_session.save()

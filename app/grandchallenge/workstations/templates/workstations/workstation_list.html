@@ -17,59 +17,52 @@
 {% block content %}
     <h2>Workstations</h2>
 
-    <div class="card-columns">
-        {% for workstation in workstation_list %}
-            <div class="card">
-                <div class="embed-responsive embed-responsive-1by1">
-                    <a href="{{ workstation.get_absolute_url }}">
-                        <img class="card-img-top embed-responsive-item"
-                             src="{{ workstation.logo.url }}"
-                             alt="{{ workstation }} Logo">
-                    </a>
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ workstation.title }}</h5>
-                    <p class="card-text">{{ workstation.description }}</p>
-                    <a href="{{ workstation.get_absolute_url }}"
-                       class="btn btn-primary"
-                       data-toggle="tooltip"
-                       data-placement="bottom"
-                       title="View Workstation">
-                        <i class="fa fa-eye"></i>
-                    </a>
-                    {% get_obj_perms request.user for workstation as "workstation_perms" %}
-                    {% if "change_workstation" in workstation_perms %}
-                        <a href="{% url 'workstations:update' slug=workstation.slug %}"
-                           class="btn btn-primary"
-                           data-toggle="tooltip"
-                           data-placement="bottom"
-                           title="Edit Workstation">
-                            <i class="fa fa-edit"></i>
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-        {% empty %}
-            <p>No workstations available.</p>
-        {% endfor %}
-    </div>
-
     {% if perms.workstations.add_workstation %}
-        <p class="mt-3">
+        <p>
             <a class="btn btn-primary"
                href="{% url 'workstations:create' %}">
                 <i class="fas fa-plus"></i> Add a new workstation
             </a>
         </p>
     {% endif %}
-{% endblock %}
 
-{% block script %}
-    {{ block.super }}
-    {# enable tooltips #}
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-    </script>
+    <div class="row equal-height mx-n2">
+        {% for workstation in workstation_list %}
+            <div class="col-12 col-md-6 col-lg-4 mb-3 px-2">
+                <div class="card">
+                    <div class="embed-responsive embed-responsive-1by1">
+                        <a href="{{ workstation.get_absolute_url }}">
+                            <img class="card-img-top embed-responsive-item"
+                                 src="{{ workstation.logo.url }}"
+                                 alt="{{ workstation }} Logo">
+                        </a>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ workstation.title }}</h5>
+                        <p class="card-text">{{ workstation.description }}</p>
+                        <div class="mt-auto mr-auto">
+                            <a href="{{ workstation.get_absolute_url }}"
+                               class="btn btn-primary"
+                               title="View Workstation">
+                                <i class="fa fa-eye"></i>
+                            </a>
+                            {% get_obj_perms request.user for workstation as "workstation_perms" %}
+                            {% if "change_workstation" in workstation_perms %}
+                                <a href="{% url 'workstations:update' slug=workstation.slug %}"
+                                   class="btn btn-primary"
+                                   title="Edit Workstation">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if not object_list %}
+        <p>You do not have permission to view any of the workstations.</p>
+    {% endif %}
+
 {% endblock %}

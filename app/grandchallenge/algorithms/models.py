@@ -71,30 +71,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "algorithm users group in order to do that."
         ),
     )
-    contact_information = models.TextField(
-        blank=True,
-        help_text=(
-            "Who should users contact with any questions regarding "
-            "this algorithm? This information is only displayed on the "
-            "algorithm's detail page."
-        ),
-    )
-    info_url = models.URLField(
-        blank=True,
-        help_text=(
-            "A URL to a page containing more information about "
-            "the algorithm."
-        ),
-    )
-    additional_information = models.TextField(
-        blank=True,
-        help_text=(
-            "Any additional information that might be relevant to "
-            "users for this algorithm. This is only displayed on the "
-            "algorithm's detail page."
-        ),
-    )
-    additional_terms = models.TextField(
+    detail_page_markdown = models.TextField(blank=True)
+    job_create_page_markdown = models.TextField(blank=True)
+    additional_terms_markdown = models.TextField(
         blank=True,
         help_text=(
             "By using this algortihm, users agree to the site wide "
