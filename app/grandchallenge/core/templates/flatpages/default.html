@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load static %}
-{% load clean from bleach %}
+{% load bleach %}
 
 {% block title %}
     {{ flatpage.title }} - {{ block.super }}
@@ -17,5 +17,5 @@
 {% block content %}
     <h1>{{ flatpage.title }}</h1>
 
-    {{ flatpage.content|clean }}
+    {{ flatpage.content|md2html }}
 {% endblock %}

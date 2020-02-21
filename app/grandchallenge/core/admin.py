@@ -2,8 +2,11 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import GroupAdmin
 from django.contrib.auth.models import Group
+from django.contrib.flatpages.admin import FlatPageAdmin
+from django.contrib.flatpages.forms import FlatpageForm
+from django.contrib.flatpages.models import FlatPage
 
-admin.site.unregister(Group)
+from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 
 
 class ReadOnlyUserInLine(admin.TabularInline):
@@ -18,6 +21,23 @@ class ReadOnlyUserInLine(admin.TabularInline):
         return False
 
 
-@admin.register(Group)
 class GroupWithUsers(GroupAdmin):
     inlines = [ReadOnlyUserInLine]
+
+
+class MarkdownFlatPageForm(FlatpageForm):
+    class Meta(FlatpageForm.Meta):
+        widgets = {
+            "content": MarkdownEditorAdminWidget(),
+        }
+
+
+class MarkdownFlatPageAdmin(FlatPageAdmin):
+    form = MarkdownFlatPageForm
+
+
+admin.site.unregister(Group)
+admin.site.register(Group, GroupWithUsers)
+
+admin.site.unregister(FlatPage)
+admin.site.register(FlatPage, MarkdownFlatPageAdmin)

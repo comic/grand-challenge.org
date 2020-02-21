@@ -1,7 +1,7 @@
 import json
 
 from django import forms
-from markdownx.widgets import MarkdownxWidget
+from markdownx.widgets import AdminMarkdownxWidget, MarkdownxWidget
 
 
 class JSONEditorWidget(forms.Textarea):
@@ -28,8 +28,23 @@ class JSONEditorWidget(forms.Textarea):
 
 
 class MarkdownEditorWidget(MarkdownxWidget):
-    class Media:
+    class Media(MarkdownxWidget.Media):
         js = [
             *MarkdownxWidget.Media.js,
+            "vendor/js/markdown-toolbar-element/index.umd.js",
+        ]
+
+
+class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
+    class Media(AdminMarkdownxWidget.Media):
+        css = {
+            "all": [
+                *AdminMarkdownxWidget.Media.css,
+                "vendor/css/base.min.css",
+                "vendor/fa/css/all.css",
+            ]
+        }
+        js = [
+            *AdminMarkdownxWidget.Media.js,
             "vendor/js/markdown-toolbar-element/index.umd.js",
         ]
