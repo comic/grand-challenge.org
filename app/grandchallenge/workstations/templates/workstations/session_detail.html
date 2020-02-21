@@ -31,7 +31,7 @@
         </p>
     {% endif %}
 
-    <div class="modal fade" id="exampleModal" tabindex="-1"
+    <div class="modal fade" id="sessionModal" tabindex="-1"
          data-keyboard="false" data-backdrop="static" role="dialog"
          aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -65,7 +65,7 @@
 
     <script type="text/javascript">
         (function () {
-            $('#exampleModal').modal({show: true});
+            $('#sessionModal').modal({show: true});
 
             getSessionStatus(
                 "{% url 'api:session-detail' pk=object.pk %}",
