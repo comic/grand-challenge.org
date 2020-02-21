@@ -487,6 +487,7 @@ MARKDOWNX_MEDIA_PATH = datetime.now().strftime("i/%Y/%m/%d/")
 MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.tables",
+    "markdown.extensions.sane_lists",
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"

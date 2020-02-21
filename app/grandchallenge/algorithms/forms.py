@@ -12,7 +12,6 @@ from django.forms import (
 )
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
-from markdownx.fields import MarkdownxFormField
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -22,14 +21,13 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.workstations.models import Workstation
 
 
 class AlgorithmForm(SaveFormInitMixin, ModelForm):
-    description = MarkdownxFormField(required=False)
-
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["workstation"].queryset = get_objects_for_user(
@@ -52,6 +50,7 @@ class AlgorithmForm(SaveFormInitMixin, ModelForm):
             "additional_information",
             "additional_terms",
         )
+        widgets = {"description": MarkdownEditorWidget()}
 
 
 class AlgorithmImageForm(ModelForm):
