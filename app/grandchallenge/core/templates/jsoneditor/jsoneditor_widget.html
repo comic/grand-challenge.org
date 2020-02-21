@@ -6,23 +6,29 @@
           name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
 {% if widget.value %}{{ widget.value }}{% endif %}</textarea>
 
-<script>
-    var container = document.getElementById("jsoneditor_{{ widget.attrs.id }}");
-    var options = {
-        mode: 'tree',
-        modes: ['code', 'tree'],
-        onChange: function () {
-            var json = editor.get();
-            document.getElementById("{{ widget.attrs.id }}").value = JSON.stringify(json);
-        }
-    };
-    var editor = new JSONEditor(container, options);
+{% with "schema_"|add:widget.attrs.id as schema_id %}
+    {{ schema|json_script:schema_id }}
 
-    editor.set({{ widget.value|safe }});
-    editor.expandAll();
+    <script>
+        const container = document.getElementById("jsoneditor_{{ widget.attrs.id }}");
+        const options = {
+            mode: 'tree',
+            modes: ['code', 'tree'],
+            onChange: function () {
+                var json = editor.get();
+                document.getElementById("{{ widget.attrs.id }}").value = JSON.stringify(json);
+            }
+        };
+        const schema = JSON.parse(document.getElementById("{{ schema_id }}").textContent);
 
-    {% if schema %}
-        editor.setSchema({{ schema|safe }});
-    {% endif %}
+        let editor = new JSONEditor(container, options);
 
-</script>
+        editor.set(JSON.parse(document.getElementById("{{ widget.attrs.id }}").value));
+        editor.expandAll();
+
+        {% if schema %}
+            editor.setSchema(schema);
+        {% endif %}
+    </script>
+
+{% endwith %}

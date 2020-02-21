@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
+{% load bleach %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -15,5 +16,5 @@
 {% block content %}
     <h1>{{ object.title }}</h1>
 
-    <p>{{ object.body|safe }}</p>
+    {{ object.body|md2html }}
 {% endblock %}

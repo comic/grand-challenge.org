@@ -7,7 +7,8 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
         </li>
         <li class="breadcrumb-item"><a
@@ -30,7 +31,7 @@
         </p>
     {% endif %}
 
-    <div class="modal fade" id="exampleModal" tabindex="-1"
+    <div class="modal fade" id="sessionModal" tabindex="-1"
          data-keyboard="false" data-backdrop="static" role="dialog"
          aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -61,16 +62,16 @@
     <script src="{% static 'workstations/js/session.js' %}"
             type="text/javascript">
     </script>
+
     <script type="text/javascript">
         (function () {
-            $('#exampleModal').modal({show: true});
+            $('#sessionModal').modal({show: true});
 
             getSessionStatus(
                 "{% url 'api:session-detail' pk=object.pk %}",
                 document.getElementById("sessionState"),
-                "{{ object.workstation_url }}?{{ request.GET.urlencode|safe }}",
+                `{{ object.workstation_url }}${window.location.search}`,
             );
         })();
     </script>
-
 {% endblock %}

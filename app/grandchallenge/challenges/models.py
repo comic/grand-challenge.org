@@ -44,7 +44,7 @@ def get_logo_path(instance, filename):
 
 
 def get_banner_path(instance, filename):
-    return f"banners/{instance.pk}/{get_valid_filename(filename)}"
+    return f"b/{instance.pk}/{get_valid_filename(filename)}"
 
 
 class TaskType(models.Model):
