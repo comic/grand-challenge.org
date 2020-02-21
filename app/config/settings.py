@@ -11,6 +11,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
 from config.denylist import USERNAME_DENYLIST
+from grandchallenge.core.utils.markdown import BS4Extension
 
 
 def strtobool(val) -> bool:
@@ -488,10 +489,12 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "markdown.extensions.fenced_code",
     "markdown.extensions.tables",
     "markdown.extensions.sane_lists",
+    BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"
 )
+MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
