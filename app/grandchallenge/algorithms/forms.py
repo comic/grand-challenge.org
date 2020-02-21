@@ -9,6 +9,7 @@ from django.forms import (
     HiddenInput,
     ModelChoiceField,
     ModelForm,
+    TextInput,
 )
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
@@ -45,12 +46,16 @@ class AlgorithmForm(SaveFormInitMixin, ModelForm):
             "public",
             "workstation",
             "workstation_config",
-            "contact_information",
-            "info_url",
-            "additional_information",
-            "additional_terms",
+            "detail_page_markdown",
+            "job_create_page_markdown",
+            "additional_terms_markdown",
         )
-        widgets = {"description": MarkdownEditorWidget()}
+        widgets = {
+            "description": TextInput,
+            "detail_page_markdown": MarkdownEditorWidget,
+            "job_create_page_markdown": MarkdownEditorWidget,
+            "additional_terms_markdown": MarkdownEditorWidget,
+        }
 
 
 class AlgorithmImageForm(ModelForm):

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load url %}
+{% load bleach %}
 
 {% block title %}
     Run this algorithm - {{ block.super }}
@@ -26,15 +27,18 @@
 
     <h2>Run this algorithm</h2>
 
+    {{ algorithm.job_create_page_markdown|md2html }}
+
     <p>Select the images that you would like to run the algorithm on.</p>
 
     {% crispy form %}
 
     By running this algorithm you agree to the
     <a href="{% url 'policies:detail' slug='terms-of-service' %}"> General Terms of
-        Service</a>{% if algorithm.additional_terms %},
-        as well as the algorithm's specific Terms of Service:
-        <p>{{ algorithm.additional_terms }}</p>
+        Service</a>{% if algorithm.additional_terms_markdown %},
+        as well as this algorithm's specific Terms of Service:
+
+        {{ algorithm.additional_terms_markdown|md2html }}
     {% else %}.
     {% endif %}
 
