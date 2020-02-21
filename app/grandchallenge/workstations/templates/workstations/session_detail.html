@@ -63,17 +63,14 @@
             type="text/javascript">
     </script>
 
-    {{ request.GET.urlencode|json_script:"sessionQueryParams" }}
-
     <script type="text/javascript">
         (function () {
             $('#exampleModal').modal({show: true});
-            const sessionQueryParams = JSON.parse(document.getElementById('sessionQueryParams').textContent);
 
             getSessionStatus(
                 "{% url 'api:session-detail' pk=object.pk %}",
                 document.getElementById("sessionState"),
-                `{{ object.workstation_url }}?${sessionQueryParams}`,
+                `{{ object.workstation_url }}${window.location.search}`,
             );
         })();
     </script>
