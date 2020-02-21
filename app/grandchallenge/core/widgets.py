@@ -37,7 +37,7 @@ class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
     class Media(AdminMarkdownxWidget.Media):
         css = {
             "all": [
-                *AdminMarkdownxWidget.Media.css,
+                *AdminMarkdownxWidget.Media.css["all"],
                 "vendor/css/base.min.css",
                 "vendor/fa/css/all.css",
             ]
