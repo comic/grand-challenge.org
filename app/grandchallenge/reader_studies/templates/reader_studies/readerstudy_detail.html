@@ -72,7 +72,7 @@
 {% block content %}
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
 
-    {% if not object.is_valid %}
+    {% if not object.is_valid and "change_readerstudy" in readerstudy_perms %}
         <div class="alert alert-danger">
             This reader study is not ready to be used. Please update the
             configuration. All of the images should be included in the hanging list
