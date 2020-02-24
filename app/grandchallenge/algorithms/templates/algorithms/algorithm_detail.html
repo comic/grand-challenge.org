@@ -27,14 +27,23 @@
 {% block sidebar %}
     {% get_obj_perms request.user for object as "algorithm_perms" %}
 
-    {% if "change_algorithm" in algorithm_perms %}
-        <div class="col-12 col-md-4 col-lg-3 mb-3">
-            <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
-                 aria-orientation="vertical">
-                <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
-                   href="#v-pills-home" role="tab" aria-controls="v-pills-home"
-                   aria-selected="true"><i
-                        class="fas fa-microchip fa-fw"></i>&nbsp;{{ object.title }}
+    <div class="col-12 col-md-4 col-lg-3 mb-3">
+        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+             aria-orientation="vertical">
+            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
+               href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+               aria-selected="true"><i
+                    class="fas fa-microchip fa-fw"></i>&nbsp;{{ object.title }}
+            </a>
+
+            {% if "change_algorithm" in algorithm_perms %}
+                <a class="nav-link" id="v-pills-containers-tab" data-toggle="pill"
+                   href="#v-pills-containers" role="tab"
+                   aria-controls="v-pills-containers"
+                   aria-selected="false">
+                    {# @formatter:off #}
+                    <i class="fas fa-box-open fa-fw"></i>&nbsp;Containers{% if not object.latest_ready_image %}&nbsp;<i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
+                    {# @formatter:on #}
                 </a>
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
                    href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
@@ -44,23 +53,32 @@
                    href="#v-pills-users" role="tab" aria-controls="v-pills-users"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Users
                 </a>
-                <a class="nav-link" id="v-pills-requests-tab" data-toggle="pill"
-                   href="#v-pills-requests" role="tab"
-                   aria-controls="v-pills-resuests"
-                   aria-selected="false"><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
+                <a class="nav-link"
+                   href="{% url 'algorithms:permission-request-list' slug=object.slug %}"
+                ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
                 </a>
-                <a class="nav-link" id="v-pills-containers-tab" data-toggle="pill"
-                   href="#v-pills-containers" role="tab"
-                   aria-controls="v-pills-containers"
-                   aria-selected="false">
-                    {# @formatter:off #}
-                    <i class="fas fa-box-open fa-fw"></i>&nbsp;Containers{% if not object.latest_ready_image %}&nbsp;<i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
-                    {# @formatter:on #}
+            {% endif %}
+
+            {% if "execute_algorithm" in algorithm_perms %}
+                {% if object.latest_ready_image %}
+                    <a class="nav-link"
+                       href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
+                        <i class="fa fa-flask fa-fw"></i>&nbsp;Run Algorithm
+                    </a>
+                {% endif %}
+                <a class="nav-link"
+                   href="{% url 'algorithms:jobs-list' slug=object.slug %}">
+                    <i class="fa fa-cogs fa-fw"></i>&nbsp;Results
                 </a>
-            </div>
+            {% else %}
+                <a class="nav-link"
+                   href="{% url 'algorithms:permission-request-create' slug=object.slug %}">
+                    <i class="fa fa-question fa-fw"></i>&nbsp;Request Access
+                </a>
+            {% endif %}
         </div>
-    {% endif %}
+    </div>
 {% endblock %}
 
 {% block content %}
@@ -75,43 +93,32 @@
 
             {% if "change_algorithm" in algorithm_perms %}
                 <p>
+                    {% if algorithm.public %}
+                        This algorithm is visible to the public, however,
+                        they will need to request access which you will need
+                        to approve before they can run this algorithm.
+                    {% else %}
+                        Only users that you add to the users group will be
+                        able to run this algorithm.
+                    {% endif %}
+                    This algorithm uses
+                    <a href="{{ object.workstation.get_absolute_url }}">
+                        {{ object.workstation.title }}</a>
+                    {% if object.workstation_config %}
+                        with configuration
+                        <a href="{{ object.workstation_config.get_absolute_url }}">
+                            {{ object.workstation_config.title }}</a>.
+                    {% else %}
+                        with its default configuration.
+                    {% endif %}
+                </p>
+                <p>
                     <a class="btn btn-primary"
                        href="{% url 'algorithms:update' slug=object.slug %}">
                         <i class="fa fa-cog"></i> Update Settings
                     </a>
                 </p>
             {% endif %}
-
-            {% if "execute_algorithm" in algorithm_perms %}
-                {% if object.latest_ready_image %}
-                    <p>
-                        <a class="btn btn-primary"
-                           href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                            <i class="fa fa-flask"></i> Try out this algorithm
-                        </a>
-                    </p>
-                {% else %}
-                    <div class="alert alert-warning">
-                        Algorithm is not ready to be used yet. Please try again later.
-                    </div>
-                {% endif %}
-
-                <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:jobs-list' slug=object.slug %}">
-                        <i class="fa fa-cogs"></i> View the results for this algorithm
-                    </a>
-                </p>
-            {% else %}
-                <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:permission-request-create' slug=object.slug %}">
-                        <i class="fa fa-question-circle"></i> Request access to this
-                        algorithm
-                    </a>
-                </p>
-            {% endif %}
-
         </div>
 
         {% if "change_algorithm" in algorithm_perms %}
@@ -197,7 +204,7 @@
                 <h2>Permission Requests</h2>
 
                 <p>
-                    <a href="{% url 'algorithms:permission-request-list' slug=object.slug %}">Click
+                    <a href="">Click
                         here</a> to manage the permission requests for this algorithm.
                     {% if pending_permission_requests %}
                         <b>{{ pending_permission_requests }} pending
