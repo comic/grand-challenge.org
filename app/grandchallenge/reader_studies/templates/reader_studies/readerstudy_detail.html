@@ -155,7 +155,8 @@
 
                     There are {{ object.images.all.count }}
                     image{{ object.images.all.count|pluralize }} arranged
-                    in {{ object.hanging_list|length }} hanging{{ object.hanging_list|pluralize }}.
+                    in {{ object.hanging_list|length }}
+                    hanging{{ object.hanging_list|pluralize }}.
 
                     {% if object.shuffle_hanging_list %}
                         Each reader will read the hangings in a unique order.
@@ -364,10 +365,36 @@
 
                 <h2>Ground Truth</h2>
 
-                <a class="btn btn-primary mb-1"
-                   href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
-                    <i class="fas fa-plus"></i> Add Ground Truth
-                </a>
+                <p>
+                    Upload the CSV file containing the ground truth here.
+                </p>
+                <p>
+                    The first row must contain the headings <code>images</code>,
+                    followed by the question text for each of the questions in
+                    the reader study:
+                    <code>
+                        images,
+                        {% for question in object.answerable_questions %}
+                            {{ question.question_text }},
+                        {% endfor %}
+                    </code>
+                </p>
+                <p>
+                    The consecutive lines contain the images per hanging. For
+                    multiple images separate the image names with a <code>;</code>.
+                    Then include the answer for the question
+                    corresponding to the question text defined in the header for that
+                    column. For now, only boolean and single line text answers are
+                    supported. For boolean values, you can use <code>1</code>
+                    to indicate <code>True</code> and
+                    <code>0</code> to indicate <code>False</code>.
+                </p>
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
+                        <i class="fas fa-plus"></i> Add Ground Truth
+                    </a>
+                </p>
 
             </div>
 
