@@ -1,7 +1,10 @@
+from typing import Union
+
 from django import template
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from grandchallenge.subdomains.utils import reverse
 
@@ -9,20 +12,30 @@ register = template.Library()
 
 
 @register.filter
-def user_profile_link(user: AbstractUser) -> str:
+def user_profile_link(user: Union[AbstractUser, None]) -> str:
+    if user:
+        username = user.username
+        profile_url = reverse(
+            "userena_profile_detail", kwargs={"username": user.username}
+        )
+        mugshot = format_html(
+            (
+                '<img class="mugshot" src="{0}" alt="User Mugshot"'
+                # Match the "fa-lg" class style:
+                '     style="height: 1.33em; vertical-align: -25%;"/>'
+            ),
+            user.user_profile.get_mugshot_url(),
+        )
+    else:
+        username = "Unknown"
+        profile_url = "#"
+        mugshot = mark_safe('<i class="fas fa-user fa-lg"></i>')
+
     return format_html(
-        (
-            '<div style="vertical-align:middle; display:inline; white-space: nowrap;">'
-            '  <a href="{0}">'
-            '    <img class="mugshot" src="{1}" alt="User Mugshot" '
-            '         style="height: 1.5em; vertical-align: middle;"/>'
-            "    {2}"
-            "  </a>"
-            "</div>"
-        ),
-        reverse("userena_profile_detail", kwargs={"username": user.username}),
-        user.user_profile.get_mugshot_url(),
-        user.username,
+        '<a href="{0}">{1}</a>&nbsp;<a href="{0}">{2}</a>',
+        profile_url,
+        mugshot,
+        username,
     )
 
 

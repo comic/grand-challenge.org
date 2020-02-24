@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% load static %}
 {% load url %}
-{% load user_profile_link from profiles %}
+{% load profiles %}
 {% load workstations %}
 {% load guardian_tags %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
             Studies</a></li>
         <li class="breadcrumb-item active" aria-current="page">{{ object }}
@@ -66,32 +67,33 @@
 
     {% if user_score.score__sum is not None and progress.hangings == 100.0 %}
         <div class="alert alert-info" role="alert">
-            You have completed this reader study. You have scored {{ user_score.score__sum|floatformat }} points
+            You have completed this reader study. You have
+            scored {{ user_score.score__sum|floatformat }} points
             out of a possible {{ answerable_questions|floatformat }} points,
             giving you an average score of {{ user_score.score__avg|floatformat:4 }}.
         </div>
     {% endif %}
 
-    <p>
-        {% if user_is_reader and object.is_valid %}
+    {% if user_is_reader and object.is_valid %}
+        <p>
             <a class="btn btn-primary"
                href="{% url 'workstations:workstation-session-redirect' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
                 <i class="fas fa-eye"></i> Launch this Reader Study
             </a>
-        {% endif %}
-        {% if "change_readerstudy" in readerstudy_perms %}
-            <div class="d-flex justify-content-between align-items-center">
-                <a class="btn btn-primary"
-                   href="{% url 'reader-studies:update' slug=object.slug %}">
-                    <i class="fa fa-edit"></i> Edit this reader study
-                </a>
-                <a href="{% url 'reader-studies:delete' slug=object.slug %}"
-                   class="btn btn-danger">
-                    <i class="fa fa-times"></i> Delete this reader study
-                </a>
-            </div>
-        {% endif %}
-    </p>
+        </p>
+    {% endif %}
+    {% if "change_readerstudy" in readerstudy_perms %}
+        <div class="d-flex justify-content-between align-items-center">
+            <a class="btn btn-primary"
+               href="{% url 'reader-studies:update' slug=object.slug %}">
+                <i class="fa fa-edit"></i> Edit this reader study
+            </a>
+            <a href="{% url 'reader-studies:delete' slug=object.slug %}"
+               class="btn btn-danger">
+                <i class="fa fa-times"></i> Delete this reader study
+            </a>
+        </div>
+    {% endif %}
 
     {% if "change_readerstudy" in readerstudy_perms %}
 
@@ -104,27 +106,30 @@
                         <div>
                             {% if user != request.user %}
                                 <form
-                                    action="{% url 'reader-studies:editors-update' slug=object.slug %}"
-                                    method="POST">
+                                        action="{% url 'reader-studies:editors-update' slug=object.slug %}"
+                                        method="POST">
                                     {% csrf_token %}
                                     {% for field in editor_remove_form %}
                                         {% if field.name == "user" %}
                                             <input
-                                                type="hidden"
-                                                name="user"
-                                                value="{{ user.id }}" />
+                                                    type="hidden"
+                                                    name="user"
+                                                    value="{{ user.id }}"/>
                                         {% else %}
                                             {{ field }}
                                         {% endif %}
                                     {% endfor %}
-                                    <button type="submit" class="btn btn-danger">Remove</button>
+                                    <button type="submit" class="btn btn-danger">
+                                        Remove
+                                    </button>
                                 </form>
                             {% endif %}
                         </div>
                     </div>
                 </li>
             {% empty %}
-                <li class="list-group-item">There are no editors for this algorithm.</li>
+                <li class="list-group-item">There are no editors for this algorithm.
+                </li>
             {% endfor %}
         </ul>
 
@@ -147,7 +152,10 @@
                         </div>
                         <div class="col-6 mb-1">
                             <div class="progress h-100">
-                                <div class="progress-bar" role="progressbar" style="width: {{ reader.progress.questions }}%" aria-valuenow="{{ reader.progress.questions }}" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {{ reader.progress.questions }}%"
+                                     aria-valuenow="{{ reader.progress.questions }}"
+                                     aria-valuemin="0" aria-valuemax="100">
                                     Progress: {{ reader.progress.questions|floatformat }}%
                                 </div>
                             </div>
@@ -155,27 +163,30 @@
                         <div class="col-3 mb-1">
                             <div class="d-flex justify-content-end align-items-center">
                                 <form
-                                    action="{% url 'reader-studies:readers-update' slug=object.slug %}"
-                                    method="POST">
+                                        action="{% url 'reader-studies:readers-update' slug=object.slug %}"
+                                        method="POST">
                                     {% csrf_token %}
                                     {% for field in reader_remove_form %}
                                         {% if field.name == "user" %}
                                             <input
-                                                type="hidden"
-                                                name="user"
-                                                value="{{ reader.obj.id }}" />
+                                                    type="hidden"
+                                                    name="user"
+                                                    value="{{ reader.obj.id }}"/>
                                         {% else %}
                                             {{ field }}
                                         {% endif %}
                                     {% endfor %}
-                                    <button type="submit" class="btn btn-danger">Remove</button>
+                                    <button type="submit" class="btn btn-danger">
+                                        Remove
+                                    </button>
                                 </form>
                             </div>
                         </div>
                     </div>
                 </li>
             {% empty %}
-                 <li class="list-group-item">There are no readers for this algorithm.</li>
+                <li class="list-group-item">There are no readers for this algorithm.
+                </li>
             {% endfor %}
         </ul>
 
@@ -225,7 +236,7 @@
 
         <div class="mt-3 d-lg-flex justify-content-between">
             <div>
-            <a class="btn btn-primary mb-1"
+                <a class="btn btn-primary mb-1"
                    href="{% url 'reader-studies:add-question' slug=object.slug %}">
                     <i class="fas fa-plus"></i> Add a question to this study
                 </a>
@@ -288,30 +299,30 @@
 
 {% block script %}
     {{ block.super }}
-        <script>
-            window.drf = {
-              csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
-              csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
-            };
+    <script>
+        window.drf = {
+            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
 
-            $(document).ready(() => {
-                $('#generateHangingList').on('click', () => {
-                    $.ajax({
-                        type: 'PATCH',
-                        url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
-                        data: {},
-                        contentType: 'application/json',
-                        complete: (response) => {
-                            $('#page').prepend(
-                                '<div class="alert alert-success" role="alert">' +
-                                    `${response.responseJSON.status}` +
-                                '</div>'
-                            );
-                            window.location.replace(window.location.href);
-                        }
-                    })
+        $(document).ready(() => {
+            $('#generateHangingList').on('click', () => {
+                $.ajax({
+                    type: 'PATCH',
+                    url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
+                    data: {},
+                    contentType: 'application/json',
+                    complete: (response) => {
+                        $('#page').prepend(
+                            '<div class="alert alert-success" role="alert">' +
+                            `${response.responseJSON.status}` +
+                            '</div>'
+                        );
+                        window.location.replace(window.location.href);
+                    }
                 })
-            });
-        </script>
-        <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+            })
+        });
+    </script>
+    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
 {% endblock %}
