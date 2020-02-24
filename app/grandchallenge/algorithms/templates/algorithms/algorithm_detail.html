@@ -2,9 +2,11 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% load url %}
-{% load user_profile_link from profiles %}
+{% load profiles %}
 {% load guardian_tags %}
 {% load bleach %}
+{% load humanize %}
+{% load remove_whitespace %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -12,7 +14,8 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a
                 href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
@@ -21,145 +24,220 @@
     </ol>
 {% endblock %}
 
-{% block content %}
+{% block sidebar %}
     {% get_obj_perms request.user for object as "algorithm_perms" %}
 
-    <h2>{{ object.title }}</h2>
-
-    {{ object.detail_page_markdown|md2html }}
-
     {% if "change_algorithm" in algorithm_perms %}
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:update' slug=object.slug %}">
-                <i class="fa fa-edit"></i> Edit this algorithm
-            </a>
-        </p>
-
-        <h3>Users</h3>
-
-        <h4>Editors Group</h4>
-        <p>
-            The following users are able to edit, use this algorithm and
-            see all of the results:
-        </p>
-
-        <ul class="list-group list-group-flush mb-2">
-            {% for user in object.editors_group.user_set.all %}
-                <li class="list-group-item">{{ user|user_profile_link }}</li>
-            {% empty %}
-                <li class="list-group-item">There are no editors for this algorithm.
-                </li>
-            {% endfor %}
-        </ul>
-
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:editors-update' slug=object.slug %}">
-                <i class="fa fa-plus"></i> Add an editor for this algorithm
-            </a>
-        </p>
-
-        <h4>Users Group</h4>
-        <p>The following users are able to use this algorithm:</p>
-
-        <ul class="list-group list-group-flush mb-2">
-            {% for user in object.users_group.user_set.all %}
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>{{ user|user_profile_link }}</div>
-                        <div>
-                            <form
-                                    action="{% url 'algorithms:users-update' slug=object.slug %}"
-                                    method="POST">
-                                {% for field in form %}
-                                    {% csrf_token %}
-                                    {% if field.name == "user" %}
-                                        <input
-                                                type="hidden"
-                                                name="user"
-                                                value="{{ user.id }}"/>
-                                    {% else %}
-                                        {{ field }}
-                                    {% endif %}
-                                {% endfor %}
-                                <button type="submit" class="btn btn-danger">Revoke
-                                    access
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </li>
-            {% empty %}
-                <li class="list-group-item">There are no users for this algorithm.
-                </li>
-            {% endfor %}
-        </ul>
-
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:users-update' slug=object.slug %}">
-                <i class="fa fa-plus"></i> Add a user for this algorithm
-            </a>
-        </p>
-
-        <h3>Permission Requests</h3>
-
-        <p>
-            <a href="{% url 'algorithms:permission-request-list' slug=object.slug %}">Click
-                here</a> to manage the permission requests for this algorithm.
-            {% if pending_permission_requests %}
-                <b>{{ pending_permission_requests }} pending
-                    request{{ pending_permission_requests|pluralize }}.</b>
-            {% endif %}
-        </p>
-
-        <h3>Container Images</h3>
-
-        <ul>
-            {% for image in object.algorithm_container_images.all %}
-                <li>
-                    <a href="{{ image.get_absolute_url }}">{{ image }}</a>
-                </li>
-            {% endfor %}
-        </ul>
-
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:image-create' slug=object.slug %}">
-                <i class="fa fa-plus"></i> Upload a new container image for
-                this algorithm
-            </a>
-        </p>
-    {% endif %}
-
-    {% if "execute_algorithm" in algorithm_perms %}
-        {% if object.latest_ready_image %}
-            <p>
-                <a class="btn btn-primary"
-                   href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                    <i class="fa fa-flask"></i> Try out this algorithm
+        <div class="col-12 col-md-4 col-lg-3 mb-3">
+            <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+                 aria-orientation="vertical">
+                <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
+                   href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+                   aria-selected="true"><i
+                        class="fas fa-microchip fa-fw"></i>&nbsp;{{ object.title }}
                 </a>
-            </p>
-        {% else %}
-            <div class="alert alert-warning">
-                Algorithm is not ready to be used yet. Please try again later.
+                <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
+                   href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
+                   aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
+                </a>
+                <a class="nav-link" id="v-pills-users-tab" data-toggle="pill"
+                   href="#v-pills-users" role="tab" aria-controls="v-pills-users"
+                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Users
+                </a>
+                <a class="nav-link" id="v-pills-requests-tab" data-toggle="pill"
+                   href="#v-pills-requests" role="tab"
+                   aria-controls="v-pills-resuests"
+                   aria-selected="false"><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
+                        class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
+                </a>
+                <a class="nav-link" id="v-pills-containers-tab" data-toggle="pill"
+                   href="#v-pills-containers" role="tab"
+                   aria-controls="v-pills-containers"
+                   aria-selected="false">
+                    {# @formatter:off #}
+                    <i class="fas fa-box-open fa-fw"></i>&nbsp;Containers{% if not object.latest_ready_image %}&nbsp;<i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
+                    {# @formatter:on #}
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% get_obj_perms request.user for object as "algorithm_perms" %}
+    <div class="tab-content" id="v-pills-tabContent">
+        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
+             aria-labelledby="v-pills-home-tab">
+
+            <h2>{{ object.title }}</h2>
+
+            {{ object.detail_page_markdown|md2html }}
+
+            {% if "change_algorithm" in algorithm_perms %}
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:update' slug=object.slug %}">
+                        <i class="fa fa-cog"></i> Update Settings
+                    </a>
+                </p>
+            {% endif %}
+
+            {% if "execute_algorithm" in algorithm_perms %}
+                {% if object.latest_ready_image %}
+                    <p>
+                        <a class="btn btn-primary"
+                           href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
+                            <i class="fa fa-flask"></i> Try out this algorithm
+                        </a>
+                    </p>
+                {% else %}
+                    <div class="alert alert-warning">
+                        Algorithm is not ready to be used yet. Please try again later.
+                    </div>
+                {% endif %}
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:jobs-list' slug=object.slug %}">
+                        <i class="fa fa-cogs"></i> View the results for this algorithm
+                    </a>
+                </p>
+            {% else %}
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:permission-request-create' slug=object.slug %}">
+                        <i class="fa fa-question-circle"></i> Request access to this
+                        algorithm
+                    </a>
+                </p>
+            {% endif %}
+
+        </div>
+
+        {% if "change_algorithm" in algorithm_perms %}
+            <div class="tab-pane fade" id="v-pills-editors" role="tabpanel"
+                 aria-labelledby="v-pills-editors-tab">
+
+                <h2>Editors</h2>
+                <p>
+                    The following users are able to edit, use this algorithm and
+                    see all of the results:
+                </p>
+
+                <ul class="list-group list-group-flush mb-2">
+                    {% for user in object.editors_group.user_set.all %}
+                        <li class="list-group-item">{{ user|user_profile_link }}</li>
+                    {% empty %}
+                        <li class="list-group-item">There are no editors for this
+                            algorithm.
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:editors-update' slug=object.slug %}">
+                        <i class="fa fa-plus"></i> Add Editors
+                    </a>
+                </p>
+            </div>
+
+            <div class="tab-pane fade" id="v-pills-users" role="tabpanel"
+                 aria-labelledby="v-pills-editors-tab">
+
+                <h2>Users</h2>
+                <p>The following users are able to use this algorithm:</p>
+
+                <ul class="list-group list-group-flush mb-2">
+                    {% for user in object.users_group.user_set.all %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>{{ user|user_profile_link }}</div>
+                                <div>
+                                    <form
+                                            action="{% url 'algorithms:users-update' slug=object.slug %}"
+                                            method="POST">
+                                        {% for field in form %}
+                                            {% csrf_token %}
+                                            {% if field.name == "user" %}
+                                                <input
+                                                        type="hidden"
+                                                        name="user"
+                                                        value="{{ user.id }}"/>
+                                            {% else %}
+                                                {{ field }}
+                                            {% endif %}
+                                        {% endfor %}
+                                        <button type="submit" class="btn btn-danger">
+                                            Revoke
+                                            access
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">There are no users for this
+                            algorithm.
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:users-update' slug=object.slug %}">
+                        <i class="fa fa-plus"></i> Add Users
+                    </a>
+                </p>
+            </div>
+
+            <div class="tab-pane fade" id="v-pills-requests" role="tabpanel"
+                 aria-labelledby="v-pills-requests-tab">
+
+                <h2>Permission Requests</h2>
+
+                <p>
+                    <a href="{% url 'algorithms:permission-request-list' slug=object.slug %}">Click
+                        here</a> to manage the permission requests for this algorithm.
+                    {% if pending_permission_requests %}
+                        <b>{{ pending_permission_requests }} pending
+                            request{{ pending_permission_requests|pluralize }}.</b>
+                    {% endif %}
+                </p>
+
+            </div>
+
+            <div class="tab-pane fade" id="v-pills-containers" role="tabpanel"
+                 aria-labelledby="v-pills-containers">
+
+                <h2>Containers</h2>
+
+                <ul>
+                    {% for image in object.algorithm_container_images.all %}
+                        <li>
+                            <a href="{{ image.get_absolute_url }}">
+                                Container uploaded
+                                by {{ image.creator }} {{ image.created|naturaltime }}.
+                                {% if image.ready %}
+                                    Ready to be used.
+                                {% else %}
+                                    Not ready to be used.
+                                {% endif %}
+                                {% if image == object.latest_ready_image %}
+                                    <b>Active</b>.
+                                {% endif %}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:image-create' slug=object.slug %}">
+                        <i class="fa fa-upload"></i> Upload a Container
+                    </a>
+                </p>
             </div>
         {% endif %}
-
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:jobs-list' slug=object.slug %}">
-                <i class="fa fa-cogs"></i> View the results for this algorithm
-            </a>
-        </p>
-    {% else %}
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:permission-request-create' slug=object.slug %}">
-                <i class="fa fa-question-circle"></i> Request access to this algorithm
-            </a>
-        </p>
-    {% endif %}
-
+    </div>
 {% endblock %}
