@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% load static %}
 {% load url %}
-{% load user_profile_link from profiles %}
+{% load profiles %}
 {% load workstations %}
 {% load guardian_tags %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
             Studies</a></li>
         <li class="breadcrumb-item active" aria-current="page">{{ object }}
@@ -15,12 +16,63 @@
     </ol>
 {% endblock %}
 
+{% block sidebar %}
+    {% get_obj_perms request.user for object as "readerstudy_perms" %}
+    {% if "change_readerstudy" in readerstudy_perms %}
+        <div class="col-12 col-md-4 col-lg-3 mb-3">
+            <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+                 aria-orientation="vertical">
+                <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
+                   href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+                   aria-selected="true"><i
+                        class="fas fa-microscope fa-fw"></i>&nbsp;{{ object.title }}
+                </a>
+                <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
+                   href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
+                   aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
+                </a>
+                <a class="nav-link" id="v-pills-readers-tab" data-toggle="pill"
+                   href="#v-pills-readers" role="tab" aria-controls="v-pills-readers"
+                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Readers
+                </a>
+                <a class="nav-link" id="v-pills-cases-tab" data-toggle="pill"
+                   href="#v-pills-cases" role="tab" aria-controls="v-pills-cases"
+                   aria-selected="false"><i class="fas fa-image fa-fw"></i>&nbsp;Cases&nbsp;<span
+                        class="badge badge-pill badge-secondary align-middle">{{ object.images.all.count }}</span>
+                </a>
+                <a class="nav-link" id="v-pills-questions-tab" data-toggle="pill"
+                   href="#v-pills-questions" role="tab"
+                   aria-controls="v-pills-questions"
+                   aria-selected="false"><i class="fas fa-question fa-fw"></i>&nbsp;Questions&nbsp;<span
+                        class="badge badge-pill badge-secondary align-middle">{{ object.questions.all.count }}</span>
+                </a>
+                <a class="nav-link" id="v-pills-ground-truth-tab" data-toggle="pill"
+                   href="#v-pills-ground-truth" role="tab"
+                   aria-controls="v-pills-ground-truth"
+                   aria-selected="false"><i class="fas fa-check fa-fw"></i>&nbsp;Ground
+                    Truth
+                </a>
+                <a class="nav-link"
+                   href="{% url 'reader-studies:leaderboard' slug=object.slug %}"><i
+                        class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
+                </a>
+                <a class="nav-link"
+                   href="{% url 'reader-studies:statistics' slug=object.slug %}"><i
+                        class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
+                </a>
+                <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
+                   href="#v-pills-export" role="tab" aria-controls="v-pills-export"
+                   aria-selected="false"><i class="fas fa-download fa-fw"></i>&nbsp;Export
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
 
-    <h1>Reader Study {{ object.title }}</h1>
-
-    {% if not object.is_valid %}
+    {% if not object.is_valid and "change_readerstudy" in readerstudy_perms %}
         <div class="alert alert-danger">
             This reader study is not ready to be used. Please update the
             configuration. All of the images should be included in the hanging list
@@ -62,256 +114,377 @@
         </div>
     {% endif %}
 
-    <p>{{ object.description }}</p>
+    <div class="tab-content" id="v-pills-tabContent">
 
-    {% if user_score.score__sum is not None and progress.hangings == 100.0 %}
-        <div class="alert alert-info" role="alert">
-            You have completed this reader study. You have scored {{ user_score.score__sum|floatformat }} points
-            out of a possible {{ answerable_questions|floatformat }} points,
-            giving you an average score of {{ user_score.score__avg|floatformat:4 }}.
+        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
+             aria-labelledby="v-pills-home-tab">
+
+            <h1>{{ object.title }}</h1>
+
+            <p>{{ object.description }}</p>
+
+            {% if user_score.score__sum is not None and progress.hangings == 100.0 %}
+                <div class="alert alert-info" role="alert">
+                    You have completed this reader study. You have
+                    scored {{ user_score.score__sum|floatformat }} points
+                    out of a possible {{ answerable_questions|floatformat }} points,
+                    giving you an average score
+                    of {{ user_score.score__avg|floatformat:4 }}.
+                </div>
+            {% endif %}
+
+            {% if user_is_reader and object.is_valid %}
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'workstations:workstation-session-redirect' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
+                        <i class="fas fa-eye"></i> Launch this Reader Study
+                    </a>
+                </p>
+            {% endif %}
+
+            {% if "change_readerstudy" in readerstudy_perms %}
+                <p>
+                    This reader study uses {{ object.workstation.title }}
+                    {% if object.workstation_config %}
+                        with configuration
+                        <a href="{{ object.workstation_config.get_absolute_url }}">{{ object.workstation_config }}</a>
+                        .
+                    {% else %}
+                        with its default configuration.
+                    {% endif %}
+
+                    There are {{ object.images.all.count }}
+                    image{{ object.images.all.count|pluralize }} arranged
+                    in {{ object.hanging_list|length }}
+                    hanging{{ object.hanging_list|pluralize }}.
+
+                    {% if object.shuffle_hanging_list %}
+                        Each reader will read the hangings in a unique order.
+                    {% else %}
+                        Each reader will read the hangings in the same order.
+                    {% endif %}
+                </p>
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:update' slug=object.slug %}">
+                        <i class="fas fa-cog"></i> Update Settings
+                    </a>
+                </p>
+            {% endif %}
+
         </div>
-    {% endif %}
 
-    <p>
-        {% if user_is_reader and object.is_valid %}
-            <a class="btn btn-primary"
-               href="{% url 'workstations:workstation-session-redirect' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
-                <i class="fas fa-eye"></i> Launch this Reader Study
-            </a>
-        {% endif %}
+
+
         {% if "change_readerstudy" in readerstudy_perms %}
-            <div class="d-flex justify-content-between align-items-center">
-                <a class="btn btn-primary"
-                   href="{% url 'reader-studies:update' slug=object.slug %}">
-                    <i class="fa fa-edit"></i> Edit this reader study
-                </a>
-                <a href="{% url 'reader-studies:delete' slug=object.slug %}"
-                   class="btn btn-danger">
-                    <i class="fa fa-times"></i> Delete this reader study
-                </a>
-            </div>
-        {% endif %}
-    </p>
+            <div class="tab-pane fade"
+                 id="v-pills-editors"
+                 role="tabpanel"
+                 aria-labelledby="v-pills-editors-tab">
 
-    {% if "change_readerstudy" in readerstudy_perms %}
+                <h2>Editors</h2>
 
-        <h2>Editors</h2>
-        <ul class="list-group list-group-flush mb-2">
-            {% for user in object.editors_group.user_set.all %}
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>{{ user|user_profile_link }}</div>
-                        <div>
-                            {% if user != request.user %}
-                                <form
-                                    action="{% url 'reader-studies:editors-update' slug=object.slug %}"
-                                    method="POST">
-                                    {% csrf_token %}
-                                    {% for field in editor_remove_form %}
-                                        {% if field.name == "user" %}
-                                            <input
-                                                type="hidden"
-                                                name="user"
-                                                value="{{ user.id }}" />
-                                        {% else %}
-                                            {{ field }}
-                                        {% endif %}
-                                    {% endfor %}
-                                    <button type="submit" class="btn btn-danger">Remove</button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                </li>
-            {% empty %}
-                <li class="list-group-item">There are no editors for this algorithm.</li>
-            {% endfor %}
-        </ul>
-
-        <p class="mt-3">
-            <a class="btn btn-primary"
-               href="{% url 'reader-studies:editors-update' slug=object.slug %}">
-                <i class="fas fa-plus"></i> Add editors
-            </a>
-        </p>
-
-        <h2>Readers</h2>
-        <ul class="list-group list-group-flush">
-            {% for reader in readers %}
-                <li class="list-group-item">
-                    <div class="row">
-                        <div class="col-3 mb-1">
-                            <div class="h-100 d-flex justify-content-start align-items-center">
-                                {{ reader.obj|user_profile_link }}
-                            </div>
-                        </div>
-                        <div class="col-6 mb-1">
-                            <div class="progress h-100">
-                                <div class="progress-bar" role="progressbar" style="width: {{ reader.progress.questions }}%" aria-valuenow="{{ reader.progress.questions }}" aria-valuemin="0" aria-valuemax="100">
-                                    Progress: {{ reader.progress.questions|floatformat }}%
+                <ul class="list-group list-group-flush mb-2">
+                    {% for user in object.editors_group.user_set.all %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>{{ user|user_profile_link }}</div>
+                                <div>
+                                    {% if user != request.user %}
+                                        <form
+                                                action="{% url 'reader-studies:editors-update' slug=object.slug %}"
+                                                method="POST">
+                                            {% csrf_token %}
+                                            {% for field in editor_remove_form %}
+                                                {% if field.name == "user" %}
+                                                    <input
+                                                            type="hidden"
+                                                            name="user"
+                                                            value="{{ user.id }}"/>
+                                                {% else %}
+                                                    {{ field }}
+                                                {% endif %}
+                                            {% endfor %}
+                                            <button type="submit"
+                                                    class="btn btn-danger">
+                                                Remove
+                                            </button>
+                                        </form>
+                                    {% endif %}
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-3 mb-1">
-                            <div class="d-flex justify-content-end align-items-center">
-                                <form
-                                    action="{% url 'reader-studies:readers-update' slug=object.slug %}"
-                                    method="POST">
-                                    {% csrf_token %}
-                                    {% for field in reader_remove_form %}
-                                        {% if field.name == "user" %}
-                                            <input
-                                                type="hidden"
-                                                name="user"
-                                                value="{{ reader.obj.id }}" />
-                                        {% else %}
-                                            {{ field }}
-                                        {% endif %}
-                                    {% endfor %}
-                                    <button type="submit" class="btn btn-danger">Remove</button>
-                                </form>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">
+                            There are no editors for this reader study.
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <p class="mt-3">
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:editors-update' slug=object.slug %}">
+                        <i class="fas fa-plus"></i> Add Editors
+                    </a>
+                </p>
+            </div>
+
+            <div class="tab-pane fade"
+                 id="v-pills-cases"
+                 role="tabpanel"
+                 aria-labelledby="v-pills-cases-tab">
+
+                <h2>Cases</h2>
+
+                <p>
+                    There
+                    are {{ object.images.all.count }}
+                    case{{ object.images.all.count|pluralize }}
+                    in this reader study.
+                </p>
+
+                <h2>Upload Sessions</h2>
+
+                <ul>
+                    {% for session in object.rawimageuploadsession_set.all %}
+                        <li>
+                            <a href="{{ session.get_absolute_url }}">{{ session }}</a>
+                        </li>
+                    {% empty %}
+                        <li>There are no upload sessions for this reader study.</li>
+                    {% endfor %}
+                </ul>
+
+                <p class="mt-3">
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:add-images' slug=object.slug %}">
+                        <i class="fas fa-plus"></i> Add Cases
+                    </a>
+                </p>
+            </div>
+
+            <div class="tab-pane fade"
+                 id="v-pills-questions"
+                 role="tabpanel"
+                 aria-labelledby="v-pills-questions-tab">
+                <h2>Questions</h2>
+
+                <ul class="list-group list-group-flush">
+                    {% for question in object.questions.all %}
+                        <li class="list-group-item">
+                            <div class="w-100 d-flex justify-content-between">
+                                <div>{{ question }}</div>
+                                <a class="btn btn-primary btn-sm"
+                                   href="{% url 'reader-studies:question-update' slug=object.slug pk=question.pk %}">
+                                    <i class="fa fa-edit"></i>
+                                </a>
                             </div>
-                        </div>
-                    </div>
-                </li>
-            {% empty %}
-                 <li class="list-group-item">There are no readers for this algorithm.</li>
-            {% endfor %}
-        </ul>
+                        </li>
+                    {% endfor %}
+                </ul>
 
-
-        <p class="mt-3">
-            <a class="btn btn-primary"
-               href="{% url 'reader-studies:readers-update' slug=object.slug %}">
-                <i class="fas fa-plus"></i> Add readers
-            </a>
-        </p>
-
-        <h2>Upload Sessions</h2>
-
-        <ul>
-            {% for session in object.rawimageuploadsession_set.all %}
-                <li><a href="{{ session.get_absolute_url }}">{{ session }}</a>
-                </li>
-            {% endfor %}
-        </ul>
-
-        <h2>Images</h2>
-
-        <p>There are {{ object.images.all.count }} image(s) in this reader study.</p>
-
-        <p class="mt-3">
-            <a class="btn btn-primary"
-               href="{% url 'reader-studies:add-images' slug=object.slug %}">
-                <i class="fas fa-plus"></i> Add images to this study
-            </a>
-        </p>
-
-        <h2>Questions</h2>
-
-        <ul class="list-group list-group-flush">
-            {% for question in object.questions.all %}
-                <li class="list-group-item">
-                    <div class="w-100 d-flex justify-content-between">
-                        <div>{{ question }}</div>
-                        <a class="btn btn-primary btn-sm"
-                           href="{% url 'reader-studies:question-update' slug=object.slug pk=question.pk %}">
-                            <i class="fa fa-edit"></i> Edit
-                        </a>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
-
-        <div class="mt-3 d-lg-flex justify-content-between">
-            <div>
-            <a class="btn btn-primary mb-1"
-                   href="{% url 'reader-studies:add-question' slug=object.slug %}">
-                    <i class="fas fa-plus"></i> Add a question to this study
-                </a>
-                <a class="btn btn-primary mb-1"
-                   href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
-                    <i class="fas fa-plus"></i> Add ground truth to this study
-                </a>
+                <p class="mt-3">
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:add-question' slug=object.slug %}">
+                        <i class="fas fa-plus"></i> Add a Question
+                    </a>
+                </p>
             </div>
-            <a class="btn btn-primary mb-1"
-               href="{% url 'api:reader-study-export-answers' pk=object.pk %}">
-                <i class="fas fa-download"></i> Export answers (CSV)
-            </a>
-        </div>
 
-        <div class="mt-3 d-lg-flex justify-content-end">
-            <a class="btn btn-primary mb-1 ml-1"
-               href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
-                <i class="fas fa-trophy mr-1"></i>View leaderboard
-            </a>
-            <a class="btn btn-primary mb-1 ml-1"
-               href="{% url 'reader-studies:statistics' slug=object.slug %}">
-                <i class="fas fa-signal mr-1"></i> View statistics
-            </a>
-        </div>
+            <div class="tab-pane fade"
+                 id="v-pills-readers"
+                 role="tabpanel"
+                 aria-labelledby="v-pills-readers-tab">
 
-    {% endif %}
+                <h2>Readers</h2>
 
-    <!-- Modal -->
-    <div class="modal fade" id="hangingListModal" tabindex="-1" role="dialog"
-         aria-labelledby="hangingListModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="hangingListModalLabel">Generate
-                        hanging list</h5>
-                    <button type="button" class="close" data-dismiss="modal"
-                            aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>The generated hanging list will overwrite any existing hanging
-                        list by setting 1 image per hanging protocol.</p>
+                <ul class="list-group list-group-flush">
+                    {% for reader in readers %}
+                        <li class="list-group-item">
+                            <div class="row">
+                                <div class="col-3 mb-1">
+                                    <div class="h-100 d-flex justify-content-start align-items-center">
+                                        {{ reader.obj|user_profile_link }}
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-1">
+                                    <div class="progress h-100">
+                                        <div class="progress-bar" role="progressbar"
+                                             style="width: {{ reader.progress.questions }}%"
+                                             aria-valuenow="{{ reader.progress.questions }}"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            Progress: {{ reader.progress.questions|floatformat }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3 mb-1">
+                                    <div class="d-flex justify-content-end align-items-center">
+                                        <form
+                                                action="{% url 'reader-studies:readers-update' slug=object.slug %}"
+                                                method="POST">
+                                            {% csrf_token %}
+                                            {% for field in reader_remove_form %}
+                                                {% if field.name == "user" %}
+                                                    <input
+                                                            type="hidden"
+                                                            name="user"
+                                                            value="{{ reader.obj.id }}"/>
+                                                {% else %}
+                                                    {{ field }}
+                                                {% endif %}
+                                            {% endfor %}
+                                            <button type="submit"
+                                                    class="btn btn-danger">
+                                                Remove
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">
+                            There are no readers for this reader study.
+                        </li>
+                    {% endfor %}
+                </ul>
 
-                    <p><b>Are you sure that you want to continue?</b></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                            data-dismiss="modal">Cancel
-                    </button>
-                    <button type="button" class="btn btn-danger"
-                            id="generateHangingList">
-                        <i class="fa fa-trash"></i> Re-generate the hanging list
-                    </button>
+                <p class="mt-3">
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:readers-update' slug=object.slug %}">
+                        <i class="fas fa-plus"></i> Add Readers
+                    </a>
+                </p>
+
+            </div>
+
+            <div class="tab-pane fade"
+                 id="v-pills-ground-truth"
+                 role="tabpanel"
+                 aria-labelledby="v-pills-ground-truth-tab">
+
+                <h2>Ground Truth</h2>
+
+                <p>
+                    If you wish to assess the performance of the readers you
+                    can upload the CSV file containing the ground truth for
+                    this reader study here.
+                </p>
+                <p>
+                    The first row of the CSV file must contain the headings
+                    <code>images</code>, followed by the question text for
+                    each of the questions in the reader study:
+                    <code>
+                        images,
+                        {% for question in object.answerable_questions %}
+                            {{ question.question_text }},
+                        {% endfor %}
+                    </code>
+                </p>
+                <p>
+                    The consecutive lines contain the images per hanging. For
+                    multiple images separate the image names with a <code>;</code>.
+                    Then include the answer for the question
+                    corresponding to the question text defined in the header for that
+                    column. For now, only boolean and single line text answers are
+                    supported. For boolean values, you can use <code>1</code>
+                    to indicate <code>True</code> and
+                    <code>0</code> to indicate <code>False</code>.
+                </p>
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
+                        <i class="fas fa-upload"></i> Upload Ground Truth
+                    </a>
+                </p>
+
+            </div>
+
+            <div class="tab-pane fade"
+                 id="v-pills-export"
+                 role="tabpanel"
+                 aria-labelledby="v-pills-export-tab">
+
+                <h2>Export</h2>
+
+                <p>
+                    You can access this reader study and integrate its data into
+                    other applications via the live
+                    <a href="{% url 'api:reader-study-detail' pk=object.pk %}">REST
+                        API</a>,
+                    alternatively, you can download the current data in CSV format:
+                </p>
+                <p class="mt-3">
+                    <a class="btn btn-primary"
+                       href="{% url 'api:reader-study-export-answers' pk=object.pk %}">
+                        <i class="fas fa-file-csv"></i> Export as CSV
+                    </a>
+                </p>
+            </div>
+        {% endif %}
+
+        <!-- Modal -->
+        <div class="modal fade" id="hangingListModal" tabindex="-1" role="dialog"
+             aria-labelledby="hangingListModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="hangingListModalLabel">Generate
+                            hanging list</h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>The generated hanging list will overwrite any existing
+                            hanging
+                            list by setting 1 image per hanging protocol.</p>
+
+                        <p><b>Are you sure that you want to continue?</b></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"
+                                data-dismiss="modal">Cancel
+                        </button>
+                        <button type="button" class="btn btn-danger"
+                                id="generateHangingList">
+                            <i class="fa fa-trash"></i> Re-generate the hanging list
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
-        <script>
-            window.drf = {
-              csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
-              csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
-            };
+    <script>
+        window.drf = {
+            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
 
-            $(document).ready(() => {
-                $('#generateHangingList').on('click', () => {
-                    $.ajax({
-                        type: 'PATCH',
-                        url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
-                        data: {},
-                        contentType: 'application/json',
-                        complete: (response) => {
-                            $('#page').prepend(
-                                '<div class="alert alert-success" role="alert">' +
-                                    `${response.responseJSON.status}` +
-                                '</div>'
-                            );
-                            window.location.replace(window.location.href);
-                        }
-                    })
+        $(document).ready(() => {
+            $('#generateHangingList').on('click', () => {
+                $.ajax({
+                    type: 'PATCH',
+                    url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
+                    data: {},
+                    contentType: 'application/json',
+                    complete: (response) => {
+                        $('#page').prepend(
+                            '<div class="alert alert-success" role="alert">' +
+                            `${response.responseJSON.status}` +
+                            '</div>'
+                        );
+                        window.location.replace(window.location.href);
+                    }
                 })
-            });
-        </script>
-        <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+            })
+        });
+    </script>
+    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
 {% endblock %}
