@@ -16,6 +16,50 @@
     </ol>
 {% endblock %}
 
+{% block sidebar %}
+    <div class="col-12 col-md-4 col-lg-3 mb-3">
+        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+             aria-orientation="vertical">
+            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
+               href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+               aria-selected="true"><i class="fas fa-microscope fa-fw"></i>&nbsp;{{ object.title }}
+            </a>
+            <a class="nav-link" id="v-pills-settings-tab" data-toggle="pill"
+               href="#v-pills-settings" role="tab" aria-controls="v-pills-settings"
+               aria-selected="false"><i class="fas fa-cog fa-fw"></i>&nbsp;Settings
+            </a>
+            <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
+               href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
+               aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
+            </a>
+            <a class="nav-link" id="v-pills-cases-tab" data-toggle="pill"
+               href="#v-pills-cases" role="tab" aria-controls="v-pills-cases"
+               aria-selected="false"><i class="fas fa-image fa-fw"></i>&nbsp;Cases
+            </a>
+            <a class="nav-link" id="v-pills-questions-tab" data-toggle="pill"
+               href="#v-pills-questions" role="tab" aria-controls="v-pills-questions"
+               aria-selected="false"><i class="fas fa-question fa-fw"></i>&nbsp;Questions
+            </a>
+            <a class="nav-link" id="v-pills-readers-tab" data-toggle="pill"
+               href="#v-pills-readers" role="tab" aria-controls="v-pills-readers"
+               aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Readers
+            </a>
+            <a class="nav-link" id="v-pills-leaderboard-tab" data-toggle="pill"
+               href="#v-pills-leaderboard" role="tab" aria-controls="v-pills-leaderboard"
+               aria-selected="false"><i class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
+            </a>
+            <a class="nav-link" id="v-pills-statistics-tab" data-toggle="pill"
+               href="#v-pills-statistics" role="tab" aria-controls="v-pills-statistics"
+               aria-selected="false"><i class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
+            </a>
+            <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
+               href="#v-pills-export" role="tab" aria-controls="v-pills-export"
+               aria-selected="false"><i class="fas fa-download fa-fw"></i>&nbsp;Export
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
 {% block content %}
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
 
