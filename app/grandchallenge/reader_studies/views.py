@@ -138,7 +138,10 @@ class ReaderStudyDetail(
 
 
 class ReaderStudyUpdate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
 ):
     model = ReaderStudy
     form_class = ReaderStudyUpdateForm
@@ -146,6 +149,7 @@ class ReaderStudyUpdate(
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
+    success_message = "Reader study successfully updated"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

@@ -5,8 +5,10 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
         {% if object %}
             <li class="breadcrumb-item"><a
                     href="{{ object.get_absolute_url }}">{{ object }}</a></li>
@@ -24,6 +26,15 @@
     <h2>Reader Study {{ object|yesno:"Update,Create" }}</h2>
 
     {% crispy form %}
+
+    {% if object %}
+        <p class="float-right">
+            <a href="{% url 'reader-studies:delete' slug=object.slug %}"
+               class="btn btn-danger">
+                <i class="fa fa-times"></i> Delete this reader study
+            </a>
+        </p>
+    {% endif %}
 {% endblock %}
 
 {% block script %}
