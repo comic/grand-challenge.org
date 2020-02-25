@@ -23,6 +23,94 @@ from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
+__doc__ = """
+A reader study enables you to have a set of readers answer a set of questions
+about a set of images.
+
+Editors
+    You can add multiple editors to your reader study.
+    An editor is someone who can edit the reader study settings, add other editors,
+    add and remove readers, add images and edit questions.
+Readers
+    A user who can read this study, creating an answer for each question and
+    image in the study.
+Cases
+    The set of images that will be used in the study.
+Hanging List
+    How the each image will be presented to the user as a set of hanging protocols.
+    For instance, you might want to present two images side by side and
+    have a reader answer a question about both, or overlay one image
+    on another.
+
+
+Creating a Reader Study
+-----------------------
+
+A ``ReaderStudy`` can use any available ``Workstation``.
+A ``WorkstationConfig`` can also be used for the study to customise the default
+appearance of the workstation.
+
+Cases
+-----
+
+Cases can be added to a reader study by adding ``Image`` instances.
+Multiple image formats are supported:
+
+* ``.mha``
+* ``.mhd`` with the accompanying ``.zraw`` or ``.raw`` file
+* ``.tif``/``.tiff``
+* ``.jpg``/``.jpeg``
+* ``.png``
+* 3D/4D DICOM support is also available, though this is experimental and not
+  guaranteed to work on all ``.dcm`` images.
+
+Defining the Hanging List
+-------------------------
+
+When you upload a set of images you have the option to automatically generate
+the default hanging list.
+The default hanging list presents each reader with 1 image per protocol.
+
+You are able to customise the hanging list in the study edit page.
+Here, you are able to assign multiple images and overlays to each protocol.
+A ``main`` and ``secondary`` image port are available.
+Overlays can be applied to either image port by using the keys ``main-overlay``
+and ``secondary-overlay``.
+
+Questions
+---------
+
+A ``Question`` can be optional and the following ``answer_type`` options are
+available:
+
+* Heading (not answerable)
+* Bool
+* Single line text
+* Multiline text
+
+The following annotation answer types are also available:
+
+* Distance measurement
+* Multiple distance measurements
+* 2D bounding box
+
+To use an annotation answer type you must also select the image port where the
+annotation will be made.
+
+Adding Ground Truth
+-------------------
+
+To monitor the performance of the readers you are able add ground truth to a
+reader study by uploading a csv file.
+
+If ground truth has been added to a ``ReaderStudy``, any ``Answer`` given by a
+reader is evaluated by applying the ``scoring_function`` chosen for the ``Question``.
+
+The scores can then be compared on the ``leaderboard``. Statistics are also available
+based on these scores: the average and total scores for each question as well
+as for each case are displayed in the ``statistics`` view.
+"""
+
 HANGING_LIST_SCHEMA = {
     "definitions": {},
     "$schema": "http://json-schema.org/draft-06/schema#",
@@ -73,6 +161,13 @@ HANGING_LIST_SCHEMA = {
 
 
 class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
+    """
+    Reader Study model.
+
+    A reader study is a tool that allows users to have a set of readers answer
+    a set of questions on a set of images (cases).
+    """
+
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
@@ -175,29 +270,37 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         self.assign_workstation_permissions()
 
     def is_editor(self, user):
+        """Checks if ``user`` is an editor for this ``ReaderStudy``."""
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
     def add_editor(self, user):
+        """Adds ``user`` as an editor for this ``ReaderStudy``."""
         return user.groups.add(self.editors_group)
 
     def remove_editor(self, user):
+        """Removes ``user`` as an editor for this ``ReaderStudy``."""
         return user.groups.remove(self.editors_group)
 
     def is_reader(self, user):
+        """Checks if ``user`` is a reader for this ``ReaderStudy``."""
         return user.groups.filter(pk=self.readers_group.pk).exists()
 
     def add_reader(self, user):
+        """Adds ``user`` as a reader for this ``ReaderStudy``."""
         return user.groups.add(self.readers_group)
 
     def remove_reader(self, user):
+        """Removes ``user`` as a reader for this ``ReaderStudy``."""
         return user.groups.remove(self.readers_group)
 
     @property
     def study_image_names(self):
+        """Names for all images added to this ``ReaderStudy``."""
         return self.images.values_list("name", flat=True)
 
     @property
     def hanging_image_names(self):
+        """Names for all images in the hanging list."""
         return [
             name for hanging in self.hanging_list for name in hanging.values()
         ]
@@ -205,7 +308,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def hanging_list_valid(self):
         """
-        Test that all of the study images are included in the hanging list
+        Tests that all of the study images are included in the hanging list
         exactly once.
         """
         return sorted(self.study_image_names) == sorted(
@@ -214,6 +317,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def hanging_list_diff(self):
+        """
+        Returns the diff between the images added to the study and the images
+        in the hanging list.
+        """
         return {
             "in_study_list": set(self.study_image_names)
             - set(self.hanging_image_names),
@@ -223,7 +330,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def non_unique_study_image_names(self):
-        """Return all of the non-unique image names for this ReaderStudy."""
+        """Returns all of the non-unique image names for this ``ReaderStudy``."""
         return [
             name
             for name, count in Counter(self.study_image_names).items()
@@ -232,7 +339,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def is_valid(self):
-        """Is this ReaderStudy valid?"""
+        """
+        Returns ``True`` if the hanging list is valid and there are no
+        duplicate image names in this ``ReaderStudy`` and ``False`` otherwise.
+        """
         return (
             self.hanging_list_valid
             and len(self.non_unique_study_image_names) == 0
@@ -258,17 +368,24 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @property
     def image_groups(self):
+        """Names of the images as they are grouped in the hanging list."""
         return [sorted(x.values()) for x in self.hanging_list]
 
     @cached_property
     def answerable_questions(self):
+        """
+        All questions for this ``ReaderStudy`` except those with answer type
+        `heading`.
+        """
         return self.questions.exclude(answer_type=Question.ANSWER_TYPE_HEADING)
 
     @cached_property
     def answerable_question_count(self):
+        """The number of answerable questions for this ``ReaderStudy``."""
         return self.answerable_questions.count()
 
     def add_ground_truth(self, *, data, user):
+        """Add ground truth answers provided by ``data`` for this ``ReaderStudy``."""
         answers = []
         for gt in data:
             images = self.images.filter(name__in=gt["images"].split(";"))
@@ -310,10 +427,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def get_hanging_list_images_for_user(self, *, user):
         """
         Returns a shuffled list of the hanging list images for a particular
-        user. The shuffle is seeded with the users pk, and using RandomState
+        user.
+
+        The shuffle is seeded with the users pk, and using ``RandomState``
         from numpy guarantees that the ordering will be consistent across
         python/library versions. Returns the normal list if
-        shuffle_hanging_list is false.
+        ``shuffle_hanging_list`` is ``False``.
         """
         hanging_list = self.hanging_list_images
 
@@ -324,11 +443,18 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return hanging_list
 
     def generate_hanging_list(self):
+        """
+        Generates a new hanging list.
+
+        Each image in the ``ReaderStudy`` is assigned to the primary port of its
+        own hanging.
+        """
         image_names = self.images.values_list("name", flat=True)
         self.hanging_list = [{"main": name} for name in image_names]
         self.save()
 
     def get_progress_for_user(self, user):
+        """Returns the percentage of completed hangings and questions for ``user``."""
         if not self.is_valid or not self.hanging_list:
             return {
                 "questions": 0.0,
@@ -394,12 +520,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         }
 
     def score_for_user(self, user):
+        """Returns the average and total score for answers given by ``user``."""
         return Answer.objects.filter(
             creator=user, question__reader_study=self, is_ground_truth=False
         ).aggregate(Sum("score"), Avg("score"))
 
     @cached_property
     def scores_by_user(self):
+        """The average and total scores for this ``ReaderStudy`` grouped by user."""
         return (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
@@ -412,6 +540,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @cached_property
     def leaderboard(self):
+        """The leaderboard for this ``ReaderStudy``."""
         question_count = float(self.answerable_question_count) * len(
             self.hanging_list
         )
@@ -422,6 +551,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @cached_property
     def statistics(self):
+        """Statistics per question and case based on the total / average score."""
         scores_by_question = (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
@@ -486,6 +616,7 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
+#: Schema used to validate if answers are of the correct type and format.
 ANSWER_TYPE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
@@ -679,6 +810,7 @@ class Question(UUIDModel):
 
     @property
     def csv_values(self):
+        """Values that are included in this ``Question``'s csv export."""
         return [
             self.question_text,
             self.get_answer_type_display(),
@@ -688,21 +820,31 @@ class Question(UUIDModel):
 
     @property
     def api_url(self):
+        """API url for this ``Question``."""
         return reverse(
             "api:reader-studies-question-detail", kwargs={"pk": self.pk}
         )
 
     @property
     def is_fully_editable(self):
+        """``True`` if no ``Answer`` has been given for this ``Question``."""
         return self.answer_set.count() == 0
 
     @property
     def read_only_fields(self):
+        """
+        ``question_text``, ``answer_type``, ``image_port``, ``required`` if
+        this ``Question`` is fully editable, an empty list otherwise.
+        """
         if not self.is_fully_editable:
             return ["question_text", "answer_type", "image_port", "required"]
         return []
 
     def calculate_score(self, answer, ground_truth):
+        """
+        Calculates the score for ``answer`` by applying ``scoring_function``
+        to ``answer`` and ``ground_truth``.
+        """
         return self.SCORING_FUNCTIONS[self.scoring_function](
             [answer], [ground_truth], normalize=True
         )
@@ -750,6 +892,7 @@ class Question(UUIDModel):
             )
 
     def is_answer_valid(self, *, answer):
+        """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
         try:
             return (
                 JSONSchemaValidator(
@@ -772,6 +915,11 @@ class Question(UUIDModel):
 
 
 class Answer(UUIDModel):
+    """
+    An ``Answer`` can be provided to a ``Question`` that is a part of a
+    ``ReaderStudy``.
+    """
+
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
@@ -795,12 +943,14 @@ class Answer(UUIDModel):
 
     @property
     def api_url(self):
+        """API url for this ``Answer``."""
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
 
     @property
     def csv_values(self):
+        """Values that are included in this ``Answer``'s csv export."""
         return self.question.csv_values + [
             self.created.isoformat(),
             self.answer,
@@ -810,6 +960,7 @@ class Answer(UUIDModel):
 
     @staticmethod
     def validate(*, creator, question, answer, images, is_ground_truth=False):
+        """Validates all fields provided for ``answer``."""
         if len(images) == 0:
             raise ValidationError(
                 "You must specify the images that this answer corresponds to."
@@ -855,6 +1006,7 @@ class Answer(UUIDModel):
             )
 
     def calculate_score(self, ground_truth):
+        """Calculate the score for this ``Answer`` based on ``ground_truth``."""
         self.score = self.question.calculate_score(self.answer, ground_truth)
         return self.score
 
