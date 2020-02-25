@@ -71,7 +71,7 @@ Adding ground truth
 Editors can optionally add ground truth to a reader study by uploading a csv file.
 
 If ground truth has been added to a ``ReaderStudy``, any ``Answer`` given by a
-reader is evaluted by applying the ``scoring_function`` chosen for the ``Question``.
+reader is evaluated by applying the ``scoring_function`` chosen for the ``Question``.
 
 The scores can then be compared on the ``leaderboard``. Statistics are also available
 based on these scores: the average and total scores for each question as well
@@ -308,7 +308,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def is_valid(self):
         """
         Returns ``True`` if the hanging list is valid and there are no
-        duplicate image names in this ReaderStudy and ``False`` otherwise.
+        duplicate image names in this ``ReaderStudy`` and ``False`` otherwise.
         """
         return (
             self.hanging_list_valid
@@ -340,7 +340,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @cached_property
     def answerable_questions(self):
-        """All questions except those with answer type `heading`."""
+        """All questions for this ``ReaderStudy`` except those with answer type `heading`."""
         return self.questions.exclude(answer_type=Question.ANSWER_TYPE_HEADING)
 
     @cached_property
@@ -393,10 +393,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Returns a shuffled list of the hanging list images for a particular
         user.
 
-        The shuffle is seeded with the users pk, and using RandomState
+        The shuffle is seeded with the users pk, and using ``RandomState``
         from numpy guarantees that the ordering will be consistent across
         python/library versions. Returns the normal list if
-        shuffle_hanging_list is false.
+        ``shuffle_hanging_list`` is ``False``.
         """
         hanging_list = self.hanging_list_images
 
@@ -410,7 +410,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         """
         Generates a new hanging list.
 
-        Each image in the ReaderStudy is assigned to the primary port of its
+        Each image in the ``ReaderStudy`` is assigned to the primary port of its
         own hanging.
         """
         image_names = self.images.values_list("name", flat=True)
@@ -798,7 +798,7 @@ class Question(UUIDModel):
     def read_only_fields(self):
         """
         ``question_text``, ``answer_type``, ``image_port``, ``required`` if
-        this Question is fully editable, an empty list otherwise.
+        this ``Question`` is fully editable, an empty list otherwise.
         """
         if not self.is_fully_editable:
             return ["question_text", "answer_type", "image_port", "required"]
@@ -924,7 +924,7 @@ class Answer(UUIDModel):
 
     @staticmethod
     def validate(*, creator, question, answer, images, is_ground_truth=False):
-        """Validates all fields provided for this ``answer``."""
+        """Validates all fields provided for ``answer``."""
         if len(images) == 0:
             raise ValidationError(
                 "You must specify the images that this answer corresponds to."
@@ -970,7 +970,7 @@ class Answer(UUIDModel):
             )
 
     def calculate_score(self, ground_truth):
-        """Calculate the score for this question based on ``ground_truth``."""
+        """Calculate the score for this ``Answer`` based on ``ground_truth``."""
         self.score = self.question.calculate_score(self.answer, ground_truth)
         return self.score
 
