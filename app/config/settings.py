@@ -35,6 +35,7 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/phpmyadmin.*"),
     re.compile(r"^/gen204.*"),
     re.compile(r"^/wp-content.*"),
+    re.compile(r"^/wp.*"),
     re.compile(r".*/trackback.*"),
     re.compile(r"^/site/.*"),
     re.compile(r"^/media/cache/.*"),
