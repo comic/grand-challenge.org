@@ -11,7 +11,6 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
-from django.utils import timezone
 from django.utils.timezone import now
 
 from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
@@ -179,7 +178,7 @@ def execute_job(
 
 @shared_task
 def mark_long_running_jobs_failed(
-    *, app_label: str, model_name: str, exclude: Dict[str, str] = None
+    *, app_label: str, model_name: str, extra_filters: Dict[str, str] = None
 ):
     """
     Mark jobs that have been started but did not finish (maybe due to
@@ -202,8 +201,8 @@ def mark_long_running_jobs_failed(
         status=Job.STARTED,
     )
 
-    if exclude:
-        jobs_to_mark = jobs_to_mark.exclude(**exclude)
+    if extra_filters:
+        jobs_to_mark = jobs_to_mark.filter(**extra_filters)
 
     for j in jobs_to_mark:
         j.update_status(status=Job.FAILURE, output="Evaluation timed out")
@@ -230,7 +229,6 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 @shared_task
 def stop_expired_services(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    now = timezone.now()
 
     services_to_stop = (
         model.objects.annotate(
@@ -239,7 +237,7 @@ def stop_expired_services(*, app_label: str, model_name: str):
                 output_field=DateTimeField(),
             )
         )
-        .filter(expires__lt=now)
+        .filter(expires__lt=now())
         .exclude(status=model.STOPPED)
     )
 
