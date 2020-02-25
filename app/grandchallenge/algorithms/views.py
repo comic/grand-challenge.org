@@ -462,7 +462,11 @@ class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(algorithm=self.algorithm)
+        queryset = (
+            queryset.filter(algorithm=self.algorithm)
+            .exclude(status=AlgorithmPermissionRequest.ACCEPTED)
+            .select_related("user__user_profile")
+        )
         return queryset
 
     def get_context_data(self, **kwargs):
