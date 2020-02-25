@@ -132,7 +132,7 @@ def test_algorithm_detail_view_permissions(client, view_name, index):
 
 
 @pytest.mark.django_db
-def test_algorithm_jobs_view(client):
+def test_algorithm_results_list_view(client):
     # This view is a bit special, all algorithm users should be able to
     # view it, but the results should be filtered
 
@@ -151,6 +151,9 @@ def test_algorithm_jobs_view(client):
             algorithm_image__algorithm=alg_set.alg2, creator=extra_user2
         ),
     )
+
+    # Create the results
+    _ = AlgorithmResultFactory(job=j1), AlgorithmResultFactory(job=j2)
 
     all_jobs = {j1, j2}
 
@@ -177,7 +180,7 @@ def test_algorithm_jobs_view(client):
 
     for test in tests:
         response = get_view_for_user(
-            viewname=f"algorithms:jobs-list",
+            viewname=f"algorithms:results-list",
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],

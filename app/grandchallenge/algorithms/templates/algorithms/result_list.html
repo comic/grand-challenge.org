@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% load url %}
-{% load user_profile_link from profiles %}
+{% load profiles %}
 {% load workstations %}
 {% load guardian_tags %}
-{% load suffix from pathlib %}
+{% load pathlib %}
 {% load humanize %}
-{% load user_error from evaluation_extras %}
+{% load evaluation_extras %}
 
 {% block title %}
-    Algorithm Jobs - {{ block.super }}
+    Algorithm Results - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -56,26 +56,24 @@
             </tr>
             </thead>
             <tbody>
-            {% for job in object_list %}
+            {% for result in object_list %}
                 <tr>
                     {# pk included for test support #}
-                    <!-- {{ job.pk }} -->
-                    <td data-order="{{ job.created|date:"U" }}">{{ job.created|naturaltime }}</td>
+                    <!-- {{ result.job.pk }} -->
+                    <td data-order="{{ result.job.created|date:"U" }}">{{ result.job.created|naturaltime }}</td>
                     <td>
-                        {% if job.creator %}
-                            {{ job.creator|user_profile_link }}
-                        {% endif %}
+                        {{ result.job.creator|user_profile_link }}
                     </td>
                     <td>
                         <ul class="list-unstyled">
                             <li>
-                                <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image config=algorithm.workstation_config %}">
+                                <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image config=algorithm.workstation_config %}">
                                     <span class="badge badge-primary">
                                         <i class="fa fa-eye"></i> View Input
                                     </span>
                                 </a>
                             </li>
-                            {% for file in job.image.files.all %}
+                            {% for file in result.job.image.files.all %}
                                 <li>
                                     <a href="{{ file.file.url }}">
                                         <span class="badge badge-primary">
@@ -89,11 +87,11 @@
                     <td>
                         <a href="#jobInfoModal"
                            class="badge
-                            {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                            {% if result.job.status == result.job.FAILURE or result.job.status == result.job.CANCELLED %}
                                 badge-danger
-                            {% elif job.status == job.RETRY %}
+                            {% elif result.job.status == result.job.RETRY %}
                                 badge-warning
-                            {% elif job.status == job.SUCCESS %}
+                            {% elif result.job.status == result.job.SUCCESS %}
                                 badge-success
                             {% else %}
                                 badge-info
@@ -101,10 +99,10 @@
                            data-toggle="modal"
                            data-target="#jobInfoModal"
                            data-title="Job Info"
-                           data-output="{% firstof job.output|user_error job.get_status_display %}"
-                           data-pk="{{ job.pk }}"
+                           data-output="{% firstof result.job.output|user_error result.job.get_status_display %}"
+                           data-pk="{{ result.job.pk }}"
                            title="Job Info">
-                            {{ job.get_status_display }}
+                            {{ result.job.get_status_display }}
                         </a>
                     </td>
                     <td>
@@ -113,14 +111,14 @@
                            data-toggle="modal"
                            data-target="#jobInfoModal"
                            data-title="Result Info"
-                           data-output="{% firstof job.result.output 'No output produced.' %}"
-                           data-pk="{{ job.result.pk }}"
+                           data-output="{% firstof result.output 'No output produced.' %}"
+                           data-pk="{{ result.pk }}"
                            title="Result Info">
                             <i class="fa fa-eye"></i> Result Info
                         </a>
                     </td>
                     <td>
-                        {% if job.result.public %}
+                        {% if result.public %}
                             <i class="fa fa-eye text-success"
                                title="Result is public"></i>
                         {% else %}
@@ -129,11 +127,11 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if job.result.images.all %}
+                        {% if result.images.all %}
                             <ul class="list-unstyled">
-                                {% for image in job.result.images.all %}
+                                {% for image in result.images.all %}
                                     <li>
-                                        <a href="{% url 'workstations:workstation-session-redirect' slug=job.algorithm_image.algorithm.workstation.slug %}?{% workstation_query image=job.image overlay=image config=algorithm.workstation_config %}">
+                                        <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image overlay=image config=algorithm.workstation_config %}">
                                             <span class="badge badge-primary">
                                                 <i class="fa fa-eye"></i> View Input &amp; Output
                                             </span>
@@ -150,7 +148,7 @@
                                     {% endfor %}
                                 {% endfor %}
                             </ul>
-                        {% elif job.status == job.SUCCESS %}
+                        {% elif result.job.status == result.job.SUCCESS %}
                             <span class="badge badge-warning"
                                   title="No output images were found">
                                <i class="fa fa-eye-slash"></i>
@@ -158,21 +156,21 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if job.result.comment %}
+                        {% if result.comment %}
                             <a href="#jobInfoModal"
                                class="badge badge-primary"
                                data-toggle="modal"
                                data-target="#jobInfoModal"
                                data-title="Result Comment"
-                               data-output="{{ job.result.comment }}"
-                               data-pk="{{ job.result.pk }}"
+                               data-output="{{ result.comment }}"
+                               data-pk="{{ result.pk }}"
                                title="Result Comment">
                                 <i class="fa fa-file"></i>
                             </a>
                         {% endif %}
                         {# TODO: This should be change_result but is expensive to lookup here, do this when moving to results list #}
-                        {% if "change_algorithm" in algorithm_perms and job.result %}
-                            <a href="{% url 'algorithms:result-update' slug=job.algorithm_image.algorithm.slug pk=job.result.pk %}">
+                        {% if "change_algorithm" in algorithm_perms and result %}
+                            <a href="{% url 'algorithms:result-update' slug=algorithm.slug pk=result.pk %}">
                                 <span class="badge badge-primary" title="Edit result">
                                     <i class="fa fa-edit"></i>
                                 </span>
