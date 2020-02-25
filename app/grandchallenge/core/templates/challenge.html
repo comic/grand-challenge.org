@@ -116,7 +116,7 @@
                                href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">Participation
                                 Requests</a>
                             {% if challenge.use_evaluation %}
-                                <hr/>
+                                <hr>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:config-update' challenge_short_name=challenge.short_name %}">
                                     Evaluation Settings

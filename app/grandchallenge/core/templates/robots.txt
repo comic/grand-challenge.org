@@ -12,3 +12,9 @@ Disallow: /
 
 User-agent: dotbot
 Disallow: /
+
+User-agent: SEOkicks
+Disallow: /
+
+User-agent: SEOkicks-Robot
+Disallow: /

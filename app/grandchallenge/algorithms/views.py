@@ -37,6 +37,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     EditorsForm,
+    PermissionRequestUpdateForm,
     ResultForm,
     UsersForm,
 )
@@ -461,7 +462,11 @@ class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(algorithm=self.algorithm)
+        queryset = (
+            queryset.filter(algorithm=self.algorithm)
+            .exclude(status=AlgorithmPermissionRequest.ACCEPTED)
+            .select_related("user__user_profile")
+        )
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -472,7 +477,7 @@ class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
 
 class AlgorithmPermissionRequestUpdate(SuccessMessageMixin, UpdateView):
     model = AlgorithmPermissionRequest
-    fields = ("status", "rejection_text")
+    form_class = PermissionRequestUpdateForm
 
     @property
     def algorithm(self) -> Algorithm:
