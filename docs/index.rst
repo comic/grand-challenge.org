@@ -14,6 +14,7 @@ Welcome to grand-challenge.org's documentation!
     evaluation
     processor
     workstations
+    reader-studies
     design
 
 
