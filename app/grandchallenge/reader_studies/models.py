@@ -134,6 +134,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     A reader study is a tool that allows users to have a set of readers answer a set of questions on a set of images (cases).
     """
+
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
@@ -417,9 +418,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         self.save()
 
     def get_progress_for_user(self, user):
-        """
-        Returns the percentage of completed hangings and questions for ``user``.
-        """
+        """Returns the percentage of completed hangings and questions for ``user``."""
         if not self.is_valid or not self.hanging_list:
             return {
                 "questions": 0.0,
@@ -516,9 +515,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @cached_property
     def statistics(self):
-        """
-        Statistics per question and case based on the total / average score.
-        """
+        """Statistics per question and case based on the total / average score."""
         scores_by_question = (
             Answer.objects.filter(
                 question__reader_study=self, is_ground_truth=False
@@ -886,6 +883,7 @@ class Answer(UUIDModel):
     An ``Answer`` can be provided to a ``Question`` that is a part of a
     ``ReaderStudy``.
     """
+
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
