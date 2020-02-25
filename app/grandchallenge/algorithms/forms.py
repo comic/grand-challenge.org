@@ -151,3 +151,17 @@ class ResultForm(SaveFormInitMixin, ModelForm):
     class Meta:
         model = Result
         fields = ("comment", "public")
+
+
+class PermissionRequestUpdateForm(SaveFormInitMixin, ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["status"].choices = (
+            c
+            for c in AlgorithmPermissionRequest.REGISTRATION_CHOICES
+            if c[0] != AlgorithmPermissionRequest.PENDING
+        )
+
+    class Meta:
+        model = AlgorithmPermissionRequest
+        fields = ("status", "rejection_text")
