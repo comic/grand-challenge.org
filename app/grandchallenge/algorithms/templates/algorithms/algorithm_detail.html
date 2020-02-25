@@ -101,11 +101,13 @@
             {{ object.detail_page_markdown|md2html }}
 
             {% if "change_algorithm" in algorithm_perms %}
+                <hr>
                 <p>
                     {% if algorithm.public %}
-                        This algorithm is visible to the public, however,
-                        they will need to request access which you will need
-                        to approve before they can run this algorithm.
+                        This algorithm is <b>visible to the public</b>,
+                        however, users will need to request access which you
+                        will need to approve before they can run this
+                        algorithm.
                     {% else %}
                         Only users that you add to the users group will be
                         able to run this algorithm.

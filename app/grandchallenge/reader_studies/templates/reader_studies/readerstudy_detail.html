@@ -78,7 +78,7 @@
             configuration. All of the images should be included in the hanging list
             exactly once.
             {% if object.non_unique_study_image_names|length > 0 %}
-                <hr/>
+                <hr>
                 The following image names appear more than once in the study: <br/>
                 <span class="font-weight-bold">
                     {{ object.non_unique_study_image_names|join:', ' }}
@@ -86,7 +86,7 @@
             {% endif %}
             {% if not object.hanging_list_valid %}
                 {% if object.hanging_list_diff.in_study_list|length > 0 %}
-                    <hr/>
+                    <hr>
                     The following image names appear in the study but not in the
                     hanging list: <br/>
                     <span class="font-weight-bold">
@@ -94,7 +94,7 @@
                     </span>
                 {% endif %}
                 {% if object.hanging_list_diff.in_hanging_list|length > 0 %}
-                    <hr/>
+                    <hr>
                     The following image names appear in the hanging list but not in
                     the study: <br/>
                     <span class="font-weight-bold">
@@ -103,7 +103,7 @@
                 {% endif %}
 
             {% endif %}
-            <hr/>
+            <hr>
 
             You might be able to solve these issues by re-generating the hanging list:
             <button type="button" class="btn btn-primary" data-toggle="modal"
@@ -143,6 +143,7 @@
             {% endif %}
 
             {% if "change_readerstudy" in readerstudy_perms %}
+                <hr>
                 <p>
                     This reader study uses
                     <a href="{{ object.workstation.get_absolute_url }}">
