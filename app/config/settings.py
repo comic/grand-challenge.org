@@ -654,6 +654,26 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
     },
+    "mark_long_running_algorithm_gpu_jobs_failed": {
+        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "kwargs": {
+            "app_label": "algorithms",
+            "model_name": "job",
+            "exclude": {"requires_gpu": False},
+        },
+        "options": {"queue": "gpu"},
+        "schedule": timedelta(hours=1),
+    },
+    "mark_long_running_algorithm_jobs_failed": {
+        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "kwargs": {
+            "app_label": "algorithms",
+            "model_name": "job",
+            "exclude": {"requires_gpu": True},
+        },
+        "options": {"queue": "evaluation"},
+        "schedule": timedelta(hours=1),
+    },
     "cache_retina_archive_data": {
         "task": "grandchallenge.retina_api.tasks.cache_archive_data",
         "schedule": timedelta(hours=1),

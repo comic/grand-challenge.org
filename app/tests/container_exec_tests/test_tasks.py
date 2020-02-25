@@ -12,7 +12,7 @@ from tests.factories import JobFactory as EvaluationJobFactory
 @pytest.mark.django_db
 def test_mark_long_running_jobs_failed():
     # Started jobs should be unaffected
-    EvaluationJobFactory(status=EvaluationJob.STARTED)
+    j1 = EvaluationJobFactory(status=EvaluationJob.STARTED)
 
     # Long running jobs should be marked as failed
     j2 = EvaluationJobFactory(status=EvaluationJob.STARTED)
@@ -26,21 +26,29 @@ def test_mark_long_running_jobs_failed():
     j3.save()
 
     # Algorithm jobs should not be affected
-    AlgorithmJobFactory(status=AlgorithmJob.STARTED)
+    a = AlgorithmJobFactory(status=AlgorithmJob.STARTED)
 
     assert EvaluationJob.objects.all().count() == 3
     assert (
         AlgorithmJob.objects.filter(status=AlgorithmJob.STARTED).count() == 1
     )
+    assert (
+        EvaluationJob.objects.filter(status=EvaluationJob.FAILURE).count() == 0
+    )
+
+    assert j1.status == EvaluationJob.STARTED
+    assert j2.status == EvaluationJob.STARTED
+    assert j3.status == EvaluationJob.PENDING
+    assert a.status == AlgorithmJob.STARTED
 
     mark_long_running_jobs_failed(app_label="evaluation", model_name="job")
 
-    assert (
-        EvaluationJob.objects.filter(status=EvaluationJob.STARTED).count() == 1
-    )
-    assert (
-        EvaluationJob.objects.filter(status=EvaluationJob.PENDING).count() == 1
-    )
-    assert (
-        AlgorithmJob.objects.filter(status=AlgorithmJob.STARTED).count() == 1
-    )
+    j1.refresh_from_db()
+    j2.refresh_from_db()
+    j3.refresh_from_db()
+    a.refresh_from_db()
+
+    assert j1.status == EvaluationJob.STARTED
+    assert j2.status == EvaluationJob.FAILURE
+    assert j3.status == EvaluationJob.PENDING
+    assert a.status == AlgorithmJob.STARTED
