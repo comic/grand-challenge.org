@@ -24,51 +24,84 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
 __doc__ = """
-Grand-challenge.org allows users to create reader studies.
-A reader study is a tool that allows users to have a set of readers answer a set of questions on a set of images (cases).
+A reader study enables you to have a set of readers answer a set of questions
+about a set of images.
 
-One or more `editors` can be added to contribute to the study.
-Any editor can add `readers` to the study. A reader can be any user on grand-challenge.org.
+Editors
+    You can add multiple editors to your reader study.
+    An editor is someone who can edit the reader study settings, add other editors,
+    add and remove readers, add images and edit questions.
+Readers
+    A user who can read this study, creating an answer for each question and
+    image in the study.
+Cases
+    The set of images that will be used in the study.
+Hanging List
+    How the each image will be presented to the user as a set of hanging protocols.
+    For instance, you might want to present two images side by side and
+    have a reader answer a question about both, or overlay one image
+    on another.
 
-Creating a reader study
+
+Creating a Reader Study
 -----------------------
 
-A ``ReaderStudy`` can make use of any of the available ``WorkStation`` instances.
-A ``WorkStationConfig`` can also be used for the study.
-Using the default ``CIRRUS`` workstation, a primary and secondary image port are available.
-Overlays can be applied to either image port. How the overlays are applied can be
-defined in the ``WorkStationConfig``.
+A ``ReaderStudy`` can use any available ``Workstation``.
+A ``WorkstationConfig`` can also be used for the study to customise the default
+appearance of the workstation.
 
-Adding cases and questions
---------------------------
+Cases
+-----
 
 Cases can be added to a reader study by adding ``Image`` instances.
 Multiple image formats are supported:
 
-* .mha,
-* .mhd/.zraw,
-* .tiff,
-* .jp(e)g,
-* .png.
-* Some dicom support is also available, though this not guarenteed to work on all .dcm images.
+* ``.mha``
+* ``.mhd`` with the accompanying ``.zraw`` or ``.raw`` file
+* ``.tif``/``.tiff``
+* ``.jpg``/``.jpeg``
+* ``.png``
+* 3D/4D DICOM support is also available, though this is experimental and not
+  guaranteed to work on all ``.dcm`` images.
 
-``Question`` instances can be added.
-A ``Question`` can be optional and the following ``answer_type`` options are available:
+Defining the Hanging List
+-------------------------
+
+When you upload a set of images you have the option to automatically generate
+the default hanging list.
+The default hanging list presents each reader with 1 image per protocol.
+
+You are able to customise the hanging list in the study edit page.
+Here, you are able to assign multiple images and overlays to each protocol.
+A ``main`` and ``secondary`` image port are available.
+Overlays can be applied to either image port by using the keys ``main-overlay``
+and ``secondary-overlay``.
+
+Questions
+---------
+
+A ``Question`` can be optional and the following ``answer_type`` options are
+available:
 
 * Heading (not answerable)
 * Bool
 * Single line text
 * Multiline text
+
+The following annotation answer types are also available:
+
 * Distance measurement
-* Multiple distance measurement
-* 2D bounding box.
+* Multiple distance measurements
+* 2D bounding box
 
-Readers will be presented each question for each of the supplied cases.
+To use an annotation answer type you must also select the image port where the
+annotation will be made.
 
-Adding ground truth
+Adding Ground Truth
 -------------------
 
-Editors can optionally add ground truth to a reader study by uploading a csv file.
+To monitor the performance of the readers you are able add ground truth to a
+reader study by uploading a csv file.
 
 If ground truth has been added to a ``ReaderStudy``, any ``Answer`` given by a
 reader is evaluated by applying the ``scoring_function`` chosen for the ``Question``.
@@ -76,7 +109,6 @@ reader is evaluated by applying the ``scoring_function`` chosen for the ``Questi
 The scores can then be compared on the ``leaderboard``. Statistics are also available
 based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
-
 """
 
 HANGING_LIST_SCHEMA = {
@@ -132,7 +164,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     """
     Reader Study model.
 
-    A reader study is a tool that allows users to have a set of readers answer a set of questions on a set of images (cases).
+    A reader study is a tool that allows users to have a set of readers answer
+    a set of questions on a set of images (cases).
     """
 
     editors_group = models.OneToOneField(
@@ -340,7 +373,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     @cached_property
     def answerable_questions(self):
-        """All questions for this ``ReaderStudy`` except those with answer type `heading`."""
+        """
+        All questions for this ``ReaderStudy`` except those with answer type
+        `heading`.
+        """
         return self.questions.exclude(answer_type=Question.ANSWER_TYPE_HEADING)
 
     @cached_property
