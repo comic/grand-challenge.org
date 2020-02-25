@@ -2,6 +2,7 @@ import json
 import tarfile
 import uuid
 from datetime import timedelta
+from typing import Dict
 
 from celery import shared_task
 from django.apps import apps
@@ -177,7 +178,9 @@ def execute_job(
 
 
 @shared_task
-def mark_long_running_jobs_failed(*, app_label: str, model_name: str):
+def mark_long_running_jobs_failed(
+    *, app_label: str, model_name: str, exclude: Dict[str, str] = None
+):
     """
     Mark jobs that have been started but did not finish (maybe due to
     an unrecoverable hardware error). It will mark tasks FAILED that have the
@@ -198,6 +201,9 @@ def mark_long_running_jobs_failed(*, app_label: str, model_name: str):
         - 5 * timedelta(seconds=settings.CELERY_TASK_TIME_LIMIT),
         status=Job.STARTED,
     )
+
+    if exclude:
+        jobs_to_mark = jobs_to_mark.exclude(**exclude)
 
     for j in jobs_to_mark:
         j.update_status(status=Job.FAILURE, output="Evaluation timed out")
