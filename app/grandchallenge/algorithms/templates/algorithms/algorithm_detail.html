@@ -60,18 +60,19 @@
                 </a>
             {% endif %}
 
-            {% if "execute_algorithm" in algorithm_perms %}
-                {% if object.latest_ready_image %}
-                    <a class="nav-link"
-                       href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                        <i class="fa fa-flask fa-fw"></i>&nbsp;Run Algorithm
-                    </a>
-                {% endif %}
+            {% if "execute_algorithm" in algorithm_perms and object.latest_ready_image %}
                 <a class="nav-link"
-                   href="{% url 'algorithms:results-list' slug=object.slug %}">
-                    <i class="fa fa-cogs fa-fw"></i>&nbsp;Results
+                   href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
+                    <i class="fa fa-flask fa-fw"></i>&nbsp;Run Algorithm
                 </a>
-            {% else %}
+            {% endif %}
+
+            <a class="nav-link"
+               href="{% url 'algorithms:results-list' slug=object.slug %}">
+                <i class="fa fa-cogs fa-fw"></i>&nbsp;Results
+            </a>
+
+            {% if "execute_algorithm" not in algorithm_perms %}
                 <a class="nav-link"
                    href="{% url 'algorithms:permission-request-create' slug=object.slug %}">
                     <i class="fa fa-question fa-fw"></i>&nbsp;Request Access
