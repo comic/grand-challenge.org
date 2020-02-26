@@ -660,7 +660,7 @@ CELERY_BEAT_SCHEDULE = {
         "kwargs": {
             "app_label": "algorithms",
             "model_name": "job",
-            "extra_filters": {"requires_gpu": True},
+            "extra_filters": {"algorithm_image__requires_gpu": True},
         },
         "options": {"queue": "gpu"},
         "schedule": timedelta(hours=1),
@@ -670,7 +670,7 @@ CELERY_BEAT_SCHEDULE = {
         "kwargs": {
             "app_label": "algorithms",
             "model_name": "job",
-            "extra_filters": {"requires_gpu": False},
+            "extra_filters": {"algorithm_image__requires_gpu": False},
         },
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
