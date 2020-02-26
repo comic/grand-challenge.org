@@ -141,8 +141,7 @@
                                 <i class="fa fa-file"></i>
                             </a>
                         {% endif %}
-                        {# TODO: This should be change_result but is expensive to lookup here, do this when moving to results list #}
-                        {% if "change_algorithm" in algorithm_perms and result %}
+                        {% if change_result|get_jsonpath:result.pk %}
                             <a href="{% url 'algorithms:result-update' slug=algorithm.slug pk=result.pk %}">
                                 <span class="badge badge-primary" title="Edit result">
                                     <i class="fa fa-edit"></i>

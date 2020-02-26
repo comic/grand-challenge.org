@@ -24,6 +24,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
@@ -354,7 +355,21 @@ class AlgorithmResultsList(LoginRequiredMixin, PermissionListMixin, ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
+
+        checker = ObjectPermissionChecker(self.request.user)
+        checker.prefetch_perms(context["object_list"])
+
+        change_result = {}
+
+        for result in context["object_list"]:
+            change_result[str(result.pk)] = checker.has_perm(
+                "change_result", result
+            )
+
+        context.update(
+            {"algorithm": self.algorithm, "change_result": change_result}
+        )
+
         return context
 
     def get_queryset(self, *args, **kwargs):
