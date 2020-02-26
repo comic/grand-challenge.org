@@ -47,69 +47,24 @@
             <tr>
                 <th>Created</th>
                 <th>Creator</th>
-                <th>Input Image</th>
-                <th>Status</th>
                 <th>Result</th>
                 <th>Visibility</th>
-                <th>Output Images</th>
+                <th>Output</th>
                 <th>Comment</th>
             </tr>
             </thead>
             <tbody>
             {% for result in object_list %}
                 <tr>
-                    {# pk included for test support #}
-                    <!-- {{ result.job.pk }} -->
                     <td data-order="{{ result.job.created|date:"U" }}">{{ result.job.created|naturaltime }}</td>
                     <td>
                         {{ result.job.creator|user_profile_link }}
                     </td>
                     <td>
-                        <ul class="list-unstyled">
-                            <li>
-                                <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image config=algorithm.workstation_config %}">
-                                    <span class="badge badge-primary">
-                                        <i class="fa fa-eye"></i> View Input
-                                    </span>
-                                </a>
-                            </li>
-                            {% for file in result.job.image.files.all %}
-                                <li>
-                                    <a href="{{ file.file.url }}">
-                                        <span class="badge badge-primary">
-                                            <i class="fa fa-download"></i> Input ({{ file.file|suffix }})
-                                        </span>
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                    <td>
-                        <a href="#jobInfoModal"
-                           class="badge
-                            {% if result.job.status == result.job.FAILURE or result.job.status == result.job.CANCELLED %}
-                                badge-danger
-                            {% elif result.job.status == result.job.RETRY %}
-                                badge-warning
-                            {% elif result.job.status == result.job.SUCCESS %}
-                                badge-success
-                            {% else %}
-                                badge-info
-                            {% endif %}"
-                           data-toggle="modal"
-                           data-target="#jobInfoModal"
-                           data-title="Job Info"
-                           data-output="{% firstof result.job.output|user_error result.job.get_status_display %}"
-                           data-pk="{{ result.job.pk }}"
-                           title="Job Info">
-                            {{ result.job.get_status_display }}
-                        </a>
-                    </td>
-                    <td>
-                        <a href="#jobInfoModal"
+                        <a href="#resultInfoModal"
                            class="badge badge-primary"
                            data-toggle="modal"
-                           data-target="#jobInfoModal"
+                           data-target="#resultInfoModal"
                            data-title="Result Info"
                            data-output="{% firstof result.output 'No output produced.' %}"
                            data-pk="{{ result.pk }}"
@@ -127,8 +82,8 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if result.images.all %}
-                            <ul class="list-unstyled">
+                        <ul class="list-unstyled">
+                            {% if result.images.all %}
                                 {% for image in result.images.all %}
                                     <li>
                                         <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image overlay=image config=algorithm.workstation_config %}">
@@ -147,20 +102,38 @@
                                         </li>
                                     {% endfor %}
                                 {% endfor %}
-                            </ul>
-                        {% elif result.job.status == result.job.SUCCESS %}
-                            <span class="badge badge-warning"
-                                  title="No output images were found">
-                               <i class="fa fa-eye-slash"></i>
-                           </span>
-                        {% endif %}
+                            {% else %}
+                                <li>
+                                    <span class="badge badge-warning"
+                                          title="No output images were found">
+                                        <i class="fa fa-eye-slash"></i>
+                                    </span>
+                                </li>
+                                <li>
+                                    <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image config=algorithm.workstation_config %}">
+                                        <span class="badge badge-primary">
+                                            <i class="fa fa-eye"></i> View Input
+                                        </span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% for file in result.job.image.files.all %}
+                                <li>
+                                    <a href="{{ file.file.url }}">
+                                        <span class="badge badge-primary">
+                                            <i class="fa fa-download"></i> Input ({{ file.file|suffix }})
+                                        </span>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
                     </td>
                     <td>
                         {% if result.comment %}
-                            <a href="#jobInfoModal"
+                            <a href="#resultInfoModal"
                                class="badge badge-primary"
                                data-toggle="modal"
-                               data-target="#jobInfoModal"
+                               data-target="#resultInfoModal"
                                data-title="Result Comment"
                                data-output="{{ result.comment }}"
                                data-pk="{{ result.pk }}"
@@ -183,9 +156,8 @@
         </table>
     </div>
 
-
-    <div class="modal fade" id="jobInfoModal" tabindex="-1" role="dialog"
-         aria-labelledby="jobInfoModalTitle" aria-hidden="true">
+    <div class="modal fade" id="resultInfoModal" tabindex="-1" role="dialog"
+         aria-labelledby="resultInfoModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -219,9 +191,9 @@
     </script>
 
     <script type="text/javascript">
-        $('#jobInfoModal').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);
-            var modal = $(this);
+        $('#resultInfoModal').on('show.bs.modal', function (event) {
+            let button = $(event.relatedTarget);
+            let modal = $(this);
             modal.find('.modal-title').text(button.data('title'));
             modal.find('.modal-job-output').text(button.data('output'));
             modal.find('#footerText').text("ID: " + button.data('pk'));
