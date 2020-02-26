@@ -343,7 +343,7 @@ class AlgorithmExecutionSessionDetail(
         return context
 
 
-class AlgorithmResultsList(LoginRequiredMixin, PermissionListMixin, ListView):
+class AlgorithmResultsList(PermissionListMixin, ListView):
     model = Result
     permission_required = (
         f"{Result._meta.app_label}.view_{Result._meta.model_name}"
