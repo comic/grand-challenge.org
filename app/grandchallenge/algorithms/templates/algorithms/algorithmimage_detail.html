@@ -3,9 +3,10 @@
 {% load crispy_forms_tags %}
 {% load url %}
 {% load guardian_tags %}
+{% load humanize %}
 
 {% block title %}
-    {{ object.title }} - {{ block.super }}
+    Algorithm Image - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -49,6 +50,9 @@
                 {{ object.image.name }}
             {% endif %}
         </dd>
+
+        <dt>Image Size</dt>
+        <dd>{{ object.image.size|intcomma }} Bytes</dd>
 
         <dt>Image SHA256</dt>
         <dd>{{ object.image_sha256 }}</dd>

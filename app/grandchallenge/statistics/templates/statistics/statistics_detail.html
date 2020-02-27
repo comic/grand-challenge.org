@@ -104,36 +104,36 @@
 
     <dl class="inline">
         <dt>Public algorithms</dt>
-        <dd>{{ public_algorithms }}</dd>
+        <dd>{{ public_algorithms|intcomma }}</dd>
 
         <dt>Hidden algorithms</dt>
-        <dd>{{ hidden_algorithms }}</dd>
+        <dd>{{ hidden_algorithms|intcomma }}</dd>
 
         <dt>Number of algorithm runs</dt>
-        <dd>{{ algorithm_jobs }}</dd>
+        <dd>{{ algorithm_jobs|intcomma }}</dd>
     </dl>
 
     <h2>Reader Studies</h2>
 
     <dl class="inline">
         <dt>Number of reader studies</dt>
-        <dd>{{ reader_studies }}</dd>
+        <dd>{{ reader_studies|intcomma }}</dd>
 
         <dt>Number of questions</dt>
-        <dd>{{ questions }}</dd>
+        <dd>{{ questions|intcomma }}</dd>
 
         <dt>Number of answers</dt>
-        <dd>{{ answers }}</dd>
+        <dd>{{ answers|intcomma }}</dd>
     </dl>
 
     <h2>Workstations</h2>
 
     <dl class="inline">
         <dt>Number of workstations</dt>
-        <dd>{{ workstations }}</dd>
+        <dd>{{ workstations|intcomma }}</dd>
 
         <dt>Number of sessions</dt>
-        <dd>{{ workstation_sessions }}</dd>
+        <dd>{{ workstation_sessions|intcomma }}</dd>
 
         <dt>Total session duration</dt>
         <dd>{{ total_session_duration }}</dd>
