@@ -51,7 +51,7 @@ class SubmissionToAnnotationSetExecutor(Executor):
 
     def _execute_container(self):
         """We do not need to do any conversion, so skip."""
-        pass
+        return ""
 
     def _get_result(self):
         """Read all of the images in /output/ & convert to an UploadSession."""

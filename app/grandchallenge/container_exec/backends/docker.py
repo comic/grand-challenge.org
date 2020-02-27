@@ -135,13 +135,14 @@ class Executor(DockerConnection):
         self._input_volume = f"{self._job_label}-input"
         self._output_volume = f"{self._job_label}-output"
 
-    def execute(self) -> dict:
+    def execute(self) -> Tuple[dict, str]:
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
         self._chmod_volumes()
-        self._execute_container()
-        return self._get_result()
+        logs = self._execute_container()
+        result = self._get_result()
+        return result, logs
 
     def _pull_images(self):
         self._client.images.pull(repository=self._io_image)
@@ -190,9 +191,9 @@ class Executor(DockerConnection):
             **self._run_kwargs,
         )
 
-    def _execute_container(self):
+    def _execute_container(self) -> str:
         try:
-            self._client.containers.run(
+            logs = self._client.containers.run(
                 image=self._exec_image_sha256,
                 volumes={
                     self._input_volume: {"bind": "/input/", "mode": "rw"},
@@ -201,10 +202,14 @@ class Executor(DockerConnection):
                 name=f"{self._job_label}-executor",
                 remove=True,
                 labels=self._labels,
+                stdout=True,
+                stderr=True,
                 **self._run_kwargs,
             )
         except ContainerError as e:
             raise ContainerExecException(e.stderr.decode())
+
+        return logs.decode()
 
     def _get_result(self) -> dict:
         """

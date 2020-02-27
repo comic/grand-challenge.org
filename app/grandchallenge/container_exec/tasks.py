@@ -161,7 +161,7 @@ def execute_job(
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
         ) as ev:
-            result = ev.execute()  # This call is potentially very long
+            result, logs = ev.execute()  # This call is potentially very long
     except ContainerExecException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -180,7 +180,7 @@ def execute_job(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
         job.create_result(result=result)
-        job.update_status(status=job.SUCCESS)
+        job.update_status(status=job.SUCCESS, output=logs)
         return result
 
 
