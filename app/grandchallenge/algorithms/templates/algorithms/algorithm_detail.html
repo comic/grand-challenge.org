@@ -63,7 +63,7 @@
             {% if "execute_algorithm" in algorithm_perms and object.latest_ready_image %}
                 <a class="nav-link"
                    href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try Out Algorithm
+                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
                 </a>
                 <a class="nav-link"
                    href="{% url 'algorithms:execution-session-list' slug=object.slug %}">
@@ -128,6 +128,12 @@
                         with its default configuration.
                     {% endif %}
                 </p>
+                {% if average_job_duration %}
+                    <p>
+                        On average, successful jobs for this algorithm have
+                        taken {{ average_job_duration }}.
+                    </p>
+                {% endif %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'algorithms:update' slug=object.slug %}">
