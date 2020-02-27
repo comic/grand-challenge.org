@@ -4,12 +4,28 @@ from typing import Tuple, Type
 from django.conf import settings
 from django.core.files import File
 from django.db import models
+from django.db.models import Avg, F
 from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 
 from grandchallenge.container_exec.backends.docker import Executor
 from grandchallenge.container_exec.tasks import execute_job
 from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import ExtensionValidator
+
+
+class ContainerExecQuerySet(models.QuerySet):
+    def with_duration(self):
+        """Annotate the queryset with the duration of completed jobs"""
+        return self.annotate(duration=F("completed_at") - F("started_at"))
+
+    def average_duration(self):
+        """Calculate the average duration that completed jobs ran for"""
+        return (
+            self.with_duration()
+            .exclude(duration=None)
+            .aggregate(Avg("duration"))["duration__avg"]
+        )
 
 
 class ContainerExecJobModel(models.Model):
@@ -35,12 +51,24 @@ class ContainerExecJobModel(models.Model):
         choices=STATUS_CHOICES, default=PENDING
     )
     output = models.TextField()
+    started_at = models.DateTimeField(null=True)
+    completed_at = models.DateTimeField(null=True)
 
-    def update_status(self, *, status: STATUS_CHOICES, output: str = None):
+    objects = ContainerExecQuerySet.as_manager()
+
+    def update_status(self, *, status: STATUS_CHOICES, output: str = ""):
         self.status = status
 
         if output:
             self.output = output
+
+        if status == self.STARTED and self.started_at is None:
+            self.started_at = now()
+        elif (
+            status in [self.SUCCESS, self.FAILURE, self.CANCELLED]
+            and self.completed_at is None
+        ):
+            self.completed_at = now()
 
         self.save()
 

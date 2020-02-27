@@ -13,6 +13,9 @@ from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils.timezone import now
 
+from grandchallenge.container_exec.backends.docker import (
+    ContainerExecException,
+)
 from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -158,22 +161,27 @@ def execute_job(
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
         ) as ev:
-            result = ev.execute()  # This call is potentially very long
-
-    except Exception as exc:
+            result, logs = ev.execute()  # This call is potentially very long
+    except ContainerExecException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.update_status(status=job.FAILURE, output=str(exc))
+        job.update_status(status=job.FAILURE, output=str(e))
+    except Exception:
+        job = get_model_instance(
+            pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        )
+        job.update_status(
+            status=job.FAILURE, output="An unexpected error occurred."
+        )
         raise
-
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
-    job.create_result(result=result)
-    job.update_status(status=job.SUCCESS)
-
-    return result
+    else:
+        job = get_model_instance(
+            pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        )
+        job.create_result(result=result)
+        job.update_status(status=job.SUCCESS, output=logs)
+        return result
 
 
 @shared_task
