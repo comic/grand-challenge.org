@@ -16,6 +16,7 @@ from django.core.exceptions import (
 from django.forms.utils import ErrorList
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.functional import cached_property
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -23,6 +24,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
@@ -341,23 +343,42 @@ class AlgorithmExecutionSessionDetail(
         return context
 
 
-class AlgorithmJobsList(LoginRequiredMixin, PermissionListMixin, ListView):
-    model = Job
-    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+class AlgorithmResultsList(PermissionListMixin, ListView):
+    model = Result
+    permission_required = (
+        f"{Result._meta.app_label}.view_{Result._meta.model_name}"
+    )
 
-    @property
-    def algorithm(self) -> Algorithm:
+    @cached_property
+    def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
+
+        checker = ObjectPermissionChecker(self.request.user)
+        checker.prefetch_perms(context["object_list"])
+
+        change_result = {}
+
+        for result in context["object_list"]:
+            change_result[str(result.pk)] = checker.has_perm(
+                "change_result", result
+            )
+
+        context.update(
+            {"algorithm": self.algorithm, "change_result": change_result}
+        )
+
         return context
 
     def get_queryset(self, *args, **kwargs):
-        """Filter the jobs for this algorithm."""
         qs = super().get_queryset(*args, **kwargs)
-        return qs.filter(algorithm_image__algorithm=self.algorithm)
+        return (
+            qs.filter(job__algorithm_image__algorithm=self.algorithm)
+            .prefetch_related("images__files", "job__image__files")
+            .select_related("job__creator__user_profile")
+        )
 
 
 class AlgorithmResultUpdate(
@@ -372,7 +393,7 @@ class AlgorithmResultUpdate(
 
     def get_success_url(self):
         return reverse(
-            "algorithms:jobs-list",
+            "algorithms:results-list",
             kwargs={"slug": self.object.job.algorithm_image.algorithm.slug},
         )
 

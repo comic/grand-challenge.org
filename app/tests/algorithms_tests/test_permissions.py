@@ -132,7 +132,7 @@ def test_algorithm_detail_view_permissions(client, view_name, index):
 
 
 @pytest.mark.django_db
-def test_algorithm_jobs_view(client):
+def test_algorithm_results_list_view(client):
     # This view is a bit special, all algorithm users should be able to
     # view it, but the results should be filtered
 
@@ -152,32 +152,35 @@ def test_algorithm_jobs_view(client):
         ),
     )
 
-    all_jobs = {j1, j2}
+    # Create the results
+    r1, r2 = AlgorithmResultFactory(job=j1), AlgorithmResultFactory(job=j2)
+
+    all_results = {r1, r2}
 
     tests = (
-        (None, alg_set.alg1, 302, set()),
-        (None, alg_set.alg2, 302, set()),
+        (None, alg_set.alg1, 200, set()),
+        (None, alg_set.alg2, 200, set()),
         (alg_set.creator, alg_set.alg1, 200, set()),
         (alg_set.creator, alg_set.alg2, 200, set()),
-        (alg_set.editor1, alg_set.alg1, 200, {j1}),
+        (alg_set.editor1, alg_set.alg1, 200, {r1}),
         (alg_set.editor1, alg_set.alg2, 200, set()),
         (alg_set.user1, alg_set.alg1, 200, set()),
         (alg_set.user1, alg_set.alg2, 200, set()),
         (alg_set.editor2, alg_set.alg1, 200, set()),
-        (alg_set.editor2, alg_set.alg2, 200, {j2}),
+        (alg_set.editor2, alg_set.alg2, 200, {r2}),
         (alg_set.user2, alg_set.alg1, 200, set()),
         (alg_set.user2, alg_set.alg2, 200, set()),
         (alg_set.u, alg_set.alg1, 200, set()),
         (alg_set.u, alg_set.alg2, 200, set()),
-        (extra_user1, alg_set.alg1, 200, {j1}),
+        (extra_user1, alg_set.alg1, 200, {r1}),
         (extra_user1, alg_set.alg2, 200, set()),
         (extra_user2, alg_set.alg1, 200, set()),
-        (extra_user2, alg_set.alg2, 200, {j2}),
+        (extra_user2, alg_set.alg2, 200, {r2}),
     )
 
     for test in tests:
         response = get_view_for_user(
-            viewname=f"algorithms:jobs-list",
+            viewname=f"algorithms:results-list",
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],
@@ -186,14 +189,15 @@ def test_algorithm_jobs_view(client):
 
         # Check that the results are filtered
         if response.status_code == 200:
-            expected_jobs = test[3]
-            excluded_jobs = all_jobs - expected_jobs
+            expected_results = test[3]
+            excluded_results = all_results - expected_results
             assert all(
-                str(j.pk) in response.rendered_content for j in expected_jobs
+                str(j.pk) in response.rendered_content
+                for j in expected_results
             )
             assert all(
                 str(j.pk) not in response.rendered_content
-                for j in excluded_jobs
+                for j in excluded_results
             )
 
 
