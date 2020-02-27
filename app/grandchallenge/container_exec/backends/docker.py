@@ -13,10 +13,14 @@ import docker
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, ContainerError, NotFound
+from docker.errors import APIError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
+
+
+class ContainerExecException(Exception):
+    """These exceptions will be sent to the user."""
 
 
 class DockerConnection:
@@ -95,18 +99,11 @@ class DockerConnection:
         """Stops and prunes all artifacts associated with this job."""
         flt = {"label": f"job={self._job_label}"}
 
-        try:
-            for c in self._client.containers.list(filters=flt):
-                c.stop(timeout=timeout)
+        for c in self._client.containers.list(filters=flt):
+            c.stop(timeout=timeout)
 
-            self.__retry_docker_obj_prune(
-                obj=self._client.containers, filters=flt
-            )
-            self.__retry_docker_obj_prune(
-                obj=self._client.volumes, filters=flt
-            )
-        except ConnectionError:
-            raise RuntimeError("Could not connect to worker.")
+        self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
+        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
 
     def __enter__(self):
         return self
@@ -155,23 +152,20 @@ class Executor(DockerConnection):
             self._client.volumes.create(name=volume, labels=self._labels)
 
     def _provision_input_volume(self):
-        try:
-            with cleanup(
-                self._client.containers.run(
-                    image=self._io_image,
-                    volumes={
-                        self._input_volume: {"bind": "/input/", "mode": "rw"}
-                    },
-                    name=f"{self._job_label}-writer",
-                    detach=True,
-                    tty=True,
-                    labels=self._labels,
-                    **self._run_kwargs,
-                )
-            ) as writer:
-                self._copy_input_files(writer=writer)
-        except Exception as exc:
-            raise RuntimeError(str(exc))
+        with cleanup(
+            self._client.containers.run(
+                image=self._io_image,
+                volumes={
+                    self._input_volume: {"bind": "/input/", "mode": "rw"}
+                },
+                name=f"{self._job_label}-writer",
+                detach=True,
+                tty=True,
+                labels=self._labels,
+                **self._run_kwargs,
+            )
+        ) as writer:
+            self._copy_input_files(writer=writer)
 
     def _copy_input_files(self, writer):
         for file in self._input_files:
@@ -183,37 +177,31 @@ class Executor(DockerConnection):
 
     def _chmod_volumes(self):
         """Ensure that the i/o directories are writable."""
-        try:
-            self._client.containers.run(
-                image=self._io_image,
-                volumes={
-                    self._input_volume: {"bind": "/input/", "mode": "rw"},
-                    self._output_volume: {"bind": "/output/", "mode": "rw"},
-                },
-                name=f"{self._job_label}-chmod-volumes",
-                command=f"chmod -R 0777 /input/ /output/",
-                remove=True,
-                labels=self._labels,
-                **self._run_kwargs,
-            )
-        except Exception as exc:
-            raise RuntimeError(str(exc))
+        self._client.containers.run(
+            image=self._io_image,
+            volumes={
+                self._input_volume: {"bind": "/input/", "mode": "rw"},
+                self._output_volume: {"bind": "/output/", "mode": "rw"},
+            },
+            name=f"{self._job_label}-chmod-volumes",
+            command=f"chmod -R 0777 /input/ /output/",
+            remove=True,
+            labels=self._labels,
+            **self._run_kwargs,
+        )
 
     def _execute_container(self):
-        try:
-            self._client.containers.run(
-                image=self._exec_image_sha256,
-                volumes={
-                    self._input_volume: {"bind": "/input/", "mode": "rw"},
-                    self._output_volume: {"bind": "/output/", "mode": "rw"},
-                },
-                name=f"{self._job_label}-executor",
-                remove=True,
-                labels=self._labels,
-                **self._run_kwargs,
-            )
-        except ContainerError as exc:
-            raise RuntimeError(exc.stderr.decode())
+        self._client.containers.run(
+            image=self._exec_image_sha256,
+            volumes={
+                self._input_volume: {"bind": "/input/", "mode": "rw"},
+                self._output_volume: {"bind": "/output/", "mode": "rw"},
+            },
+            name=f"{self._job_label}-executor",
+            remove=True,
+            labels=self._labels,
+            **self._run_kwargs,
+        )
 
     def _get_result(self) -> dict:
         """
@@ -240,21 +228,21 @@ class Executor(DockerConnection):
             # The container exited without error, but no results file was
             # produced. This shouldn't happen, but does with poorly programmed
             # evaluation containers.
-            raise RuntimeError(
+            raise ContainerExecException(
                 "The evaluation failed for an unknown reason as no results "
                 "file was produced. Please contact the organisers for "
                 "assistance."
             )
-        except Exception as e:
-            raise RuntimeError(str(e))
 
         try:
             result = json.loads(
                 result.read().decode(),
                 parse_constant=lambda x: None,  # Removes -inf, inf and NaN
             )
-        except JSONDecodeError as exc:
-            raise RuntimeError(exc.msg)
+        except JSONDecodeError as e:
+            raise ContainerExecException(
+                f"Could not decode results file: {e.msg}"
+            )
 
         return result
 
@@ -326,19 +314,16 @@ class Service(DockerConnection):
             "traefik.websocket.frontend.entryPoints": "websocket",
         }
 
-        try:
-            self._client.containers.run(
-                image=self._exec_image_sha256,
-                name=f"{self._job_label}-service",
-                remove=True,
-                detach=True,
-                labels={**self._labels, **traefik_labels},
-                environment=environment or {},
-                extra_hosts=self.extra_hosts,
-                **self._run_kwargs,
-            )
-        except ContainerError as exc:
-            raise RuntimeError(exc.stderr.decode())
+        self._client.containers.run(
+            image=self._exec_image_sha256,
+            name=f"{self._job_label}-service",
+            remove=True,
+            detach=True,
+            labels={**self._labels, **traefik_labels},
+            environment=environment or {},
+            extra_hosts=self.extra_hosts,
+            **self._run_kwargs,
+        )
 
 
 @contextmanager

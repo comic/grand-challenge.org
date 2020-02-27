@@ -341,25 +341,22 @@ class AlgorithmExecutor(Executor):
 
     def _get_result(self):
         """Read all of the images in /output/ & convert to an UploadSession."""
-        try:
-            with cleanup(
-                self._client.containers.run(
-                    image=self._io_image,
-                    volumes={
-                        self._output_volume: {"bind": "/output/", "mode": "ro"}
-                    },
-                    name=f"{self._job_label}-reader",
-                    detach=True,
-                    tty=True,
-                    labels=self._labels,
-                    **self._run_kwargs,
-                )
-            ) as reader:
-                self._copy_output_files(
-                    container=reader, base_dir=Path(self.output_images_dir)
-                )
-        except Exception as exc:
-            raise RuntimeError(str(exc))
+        with cleanup(
+            self._client.containers.run(
+                image=self._io_image,
+                volumes={
+                    self._output_volume: {"bind": "/output/", "mode": "ro"}
+                },
+                name=f"{self._job_label}-reader",
+                detach=True,
+                tty=True,
+                labels=self._labels,
+                **self._run_kwargs,
+            )
+        ) as reader:
+            self._copy_output_files(
+                container=reader, base_dir=Path(self.output_images_dir)
+            )
 
         return super()._get_result()
 

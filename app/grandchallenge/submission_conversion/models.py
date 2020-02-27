@@ -57,25 +57,18 @@ class SubmissionToAnnotationSetExecutor(Executor):
         """Read all of the images in /output/ & convert to an UploadSession."""
         base_dir = "/output/"
 
-        try:
-            with cleanup(
-                self._client.containers.run(
-                    image=self._io_image,
-                    volumes={
-                        self._input_volume: {"bind": base_dir, "mode": "ro"}
-                    },
-                    name=f"{self._job_label}-reader",
-                    detach=True,
-                    tty=True,
-                    labels=self._labels,
-                    **self._run_kwargs,
-                )
-            ) as reader:
-                self._copy_output_files(
-                    container=reader, base_dir=Path(base_dir)
-                )
-        except Exception as exc:
-            raise RuntimeError(str(exc))
+        with cleanup(
+            self._client.containers.run(
+                image=self._io_image,
+                volumes={self._input_volume: {"bind": base_dir, "mode": "ro"}},
+                name=f"{self._job_label}-reader",
+                detach=True,
+                tty=True,
+                labels=self._labels,
+                **self._run_kwargs,
+            )
+        ) as reader:
+            self._copy_output_files(container=reader, base_dir=Path(base_dir))
 
         return {}
 

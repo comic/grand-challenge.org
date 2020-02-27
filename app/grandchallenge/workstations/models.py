@@ -15,7 +15,10 @@ from rest_framework.authtoken.models import Token
 from simple_history.models import HistoricalRecords
 
 from grandchallenge.challenges.models import get_logo_path
-from grandchallenge.container_exec.backends.docker import Service
+from grandchallenge.container_exec.backends.docker import (
+    ContainerExecException,
+    Service,
+)
 from grandchallenge.container_exec.models import ContainerImageModel
 from grandchallenge.container_exec.tasks import start_service, stop_service
 from grandchallenge.core.models import UUIDModel
@@ -386,12 +389,12 @@ class Session(UUIDModel):
 
         Raises
         ------
-        RunTimeError
+        ContainerExecException
             If the service cannot be started.
         """
         try:
             if not self.workstation_image.ready:
-                raise RuntimeError("Workstation image was not ready")
+                raise ContainerExecException("Workstation image was not ready")
 
             if (
                 Session.objects.all()
@@ -399,7 +402,7 @@ class Session(UUIDModel):
                 .count()
                 >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
             ):
-                raise RuntimeError("Too many sessions are running")
+                raise ContainerExecException("Too many sessions are running")
 
             self.service.start(
                 http_port=self.workstation_image.http_port,
@@ -408,8 +411,9 @@ class Session(UUIDModel):
                 environment=self.environment,
             )
             self.update_status(status=self.STARTED)
-        except RuntimeError:
+        except Exception:
             self.update_status(status=self.FAILED)
+            raise
 
     def stop(self) -> None:
         """Stop the service for this session, cleaning up all of the containers."""
