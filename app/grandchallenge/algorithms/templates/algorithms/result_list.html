@@ -83,26 +83,24 @@
                     </td>
                     <td>
                         <ul class="list-unstyled">
-                            {% if result.images.all %}
-                                {% for image in result.images.all %}
-                                    <li>
-                                        <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image overlay=image config=algorithm.workstation_config %}">
+                            {% for image in result.images.all %}
+                                <li>
+                                    <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image overlay=image config=algorithm.workstation_config %}">
                                             <span class="badge badge-primary">
                                                 <i class="fa fa-eye"></i> View Input &amp; Output
                                             </span>
-                                        </a>
-                                    </li>
-                                    {% for file in image.files.all %}
-                                        <li>
-                                            <a href="{{ file.file.url }}">
+                                    </a>
+                                </li>
+                                {% for file in image.files.all %}
+                                    <li>
+                                        <a href="{{ file.file.url }}">
                                             <span class="badge badge-primary">
                                                 <i class="fa fa-download"></i> Output ({{ file.file|suffix }})
                                             </span>
-                                            </a>
-                                        </li>
-                                    {% endfor %}
+                                        </a>
+                                    </li>
                                 {% endfor %}
-                            {% else %}
+                            {% empty %}
                                 <li>
                                     <span class="badge badge-warning"
                                           title="No output images were found">
@@ -116,7 +114,7 @@
                                         </span>
                                     </a>
                                 </li>
-                            {% endif %}
+                            {% endfor %}
                             {% for file in result.job.image.files.all %}
                                 <li>
                                     <a href="{{ file.file.url }}">

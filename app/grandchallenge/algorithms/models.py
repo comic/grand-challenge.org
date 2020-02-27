@@ -432,10 +432,6 @@ class Job(UUIDModel, ContainerExecJobModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._original_image = self.image
-
     @property
     def container(self):
         return self.algorithm_image
@@ -462,15 +458,21 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
+        image_changed = False
+
+        if not adding:
+            orig = Job.objects.get(pk=self.pk)
+            if orig.image != self.image:
+                image_changed = True
 
         super().save(*args, **kwargs)
 
         if adding:
             self.assign_permissions()
-
-        if self._original_image and self.image != self._original_image:
             self.image.update_public_group_permissions()
-            self._original_image.update_public_group_permissions()
+        elif image_changed:
+            self.image.update_public_group_permissions()
+            orig.image.update_public_group_permissions()
 
     def assign_permissions(self):
         # Editors and creators can view this job and the related image

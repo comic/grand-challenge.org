@@ -374,9 +374,11 @@ class AlgorithmResultsList(PermissionListMixin, ListView):
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
-        return qs.filter(
-            job__algorithm_image__algorithm=self.algorithm
-        ).select_related("job")
+        return (
+            qs.filter(job__algorithm_image__algorithm=self.algorithm)
+            .prefetch_related("images__files", "job__image__files")
+            .select_related("job__creator__user_profile")
+        )
 
 
 class AlgorithmResultUpdate(
