@@ -13,7 +13,7 @@ import docker
 from django.conf import settings
 from django.core.files import File
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, NotFound
+from docker.errors import APIError, ContainerError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
@@ -191,17 +191,20 @@ class Executor(DockerConnection):
         )
 
     def _execute_container(self):
-        self._client.containers.run(
-            image=self._exec_image_sha256,
-            volumes={
-                self._input_volume: {"bind": "/input/", "mode": "rw"},
-                self._output_volume: {"bind": "/output/", "mode": "rw"},
-            },
-            name=f"{self._job_label}-executor",
-            remove=True,
-            labels=self._labels,
-            **self._run_kwargs,
-        )
+        try:
+            self._client.containers.run(
+                image=self._exec_image_sha256,
+                volumes={
+                    self._input_volume: {"bind": "/input/", "mode": "rw"},
+                    self._output_volume: {"bind": "/output/", "mode": "rw"},
+                },
+                name=f"{self._job_label}-executor",
+                remove=True,
+                labels=self._labels,
+                **self._run_kwargs,
+            )
+        except ContainerError as e:
+            raise ContainerExecException(e.stderr.decode())
 
     def _get_result(self) -> dict:
         """
