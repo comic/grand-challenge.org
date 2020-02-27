@@ -325,6 +325,32 @@ class AlgorithmExecutionSessionCreate(
         )
 
 
+class AlgorithmExecutionSessionList(
+    LoginRequiredMixin, PermissionListMixin, ListView
+):
+    model = RawImageUploadSession
+    template_name = "algorithms/executionsession_list.html"
+    permission_required = "cases.view_rawimageuploadsession"
+    raise_exception = True
+
+    @cached_property
+    def algorithm(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        return (
+            qs.filter(algorithm_image__algorithm=self.algorithm)
+            .prefetch_related("image_set__job_set")
+            .select_related("creator__user_profile")
+        )
+
+
 class AlgorithmExecutionSessionDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
@@ -333,8 +359,8 @@ class AlgorithmExecutionSessionDetail(
     permission_required = "cases.view_rawimageuploadsession"
     raise_exception = True
 
-    @property
-    def algorithm(self) -> Algorithm:
+    @cached_property
+    def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_context_data(self, *args, **kwargs):

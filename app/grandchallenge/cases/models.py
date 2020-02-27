@@ -104,9 +104,23 @@ class RawImageUploadSession(UUIDModel):
 
         super().save(*args, **kwargs)
 
-        if adding and self.creator:
-            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-            assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+        if adding:
+            if self.creator:
+                # The creator can view this upload session
+                assign_perm(
+                    f"view_{self._meta.model_name}", self.creator, self
+                )
+                assign_perm(
+                    f"change_{self._meta.model_name}", self.creator, self
+                )
+            if self.algorithm_image and self.algorithm_image.algorithm:
+                # If an algorithm image is assigned, the algorithm editor
+                # can view this
+                assign_perm(
+                    f"view_{self._meta.model_name}",
+                    self.algorithm_image.algorithm.editors_group,
+                    self,
+                )
 
     def process_images(self):
         # Local import to avoid circular dependency

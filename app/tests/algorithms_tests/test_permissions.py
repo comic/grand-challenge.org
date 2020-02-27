@@ -133,7 +133,7 @@ def test_algorithm_detail_view_permissions(client, view_name, index):
 
 @pytest.mark.django_db
 def test_algorithm_results_list_view(client):
-    # This view is a bit special, all algorithm users should be able to
+    # This view is a bit special, everyone should be able to
     # view it, but the results should be filtered
 
     alg_set = TwoAlgorithms()
@@ -198,6 +198,71 @@ def test_algorithm_results_list_view(client):
             assert all(
                 str(j.pk) not in response.rendered_content
                 for j in excluded_results
+            )
+
+
+@pytest.mark.django_db
+def test_algorithm_execution_session_list_view(client):
+    # Session creators and algorithm editors should be able to see these sessions
+    alg_set = TwoAlgorithms()
+
+    extra_user1, extra_user2 = UserFactory(), UserFactory()
+
+    alg_set.alg1.add_user(extra_user1)
+    alg_set.alg2.add_user(extra_user2)
+
+    s1, s2 = (
+        RawImageUploadSessionFactory(
+            creator=extra_user1, algorithm_image__algorithm=alg_set.alg1
+        ),
+        RawImageUploadSessionFactory(
+            creator=extra_user2, algorithm_image__algorithm=alg_set.alg2
+        ),
+    )
+
+    all_sessions = {s1, s2}
+
+    tests = (
+        (None, alg_set.alg1, 302, set()),
+        (None, alg_set.alg2, 302, set()),
+        (alg_set.creator, alg_set.alg1, 200, set()),
+        (alg_set.creator, alg_set.alg2, 200, set()),
+        (alg_set.editor1, alg_set.alg1, 200, {s1}),
+        (alg_set.editor1, alg_set.alg2, 200, set()),
+        (alg_set.user1, alg_set.alg1, 200, set()),
+        (alg_set.user1, alg_set.alg2, 200, set()),
+        (alg_set.editor2, alg_set.alg1, 200, set()),
+        (alg_set.editor2, alg_set.alg2, 200, {s2}),
+        (alg_set.user2, alg_set.alg1, 200, set()),
+        (alg_set.user2, alg_set.alg2, 200, set()),
+        (alg_set.u, alg_set.alg1, 200, set()),
+        (alg_set.u, alg_set.alg2, 200, set()),
+        (extra_user1, alg_set.alg1, 200, {s1}),
+        (extra_user1, alg_set.alg2, 200, set()),
+        (extra_user2, alg_set.alg1, 200, set()),
+        (extra_user2, alg_set.alg2, 200, {s2}),
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname=f"algorithms:execution-session-list",
+            reverse_kwargs={"slug": test[1].slug},
+            client=client,
+            user=test[0],
+        )
+        assert response.status_code == test[2]
+
+        # Check that the results are filtered
+        if response.status_code == 200:
+            expected_sessions = test[3]
+            excluded_sessions = all_sessions - expected_sessions
+            assert all(
+                str(j.pk) in response.rendered_content
+                for j in expected_sessions
+            )
+            assert all(
+                str(j.pk) not in response.rendered_content
+                for j in excluded_sessions
             )
 
 
