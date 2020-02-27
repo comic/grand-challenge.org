@@ -57,6 +57,7 @@ urlpatterns = [
         AlgorithmExecutionSessionDetail.as_view(),
         name="execution-session-detail",
     ),
+    # TODO: we need a place to see failed jobs and their status, maybe an upload list page?
     path(
         "<slug:slug>/results/",
         AlgorithmResultsList.as_view(),
