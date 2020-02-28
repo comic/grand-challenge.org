@@ -313,13 +313,22 @@ class Service(DockerConnection):
     ):
         self._pull_images()
 
+        tid = hostname.replace(".", "-")
+
         traefik_labels = {
             "traefik.enable": "true",
-            "traefik.frontend.rule": f"Host:{hostname}",
-            "traefik.http.port": str(http_port),
-            "traefik.http.frontend.entryPoints": "http",
-            "traefik.websocket.port": str(websocket_port),
-            "traefik.websocket.frontend.entryPoints": "websocket",
+            f"traefik.http.routers.workstation-http-{tid}.rule": f"Host(`{hostname}`)",
+            f"traefik.http.routers.workstation-http-{tid}.service": f"workstation-http-{tid}",
+            f"traefik.http.routers.workstation-http-{tid}.entrypoints": f"workstation-http",
+            f"traefik.http.services.workstation-http-{tid}.loadbalancer.server.port": str(
+                http_port
+            ),
+            f"traefik.http.routers.workstation-websocket-{tid}.rule": f"Host(`{hostname}`)",
+            f"traefik.http.routers.workstation-websocket-{tid}.service": f"workstation-websocket-{tid}",
+            f"traefik.http.routers.workstation-websocket-{tid}.entrypoints": f"workstation-websocket",
+            f"traefik.http.services.workstation-websocket-{tid}.loadbalancer.server.port": str(
+                websocket_port
+            ),
         }
 
         self._client.containers.run(
