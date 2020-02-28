@@ -40,6 +40,8 @@ def test_banner_migration():
     assert c.banner.name == new_name
     assert c.banner.file.size == old_file_size
 
+    _ = ChallengeFactory()
+
     # Migrate the file back
     for _ in range(2):
         call_command("migrate_banners")

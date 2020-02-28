@@ -7,7 +7,7 @@ from grandchallenge.challenges.models import Challenge, get_banner_path
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        challenges = Challenge.objects.exclude(banner=None)
+        challenges = Challenge.objects.exclude(banner="")
 
         print(f"Found {len(challenges)} challenges with banners")
 
