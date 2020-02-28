@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -12,11 +12,13 @@ from tests.factories import JobFactory as EvaluationJobFactory
 @pytest.mark.django_db
 def test_mark_long_running_jobs_failed():
     # Started jobs should be unaffected
-    j1 = EvaluationJobFactory(status=EvaluationJob.STARTED)
+    j1 = EvaluationJobFactory()
+    j1.update_status(status=EvaluationJob.STARTED)
 
     # Long running jobs should be marked as failed
-    j2 = EvaluationJobFactory(status=EvaluationJob.STARTED)
-    j2.created -= timedelta(days=1)
+    j2 = EvaluationJobFactory()
+    j2.update_status(status=EvaluationJob.STARTED)
+    j2.started_at = datetime.now() - timedelta(days=1)
     j2.save()
 
     # A job that has not been started should not be marked as failed, even if
@@ -26,7 +28,8 @@ def test_mark_long_running_jobs_failed():
     j3.save()
 
     # Algorithm jobs should not be affected
-    a = AlgorithmJobFactory(status=AlgorithmJob.STARTED)
+    a = AlgorithmJobFactory()
+    a.update_status(status=AlgorithmJob.STARTED)
 
     assert EvaluationJob.objects.all().count() == 3
     assert (
