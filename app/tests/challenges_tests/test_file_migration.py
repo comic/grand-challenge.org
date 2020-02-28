@@ -1,53 +1,61 @@
 import uuid
 
 import pytest
+from django.conf import settings
 from django.core.files import File
 from django.core.management import call_command
+from django.utils.text import get_valid_filename
 
-from grandchallenge.challenges.models import Challenge, get_banner_path
+from grandchallenge.cases.models import image_file_path
 from grandchallenge.core.management.commands.init_gc_demo import (
     get_temporary_image,
 )
-from tests.factories import ChallengeFactory
+from tests.factories import ImageFactory, ImageFileFactory
+
+
+def original_image_file_path(instance, filename):
+    return (
+        f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
+        f"{instance.image.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
 
 
 @pytest.mark.django_db
-def test_banner_migration():
-    filename = f"{uuid.uuid4()}.jpg"
+def test_image_file_migration():
+    filename = f"{uuid.uuid4()}.zraw"
 
-    c = ChallengeFactory()
-    c.banner.save(filename, File(get_temporary_image()))
+    i = ImageFactory()
+    f = ImageFileFactory(image=i)
+    f.file.save(filename, File(get_temporary_image()))
 
-    old_name = get_banner_path(c, filename)
-    new_name = f"banners/{c.pk}/{filename}"
+    old_name = image_file_path(f, filename)
+    new_name = original_image_file_path(f, filename)
 
-    storage = c.banner.storage
-    old_file_size = c.banner.file.size
+    storage = f.file.storage
+    old_file_size = f.file.file.size
 
     assert old_name != new_name
-    assert c.banner.file.name == old_name
+    assert f.file.name == old_name
     assert storage.exists(old_name)
     assert not storage.exists(new_name)
 
     storage.copy(from_name=old_name, to_name=new_name)
-    c.banner.name = new_name
-    c.save()
+    f.file.name = new_name
+    f.save()
     storage.delete(old_name)
 
     assert not storage.exists(old_name)
     assert storage.exists(new_name)
-    c = Challenge.objects.get(pk=c.pk)
-    assert c.banner.name == new_name
-    assert c.banner.file.size == old_file_size
+    f.refresh_from_db()
+    assert f.file.name == new_name
+    assert f.file.file.size == old_file_size
 
-    _ = ChallengeFactory()
-
-    # Migrate the file back
     for _ in range(2):
-        call_command("migrate_banners")
+        call_command("migrate_images")
 
         assert storage.exists(old_name)
         assert not storage.exists(new_name)
-        c.refresh_from_db()
-        assert c.banner.file.name == old_name
-        assert c.banner.file.size == old_file_size
+        f.refresh_from_db()
+        assert f.file.name == old_name
+        assert f.file.file.size == old_file_size
