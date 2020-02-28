@@ -22,6 +22,16 @@ class S3Storage(S3Boto3Storage):
                 f"Could not set all kwargs for S3 storage using {config}"
             )
 
+    def copy(self, *, from_name, to_name):
+        from_name = self._normalize_name(self._clean_name(from_name))
+        to_name = self._normalize_name(self._clean_name(to_name))
+
+        self.connection.meta.client.copy_object(
+            Bucket=self.bucket_name,
+            CopySource=f"{self.bucket_name}/{from_name}",
+            Key=to_name,
+        )
+
 
 @deconstructible
 class PrivateS3Storage(S3Storage):
