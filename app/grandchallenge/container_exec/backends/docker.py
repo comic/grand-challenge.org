@@ -313,20 +313,19 @@ class Service(DockerConnection):
     ):
         self._pull_images()
 
-        tid = hostname.replace(".", "-")
-
+        # TODO: Check routing is still ok with whoami, update tests
         traefik_labels = {
             "traefik.enable": "true",
-            f"traefik.http.routers.workstation-http-{tid}.rule": f"Host(`{hostname}`)",
-            f"traefik.http.routers.workstation-http-{tid}.service": f"workstation-http-{tid}",
-            f"traefik.http.routers.workstation-http-{tid}.entrypoints": f"workstation-http",
-            f"traefik.http.services.workstation-http-{tid}.loadbalancer.server.port": str(
+            f"traefik.http.routers.{hostname}-http.rule": f"Host(`{hostname}`)",
+            f"traefik.http.routers.{hostname}-http.service": f"{hostname}-http",
+            f"traefik.http.routers.{hostname}-http.entrypoints": f"workstation-http",
+            f"traefik.http.services.{hostname}-http.loadbalancer.server.port": str(
                 http_port
             ),
-            f"traefik.http.routers.workstation-websocket-{tid}.rule": f"Host(`{hostname}`)",
-            f"traefik.http.routers.workstation-websocket-{tid}.service": f"workstation-websocket-{tid}",
-            f"traefik.http.routers.workstation-websocket-{tid}.entrypoints": f"workstation-websocket",
-            f"traefik.http.services.workstation-websocket-{tid}.loadbalancer.server.port": str(
+            f"traefik.http.routers.{hostname}-websocket.rule": f"Host(`{hostname}`)",
+            f"traefik.http.routers.{hostname}-websocket.service": f"{hostname}-websocket",
+            f"traefik.http.routers.{hostname}-websocket.entrypoints": f"workstation-websocket",
+            f"traefik.http.services.{hostname}-websocket.loadbalancer.server.port": str(
                 websocket_port
             ),
         }

@@ -267,10 +267,10 @@ services:
     image: traefik:2.1
     ports:
       - "8081:8081"
-      - "8082:8082"
+      - "9101:9101"
     command:
       - "--entrypoints.traefik.address=:8081"
-      - "--entrypoints.metrics.address=:8082"
+      - "--entrypoints.metrics.address=:9101"
       - "--entrypoints.workstation-http.address=:8000"
       - "--entrypoints.workstation-websocket.address=:8001"
       - "--api=true"
@@ -292,6 +292,30 @@ services:
     networks:
       - default
       - workstations
+
+  nginx-prometheus-exporter:
+    image: nginx/nginx-prometheus-exporter:0.6.0
+    command: "-nginx.scrape-uri http://http:9113/stub_status"
+    ports:
+      - "9113:9113"
+    depends_on:
+      http:
+        condition: service_started
+    restart: always
+
+  cadvisor:
+    image: gcr.io/google-containers/cadvisor:v0.35.0
+    command: -storage_driver=influxdb -storage_driver_db=cadvisor -storage_driver_host=influxsrv:8086
+    ports:
+      - "4194:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    userns_mode: "host"
+    restart: always
 
   flower:
     image: mher/flower
