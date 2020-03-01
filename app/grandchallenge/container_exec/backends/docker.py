@@ -313,6 +313,9 @@ class Service(DockerConnection):
     ):
         self._pull_images()
 
+        if "." in hostname:
+            raise ValueError("Hostname cannot contain a '.'")
+
         # TODO: Check routing is still ok with whoami, update tests
         traefik_labels = {
             "traefik.enable": "true",
