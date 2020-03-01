@@ -316,7 +316,6 @@ class Service(DockerConnection):
         if "." in hostname:
             raise ValueError("Hostname cannot contain a '.'")
 
-        # TODO: Check routing is still ok with whoami, update tests
         traefik_labels = {
             "traefik.enable": "true",
             f"traefik.http.routers.{hostname}-http.rule": f"Host(`{hostname}`)",
