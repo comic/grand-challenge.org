@@ -293,29 +293,6 @@ services:
       - default
       - workstations
 
-  nginx-prometheus-exporter:
-    image: nginx/nginx-prometheus-exporter:0.6.0
-    command: "-nginx.scrape-uri http://http:9113/stub_status"
-    ports:
-      - "9113:9113"
-    depends_on:
-      http:
-        condition: service_started
-    restart: always
-
-  cadvisor:
-    image: gcr.io/google-containers/cadvisor:v0.35.0
-    ports:
-      - "4194:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    userns_mode: "host"
-    restart: always
-
   flower:
     image: mher/flower
     environment:
