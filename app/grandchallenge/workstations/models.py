@@ -318,7 +318,7 @@ class Session(UUIDModel):
             The unique hostname for this session
         """
         return (
-            f"{self.pk}.{self._meta.model_name}.{self._meta.app_label}".lower()
+            f"{self.pk}-{self._meta.model_name}-{self._meta.app_label}".lower()
         )
 
     @property

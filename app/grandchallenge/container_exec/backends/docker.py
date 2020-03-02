@@ -313,13 +313,23 @@ class Service(DockerConnection):
     ):
         self._pull_images()
 
+        if "." in hostname:
+            raise ValueError("Hostname cannot contain a '.'")
+
         traefik_labels = {
             "traefik.enable": "true",
-            "traefik.frontend.rule": f"Host:{hostname}",
-            "traefik.http.port": str(http_port),
-            "traefik.http.frontend.entryPoints": "http",
-            "traefik.websocket.port": str(websocket_port),
-            "traefik.websocket.frontend.entryPoints": "websocket",
+            f"traefik.http.routers.{hostname}-http.rule": f"Host(`{hostname}`)",
+            f"traefik.http.routers.{hostname}-http.service": f"{hostname}-http",
+            f"traefik.http.routers.{hostname}-http.entrypoints": f"workstation-http",
+            f"traefik.http.services.{hostname}-http.loadbalancer.server.port": str(
+                http_port
+            ),
+            f"traefik.http.routers.{hostname}-websocket.rule": f"Host(`{hostname}`)",
+            f"traefik.http.routers.{hostname}-websocket.service": f"{hostname}-websocket",
+            f"traefik.http.routers.{hostname}-websocket.entrypoints": f"workstation-websocket",
+            f"traefik.http.services.{hostname}-websocket.loadbalancer.server.port": str(
+                websocket_port
+            ),
         }
 
         self._client.containers.run(

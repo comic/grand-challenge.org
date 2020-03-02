@@ -8,7 +8,9 @@ from grandchallenge.cases.models import Image, ImageFile, image_file_path
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        images = Image.objects.all().prefetch_related("files")
+        images = (
+            Image.objects.all().order_by("created").prefetch_related("files")
+        )
         paginator = Paginator(images, 100)
 
         print(f"Found {paginator.count} images")

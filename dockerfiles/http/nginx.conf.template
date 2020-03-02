@@ -110,6 +110,14 @@ http {
     return 301 $scheme://${SERVER_NAME}$request_uri;
   }
 
+  server {
+    listen 9113;
+    listen [::]:9113;
+
+    server_name http;
+
+    stub_status;
+  }
 
   server {
     # Try to serve files, otherwise proxy to app
