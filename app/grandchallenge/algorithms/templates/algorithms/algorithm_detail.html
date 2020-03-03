@@ -93,6 +93,8 @@
              aria-labelledby="v-pills-home-tab">
 
             <h2>{{ object.title }}</h2>
+            {% comment %}
+            {# TODO: Some public algorithms must be anonymous, do not include author names by default #}
             <h5>
                 By
                 {% for user in object.editors_group.user_set.all %}
@@ -102,6 +104,7 @@
                         {# @formatter:on #}
                 {% endfor %}
             </h5>
+            {% endcomment %}
 
             {{ object.detail_page_markdown|md2html }}
 

@@ -52,7 +52,12 @@
                         </a>
                     </div>
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ algorithm.title }}</h5>
+                        <h5 class="card-title">
+                            {{ algorithm.title }}
+                            {% if not algorithm.public %}
+                                <i class="fas fa-lock" title="Algorithm is private"></i>
+                            {% endif %}
+                        </h5>
                         <p class="card-text">{{ algorithm.description }}</p>
                         <a href="{{ algorithm.get_absolute_url }}"
                            class="btn btn-primary mt-auto mr-auto"
