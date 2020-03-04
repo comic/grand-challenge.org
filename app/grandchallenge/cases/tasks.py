@@ -3,6 +3,7 @@ import os
 import re
 import tarfile
 import zipfile
+from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Sequence, Tuple
@@ -12,6 +13,7 @@ from celery import shared_task
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import transaction
+from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.emails import send_failed_file_import
@@ -500,6 +502,9 @@ def _delete_session_files(*, session_files):
                     and Path(file.filename).suffix == ".dcm"
                     and getattr(file.creator, "username", None) in users
                 ):
+                    saf.staged_files.update(
+                        timeout=timezone.now() + timedelta(days=100)
+                    )
                     continue
                 file.staged_file_id = None
                 saf.delete()
