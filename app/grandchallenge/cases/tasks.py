@@ -503,7 +503,7 @@ def _delete_session_files(*, session_files):
                     and getattr(file.creator, "username", None) in users
                 ):
                     saf.staged_files.update(
-                        timeout=timezone.now() + timedelta(days=100)
+                        timeout=timezone.now() + timedelta(days=21)
                     )
                     continue
                 file.staged_file_id = None
