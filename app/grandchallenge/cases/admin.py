@@ -5,7 +5,7 @@ from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.urls import path
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from grandchallenge.cases.models import (
     Image,
@@ -134,7 +134,7 @@ class RawImageFileAdmin(admin.ModelAdmin):
     def download(self, instance):
         if not instance.staged_file_id:
             return
-        return mark_safe(
+        return format_html(
             f'<a class="button" href={reverse(f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_download", kwargs={"object_id": instance.pk})}>Download</a>'
         )
 
