@@ -8,11 +8,7 @@ def create_dicom_group(apps, schema_editor):
 
 
 def remove_dicom_group(apps, schema_editor):
-    group = Group.objects.filter(
-        name=settings.DICOM_DATA_CREATORS_GROUP_NAME
-    ).first()
-    if group:
-        group.delete()
+    Group.objects.get(name=settings.DICOM_DATA_CREATORS_GROUP_NAME).delete()
 
 
 class Migration(migrations.Migration):
