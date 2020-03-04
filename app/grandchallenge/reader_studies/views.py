@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -208,6 +209,14 @@ class ReaderStudyImages(
     )
     raise_exception = True
     template_name = "reader_studies/readerstudy_images.html"
+
+    def get_context_data(self, **kwarsg):
+        context = super().get_context_data(**kwarsg)
+        paginator = Paginator(self.object.images.all(), 15)
+        page_number = self.request.GET.get("page", 1)
+        page_obj = paginator.get_page(page_number)
+        context.update({"page_obj": page_obj})
+        return context
 
 
 class QuestionUpdate(

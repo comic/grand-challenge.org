@@ -17,8 +17,8 @@
     <h1>Reader Study {{ object.title }} - Images</h1>
 
     <ul class="list-group list-group-flush mt-3">
-        {% for image in object.images.all %}
-            <li class="list-group-item">
+        {% for image in page_obj %}
+            <li class="list-group-item py-1">
                 <div class="row">
                     <div class="col-9 mb-1">
                         <div class="h-100 d-flex justify-content-start align-items-center">
@@ -35,6 +35,19 @@
         {% endfor %}
     </ul>
 
+    <nav aria-label="Page navigation" class="mt-3">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a></li>
+        {% endif %}
+        <li class="page-item active"><a class="page-link">{{ page_obj.number }}</a></li>
+        {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
 
     <div class="modal fade" id="removeImageModal" tabindex="-1" role="dialog"
      aria-labelledby="removeImageModalLabel" aria-hidden="true">
