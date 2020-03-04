@@ -14,7 +14,7 @@ from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
 )
-from rest_framework.permissions import DjangoObjectPermissions, IsAdminUser
+from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -147,11 +147,6 @@ class RawImageFileViewSet(
     queryset = RawImageFile.objects.all()
     permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
     filter_backends = [ObjectPermissionsFilter]
-
-    def get_permissions(self):
-        if self.action == "download":
-            return [IsAdminUser()]
-        return super().get_permissions()
 
     @action(detail=True, methods=["get"])
     def download(self, request, pk=None):

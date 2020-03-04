@@ -1,4 +1,10 @@
+from functools import update_wrapper
+
 from django.contrib import admin
+from django.contrib.admin.utils import unquote
+from django.core.exceptions import PermissionDenied
+from django.http import Http404, HttpResponse
+from django.urls import path
 from django.utils.safestring import mark_safe
 
 from grandchallenge.cases.models import (
@@ -7,6 +13,7 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
+from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -128,8 +135,45 @@ class RawImageFileAdmin(admin.ModelAdmin):
         if not instance.staged_file_id:
             return
         return mark_safe(
-            f'<a class="button" href={reverse("api:upload-session-file-download", kwargs={"pk": instance.pk})}>Download</a>'
+            f'<a class="button" href={reverse(f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_download", kwargs={"object_id": instance.pk})}>Download</a>'
         )
+
+    def download_view(self, request, object_id, **kwargs):
+        obj = self.get_object(request, unquote(object_id), None)
+        if not self.has_view_or_change_permission(request, obj):
+            raise PermissionDenied
+
+        try:
+            saf = StagedAjaxFile(obj.staged_file_id).open()
+            response = HttpResponse(
+                saf.read(), content_type="application/dicom"
+            )
+            response[
+                "Content-Disposition"
+            ] = f'attachment; filename="{obj.filename}"'
+            return response
+        except Exception:
+            raise Http404("File not found")
+
+    def get_urls(self):
+        def wrap(view):
+            def wrapper(*args, **kwargs):
+                return self.admin_site.admin_view(view)(*args, **kwargs)
+
+            wrapper.model_admin = self
+            return update_wrapper(wrapper, view)
+
+        urls = super().get_urls()
+
+        # Replace catchall with download endpoint, as the catchall is only there
+        # for django < 1.10 compatibility.
+        urls[-1] = path(
+            "<path:object_id>/download/",
+            wrap(self.download_view),
+            name=f"{self.model._meta.app_label}_{self.model._meta.model_name}_download",
+        )
+
+        return urls
 
 
 admin.site.register(Image, ImageAdmin)
