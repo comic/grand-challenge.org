@@ -370,36 +370,3 @@ def test_filter_images_api_view(client):
     assert response.status_code == 200
     assert response.json()["count"] == 1
     assert response.json()["results"][0]["pk"] == str(im.pk)
-
-
-@pytest.mark.django_db
-def test_raw_image_file_download(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-    admin = UserFactory(is_staff=True)
-    user = UserFactory()
-    us = RawImageUploadSessionFactory(creator=user)
-    path = Path(__file__).parent / "resources" / "dicom" / "1.dcm"
-
-    f = StagedFileFactory(file__from_path=path)
-
-    rif = RawImageFileFactory(upload_session=us, staged_file_id=f.file_id)
-
-    response = get_view_for_user(
-        client=client,
-        user=user,
-        viewname="api:upload-session-file-download",
-        reverse_kwargs={"pk": rif.pk},
-    )
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        client=client,
-        user=admin,
-        viewname="api:upload-session-file-download",
-        reverse_kwargs={"pk": rif.pk},
-    )
-
-    assert response.status_code == 200
-    with path.open("rb") as dcm:
-        assert dcm.read() == response.content
