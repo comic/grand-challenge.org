@@ -7,7 +7,7 @@
     </script>
     <script>
         {# Setup sentry before anything else loads #}
-        Sentry.init({dsn: '{{ SENTRY_DSN }}'});
+        Sentry.init({dsn: '{{ SENTRY_DSN }}', release: '{{ COMMIT_ID }}'});
     </script>
 {% endif %}
 
