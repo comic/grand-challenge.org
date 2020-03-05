@@ -138,6 +138,14 @@
         <dt>Total session duration</dt>
         <dd>{{ total_session_duration }}</dd>
     </dl>
+
+    {% if request.user.is_staff %}
+        <h2>Deployment</h2>
+        <dl class="inline">
+            <dt>Commit ID</dt>
+            <dd>{{ COMMIT_ID }}</dd>
+        </dl>
+    {% endif %}
 {% endblock %}
 
 {% block script %}

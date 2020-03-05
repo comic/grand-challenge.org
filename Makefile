@@ -2,12 +2,14 @@ USER_ID = $(shell id -u)
 
 build_web:
 	docker build \
+		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--target test \
 		-t grandchallenge/web-test:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME) \
 		-t grandchallenge/web-test:latest \
 		-f dockerfiles/web/Dockerfile \
 		.
 	docker build \
+		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--target dist \
 		-t grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME) \
 		-t grandchallenge/web:latest \

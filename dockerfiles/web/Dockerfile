@@ -34,6 +34,9 @@ COPY poetry.lock /opt/poetry
 RUN poetry install --no-dev --no-root
 ENV PATH="/opt/poetry/.venv/bin:$PATH"
 
+ARG COMMIT_ID=unknown
+ENV COMMIT_ID=$COMMIT_ID
+
 ###################
 #  Webpack        #
 ###################
