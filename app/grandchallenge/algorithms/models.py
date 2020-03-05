@@ -277,7 +277,7 @@ class Result(UUIDModel):
         help_text=(
             "If True, allow anyone to view this result along "
             "with the input image. Otherwise, only the job creator and "
-            "algorithm editor will have permission to view this."
+            "algorithm editor will have permission to view this result."
         ),
     )
     output = JSONField(default=dict, editable=False)
