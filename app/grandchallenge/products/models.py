@@ -132,7 +132,7 @@ class Product(models.Model):
     countries = models.TextField()
     distribution = models.CharField(max_length=100, blank=True)
     institutes_research = models.TextField()
-    institutes_clinical = models.TextField()
+    institutes_clinic = models.TextField()
 
     pricing_model = models.TextField()
     pricing_basis = models.TextField()
