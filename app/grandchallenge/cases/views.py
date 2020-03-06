@@ -1,6 +1,5 @@
 from django.conf import settings
-from django.http import Http404, HttpResponse
-from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.views.generic import DetailView
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -147,18 +146,3 @@ class RawImageFileViewSet(
     queryset = RawImageFile.objects.all()
     permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
     filter_backends = [ObjectPermissionsFilter]
-
-    @action(detail=True, methods=["get"])
-    def download(self, request, pk=None):
-        rif = get_object_or_404(RawImageFile, pk=pk)
-        try:
-            saf = StagedAjaxFile(rif.staged_file_id).open()
-            response = HttpResponse(
-                saf.read(), content_type="application/dicom"
-            )
-            response[
-                "Content-Disposition"
-            ] = f'attachment; filename="{rif.filename}"'
-            return response
-        except Exception:
-            raise Http404("File not found")
