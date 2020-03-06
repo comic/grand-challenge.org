@@ -1,4 +1,5 @@
 {% extends 'products/base.html' %}
+{% load bleach %}
 
 {% block title %}
     {{product.product_name}} - {{product.company.company_name}}
@@ -193,15 +194,15 @@
           </thead>
           <tr>
             <td class="text-muted">Peer reviewed papers on performance</td>
-            <td>{{ product.tech_peer_papers|safe|linebreaksbr }}</td>
+            <td>{{ product.tech_peer_papers|clean|linebreaksbr }}</td>
           </tr>
           <tr>
             <td class="text-muted">Non-peer reviewed papers on performance</td>
-            <td>{{ product.tech_other_papers|safe|linebreaksbr }}</td>
+            <td>{{ product.tech_other_papers|clean|linebreaksbr }}</td>
           </tr>
           <tr>
             <td class="text-muted">Other relevant papers</td>
-            <td>{{ product.all_other_papers|safe|linebreaksbr }}</td>
+            <td>{{ product.all_other_papers|clean|linebreaksbr }}</td>
           </tr>
         </table>
       </div>
