@@ -1,3 +1,4 @@
+import re
 from functools import update_wrapper
 
 from django.contrib import admin
@@ -165,13 +166,23 @@ class RawImageFileAdmin(admin.ModelAdmin):
 
         urls = super().get_urls()
 
-        # Replace catchall with download endpoint, as the catchall is only there
-        # for django < 1.10 compatibility.
-        urls[-1] = path(
+        download_url = path(
             "<path:object_id>/download/",
             wrap(self.download_view),
             name=f"{self.model._meta.app_label}_{self.model._meta.model_name}_download",
         )
+        # Currently the last url in ModelAdmin's get-urls is this:
+        # # For backwards compatibility (was the change url before 1.9)
+        #   path('<path:object_id>/', wrap(RedirectView.as_view(
+        #       pattern_name='%s:%s_%s_change' % ((self.admin_site.name,) + info)
+        #   ))),
+        # This would also match <path:object_id>/download/ and is only there for
+        # old django versions, which we do not use. Replace it if it is there.
+        # Otherwise just append the download_url to the list.
+        if urls[-1].pattern.regex == re.compile("^(?P<object_id>.+)/$"):
+            urls[-1] = download_url
+        else:
+            urls.append(download_url)
 
         return urls
 
