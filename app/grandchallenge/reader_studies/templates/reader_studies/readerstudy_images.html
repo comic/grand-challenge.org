@@ -14,7 +14,7 @@
 
 {% block content %}
 
-    <h1>Reader Study {{ object.title }} - Images</h1>
+    <h1>{{ object.title }} Cases</h1>
 
     <ul class="list-group list-group-flush mt-3">
         {% for image in page_obj %}
@@ -32,6 +32,8 @@
                     </div>
                 </div>
             </li>
+        {% empty %}
+            <li class="list-group-item">There are no cases for this study.</li>
         {% endfor %}
     </ul>
 
@@ -54,15 +56,15 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="removeImageModalLabel">Remoove
-                        image</h5>
+                    <h5 class="modal-title" id="removeImageModalLabel">Remove
+                        case</h5>
                     <button type="button" class="close" data-dismiss="modal"
                             aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Removing an image cannot be undone. By removing an image, the current
+                    <p>Removing a case cannot be undone. By removing a case, the current
                         hanging list will become invalid.</p>
 
                     <p><b>Are you sure that you want to continue?</b></p>
@@ -100,7 +102,7 @@
                             window.location.replace(window.location.href);
                         }
                     })
-                })
+                });
                 $('.remove-image').on('click', (e) => {
                     $('#removeImage').data('image', $(e.currentTarget).data('id'));
                     $('#removeImageModal').modal('show');
