@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -43,7 +44,7 @@ from rest_framework.viewsets import (
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
@@ -197,6 +198,25 @@ class ReaderStudyStatistics(
     template_name = "reader_studies/readerstudy_statistics.html"
     # TODO: this view also contains the ground truth answer values.
     # If the permission is changed to 'read', we need to filter these values out.
+
+
+class ReaderStudyImages(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_images.html"
+
+    def get_context_data(self, **kwarsg):
+        context = super().get_context_data(**kwarsg)
+        paginator = Paginator(self.object.images.all(), 15)
+        page_number = self.request.GET.get("page", 1)
+        page_obj = paginator.get_page(page_number)
+        context.update({"page_obj": page_obj})
+        return context
 
 
 class QuestionUpdate(
@@ -458,6 +478,26 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             request, messages.SUCCESS, "Hanging list re-generated."
         )
         return Response({"status": "Hanging list generated."},)
+
+    @action(detail=True, methods=["patch"])
+    def remove_image(self, request, pk=None):
+        image_id = request.data.get("image")
+        reader_study = self.get_object()
+        try:
+            reader_study.images.remove(Image.objects.get(id=image_id))
+            messages.add_message(
+                request, messages.SUCCESS, "Image removed from reader study."
+            )
+            return Response({"status": "Image removed from reader study."},)
+        except Image.DoesNotExist:
+            messages.add_message(
+                request,
+                messages.ERROR,
+                "Image could not be removed from reader study.",
+            )
+        return Response(
+            {"status": "Image could not be removed from reader study."},
+        )
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):
