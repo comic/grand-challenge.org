@@ -149,7 +149,7 @@ class DataImporter(object):
     def _create_product_images(self, product, row):
         images = []
         img_files = self.images_path.glob(
-            "**/product_images/{}*.png".format(row["Short name"])
+            "**/product_images/{}*".format(row["Short name"])
         )
         product.images.all().delete()
         for file in img_files:
