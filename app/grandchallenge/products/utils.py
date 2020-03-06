@@ -73,7 +73,7 @@ class DataImporter(object):
         c.founded = row["Founded"]
         c.hq = row["Head office"]
         c.email = row["Email address (public)"]
-        c.description = row["Company description"][:500]
+        c.description = row["Company description"]
         c.description_short = self._split(row["Company description"], 200)
         image_name = row["Company name"]
         for ch in [" ", ".", "-"]:
@@ -93,7 +93,7 @@ class DataImporter(object):
         p.company = c
         p.modified = row["Timestamp"]
         p.short_name = row["Short name"][:50]
-        p.description = row["Product description"][:300]
+        p.description = row["Product description"]
         p.description_short = self._split(row["Product description"], 200)
         p.modality = row["Modality"]
         p.subspeciality = row["Subspeciality"]
