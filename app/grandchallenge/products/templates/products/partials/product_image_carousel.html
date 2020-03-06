@@ -1,33 +1,33 @@
 {% if product.images.all %}
-  <div id="product_img_carousel" class="carousel slide" data-ride="carousel" data-interval="false">
-    <ol class="carousel-indicators">
-      {% for image in product.images.all %}
-        <li data-target="#product_img_carousel" data-slide-to={{ forloop.counter0 }} {% if forloop.counter0 == 0%}class="active"{% endif %}></li>
-      {% endfor %}
-    </ol>
-    <div class="carousel-inner">
-      {% for image in product.images.all %}
-        <div class="carousel-item {% if forloop.counter0 == 0 %}active{% endif %}">
-          <img class="d-block w-100" src={{ image.img.url }}>
-        </div>
-      {% endfor %}
+  {% if product.images.all.count == 1 %}
+    <img src={{product.images.first.img.url}} style="width:100%;">
+  {% else %}
+    <div id="product_img_carousel" class="carousel slide" data-ride="carousel" data-interval="false">
+      <ol class="carousel-indicators">
+        {% for image in product.images.all %}
+          <li data-target="#product_img_carousel" data-slide-to={{ forloop.counter0 }} {% if forloop.counter0 == 0%}class="active"{% endif %}></li>
+        {% endfor %}
+      </ol>
+      <div class="carousel-inner">
+        {% for image in product.images.all %}
+          <div class="carousel-item {% if forloop.counter0 == 0 %}active{% endif %}">
+            <img class="d-block w-100" src={{ image.img.url }}>
+          </div>
+        {% endfor %}
+      </div>
 
+      <a class="carousel-control-prev" href="#product_img_carousel" role="button" data-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+      </a>
+      <a class="carousel-control-next" href="#product_img_carousel" role="button" data-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+      </a>
     </div>
-
-    <a class="carousel-control-prev" href="#product_img_carousel" role="button" data-slide="prev">
-      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-      <span class="sr-only">Previous</span>
-    </a>
-    <a class="carousel-control-next" href="#product_img_carousel" role="button" data-slide="next">
-      <span class="carousel-control-next-icon" aria-hidden="true"></span>
-      <span class="sr-only">Next</span>
-    </a>
-  </div>
-  <div class="text-muted small"> Source: {{product.company.website}}</div>
-
-{% elif product.product_img %} {# TODO: elif len(product.images.all)==1, no carousel #}
-  <img src={{product.product_img.url}} style="width:100%;">
-  <div class="text-muted small"> Source: {{product.company.website}}</div>
+  {% endif %}
+{# TODO: add if statement determining to display product.company.website or 'vendor' based on model field 'image_source' to be created#}
+<div class="text-muted small"> Source: {{product.company.website}}</div>
 {% endif %}
 
 
