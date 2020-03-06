@@ -25,7 +25,9 @@
   </div>
   <div class="text-muted small"> Source: {{product.company.website}}</div>
 
-{% elif product.product_img %}
+{% elif product.product_img %} <!--TODO: elif len(product.images.all)==1, no carousel-->
   <img src={{product.product_img.url}} style="width:100%;">
   <div class="text-muted small"> Source: {{product.company.website}}</div>
 {% endif %}
+
+

@@ -59,9 +59,9 @@ class Product(models.Model):
         CLEARED = Status.CLEARED, "510(k) cleared"
         DE_NOVO_CLEARED = Status.DE_NOVO_CLEARED, "De novo 510(k) cleared"
         PMA_APPROVED = Status.PMA_APPROVED, "PMA approved"
-        NO = Status.UNKNOWN, "No or not yet"
-        NA = Status.NO, "Not applicable"
-        UNKNOWN = Status.NA, "Unknown"
+        NO = Status.NO, "No or not yet"
+        NA = Status.NA, "Not applicable"
+        UNKNOWN = Status.UNKNOWN, "Unknown"
 
     ICONS = {
         Status.CERTIFIED: "icon_check.png",
@@ -132,7 +132,7 @@ class Product(models.Model):
     countries = models.TextField()
     distribution = models.CharField(max_length=100, blank=True)
     institutes_research = models.TextField()
-    institutes_clinic = models.TextField()
+    institutes_clinical = models.TextField()
 
     pricing_model = models.TextField()
     pricing_basis = models.TextField()

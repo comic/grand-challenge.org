@@ -167,11 +167,11 @@
           </tr>
           <tr>
             <td class="text-muted">Paying clinical customers (institutes) </td>
-            <td>{{product.institutes_research}}</td>
+            <td>{{product.institutes_clinical}}</td>
           </tr>
           <tr>
             <td class="text-muted">Research/test users (institutes) </td>
-            <td>{{product.institutes_clinical}}</td>
+            <td>{{product.institutes_research}}</td>
           </tr>
           <thead class="thead-light">
             <tr>
@@ -192,16 +192,16 @@
             </tr>
           </thead>
           <tr>
-            <td class="text-muted">Peer reviewed papers regarding performance as commercially available</td>
-            <td>{{ product.tech_peer_papers|linebreaksbr }}</td>
+            <td class="text-muted">Peer reviewed papers on performance</td>
+            <td>{{ product.tech_peer_papers|safe|linebreaksbr }}</td>
           </tr>
           <tr>
-            <td class="text-muted">Other papers regarding performance as commercially available</td>
-            <td>{{ product.tech_other_papers|linebreaksbr }}</td>
+            <td class="text-muted">Non-peer reviewed papers on performance</td>
+            <td>{{ product.tech_other_papers|safe|linebreaksbr }}</td>
           </tr>
           <tr>
             <td class="text-muted">Other relevant papers</td>
-            <td>{{ product.all_other_papers|linebreaksbr }}</td>
+            <td>{{ product.all_other_papers|safe|linebreaksbr }}</td>
           </tr>
         </table>
       </div>

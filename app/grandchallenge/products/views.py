@@ -33,6 +33,7 @@ class ProductList(ListView):
                 "modality",
                 "description",
                 "key_features",
+                "diseases",
                 "company__company_name",
             ]
             q = reduce(
@@ -118,6 +119,7 @@ class CompanyList(ListView):
                 Q(),
             )
             queryset = queryset.filter(q)
+        self.queryset = queryset
         return queryset
 
     def get_context_data(self, *args, **kwargs):

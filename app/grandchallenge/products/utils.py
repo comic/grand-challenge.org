@@ -128,7 +128,7 @@ class DataImporter(object):
         p.institutes_research = str(
             row["Number of institutes using the product for research"]
         )
-        p.institutes_clinic = str(
+        p.institutes_clinical = str(
             row["Number of institutes using the product in clinical practice"]
         )
         p.pricing_model = row["Pricing model"]
