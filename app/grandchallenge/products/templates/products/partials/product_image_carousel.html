@@ -1,5 +1,5 @@
 {% if product.images.all %}
-  {% if product.images.all.count == 1 %}
+  {% if product.images.count == 1 %}
     <img src={{product.images.first.img.url}} style="width:100%;">
   {% else %}
     <div id="product_img_carousel" class="carousel slide" data-ride="carousel" data-interval="false">
@@ -29,5 +29,4 @@
 {# TODO: add if statement determining to display product.company.website or 'vendor' based on model field 'image_source' to be created#}
 <div class="text-muted small"> Source: {{product.company.website}}</div>
 {% endif %}
-
 
