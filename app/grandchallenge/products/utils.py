@@ -39,6 +39,12 @@ class DataImporter(object):
         df_c = self._read_data(company_data)
         df_p = self._read_data(product_data)
         tmpdir = None
+
+        # Delete all existing entries and recreate them
+        Company.objects.all().delete()
+        Product.objects.all().delete()
+        ProductImage.objects.all().delete()
+
         if images_zip:
             tmpdir = tempfile.mkdtemp()
             with zipfile.ZipFile(images_zip) as zipf:
@@ -63,10 +69,7 @@ class DataImporter(object):
         return short_string
 
     def _create_company(self, row):
-        try:
-            c = Company.objects.get(company_name=row["Company name"])
-        except Company.DoesNotExist:
-            c = Company()
+        c = Company()
         c.company_name = row["Company name"]
         c.modified = row["Timestamp"]
         c.website = row["Company website url"]
@@ -85,10 +88,7 @@ class DataImporter(object):
         return c
 
     def _create_product(self, row, c):
-        try:
-            p = Product.objects.get(short_name=row["Short name"][:50])
-        except Product.DoesNotExist:
-            p = Product()
+        p = Product()
         p.product_name = row["Product name"]
         p.company = c
         p.modified = row["Timestamp"]
