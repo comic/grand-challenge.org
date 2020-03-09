@@ -88,7 +88,7 @@ class ProductList(ListView):
                 "selected_subspeciality": subspeciality_query,
                 "selected_modality": modality_query,
                 "products_selected_page": True,
-                "product_total": context["object_list"].count()
+                "product_total": context["object_list"].count(),
             }
         )
         return context
