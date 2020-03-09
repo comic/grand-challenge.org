@@ -233,6 +233,10 @@ class StagedAjaxFile:
         return query
 
     @property
+    def staged_files(self):
+        return StagedFile.objects.filter(file_id=self.__uuid)
+
+    @property
     def uuid(self):
         """The uuid-representation of the file used in the actual form."""
         return self.__uuid

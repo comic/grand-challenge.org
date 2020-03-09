@@ -3,20 +3,22 @@ import os
 import re
 import tarfile
 import zipfile
+from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Sequence, Tuple
 from uuid import UUID
 
 from celery import shared_task
+from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db import transaction
+from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.image_builders.dicom_4dct import (
-    image_builder_dicom_4dct,
-)
+from grandchallenge.cases.image_builders.dicom import image_builder_dicom
 from grandchallenge.cases.image_builders.fallback import image_builder_fallback
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
@@ -160,7 +162,7 @@ def store_image(
 IMAGE_BUILDER_ALGORITHMS = [
     image_builder_mhd,
     image_builder_tiff,
-    image_builder_dicom_4dct,
+    image_builder_dicom,
     image_builder_fallback,
 ]
 
@@ -487,10 +489,23 @@ def _handle_unconsumed_files(
 
 
 def _delete_session_files(*, session_files):
+    dicom_group = Group.objects.get(
+        name=settings.DICOM_DATA_CREATORS_GROUP_NAME
+    )
+    users = dicom_group.user_set.values_list("username", flat=True)
     for file in session_files:
         try:
             if file.staged_file_id:
                 saf = StagedAjaxFile(file.staged_file_id)
+                if (
+                    not file.consumed
+                    and Path(file.filename).suffix == ".dcm"
+                    and getattr(file.creator, "username", None) in users
+                ):
+                    saf.staged_files.update(
+                        timeout=timezone.now() + timedelta(days=21)
+                    )
+                    continue
                 file.staged_file_id = None
                 saf.delete()
             file.save()
