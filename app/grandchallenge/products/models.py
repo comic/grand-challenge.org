@@ -6,7 +6,7 @@ from grandchallenge.challenges.models import get_logo_path
 
 class Company(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(default=timezone.now)
+    modified = models.DateField(default=timezone.now)
     company_name = models.CharField(max_length=200)
     website = models.URLField()
     founded = models.IntegerField()
@@ -59,9 +59,9 @@ class Product(models.Model):
         CLEARED = Status.CLEARED, "510(k) cleared"
         DE_NOVO_CLEARED = Status.DE_NOVO_CLEARED, "De novo 510(k) cleared"
         PMA_APPROVED = Status.PMA_APPROVED, "PMA approved"
-        NO = Status.UNKNOWN, "No or not yet"
-        NA = Status.NO, "Not applicable"
-        UNKNOWN = Status.NA, "Unknown"
+        NO = Status.NO, "No or not yet"
+        NA = Status.NA, "Not applicable"
+        UNKNOWN = Status.UNKNOWN, "Unknown"
 
     ICONS = {
         Status.CERTIFIED: "icon_check.png",
@@ -75,7 +75,7 @@ class Product(models.Model):
     }
 
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(default=timezone.now)
+    modified = models.DateField(default=timezone.now)
     product_name = models.CharField(max_length=200)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     short_name = models.CharField(
@@ -100,9 +100,9 @@ class Product(models.Model):
     diseases = models.TextField()
     population = models.TextField()
 
-    input_data = models.CharField(max_length=150)
+    input_data = models.CharField(max_length=250)
     file_format_input = models.TextField()
-    output_data = models.CharField(max_length=150)
+    output_data = models.CharField(max_length=250)
     file_format_output = models.TextField()
     key_features = models.TextField()
     key_features_short = models.CharField(max_length=120)
@@ -126,11 +126,11 @@ class Product(models.Model):
     integration = models.TextField()
     deployment = models.TextField()
     process_time = models.TextField()
-    trigger = models.CharField(max_length=100)
+    trigger = models.CharField(max_length=200)
 
     market_since = models.TextField()
     countries = models.TextField()
-    distribution = models.CharField(max_length=100, blank=True)
+    distribution = models.CharField(max_length=150, blank=True)
     institutes_research = models.TextField()
     institutes_clinic = models.TextField()
 

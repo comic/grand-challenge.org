@@ -39,6 +39,12 @@ class DataImporter(object):
         df_c = self._read_data(company_data)
         df_p = self._read_data(product_data)
         tmpdir = None
+
+        # Delete all existing entries and recreate them
+        Company.objects.all().delete()
+        Product.objects.all().delete()
+        ProductImage.objects.all().delete()
+
         if images_zip:
             tmpdir = tempfile.mkdtemp()
             with zipfile.ZipFile(images_zip) as zipf:
@@ -63,17 +69,14 @@ class DataImporter(object):
         return short_string
 
     def _create_company(self, row):
-        try:
-            c = Company.objects.get(company_name=row["Company name"])
-        except Company.DoesNotExist:
-            c = Company()
+        c = Company()
         c.company_name = row["Company name"]
         c.modified = row["Timestamp"]
         c.website = row["Company website url"]
         c.founded = row["Founded"]
         c.hq = row["Head office"]
         c.email = row["Email address (public)"]
-        c.description = row["Company description"][:500]
+        c.description = row["Company description"]
         c.description_short = self._split(row["Company description"], 200)
         image_name = row["Company name"]
         for ch in [" ", ".", "-"]:
@@ -85,15 +88,12 @@ class DataImporter(object):
         return c
 
     def _create_product(self, row, c):
-        try:
-            p = Product.objects.get(short_name=row["Short name"][:50])
-        except Product.DoesNotExist:
-            p = Product()
+        p = Product()
         p.product_name = row["Product name"]
         p.company = c
         p.modified = row["Timestamp"]
         p.short_name = row["Short name"][:50]
-        p.description = row["Product description"][:300]
+        p.description = row["Product description"]
         p.description_short = self._split(row["Product description"], 200)
         p.modality = row["Modality"]
         p.subspeciality = row["Subspeciality"]
@@ -149,7 +149,7 @@ class DataImporter(object):
     def _create_product_images(self, product, row):
         images = []
         img_files = self.images_path.glob(
-            "**/product_images/{}*.png".format(row["Short name"])
+            "**/product_images/{}*".format(row["Short name"])
         )
         product.images.all().delete()
         for file in img_files:

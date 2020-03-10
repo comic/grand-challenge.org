@@ -17,7 +17,7 @@ class ProductList(ListView):
     model = Product
     context_object_name = "products"
     queryset = Product.objects.filter(ce_status=Status.CERTIFIED).order_by(
-        "-verified", "company__company_name"
+        "-verified", "-ce_verified", "company__company_name"
     )
 
     def get_queryset(self):
@@ -33,6 +33,7 @@ class ProductList(ListView):
                 "modality",
                 "description",
                 "key_features",
+                "diseases",
                 "company__company_name",
             ]
             q = reduce(
@@ -50,7 +51,6 @@ class ProductList(ListView):
             )
         if modality_query and modality_query != "All":
             queryset = queryset.filter(Q(modality__icontains=modality_query))
-        self.queryset = queryset
         return queryset
 
     def get_context_data(self, *args, **kwargs):
@@ -88,7 +88,7 @@ class ProductList(ListView):
                 "selected_subspeciality": subspeciality_query,
                 "selected_modality": modality_query,
                 "products_selected_page": True,
-                "product_total": len(self.queryset),
+                "product_total": context["object_list"].count(),
             }
         )
         return context
@@ -128,7 +128,7 @@ class CompanyList(ListView):
             {
                 "q_search": search_query,
                 "companies_selected_page": True,
-                "company_total": len(self.queryset),
+                "company_total": context["object_list"].count(),
             }
         )
         return context
