@@ -17,10 +17,14 @@ from tests.annotations_tests.factories import (
     BooleanClassificationAnnotationFactory,
     CoordinateListAnnotationFactory,
     ETDRSGridAnnotationFactory,
+    ImagePathologyAnnotationFactory,
+    ImageQualityAnnotationFactory,
+    ImageTextAnnotationFactory,
     IntegerClassificationAnnotationFactory,
     LandmarkAnnotationSetFactory,
     MeasurementAnnotationFactory,
     PolygonAnnotationSetFactory,
+    RetinaImagePathologyAnnotationFactory,
     SingleLandmarkAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
@@ -669,3 +673,20 @@ def reader_study_with_gt():
             ans.images.add(im)
 
     return rs
+
+
+@pytest.fixture
+def image_with_image_level_annotations():
+    grader = UserFactory()
+    add_to_graders_group([grader])
+    image = ImageFactory()
+    factory_kwargs = {"image": image, "grader": grader}
+    annotations = {
+        "quality": ImageQualityAnnotationFactory(**factory_kwargs),
+        "pathology": ImagePathologyAnnotationFactory(**factory_kwargs),
+        "retina_pathology": RetinaImagePathologyAnnotationFactory(
+            **factory_kwargs
+        ),
+        "text": ImageTextAnnotationFactory(**factory_kwargs),
+    }
+    return image, grader, annotations

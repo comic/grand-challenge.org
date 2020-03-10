@@ -22,7 +22,10 @@ from grandchallenge.reader_studies.views import (
     QuestionViewSet,
     ReaderStudyViewSet,
 )
-from grandchallenge.retina_api.views import LandmarkAnnotationSetViewSet
+from grandchallenge.retina_api.views import (
+    ImageLevelAnnotationsForImageViewSet,
+    LandmarkAnnotationSetViewSet,
+)
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
@@ -74,6 +77,11 @@ router.register(
     LandmarkAnnotationSetViewSet,
     basename="landmark-annotation",
 )
+router.register(
+    r"retina/image-level-annotation-for-image",
+    ImageLevelAnnotationsForImageViewSet,
+    basename="image-level-annotation-for-image",
+)
 
 # Workstations
 router.register(
@@ -82,7 +90,6 @@ router.register(
     basename="workstations-config",
 )
 router.register(r"workstations/sessions", SessionViewSet)
-
 
 schema_view = get_schema_view(
     openapi.Info(

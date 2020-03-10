@@ -86,3 +86,18 @@ class TreeImageSerializer(TreeObjectSerializer):
     modality = ImagingModalitySerializer()
     study = TreeStudySerializer(required=False)
     archive_set = TreeArchiveSerializer(many=True)
+
+
+class ImageLevelAnnotationsForImageSerializer(serializers.BaseSerializer):
+    quality = serializers.UUIDField(allow_null=True)
+    pathology = serializers.UUIDField(allow_null=True)
+    retina_pathology = serializers.UUIDField(allow_null=True)
+    text = serializers.UUIDField(allow_null=True)
+
+    def to_representation(self, instance):
+        return {
+            "quality": instance.get("quality"),
+            "pathology": instance.get("pathology"),
+            "retina_pathology": instance.get("retina_pathology"),
+            "text": instance.get("text"),
+        }

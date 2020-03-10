@@ -30,6 +30,7 @@ from grandchallenge.registrations.serializers import (
 from grandchallenge.retina_api.views import (
     ETDRSGridAnnotationViewSet,
     GradersWithPolygonAnnotationsListView,
+    ImageLevelAnnotationsForImageViewSet,
     ImagePathologyAnnotationViewSet,
     ImageQualityAnnotationViewSet,
     ImageTextAnnotationViewSet,
@@ -1982,5 +1983,111 @@ class TestLandmarkAnnotationSetViewSetForImage:
                 many=True,
             ).data
             serialized_data.sort(key=lambda k: k["created"], reverse=True)
+        else:
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type", [None, "normal_user", "retina_grader", "retina_admin"]
+)
+class TestImageLevelAnnotationsForImageViewSet:
+    @staticmethod
+    def perform_request(rf, user_type, image_id=None, grader=None):
+        kwargs = {"pk": image_id}
+        user = get_user_from_user_type(user_type, grader=grader)
+
+        url = reverse(
+            "api:image-level-annotation-for-image-detail", kwargs=kwargs
+        )
+
+        request = rf.get(url)
+
+        force_authenticate(request, user=user)
+        view = ImageLevelAnnotationsForImageViewSet.as_view(
+            actions={"get": "retrieve"}
+        )
+        return view(request, **kwargs)
+
+    def test_no_image_id(self, rf, user_type):
+        response = self.perform_request(rf, user_type)
+
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        else:
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_non_existant_image(self, rf, user_type):
+        img = ImageFactory()
+        pk = img.pk
+        img.delete()
+        response = self.perform_request(rf, user_type, image_id=pk)
+
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        else:
+            assert response.status_code == status.HTTP_200_OK
+            assert response.data == {
+                "quality": None,
+                "pathology": None,
+                "retina_pathology": None,
+                "text": None,
+            }
+
+    def test_non_annotation_image(self, rf, user_type):
+        img = ImageFactory()
+        response = self.perform_request(rf, user_type, image_id=img.pk)
+
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        else:
+            assert response.status_code == status.HTTP_200_OK
+            assert response.data == {
+                "quality": None,
+                "pathology": None,
+                "retina_pathology": None,
+                "text": None,
+            }
+
+    def test_annotation_image_wrong_user(
+        self, rf, user_type, image_with_image_level_annotations
+    ):
+        image, grader, annotations = image_with_image_level_annotations
+        response = self.perform_request(rf, user_type, image_id=image.pk)
+        if user_type in (None, "normal_user"):
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        else:
+            assert response.status_code == status.HTTP_200_OK
+            assert response.data == {
+                "quality": None,
+                "pathology": None,
+                "retina_pathology": None,
+                "text": None,
+            }
+
+    def test_annotation_image_correct_user(
+        self, rf, user_type, image_with_image_level_annotations
+    ):
+        image, grader, annotations = image_with_image_level_annotations
+        response = self.perform_request(
+            rf, user_type, image_id=image.pk, grader=grader
+        )
+
+        if user_type == "retina_admin":
+            assert response.status_code == status.HTTP_200_OK
+            assert response.data == {
+                "quality": None,
+                "pathology": None,
+                "retina_pathology": None,
+                "text": None,
+            }
+        elif user_type == "retina_grader":
+            assert response.status_code == status.HTTP_200_OK
+            assert response.data == {
+                "quality": annotations["quality"].id,
+                "pathology": annotations["pathology"].id,
+                "retina_pathology": annotations["retina_pathology"].id,
+                "text": annotations["text"].id,
+            }
         else:
             assert response.status_code == status.HTTP_403_FORBIDDEN
