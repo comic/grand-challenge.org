@@ -4,7 +4,7 @@
 {% load bleach %}
 
 {% block title %}
-    Run this algorithm - {{ block.super }}
+    Try-out Algorithm - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -17,15 +17,18 @@
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:execution-session-list' slug=algorithm.slug %}">Experiments</a>
+        </li>
         <li class="breadcrumb-item active"
-            aria-current="page">Run algorithm
+            aria-current="page">Create
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Run this algorithm</h2>
+    <h2>Try-out Algorithm</h2>
 
     {{ algorithm.job_create_page_markdown|md2html }}
 

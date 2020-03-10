@@ -38,7 +38,12 @@
                         </a>
                     </div>
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ workstation.title }}</h5>
+                        <h5 class="card-title">
+                            {{ workstation.title }}
+                            {% if not workstation.public %}
+                                <i class="fas fa-lock" title="Workstation is private"></i>
+                            {% endif %}
+                        </h5>
                         <p class="card-text">{{ workstation.description }}</p>
                         <div class="mt-auto mr-auto">
                             <a href="{{ workstation.get_absolute_url }}"

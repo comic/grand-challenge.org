@@ -7,6 +7,7 @@ from typing import Dict, List, Tuple
 
 import SimpleITK
 import pytest
+from django.contrib.auth.models import Group
 
 from grandchallenge.cases.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,
@@ -33,9 +34,13 @@ from tests.jqfileupload_tests.external_test_support import (
 
 
 def create_raw_upload_image_session(
-    images: List[str], delete_file=False, imageset=None, annotationset=None
+    images: List[str],
+    delete_file=False,
+    imageset=None,
+    annotationset=None,
+    user=None,
 ) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
-    creator = UserFactory(email="test@example.com")
+    creator = user or UserFactory(email="test@example.com")
     upload_session = RawImageUploadSession(
         imageset=imageset, annotationset=annotationset, creator=creator
     )
@@ -407,3 +412,44 @@ def test_build_zip_file(settings):
     assert (
         len([x for x in images if x.shape_without_color == [1, 205, 205]]) == 1
     )
+
+
+@pytest.mark.django_db
+def test_failed_dicom_files_are_retained(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # A valid set of dicom images. Files should not be retained
+    images = [f"dicom/{x}.dcm" for x in range(1, 21)]
+    session, _ = create_raw_upload_image_session(images)
+    session.refresh_from_db()
+    session.process_images()
+    assert Image.objects.count() == 1
+    assert not any(
+        RawImageFile.objects.values_list("staged_file_id", flat=True)
+    )
+    RawImageFile.objects.all().delete()
+
+    # An invalid set of dicom images, but the creator is not in the dedicated
+    # user group. Files should not be retained
+    images = [f"dicom/{x}.dcm" for x in range(1, 22)]
+    session, _ = create_raw_upload_image_session(images)
+    session.refresh_from_db()
+    session.process_images()
+    assert Image.objects.count() == 1
+    assert not any(
+        RawImageFile.objects.values_list("staged_file_id", flat=True)
+    )
+    RawImageFile.objects.all().delete()
+
+    # An invalid set of dicom images, and the creator is in the dedicated
+    # user group. Files should be retained
+    user = UserFactory()
+    g = Group.objects.get(name=settings.DICOM_DATA_CREATORS_GROUP_NAME)
+    g.user_set.add(user)
+    session, _ = create_raw_upload_image_session(images, user=user)
+    session.refresh_from_db()
+    session.process_images()
+    assert Image.objects.count() == 1
+    assert all(RawImageFile.objects.values_list("staged_file_id", flat=True))
+    RawImageFile.objects.all().delete()

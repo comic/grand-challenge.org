@@ -13,3 +13,12 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 @import "node_modules/bootswatch/dist/flatly/variables";
 @import "node_modules/bootstrap/scss/bootstrap";
 @import "node_modules/bootswatch/dist/flatly/bootswatch";
+
+// Fix https://github.com/comic/grand-challenge.org/issues/1201
+.custom-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+.custom-select-sm {
+  padding-left: $custom-select-padding-x;
+}

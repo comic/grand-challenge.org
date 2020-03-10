@@ -63,15 +63,17 @@
                     </span>
                     </td>
 
-                    {% if job.output %}
-                        <td>{{ job.output|user_error }}</td>
-                    {% elif job.result.metrics and job.result.published %}
-                        <td>
-                            <a href="{{ job.result.get_absolute_url }}">Result</a>
-                        </td>
-                    {% else %}
-                        <td>Submission is under review by the challenge admins.</td>
-                    {% endif %}
+                    <td>
+                        {% if job.result.metrics %}
+                            {% if job.result.published %}
+                                <a href="{{ job.result.get_absolute_url }}">Result</a>
+                            {% else %}
+                                Submission is under review by the challenge admins.
+                            {% endif %}
+                        {% elif job.FAILURE and job.output %}
+                            {{ job.output|user_error }}
+                        {% endif %}
+                    </td>
 
                     <td data-order="{{ job.result.rank }}">
                         {% if job.result and job.result.rank > 0 %}

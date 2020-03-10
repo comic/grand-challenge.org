@@ -13,6 +13,9 @@ from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils.timezone import now
 
+from grandchallenge.container_exec.backends.docker import (
+    ContainerExecException,
+)
 from grandchallenge.container_exec.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -158,22 +161,27 @@ def execute_job(
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
         ) as ev:
-            result = ev.execute()  # This call is potentially very long
-
-    except Exception as exc:
+            result, logs = ev.execute()  # This call is potentially very long
+    except ContainerExecException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.update_status(status=job.FAILURE, output=str(exc))
+        job.update_status(status=job.FAILURE, output=str(e))
+    except Exception:
+        job = get_model_instance(
+            pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        )
+        job.update_status(
+            status=job.FAILURE, output="An unexpected error occurred."
+        )
         raise
-
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
-    job.create_result(result=result)
-    job.update_status(status=job.SUCCESS)
-
-    return result
+    else:
+        job = get_model_instance(
+            pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        )
+        job.create_result(result=result)
+        job.update_status(status=job.SUCCESS, output=logs)
+        return result
 
 
 @shared_task
@@ -183,21 +191,20 @@ def mark_long_running_jobs_failed(
     """
     Mark jobs that have been started but did not finish (maybe due to
     an unrecoverable hardware error). It will mark tasks FAILED that have the
-    status STARTED after 5x the task limit (which is different for each queue),
-    so, this must be scheduled on the same queue that the execute_job task is
-    run for this app_label and model_name.
+    status STARTED after 1.2x the task limit (which is different for each
+    queue), so, this must be scheduled on the same queue that the execute_job
+    task is run for this app_label and model_name.
 
-    The implications of this is that a task will need to be scheduled in
-    4x the CELERY_TASK_TIME_LIMIT. If the task is still running on Celery then
-    it will still be able to report as passed later.
+    If the task is still running on Celery then it will still be able to
+    report as passed later.
     """
     Job = apps.get_model(  # noqa: N806
         app_label=app_label, model_name=model_name
     )
 
     jobs_to_mark = Job.objects.filter(
-        created__lt=now()
-        - 5 * timedelta(seconds=settings.CELERY_TASK_TIME_LIMIT),
+        started_at__lt=now()
+        - 1.2 * timedelta(seconds=settings.CELERY_TASK_TIME_LIMIT),
         status=Job.STARTED,
     )
 

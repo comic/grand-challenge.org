@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             name="public",
             field=models.BooleanField(
                 default=False,
-                help_text="If True, allow anyone to view this result along with the input image. Otherwise, only the job creator and algorithm editor will have permission to view this.",
+                help_text="If True, allow anyone to view this result along with the input image. Otherwise, only the job creator and algorithm editor will have permission to view this result.",
             ),
         ),
         migrations.AlterField(

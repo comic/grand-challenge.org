@@ -26,7 +26,7 @@ def test_service_start_cleanup():
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
     try:
-        s.start(http_port=80, websocket_port=81, hostname="test.local")
+        s.start(http_port=80, websocket_port=81, hostname="test-local")
 
         containers = dockerclient.containers.list(filters=filters)
         assert len(containers) == 1
@@ -36,11 +36,14 @@ def test_service_start_cleanup():
         expected_labels = {
             "job": f"{job_model}-{job_id}",
             "traefik.enable": "true",
-            "traefik.frontend.rule": f"Host:test.local",
-            "traefik.http.port": "80",
-            "traefik.http.frontend.entryPoints": "http",
-            "traefik.websocket.port": "81",
-            "traefik.websocket.frontend.entryPoints": "websocket",
+            "traefik.http.routers.test-local-http.entrypoints": "workstation-http",
+            "traefik.http.routers.test-local-http.rule": "Host(`test-local`)",
+            "traefik.http.routers.test-local-http.service": "test-local-http",
+            "traefik.http.routers.test-local-websocket.entrypoints": "workstation-websocket",
+            "traefik.http.routers.test-local-websocket.rule": "Host(`test-local`)",
+            "traefik.http.routers.test-local-websocket.service": "test-local-websocket",
+            "traefik.http.services.test-local-http.loadbalancer.server.port": "80",
+            "traefik.http.services.test-local-websocket.loadbalancer.server.port": "81",
         }
 
         for k, v in expected_labels.items():

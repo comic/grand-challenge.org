@@ -11,8 +11,10 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ object.algorithm.get_absolute_url }}">{{ object.algorithm.title }}
@@ -44,15 +46,13 @@
         <dt>Created</dt>
         <dd>{{ object.created }}</dd>
 
-        <dt>Image</dt>
-        <dd>
-            {% if object.image %}
-                {{ object.image.name }}
-            {% endif %}
-        </dd>
+        {% if object.image %}
+            <dt>Image</dt>
+            <dd>{{ object.image.name }}</dd>
 
-        <dt>Image Size</dt>
-        <dd>{{ object.image.size|intcomma }} Bytes</dd>
+            <dt>Image Size</dt>
+            <dd>{{ object.image.size|intcomma }} Bytes</dd>
+        {% endif %}
 
         <dt>Image SHA256</dt>
         <dd>{{ object.image_sha256 }}</dd>
@@ -69,7 +69,7 @@
 
     {% get_obj_perms request.user for object as "algorithm_image_perms" %}
 
-   {% if "change_algorithmimage" in algorithm_image_perms %}
+    {% if "change_algorithmimage" in algorithm_image_perms %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">

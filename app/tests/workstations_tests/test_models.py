@@ -65,12 +65,12 @@ def test_session_start(http_image, docker_client, settings):
         container = s.service.container
 
         assert container.labels["traefik.enable"] == "true"
-        assert container.labels["traefik.http.port"] == str(
-            s.workstation_image.http_port
-        )
-        assert container.labels["traefik.websocket.port"] == str(
-            s.workstation_image.websocket_port
-        )
+        assert container.labels[
+            f"traefik.http.services.{s.hostname}-http.loadbalancer.server.port"
+        ] == str(s.workstation_image.http_port)
+        assert container.labels[
+            f"traefik.http.services.{s.hostname}-websocket.loadbalancer.server.port"
+        ] == str(s.workstation_image.websocket_port)
 
         networks = container.attrs.get("NetworkSettings")["Networks"]
         assert len(networks) == 1

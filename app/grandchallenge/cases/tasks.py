@@ -3,6 +3,7 @@ import os
 import re
 import tarfile
 import zipfile
+from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Sequence, Tuple
@@ -10,15 +11,14 @@ from uuid import UUID
 
 from celery import shared_task
 from django.conf import settings
-from django.contrib.sites.models import Site
-from django.core.mail import send_mail
+from django.contrib.auth.models import Group
 from django.db import transaction
+from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.image_builders import ImageBuilderResult
-from grandchallenge.cases.image_builders.dicom_4dct import (
-    image_builder_dicom_4dct,
-)
+from grandchallenge.cases.image_builders.dicom import image_builder_dicom
 from grandchallenge.cases.image_builders.fallback import image_builder_fallback
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
@@ -162,7 +162,7 @@ def store_image(
 IMAGE_BUILDER_ALGORITHMS = [
     image_builder_mhd,
     image_builder_tiff,
-    image_builder_dicom_4dct,
+    image_builder_dicom,
     image_builder_fallback,
 ]
 
@@ -377,9 +377,9 @@ def build_images(upload_session_uuid: UUID):
             upload_session.status = upload_session.FAILURE
             upload_session.save()
             raise
-
-    upload_session.status = upload_session.SUCCESS
-    upload_session.save()
+        else:
+            upload_session.status = upload_session.SUCCESS
+            upload_session.save()
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):
@@ -474,7 +474,7 @@ def _handle_unconsumed_files(
         raw_file = filename_lookup[unconsumed_filename]
         error = raw_file.error or ""
         raw_file.error = (
-            "File could not be processed by any image builder:\n\n" f"{error}"
+            f"File could not be processed by any image builder:\n\n{error}"
         )
 
     if unconsumed_filenames:
@@ -483,29 +483,29 @@ def _handle_unconsumed_files(
         )
 
         if upload_session.creator and upload_session.creator.email:
-            msg = (
-                "The following image files could not be processed "
-                f"in reader study {upload_session.reader_study}:"
-                f"\n\n{', '.join(unconsumed_filenames)}\n\n"
-                "The following file formats are supported: "
-                ".mhd, .mha, .tiff"
-            )
-            send_mail(
-                subject=(
-                    f"[{Site.objects.get_current().domain.lower()}] "
-                    f"Unable to process images"
-                ),
-                message=msg,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[upload_session.creator.email],
+            send_failed_file_import(
+                filename_lookup, unconsumed_filenames, upload_session
             )
 
 
 def _delete_session_files(*, session_files):
+    dicom_group = Group.objects.get(
+        name=settings.DICOM_DATA_CREATORS_GROUP_NAME
+    )
+    users = dicom_group.user_set.values_list("username", flat=True)
     for file in session_files:
         try:
             if file.staged_file_id:
                 saf = StagedAjaxFile(file.staged_file_id)
+                if (
+                    not file.consumed
+                    and Path(file.filename).suffix == ".dcm"
+                    and getattr(file.creator, "username", None) in users
+                ):
+                    saf.staged_files.update(
+                        timeout=timezone.now() + timedelta(days=21)
+                    )
+                    continue
                 file.staged_file_id = None
                 saf.delete()
             file.save()

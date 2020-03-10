@@ -33,7 +33,7 @@
             <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
                href="#v-pills-home" role="tab" aria-controls="v-pills-home"
                aria-selected="true"><i
-                    class="fas fa-microchip fa-fw"></i>&nbsp;{{ object.title }}
+                    class="fas fa-info fa-fw"></i>&nbsp;{{ object.title }}
             </a>
 
             {% if "change_algorithm" in algorithm_perms %}
@@ -42,7 +42,7 @@
                    aria-controls="v-pills-containers"
                    aria-selected="false">
                     {# @formatter:off #}
-                    <i class="fas fa-box-open fa-fw"></i>&nbsp;Containers{% if not object.latest_ready_image %}&nbsp;<i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
+                    <i class="fab fa-docker fa-fw"></i>&nbsp;Containers{% if not object.latest_ready_image %}&nbsp;<i class="fas fa-exclamation-triangle text-danger"></i>{% endif %}
                     {# @formatter:on #}
                 </a>
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
@@ -63,13 +63,17 @@
             {% if "execute_algorithm" in algorithm_perms and object.latest_ready_image %}
                 <a class="nav-link"
                    href="{% url 'algorithms:execution-session-create' slug=object.slug %}">
-                    <i class="fa fa-flask fa-fw"></i>&nbsp;Run Algorithm
+                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
+                </a>
+                <a class="nav-link"
+                   href="{% url 'algorithms:execution-session-list' slug=object.slug %}">
+                    <i class="fa fa-flask fa-fw"></i>&nbsp;Experiments
                 </a>
             {% endif %}
 
             <a class="nav-link"
                href="{% url 'algorithms:results-list' slug=object.slug %}">
-                <i class="fa fa-cogs fa-fw"></i>&nbsp;Results
+                <i class="fas fa-file-export fa-fw"></i>&nbsp;Results
             </a>
 
             {% if "execute_algorithm" not in algorithm_perms %}
@@ -89,6 +93,8 @@
              aria-labelledby="v-pills-home-tab">
 
             <h2>{{ object.title }}</h2>
+            {% comment %}
+            {# TODO: Some public algorithms must be anonymous, do not include author names by default #}
             <h5>
                 By
                 {% for user in object.editors_group.user_set.all %}
@@ -98,11 +104,13 @@
                         {# @formatter:on #}
                 {% endfor %}
             </h5>
+            {% endcomment %}
 
             {{ object.detail_page_markdown|md2html }}
 
             {% if "change_algorithm" in algorithm_perms %}
                 <hr>
+                <h3>Admin Info</h3>
                 <p>
                     {% if algorithm.public %}
                         This algorithm is <b>visible to the public</b>,
@@ -124,6 +132,12 @@
                         with its default configuration.
                     {% endif %}
                 </p>
+                {% if average_job_duration %}
+                    <p>
+                        On average, successful jobs for this algorithm have
+                        taken {{ average_job_duration }}.
+                    </p>
+                {% endif %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'algorithms:update' slug=object.slug %}">

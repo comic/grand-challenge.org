@@ -21,6 +21,8 @@ def strtobool(val) -> bool:
 
 DEBUG = strtobool(os.environ.get("DEBUG", "True"))
 
+COMMIT_ID = os.environ.get("COMMIT_ID", "unknown")
+
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
@@ -258,7 +260,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.context_processors.challenge",
-                "grandchallenge.core.context_processors.google_keys",
+                "grandchallenge.core.context_processors.deployment_info",
                 "grandchallenge.core.context_processors.debug",
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.policy_pages",
@@ -550,6 +552,7 @@ sentry_sdk.init(
         CeleryIntegration(),
         RedisIntegration(),
     ],
+    release=COMMIT_ID,
 )
 
 REST_FRAMEWORK = {
@@ -722,6 +725,9 @@ WORKSTATIONS_SESSION_DURATION_LIMIT = int(
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
+
+# The name of the group whose uploaded dicom files will be retained if the image builder fails
+DICOM_DATA_CREATORS_GROUP_NAME = "dicom_creators"
 
 # Disallow some challenge names due to subdomain or media folder clashes
 DISALLOWED_CHALLENGE_NAMES = [
