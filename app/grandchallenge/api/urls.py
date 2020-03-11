@@ -25,6 +25,10 @@ from grandchallenge.reader_studies.views import (
 from grandchallenge.retina_api.views import (
     ImageLevelAnnotationsForImageViewSet,
     LandmarkAnnotationSetViewSet,
+    PathologyAnnotationViewSet,
+    QualityAnnotationViewSet,
+    RetinaPathologyAnnotationViewSet,
+    TextAnnotationViewSet,
 )
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
@@ -81,6 +85,26 @@ router.register(
     r"retina/image-level-annotation-for-image",
     ImageLevelAnnotationsForImageViewSet,
     basename="image-level-annotation-for-image",
+)
+router.register(
+    r"retina/quality-annotation",
+    QualityAnnotationViewSet,
+    basename="quality-annotation",
+)
+router.register(
+    r"retina/pathology-annotation",
+    PathologyAnnotationViewSet,
+    basename="pathology-annotation",
+)
+router.register(
+    r"retina/retina-pathology-annotation",
+    RetinaPathologyAnnotationViewSet,
+    basename="retina-pathology-annotation",
+)
+router.register(
+    r"retina/text-annotation",
+    TextAnnotationViewSet,
+    basename="text-annotation",
 )
 
 # Workstations

@@ -929,3 +929,39 @@ class ImageLevelAnnotationsForImageViewSet(
             except (IndexError, AttributeError):
                 data[key] = None
         return data
+
+
+class QualityAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = ImageQualityAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = ImageQualityAnnotation.objects.all()
+
+
+class PathologyAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = ImagePathologyAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = ImagePathologyAnnotation.objects.all()
+
+
+class RetinaPathologyAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = RetinaImagePathologyAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = RetinaImagePathologyAnnotation.objects.all()
+
+
+class TextAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = ImageTextAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = ImageTextAnnotation.objects.all()
