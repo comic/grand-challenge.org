@@ -1355,28 +1355,28 @@ class TestETDRSAnnotationViewSet:
             QualityAnnotationViewSet,
             ImageQualityAnnotationFactory,
             ImageQualityAnnotationSerializer,
-            "quality-annotation",
+            "retina-quality-annotation",
             False,
         ),
         (
             PathologyAnnotationViewSet,
             ImagePathologyAnnotationFactory,
             ImagePathologyAnnotationSerializer,
-            "pathology-annotation",
+            "retina-pathology-annotation",
             False,
         ),
         (
             RetinaPathologyAnnotationViewSet,
             RetinaImagePathologyAnnotationFactory,
             RetinaImagePathologyAnnotationSerializer,
-            "retina-pathology-annotation",
+            "retina-retina-pathology-annotation",
             False,
         ),
         (
             TextAnnotationViewSet,
             ImageTextAnnotationFactory,
             ImageTextAnnotationSerializer,
-            "text-annotation",
+            "retina-text-annotation",
             False,
         ),
     ),
@@ -1675,7 +1675,7 @@ class TestAnnotationViewSets:
             LandmarkAnnotationSetViewSet,
             LandmarkAnnotationSetFactory,
             LandmarkAnnotationSetSerializer,
-            "landmark-annotation",
+            "retina-landmark-annotation",
         ),
     ),
 )
@@ -1978,7 +1978,7 @@ class TestLandmarkAnnotationSetViewSetForImage:
 
         user = get_user_from_user_type(user_type, **kwargs)
 
-        url = reverse(f"api:landmark-annotation-list") + querystring
+        url = reverse(f"api:retina-landmark-annotation-list") + querystring
 
         request = rf.get(url)
 
@@ -2075,7 +2075,7 @@ class TestImageLevelAnnotationsForImageViewSet:
         user = get_user_from_user_type(user_type, grader=grader)
 
         url = reverse(
-            "api:image-level-annotation-for-image-detail", kwargs=kwargs
+            "api:retina-image-level-annotation-for-image-detail", kwargs=kwargs
         )
 
         request = rf.get(url)

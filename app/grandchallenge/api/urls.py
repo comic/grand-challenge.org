@@ -79,32 +79,32 @@ router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
 router.register(
     r"retina/landmark-annotation",
     LandmarkAnnotationSetViewSet,
-    basename="landmark-annotation",
+    basename="retina-landmark-annotation",
 )
 router.register(
     r"retina/image-level-annotation-for-image",
     ImageLevelAnnotationsForImageViewSet,
-    basename="image-level-annotation-for-image",
+    basename="retina-image-level-annotation-for-image",
 )
 router.register(
     r"retina/quality-annotation",
     QualityAnnotationViewSet,
-    basename="quality-annotation",
+    basename="retina-quality-annotation",
 )
 router.register(
     r"retina/pathology-annotation",
     PathologyAnnotationViewSet,
-    basename="pathology-annotation",
+    basename="retina-pathology-annotation",
 )
 router.register(
     r"retina/retina-pathology-annotation",
     RetinaPathologyAnnotationViewSet,
-    basename="retina-pathology-annotation",
+    basename="retina-retina-pathology-annotation",
 )
 router.register(
     r"retina/text-annotation",
     TextAnnotationViewSet,
-    basename="text-annotation",
+    basename="retina-text-annotation",
 )
 
 # Workstations
