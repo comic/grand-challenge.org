@@ -22,7 +22,14 @@ from grandchallenge.reader_studies.views import (
     QuestionViewSet,
     ReaderStudyViewSet,
 )
-from grandchallenge.retina_api.views import LandmarkAnnotationSetViewSet
+from grandchallenge.retina_api.views import (
+    ImageLevelAnnotationsForImageViewSet,
+    LandmarkAnnotationSetViewSet,
+    PathologyAnnotationViewSet,
+    QualityAnnotationViewSet,
+    RetinaPathologyAnnotationViewSet,
+    TextAnnotationViewSet,
+)
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
@@ -72,7 +79,32 @@ router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
 router.register(
     r"retina/landmark-annotation",
     LandmarkAnnotationSetViewSet,
-    basename="landmark-annotation",
+    basename="retina-landmark-annotation",
+)
+router.register(
+    r"retina/image-level-annotation-for-image",
+    ImageLevelAnnotationsForImageViewSet,
+    basename="retina-image-level-annotation-for-image",
+)
+router.register(
+    r"retina/quality-annotation",
+    QualityAnnotationViewSet,
+    basename="retina-quality-annotation",
+)
+router.register(
+    r"retina/pathology-annotation",
+    PathologyAnnotationViewSet,
+    basename="retina-pathology-annotation",
+)
+router.register(
+    r"retina/retina-pathology-annotation",
+    RetinaPathologyAnnotationViewSet,
+    basename="retina-retina-pathology-annotation",
+)
+router.register(
+    r"retina/text-annotation",
+    TextAnnotationViewSet,
+    basename="retina-text-annotation",
 )
 
 # Workstations
@@ -82,7 +114,6 @@ router.register(
     basename="workstations-config",
 )
 router.register(r"workstations/sessions", SessionViewSet)
-
 
 schema_view = get_schema_view(
     openapi.Info(

@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
-from rest_framework import authentication, status, viewsets
+from rest_framework import authentication, mixins, status, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
@@ -61,6 +61,7 @@ from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.renderers import Base64Renderer
 from grandchallenge.retina_api.serializers import (
     BytesImageSerializer,
+    ImageLevelAnnotationsForImageSerializer,
     TreeImageSerializer,
     TreeObjectSerializer,
 )
@@ -898,3 +899,69 @@ class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
             )
 
         return queryset
+
+
+class ImageLevelAnnotationsForImageViewSet(
+    mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = ImageLevelAnnotationsForImageSerializer
+    filter_backends = (filters.ObjectPermissionsFilter,)
+
+    def get_object(self):
+        keys_to_models_map = {
+            "quality": ImageQualityAnnotation,
+            "pathology": ImagePathologyAnnotation,
+            "retina_pathology": RetinaImagePathologyAnnotation,
+            "text": ImageTextAnnotation,
+        }
+        image_id = self.kwargs.get("pk")
+        if image_id is None:
+            raise NotFound()
+        data = {}
+        for key, model in keys_to_models_map.items():
+            objects = model.objects.filter(
+                image__id=image_id, grader=self.request.user
+            )
+            try:
+                data[key] = objects[0].id
+            except (IndexError, AttributeError):
+                data[key] = None
+        return data
+
+
+class QualityAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = ImageQualityAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = ImageQualityAnnotation.objects.all()
+
+
+class PathologyAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = ImagePathologyAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = ImagePathologyAnnotation.objects.all()
+
+
+class RetinaPathologyAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = RetinaImagePathologyAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = RetinaImagePathologyAnnotation.objects.all()
+
+
+class TextAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = ImageTextAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = ImageTextAnnotation.objects.all()

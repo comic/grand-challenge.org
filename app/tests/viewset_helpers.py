@@ -250,6 +250,9 @@ def view_test(
     check_response_status_code=True,
     with_user=True,
 ):
+    if not with_user and user_type == "retina_grader_non_allowed":
+        user_type = "normal_user"
+
     user = get_user_from_user_type(user_type, grader=grader)
 
     url, kwargs = get_viewset_url_kwargs(
