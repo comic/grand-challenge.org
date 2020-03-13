@@ -663,7 +663,7 @@ class PolygonListView(ListAPIView):
         ).filter(grader__id=user_id)
 
 
-class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
+class LegacyPolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
@@ -672,7 +672,7 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     queryset = PolygonAnnotationSet.objects.all()
 
 
-class SinglePolygonViewSet(viewsets.ModelViewSet):
+class LegacySinglePolygonViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = SinglePolygonAnnotationSerializer

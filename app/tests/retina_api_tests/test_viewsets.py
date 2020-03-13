@@ -36,14 +36,14 @@ from grandchallenge.retina_api.views import (
     ImageTextAnnotationViewSet,
     LandmarkAnnotationSetForImageList,
     LandmarkAnnotationSetViewSet,
+    LegacyPolygonAnnotationSetViewSet,
+    LegacySinglePolygonViewSet,
     OctObsRegistrationRetrieve,
     PathologyAnnotationViewSet,
-    PolygonAnnotationSetViewSet,
     PolygonListView,
     QualityAnnotationViewSet,
     RetinaImagePathologyAnnotationViewSet,
     RetinaPathologyAnnotationViewSet,
-    SinglePolygonViewSet,
     TextAnnotationViewSet,
 )
 from grandchallenge.subdomains.utils import reverse
@@ -128,7 +128,7 @@ class TestPolygonAPIListView(TestCase):
         "retina_admin",
     ],
 )
-class TestPolygonAnnotationSetViewSet:
+class TestLegacyPolygonAnnotationSetViewSet:
     namespace = "retina:api"
     basename = "polygonannotationset"
 
@@ -143,7 +143,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
         )
         if user_type == "retina_grader":
             serialized_data = PolygonAnnotationSetSerializer(
@@ -183,7 +183,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
             model_json,
         )
         if user_type in ("retina_grader", "retina_admin"):
@@ -210,7 +210,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
             model_json,
             check_response_status_code=False,
         )
@@ -238,7 +238,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
         )
         if user_type == "retina_grader" or user_type == "retina_admin":
             model_serialized = PolygonAnnotationSetSerializer(
@@ -265,7 +265,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
             model_json,
         )
 
@@ -295,7 +295,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
             model_json,
             check_response_status_code=False,
         )
@@ -331,7 +331,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
             model_json,
         )
 
@@ -351,7 +351,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
         )
         if user_type in ("retina_grader", "retina_admin"):
             assert not PolygonAnnotationSet.objects.filter(
@@ -369,7 +369,7 @@ class TestPolygonAnnotationSetViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset2,
             rf,
-            PolygonAnnotationSetViewSet,
+            LegacyPolygonAnnotationSetViewSet,
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
@@ -408,7 +408,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader1,
             None,
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
         )
         if user_type == "retina_grader":
             serialized_data = SinglePolygonAnnotationSerializer(
@@ -446,7 +446,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader1,
             None,
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
             model_json,
         )
         if user_type in ("retina_grader", "retina_admin"):
@@ -470,7 +470,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader1,
             None,
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
             model_json,
             check_response_status_code=False,
         )
@@ -496,7 +496,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
         )
         if user_type == "retina_grader" or user_type == "retina_admin":
             model_serialized = SinglePolygonAnnotationSerializer(
@@ -524,7 +524,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
             model_json,
         )
 
@@ -552,7 +552,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
             model_json,
             check_response_status_code=False,
         )
@@ -592,7 +592,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
             model_json,
         )
 
@@ -610,7 +610,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
         )
         if user_type in ("retina_grader", "retina_admin"):
             assert not PolygonAnnotationSet.objects.filter(
@@ -628,7 +628,7 @@ class TestSinglePolygonAnnotationViewSet:
             two_retina_polygon_annotation_sets.grader2,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            SinglePolygonViewSet,
+            LegacySinglePolygonViewSet,
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
