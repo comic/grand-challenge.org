@@ -50,7 +50,10 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
-from grandchallenge.retina_api.filters import RetinaAnnotationFilter
+from grandchallenge.retina_api.filters import (
+    ImageAnnotationFilter,
+    RetinaAnnotationFilter,
+)
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -965,3 +968,25 @@ class TextAnnotationViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
     queryset = ImageTextAnnotation.objects.all()
+
+
+class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = PolygonAnnotationSetSerializer
+    filter_backends = (
+        filters.ObjectPermissionsFilter,
+        RetinaAnnotationFilter,
+        ImageAnnotationFilter,
+    )
+    pagination_class = None
+    queryset = PolygonAnnotationSet.objects.all()
+
+
+class SinglePolygonViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = SinglePolygonAnnotationSerializer
+    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    pagination_class = None
+    queryset = SinglePolygonAnnotation.objects.all()

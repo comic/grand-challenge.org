@@ -17,3 +17,14 @@ class RetinaAnnotationFilter(filters.BaseFilterBackend):
         if is_in_retina_admins_group(request.user):
             return queryset
         return queryset.filter(grader=request.user)
+
+
+class ImageAnnotationFilter(filters.BaseFilterBackend):
+    """
+    Filter backend that only returns objects that belong to the image that
+    is supplied by the image_id query parameter.
+    """
+
+    def filter_queryset(self, request, queryset, view):
+        image_id = self.request.query_params.get("image_id")
+        return queryset.filter(image__id=image_id)
