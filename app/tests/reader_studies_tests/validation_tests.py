@@ -177,7 +177,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple points",
         "name": "test_name",
-        "points": [{"point": [0, 0, 0]},],
+        "points": [{"point": [0, 0, 0]}],
     },
 }
 
