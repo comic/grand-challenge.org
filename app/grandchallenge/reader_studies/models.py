@@ -667,6 +667,19 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["start", "end"],
         },
+        "point-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["point"],
+        },
         "DIST": {
             "type": "object",
             "properties": {
@@ -701,6 +714,20 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["version", "type", "lines"],
         },
+        "MPTS": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Multiple points"]},
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "allOf": [{"$ref": "#/definitions/point-object"}]
+                    },
+                },
+            },
+            "required": ["version", "type", "points"],
+        },
     },
     "properties": {
         "version": {
@@ -718,6 +745,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
         {"$ref": "#/definitions/MDIS"},
+        {"$ref": "#/definitions/MPTS"},
     ],
 }
 
@@ -730,6 +758,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
+    ANSWER_TYPE_MULTIPLE_POINTS = "MPTS"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
@@ -742,6 +771,7 @@ class Question(UUIDModel):
             ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
             "Multiple distance measurements",
         ),
+        (ANSWER_TYPE_MULTIPLE_POINTS, "Multiple points"),
     )
 
     # What is the orientation of the question form when presented on the
@@ -879,6 +909,7 @@ class Question(UUIDModel):
                 self.ANSWER_TYPE_2D_BOUNDING_BOX,
                 self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
                 self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+                self.ANSWER_TYPE_MULTIPLE_POINTS,
             ]
         ) != bool(self.image_port):
             raise ValidationError(

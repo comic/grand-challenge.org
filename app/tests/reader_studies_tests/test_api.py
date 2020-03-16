@@ -277,6 +277,16 @@ def test_answer_creator_is_reader(client):
             },
             400,
         ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_POINTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple points",
+                "name": "test",
+                "points": [{"point": (1, 2, 3)}, {"point": (4, 5, 6)}],
+            },
+            201,
+        ),
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):
