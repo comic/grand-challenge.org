@@ -179,6 +179,29 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "name": "test_name",
         "points": [{"point": [0, 0, 0]}],
     },
+    "POLY": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Polygon",
+        "name": "test_name",
+        "seed_point": [0, 0, 0],
+        "path_points": [[0, 0, 0], [0, 0, 0]],
+        "sub_type": "poly",
+        "groups": ["a", "b"],
+    },
+    "MPOL": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Multiple polygons",
+        "name": "test_name",
+        "polygons": [
+            {
+                "name": "test_name",
+                "seed_point": [0, 0, 0],
+                "path_points": [[0, 0, 0], [0, 0, 0]],
+                "sub_type": "poly",
+                "groups": ["a", "b"],
+            }
+        ],
+    },
 }
 
 
