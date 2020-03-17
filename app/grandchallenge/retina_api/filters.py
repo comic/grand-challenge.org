@@ -26,5 +26,7 @@ class ImageAnnotationFilter(filters.BaseFilterBackend):
     """
 
     def filter_queryset(self, request, queryset, view):
-        image_id = self.request.query_params.get("image_id")
-        return queryset.filter(image__id=image_id)
+        image_id = request.query_params.get("image_id")
+        if image_id is not None:
+            return queryset.filter(image__id=image_id)
+        return queryset
