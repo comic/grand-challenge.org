@@ -19,13 +19,7 @@ class BooleanClassificationAnnotationAdmin(admin.ModelAdmin):
 class SinglePolygonAnnotationInline(admin.StackedInline):
     model = SinglePolygonAnnotation
     extra = 0
-    readonly_fields = (
-        "annotation_set",
-        "value",
-        "x_axis_orientation",
-        "y_axis_orientation",
-        "z",
-    )
+    readonly_fields = ("annotation_set", "value", "z", "interpolated")
 
 
 class PolygonAnnotationSetAdmin(admin.ModelAdmin):

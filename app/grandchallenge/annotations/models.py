@@ -186,14 +186,8 @@ class SinglePolygonAnnotation(AbstractSingleAnnotationModel):
 
     # General form: [[x1,y1],[x2,y2],...]
     value = ArrayField(ArrayField(models.FloatField(), size=2))
-
-    x_axis_orientation = ArrayField(
-        models.FloatField(), size=3, default=x_axis_orientation_default
-    )
-    y_axis_orientation = ArrayField(
-        models.FloatField(), size=3, default=y_axis_orientation_default
-    )
     z = models.FloatField(null=True, blank=True)
+    interpolated = models.BooleanField(default=False)
 
 
 class LandmarkAnnotationSet(AbstractAnnotationModel):

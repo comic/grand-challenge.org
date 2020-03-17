@@ -85,9 +85,8 @@ class SinglePolygonAnnotationSerializer(AbstractSingleAnnotationSerializer):
             "value",
             "annotation_set",
             "created",
-            "x_axis_orientation",
-            "y_axis_orientation",
             "z",
+            "interpolated",
         )
 
 
