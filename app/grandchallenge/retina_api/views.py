@@ -53,6 +53,7 @@ from grandchallenge.registrations.serializers import (
 from grandchallenge.retina_api.filters import (
     ImageAnnotationFilter,
     RetinaAnnotationFilter,
+    RetinaChildAnnotationFilter,
 )
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
@@ -987,6 +988,9 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
     authentication_classes = (authentication.TokenAuthentication,)
     serializer_class = SinglePolygonAnnotationSerializer
-    filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
+    filter_backends = (
+        filters.ObjectPermissionsFilter,
+        RetinaChildAnnotationFilter,
+    )
     pagination_class = None
     queryset = SinglePolygonAnnotation.objects.all()
