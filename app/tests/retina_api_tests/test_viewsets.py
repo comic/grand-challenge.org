@@ -40,10 +40,12 @@ from grandchallenge.retina_api.views import (
     LegacySinglePolygonViewSet,
     OctObsRegistrationRetrieve,
     PathologyAnnotationViewSet,
+    PolygonAnnotationSetViewSet,
     PolygonListView,
     QualityAnnotationViewSet,
     RetinaImagePathologyAnnotationViewSet,
     RetinaPathologyAnnotationViewSet,
+    SinglePolygonViewSet,
     TextAnnotationViewSet,
 )
 from grandchallenge.subdomains.utils import reverse
@@ -128,22 +130,44 @@ class TestPolygonAPIListView(TestCase):
         "retina_admin",
     ],
 )
-class TestLegacyPolygonAnnotationSetViewSet:
-    namespace = "retina:api"
-    basename = "polygonannotationset"
-
+@pytest.mark.parametrize(
+    "namespace,basename,viewset,with_user",
+    [
+        (
+            "retina:api",
+            "polygonannotationset",
+            LegacyPolygonAnnotationSetViewSet,
+            True,
+        ),
+        (
+            "api",
+            "retina-polygon-annotation-set",
+            PolygonAnnotationSetViewSet,
+            False,
+        ),
+    ],
+)
+class TestPolygonAnnotationSetViewSet:
     def test_list_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         response = view_test(
             "list",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
+            with_user=with_user,
         )
         if user_type == "retina_grader":
             serialized_data = PolygonAnnotationSetSerializer(
@@ -164,7 +188,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
             assert response.data == serialized_data_sorted
 
     def test_create_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_build = PolygonAnnotationSetFactory.build()
         model_serialized = PolygonAnnotationSetSerializer(model_build).data
@@ -178,13 +209,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
         response = view_test(
             "create",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
         )
         if user_type in ("retina_grader", "retina_admin"):
             model_serialized["id"] = response.data["id"]
@@ -192,7 +224,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
             assert response.data == model_serialized
 
     def test_create_view_wrong_user_id(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_build = PolygonAnnotationSetFactory.build()
         model_serialized = PolygonAnnotationSetSerializer(model_build).data
@@ -205,13 +244,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
         response = view_test(
             "create",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
@@ -228,17 +268,25 @@ class TestLegacyPolygonAnnotationSetViewSet:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_retrieve_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         response = view_test(
             "retrieve",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
+            with_user=with_user,
         )
         if user_type == "retina_grader" or user_type == "retina_admin":
             model_serialized = PolygonAnnotationSetSerializer(
@@ -247,7 +295,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
             assert response.data == model_serialized
 
     def test_update_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_serialized = PolygonAnnotationSetSerializer(
             instance=two_retina_polygon_annotation_sets.polygonset1
@@ -260,13 +315,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
         response = view_test(
             "update",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
         )
 
         if user_type in ("retina_grader", "retina_admin"):
@@ -275,7 +331,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
             assert response.data == model_serialized
 
     def test_update_view_wrong_user(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_serialized = PolygonAnnotationSetSerializer(
             instance=two_retina_polygon_annotation_sets.polygonset1
@@ -290,13 +353,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
         response = view_test(
             "update",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
@@ -313,7 +377,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_partial_update_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_serialized = PolygonAnnotationSetSerializer(
             instance=two_retina_polygon_annotation_sets.polygonset1
@@ -326,13 +397,14 @@ class TestLegacyPolygonAnnotationSetViewSet:
         response = view_test(
             "partial_update",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
         )
 
         if user_type in ("retina_grader", "retina_admin"):
@@ -341,17 +413,25 @@ class TestLegacyPolygonAnnotationSetViewSet:
             assert response.data == model_serialized
 
     def test_destroy_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         view_test(
             "destroy",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
+            with_user=with_user,
         )
         if user_type in ("retina_grader", "retina_admin"):
             assert not PolygonAnnotationSet.objects.filter(
@@ -359,17 +439,25 @@ class TestLegacyPolygonAnnotationSetViewSet:
             ).exists()
 
     def test_destroy_view_wrong_user(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         response = view_test(
             "destroy",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset2,
             rf,
-            LegacyPolygonAnnotationSetViewSet,
+            viewset,
+            with_user=with_user,
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
@@ -393,22 +481,44 @@ class TestLegacyPolygonAnnotationSetViewSet:
         "retina_admin",
     ],
 )
+@pytest.mark.parametrize(
+    "namespace,basename,viewset,with_user",
+    [
+        (
+            "retina:api",
+            "singlepolygonannotation",
+            LegacySinglePolygonViewSet,
+            True,
+        ),
+        (
+            "api",
+            "retina-single-polygon-annotation",
+            SinglePolygonViewSet,
+            False,
+        ),
+    ],
+)
 class TestSinglePolygonAnnotationViewSet:
-    namespace = "retina:api"
-    basename = "singlepolygonannotation"
-
     def test_list_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         response = view_test(
             "list",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             None,
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
+            with_user=with_user,
         )
         if user_type == "retina_grader":
             serialized_data = SinglePolygonAnnotationSerializer(
@@ -428,7 +538,14 @@ class TestSinglePolygonAnnotationViewSet:
             assert response.data == serialized_data
 
     def test_create_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_build = SinglePolygonAnnotationFactory.build()
         model_serialized = SinglePolygonAnnotationSerializer(model_build).data
@@ -441,19 +558,27 @@ class TestSinglePolygonAnnotationViewSet:
         response = view_test(
             "create",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             None,
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
         )
         if user_type in ("retina_grader", "retina_admin"):
             assert response.data["value"] == model_serialized["value"]
 
     def test_create_view_wrong_user_id(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_build = SinglePolygonAnnotationFactory.build()
         model_serialized = SinglePolygonAnnotationSerializer(model_build).data
@@ -465,13 +590,14 @@ class TestSinglePolygonAnnotationViewSet:
         response = view_test(
             "create",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             None,
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
@@ -486,17 +612,25 @@ class TestSinglePolygonAnnotationViewSet:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_retrieve_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         response = view_test(
             "retrieve",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
+            with_user=with_user,
         )
         if user_type == "retina_grader" or user_type == "retina_admin":
             model_serialized = SinglePolygonAnnotationSerializer(
@@ -505,7 +639,14 @@ class TestSinglePolygonAnnotationViewSet:
             assert response.data == model_serialized
 
     def test_update_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_serialized = SinglePolygonAnnotationSerializer(
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first()
@@ -519,13 +660,14 @@ class TestSinglePolygonAnnotationViewSet:
         response = view_test(
             "update",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
         )
 
         if user_type in ("retina_grader", "retina_admin"):
@@ -535,7 +677,14 @@ class TestSinglePolygonAnnotationViewSet:
             assert response.data == model_serialized
 
     def test_update_view_wrong_user_id(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_serialized = SinglePolygonAnnotationSerializer(
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first()
@@ -547,13 +696,14 @@ class TestSinglePolygonAnnotationViewSet:
         response = view_test(
             "update",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
@@ -572,7 +722,14 @@ class TestSinglePolygonAnnotationViewSet:
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_partial_update_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         model_serialized = SinglePolygonAnnotationSerializer(
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first()
@@ -587,30 +744,39 @@ class TestSinglePolygonAnnotationViewSet:
         response = view_test(
             "partial_update",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
             model_json,
+            with_user=with_user,
         )
 
         if user_type in ("retina_grader", "retina_admin"):
             assert response.data == model_serialized
 
     def test_destroy_view(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         view_test(
             "destroy",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader1,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
+            with_user=with_user,
         )
         if user_type in ("retina_grader", "retina_admin"):
             assert not PolygonAnnotationSet.objects.filter(
@@ -618,17 +784,25 @@ class TestSinglePolygonAnnotationViewSet:
             ).exists()
 
     def test_destroy_view_wrong_user(
-        self, two_retina_polygon_annotation_sets, rf, user_type
+        self,
+        two_retina_polygon_annotation_sets,
+        rf,
+        user_type,
+        namespace,
+        basename,
+        viewset,
+        with_user,
     ):
         response = view_test(
             "destroy",
             user_type,
-            self.namespace,
-            self.basename,
+            namespace,
+            basename,
             two_retina_polygon_annotation_sets.grader2,
             two_retina_polygon_annotation_sets.polygonset1.singlepolygonannotation_set.first(),
             rf,
-            LegacySinglePolygonViewSet,
+            viewset,
+            with_user=with_user,
             check_response_status_code=False,
         )
         if user_type == "retina_admin":
@@ -1377,6 +1551,13 @@ class TestETDRSAnnotationViewSet:
             ImageTextAnnotationFactory,
             ImageTextAnnotationSerializer,
             "retina-text-annotation",
+            False,
+        ),
+        (
+            PolygonAnnotationSetViewSet,
+            PolygonAnnotationSetFactory,
+            PolygonAnnotationSetSerializer,
+            "retina-polygon-annotation-set",
             False,
         ),
     ),
@@ -2168,3 +2349,40 @@ class TestImageLevelAnnotationsForImageViewSet:
             }
         else:
             assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestPolygonAnnotationSetViewSetWithImageFilter:
+    @staticmethod
+    def perform_request(rf, image_id, user):
+        url = f"{reverse('api:retina-polygon-annotation-set-list')}?image_id={image_id}"
+        request = rf.get(url)
+        force_authenticate(request, user=user)
+        view = PolygonAnnotationSetViewSet.as_view(actions={"get": "list"})
+        return view(request)
+
+    def test_filter_none(self, rf, two_retina_polygon_annotation_sets):
+        grader = two_retina_polygon_annotation_sets.grader1
+        response = self.perform_request(
+            rf, "00000000-0000-0000-0000-000000000000", grader
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == []
+
+    def test_filter_all(self, rf, two_retina_polygon_annotation_sets):
+        image = two_retina_polygon_annotation_sets.polygonset1.image
+        grader = two_retina_polygon_annotation_sets.grader1
+        response = self.perform_request(rf, image.id, grader)
+        assert response.status_code == status.HTTP_200_OK
+        serialized_data = PolygonAnnotationSetSerializer(
+            two_retina_polygon_annotation_sets.polygonset1
+        ).data
+        assert response.data == [serialized_data]
+
+    def test_filter_other(self, rf, two_retina_polygon_annotation_sets):
+        grader = two_retina_polygon_annotation_sets.grader1
+        polygonset3 = PolygonAnnotationSetFactory(grader=grader)
+        response = self.perform_request(rf, polygonset3.image.id, grader)
+        assert response.status_code == status.HTTP_200_OK
+        serialized_data = PolygonAnnotationSetSerializer(polygonset3).data
+        assert response.data == [serialized_data]
