@@ -287,6 +287,112 @@ def test_answer_creator_is_reader(client):
             },
             201,
         ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_POINTS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple points",
+                "name": "test",
+                "points": [{"point": (1, 2)}, {"point": (4, 5, 6)}],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_POLYGON,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Polygon",
+                "name": "test",
+                "seed_point": (1, 2, 3),
+                "path_points": [(1, 2, 3), (4, 5, 6)],
+                "sub_type": "poly",
+                "groups": ["a", "b"],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_POLYGON,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Polygon",
+                "name": "test",
+                "path_points": [(1, 2, 3), (4, 5, 6)],
+                "sub_type": "poly",
+                "groups": ["a", "b"],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_POLYGON,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Polygon",
+                "name": "test",
+                "seed_point": (1, 2, 3),
+                "sub_type": "poly",
+                "groups": ["a", "b"],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_POLYGON,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Polygon",
+                "name": "test",
+                "seed_point": (1, 2, 3),
+                "path_points": [(1, 2, 3), (4, 5, 6)],
+                "sub_type": "poly",
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_POLYGON,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Polygon",
+                "name": "test",
+                "seed_point": (1, 2, 3),
+                "path_points": [(1, 2, 3), (4, 5, 6)],
+                "groups": ["a", "b"],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_POLYGONS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple polygons",
+                "name": "test",
+                "polygons": [
+                    {
+                        "name": "test",
+                        "seed_point": (1, 2, 3),
+                        "path_points": [(1, 2, 3), (4, 5, 6)],
+                        "sub_type": "poly",
+                        "groups": ["a", "b"],
+                    }
+                ],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_POLYGONS,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple polygons",
+                "name": "test",
+                "polygons": [
+                    {
+                        "seed_point": (1, 2, 3),
+                        "path_points": [(1, 2, 3), (4, 5, 6)],
+                        "sub_type": "poly",
+                        "groups": ["a", "b"],
+                    }
+                ],
+            },
+            400,
+        ),
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):

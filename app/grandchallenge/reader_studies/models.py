@@ -680,6 +680,36 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["point"],
         },
+        "polygon-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "seed_point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "path_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                },
+                "sub_type": {"type": "string"},
+                "groups": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": [
+                "name",
+                "seed_point",
+                "path_points",
+                "sub_type",
+                "groups",
+            ],
+        },
         "DIST": {
             "type": "object",
             "properties": {
@@ -728,6 +758,53 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["version", "type", "points"],
         },
+        "POLY": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "seed_point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "path_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                },
+                "sub_type": {"type": "string"},
+                "groups": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": [
+                "name",
+                "seed_point",
+                "path_points",
+                "sub_type",
+                "groups",
+            ],
+        },
+        "MPOL": {
+            "type": "object",
+            "properties": {
+                "type": {"enum": ["Multiple polygons"]},
+                "version": {
+                    "type": "object",
+                    "additionalProperties": {"type": "number"},
+                    "required": ["major", "minor"],
+                },
+                "name": {"type": "string"},
+                "polygons": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/polygon-object"},
+                },
+            },
+            "required": ["type", "version", "polygons"],
+        },
     },
     "properties": {
         "version": {
@@ -746,6 +823,8 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/DIST"},
         {"$ref": "#/definitions/MDIS"},
         {"$ref": "#/definitions/MPTS"},
+        {"$ref": "#/definitions/POLY"},
+        {"$ref": "#/definitions/MPOL"},
     ],
 }
 
@@ -759,6 +838,8 @@ class Question(UUIDModel):
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
     ANSWER_TYPE_MULTIPLE_POINTS = "MPTS"
+    ANSWER_TYPE_POLYGON = "POLY"
+    ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
@@ -772,6 +853,8 @@ class Question(UUIDModel):
             "Multiple distance measurements",
         ),
         (ANSWER_TYPE_MULTIPLE_POINTS, "Multiple points"),
+        (ANSWER_TYPE_POLYGON, "Polygon"),
+        (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
     )
 
     # What is the orientation of the question form when presented on the
@@ -910,6 +993,8 @@ class Question(UUIDModel):
                 self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
                 self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
                 self.ANSWER_TYPE_MULTIPLE_POINTS,
+                self.ANSWER_TYPE_POLYGON,
+                self.ANSWER_TYPE_MULTIPLE_POLYGONS,
             ]
         ) != bool(self.image_port):
             raise ValidationError(
