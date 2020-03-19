@@ -37,6 +37,7 @@ from grandchallenge.annotations.serializers import (
     ImageQualityAnnotationSerializer,
     ImageTextAnnotationSerializer,
     LandmarkAnnotationSetSerializer,
+    NestedPolygonAnnotationSetSerializer,
     PolygonAnnotationSetSerializer,
     RetinaImagePathologyAnnotationSerializer,
     SinglePolygonAnnotationSerializer,
@@ -974,7 +975,7 @@ class TextAnnotationViewSet(viewsets.ModelViewSet):
 class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
     authentication_classes = (authentication.TokenAuthentication,)
-    serializer_class = PolygonAnnotationSetSerializer
+    serializer_class = NestedPolygonAnnotationSetSerializer
     filter_backends = (
         filters.ObjectPermissionsFilter,
         RetinaAnnotationFilter,

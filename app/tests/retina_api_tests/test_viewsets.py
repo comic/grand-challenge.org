@@ -19,6 +19,7 @@ from grandchallenge.annotations.serializers import (
     ImageQualityAnnotationSerializer,
     ImageTextAnnotationSerializer,
     LandmarkAnnotationSetSerializer,
+    NestedPolygonAnnotationSetSerializer,
     PolygonAnnotationSetSerializer,
     RetinaImagePathologyAnnotationSerializer,
     SinglePolygonAnnotationSerializer,
@@ -131,18 +132,20 @@ class TestPolygonAPIListView(TestCase):
     ],
 )
 @pytest.mark.parametrize(
-    "namespace,basename,viewset,with_user",
+    "namespace,basename,viewset,serializer,with_user",
     [
         (
             "retina:api",
             "polygonannotationset",
             LegacyPolygonAnnotationSetViewSet,
+            PolygonAnnotationSetSerializer,
             True,
         ),
         (
             "api",
             "retina-polygon-annotation-set",
             PolygonAnnotationSetViewSet,
+            NestedPolygonAnnotationSetSerializer,
             False,
         ),
     ],
@@ -156,6 +159,7 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
         response = view_test(
@@ -170,12 +174,12 @@ class TestPolygonAnnotationSetViewSet:
             with_user=with_user,
         )
         if user_type == "retina_grader":
-            serialized_data = PolygonAnnotationSetSerializer(
+            serialized_data = serializer(
                 two_retina_polygon_annotation_sets.polygonset1
             ).data
             assert response.data == [serialized_data]
         if user_type == "retina_admin":
-            serialized_data = PolygonAnnotationSetSerializer(
+            serialized_data = serializer(
                 [
                     two_retina_polygon_annotation_sets.polygonset1,
                     two_retina_polygon_annotation_sets.polygonset2,
@@ -195,10 +199,11 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
         model_build = PolygonAnnotationSetFactory.build()
-        model_serialized = PolygonAnnotationSetSerializer(model_build).data
+        model_serialized = serializer(model_build).data
         image = ImageFactory()
         model_serialized["image"] = str(image.id)
         model_serialized[
@@ -231,10 +236,11 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
         model_build = PolygonAnnotationSetFactory.build()
-        model_serialized = PolygonAnnotationSetSerializer(model_build).data
+        model_serialized = serializer(model_build).data
         image = ImageFactory()
         model_serialized["image"] = str(image.id)
         other_user = UserFactory()
@@ -275,6 +281,7 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
         response = view_test(
@@ -289,7 +296,7 @@ class TestPolygonAnnotationSetViewSet:
             with_user=with_user,
         )
         if user_type == "retina_grader" or user_type == "retina_admin":
-            model_serialized = PolygonAnnotationSetSerializer(
+            model_serialized = serializer(
                 instance=two_retina_polygon_annotation_sets.polygonset1
             ).data
             assert response.data == model_serialized
@@ -302,9 +309,10 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
-        model_serialized = PolygonAnnotationSetSerializer(
+        model_serialized = serializer(
             instance=two_retina_polygon_annotation_sets.polygonset1
         ).data
         image = ImageFactory()
@@ -328,6 +336,10 @@ class TestPolygonAnnotationSetViewSet:
         if user_type in ("retina_grader", "retina_admin"):
             response.data["image"] = str(response.data["image"])
             response.data["singlepolygonannotation_set"] = []
+            if basename == "retina-polygon-annotation-set":
+                model_serialized["image"] = str(
+                    two_retina_polygon_annotation_sets.polygonset1.image.id
+                )
             assert response.data == model_serialized
 
     def test_update_view_wrong_user(
@@ -338,9 +350,10 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
-        model_serialized = PolygonAnnotationSetSerializer(
+        model_serialized = serializer(
             instance=two_retina_polygon_annotation_sets.polygonset1
         ).data
         image = ImageFactory()
@@ -366,6 +379,13 @@ class TestPolygonAnnotationSetViewSet:
         if user_type == "retina_admin":
             response.data["singlepolygonannotation_set"] = []
             response.data["image"] = str(response.data["image"])
+            if basename == "retina-polygon-annotation-set":
+                model_serialized["image"] = str(
+                    two_retina_polygon_annotation_sets.polygonset1.image.id
+                )
+                model_serialized[
+                    "grader"
+                ] = two_retina_polygon_annotation_sets.polygonset1.grader.id
             assert response.data == model_serialized
         elif user_type == "retina_grader":
             assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -384,9 +404,10 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
-        model_serialized = PolygonAnnotationSetSerializer(
+        model_serialized = serializer(
             instance=two_retina_polygon_annotation_sets.polygonset1
         ).data
         image = ImageFactory()
@@ -410,6 +431,10 @@ class TestPolygonAnnotationSetViewSet:
         if user_type in ("retina_grader", "retina_admin"):
             response.data["image"] = str(response.data["image"])
             response.data["singlepolygonannotation_set"] = []
+            if basename == "retina-polygon-annotation-set":
+                model_serialized["image"] = str(
+                    two_retina_polygon_annotation_sets.polygonset1.image.id
+                )
             assert response.data == model_serialized
 
     def test_destroy_view(
@@ -420,6 +445,7 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
         view_test(
@@ -446,6 +472,7 @@ class TestPolygonAnnotationSetViewSet:
         namespace,
         basename,
         viewset,
+        serializer,
         with_user,
     ):
         response = view_test(
