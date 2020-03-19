@@ -209,6 +209,8 @@ class ImageTextAnnotationSerializer(AbstractAnnotationSerializer):
 class SinglePolygonAnnotationSerializerNoParent(
     AbstractSingleAnnotationSerializer
 ):
+    id = serializers.UUIDField(read_only=False, required=False)
+
     class Meta:
         model = SinglePolygonAnnotation
         fields = ("id", "value", "z", "interpolated")
