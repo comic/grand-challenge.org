@@ -204,3 +204,61 @@ class ImageTextAnnotationSerializer(AbstractAnnotationSerializer):
     class Meta:
         model = ImageTextAnnotation
         fields = ("id", "created", "grader", "image", "text")
+
+
+class SinglePolygonAnnotationSerializerNoParent(
+    AbstractSingleAnnotationSerializer
+):
+    class Meta:
+        model = SinglePolygonAnnotation
+        fields = ("id", "value", "z", "interpolated")
+
+
+class NestedPolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
+    singlepolygonannotation_set = SinglePolygonAnnotationSerializerNoParent(
+        many=True
+    )
+
+    class Meta:
+        model = PolygonAnnotationSet
+        fields = (
+            "id",
+            "image",
+            "grader",
+            "created",
+            "name",
+            "singlepolygonannotation_set",
+        )
+
+    def create(self, validated_data):
+        spa_data = validated_data.pop("singlepolygonannotation_set")
+        pa_set = PolygonAnnotationSet.objects.create(**validated_data)
+        for sla in spa_data:
+            SinglePolygonAnnotation.objects.create(
+                annotation_set=pa_set, **sla
+            )
+        return pa_set
+
+    def update(self, instance, validated_data):
+        remove_ids = [
+            spa.id for spa in instance.singlepolygonannotation_set.all()
+        ]
+        spa_data = validated_data.pop("singlepolygonannotation_set")
+        for singe_polygon_annotation in spa_data:
+            spa_id = singe_polygon_annotation.get("id")
+            if spa_id is not None:
+                item = SinglePolygonAnnotation.objects.get(
+                    id=spa_id, annotation_set=instance
+                )
+                item.value = singe_polygon_annotation["value"]
+                item.z = singe_polygon_annotation.get("z")
+                item.interpolated = singe_polygon_annotation.get(
+                    "interpolated", False
+                )
+                item.save()
+                remove_ids.remove(spa_id)
+            else:
+                SinglePolygonAnnotation.objects.create(
+                    annotation_set=instance, **singe_polygon_annotation
+                )
+        return instance
