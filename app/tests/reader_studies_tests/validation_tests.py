@@ -236,13 +236,9 @@ def test_answer_type_annotation_schema_mismatch():
     for answer_type in unique_answer_types:
         answer = ANSWER_TYPE_NAMES_AND_ANSWERS[answer_type]
         for answer_type_check in unique_answer_types:
-            assert (
-                Question(answer_type=answer_type_check).is_answer_valid(
-                    answer=answer
-                )
-                == answer_type
-                == answer_type_check
-            )
+            assert Question(answer_type=answer_type_check).is_answer_valid(
+                answer=answer
+            ) == (answer_type == answer_type_check)
 
 
 def test_new_answer_type_listed():
