@@ -627,11 +627,6 @@ ANSWER_TYPE_SCHEMA = {
         "2DBB": {
             "type": "object",
             "properties": {
-                "version": {
-                    "type": "object",
-                    "additionalProperties": {"type": "number"},
-                    "required": ["major", "minor"],
-                },
                 "type": {"enum": ["2D bounding box"]},
                 "corners": {
                     "type": "array",
@@ -667,6 +662,49 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["start", "end"],
         },
+        "point-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["point"],
+        },
+        "polygon-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "seed_point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "path_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                },
+                "sub_type": {"type": "string"},
+                "groups": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": [
+                "name",
+                "seed_point",
+                "path_points",
+                "sub_type",
+                "groups",
+            ],
+        },
         "DIST": {
             "type": "object",
             "properties": {
@@ -701,6 +739,77 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["version", "type", "lines"],
         },
+        "POIN": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Point"]},
+                "point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["version", "type", "point"],
+        },
+        "MPOI": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Multiple points"]},
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "allOf": [{"$ref": "#/definitions/point-object"}]
+                    },
+                },
+            },
+            "required": ["version", "type", "points"],
+        },
+        "POLY": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "seed_point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "path_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                },
+                "sub_type": {"type": "string"},
+                "groups": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": [
+                "name",
+                "seed_point",
+                "path_points",
+                "sub_type",
+                "groups",
+                "version",
+            ],
+        },
+        "MPOL": {
+            "type": "object",
+            "properties": {
+                "type": {"enum": ["Multiple polygons"]},
+                "name": {"type": "string"},
+                "polygons": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/polygon-object"},
+                },
+            },
+            "required": ["type", "version", "polygons"],
+        },
     },
     "properties": {
         "version": {
@@ -718,6 +827,10 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
         {"$ref": "#/definitions/MDIS"},
+        {"$ref": "#/definitions/POIN"},
+        {"$ref": "#/definitions/MPOI"},
+        {"$ref": "#/definitions/POLY"},
+        {"$ref": "#/definitions/MPOL"},
     ],
 }
 
@@ -730,6 +843,10 @@ class Question(UUIDModel):
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
+    ANSWER_TYPE_POINT = "POIN"
+    ANSWER_TYPE_MULTIPLE_POINTS = "MPOI"
+    ANSWER_TYPE_POLYGON = "POLY"
+    ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
@@ -742,6 +859,10 @@ class Question(UUIDModel):
             ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
             "Multiple distance measurements",
         ),
+        (ANSWER_TYPE_POINT, "Point"),
+        (ANSWER_TYPE_MULTIPLE_POINTS, "Multiple points"),
+        (ANSWER_TYPE_POLYGON, "Polygon"),
+        (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
     )
 
     # What is the orientation of the question form when presented on the
@@ -879,6 +1000,10 @@ class Question(UUIDModel):
                 self.ANSWER_TYPE_2D_BOUNDING_BOX,
                 self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
                 self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+                self.ANSWER_TYPE_POINT,
+                self.ANSWER_TYPE_MULTIPLE_POINTS,
+                self.ANSWER_TYPE_POLYGON,
+                self.ANSWER_TYPE_MULTIPLE_POLYGONS,
             ]
         ) != bool(self.image_port):
             raise ValidationError(
