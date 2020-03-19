@@ -627,11 +627,6 @@ ANSWER_TYPE_SCHEMA = {
         "2DBB": {
             "type": "object",
             "properties": {
-                "version": {
-                    "type": "object",
-                    "additionalProperties": {"type": "number"},
-                    "required": ["major", "minor"],
-                },
                 "type": {"enum": ["2D bounding box"]},
                 "corners": {
                     "type": "array",
@@ -800,17 +795,13 @@ ANSWER_TYPE_SCHEMA = {
                 "path_points",
                 "sub_type",
                 "groups",
+                "version",
             ],
         },
         "MPOL": {
             "type": "object",
             "properties": {
                 "type": {"enum": ["Multiple polygons"]},
-                "version": {
-                    "type": "object",
-                    "additionalProperties": {"type": "number"},
-                    "required": ["major", "minor"],
-                },
                 "name": {"type": "string"},
                 "polygons": {
                     "type": "array",

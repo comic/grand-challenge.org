@@ -227,31 +227,22 @@ def test_answer_type_annotation_header_schema_fails(
     assert not q.is_answer_valid(answer=answer)
 
 
-@pytest.mark.parametrize(
-    "answer_type, answer_type_check",
-    [
-        ("STXT", "2DBB"),
-        ("STXT", "DIST"),
-        ("MTXT", "MDIS"),
-        ("BOOL", "2DBB"),
-        ("BOOL", "STXT"),
-        ("2DBB", "DIST"),
-        ("2DBB", "STXT"),
-        ("DIST", "MDIS"),
-        ("DIST", "2DBB"),
-        ("MDIS", "2DBB"),
-        ("MDIS", "DIST"),
-    ],
-)
-def test_answer_type_annotation_schema_mismatch(
-    answer_type, answer_type_check
-):
-    a = ANSWER_TYPE_NAMES_AND_ANSWERS[answer_type]
-    assert Question(answer_type=answer_type).is_answer_valid(answer=a) is True
-    assert (
-        Question(answer_type=answer_type_check).is_answer_valid(answer=a)
-        is False
-    )
+def test_answer_type_annotation_schema_mismatch():
+    # Answers to STXT are valid for MTXT as well, that's why STXT is excluded
+    # Other than that, each answer is only valid for a single answer type
+    unique_answer_types = [
+        key for key in ANSWER_TYPE_NAMES_AND_ANSWERS.keys() if key != "STXT"
+    ]
+    for answer_type in unique_answer_types:
+        answer = ANSWER_TYPE_NAMES_AND_ANSWERS[answer_type]
+        for answer_type_check in unique_answer_types:
+            assert (
+                Question(answer_type=answer_type_check).is_answer_valid(
+                    answer=answer
+                )
+                == answer_type
+                == answer_type_check
+            )
 
 
 def test_new_answer_type_listed():
