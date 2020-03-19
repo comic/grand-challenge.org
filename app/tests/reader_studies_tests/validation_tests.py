@@ -173,7 +173,13 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
             {"start": [0, 0, 0], "end": [10, 0, 0]},
         ],
     },
-    "MPTS": {
+    "POIN": {
+        "version": {"major": 1, "minor": 0},
+        "type": "Point",
+        "name": "test_name",
+        "point": [0, 0, 0],
+    },
+    "MPOI": {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple points",
         "name": "test_name",

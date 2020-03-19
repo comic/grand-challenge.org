@@ -744,7 +744,21 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["version", "type", "lines"],
         },
-        "MPTS": {
+        "POIN": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Point"]},
+                "point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["version", "type", "point"],
+        },
+        "MPOI": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
@@ -822,7 +836,8 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
         {"$ref": "#/definitions/MDIS"},
-        {"$ref": "#/definitions/MPTS"},
+        {"$ref": "#/definitions/POIN"},
+        {"$ref": "#/definitions/MPOI"},
         {"$ref": "#/definitions/POLY"},
         {"$ref": "#/definitions/MPOL"},
     ],
@@ -837,7 +852,8 @@ class Question(UUIDModel):
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
-    ANSWER_TYPE_MULTIPLE_POINTS = "MPTS"
+    ANSWER_TYPE_POINT = "POIN"
+    ANSWER_TYPE_MULTIPLE_POINTS = "MPOI"
     ANSWER_TYPE_POLYGON = "POLY"
     ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
     # WARNING: Do not change the display text, these are used in the front end
@@ -852,6 +868,7 @@ class Question(UUIDModel):
             ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
             "Multiple distance measurements",
         ),
+        (ANSWER_TYPE_POINT, "Point"),
         (ANSWER_TYPE_MULTIPLE_POINTS, "Multiple points"),
         (ANSWER_TYPE_POLYGON, "Polygon"),
         (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
@@ -992,6 +1009,7 @@ class Question(UUIDModel):
                 self.ANSWER_TYPE_2D_BOUNDING_BOX,
                 self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
                 self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+                self.ANSWER_TYPE_POINT,
                 self.ANSWER_TYPE_MULTIPLE_POINTS,
                 self.ANSWER_TYPE_POLYGON,
                 self.ANSWER_TYPE_MULTIPLE_POLYGONS,

@@ -278,6 +278,26 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
+            Question.ANSWER_TYPE_POINT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Point",
+                "name": "test",
+                "point": (1, 2, 3),
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_POINT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Point",
+                "name": "test",
+                "point": (1, 2,),
+            },
+            400,
+        ),
+        (
             Question.ANSWER_TYPE_MULTIPLE_POINTS,
             {
                 "version": {"major": 1, "minor": 0},
