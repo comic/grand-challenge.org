@@ -5,6 +5,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import BooleanField
+from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 
 from grandchallenge.challenges.models import Challenge
@@ -473,11 +474,22 @@ class Result(UUIDModel):
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = JSONField(default=dict)
 
+    def __str__(self):
+        return f"Result {self.pk} for {self.job}"
+
+    @cached_property
+    def challenge(self):
+        return self.job.challenge
+
+    @cached_property
+    def creator(self):
+        return self.job.creator
+
     def save(self, *args, **kwargs):
         # Note: cannot use `self.pk is None` with a custom pk
         if self._state.adding:
             self.published = (
-                self.job.submission.challenge.evaluation_config.auto_publish_new_results
+                self.challenge.evaluation_config.auto_publish_new_results
             )
 
         super().save(*args, **kwargs)
@@ -487,7 +499,7 @@ class Result(UUIDModel):
             "evaluation:result-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.job.submission.challenge.short_name,
+                "challenge_short_name": self.challenge.short_name,
             },
         )
 
@@ -497,6 +509,14 @@ class Job(UUIDModel, ContainerExecJobModel):
 
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
+
+    @cached_property
+    def challenge(self):
+        return self.submission.challenge
+
+    @cached_property
+    def creator(self):
+        return self.submission.creator
 
     @property
     def container(self):
@@ -537,7 +557,7 @@ class Job(UUIDModel, ContainerExecJobModel):
             "evaluation:job-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.submission.challenge.short_name,
+                "challenge_short_name": self.challenge.short_name,
             },
         )
 
