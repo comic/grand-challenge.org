@@ -264,4 +264,4 @@ class NestedPolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
                     annotation_set=instance, **singe_polygon_annotation
                 )
         SinglePolygonAnnotation.objects.filter(id__in=remove_ids).delete()
-        return instance
+        return super().update(instance, validated_data)

@@ -336,10 +336,6 @@ class TestPolygonAnnotationSetViewSet:
         if user_type in ("retina_grader", "retina_admin"):
             response.data["image"] = str(response.data["image"])
             response.data["singlepolygonannotation_set"] = []
-            if basename == "retina-polygon-annotation-set":
-                model_serialized["image"] = str(
-                    two_retina_polygon_annotation_sets.polygonset1.image.id
-                )
             assert response.data == model_serialized
 
     def test_update_view_wrong_user(
@@ -379,13 +375,6 @@ class TestPolygonAnnotationSetViewSet:
         if user_type == "retina_admin":
             response.data["singlepolygonannotation_set"] = []
             response.data["image"] = str(response.data["image"])
-            if basename == "retina-polygon-annotation-set":
-                model_serialized["image"] = str(
-                    two_retina_polygon_annotation_sets.polygonset1.image.id
-                )
-                model_serialized[
-                    "grader"
-                ] = two_retina_polygon_annotation_sets.polygonset1.grader.id
             assert response.data == model_serialized
         elif user_type == "retina_grader":
             assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -431,10 +420,6 @@ class TestPolygonAnnotationSetViewSet:
         if user_type in ("retina_grader", "retina_admin"):
             response.data["image"] = str(response.data["image"])
             response.data["singlepolygonannotation_set"] = []
-            if basename == "retina-polygon-annotation-set":
-                model_serialized["image"] = str(
-                    two_retina_polygon_annotation_sets.polygonset1.image.id
-                )
             assert response.data == model_serialized
 
     def test_destroy_view(
@@ -1583,7 +1568,7 @@ class TestETDRSAnnotationViewSet:
         (
             PolygonAnnotationSetViewSet,
             PolygonAnnotationSetFactory,
-            PolygonAnnotationSetSerializer,
+            NestedPolygonAnnotationSetSerializer,
             "retina-polygon-annotation-set",
             False,
         ),
