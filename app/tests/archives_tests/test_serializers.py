@@ -17,7 +17,7 @@ from tests.serializer_helpers import (
                 "unique": True,
                 "factory": ArchiveFactory,
                 "serializer": ArchiveSerializer,
-                "fields": ("id", "name", "images"),
+                "fields": ("id", "name", "images", "title"),
             },
         )
     ),
