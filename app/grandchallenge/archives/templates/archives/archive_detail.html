@@ -68,11 +68,11 @@
                     {% if object.public %}
                         This {{ object|meta_attr:'verbose_name' }} is <b>visible to the public</b>,
                         however, users will need to request access which you
-                        will need to approve before they can run this
+                        will need to approve before they can view this
                         {{ object|meta_attr:'verbose_name' }}.
                     {% else %}
                         Only users that you add to the users group will be
-                        able to run this {{ object|meta_attr:'verbose_name' }}.
+                        able to view this {{ object|meta_attr:'verbose_name' }}.
                     {% endif %}
                     This {{ object|meta_attr:'verbose_name' }} uses
                     <a href="{{ object.workstation.get_absolute_url }}">
@@ -101,8 +101,8 @@
 
                 <h2>Editors</h2>
                 <p>
-                    The following users are able to edit, use this {{ object|meta_attr:'verbose_name' }} and
-                    see all of the results:
+                    The following users are able to edit, view all cases, download all cases and upload new cases to
+                    this {{ object|meta_attr:'verbose_name' }}:
                 </p>
 
                 <ul class="list-group list-group-flush mb-2">
@@ -127,7 +127,10 @@
                  aria-labelledby="v-pills-editors-tab">
 
                 <h2>Users</h2>
-                <p>The following users are able to use this {{ object|meta_attr:'verbose_name' }}:</p>
+                <p>
+                    The following users are able to view and download all cases belonging to this
+                    {{ object|meta_attr:'verbose_name' }}:
+                </p>
 
                 <ul class="list-group list-group-flush mb-2">
                     {% for user in object.users_group.user_set.all %}
