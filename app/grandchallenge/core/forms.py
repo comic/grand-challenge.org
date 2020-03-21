@@ -20,3 +20,10 @@ class WorkstationUserFilterMixin:
             f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}",
             Workstation,
         )
+
+
+class UserFormKwargsMixin:
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
