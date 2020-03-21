@@ -31,6 +31,18 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         related_name="users_of_archive",
     )
     public = models.BooleanField(default=False)
+    workstation = models.ForeignKey(
+        "workstations.Workstation",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    workstation_config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     images = models.ManyToManyField(Image)
 
     def __str__(self):

@@ -12,6 +12,8 @@ class Migration(migrations.Migration):
     dependencies = [
         ("auth", "0011_update_proxy_permissions"),
         ("archives", "0002_auto_20200321_1044"),
+        ("workstations", "0008_workstation_public"),
+        ("workstation_configs", "0003_auto_20200110_1358"),
     ]
 
     operations = [
@@ -72,5 +74,25 @@ class Migration(migrations.Migration):
             model_name="archive",
             name="title",
             field=models.CharField(max_length=255, verbose_name="title"),
+        ),
+        migrations.AddField(
+            model_name="archive",
+            name="workstation",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="workstations.Workstation",
+            ),
+        ),
+        migrations.AddField(
+            model_name="archive",
+            name="workstation_config",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="workstation_configs.WorkstationConfig",
+            ),
         ),
     ]
