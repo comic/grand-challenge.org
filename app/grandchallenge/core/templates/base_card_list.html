@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load url %}
+{% load meta_attr %}
+
+{% block title %}{{ object_list.model|meta_attr:'verbose_name_plural'|title }} - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object_list.model|meta_attr:'verbose_name_plural'|title }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>{{ object_list.model|meta_attr:'verbose_name_plural'|title }}</h2>
+
+    {% if explanation %}
+        {{ explanation|linebreaks }}
+    {% endif %}
+
+    <div class="row equal-height mx-n2">
+        {% for object in object_list %}
+            <div class="col-12 col-md-6 col-lg-4 mb-3 px-2">
+                <div class="card">
+                    <div class="embed-responsive embed-responsive-1by1">
+                        <a href="{{ object.get_absolute_url }}">
+                            <img class="card-img-top embed-responsive-item"
+                                 src="{{ object.logo.url }}"
+                                 alt="{{ object }} Logo">
+                        </a>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ object.title }}</h5>
+                        <p class="card-text">{{ object.description }}</p>
+                        <a href="{{ object.get_absolute_url }}"
+                           class="btn btn-primary mt-auto mr-auto"
+                           title="View {{ object_list.model|meta_attr:'verbose_name'|title }}">
+                            <i class="fa fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if not object_list %}
+        <p>You do not have permission to view any of the {{ object_list.model|meta_attr:"verbose_name_plural" }}.</p>
+    {% endif %}
+{% endblock %}
