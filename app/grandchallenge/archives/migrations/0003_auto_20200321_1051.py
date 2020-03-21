@@ -95,4 +95,9 @@ class Migration(migrations.Migration):
                 to="workstation_configs.WorkstationConfig",
             ),
         ),
+        migrations.AddField(
+            model_name="archive",
+            name="detail_page_markdown",
+            field=models.TextField(blank=True),
+        ),
     ]

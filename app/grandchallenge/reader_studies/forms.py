@@ -14,17 +14,18 @@ from django.forms import (
     ModelForm,
     TextInput,
 )
-from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.forms import (
+    SaveFormInitMixin,
+    WorkstationUserFilterMixin,
+)
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.models import (
     HANGING_LIST_SCHEMA,
     Question,
     ReaderStudy,
 )
-from grandchallenge.workstations.models import Workstation
 
 READER_STUDY_HELP_TEXTS = {
     "title": "The title of this reader study",
@@ -40,15 +41,9 @@ READER_STUDY_HELP_TEXTS = {
 }
 
 
-class ReaderStudyCreateForm(SaveFormInitMixin, ModelForm):
-    def __init__(self, *args, user, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["workstation"].queryset = get_objects_for_user(
-            user,
-            f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}",
-            Workstation,
-        )
-
+class ReaderStudyCreateForm(
+    WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm
+):
     class Meta:
         model = ReaderStudy
         fields = (

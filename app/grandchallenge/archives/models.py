@@ -10,11 +10,13 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
+from grandchallenge.subdomains.utils import reverse
 
 
 class Archive(UUIDModel, TitleSlugDescriptionModel):
     """Model for archive. Contains a collection of images."""
 
+    detail_page_markdown = models.TextField(blank=True)
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage, null=True
     )
@@ -60,6 +62,8 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
             self.create_groups()
 
         super().save(*args, **kwargs)
+
+        self.assign_permissions()
 
     def create_groups(self):
         self.editors_group = Group.objects.create(
@@ -138,3 +142,24 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
             images_to_remove.delete(*args, **kwargs)
 
             super().delete(*args, **kwargs)
+
+    def is_editor(self, user):
+        return user.groups.filter(pk=self.editors_group.pk).exists()
+
+    def add_editor(self, user):
+        return user.groups.add(self.editors_group)
+
+    def remove_editor(self, user):
+        return user.groups.remove(self.editors_group)
+
+    def is_user(self, user):
+        return user.groups.filter(pk=self.users_group.pk).exists()
+
+    def add_user(self, user):
+        return user.groups.add(self.users_group)
+
+    def remove_user(self, user):
+        return user.groups.remove(self.users_group)
+
+    def get_absolute_url(self):
+        return reverse("archives:detail", kwargs={"slug": self.slug})

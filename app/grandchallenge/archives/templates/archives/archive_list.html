@@ -2,7 +2,9 @@
 {% load url %}
 {% load meta_attr %}
 
-{% block title %}{{ object_list.model|meta_attr:'verbose_name_plural'|title }} - {{ block.super }}{% endblock %}
+{% block title %}
+    {{ object_list.model|meta_attr:'verbose_name_plural'|title }} - {{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -19,6 +21,15 @@
 
     {% if explanation %}
         {{ explanation|linebreaks }}
+    {% endif %}
+
+    {% if perms.archives.add_archive %}
+        <p>
+            <a href="{% url 'archives:create' %}"
+               class="btn btn-primary">
+                <i class="fa fa-plus"></i> New {{ object_list.model|meta_attr:'verbose_name'|title }}
+            </a>
+        </p>
     {% endif %}
 
     <div class="row equal-height mx-n2">
@@ -47,6 +58,8 @@
     </div>
 
     {% if not object_list %}
-        <p>You do not have permission to view any of the {{ object_list.model|meta_attr:"verbose_name_plural" }}.</p>
+        <p>
+            You do not have permission to view any of the {{ object_list.model|meta_attr:"verbose_name_plural" }}.
+        </p>
     {% endif %}
 {% endblock %}
