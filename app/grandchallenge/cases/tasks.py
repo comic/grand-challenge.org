@@ -466,6 +466,9 @@ def _handle_image_relations(*, collected_images, upload_session):
     if upload_session.reader_study:
         upload_session.reader_study.images.add(*collected_images)
 
+    if upload_session.archive:
+        upload_session.archive.images.add(*collected_images)
+
 
 def _handle_unconsumed_files(
     *, filename_lookup, unconsumed_filenames, upload_session

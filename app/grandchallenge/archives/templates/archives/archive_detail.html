@@ -59,6 +59,8 @@
 
             {{ object.detail_page_markdown|md2html }}
 
+            <p><a href="{% url 'archives:add-cases' slug=object.slug %}">Add cases</a></p>
+
             {% if "change_archive" in object_perms %}
                 <hr>
                 <h3>Admin Info</h3>

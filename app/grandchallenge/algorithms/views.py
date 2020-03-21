@@ -230,7 +230,10 @@ class UsersUpdate(AlgorithmUserGroupUpdateMixin):
 
 
 class AlgorithmImageCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
@@ -238,11 +241,6 @@ class AlgorithmImageCreate(
         f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
     raise_exception = True
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
     @property
     def algorithm(self):
@@ -289,7 +287,10 @@ class AlgorithmImageUpdate(
 
 
 class AlgorithmExecutionSessionCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView,
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
@@ -310,11 +311,6 @@ class AlgorithmExecutionSessionCreate(
         if self.algorithm.latest_ready_image is None:
             raise Http404()
         return super().get_initial()
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
     def form_valid(self, form):
         form.instance.creator = self.request.user

@@ -23,6 +23,8 @@ from guardian.mixins import (
 
 from grandchallenge.archives.forms import ArchiveForm, EditorsForm, UsersForm
 from grandchallenge.archives.models import Archive
+from grandchallenge.cases.forms import UploadRawImagesForm
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 
 
@@ -153,3 +155,36 @@ class ArchiveEditorsUpdate(ArchiveGroupUpdateMixin):
 class ArchiveUsersUpdate(ArchiveGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+
+class ArchiveUploadSessionCreate(
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
+):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+    template_name = "archives/archive_upload_session_create.html"
+    # TODO - maybe add another group with upload permission?
+    permission_required = (
+        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+    )
+    raise_exception = True
+
+    @cached_property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.archive
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.archive = self.archive
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.archive})
+        return context

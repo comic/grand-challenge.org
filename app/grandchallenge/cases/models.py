@@ -92,6 +92,13 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.SET_NULL,
     )
 
+    archive = models.ForeignKey(
+        to="archives.Archive",
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
+
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
