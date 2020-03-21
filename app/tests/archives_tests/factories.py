@@ -8,7 +8,7 @@ class ArchiveFactory(factory.DjangoModelFactory):
     class Meta:
         model = Archive
 
-    name = factory.Sequence(lambda n: f"Archive {n}")
+    title = factory.Sequence(lambda n: f"Archive {n}")
 
     @factory.post_generation
     def images(self, create, extracted, **kwargs):

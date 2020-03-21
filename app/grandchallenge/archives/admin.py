@@ -4,9 +4,7 @@ from grandchallenge.archives.models import Archive
 
 
 class ArchiveAdmin(admin.ModelAdmin):
-    fieldsets = []
-    inlines = []
-    search_fields = ("name",)
+    search_fields = ("title",)
 
 
 admin.site.register(Archive, ArchiveAdmin)
