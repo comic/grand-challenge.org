@@ -66,7 +66,7 @@ def client_force_login(client, user=None):
 def create_datastructures_data():
     datastructures = create_some_datastructure_data()
     datastructures_aus = create_some_datastructure_data(
-        archive_pars={"name": "Australia"}
+        archive_pars={"title": "Australia"}
     )
     oct_obs_registration_aus = OctObsRegistrationFactory(
         oct_image=datastructures_aus["image_oct"],
@@ -170,7 +170,9 @@ def create_image_test_method(image_type, reverse_name):
         assert status.HTTP_200_OK == response.status_code
 
     def test_redirect_australia(self, client):
-        ds = create_some_datastructure_data(archive_pars={"name": "Australia"})
+        ds = create_some_datastructure_data(
+            archive_pars={"title": "Australia"}
+        )
         url = reverse(
             "retina:api:image-api-view",
             args=[
@@ -194,7 +196,9 @@ def create_image_test_method(image_type, reverse_name):
         assert status.HTTP_200_OK == response.status_code
 
     def test_redirect_kappa(self, client):
-        ds = create_some_datastructure_data(archive_pars={"name": "kappadata"})
+        ds = create_some_datastructure_data(
+            archive_pars={"title": "kappadata"}
+        )
         url = reverse(
             "retina:api:image-api-view",
             args=[
@@ -366,7 +370,9 @@ def create_data_test_methods(data_type):  # noqa: C901
             ):
                 continue  # These annotations do not exist for kappadata archive type
 
-            ds = create_some_datastructure_data(archive_pars={"name": archive})
+            ds = create_some_datastructure_data(
+                archive_pars={"title": archive}
+            )
 
             model = create_load_data(data_type, ds, grader)
 
