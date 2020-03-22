@@ -149,7 +149,7 @@ def _create_sitk_image(dcm_array):
         return img
 
 
-def _process_dicom_file(dicom_ds):
+def _process_dicom_file(dicom_ds):  # noqa: C901
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
     dimensions = 4 if dicom_ds.n_time else 3
     direction = np.eye(dimensions, dtype=np.float)
@@ -188,16 +188,30 @@ def _process_dicom_file(dicom_ds):
         del ds
 
     img = _create_sitk_image(dcm_array)
+
     # Set Image Spacing, Origin and Direction
-    sitk_origin = tuple((float(i) for i in ref_file.ImagePositionPatient)) + (
-        0.0,
-    )
-    sitk_direction = tuple(direction.flatten())
-    x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
-    z_i = float(ref_file.SliceThickness)
+    if "ImagePositionPatient" in ref_file:
+        sitk_origin = tuple(
+            float(i) for i in ref_file.ImagePositionPatient
+        ) + (0.0,)
+    else:
+        sitk_origin = (0.0, 0.0, 0.0, 0.0)
+
+    if "PixelSpacing" in ref_file:
+        x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
+    else:
+        x_i = y_i = 1.0
+
+    if "SliceThickness" in ref_file:
+        z_i = float(ref_file.SliceThickness)
+    else:
+        z_i = 1.0
+
     sitk_spacing = (x_i, y_i, z_i)
     if dicom_ds.n_time:
         sitk_spacing += (1.0,)
+
+    sitk_direction = tuple(direction.flatten())
     img.SetDirection(sitk_direction)
     img.SetSpacing(sitk_spacing)
     img.SetOrigin(sitk_origin)
