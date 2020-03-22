@@ -89,7 +89,7 @@ class StagedFileViewSet(
             "file": uploaded_file,
             "filename": uploaded_file.name,
             "start_byte": start_byte if start_byte is not None else 0,
-            "timeout": now() + timedelta(hours=6),
+            "timeout": now() + timedelta(days=7),
             "total_size": total_size,
             "user_pk_str": self.user_pk_str,
         }

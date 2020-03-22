@@ -442,7 +442,9 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         upload_session=upload_session,
     )
 
-    _delete_session_files(session_files=session_files)
+    _delete_session_files(
+        session_files=session_files, upload_session=upload_session
+    )
 
 
 def _handle_image_relations(*, collected_images, upload_session):
@@ -491,7 +493,7 @@ def _handle_unconsumed_files(
             )
 
 
-def _delete_session_files(*, session_files):
+def _delete_session_files(*, session_files, upload_session):
     dicom_group = Group.objects.get(
         name=settings.DICOM_DATA_CREATORS_GROUP_NAME
     )
@@ -500,15 +502,24 @@ def _delete_session_files(*, session_files):
         try:
             if file.staged_file_id:
                 saf = StagedAjaxFile(file.staged_file_id)
+
+                if not file.consumed and upload_session.archive:
+                    # Keep unconsumed archive files
+                    saf.staged_files.update(
+                        timeout=timezone.now() + timedelta(days=90)
+                    )
+                    continue
+
                 if (
                     not file.consumed
                     and Path(file.filename).suffix == ".dcm"
                     and getattr(file.creator, "username", None) in users
                 ):
                     saf.staged_files.update(
-                        timeout=timezone.now() + timedelta(days=21)
+                        timeout=timezone.now() + timedelta(days=90)
                     )
                     continue
+
                 file.staged_file_id = None
                 saf.delete()
             file.save()
