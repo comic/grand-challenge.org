@@ -22,7 +22,7 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            archives = instance.archives.all()
+            archives = instance.archive_set.all()
         else:
             archives = model.objects.filter(pk__in=pk_set)
 
