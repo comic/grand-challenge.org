@@ -29,7 +29,7 @@ from grandchallenge.archives.forms import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 
 
@@ -236,4 +236,35 @@ class ArchiveUploadSessionList(
             qs.filter(archive=self.archive)
             .prefetch_related("image_set", "rawimagefile_set")
             .select_related("creator__user_profile")
+        )
+
+
+class ArchiveCasesList(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+):
+    model = Image
+    permission_required = (
+        f"{Archive._meta.app_label}.view_{Archive._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "archives/archive_cases_list.html"
+
+    @cached_property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.archive
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.archive})
+        return context
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        return (
+            qs.filter(archive=self.archive)
+            .prefetch_related("files")
+            .select_related("origin__creator__user_profile")
         )

@@ -55,10 +55,15 @@
                 ><i class="fa fa-upload fa-fw"></i>&nbsp;Uploads
                 </a>
                 <a class="nav-link"
-                   href="{% url 'archives:add-cases' slug=object.slug %}"
+                   href="{% url 'archives:cases-create' slug=object.slug %}"
                 ><i class="fas fa-file-import fa-fw"></i>&nbsp;Add Cases
                 </a>
             {% endif %}
+
+            <a class="nav-link"
+               href="{% url 'archives:cases-list' slug=object.slug %}"
+            ><i class="fas fa-eye fa-fw"></i>&nbsp;View Cases
+            </a>
         </div>
     </div>
 {% endblock %}
