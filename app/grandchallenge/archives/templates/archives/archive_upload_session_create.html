@@ -17,9 +17,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ archive.get_absolute_url }}">{{ archive.title }}
         </a>
-        {# TODO - add a link here #}
         <li class="breadcrumb-item"><a
-                href="">Cases</a>
+                href="{% url 'archives:uploads-list' slug=archive.slug %}">Uploads</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">Add Cases

@@ -206,3 +206,34 @@ class ArchiveUploadSessionCreate(
         context = super().get_context_data(**kwargs)
         context.update({"archive": self.archive})
         return context
+
+
+class ArchiveUploadSessionList(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+):
+    model = RawImageUploadSession
+    permission_required = (
+        f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "archives/archive_upload_session_list.html"
+
+    @cached_property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.archive
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.archive})
+        return context
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        return (
+            qs.filter(archive=self.archive)
+            .prefetch_related("image_set", "rawimagefile_set")
+            .select_related("creator__user_profile")
+        )

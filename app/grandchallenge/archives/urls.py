@@ -7,6 +7,7 @@ from grandchallenge.archives.views import (
     ArchiveList,
     ArchiveUpdate,
     ArchiveUploadSessionCreate,
+    ArchiveUploadSessionList,
     ArchiveUploadersUpdate,
     ArchiveUsersAutocomplete,
     ArchiveUsersUpdate,
@@ -38,6 +39,11 @@ urlpatterns = [
         "<slug>/users/update/",
         ArchiveUsersUpdate.as_view(),
         name="users-update",
+    ),
+    path(
+        "<slug>/uploads/",
+        ArchiveUploadSessionList.as_view(),
+        name="uploads-list",
     ),
     path(
         "<slug>/cases/add/",
