@@ -63,8 +63,8 @@ def client_force_login(client, user=None):
     return client, user
 
 
-def create_datastructures_data():
-    datastructures = create_some_datastructure_data()
+def create_datastructures_data(archive_pars=None):
+    datastructures = create_some_datastructure_data(archive_pars=archive_pars)
     datastructures_aus = create_some_datastructure_data(
         archive_pars={"title": "Australia"}
     )
