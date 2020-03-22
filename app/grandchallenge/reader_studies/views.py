@@ -45,6 +45,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
@@ -73,18 +74,16 @@ class ReaderStudyList(PermissionListMixin, ListView):
 
 
 class ReaderStudyCreate(
-    LoginRequiredMixin, PermissionRequiredMixin, CreateView
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    CreateView,
 ):
     model = ReaderStudy
     form_class = ReaderStudyCreateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
     )
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -139,6 +138,7 @@ class ReaderStudyDetail(
 
 
 class ReaderStudyUpdate(
+    UserFormKwargsMixin,
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
@@ -151,11 +151,6 @@ class ReaderStudyUpdate(
     )
     raise_exception = True
     success_message = "Reader study successfully updated"
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
 
 class ReaderStudyDelete(

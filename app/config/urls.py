@@ -48,6 +48,10 @@ urlpatterns = [
         include("grandchallenge.algorithms.urls", namespace="algorithms"),
     ),
     path(
+        "archives/",
+        include("grandchallenge.archives.urls", namespace="archives"),
+    ),
+    path(
         "workstations/",
         include("grandchallenge.workstations.urls", namespace="workstations"),
     ),

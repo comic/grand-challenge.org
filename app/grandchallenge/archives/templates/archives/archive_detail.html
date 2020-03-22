@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% load url %}
+{% load guardian_tags %}
+{% load bleach %}
+{% load profiles %}
+{% load meta_attr %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {{ object.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'archives:list' %}">Archives</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    {% get_obj_perms request.user for object as "object_perms" %}
+
+    <div class="col-12 col-md-4 col-lg-3 mb-3">
+        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+             aria-orientation="vertical">
+            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
+               href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+               aria-selected="true"><i
+                    class="fas fa-info fa-fw"></i>&nbsp;{{ object.title }}
+            </a>
+
+            {% if "change_archive" in object_perms %}
+                <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
+                   href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
+                   aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
+                </a>
+                <a class="nav-link" id="v-pills-uploaders-tab" data-toggle="pill"
+                   href="#v-pills-uploaders" role="tab" aria-controls="v-pills-uploaders"
+                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Uploaders
+                </a>
+                <a class="nav-link" id="v-pills-users-tab" data-toggle="pill"
+                   href="#v-pills-users" role="tab" aria-controls="v-pills-users"
+                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Users
+                </a>
+            {% endif %}
+
+            {% if "upload_archive" in object_perms %}
+                <a class="nav-link"
+                   href="{% url 'archives:uploads-list' slug=object.slug %}"
+                ><i class="fa fa-upload fa-fw"></i>&nbsp;Uploads
+                </a>
+                <a class="nav-link"
+                   href="{% url 'archives:cases-create' slug=object.slug %}"
+                ><i class="fas fa-file-import fa-fw"></i>&nbsp;Add Cases
+                </a>
+            {% endif %}
+
+            <a class="nav-link"
+               href="{% url 'archives:cases-list' slug=object.slug %}"
+            ><i class="fas fa-eye fa-fw"></i>&nbsp;View Cases
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    {% get_obj_perms request.user for object as "object_perms" %}
+
+    <div class="tab-content" id="v-pills-tabContent">
+        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
+             aria-labelledby="v-pills-home-tab">
+
+            <h2>{{ object.title }}</h2>
+
+            {{ object.detail_page_markdown|md2html }}
+
+            {% if "change_archive" in object_perms %}
+                <hr>
+                <h3>Admin Info</h3>
+                <p>
+                    {% if object.public %}
+                        This {{ object|meta_attr:'verbose_name' }} is <b>visible to the public</b>,
+                        however, users will need to request access which you
+                        will need to approve before they can view this
+                        {{ object|meta_attr:'verbose_name' }}.
+                    {% else %}
+                        Only users that you add to the users group will be
+                        able to view this {{ object|meta_attr:'verbose_name' }}.
+                    {% endif %}
+                    This {{ object|meta_attr:'verbose_name' }} uses
+                    <a href="{{ object.workstation.get_absolute_url }}">
+                        {{ object.workstation.title }}</a>
+                    {% if object.workstation_config %}
+                        with configuration
+                        <a href="{{ object.workstation_config.get_absolute_url }}">
+                            {{ object.workstation_config.title }}</a>.
+                    {% else %}
+                        with its default configuration.
+                    {% endif %}
+                </p>
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'archives:update' slug=object.slug %}">
+                        <i class="fa fa-cog"></i> Update Settings
+                    </a>
+                </p>
+            {% endif %}
+        </div>
+
+        {% if "change_archive" in object_perms %}
+            <div class="tab-pane fade" id="v-pills-editors" role="tabpanel"
+                 aria-labelledby="v-pills-editors-tab">
+
+                <h2>Editors</h2>
+                <p>
+                    The following users are able to edit, view all cases, download all cases and upload new cases to
+                    this {{ object|meta_attr:'verbose_name' }}:
+                </p>
+
+                <ul class="list-group list-group-flush mb-2">
+                    {% for user in object.editors_group.user_set.all %}
+                        <li class="list-group-item">{{ user|user_profile_link }}</li>
+                    {% empty %}
+                        <li class="list-group-item">
+                            There are no editors for this {{ object|meta_attr:'verbose_name' }}.
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'archives:editors-update' slug=object.slug %}">
+                        <i class="fa fa-plus"></i> Add Editors
+                    </a>
+                </p>
+            </div>
+
+            <div class="tab-pane fade" id="v-pills-uploaders" role="tabpanel"
+                 aria-labelledby="v-pills-uploaders-tab">
+
+                <h2>Uploaders</h2>
+                <p>
+                    The following users are able to view all cases, download all cases and upload new cases to
+                    this {{ object|meta_attr:'verbose_name' }}:
+                </p>
+
+                <ul class="list-group list-group-flush mb-2">
+                    {% for user in object.uploaders_group.user_set.all %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>{{ user|user_profile_link }}</div>
+                                <div>
+                                    <form action="{% url 'archives:uploaders-update' slug=object.slug %}" method="POST">
+                                        {% for field in uploader_remove_form %}
+                                            {% csrf_token %}
+                                            {% if field.name == "user" %}
+                                                <input type="hidden" name="user" value="{{ user.id }}"/>
+                                            {% else %}
+                                                {{ field }}
+                                            {% endif %}
+                                        {% endfor %}
+                                        <button type="submit" class="btn btn-danger">
+                                            Remove Uploader
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">
+                            There are no uploaders for this {{ object|meta_attr:'verbose_name' }}.
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'archives:uploaders-update' slug=object.slug %}">
+                        <i class="fa fa-plus"></i> Add Uploaders
+                    </a>
+                </p>
+            </div>
+
+            <div class="tab-pane fade" id="v-pills-users" role="tabpanel"
+                 aria-labelledby="v-pills-editors-tab">
+
+                <h2>Users</h2>
+                <p>
+                    The following users are able to view and download all cases belonging to this
+                    {{ object|meta_attr:'verbose_name' }}:
+                </p>
+
+                <ul class="list-group list-group-flush mb-2">
+                    {% for user in object.users_group.user_set.all %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>{{ user|user_profile_link }}</div>
+                                <div>
+                                    <form action="{% url 'archives:users-update' slug=object.slug %}" method="POST">
+                                        {% for field in user_remove_form %}
+                                            {% csrf_token %}
+                                            {% if field.name == "user" %}
+                                                <input type="hidden" name="user" value="{{ user.id }}"/>
+                                            {% else %}
+                                                {{ field }}
+                                            {% endif %}
+                                        {% endfor %}
+                                        <button type="submit" class="btn btn-danger">
+                                            Revoke access
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">
+                            There are no users for this {{ object|meta_attr:'verbose_name' }}.
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'archives:users-update' slug=object.slug %}">
+                        <i class="fa fa-plus"></i> Add Users
+                    </a>
+                </p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

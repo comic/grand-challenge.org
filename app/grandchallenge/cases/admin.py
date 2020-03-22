@@ -128,9 +128,10 @@ class DownloadableFilter(admin.SimpleListFilter):
 
 
 class RawImageFileAdmin(admin.ModelAdmin):
-    list_filter = (DownloadableFilter,)
+    list_filter = (DownloadableFilter, "upload_session__archive__title")
     list_display = ("filename", "upload_session", "download")
     readonly_fields = ("download",)
+    search_fields = ("upload_session__pk", "filename")
 
     def download(self, instance):
         if not instance.staged_file_id:

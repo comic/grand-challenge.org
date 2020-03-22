@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+
+{% block title %}
+    New Archive - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">New Archive</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>New Archive</h2>
+
+    {% crispy form %}
+
+{% endblock %}

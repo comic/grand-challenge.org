@@ -1,0 +1,12 @@
+{% extends "cases/rawimageuploadsession_detail.html" %}
+{% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a></li>
+        <li class="breadcrumb-item"><a href="{{ archive.get_absolute_url }}">{{ archive.title }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'archives:uploads-list' slug=archive.slug %}">Uploads</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.pk }}</li>
+    </ol>
+{% endblock %}

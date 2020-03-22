@@ -6,7 +6,7 @@ from tests.retina_api_tests.helpers import create_datastructures_data
 
 
 @pytest.mark.django_db
-class TestCacheArchiveDataTaks:
+class TestCacheArchiveDataTasks:
     def test_caching(self):
         # Create data
         (
@@ -14,7 +14,7 @@ class TestCacheArchiveDataTaks:
             datastructures_aus,
             oct_obs_registration,
             oct_obs_registration_aus,
-        ) = create_datastructures_data()
+        ) = create_datastructures_data(archive_pars={"title": "RS1"})
 
         # Run task synchronously
         cache_archive_data()

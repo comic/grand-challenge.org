@@ -16,7 +16,19 @@ def cache_archive_data():
 
 
 def create_archive_data_object():
-    archives = Archive.objects.all()
+    # TODO: use the guardian filters
+    archives = Archive.objects.filter(
+        title__in=[
+            "AREDS - GA selection",
+            "RS1",
+            "kappadata",
+            "Rotterdam_Study_1",
+            "Rotterdam Study 1",
+            "Australia",
+            "RS3",
+            "RS2",
+        ]
+    )
     patients = Patient.objects.prefetch_related(
         "study_set",
         "study_set__image_set",

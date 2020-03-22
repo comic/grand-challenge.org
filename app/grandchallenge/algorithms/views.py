@@ -58,13 +58,19 @@ from grandchallenge.algorithms.serializers import (
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 
 
-class AlgorithmCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class AlgorithmCreate(
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    CreateView,
+):
     model = Algorithm
     form_class = AlgorithmForm
     permission_required = (
@@ -75,11 +81,6 @@ class AlgorithmCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         response = super().form_valid(form=form)
         self.object.add_editor(self.request.user)
         return response
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
 
 class AlgorithmList(PermissionListMixin, ListView):
@@ -143,7 +144,10 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
 
 
 class AlgorithmUpdate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
 ):
     model = Algorithm
     form_class = AlgorithmForm
@@ -151,11 +155,6 @@ class AlgorithmUpdate(
         f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
     raise_exception = True
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
 
 class AlgorithmUserAutocomplete(
@@ -231,7 +230,10 @@ class UsersUpdate(AlgorithmUserGroupUpdateMixin):
 
 
 class AlgorithmImageCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
@@ -239,11 +241,6 @@ class AlgorithmImageCreate(
         f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
     raise_exception = True
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
     @property
     def algorithm(self):
@@ -290,7 +287,10 @@ class AlgorithmImageUpdate(
 
 
 class AlgorithmExecutionSessionCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView,
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
 ):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
@@ -311,11 +311,6 @@ class AlgorithmExecutionSessionCreate(
         if self.algorithm.latest_ready_image is None:
             raise Http404()
         return super().get_initial()
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
     def form_valid(self, form):
         form.instance.creator = self.request.user

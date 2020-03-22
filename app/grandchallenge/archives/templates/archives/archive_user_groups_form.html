@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.get_absolute_url }}">{{ object.title }}</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Add a user to {{ role }}s group </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Add a user to the {{ role }}s group for {{ object.title }}</h2>
+
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ form.media }}
+    <link rel="stylesheet"
+          href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
+{% endblock %}

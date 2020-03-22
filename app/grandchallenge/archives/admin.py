@@ -4,9 +4,8 @@ from grandchallenge.archives.models import Archive
 
 
 class ArchiveAdmin(admin.ModelAdmin):
-    fieldsets = []
-    inlines = []
-    search_fields = ("name",)
+    search_fields = ("title",)
+    readonly_fields = ("images",)
 
 
 admin.site.register(Archive, ArchiveAdmin)
