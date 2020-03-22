@@ -26,6 +26,12 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         editable=False,
         related_name="editors_of_archive",
     )
+    uploaders_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="uploaders_of_archive",
+    )
     users_group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
@@ -46,6 +52,10 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         on_delete=models.SET_NULL,
     )
     images = models.ManyToManyField(Image)
+
+    class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
+        ordering = ("created",)
+        permissions = [("upload_archive", "Can upload to archive")]
 
     def __str__(self):
         return f"<{self.__class__.__name__} {self.title}>"
@@ -69,14 +79,27 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         self.editors_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
         )
+        self.uploaders_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_uploaders"
+        )
         self.users_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
         )
 
     def assign_permissions(self):
-        # Allow the editors and users groups to view this
+        # Allow the editors, uploaders and users groups to view this
         assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(
+            f"view_{self._meta.model_name}", self.uploaders_group, self
+        )
         assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+        # Allow editors and uploaders to upload to this
+        assign_perm(
+            f"upload_{self._meta.model_name}", self.editors_group, self
+        )
+        assign_perm(
+            f"upload_{self._meta.model_name}", self.uploaders_group, self
+        )
         # Allow the editors to change this
         assign_perm(
             f"change_{self._meta.model_name}", self.editors_group, self
@@ -151,6 +174,15 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
 
     def remove_editor(self, user):
         return user.groups.remove(self.editors_group)
+
+    def is_uploader(self, user):
+        return user.groups.filter(pk=self.uploaders_group.pk).exists()
+
+    def add_uploader(self, user):
+        return user.groups.add(self.uploaders_group)
+
+    def remove_uploader(self, user):
+        return user.groups.remove(self.uploaders_group)
 
     def is_user(self, user):
         return user.groups.filter(pk=self.users_group.pk).exists()

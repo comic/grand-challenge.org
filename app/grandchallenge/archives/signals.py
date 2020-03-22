@@ -39,5 +39,6 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
     op = assign_perm if "add" in action else remove_perm
 
     for archive in archives:
-        op("view_image", archive.users_group, images)
         op("view_image", archive.editors_group, images)
+        op("view_image", archive.uploaders_group, images)
+        op("view_image", archive.users_group, images)

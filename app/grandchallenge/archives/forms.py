@@ -80,5 +80,9 @@ class EditorsForm(UserGroupForm):
     role = "editor"
 
 
+class UploadersForm(UserGroupForm):
+    role = "uploader"
+
+
 class UsersForm(UserGroupForm):
     role = "user"

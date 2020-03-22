@@ -21,7 +21,12 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.archives.forms import ArchiveForm, EditorsForm, UsersForm
+from grandchallenge.archives.forms import (
+    ArchiveForm,
+    EditorsForm,
+    UploadersForm,
+    UsersForm,
+)
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -66,9 +71,18 @@ class ArchiveDetail(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        form = UsersForm()
-        form.fields["action"].initial = UsersForm.REMOVE
-        context.update({"form": form})
+        user_remove_form = UsersForm()
+        user_remove_form.fields["action"].initial = UsersForm.REMOVE
+
+        uploader_remove_form = UploadersForm()
+        uploader_remove_form.fields["action"].initial = UploadersForm.REMOVE
+
+        context.update(
+            {
+                "user_remove_form": user_remove_form,
+                "uploader_remove_form": uploader_remove_form,
+            }
+        )
 
         return context
 
@@ -152,6 +166,11 @@ class ArchiveEditorsUpdate(ArchiveGroupUpdateMixin):
     success_message = "Editors successfully updated"
 
 
+class ArchiveUploadersUpdate(ArchiveGroupUpdateMixin):
+    form_class = UploadersForm
+    success_message = "Uploaders successfully updated"
+
+
 class ArchiveUsersUpdate(ArchiveGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
@@ -166,9 +185,8 @@ class ArchiveUploadSessionCreate(
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
     template_name = "archives/archive_upload_session_create.html"
-    # TODO - maybe add another group with upload permission?
     permission_required = (
-        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+        f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
     )
     raise_exception = True
 
