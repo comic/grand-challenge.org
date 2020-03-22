@@ -8,6 +8,7 @@ from grandchallenge.archives.views import (
     ArchiveList,
     ArchiveUpdate,
     ArchiveUploadSessionCreate,
+    ArchiveUploadSessionDetail,
     ArchiveUploadSessionList,
     ArchiveUploadersUpdate,
     ArchiveUsersAutocomplete,
@@ -45,6 +46,11 @@ urlpatterns = [
         "<slug>/uploads/",
         ArchiveUploadSessionList.as_view(),
         name="uploads-list",
+    ),
+    path(
+        "<slug>/uploads/<uuid:pk>/",
+        ArchiveUploadSessionDetail.as_view(),
+        name="uploads-detail",
     ),
     path("<slug>/cases/", ArchiveCasesList.as_view(), name="cases-list"),
     path(

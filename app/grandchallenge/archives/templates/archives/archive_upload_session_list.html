@@ -3,6 +3,7 @@
 {% load static %}
 {% load humanize %}
 {% load profiles %}
+{% load url %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -44,7 +45,7 @@
             {% for object in object_list %}
                 <tr>
                     <td data-order="{{ object.created|date:'U' }}">
-                        <a href="{{ object.get_absolute_url }}">{{ object.created|naturaltime }}</a>
+                        <a href="{% url 'archives:uploads-detail' slug=archive.slug pk=object.pk %}">{{ object.created|naturaltime }}</a>
                     </td>
                     <td>{{ object.creator|user_profile_link }}</td>
                     <td>

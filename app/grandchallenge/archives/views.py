@@ -30,7 +30,9 @@ from grandchallenge.archives.forms import (
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.views import RawImageUploadSessionDetail
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.subdomains.utils import reverse
 
 
 class ArchiveList(PermissionListMixin, ListView):
@@ -201,6 +203,25 @@ class ArchiveUploadSessionCreate(
         form.instance.creator = self.request.user
         form.instance.archive = self.archive
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.archive})
+        return context
+
+    def get_success_url(self):
+        return reverse(
+            "archives:uploads-detail",
+            kwargs={"slug": self.archive.slug, "pk": self.object.pk},
+        )
+
+
+class ArchiveUploadSessionDetail(RawImageUploadSessionDetail):
+    template_name = "archives/archive_upload_session_detail.html"
+
+    @cached_property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
