@@ -172,7 +172,7 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
 
     origin = None
     origin_diff = np.array((0, 0, 0), dtype=float)
-    n_origins = 0
+    n_diffs = 0
     for partial in dicom_ds.headers:
         ds = partial["data"]
         if "ImagePositionPatient" in ds:
@@ -180,10 +180,13 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
             if origin is not None:
                 diff = file_origin - origin
                 origin_diff = origin_diff + diff
+                n_diffs += 1
             origin = file_origin
-            n_origins += 1
-    avg_origin_diff = tuple(origin_diff / n_origins)
-    z_i = avg_origin_diff[-1]
+    avg_origin_diff = tuple(origin_diff / n_diffs)
+    try:
+        z_i = avg_origin_diff[2]
+    except IndexError:
+        z_i = 1.0
     for index, partial in enumerate(dicom_ds.headers):
         ds = pydicom.dcmread(str(partial["file"]))
 
@@ -194,7 +197,7 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
         if len(ds.pixel_array.shape) == dimensions:
             dcm_array = pixel_array
             break
-        z_index = index if z_i >= 0 else len(dicom_ds.headers) - index
+        z_index = index if z_i >= 0 else len(dicom_ds.headers) - index - 1
         if dimensions == 4:
             dcm_array[
                 index // dicom_ds.n_slices, z_index % dicom_ds.n_slices, :, :
@@ -225,6 +228,8 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
     img.SetDirection(sitk_direction)
     img.SetSpacing(sitk_spacing)
     img.SetOrigin(sitk_origin)
+
+    print(sitk_direction, sitk_spacing, sitk_origin)
 
     if dimensions == 4:
         # Set Additional Meta Data
