@@ -1,6 +1,16 @@
 import csv
 import io
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import (
+    ButtonHolder,
+    Div,
+    Field,
+    Fieldset,
+    HTML,
+    Layout,
+    Submit,
+)
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,14 +24,17 @@ from django.forms import (
     ModelForm,
     TextInput,
 )
+from django.forms.models import inlineformset_factory
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
+from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.reader_studies.models import (
+    CategoricalOption,
     HANGING_LIST_SCHEMA,
     Question,
     ReaderStudy,
@@ -94,6 +107,25 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
 
 
 class QuestionForm(SaveFormInitMixin, ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.layout = Layout(
+            Div(
+                Field("question_text"),
+                Field("help_text"),
+                Field("answer_type"),
+                Fieldset("Add options", Formset("options")),
+                Field("required"),
+                Field("image_port"),
+                Field("direction"),
+                Field("order"),
+                HTML("<br>"),
+                ButtonHolder(Submit("save", "Save")),
+            )
+        )
+
     def full_clean(self):
         """Override of the form's full_clean method.
 
@@ -152,6 +184,22 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
             ),
         }
         widgets = {"question_text": TextInput}
+
+
+class CategoricalOptionForm(ModelForm):
+    class Meta:
+        model = CategoricalOption
+        fields = ("title", "default")
+
+
+CategoricalOptionFormSet = inlineformset_factory(
+    Question,
+    CategoricalOption,
+    form=CategoricalOptionForm,
+    fields=["title", "default"],
+    extra=1,
+    can_delete=True,
+)
 
 
 class UserGroupForm(SaveFormInitMixin, Form):
