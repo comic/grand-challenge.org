@@ -12,6 +12,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -50,6 +51,7 @@ from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
 from grandchallenge.reader_studies.forms import (
+    CategoricalOptionFormSet,
     EditorsForm,
     GroundTruthForm,
     QuestionForm,
@@ -238,8 +240,24 @@ class QuestionUpdate(
         for field_name in self.object.read_only_fields:
             form_fields[field_name].required = False
             form_fields[field_name].disabled = True
+        if self.request.POST:
+            context["options"] = CategoricalOptionFormSet(
+                self.request.POST, instance=self.object
+            )
+        else:
+            context["options"] = CategoricalOptionFormSet(instance=self.object)
         context.update({"reader_study": self.reader_study})
         return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        options = context["options"]
+        with transaction.atomic():
+            self.object = form.save()
+            if options.is_valid():
+                options.instance = self.object
+                options.save()
+        return super().form_valid(form)
 
     def get_success_url(self):
         return self.object.reader_study.get_absolute_url()
@@ -327,6 +345,27 @@ class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):
     form_class = QuestionForm
     template_name = "reader_studies/readerstudy_add_object.html"
     type_to_add = "question"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["options"] = CategoricalOptionFormSet(self.request.POST)
+        else:
+            context["options"] = CategoricalOptionFormSet()
+        context.update({"reader_study": self.reader_study})
+        return context
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.reader_study = self.reader_study
+        context = self.get_context_data()
+        options = context["options"]
+        with transaction.atomic():
+            self.object = form.save()
+            if options.is_valid():
+                options.instance = self.object
+                options.save()
+        return super().form_valid(form)
 
 
 class ReaderStudyUserAutocomplete(
