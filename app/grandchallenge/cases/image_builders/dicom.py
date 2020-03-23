@@ -151,6 +151,7 @@ def _create_sitk_image(dcm_array):
 
 def _process_dicom_file(dicom_ds):  # noqa: C901
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
+    ref_origin = tuple(float(i) for i in ref_file.ImagePositionPatient)
     dimensions = 4 if dicom_ds.n_time else 3
     direction = np.eye(dimensions, dtype=np.float)
     direction = _extract_direction(dicom_ds, direction)
@@ -167,8 +168,15 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
     content_times = []
     exposures = []
 
+    origin = (0.0, 0.0, 0.0)
+    n_origins = 0
     for index, partial in enumerate(dicom_ds.headers):
         ds = pydicom.dcmread(str(partial["file"]))
+        if "ImagePositionPatient" in ref_file:
+            file_origin = tuple(float(i) for i in ds.ImagePositionPatient)
+            origin = tuple(map(sum, zip(origin, file_origin)))
+            n_origins += 1
+
         # Apply RescaleSlope and RescaleIntercept
         pixel_array = float(
             getattr(ds, "RescaleSlope", 1)
@@ -188,28 +196,21 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
         del ds
 
     img = _create_sitk_image(dcm_array)
+    avg_origin = (x / n_origins for x in origin)
+    z_i = avg_origin[-1]
 
-    # Set Image Spacing, Origin and Direction
-    if "ImagePositionPatient" in ref_file:
-        sitk_origin = tuple(
-            float(i) for i in ref_file.ImagePositionPatient
-        ) + (0.0,)
-    else:
-        sitk_origin = (0.0, 0.0, 0.0, 0.0)
+    sitk_origin = ref_origin if z_i > 0 else file_origin
+    z_i = np.abs(z_i)
 
     if "PixelSpacing" in ref_file:
         x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
     else:
         x_i = y_i = 1.0
 
-    if "SliceThickness" in ref_file:
-        z_i = float(ref_file.SliceThickness)
-    else:
-        z_i = 1.0
-
     sitk_spacing = (x_i, y_i, z_i)
     if dicom_ds.n_time:
         sitk_spacing += (1.0,)
+        sitk_origin += (0.0,)
 
     sitk_direction = tuple(direction.flatten())
     img.SetDirection(sitk_direction)
