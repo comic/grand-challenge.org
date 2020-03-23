@@ -19,6 +19,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
@@ -195,6 +196,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
     )
+    help_text_markdown = models.TextField(blank=True)
 
     # A hanging_list is a list of dictionaries where the keys are the
     # view names, and the values are the filenames to place there.
@@ -292,6 +294,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def remove_reader(self, user):
         """Removes ``user`` as a reader for this ``ReaderStudy``."""
         return user.groups.remove(self.readers_group)
+
+    @property
+    def help_text(self):
+        """The cleaned help text from the markdown sources"""
+        return md2html(self.help_text_markdown)
 
     @property
     def study_image_names(self):

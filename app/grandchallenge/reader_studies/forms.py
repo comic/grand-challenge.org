@@ -20,7 +20,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.reader_studies.models import (
     HANGING_LIST_SCHEMA,
     Question,
@@ -37,6 +37,10 @@ READER_STUDY_HELP_TEXTS = {
         "of that workstations users group. "
         "If you do not see the workstation that you want to use, "
         "please contact the admin for that workstation."
+    ),
+    "help_text_markdown": (
+        "Extra information that will be presented to the reader in the help "
+        "text modal"
     ),
 }
 
@@ -64,11 +68,13 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "description",
             "workstation",
             "workstation_config",
+            "help_text_markdown",
             "shuffle_hanging_list",
             "hanging_list",
         )
         widgets = {
-            "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA)
+            "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),
+            "help_text_markdown": MarkdownEditorWidget,
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,

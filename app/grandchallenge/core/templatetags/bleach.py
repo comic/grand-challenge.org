@@ -25,6 +25,6 @@ def clean(html: str):
 
 
 @register.filter
-def md2html(html: Union[str, None]):
+def md2html(markdown: Union[str, None]):
     """Convert markdown to clean html"""
-    return clean(markdownify(html or ""))
+    return clean(markdownify(markdown or ""))
