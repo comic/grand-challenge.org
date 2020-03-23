@@ -151,7 +151,9 @@ def _create_sitk_image(dcm_array):
 
 def _process_dicom_file(dicom_ds):  # noqa: C901
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
-    ref_origin = tuple(float(i) for i in ref_file.ImagePositionPatient)
+    ref_origin = tuple(
+        float(i) for i in getattr(ref_file, "ImagePositionPatient", (0, 0, 0))
+    )
     dimensions = 4 if dicom_ds.n_time else 3
     direction = np.eye(dimensions, dtype=np.float)
     direction = _extract_direction(dicom_ds, direction)
