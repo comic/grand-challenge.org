@@ -154,7 +154,7 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
     ref_origin = tuple(
         float(i) for i in getattr(ref_file, "ImagePositionPatient", (0, 0, 0))
     )
-    dimensions = 4 if dicom_ds.n_time and dicom_ds.n_time > 1 else 3
+    dimensions = 4 if dicom_ds.n_time else 3
     direction = np.eye(dimensions, dtype=np.float)
     direction = _extract_direction(dicom_ds, direction)
     pixel_dims = (
@@ -228,8 +228,6 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
     img.SetDirection(sitk_direction)
     img.SetSpacing(sitk_spacing)
     img.SetOrigin(sitk_origin)
-
-    print(sitk_direction, sitk_spacing, sitk_origin)
 
     if dimensions == 4:
         # Set Additional Meta Data
