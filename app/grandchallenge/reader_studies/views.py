@@ -216,8 +216,37 @@ class ReaderStudyImages(
         return context
 
 
+class QuestionOptionMixin(object):
+    def validate_options(self, form, _super):
+        context = self.get_context_data()
+        options = context["options"]
+        if form.data["answer_type"] in ["CHOI", "MCHO"] and not any(
+            option.get("title") for option in options.cleaned_data
+        ):
+            error = [
+                "At least one option should be supplied for (multiple) choice questions"
+            ]
+            form.errors["answer_type"] = error
+            return self.form_invalid(form)
+        if form.data["answer_type"] == "CHOI" and not any(
+            option.get("default") for option in options.cleaned_data
+        ):
+            error = ["A default option is required for choice questions"]
+            form.errors["answer_type"] = error
+            return self.form_invalid(form)
+        with transaction.atomic():
+            self.object = form.save()
+            if options.is_valid():
+                options.instance = self.object
+                options.save()
+        return _super.form_valid(form)
+
+
 class QuestionUpdate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+    QuestionOptionMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
 ):
     model = Question
     form_class = QuestionForm
@@ -250,14 +279,7 @@ class QuestionUpdate(
         return context
 
     def form_valid(self, form):
-        context = self.get_context_data()
-        options = context["options"]
-        with transaction.atomic():
-            self.object = form.save()
-            if options.is_valid():
-                options.instance = self.object
-                options.save()
-        return super().form_valid(form)
+        return self.validate_options(form, super())
 
     def get_success_url(self):
         return self.object.reader_study.get_absolute_url()
@@ -340,7 +362,9 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
         return kwargs
 
 
-class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):
+class AddQuestionToReaderStudy(
+    QuestionOptionMixin, AddObjectToReaderStudyMixin
+):
     model = Question
     form_class = QuestionForm
     template_name = "reader_studies/readerstudy_add_object.html"
@@ -358,14 +382,7 @@ class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):
     def form_valid(self, form):
         form.instance.creator = self.request.user
         form.instance.reader_study = self.reader_study
-        context = self.get_context_data()
-        options = context["options"]
-        with transaction.atomic():
-            self.object = form.save()
-            if options.is_valid():
-                options.instance = self.object
-                options.save()
-        return super().form_valid(form)
+        return self.validate_options(form, super())
 
 
 class ReaderStudyUserAutocomplete(
