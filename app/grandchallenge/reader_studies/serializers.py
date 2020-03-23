@@ -1,4 +1,4 @@
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, ReadOnlyField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
@@ -48,12 +48,14 @@ class QuestionSerializer(HyperlinkedModelSerializer):
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     hanging_list_images = SerializerMethodField()
+    help_text = ReadOnlyField()
 
     class Meta:
         model = ReaderStudy
         fields = (
             "api_url",
             "description",
+            "help_text",
             "hanging_list_images",
             "is_valid",
             "pk",

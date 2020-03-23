@@ -8,6 +8,7 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -316,3 +317,17 @@ def test_score_for_user(reader_study_with_gt, settings):
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
     assert score["score__sum"] == 3.0
     assert score["score__avg"] == 0.5
+
+
+@pytest.mark.django_db
+def test_help_markdown_is_scrubbed(client):
+    rs = ReaderStudyFactory(
+        help_text_markdown="<b>My Help Text</b><script>naughty</script>"
+    )
+    u = UserFactory()
+    rs.add_reader(u)
+
+    response = get_view_for_user(client=client, url=rs.api_url, user=u)
+
+    assert response.status_code == 200
+    assert response.json()["help_text"] == "<p><b>My Help Text</b>naughty</p>"
