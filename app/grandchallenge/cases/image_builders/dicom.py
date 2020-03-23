@@ -171,18 +171,18 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
     exposures = []
 
     origin = None
-    origin_diff = (0.0, 0.0, 0.0)
+    origin_diff = np.array((0, 0, 0), dtype=float)
     n_origins = 0
     for partial in dicom_ds.headers:
         ds = partial["data"]
         if "ImagePositionPatient" in ds:
-            file_origin = tuple(float(i) for i in ds.ImagePositionPatient)
-            if origin:
-                diff = tuple(np.subtract(file_origin, origin))
-                origin_diff = tuple(np.add(origin_diff, diff))
+            file_origin = np.array(ds.ImagePositionPatient, dtype=float)
+            if origin is not None:
+                diff = file_origin - origin
+                origin_diff = origin_diff + diff
             origin = file_origin
             n_origins += 1
-    avg_origin_diff = tuple(x / n_origins for x in origin_diff)
+    avg_origin_diff = tuple(origin_diff / n_origins)
     z_i = avg_origin_diff[-1]
     for index, partial in enumerate(dicom_ds.headers):
         ds = pydicom.dcmread(str(partial["file"]))
@@ -208,7 +208,7 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
 
     img = _create_sitk_image(dcm_array)
 
-    sitk_origin = ref_origin if z_i > 0 else file_origin
+    sitk_origin = ref_origin if z_i > 0 else tuple(file_origin)
     z_i = np.abs(z_i)
 
     if "PixelSpacing" in ref_file:
