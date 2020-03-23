@@ -1107,7 +1107,9 @@ class Answer(UUIDModel):
         ]
 
     @staticmethod
-    def validate(*, creator, question, answer, images, is_ground_truth=False):
+    def validate(  # noqa: C901
+        *, creator, question, answer, images, is_ground_truth=False
+    ):
         """Validates all fields provided for ``answer``."""
         if len(images) == 0:
             raise ValidationError(
@@ -1145,7 +1147,19 @@ class Answer(UUIDModel):
                 raise ValidationError(
                     "This user is not a reader for this study."
                 )
-
+        if (
+            question.answer_type == Question.ANSWER_TYPE_CHOICE
+            and answer not in question.options.values_list("id", flat=True)
+        ):
+            raise ValidationError(
+                "Provided option is not valid for this question"
+            )
+        if question.answer_type == Question.ANSWER_TYPE_MULTIPLE_CHOICE:
+            options = question.options.values_list("id", flat=True)
+            if not all(x in options for x in answer):
+                raise ValidationError(
+                    "Provided options are not valid for this question"
+                )
         if not question.is_answer_valid(answer=answer):
             raise ValidationError(
                 f"Your answer is not the correct type. "
