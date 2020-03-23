@@ -122,7 +122,7 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
                 Field("direction"),
                 Field("order"),
                 HTML("<br>"),
-                ButtonHolder(Submit("submit", "save")),
+                ButtonHolder(Submit("save", "Save")),
             )
         )
 
