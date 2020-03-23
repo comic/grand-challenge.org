@@ -247,21 +247,22 @@ class NestedPolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
         ]
         spa_data = validated_data.pop("singlepolygonannotation_set")
         for singe_polygon_annotation in spa_data:
-            spa_id = singe_polygon_annotation.get("id")
-            if spa_id is not None:
+            spa_id = singe_polygon_annotation.pop("id")
+            try:
                 item = SinglePolygonAnnotation.objects.get(
                     id=spa_id, annotation_set=instance
                 )
+            except SinglePolygonAnnotation.DoesNotExist:
+                SinglePolygonAnnotation.objects.create(
+                    annotation_set=instance, **singe_polygon_annotation
+                )
+            else:
                 item.value = singe_polygon_annotation["value"]
                 item.z = singe_polygon_annotation.get("z")
                 item.interpolated = singe_polygon_annotation.get(
                     "interpolated", False
                 )
                 item.save()
-                remove_ids.remove(spa_id)
-            else:
-                SinglePolygonAnnotation.objects.create(
-                    annotation_set=instance, **singe_polygon_annotation
-                )
+                remove_ids.remove(item.id)
         SinglePolygonAnnotation.objects.filter(id__in=remove_ids).delete()
         return super().update(instance, validated_data)

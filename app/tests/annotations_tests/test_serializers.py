@@ -471,3 +471,48 @@ class TestNestedPolygonAnnotationSetSerializer:
         assert not saved_set.singlepolygonannotation_set.filter(
             id=old_slas[1].id
         ).exists()
+
+    def test_update_method_invalid_uuid(self):
+        annotation_set_dict, annotation_set_obj = self.save_annotation_set()
+        new_slas = [{"id": "invalid_uuid", "value": [[4, 4], [5, 5], [6, 6]]}]
+        updated_set = {
+            **annotation_set_dict,
+            "singlepolygonannotation_set": new_slas,
+        }
+        serializer = NestedPolygonAnnotationSetSerializer(
+            annotation_set_obj, data=updated_set
+        )
+        serializer.is_valid()
+        assert (
+            str(serializer.errors["singlepolygonannotation_set"][0]["id"][0])
+            == "Must be a valid UUID."
+        )
+
+    def test_update_method_valid_but_nonexistent_uuid(self):
+        annotation_set_dict, annotation_set_obj = self.save_annotation_set()
+        valid_nonexistent_uuid = "00000000-0000-0000-0000-000000000000"
+        new_slas = [
+            {"id": valid_nonexistent_uuid, "value": [[4, 4], [5, 5], [6, 6]]}
+        ]
+        updated_set = {
+            **annotation_set_dict,
+            "singlepolygonannotation_set": new_slas,
+        }
+        serializer = NestedPolygonAnnotationSetSerializer(
+            annotation_set_obj, data=updated_set
+        )
+        serializer.is_valid()
+        saved_set = None
+        try:
+            saved_set = serializer.save()
+        except Exception as e:
+            pytest.fail(f"Saving serializer failed with error: {str(e)}")
+        assert saved_set.singlepolygonannotation_set.count() == 1
+        assert not saved_set.singlepolygonannotation_set.filter(
+            id=valid_nonexistent_uuid
+        ).exists()
+        assert saved_set.singlepolygonannotation_set.first().value == [
+            [4.0, 4.0],
+            [5.0, 5.0],
+            [6.0, 6.0],
+        ]
