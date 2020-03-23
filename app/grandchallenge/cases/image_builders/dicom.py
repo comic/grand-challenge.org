@@ -168,14 +168,22 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
     content_times = []
     exposures = []
 
-    origin = (0.0, 0.0, 0.0)
+    origin = None
+    origin_diff = (0.0, 0.0, 0.0)
     n_origins = 0
+    for partial in dicom_ds.headers:
+        ds = partial["data"]
+        if "ImagePositionPatient" in ds:
+            file_origin = tuple(float(i) for i in ds.ImagePositionPatient)
+            if origin:
+                diff = tuple(np.subtract(file_origin, origin))
+                origin_diff = tuple(np.add(origin_diff, diff))
+            origin = file_origin
+            n_origins += 1
+    avg_origin_diff = tuple(x / n_origins for x in origin_diff)
+    z_i = avg_origin_diff[-1]
     for index, partial in enumerate(dicom_ds.headers):
         ds = pydicom.dcmread(str(partial["file"]))
-        if "ImagePositionPatient" in ref_file:
-            file_origin = tuple(float(i) for i in ds.ImagePositionPatient)
-            origin = tuple(map(sum, zip(origin, file_origin)))
-            n_origins += 1
 
         # Apply RescaleSlope and RescaleIntercept
         pixel_array = float(
@@ -184,20 +192,19 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
         if len(ds.pixel_array.shape) == dimensions:
             dcm_array = pixel_array
             break
+        z_index = index if z_i >= 0 else len(dicom_ds.headers) - index
         if dimensions == 4:
             dcm_array[
-                index // dicom_ds.n_slices, index % dicom_ds.n_slices, :, :
+                index // dicom_ds.n_slices, z_index % dicom_ds.n_slices, :, :
             ] = pixel_array
             if index % dicom_ds.n_slices == 0:
                 content_times.append(str(ds.ContentTime))
                 exposures.append(str(ds.Exposure))
         else:
-            dcm_array[index % dicom_ds.n_slices, :, :] = pixel_array
+            dcm_array[z_index % dicom_ds.n_slices, :, :] = pixel_array
         del ds
 
     img = _create_sitk_image(dcm_array)
-    avg_origin = (x / n_origins for x in origin)
-    z_i = avg_origin[-1]
 
     sitk_origin = ref_origin if z_i > 0 else file_origin
     z_i = np.abs(z_i)
