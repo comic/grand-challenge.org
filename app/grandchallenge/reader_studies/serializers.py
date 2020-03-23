@@ -20,7 +20,7 @@ from grandchallenge.reader_studies.models import (
 class CategoricalOptionSerializer(ModelSerializer):
     class Meta:
         model = CategoricalOption
-        fields = ("id", "title")
+        fields = ("id", "title", "default")
 
 
 class QuestionSerializer(HyperlinkedModelSerializer):
