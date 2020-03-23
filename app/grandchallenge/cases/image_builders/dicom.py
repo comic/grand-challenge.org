@@ -211,7 +211,7 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
 
     img = _create_sitk_image(dcm_array)
 
-    sitk_origin = ref_origin if z_i > 0 else tuple(file_origin)
+    sitk_origin = ref_origin if z_i > 0.0 else tuple(file_origin)
     z_i = np.abs(z_i)
 
     if "PixelSpacing" in ref_file:
@@ -228,6 +228,8 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
     img.SetDirection(sitk_direction)
     img.SetSpacing(sitk_spacing)
     img.SetOrigin(sitk_origin)
+
+    print(sitk_direction, sitk_spacing, sitk_origin)
 
     if dimensions == 4:
         # Set Additional Meta Data
