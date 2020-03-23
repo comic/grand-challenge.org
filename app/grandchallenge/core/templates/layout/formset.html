@@ -5,20 +5,20 @@
 {{ formset.management_form|crispy }}
 
     {% for form in formset.forms %}
-            <tr class="{% cycle 'row1' 'row2' %} formset_row-{{ formset.prefix }} d-flex justify-content-bewteen align-items-center">
-                {% for field in form.visible_fields %}
-                    <td class="pr-5">
-                        {# Include the hidden fields in the form #}
-                        {% if forloop.first %}
-                            {% for hidden in form.hidden_fields %}
-                                {{ hidden }}
-                            {% endfor %}
-                        {% endif %}
-                        {{ field.errors.as_ul }}
-                        {{ field|as_crispy_field }}
-                    </td>
-                {% endfor %}
-            </tr>
+        <tr class="{% cycle 'row1' 'row2' %} formset_row-{{ formset.prefix }} d-flex justify-content-bewteen align-items-center">
+            {% for field in form.visible_fields %}
+                <td class="pr-5">
+                    {# Include the hidden fields in the form #}
+                    {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                    {% endif %}
+                    {{ field.errors.as_ul }}
+                    {{ field|as_crispy_field }}
+                </td>
+            {% endfor %}
+        </tr>
     {% endfor %}
 
 </table>
