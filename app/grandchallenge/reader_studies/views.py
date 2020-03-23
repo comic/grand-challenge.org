@@ -220,15 +220,16 @@ class QuestionOptionMixin(object):
     def validate_options(self, form, _super):
         context = self.get_context_data()
         options = context["options"]
-        if form.data["answer_type"] in ["CHOI", "MCHO"] and not any(
-            option.get("title") for option in options.cleaned_data
-        ):
+        if form.data["answer_type"] in [
+            Question.ANSWER_TYPE_CHOICE,
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+        ] and not any(option.get("title") for option in options.cleaned_data):
             error = [
                 "At least one option should be supplied for (multiple) choice questions"
             ]
             form.errors["answer_type"] = error
             return self.form_invalid(form)
-        if form.data["answer_type"] == "CHOI" and not any(
+        if form.data["answer_type"] == Question.ANSWER_TYPE_CHOICE and not any(
             option.get("default") for option in options.cleaned_data
         ):
             error = ["A default option is required for choice questions"]
