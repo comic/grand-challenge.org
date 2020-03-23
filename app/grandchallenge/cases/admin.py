@@ -81,6 +81,7 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
         "error_message",
         "algorithm",
         "reader_study",
+        "archive",
     )
     readonly_fields = (
         "creator",
@@ -89,11 +90,13 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
         "annotationset",
         "algorithm_result",
         "reader_study",
+        "archive",
         "status",
     )
     list_select_related = (
         "algorithm_image__algorithm",
         "algorithm_result__job__algorithm_image__algorithm",
+        "archive",
     )
     list_filter = ("status",)
     search_fields = (
@@ -101,6 +104,7 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
         "algorithm_image__algorithm__title",
         "algorithm_result__job__algorithm_image__algorithm__title",
         "reader_study__title",
+        "archive__title",
         "pk",
         "error_message",
     )
@@ -130,7 +134,11 @@ class DownloadableFilter(admin.SimpleListFilter):
 class RawImageFileAdmin(admin.ModelAdmin):
     list_filter = (DownloadableFilter, "upload_session__archive__title")
     list_display = ("filename", "upload_session", "download")
-    readonly_fields = ("download",)
+    list_select_related = ("upload_session__archive",)
+    readonly_fields = (
+        "download",
+        "upload_session",
+    )
     search_fields = ("upload_session__pk", "filename")
 
     def download(self, instance):
