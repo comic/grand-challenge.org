@@ -229,8 +229,6 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
     img.SetSpacing(sitk_spacing)
     img.SetOrigin(sitk_origin)
 
-    print(sitk_direction, sitk_spacing, sitk_origin)
-
     if dimensions == 4:
         # Set Additional Meta Data
         img.SetMetaData("ContentTimes", " ".join(content_times))
