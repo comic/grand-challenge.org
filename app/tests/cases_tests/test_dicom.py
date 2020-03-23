@@ -75,13 +75,8 @@ def test_image_builder_dicom_4dct():
         np.array(list(map(float, direction))).reshape((4, 4)), np.eye(4)
     )
     assert np.allclose(
-        list(map(float, spacing)),
-        list(
-            map(
-                float,
-                list(dcm_ref.PixelSpacing) + [dcm_ref.SliceThickness] + [1.0],
-            )
-        ),
+        list(map(float, spacing))[:2],
+        list(map(float, list(dcm_ref.PixelSpacing),)),
     )
     assert np.allclose(
         list(map(float, origin)),
