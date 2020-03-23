@@ -16,7 +16,7 @@ class ConfigAdmin(admin.ModelAdmin):
 
 
 class MethodAdmin(admin.ModelAdmin):
-    ordering = ("created",)
+    ordering = ("-created",)
     list_display = ("pk", "created", "challenge", "ready", "status")
     list_filter = ("challenge__short_name",)
     search_fields = ("pk",)
@@ -24,7 +24,7 @@ class MethodAdmin(admin.ModelAdmin):
 
 
 class SubmissionAdmin(admin.ModelAdmin):
-    ordering = ("created",)
+    ordering = ("-created",)
     list_display = ("pk", "created", "challenge", "creator")
     list_filter = ("challenge__short_name",)
     search_fields = (
@@ -39,7 +39,7 @@ class SubmissionAdmin(admin.ModelAdmin):
 
 
 class ResultAdmin(admin.ModelAdmin):
-    ordering = ("created",)
+    ordering = ("-created",)
     list_display = (
         "pk",
         "created",
@@ -66,7 +66,7 @@ class ResultAdmin(admin.ModelAdmin):
 
 
 class JobAdmin(admin.ModelAdmin):
-    ordering = ("created",)
+    ordering = ("-created",)
     list_display = ("pk", "created", "challenge", "creator", "status")
     list_filter = ("submission__challenge__short_name", "status")
     list_select_related = ("submission__challenge", "submission__creator")
