@@ -1061,6 +1061,9 @@ class CategoricalOption(models.Model):
     title = models.CharField(max_length=1024)
     default = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"{self.title} ({'' if self.default else 'not '}default)"
+
 
 class Answer(UUIDModel):
     """
