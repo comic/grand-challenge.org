@@ -9,7 +9,7 @@ from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 
 
-def image_builder_fallback(path: Path) -> ImageBuilderResult:
+def image_builder_fallback(path: Path, session_id=None) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
