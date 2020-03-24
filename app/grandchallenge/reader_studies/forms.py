@@ -191,6 +191,10 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
 
 
 class CategoricalOptionForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].label = False
+
     class Meta:
         model = CategoricalOption
         fields = ("title", "default")

@@ -7,7 +7,7 @@
     {% for form in formset.forms %}
         <tr class="{% cycle 'row1' 'row2' %} formset_row-{{ formset.prefix }} d-flex justify-content-bewteen align-items-center">
             {% for field in form.visible_fields %}
-                <td class="pr-5">
+                <td class="pr-5 d-flex align-items-end">
                     {# Include the hidden fields in the form #}
                     {% if forloop.first %}
                         {% for hidden in form.hidden_fields %}
@@ -30,6 +30,7 @@
         deleteText: 'Remove',
         prefix: '{{ formset.prefix }}',
         addCssClass: "btn btn-primary my-2",
-        deleteCssClass: "btn btn-danger delete-row",
+        deleteCssClass: "btn btn-danger delete-row mb-2",
+        hideLastAddForm: true,
     });
 </script>
