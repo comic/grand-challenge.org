@@ -52,7 +52,7 @@ CONTENT_TIMES_LIST_MATCH_REGEXP: Pattern = re.compile(
 )
 
 LENGTH_LIMIT_MATCH_REGEXP: Pattern = re.compile(
-    r".{,128}"
+    r"^.{0,128}$"
 )
 
 STUDYDATE_MATCH_REGEXP: Pattern = re.compile(
