@@ -149,7 +149,7 @@ def _create_sitk_image(dcm_array):
         return img
 
 
-def _process_dicom_file(dicom_ds):  # noqa: C901
+def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
     ref_origin = tuple(
         float(i) for i in getattr(ref_file, "ImagePositionPatient", (0, 0, 0))
@@ -237,10 +237,13 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
         img.SetMetaData("ContentTimes", " ".join(content_times))
         img.SetMetaData("Exposures", " ".join(exposures))
     # Convert the SimpleITK image to our internal representation
-    return convert_itk_to_internal(img)
+    return convert_itk_to_internal(
+        img,
+        name=f"{session_id}-{dicom_ds.headers[0]['data'].StudyInstanceUID}",
+    )
 
 
-def image_builder_dicom(path: Path) -> ImageBuilderResult:
+def image_builder_dicom(path: Path, session_id=None) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -264,7 +267,7 @@ def image_builder_dicom(path: Path) -> ImageBuilderResult:
     consumed_files = []
     for dicom_ds in studies:
         try:
-            n_image, n_image_files = _process_dicom_file(dicom_ds)
+            n_image, n_image_files = _process_dicom_file(dicom_ds, session_id)
             new_images.append(n_image)
             new_image_files += n_image_files
             consumed_files += [d["file"].name for d in dicom_ds.headers]

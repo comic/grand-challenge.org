@@ -177,7 +177,7 @@ def get_color_space(color_space_string) -> Image.COLOR_SPACES:
     return color_space
 
 
-def image_builder_tiff(path: Path) -> ImageBuilderResult:
+def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
     new_images = []
     new_image_files = []
     consumed_files = set()
