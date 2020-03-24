@@ -116,7 +116,11 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
                 Field("question_text"),
                 Field("help_text"),
                 Field("answer_type"),
-                Fieldset("Add options", Formset("options")),
+                Fieldset(
+                    "Add options",
+                    Formset("options"),
+                    css_class="options-formset",
+                ),
                 Field("required"),
                 Field("image_port"),
                 Field("direction"),

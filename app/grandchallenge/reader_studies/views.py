@@ -220,10 +220,14 @@ class QuestionOptionMixin(object):
     def validate_options(self, form, _super):
         context = self.get_context_data()
         options = context["options"]
-        if form.data["answer_type"] in [
+        if form.data["answer_type"] not in [
             Question.ANSWER_TYPE_CHOICE,
             Question.ANSWER_TYPE_MULTIPLE_CHOICE,
-        ] and not any(option.get("title") for option in options.cleaned_data):
+        ]:
+            if getattr(self, "object", None):
+                self.object.options.all().delete()
+            return _super.form_valid(form)
+        if not any(option.get("title") for option in options.cleaned_data):
             error = [
                 "At least one option should be supplied for (multiple) choice questions"
             ]
