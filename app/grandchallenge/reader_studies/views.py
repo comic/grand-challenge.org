@@ -238,12 +238,6 @@ class QuestionOptionMixin(object):
             ]
             form.errors["answer_type"] = error
             return self.form_invalid(form)
-        if form.data["answer_type"] == Question.ANSWER_TYPE_CHOICE and not any(
-            option.get("default") for option in data
-        ):
-            error = ["A default option is required for choice questions"]
-            form.errors["answer_type"] = error
-            return self.form_invalid(form)
         with transaction.atomic():
             try:
                 self.object = form.save()
