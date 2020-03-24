@@ -347,17 +347,11 @@ def test_extract_and_flatten(tmpdir, file_name, func, is_tar):
 
     expected = [
         {"prefix": "folder-0-", "path": tmpdir_path / "folder-0-file-0.txt"},
+        {"prefix": "folder-1-", "path": tmpdir_path / "folder-1-file-1.txt"},
+        {"prefix": "folder-2-", "path": tmpdir_path / "folder-2-file-2.txt"},
         {
-            "prefix": "folder-0-folder-1-",
-            "path": tmpdir_path / "folder-0-folder-1-file-1.txt",
-        },
-        {
-            "prefix": "folder-0-folder-1-folder-2-",
-            "path": tmpdir_path / "folder-0-folder-1-folder-2-file-2.txt",
-        },
-        {
-            "prefix": "folder-0-folder-1-folder-2-",
-            "path": tmpdir_path / "folder-0-folder-1-folder-2-folder-3.zip",
+            "prefix": "folder-2-",
+            "path": tmpdir_path / "folder-2-folder-3.zip",
         },
     ]
     assert sorted(new_files, key=lambda k: k["path"]) == expected
@@ -378,11 +372,10 @@ def test_check_compressed_and_extract(tmpdir, file_name):
 
     expected = [
         "folder-0-file-0.txt",
-        "folder-0-folder-1-file-1.txt",
-        "folder-0-folder-1-folder-2-file-2.txt",
-        "folder-0-folder-1-folder-2-folder-3-file-3.txt",
+        "folder-1-file-1.txt",
+        "folder-2-file-2.txt",
+        "folder-3-file-3.txt",
     ]
-
     assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
 
 

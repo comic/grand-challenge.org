@@ -229,7 +229,7 @@ def fix_mhd_file(file, prefix):
         pass
 
 
-def extract_and_flatten(file, path, prefix=None, is_tar=False):
+def extract_and_flatten(file, path, prefix="", is_tar=False):
     """
     Extracts a flattened list of all files in `file` to `path`.
 
@@ -255,9 +255,12 @@ def extract_and_flatten(file, path, prefix=None, is_tar=False):
             continue
         # For any file that is inside a directory, prepend the directory
         # name(s) to the filename
-        _filename = re.sub(r"[/:?]", "-", filename)
+        _filename = "-".join(Path(filename).parts[-2:])
         base_name = os.path.basename(filename)
-        setattr(info, filename_attr, (prefix or "") + _filename)
+        _prefix = _filename.replace(base_name, "")
+        setattr(
+            info, filename_attr, (prefix if not _prefix else "") + _filename
+        )
         file.extract(info, path)
         filename = getattr(info, filename_attr)
         new_files.append(
