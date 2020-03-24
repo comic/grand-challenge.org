@@ -187,6 +187,7 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
         z_i = avg_origin_diff[2]
     except IndexError:
         z_i = 1.0
+
     for index, partial in enumerate(dicom_ds.headers):
         ds = pydicom.dcmread(str(partial["file"]))
 
@@ -211,8 +212,10 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
 
     img = _create_sitk_image(dcm_array)
 
-    sitk_origin = ref_origin if z_i > 0.0 else tuple(file_origin)
-    z_i = np.abs(z_i)
+    if origin is None:
+        origin = (0.0, 0.0, 0.0)
+    sitk_origin = ref_origin if z_i >= 0.0 else tuple(origin)
+    z_i = np.abs(z_i) if not np.isnan(z_i) else 1.0
 
     if "PixelSpacing" in ref_file:
         x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
@@ -233,7 +236,6 @@ def _process_dicom_file(dicom_ds):  # noqa: C901
         # Set Additional Meta Data
         img.SetMetaData("ContentTimes", " ".join(content_times))
         img.SetMetaData("Exposures", " ".join(exposures))
-
     # Convert the SimpleITK image to our internal representation
     return convert_itk_to_internal(img)
 
