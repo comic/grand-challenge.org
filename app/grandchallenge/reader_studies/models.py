@@ -463,11 +463,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def get_progress_for_user(self, user):
         """Returns the percentage of completed hangings and questions for ``user``."""
         if not self.is_valid or not self.hanging_list:
-            return {
-                "questions": 0.0,
-                "hangings": 0.0,
-                "diff": 0.0,
-            }
+            return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
         hanging_list_count = len(self.hanging_list)
 
@@ -575,7 +571,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             )
             .order_by("images__name")
             .values("images__name", "images__pk")
-            .annotate(Sum("score"), Avg("score"),)
+            .annotate(Sum("score"), Avg("score"))
             .order_by("score__avg")
         )
 
@@ -776,37 +772,6 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["version", "type", "points"],
         },
-        "POLY": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "seed_point": {
-                    "type": "array",
-                    "items": {"type": "number"},
-                    "minItems": 3,
-                    "maxItems": 3,
-                },
-                "path_points": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {"type": "number"},
-                        "minItems": 3,
-                        "maxItems": 3,
-                    },
-                },
-                "sub_type": {"type": "string"},
-                "groups": {"type": "array", "items": {"type": "string"}},
-            },
-            "required": [
-                "name",
-                "seed_point",
-                "path_points",
-                "sub_type",
-                "groups",
-                "version",
-            ],
-        },
         "MPOL": {
             "type": "object",
             "properties": {
@@ -838,7 +803,6 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MDIS"},
         {"$ref": "#/definitions/POIN"},
         {"$ref": "#/definitions/MPOI"},
-        {"$ref": "#/definitions/POLY"},
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
@@ -856,7 +820,6 @@ class Question(UUIDModel):
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
     ANSWER_TYPE_POINT = "POIN"
     ANSWER_TYPE_MULTIPLE_POINTS = "MPOI"
-    ANSWER_TYPE_POLYGON = "POLY"
     ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
     ANSWER_TYPE_CHOICE = "CHOI"
     ANSWER_TYPE_MULTIPLE_CHOICE = "MCHO"
@@ -874,7 +837,6 @@ class Question(UUIDModel):
         ),
         (ANSWER_TYPE_POINT, "Point"),
         (ANSWER_TYPE_MULTIPLE_POINTS, "Multiple points"),
-        (ANSWER_TYPE_POLYGON, "Polygon"),
         (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
         (ANSWER_TYPE_CHOICE, "Choice"),
         (ANSWER_TYPE_MULTIPLE_CHOICE, "Multiple choice"),
@@ -900,9 +862,7 @@ class Question(UUIDModel):
     SCORING_FUNCTION_ACCURACY = "ACC"
     SCORING_FUNCTION_CHOICES = ((SCORING_FUNCTION_ACCURACY, "Accuracy score"),)
 
-    SCORING_FUNCTIONS = {
-        SCORING_FUNCTION_ACCURACY: accuracy_score,
-    }
+    SCORING_FUNCTIONS = {SCORING_FUNCTION_ACCURACY: accuracy_score}
 
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
@@ -1017,7 +977,6 @@ class Question(UUIDModel):
                 self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
                 self.ANSWER_TYPE_POINT,
                 self.ANSWER_TYPE_MULTIPLE_POINTS,
-                self.ANSWER_TYPE_POLYGON,
                 self.ANSWER_TYPE_MULTIPLE_POLYGONS,
             ]
         ) != bool(self.image_port):
