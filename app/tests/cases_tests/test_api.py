@@ -8,11 +8,13 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmResultFactory,
 )
+from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import (
     RawImageFileFactory,
     RawImageUploadSessionFactory,
 )
 from tests.factories import ImageFactory, StagedFileFactory, UserFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
 
@@ -115,7 +117,11 @@ def test_empty_data_upload_sessions(client):
         content_type="application/json",
     )
     assert response.status_code == 400
-    assert response.json() == {"algorithm_image": ["This field is required."]}
+    assert response.json() == {
+        "non_field_errors": [
+            "1 of algorithm image, archive or reader study must be set"
+        ]
+    }
 
 
 @pytest.mark.django_db
@@ -370,3 +376,38 @@ def test_filter_images_api_view(client):
     assert response.status_code == 200
     assert response.json()["count"] == 1
     assert response.json()["results"][0]["pk"] == str(im.pk)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "obj,factory",
+    [("archive", ArchiveFactory), ("reader_study", ReaderStudyFactory)],
+)
+def test_archive_upload_session_create(client, obj, factory):
+    u = UserFactory()
+
+    o = factory()
+
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        user=u,
+        client=client,
+        method=client.post,
+        data={obj: o.slug},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+
+    o.add_editor(u)
+
+    response = get_view_for_user(
+        viewname="api:upload-session-list",
+        user=u,
+        client=client,
+        method=client.post,
+        data={obj: o.slug},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 201
