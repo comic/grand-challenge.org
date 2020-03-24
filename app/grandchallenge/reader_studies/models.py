@@ -1,6 +1,7 @@
 import json
 from collections import Counter
 
+import numpy as np
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
@@ -992,8 +993,16 @@ class Question(UUIDModel):
         Calculates the score for ``answer`` by applying ``scoring_function``
         to ``answer`` and ``ground_truth``.
         """
+        if self.answer_type == self.ANSWER_TYPE_MULTIPLE_CHOICE:
+            ans = np.zeros(max(len(answer), len(ground_truth)), dtype=int)
+            gt = ans.copy()
+            ans[: len(answer)] = answer
+            gt[: len(ground_truth)] = ground_truth
+        else:
+            ans = [answer]
+            gt = [ground_truth]
         return self.SCORING_FUNCTIONS[self.scoring_function](
-            [answer], [ground_truth], normalize=True
+            ans, gt, normalize=True
         )
 
     def save(self, *args, **kwargs):
