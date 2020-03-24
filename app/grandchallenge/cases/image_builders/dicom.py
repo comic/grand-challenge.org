@@ -237,7 +237,10 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
         img.SetMetaData("ContentTimes", " ".join(content_times))
         img.SetMetaData("Exposures", " ".join(exposures))
     # Convert the SimpleITK image to our internal representation
-    return convert_itk_to_internal(img, name=f"{session_id}-{dicom_ds.headers[0]['data'].StudyInstanceUID}")
+    return convert_itk_to_internal(
+        img,
+        name=f"{session_id}-{dicom_ds.headers[0]['data'].StudyInstanceUID}",
+    )
 
 
 def image_builder_dicom(path: Path, session_id=None) -> ImageBuilderResult:

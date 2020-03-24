@@ -402,7 +402,9 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     collected_associated_folders = []
 
     for algorithm in IMAGE_BUILDER_ALGORITHMS:
-        algorithm_result = algorithm(tmp_dir, session_id=upload_session.pk)  # type: ImageBuilderResult
+        algorithm_result = algorithm(
+            tmp_dir, session_id=upload_session.pk
+        )  # type: ImageBuilderResult
         collected_images += list(algorithm_result.new_images)
         collected_associated_files += list(algorithm_result.new_image_files)
 
