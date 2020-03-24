@@ -274,7 +274,12 @@ class GroundTruthForm(SaveFormInitMixin, Form):
     def clean_ground_truth(self):
         csv_file = self.cleaned_data.get("ground_truth")
         csv_file.seek(0)
-        rdr = csv.DictReader(io.StringIO(csv_file.read().decode("utf-8")))
+        rdr = csv.DictReader(
+            io.StringIO(csv_file.read().decode("utf-8")),
+            quoting=csv.QUOTE_ALL,
+            escapechar="\\",
+            quotechar="'",
+        )
         headers = rdr.fieldnames
         if sorted(headers) != sorted(
             ["images"]

@@ -1,3 +1,4 @@
+import json
 from collections import Counter
 
 from django.contrib.auth import get_user_model
@@ -400,14 +401,24 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 if key == "images":
                     continue
                 question = self.questions.get(question_text=key)
-                if question.answer_type == Question.ANSWER_TYPE_BOOL:
-                    if gt[key] not in ["1", "0"]:
+                _answer = json.loads(gt[key])
+                if question.answer_type == Question.ANSWER_TYPE_CHOICE:
+                    try:
+                        option = question.options.get(title=_answer)
+                        _answer = option.pk
+                    except CategoricalOption.DoesNotExist:
                         raise ValidationError(
-                            "Expected 1 or 0 for answer type BOOL."
+                            f"Option '{_answer}' is not valid for question {question.question_text}"
                         )
-                    _answer = bool(int(gt[key]))
-                else:
-                    _answer = gt[key]
+                if (
+                    question.answer_type
+                    == Question.ANSWER_TYPE_MULTIPLE_CHOICE
+                ):
+                    _answer = list(
+                        question.options.filter(title__in=_answer).values_list(
+                            "pk", flat=True
+                        )
+                    )
                 Answer.validate(
                     creator=user,
                     question=question,
