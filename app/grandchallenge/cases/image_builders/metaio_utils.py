@@ -51,12 +51,20 @@ CONTENT_TIMES_LIST_MATCH_REGEXP: Pattern = re.compile(
     r"(\s(2[0-3]|[0-1]\d)[0-5]\d[0-5]\d(\.\d\d\d)?)*$"
 )
 
+LENGTH_LIMIT_MATCH_REGEXP: Pattern = re.compile(
+    r".{,128}"
+)
+
+STUDYDATE_MATCH_REGEXP: Pattern = re.compile(
+    r"^\d{4}\d{1,2}\d{1,2}$"
+)
+
 ADDITIONAL_HEADERS: Dict[str, Pattern] = {
-    "PatientID": None,
-    "PatientName": None,
-    "StudyDate": None,
-    "StudyInstanceUID": None,
-    "SeriesInstanceUID": None,
+    "PatientID": LENGTH_LIMIT_MATCH_REGEXP,
+    "PatientName": LENGTH_LIMIT_MATCH_REGEXP,
+    "StudyDate": STUDYDATE_MATCH_REGEXP,
+    "StudyInstanceUID": LENGTH_LIMIT_MATCH_REGEXP,
+    "SeriesInstanceUID": LENGTH_LIMIT_MATCH_REGEXP,
     "Exposures": FLOAT_LIST_MATCH_REGEXP,
     "ContentTimes": CONTENT_TIMES_LIST_MATCH_REGEXP,
     "t0": FLOAT_MATCH_REGEXP,
@@ -238,12 +246,11 @@ def validate_and_clean_additional_mh_headers(
         else:
             if key in ADDITIONAL_HEADERS:
                 match_pattern = ADDITIONAL_HEADERS[key]
-                if match_pattern is not None:
-                    if not re.match(match_pattern, value):
-                        raise ValueError(
-                            f"Invalid data type found for "
-                            f"additional header key: {key}"
-                        )
+                if not re.match(match_pattern, value):
+                    raise ValueError(
+                        f"Invalid data type found for "
+                        f"additional header key: {key}"
+                    )
                 cleaned_headers[key] = value
         if key in HEADERS_MATCHING_NUM_TIMEPOINTS:
             validate_list_data_matches_num_timepoints(
