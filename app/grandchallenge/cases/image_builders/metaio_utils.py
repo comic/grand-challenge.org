@@ -52,6 +52,11 @@ CONTENT_TIMES_LIST_MATCH_REGEXP: Pattern = re.compile(
 )
 
 ADDITIONAL_HEADERS: Dict[str, Pattern] = {
+    "PatientID": None,
+    "PatientName": None,
+    "StudyDate": None,
+    "StudyInstanceUID": None,
+    "SeriesInstanceUID": None,
     "Exposures": FLOAT_LIST_MATCH_REGEXP,
     "ContentTimes": CONTENT_TIMES_LIST_MATCH_REGEXP,
     "t0": FLOAT_MATCH_REGEXP,
@@ -77,7 +82,6 @@ EXPECTED_HEADERS: List[str] = [
     "ElementType",
     "ElementDataFile",
 ]
-
 
 def parse_mh_header(file: File) -> Mapping[str, Union[str, None]]:
     """
@@ -234,11 +238,12 @@ def validate_and_clean_additional_mh_headers(
         else:
             if key in ADDITIONAL_HEADERS:
                 match_pattern = ADDITIONAL_HEADERS[key]
-                if not re.match(match_pattern, value):
-                    raise ValueError(
-                        f"Invalid data type found for "
-                        f"additional header key: {key}"
-                    )
+                if match_pattern is not None:
+                    if not re.match(match_pattern, value):
+                        raise ValueError(
+                            f"Invalid data type found for "
+                            f"additional header key: {key}"
+                        )
                 cleaned_headers[key] = value
         if key in HEADERS_MATCHING_NUM_TIMEPOINTS:
             validate_list_data_matches_num_timepoints(
