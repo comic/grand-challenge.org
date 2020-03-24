@@ -51,13 +51,9 @@ CONTENT_TIMES_LIST_MATCH_REGEXP: Pattern = re.compile(
     r"(\s(2[0-3]|[0-1]\d)[0-5]\d[0-5]\d(\.\d\d\d)?)*$"
 )
 
-LENGTH_LIMIT_MATCH_REGEXP: Pattern = re.compile(
-    r"^.{0,128}$"
-)
+LENGTH_LIMIT_MATCH_REGEXP: Pattern = re.compile(r"^.{0,128}$")
 
-STUDYDATE_MATCH_REGEXP: Pattern = re.compile(
-    r"^\d{4}\d{1,2}\d{1,2}$"
-)
+STUDYDATE_MATCH_REGEXP: Pattern = re.compile(r"^\d{4}\d{1,2}\d{1,2}$")
 
 ADDITIONAL_HEADERS: Dict[str, Pattern] = {
     "PatientID": LENGTH_LIMIT_MATCH_REGEXP,
@@ -90,6 +86,7 @@ EXPECTED_HEADERS: List[str] = [
     "ElementType",
     "ElementDataFile",
 ]
+
 
 def parse_mh_header(file: File) -> Mapping[str, Union[str, None]]:
     """
