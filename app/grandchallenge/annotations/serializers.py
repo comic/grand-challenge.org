@@ -247,7 +247,7 @@ class NestedPolygonAnnotationSetSerializer(AbstractAnnotationSerializer):
         ]
         spa_data = validated_data.pop("singlepolygonannotation_set")
         for singe_polygon_annotation in spa_data:
-            spa_id = singe_polygon_annotation.pop("id")
+            spa_id = singe_polygon_annotation.pop("id", None)
             try:
                 item = SinglePolygonAnnotation.objects.get(
                     id=spa_id, annotation_set=instance
