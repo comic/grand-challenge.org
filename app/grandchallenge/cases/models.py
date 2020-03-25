@@ -92,6 +92,13 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.SET_NULL,
     )
 
+    archive = models.ForeignKey(
+        to="archives.Archive",
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
+
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
@@ -119,6 +126,19 @@ class RawImageUploadSession(UUIDModel):
                 assign_perm(
                     f"view_{self._meta.model_name}",
                     self.algorithm_image.algorithm.editors_group,
+                    self,
+                )
+            if self.archive:
+                # If an archive is assigned, then the editors and uploaders
+                # groups can view this
+                assign_perm(
+                    f"view_{self._meta.model_name}",
+                    self.archive.editors_group,
+                    self,
+                )
+                assign_perm(
+                    f"view_{self._meta.model_name}",
+                    self.archive.uploaders_group,
                     self,
                 )
 

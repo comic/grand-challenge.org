@@ -1,0 +1,86 @@
+from django.contrib import admin
+
+from grandchallenge.evaluation.models import (
+    Config,
+    Job,
+    Method,
+    Result,
+    Submission,
+)
+
+
+class ConfigAdmin(admin.ModelAdmin):
+    ordering = ("challenge",)
+    list_display = ("pk", "challenge", "modified")
+    search_fields = ("pk",)
+
+
+class MethodAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = ("pk", "created", "challenge", "ready", "status")
+    list_filter = ("challenge__short_name",)
+    search_fields = ("pk",)
+    readonly_fields = ("creator", "challenge")
+
+
+class SubmissionAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = ("pk", "created", "challenge", "creator")
+    list_filter = ("challenge__short_name",)
+    search_fields = (
+        "pk",
+        "creator__username",
+    )
+    readonly_fields = (
+        "creator",
+        "challenge",
+        "file",
+    )
+
+
+class ResultAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "challenge",
+        "creator",
+        "published",
+        "rank",
+    )
+    list_select_related = (
+        "job__submission__challenge",
+        "job__submission__creator",
+    )
+    list_filter = (
+        "job__submission__challenge__short_name",
+        "published",
+    )
+    search_fields = (
+        "pk",
+        "job__pk",
+        "job__submission__challenge__short_name",
+        "job__submission__creator__username",
+    )
+    readonly_fields = ("job",)
+
+
+class JobAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = ("pk", "created", "challenge", "creator", "status")
+    list_filter = ("submission__challenge__short_name", "status")
+    list_select_related = ("submission__challenge", "submission__creator")
+    search_fields = (
+        "pk",
+        "submission__pk",
+        "submission__challenge__short_name",
+        "submission__creator__username",
+    )
+    readonly_fields = ("status", "submission", "method")
+
+
+admin.site.register(Config, ConfigAdmin)
+admin.site.register(Method, MethodAdmin)
+admin.site.register(Submission, SubmissionAdmin)
+admin.site.register(Result, ResultAdmin)
+admin.site.register(Job, JobAdmin)

@@ -81,6 +81,7 @@ class Command(BaseCommand):
             "algorithm",
             "algorithmuser",
             "air",
+            "archive",
         ]
         self.users = self._create_users(usernames=default_users)
 
@@ -143,6 +144,9 @@ class Command(BaseCommand):
 
         add_product_perm = Permission.objects.get(codename="add_product")
         self.users["air"].user_permissions.add(add_product_perm)
+
+        add_archive_perm = Permission.objects.get(codename="add_archive")
+        self.users["archive"].user_permissions.add(add_archive_perm)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
@@ -305,11 +309,11 @@ class Command(BaseCommand):
 
     def _create_workstation(self):
         w = Workstation.objects.create(
-            title=settings.DEFAULT_WORKSTATION_SLUG, logo=get_temporary_image()
+            title=settings.DEFAULT_WORKSTATION_SLUG,
+            logo=get_temporary_image(),
+            public=True,
         )
-        w.add_user(user=self.users["readerstudy"])
         w.add_editor(user=self.users["workstation"])
-        w.add_user(user=self.users["algorithm"])
 
     def _create_reader_studies(self):
         reader_study = ReaderStudy.objects.create(

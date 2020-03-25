@@ -229,7 +229,7 @@ def fix_mhd_file(file, prefix):
         pass
 
 
-def extract_and_flatten(file, path, prefix=None, is_tar=False):
+def extract_and_flatten(file, path, prefix="", is_tar=False):
     """
     Extracts a flattened list of all files in `file` to `path`.
 
@@ -255,9 +255,12 @@ def extract_and_flatten(file, path, prefix=None, is_tar=False):
             continue
         # For any file that is inside a directory, prepend the directory
         # name(s) to the filename
-        _filename = re.sub(r"[/:?]", "-", filename)
+        _filename = "-".join(Path(filename).parts[-2:])
         base_name = os.path.basename(filename)
-        setattr(info, filename_attr, (prefix or "") + _filename)
+        _prefix = _filename.replace(base_name, "")
+        setattr(
+            info, filename_attr, (prefix if not _prefix else "") + _filename
+        )
         file.extract(info, path)
         filename = getattr(info, filename_attr)
         new_files.append(
@@ -402,7 +405,9 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     collected_associated_folders = []
 
     for algorithm in IMAGE_BUILDER_ALGORITHMS:
-        algorithm_result = algorithm(tmp_dir)  # type: ImageBuilderResult
+        algorithm_result = algorithm(
+            tmp_dir, session_id=upload_session.pk
+        )  # type: ImageBuilderResult
         collected_images += list(algorithm_result.new_images)
         collected_associated_files += list(algorithm_result.new_image_files)
 
@@ -431,7 +436,6 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         store_image(
             image, collected_associated_files, collected_associated_folders,
         )
-
     _handle_image_relations(
         collected_images=collected_images, upload_session=upload_session
     )
@@ -442,7 +446,9 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         upload_session=upload_session,
     )
 
-    _delete_session_files(session_files=session_files)
+    _delete_session_files(
+        session_files=session_files, upload_session=upload_session
+    )
 
 
 def _handle_image_relations(*, collected_images, upload_session):
@@ -466,6 +472,9 @@ def _handle_image_relations(*, collected_images, upload_session):
     if upload_session.reader_study:
         upload_session.reader_study.images.add(*collected_images)
 
+    if upload_session.archive:
+        upload_session.archive.images.add(*collected_images)
+
 
 def _handle_unconsumed_files(
     *, filename_lookup, unconsumed_filenames, upload_session
@@ -488,7 +497,7 @@ def _handle_unconsumed_files(
             )
 
 
-def _delete_session_files(*, session_files):
+def _delete_session_files(*, session_files, upload_session):
     dicom_group = Group.objects.get(
         name=settings.DICOM_DATA_CREATORS_GROUP_NAME
     )
@@ -497,15 +506,24 @@ def _delete_session_files(*, session_files):
         try:
             if file.staged_file_id:
                 saf = StagedAjaxFile(file.staged_file_id)
+
+                if not file.consumed and upload_session.archive:
+                    # Keep unconsumed archive files
+                    saf.staged_files.update(
+                        timeout=timezone.now() + timedelta(days=90)
+                    )
+                    continue
+
                 if (
                     not file.consumed
                     and Path(file.filename).suffix == ".dcm"
                     and getattr(file.creator, "username", None) in users
                 ):
                     saf.staged_files.update(
-                        timeout=timezone.now() + timedelta(days=21)
+                        timeout=timezone.now() + timedelta(days=90)
                     )
                     continue
+
                 file.staged_file_id = None
                 saf.delete()
             file.save()

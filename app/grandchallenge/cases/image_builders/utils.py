@@ -66,7 +66,6 @@ def convert_itk_to_internal(
                 while buffer:
                     buffer = open_file.read(1024)
                     temp_file.write(buffer)
-
             db_image_file = ImageFile(
                 image=db_image,
                 image_type=ImageFile.IMAGE_TYPE_MHD,

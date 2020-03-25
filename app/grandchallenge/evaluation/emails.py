@@ -11,25 +11,25 @@ def send_failed_job_email(job):
     message = (
         f"Dear {{}},\n\n"
         f"Unfortunately the evaluation for the submission to "
-        f"{job.submission.challenge.short_name} failed with an error. "
+        f"{job.challenge.short_name} failed with an error. "
         f"The error message is:\n\n"
         f"{user_error(job.output)}\n\n"
         f"You may wish to try and correct this, or contact the challenge "
         f"organizers. The following information may help them:\n"
-        f"User: {job.submission.creator.username}\n"
+        f"User: {job.creator.username}\n"
         f"Job ID: {job.pk}\n"
         f"Submission ID: {job.submission.pk}\n\n"
         f"Regards,\n"
         f"{site.name}\n\n"
         f"This is an automated service email from {site.domain}."
     )
-    recipients = list(job.submission.challenge.get_admins())
-    recipients.append(job.submission.creator)
+    recipients = list(job.challenge.get_admins())
+    recipients.append(job.creator)
     for recipient in recipients:
         send_mail(
             subject=(
                 f"[{site.domain.lower()}] "
-                f"[{job.submission.challenge.short_name.lower()}] "
+                f"[{job.challenge.short_name.lower()}] "
                 f"Evaluation Failed"
             ),
             message=message.format(recipient.username),
@@ -40,7 +40,7 @@ def send_failed_job_email(job):
 
 def send_new_result_email(result):
     site = Site.objects.get_current()
-    challenge = result.job.submission.challenge
+    challenge = result.challenge
 
     recipients = list(challenge.get_admins())
     message = (

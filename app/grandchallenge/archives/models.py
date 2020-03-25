@@ -1,21 +1,111 @@
+from django.contrib.auth.models import Group
 from django.db import models, transaction
 from django.db.models import Count
+from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
+from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
+from grandchallenge.subdomains.utils import reverse
 
 
-class Archive(UUIDModel):
+class Archive(UUIDModel, TitleSlugDescriptionModel):
     """Model for archive. Contains a collection of images."""
 
-    name = models.CharField(max_length=255, default="Unnamed Archive")
-
+    detail_page_markdown = models.TextField(blank=True)
+    logo = models.ImageField(
+        upload_to=get_logo_path, storage=public_s3_storage, null=True
+    )
+    editors_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="editors_of_archive",
+    )
+    uploaders_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="uploaders_of_archive",
+    )
+    users_group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="users_of_archive",
+    )
+    public = models.BooleanField(default=False)
+    workstation = models.ForeignKey(
+        "workstations.Workstation",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    workstation_config = models.ForeignKey(
+        "workstation_configs.WorkstationConfig",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     images = models.ManyToManyField(Image)
 
+    class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
+        ordering = ("created",)
+        permissions = [("upload_archive", "Can upload to archive")]
+
     def __str__(self):
-        return f"<{self.__class__.__name__} {self.name}>"
+        return f"<{self.__class__.__name__} {self.title}>"
+
+    @property
+    def name(self):
+        # Include the read only name for legacy clients
+        return self.title
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.create_groups()
+
+        super().save(*args, **kwargs)
+
+        self.assign_permissions()
+
+    def create_groups(self):
+        self.editors_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
+        )
+        self.uploaders_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_uploaders"
+        )
+        self.users_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
+        )
+
+    def assign_permissions(self):
+        # Allow the editors, uploaders and users groups to view this
+        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(
+            f"view_{self._meta.model_name}", self.uploaders_group, self
+        )
+        assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+        # Allow editors and uploaders to upload to this
+        assign_perm(
+            f"upload_{self._meta.model_name}", self.editors_group, self
+        )
+        assign_perm(
+            f"upload_{self._meta.model_name}", self.uploaders_group, self
+        )
+        # Allow the editors to change this
+        assign_perm(
+            f"change_{self._meta.model_name}", self.editors_group, self
+        )
+
+        # TODO: Handle public permissions
 
     def delete(self, *args, **kwargs):
         """
@@ -52,7 +142,7 @@ class Archive(UUIDModel):
 
         images_to_remove = (
             Image.objects.annotate(num_archives=Count("archive"))
-            .filter(archive__id=self.id, num_archives=1)
+            .filter(archive=self, num_archives=1)
             .order_by("name")
         )
 
@@ -75,3 +165,33 @@ class Archive(UUIDModel):
             images_to_remove.delete(*args, **kwargs)
 
             super().delete(*args, **kwargs)
+
+    def is_editor(self, user):
+        return user.groups.filter(pk=self.editors_group.pk).exists()
+
+    def add_editor(self, user):
+        return user.groups.add(self.editors_group)
+
+    def remove_editor(self, user):
+        return user.groups.remove(self.editors_group)
+
+    def is_uploader(self, user):
+        return user.groups.filter(pk=self.uploaders_group.pk).exists()
+
+    def add_uploader(self, user):
+        return user.groups.add(self.uploaders_group)
+
+    def remove_uploader(self, user):
+        return user.groups.remove(self.uploaders_group)
+
+    def is_user(self, user):
+        return user.groups.filter(pk=self.users_group.pk).exists()
+
+    def add_user(self, user):
+        return user.groups.add(self.users_group)
+
+    def remove_user(self, user):
+        return user.groups.remove(self.users_group)
+
+    def get_absolute_url(self):
+        return reverse("archives:detail", kwargs={"slug": self.slug})

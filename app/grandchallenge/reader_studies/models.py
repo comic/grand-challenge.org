@@ -19,6 +19,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
@@ -195,6 +196,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
     )
+    help_text_markdown = models.TextField(blank=True)
 
     # A hanging_list is a list of dictionaries where the keys are the
     # view names, and the values are the filenames to place there.
@@ -292,6 +294,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def remove_reader(self, user):
         """Removes ``user`` as a reader for this ``ReaderStudy``."""
         return user.groups.remove(self.readers_group)
+
+    @property
+    def help_text(self):
+        """The cleaned help text from the markdown sources"""
+        return md2html(self.help_text_markdown)
 
     @property
     def study_image_names(self):
@@ -624,14 +631,11 @@ ANSWER_TYPE_SCHEMA = {
         "MTXT": {"type": "string"},
         "BOOL": {"type": "boolean"},
         "HEAD": {"type": "null"},
+        "CHOI": {"type": "number"},
+        "MCHO": {"type": "array", "items": {"type": "number"}},
         "2DBB": {
             "type": "object",
             "properties": {
-                "version": {
-                    "type": "object",
-                    "additionalProperties": {"type": "number"},
-                    "required": ["major", "minor"],
-                },
                 "type": {"enum": ["2D bounding box"]},
                 "corners": {
                     "type": "array",
@@ -667,6 +671,49 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["start", "end"],
         },
+        "point-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["point"],
+        },
+        "polygon-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "seed_point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "path_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                },
+                "sub_type": {"type": "string"},
+                "groups": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": [
+                "name",
+                "seed_point",
+                "path_points",
+                "sub_type",
+                "groups",
+            ],
+        },
         "DIST": {
             "type": "object",
             "properties": {
@@ -701,6 +748,77 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["version", "type", "lines"],
         },
+        "POIN": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Point"]},
+                "point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+            },
+            "required": ["version", "type", "point"],
+        },
+        "MPOI": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Multiple points"]},
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "allOf": [{"$ref": "#/definitions/point-object"}]
+                    },
+                },
+            },
+            "required": ["version", "type", "points"],
+        },
+        "POLY": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "seed_point": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 3,
+                    "maxItems": 3,
+                },
+                "path_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                },
+                "sub_type": {"type": "string"},
+                "groups": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": [
+                "name",
+                "seed_point",
+                "path_points",
+                "sub_type",
+                "groups",
+                "version",
+            ],
+        },
+        "MPOL": {
+            "type": "object",
+            "properties": {
+                "type": {"enum": ["Multiple polygons"]},
+                "name": {"type": "string"},
+                "polygons": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/polygon-object"},
+                },
+            },
+            "required": ["type", "version", "polygons"],
+        },
     },
     "properties": {
         "version": {
@@ -718,6 +836,12 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
         {"$ref": "#/definitions/MDIS"},
+        {"$ref": "#/definitions/POIN"},
+        {"$ref": "#/definitions/MPOI"},
+        {"$ref": "#/definitions/POLY"},
+        {"$ref": "#/definitions/MPOL"},
+        {"$ref": "#/definitions/CHOI"},
+        {"$ref": "#/definitions/MCHO"},
     ],
 }
 
@@ -730,6 +854,12 @@ class Question(UUIDModel):
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
+    ANSWER_TYPE_POINT = "POIN"
+    ANSWER_TYPE_MULTIPLE_POINTS = "MPOI"
+    ANSWER_TYPE_POLYGON = "POLY"
+    ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
+    ANSWER_TYPE_CHOICE = "CHOI"
+    ANSWER_TYPE_MULTIPLE_CHOICE = "MCHO"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
@@ -742,6 +872,12 @@ class Question(UUIDModel):
             ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
             "Multiple distance measurements",
         ),
+        (ANSWER_TYPE_POINT, "Point"),
+        (ANSWER_TYPE_MULTIPLE_POINTS, "Multiple points"),
+        (ANSWER_TYPE_POLYGON, "Polygon"),
+        (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
+        (ANSWER_TYPE_CHOICE, "Choice"),
+        (ANSWER_TYPE_MULTIPLE_CHOICE, "Multiple choice"),
     )
 
     # What is the orientation of the question form when presented on the
@@ -879,6 +1015,10 @@ class Question(UUIDModel):
                 self.ANSWER_TYPE_2D_BOUNDING_BOX,
                 self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
                 self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+                self.ANSWER_TYPE_POINT,
+                self.ANSWER_TYPE_MULTIPLE_POINTS,
+                self.ANSWER_TYPE_POLYGON,
+                self.ANSWER_TYPE_MULTIPLE_POLYGONS,
             ]
         ) != bool(self.image_port):
             raise ValidationError(
@@ -912,6 +1052,17 @@ class Question(UUIDModel):
                 f"#/definitions/{self.answer_type} needs to be defined in "
                 "ANSWER_TYPE_SCHEMA."
             )
+
+
+class CategoricalOption(models.Model):
+    question = models.ForeignKey(
+        Question, related_name="options", on_delete=models.CASCADE
+    )
+    title = models.CharField(max_length=1024)
+    default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.title} ({'' if self.default else 'not '}default)"
 
 
 class Answer(UUIDModel):
@@ -959,7 +1110,9 @@ class Answer(UUIDModel):
         ]
 
     @staticmethod
-    def validate(*, creator, question, answer, images, is_ground_truth=False):
+    def validate(  # noqa: C901
+        *, creator, question, answer, images, is_ground_truth=False
+    ):
         """Validates all fields provided for ``answer``."""
         if len(images) == 0:
             raise ValidationError(
@@ -997,7 +1150,19 @@ class Answer(UUIDModel):
                 raise ValidationError(
                     "This user is not a reader for this study."
                 )
-
+        if (
+            question.answer_type == Question.ANSWER_TYPE_CHOICE
+            and answer not in question.options.values_list("id", flat=True)
+        ):
+            raise ValidationError(
+                "Provided option is not valid for this question"
+            )
+        if question.answer_type == Question.ANSWER_TYPE_MULTIPLE_CHOICE:
+            options = question.options.values_list("id", flat=True)
+            if not all(x in options for x in answer):
+                raise ValidationError(
+                    "Provided options are not valid for this question"
+                )
         if not question.is_answer_valid(answer=answer):
             raise ValidationError(
                 f"Your answer is not the correct type. "

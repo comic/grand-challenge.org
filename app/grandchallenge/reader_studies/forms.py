@@ -1,6 +1,16 @@
 import csv
 import io
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import (
+    ButtonHolder,
+    Div,
+    Field,
+    Fieldset,
+    HTML,
+    Layout,
+    Submit,
+)
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,17 +24,21 @@ from django.forms import (
     ModelForm,
     TextInput,
 )
-from guardian.shortcuts import get_objects_for_user
+from django.forms.models import inlineformset_factory
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.widgets import JSONEditorWidget
+from grandchallenge.core.forms import (
+    SaveFormInitMixin,
+    WorkstationUserFilterMixin,
+)
+from grandchallenge.core.layout import Formset
+from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.reader_studies.models import (
+    CategoricalOption,
     HANGING_LIST_SCHEMA,
     Question,
     ReaderStudy,
 )
-from grandchallenge.workstations.models import Workstation
 
 READER_STUDY_HELP_TEXTS = {
     "title": "The title of this reader study",
@@ -37,18 +51,16 @@ READER_STUDY_HELP_TEXTS = {
         "If you do not see the workstation that you want to use, "
         "please contact the admin for that workstation."
     ),
+    "help_text_markdown": (
+        "Extra information that will be presented to the reader in the help "
+        "text modal"
+    ),
 }
 
 
-class ReaderStudyCreateForm(SaveFormInitMixin, ModelForm):
-    def __init__(self, *args, user, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["workstation"].queryset = get_objects_for_user(
-            user,
-            f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}",
-            Workstation,
-        )
-
+class ReaderStudyCreateForm(
+    WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm
+):
     class Meta:
         model = ReaderStudy
         fields = (
@@ -69,11 +81,13 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "description",
             "workstation",
             "workstation_config",
+            "help_text_markdown",
             "shuffle_hanging_list",
             "hanging_list",
         )
         widgets = {
-            "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA)
+            "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),
+            "help_text_markdown": MarkdownEditorWidget,
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
@@ -93,6 +107,29 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
 
 
 class QuestionForm(SaveFormInitMixin, ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.layout = Layout(
+            Div(
+                Field("question_text"),
+                Field("help_text"),
+                Field("answer_type"),
+                Fieldset(
+                    "Add options",
+                    Formset("options"),
+                    css_class="options-formset",
+                ),
+                Field("required"),
+                Field("image_port"),
+                Field("direction"),
+                Field("order"),
+                HTML("<br>"),
+                ButtonHolder(Submit("save", "Save")),
+            )
+        )
+
     def full_clean(self):
         """Override of the form's full_clean method.
 
@@ -151,6 +188,26 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
             ),
         }
         widgets = {"question_text": TextInput}
+
+
+class CategoricalOptionForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].label = False
+
+    class Meta:
+        model = CategoricalOption
+        fields = ("title", "default")
+
+
+CategoricalOptionFormSet = inlineformset_factory(
+    Question,
+    CategoricalOption,
+    form=CategoricalOptionForm,
+    fields=["title", "default"],
+    extra=1,
+    can_delete=True,
+)
 
 
 class UserGroupForm(SaveFormInitMixin, Form):

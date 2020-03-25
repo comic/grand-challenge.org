@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+{% load bleach %}
+
+{% block title %}
+    Add Cases to Archive - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'archives:list' %}">Archives</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ archive.get_absolute_url }}">{{ archive.title }}
+        </a>
+        <li class="breadcrumb-item"><a
+                href="{% url 'archives:cases-list' slug=archive.slug %}">Cases</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Add Cases
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Add Cases to Archive</h2>
+
+    {% crispy form %}
+{% endblock %}

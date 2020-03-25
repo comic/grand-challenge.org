@@ -81,8 +81,7 @@ def json_dumps(obj: dict):
 def get_team_html(obj):
     try:
         team = Team.objects.get(
-            challenge=obj.job.submission.challenge,
-            teammember__user=obj.job.submission.creator,
+            challenge=obj.challenge, teammember__user=obj.creator,
         )
         return format_html(
             '<a href="{}">{}</a>', team.get_absolute_url(), team.name

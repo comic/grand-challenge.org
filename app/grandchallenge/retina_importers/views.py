@@ -39,7 +39,7 @@ class CheckImage(generics.GenericAPIView):
         try:
             archive_name = request.data.get("archive_identifier")
             if archive_name is not None:
-                Archive.objects.get(name=archive_name)
+                Archive.objects.get(title=archive_name)
 
             patient_name = request.data.get("patient_identifier")
             patient = None
@@ -73,7 +73,7 @@ class UploadImage(generics.CreateAPIView):
             archive_name = request.data.get("archive_identifier")
             archive = None
             if archive_name is not None:
-                archive_dict = {"name": archive_name}
+                archive_dict = {"title": archive_name}
                 self.validate_model(archive_dict, ArchiveSerializer)
                 archive, archive_created = Archive.objects.get_or_create(
                     **archive_dict

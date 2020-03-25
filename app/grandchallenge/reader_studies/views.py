@@ -12,6 +12,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -45,10 +46,12 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
 from grandchallenge.reader_studies.forms import (
+    CategoricalOptionFormSet,
     EditorsForm,
     GroundTruthForm,
     QuestionForm,
@@ -73,18 +76,16 @@ class ReaderStudyList(PermissionListMixin, ListView):
 
 
 class ReaderStudyCreate(
-    LoginRequiredMixin, PermissionRequiredMixin, CreateView
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    CreateView,
 ):
     model = ReaderStudy
     form_class = ReaderStudyCreateForm
     permission_required = (
         f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
     )
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -139,6 +140,7 @@ class ReaderStudyDetail(
 
 
 class ReaderStudyUpdate(
+    UserFormKwargsMixin,
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
@@ -151,11 +153,6 @@ class ReaderStudyUpdate(
     )
     raise_exception = True
     success_message = "Reader study successfully updated"
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
 
 class ReaderStudyDelete(
@@ -219,8 +216,44 @@ class ReaderStudyImages(
         return context
 
 
+class QuestionOptionMixin(object):
+    def validate_options(self, form, _super):
+        context = self.get_context_data()
+        options = context["options"]
+        if form.data["answer_type"] not in [
+            Question.ANSWER_TYPE_CHOICE,
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+        ]:
+            if getattr(self, "object", None):
+                self.object.options.all().delete()
+            return _super.form_valid(form)
+        data = options.cleaned_data
+        if len(list(filter(lambda x: x.get("default"), data))) > 1:
+            error = ["Only one option can be the default option"]
+            form.errors["answer_type"] = error
+            return self.form_invalid(form)
+        if not any(option.get("title") for option in data):
+            error = [
+                "At least one option should be supplied for (multiple) choice questions"
+            ]
+            form.errors["answer_type"] = error
+            return self.form_invalid(form)
+        with transaction.atomic():
+            try:
+                self.object = form.save()
+            except Exception:
+                return self.form_invalid(form)
+            if options.is_valid():
+                options.instance = self.object
+                options.save()
+        return _super.form_valid(form)
+
+
 class QuestionUpdate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+    QuestionOptionMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
 ):
     model = Question
     form_class = QuestionForm
@@ -243,8 +276,17 @@ class QuestionUpdate(
         for field_name in self.object.read_only_fields:
             form_fields[field_name].required = False
             form_fields[field_name].disabled = True
+        if self.request.POST:
+            context["options"] = CategoricalOptionFormSet(
+                self.request.POST, instance=self.object
+            )
+        else:
+            context["options"] = CategoricalOptionFormSet(instance=self.object)
         context.update({"reader_study": self.reader_study})
         return context
+
+    def form_valid(self, form):
+        return self.validate_options(form, super())
 
     def get_success_url(self):
         return self.object.reader_study.get_absolute_url()
@@ -327,11 +369,27 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
         return kwargs
 
 
-class AddQuestionToReaderStudy(AddObjectToReaderStudyMixin):
+class AddQuestionToReaderStudy(
+    QuestionOptionMixin, AddObjectToReaderStudyMixin
+):
     model = Question
     form_class = QuestionForm
     template_name = "reader_studies/readerstudy_add_object.html"
     type_to_add = "question"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["options"] = CategoricalOptionFormSet(self.request.POST)
+        else:
+            context["options"] = CategoricalOptionFormSet()
+        context.update({"reader_study": self.reader_study})
+        return context
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        form.instance.reader_study = self.reader_study
+        return self.validate_options(form, super())
 
 
 class ReaderStudyUserAutocomplete(

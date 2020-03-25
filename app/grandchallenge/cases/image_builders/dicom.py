@@ -149,8 +149,11 @@ def _create_sitk_image(dcm_array):
         return img
 
 
-def _process_dicom_file(dicom_ds):
+def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
+    ref_origin = tuple(
+        float(i) for i in getattr(ref_file, "ImagePositionPatient", (0, 0, 0))
+    )
     dimensions = 4 if dicom_ds.n_time else 3
     direction = np.eye(dimensions, dtype=np.float)
     direction = _extract_direction(dicom_ds, direction)
@@ -167,8 +170,27 @@ def _process_dicom_file(dicom_ds):
     content_times = []
     exposures = []
 
+    origin = None
+    origin_diff = np.array((0, 0, 0), dtype=float)
+    n_diffs = 0
+    for partial in dicom_ds.headers:
+        ds = partial["data"]
+        if "ImagePositionPatient" in ds:
+            file_origin = np.array(ds.ImagePositionPatient, dtype=float)
+            if origin is not None:
+                diff = file_origin - origin
+                origin_diff = origin_diff + diff
+                n_diffs += 1
+            origin = file_origin
+    avg_origin_diff = tuple(origin_diff / n_diffs)
+    try:
+        z_i = avg_origin_diff[2]
+    except IndexError:
+        z_i = 1.0
+
     for index, partial in enumerate(dicom_ds.headers):
         ds = pydicom.dcmread(str(partial["file"]))
+
         # Apply RescaleSlope and RescaleIntercept
         pixel_array = float(
             getattr(ds, "RescaleSlope", 1)
@@ -176,28 +198,36 @@ def _process_dicom_file(dicom_ds):
         if len(ds.pixel_array.shape) == dimensions:
             dcm_array = pixel_array
             break
+        z_index = index if z_i >= 0 else len(dicom_ds.headers) - index - 1
         if dimensions == 4:
             dcm_array[
-                index // dicom_ds.n_slices, index % dicom_ds.n_slices, :, :
+                index // dicom_ds.n_slices, z_index % dicom_ds.n_slices, :, :
             ] = pixel_array
             if index % dicom_ds.n_slices == 0:
                 content_times.append(str(ds.ContentTime))
                 exposures.append(str(ds.Exposure))
         else:
-            dcm_array[index % dicom_ds.n_slices, :, :] = pixel_array
+            dcm_array[z_index % dicom_ds.n_slices, :, :] = pixel_array
         del ds
 
     img = _create_sitk_image(dcm_array)
-    # Set Image Spacing, Origin and Direction
-    sitk_origin = tuple((float(i) for i in ref_file.ImagePositionPatient)) + (
-        0.0,
-    )
-    sitk_direction = tuple(direction.flatten())
-    x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
-    z_i = float(ref_file.SliceThickness)
+
+    if origin is None:
+        origin = (0.0, 0.0, 0.0)
+    sitk_origin = ref_origin if z_i >= 0.0 else tuple(origin)
+    z_i = np.abs(z_i) if not np.isnan(z_i) else 1.0
+
+    if "PixelSpacing" in ref_file:
+        x_i, y_i = (float(x) for x in ref_file.PixelSpacing)
+    else:
+        x_i = y_i = 1.0
+
     sitk_spacing = (x_i, y_i, z_i)
-    if dicom_ds.n_time:
+    if dimensions == 4:
         sitk_spacing += (1.0,)
+        sitk_origin += (0.0,)
+
+    sitk_direction = tuple(direction.flatten())
     img.SetDirection(sitk_direction)
     img.SetSpacing(sitk_spacing)
     img.SetOrigin(sitk_origin)
@@ -206,12 +236,14 @@ def _process_dicom_file(dicom_ds):
         # Set Additional Meta Data
         img.SetMetaData("ContentTimes", " ".join(content_times))
         img.SetMetaData("Exposures", " ".join(exposures))
-
     # Convert the SimpleITK image to our internal representation
-    return convert_itk_to_internal(img)
+    return convert_itk_to_internal(
+        img,
+        name=f"{session_id}-{dicom_ds.headers[0]['data'].StudyInstanceUID}",
+    )
 
 
-def image_builder_dicom(path: Path) -> ImageBuilderResult:
+def image_builder_dicom(path: Path, session_id=None) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -235,7 +267,7 @@ def image_builder_dicom(path: Path) -> ImageBuilderResult:
     consumed_files = []
     for dicom_ds in studies:
         try:
-            n_image, n_image_files = _process_dicom_file(dicom_ds)
+            n_image, n_image_files = _process_dicom_file(dicom_ds, session_id)
             new_images.append(n_image)
             new_image_files += n_image_files
             consumed_files += [d["file"].name for d in dicom_ds.headers]

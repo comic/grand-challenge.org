@@ -255,11 +255,11 @@ class DataView(APIView):
         data = {}
         images = Image.objects.filter(
             study__patient__name=patient_identifier,
-            archive__name=archive_identifier,
+            archive__title=archive_identifier,
         )
         if archive_identifier == "kappadata":
             images = Image.objects.filter(
-                archive=Archive.objects.get(name="kappadata")
+                archive=Archive.objects.get(title="kappadata")
             )
 
         user = get_user_model().objects.get(id=user_id)
@@ -491,7 +491,7 @@ class DataView(APIView):
             patient = (
                 Patient.objects.filter(
                     name=patient_identifier,
-                    study__image__archive__name=archive_identifier,
+                    study__image__archive__title=archive_identifier,
                 )
                 .distinct()
                 .get()

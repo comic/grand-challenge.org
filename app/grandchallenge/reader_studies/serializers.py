@@ -1,7 +1,8 @@
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, ReadOnlyField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
+    ModelSerializer,
     SerializerMethodField,
 )
 
@@ -10,9 +11,16 @@ from grandchallenge.cases.models import Image
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_SCHEMA,
     Answer,
+    CategoricalOption,
     Question,
     ReaderStudy,
 )
+
+
+class CategoricalOptionSerializer(ModelSerializer):
+    class Meta:
+        model = CategoricalOption
+        fields = ("id", "title", "default")
 
 
 class QuestionSerializer(HyperlinkedModelSerializer):
@@ -22,6 +30,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     )
     form_direction = CharField(source="get_direction_display")
     image_port = CharField(source="get_image_port_display")
+    options = CategoricalOptionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Question
@@ -35,6 +44,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "question_text",
             "reader_study",
             "required",
+            "options",
         )
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             answer_type=model._meta.get_field("answer_type"),
@@ -48,12 +58,14 @@ class QuestionSerializer(HyperlinkedModelSerializer):
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     hanging_list_images = SerializerMethodField()
+    help_text = ReadOnlyField()
 
     class Meta:
         model = ReaderStudy
         fields = (
             "api_url",
             "description",
+            "help_text",
             "hanging_list_images",
             "is_valid",
             "pk",

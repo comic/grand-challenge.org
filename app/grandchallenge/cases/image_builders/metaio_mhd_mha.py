@@ -18,7 +18,9 @@ from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 from grandchallenge.cases.models import Image, ImageFile
 
 
-def image_builder_mhd(path: Path) -> ImageBuilderResult:  # noqa: C901
+def image_builder_mhd(  # noqa: C901
+    path: Path, session_id=None
+) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 

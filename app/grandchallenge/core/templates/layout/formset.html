@@ -1,0 +1,36 @@
+{% load static %}
+{% load crispy_forms_tags %}
+
+<table class="table table-sm table-hover table-borderless">
+{{ formset.management_form|crispy }}
+
+    {% for form in formset.forms %}
+        <tr class="{% cycle 'row1' 'row2' %} formset_row-{{ formset.prefix }} d-flex justify-content-bewteen align-items-center">
+            {% for field in form.visible_fields %}
+                <td class="pr-5 d-flex align-items-end">
+                    {# Include the hidden fields in the form #}
+                    {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                    {% endif %}
+                    {{ field.errors.as_ul }}
+                    {{ field|as_crispy_field }}
+                </td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+
+</table>
+<script src="{% static 'js/jquery.formset.js' %}">
+</script>
+<script type="text/javascript">
+    $('.formset_row-{{ formset.prefix }}').formset({
+        addText: 'Add another',
+        deleteText: 'Remove',
+        prefix: '{{ formset.prefix }}',
+        addCssClass: "btn btn-primary my-2",
+        deleteCssClass: "btn btn-danger delete-row mb-2",
+        hideLastAddForm: true,
+    });
+</script>
