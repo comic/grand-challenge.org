@@ -2386,7 +2386,7 @@ class TestPolygonAnnotationSetViewSetWithImageFilter:
         grader = two_retina_polygon_annotation_sets.grader1
         response = self.perform_request(rf, image.id, grader)
         assert response.status_code == status.HTTP_200_OK
-        serialized_data = PolygonAnnotationSetSerializer(
+        serialized_data = NestedPolygonAnnotationSetSerializer(
             two_retina_polygon_annotation_sets.polygonset1
         ).data
         assert response.data == [serialized_data]
@@ -2396,5 +2396,7 @@ class TestPolygonAnnotationSetViewSetWithImageFilter:
         polygonset3 = PolygonAnnotationSetFactory(grader=grader)
         response = self.perform_request(rf, polygonset3.image.id, grader)
         assert response.status_code == status.HTTP_200_OK
-        serialized_data = PolygonAnnotationSetSerializer(polygonset3).data
+        serialized_data = NestedPolygonAnnotationSetSerializer(
+            polygonset3
+        ).data
         assert response.data == [serialized_data]
