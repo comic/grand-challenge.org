@@ -1,4 +1,4 @@
-images,foo,bool
-im1,yes,1
-im2,no,0
-im3;im4,yes,1
+images,foo,bool,choice,mchoice
+im1,'"yes'",'true','"option1"','["option1", "option2"]'
+im2,'"no"','false','"option1"','["option1", "option2"]'
+im3;im4,'"yes"','true','"option1"','["option1", "option2"]'

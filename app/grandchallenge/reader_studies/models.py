@@ -216,6 +216,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return f"{self.title}"
 
     def get_example_ground_truth_csv(self):
+        if self.images.count() == 0:
+            return "No cases in this reader study"
         questions = self.questions.all()
         return (
             f"images,{','.join([q.question_text for q in questions])}\n"
