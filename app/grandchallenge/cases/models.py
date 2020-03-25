@@ -172,7 +172,7 @@ class RawImageFile(UUIDModel):
     )
 
     # Copy in case staged_file_id is set to None
-    filename = models.CharField(max_length=128, blank=False)
+    filename = models.CharField(max_length=255, blank=False)
 
     staged_file_id = models.UUIDField(blank=True, null=True)
 
