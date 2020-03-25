@@ -23,6 +23,19 @@ NUMPY_IMAGE_TYPES = {
     "float64": SimpleITK.sitkFloat64,
 }
 
+OPTIONAL_METADATA_FIELDS = (
+    # These fields will be included in the output mha file
+    "PatientID",
+    "PatientName",
+    "PatientBirthDate",
+    "PatientAge",
+    "PatientSex",
+    "StudyDate",
+    "StudyInstanceUID",
+    "SeriesInstanceUID",
+    "StudyDescription",
+)
+
 
 def pixel_data_reached(tag, vr, length):
     return pydicom.datadict.keyword_for_tag(tag) == "PixelData"
@@ -236,10 +249,15 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
         # Set Additional Meta Data
         img.SetMetaData("ContentTimes", " ".join(content_times))
         img.SetMetaData("Exposures", " ".join(exposures))
+
+    for f in OPTIONAL_METADATA_FIELDS:
+        if f in ref_file:
+            img.SetMetaData(f, getattr(ref_file, f))
+
     # Convert the SimpleITK image to our internal representation
     return convert_itk_to_internal(
         img,
-        name=f"{session_id}-{dicom_ds.headers[0]['data'].StudyInstanceUID}",
+        name=f"{str(session_id)[:8]}-{dicom_ds.headers[0]['data'].StudyInstanceUID}",
     )
 
 
