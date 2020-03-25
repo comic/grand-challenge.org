@@ -215,6 +215,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def __str__(self):
         return f"{self.title}"
 
+    def get_example_ground_truth_csv(self):
+        questions = self.questions.all()
+        return (
+            f"images,{','.join([q.question_text for q in questions])}\n"
+            f"{';'.join(self.image_groups[0])},{','.join([q.example_answer for q in questions])}"
+        )
+
     def get_absolute_url(self):
         return reverse("reader-studies:detail", kwargs={"slug": self.slug})
 
@@ -916,6 +923,14 @@ class Question(UUIDModel):
         SCORING_FUNCTION_ACCURACY: accuracy_score,
     }
 
+    EXAMPLE_FOR_ANSWER_TYPE = {
+        ANSWER_TYPE_SINGLE_LINE_TEXT: "'\"answer\"'",
+        ANSWER_TYPE_MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
+        ANSWER_TYPE_BOOL: "'true'",
+        ANSWER_TYPE_CHOICE: "'\"option\"'",
+        ANSWER_TYPE_MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
+    }
+
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
     )
@@ -987,6 +1002,12 @@ class Question(UUIDModel):
         if not self.is_fully_editable:
             return ["question_text", "answer_type", "image_port", "required"]
         return []
+
+    @property
+    def example_answer(self):
+        return self.EXAMPLE_FOR_ANSWER_TYPE.get(
+            self.answer_type, "<NO EXAMPLE YET>"
+        )
 
     def calculate_score(self, answer, ground_truth):
         """
