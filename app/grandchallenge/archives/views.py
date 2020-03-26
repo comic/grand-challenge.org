@@ -22,6 +22,7 @@ from guardian.mixins import (
 )
 
 from grandchallenge.archives.forms import (
+    ArchiveCasesToReaderStudyForm,
     ArchiveForm,
     EditorsForm,
     UploadersForm,
@@ -32,6 +33,7 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.views import RawImageUploadSessionDetail
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -289,3 +291,45 @@ class ArchiveCasesList(
             .prefetch_related("files")
             .select_related("origin__creator__user_profile")
         )
+
+
+class ArchiveCasesToReaderStudyUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = ArchiveCasesToReaderStudyForm
+    permission_required = (
+        f"{Archive._meta.app_label}.view_{Archive._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "archives/archive_cases_to_reader_study_form.html"
+
+    @cached_property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.archive
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.archive})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user, "archive": self.archive})
+        return kwargs
+
+    def form_valid(self, form):
+        reader_study: ReaderStudy = form.cleaned_data["reader_study"]
+        images = form.cleaned_data["images"]
+
+        reader_study.images.add(*images)
+
+        self.success_url = reader_study.get_absolute_url()
+        self.success_message = f"Added {len(images)} cases to {reader_study}."
+
+        return super().form_valid(form)

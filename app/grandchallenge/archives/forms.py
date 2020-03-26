@@ -8,16 +8,21 @@ from django.forms import (
     HiddenInput,
     ModelChoiceField,
     ModelForm,
+    ModelMultipleChoiceField,
     TextInput,
 )
+from django_select2.forms import Select2MultipleWidget
+from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.archives.models import Archive
+from grandchallenge.cases.models import Image
 from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.reader_studies.models import ReaderStudy
 
 
 class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
@@ -86,3 +91,56 @@ class UploadersForm(UserGroupForm):
 
 class UsersForm(UserGroupForm):
     role = "user"
+
+
+class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
+    reader_study = ModelChoiceField(
+        queryset=ReaderStudy.objects.all(), required=True, empty_label=None
+    )
+    images = ModelMultipleChoiceField(
+        queryset=Image.objects.all(),
+        required=True,
+        widget=Select2MultipleWidget,
+    )
+
+    def __init__(self, *args, user, archive, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.archive = archive
+
+        self.fields["reader_study"].queryset = get_objects_for_user(
+            self.user,
+            f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
+            ReaderStudy,
+        ).order_by("title")
+        self.fields["images"].queryset = Image.objects.filter(
+            archive=self.archive
+        )
+        self.fields["images"].initial = self.fields["images"].queryset
+
+    def clean_reader_study(self):
+        reader_study = self.cleaned_data["reader_study"]
+        if not self.user.has_perm("change_readerstudy", reader_study):
+            raise ValidationError(
+                "You do not have permission to change this reader study"
+            )
+        return reader_study
+
+    def clean_images(self):
+        images = self.cleaned_data["images"]
+        images = images.filter(archive=self.archive)
+        return images
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        cleaned_data["images"] = cleaned_data["images"].exclude(
+            readerstudies__in=[cleaned_data["reader_study"]]
+        )
+
+        if len(cleaned_data["images"]) == 0:
+            raise ValidationError(
+                "All of the selected images already exist in that reader study"
+            )
+
+        return cleaned_data

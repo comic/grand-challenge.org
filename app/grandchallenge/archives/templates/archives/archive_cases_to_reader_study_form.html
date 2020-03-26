@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ archive.get_absolute_url }}">{{ archive.title }}</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'archives:cases-list' slug=archive.slug %}">Cases</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Add Cases to Reader Study</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Add Cases to Reader Study</h2>
+
+    <p>
+        Use this form to append cases from this archive to a reader study.
+        If the cases already belong to the selected reader study then those cases will not be added again.
+        All of the cases in this archive have been pre-selected for you.
+        <b>Be sure to select the correct reader study first!</b>
+    </p>
+
+    {% crispy form %}
+{% endblock %}
+
