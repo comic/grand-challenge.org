@@ -208,6 +208,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         validators=[JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)],
     )
     shuffle_hanging_list = models.BooleanField(default=False)
+    is_educational = models.BooleanField(
+        default=False,
+        help_text=(
+            "If checked, readers get the option to verify their answers "
+            "against the uploaded ground truth. This also means that "
+            "the uploaded ground truth will be readily available to "
+            "the readers."
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -388,6 +397,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def image_groups(self):
         """Names of the images as they are grouped in the hanging list."""
         return [sorted(x.values()) for x in self.hanging_list]
+
+    @property
+    def has_ground_truth(self):
+        return Answer.objects.filter(
+            question__reader_study_id=self.id, is_ground_truth=True
+        ).exists()
 
     @cached_property
     def answerable_questions(self):
