@@ -101,10 +101,10 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = (
         "creator__username",
-        "algorithm_image__algorithm__title",
-        "algorithm_result__job__algorithm_image__algorithm__title",
-        "reader_study__title",
-        "archive__title",
+        "algorithm_image__algorithm__slug",
+        "algorithm_result__job__algorithm_image__algorithm__slug",
+        "reader_study__slug",
+        "archive__slug",
         "pk",
         "error_message",
     )
@@ -132,7 +132,7 @@ class DownloadableFilter(admin.SimpleListFilter):
 
 
 class RawImageFileAdmin(admin.ModelAdmin):
-    list_filter = (DownloadableFilter, "upload_session__archive__title")
+    list_filter = (DownloadableFilter, "upload_session__archive__slug")
     list_display = ("filename", "upload_session", "download")
     list_select_related = ("upload_session__archive",)
     readonly_fields = (
