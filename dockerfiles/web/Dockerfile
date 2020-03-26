@@ -34,9 +34,6 @@ COPY poetry.lock /opt/poetry
 RUN poetry install --no-dev --no-root
 ENV PATH="/opt/poetry/.venv/bin:$PATH"
 
-ARG COMMIT_ID=unknown
-ENV COMMIT_ID=$COMMIT_ID
-
 ###################
 #  Webpack        #
 ###################
@@ -70,3 +67,6 @@ WORKDIR /app
 COPY --chown=django:django ./app/ /app/
 COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 RUN python manage.py collectstatic --noinput
+
+ARG COMMIT_ID=unknown
+ENV COMMIT_ID=$COMMIT_ID

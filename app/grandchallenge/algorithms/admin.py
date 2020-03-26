@@ -30,7 +30,7 @@ class JobAdmin(admin.ModelAdmin):
         "creator__username",
         "pk",
         "output",
-        "algorithm_image__algorithm__title",
+        "algorithm_image__algorithm__slug",
     )
 
     def algorithm(self, obj):
