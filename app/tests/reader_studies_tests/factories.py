@@ -1,6 +1,11 @@
 import factory
 
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    Answer,
+    CategoricalOption,
+    Question,
+    ReaderStudy,
+)
 from tests.factories import UserFactory, WorkstationFactory
 
 
@@ -25,4 +30,11 @@ class AnswerFactory(factory.DjangoModelFactory):
         model = Answer
 
     creator = factory.SubFactory(UserFactory)
+    question = factory.SubFactory(QuestionFactory)
+
+
+class CategoricalOptionFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = CategoricalOption
+
     question = factory.SubFactory(QuestionFactory)

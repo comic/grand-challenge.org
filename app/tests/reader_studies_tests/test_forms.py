@@ -1,3 +1,5 @@
+import html
+
 import pytest
 
 from grandchallenge.core.management.commands.init_gc_demo import (
@@ -8,6 +10,7 @@ from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
+    CategoricalOptionFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -393,6 +396,19 @@ def test_reader_study_add_ground_truth(client, settings):
         question_text="bool",
         answer_type=Question.ANSWER_TYPE_BOOL,
     )
+    q1 = QuestionFactory(
+        reader_study=rs,
+        question_text="choice",
+        answer_type=Question.ANSWER_TYPE_CHOICE,
+    )
+    q2 = QuestionFactory(
+        reader_study=rs,
+        question_text="mchoice",
+        answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+    )
+    for q_ in [q1, q2]:
+        for x in range(3):
+            CategoricalOptionFactory(question=q_, title=f"option{x}")
     im1, im2, im3, im4 = (
         ImageFactory(name="im1"),
         ImageFactory(name="im2"),
@@ -480,7 +496,7 @@ def test_reader_study_add_ground_truth(client, settings):
     rs.save()
     assert rs.hanging_list_valid
 
-    with open(RESOURCE_PATH / "ground_truth_wrong_boolean.csv") as gt:
+    with open(RESOURCE_PATH / "ground_truth_invalid.csv") as gt:
         response = get_view_for_user(
             viewname="reader-studies:add-ground-truth",
             client=client,
@@ -491,7 +507,10 @@ def test_reader_study_add_ground_truth(client, settings):
             user=editor,
         )
     assert response.status_code == 200
-    assert "Expected 1 or 0 for answer type BOOL." in response.rendered_content
+    assert (
+        html.escape("Option 'option3' is not valid for question choice")
+        in response.rendered_content
+    )
 
     with open(RESOURCE_PATH / "ground_truth.csv") as gt:
         response = get_view_for_user(
@@ -504,8 +523,10 @@ def test_reader_study_add_ground_truth(client, settings):
             user=editor,
         )
     assert response.status_code == 200
-    assert Answer.objects.all().count() == 6
-    assert Answer.objects.filter(is_ground_truth=True).count() == 6
+
+    answer_count = len(rs.hanging_list) * rs.answerable_question_count
+    assert Answer.objects.all().count() == answer_count
+    assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
 
     with open(RESOURCE_PATH / "ground_truth.csv") as gt:
         response = get_view_for_user(
@@ -522,5 +543,5 @@ def test_reader_study_add_ground_truth(client, settings):
         "Ground truth already added for this question/image combination"
         in response.rendered_content
     )
-    assert Answer.objects.all().count() == 6
-    assert Answer.objects.filter(is_ground_truth=True).count() == 6
+    assert Answer.objects.all().count() == answer_count
+    assert Answer.objects.filter(is_ground_truth=True).count() == answer_count

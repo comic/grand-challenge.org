@@ -379,23 +379,23 @@
                 <p>
                     The first row of the CSV file must contain the headings
                     <code>images</code>, followed by the question text for
-                    each of the questions in the reader study:
-                    <code>
-                        images,
-                        {% for question in object.answerable_questions %}
-                            {{ question.question_text }},
-                        {% endfor %}
-                    </code>
+                    each of the questions in the reader study.
                 </p>
                 <p>
                     The consecutive lines contain the images per hanging. For
                     multiple images separate the image names with a <code>;</code>.
                     Then include the answer for the question
                     corresponding to the question text defined in the header for that
-                    column. For now, only boolean and single line text answers are
-                    supported. For boolean values, you can use <code>1</code>
-                    to indicate <code>True</code> and
-                    <code>0</code> to indicate <code>False</code>.
+                    column. All answers must be enclosed in single quotes. Strings
+                    must be enclosed in both single and double quotes, i.e.
+                    <code>'"answer"'</code>. For choice type questions, the
+                    options text(s) must me provided as a string.
+                </p>
+                <p>
+                    An example of the first two lines of the csv for this reader study is:
+                    <code>
+                        {{ object.get_example_ground_truth_csv|linebreaks }}
+                    </code>
                 </p>
                 <p>
                     <a class="btn btn-primary"

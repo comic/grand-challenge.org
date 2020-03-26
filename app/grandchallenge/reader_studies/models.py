@@ -1,5 +1,7 @@
+import json
 from collections import Counter
 
+import numpy as np
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
@@ -213,6 +215,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def __str__(self):
         return f"{self.title}"
 
+    def get_example_ground_truth_csv(self):
+        if len(self.hanging_list) == 0:
+            return "No cases in this reader study"
+        questions = self.questions.all()
+        return (
+            f"images,{','.join([q.question_text for q in questions])}\n"
+            f"{';'.join(self.image_groups[0])},{','.join([q.example_answer for q in questions])}"
+        )
+
     def get_absolute_url(self):
         return reverse("reader-studies:detail", kwargs={"slug": self.slug})
 
@@ -400,14 +411,24 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 if key == "images":
                     continue
                 question = self.questions.get(question_text=key)
-                if question.answer_type == Question.ANSWER_TYPE_BOOL:
-                    if gt[key] not in ["1", "0"]:
+                _answer = json.loads(gt[key])
+                if question.answer_type == Question.ANSWER_TYPE_CHOICE:
+                    try:
+                        option = question.options.get(title=_answer)
+                        _answer = option.pk
+                    except CategoricalOption.DoesNotExist:
                         raise ValidationError(
-                            "Expected 1 or 0 for answer type BOOL."
+                            f"Option '{_answer}' is not valid for question {question.question_text}"
                         )
-                    _answer = bool(int(gt[key]))
-                else:
-                    _answer = gt[key]
+                if (
+                    question.answer_type
+                    == Question.ANSWER_TYPE_MULTIPLE_CHOICE
+                ):
+                    _answer = list(
+                        question.options.filter(title__in=_answer).values_list(
+                            "pk", flat=True
+                        )
+                    )
                 Answer.validate(
                     creator=user,
                     question=question,
@@ -904,6 +925,14 @@ class Question(UUIDModel):
         SCORING_FUNCTION_ACCURACY: accuracy_score,
     }
 
+    EXAMPLE_FOR_ANSWER_TYPE = {
+        ANSWER_TYPE_SINGLE_LINE_TEXT: "'\"answer\"'",
+        ANSWER_TYPE_MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
+        ANSWER_TYPE_BOOL: "'true'",
+        ANSWER_TYPE_CHOICE: "'\"option\"'",
+        ANSWER_TYPE_MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
+    }
+
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.CASCADE, related_name="questions"
     )
@@ -976,13 +1005,27 @@ class Question(UUIDModel):
             return ["question_text", "answer_type", "image_port", "required"]
         return []
 
+    @property
+    def example_answer(self):
+        return self.EXAMPLE_FOR_ANSWER_TYPE.get(
+            self.answer_type, "<NO EXAMPLE YET>"
+        )
+
     def calculate_score(self, answer, ground_truth):
         """
         Calculates the score for ``answer`` by applying ``scoring_function``
         to ``answer`` and ``ground_truth``.
         """
+        if self.answer_type == self.ANSWER_TYPE_MULTIPLE_CHOICE:
+            ans = np.zeros(max(len(answer), len(ground_truth)), dtype=int)
+            gt = ans.copy()
+            ans[: len(answer)] = answer
+            gt[: len(ground_truth)] = ground_truth
+        else:
+            ans = [answer]
+            gt = [ground_truth]
         return self.SCORING_FUNCTIONS[self.scoring_function](
-            [answer], [ground_truth], normalize=True
+            ans, gt, normalize=True
         )
 
     def save(self, *args, **kwargs):
