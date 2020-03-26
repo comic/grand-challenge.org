@@ -2,6 +2,7 @@ from unittest import mock
 
 import numpy as np
 import pydicom
+import pytest
 
 from grandchallenge.cases.image_builders.dicom import (
     _get_headers_by_study,
@@ -82,3 +83,27 @@ def test_image_builder_dicom_4dct():
         list(map(float, origin)),
         list(map(float, dcm_ref.ImagePositionPatient)) + [0.0],
     )
+
+
+@pytest.mark.parametrize(
+    "folder,element_type",
+    [
+        ("dicom", "MET_SHORT"),
+        ("dicom_intercept", "MET_FLOAT"),
+        ("dicom_slope", "MET_FLOAT"),
+    ],
+)
+def test_dicom_rescaling(folder, element_type):
+    """
+    2.dcm in dicom_intercept and dicom_slope has been modified to add a
+    small intercept (0.01) or slope (1.001) respectively.
+    """
+    result = image_builder_dicom(RESOURCE_PATH / folder)
+
+    assert len(result.new_image_files) == 1
+    mha_file_obj = [
+        x for x in result.new_image_files if x.file.name.endswith("mha")
+    ][0]
+
+    headers = parse_mh_header(mha_file_obj.file)
+    assert headers["ElementType"] == element_type
