@@ -95,7 +95,7 @@ class UsersForm(UserGroupForm):
 
 class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
     reader_study = ModelChoiceField(
-        queryset=ReaderStudy.objects.all(), required=True, empty_label=None
+        queryset=ReaderStudy.objects.all(), required=True,
     )
     images = ModelMultipleChoiceField(
         queryset=Image.objects.all(),
