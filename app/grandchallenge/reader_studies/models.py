@@ -1147,7 +1147,7 @@ class Answer(UUIDModel):
         """Values that are included in this ``Answer``'s csv export."""
         return self.question.csv_values + [
             self.created.isoformat(),
-            self.answer,
+            self.answer_text,
             "; ".join(self.images.values_list("name", flat=True)),
             self.creator.username,
         ]
@@ -1212,6 +1212,23 @@ class Answer(UUIDModel):
                 f"{question.get_answer_type_display()} expected, "
                 f"{type(answer)} found."
             )
+
+    @property
+    def answer_text(self):
+        if self.question.answer_type == Question.ANSWER_TYPE_CHOICE:
+            return (
+                self.question.options.filter(pk=self.answer)
+                .values_list("title", flat=True)
+                .first()
+                or ""
+            )
+        if self.question.answer_type == Question.ANSWER_TYPE_MULTIPLE_CHOICE:
+            return ", ".join(
+                self.question.options.filter(pk__in=self.answer).values_list(
+                    "title", flat=True
+                )
+            )
+        return self.answer
 
     def calculate_score(self, ground_truth):
         """Calculate the score for this ``Answer`` based on ``ground_truth``."""
