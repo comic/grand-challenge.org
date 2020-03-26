@@ -1,5 +1,6 @@
 import tempfile
 from collections import namedtuple
+from math import isclose
 from pathlib import Path
 
 import SimpleITK
@@ -234,11 +235,11 @@ def _create_itk_from_dcm(
     *, content_times, dicom_ds, dimensions, exposures, pixel_dims, z_i
 ):
     apply_slope = any(
-        int(getattr(h["data"], "RescaleSlope", 1)) != 1
+        not isclose(float(getattr(h["data"], "RescaleSlope", 1.0)), 1.0)
         for h in dicom_ds.headers
     )
     apply_intercept = any(
-        int(getattr(h["data"], "RescaleIntercept", 0)) != 0
+        not isclose(float(getattr(h["data"], "RescaleIntercept", 0.0)), 0.0)
         for h in dicom_ds.headers
     )
     apply_scaling = apply_slope or apply_intercept
