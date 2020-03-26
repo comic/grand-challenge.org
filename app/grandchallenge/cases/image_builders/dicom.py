@@ -233,15 +233,34 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
 def _create_itk_from_dcm(
     *, content_times, dicom_ds, dimensions, exposures, pixel_dims, z_i
 ):
-    dcm_array = np.zeros(pixel_dims, dtype=np.float32)
+    apply_slope = any(
+        int(getattr(h["data"], "RescaleSlope", 1)) != 1
+        for h in dicom_ds.headers
+    )
+    apply_intercept = any(
+        int(getattr(h["data"], "RescaleIntercept", 0)) != 0
+        for h in dicom_ds.headers
+    )
+    apply_scaling = apply_slope or apply_intercept
+
+    if apply_scaling:
+        np_dtype = np.float32
+        sitk_dtype = SimpleITK.sitkFloat32
+    else:
+        np_dtype = np.short
+        sitk_dtype = SimpleITK.sitkInt16
+
+    dcm_array = np.zeros(pixel_dims, dtype=np_dtype)
 
     for index, partial in enumerate(dicom_ds.headers):
         ds = pydicom.dcmread(str(partial["file"]))
 
-        # Apply RescaleSlope and RescaleIntercept
-        pixel_array = float(
-            getattr(ds, "RescaleSlope", 1)
-        ) * ds.pixel_array + float(getattr(ds, "RescaleIntercept", 0))
+        if apply_scaling:
+            pixel_array = float(
+                getattr(ds, "RescaleSlope", 1)
+            ) * ds.pixel_array + float(getattr(ds, "RescaleIntercept", 0))
+        else:
+            pixel_array = ds.pixel_array
 
         if len(ds.pixel_array.shape) == dimensions:
             dcm_array = pixel_array
@@ -268,9 +287,10 @@ def _create_itk_from_dcm(
         temp.write(dcm_array.tostring())
         temp.flush()
         temp.seek(0)
+
         del dcm_array
 
-        img = SimpleITK.Image(shape, SimpleITK.sitkFloat32, 1)
+        img = SimpleITK.Image(shape, sitk_dtype, 1)
         SimpleITK._SimpleITK._SetImageFromArray(temp.read(), img)
 
     return img
