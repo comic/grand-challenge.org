@@ -147,21 +147,6 @@ def _extract_direction(dicom_ds, direction):
     return direction
 
 
-def _create_sitk_image(dcm_array):
-    shape = dcm_array.shape[::-1]
-    # Write the numpy array to a file, so there is no need to keep it in memory
-    # anymore. Then create a SimpleITK image from it.
-    with tempfile.NamedTemporaryFile() as temp:
-        temp.seek(0)
-        temp.write(dcm_array.tostring())
-        temp.flush()
-        temp.seek(0)
-        del dcm_array
-        img = SimpleITK.Image(shape, SimpleITK.sitkFloat32, 1)
-        SimpleITK._SimpleITK._SetImageFromArray(temp.read(), img)
-        return img
-
-
 def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
     ref_origin = tuple(
@@ -177,7 +162,6 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     )
     if dicom_ds.n_time:
         pixel_dims = (dicom_ds.n_time,) + pixel_dims
-    dcm_array = np.zeros(pixel_dims, dtype=np.float32)
 
     # Additional Meta data Contenttimes and Exposures
     content_times = []
@@ -201,29 +185,14 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     except IndexError:
         z_i = 1.0
 
-    for index, partial in enumerate(dicom_ds.headers):
-        ds = pydicom.dcmread(str(partial["file"]))
-
-        # Apply RescaleSlope and RescaleIntercept
-        pixel_array = float(
-            getattr(ds, "RescaleSlope", 1)
-        ) * ds.pixel_array + float(getattr(ds, "RescaleIntercept", 0))
-        if len(ds.pixel_array.shape) == dimensions:
-            dcm_array = pixel_array
-            break
-        z_index = index if z_i >= 0 else len(dicom_ds.headers) - index - 1
-        if dimensions == 4:
-            dcm_array[
-                index // dicom_ds.n_slices, z_index % dicom_ds.n_slices, :, :
-            ] = pixel_array
-            if index % dicom_ds.n_slices == 0:
-                content_times.append(str(ds.ContentTime))
-                exposures.append(str(ds.Exposure))
-        else:
-            dcm_array[z_index % dicom_ds.n_slices, :, :] = pixel_array
-        del ds
-
-    img = _create_sitk_image(dcm_array)
+    img = _create_itk_from_dcm(
+        content_times=content_times,
+        dicom_ds=dicom_ds,
+        dimensions=dimensions,
+        exposures=exposures,
+        pixel_dims=pixel_dims,
+        z_i=z_i,
+    )
 
     if origin is None:
         origin = (0.0, 0.0, 0.0)
@@ -251,7 +220,7 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
         img.SetMetaData("Exposures", " ".join(exposures))
 
     for f in OPTIONAL_METADATA_FIELDS:
-        if f in ref_file:
+        if getattr(ref_file, f, False):
             img.SetMetaData(f, getattr(ref_file, f))
 
     # Convert the SimpleITK image to our internal representation
@@ -259,6 +228,52 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
         img,
         name=f"{str(session_id)[:8]}-{dicom_ds.headers[0]['data'].StudyInstanceUID}",
     )
+
+
+def _create_itk_from_dcm(
+    *, content_times, dicom_ds, dimensions, exposures, pixel_dims, z_i
+):
+    dcm_array = np.zeros(pixel_dims, dtype=np.float32)
+
+    for index, partial in enumerate(dicom_ds.headers):
+        ds = pydicom.dcmread(str(partial["file"]))
+
+        # Apply RescaleSlope and RescaleIntercept
+        pixel_array = float(
+            getattr(ds, "RescaleSlope", 1)
+        ) * ds.pixel_array + float(getattr(ds, "RescaleIntercept", 0))
+
+        if len(ds.pixel_array.shape) == dimensions:
+            dcm_array = pixel_array
+            break
+
+        z_index = index if z_i >= 0 else len(dicom_ds.headers) - index - 1
+        if dimensions == 4:
+            dcm_array[
+                index // dicom_ds.n_slices, z_index % dicom_ds.n_slices, :, :
+            ] = pixel_array
+            if index % dicom_ds.n_slices == 0:
+                content_times.append(str(ds.ContentTime))
+                exposures.append(str(ds.Exposure))
+        else:
+            dcm_array[z_index % dicom_ds.n_slices, :, :] = pixel_array
+
+        del ds
+
+    shape = dcm_array.shape[::-1]
+    # Write the numpy array to a file, so there is no need to keep it in memory
+    # anymore. Then create a SimpleITK image from it.
+    with tempfile.NamedTemporaryFile() as temp:
+        temp.seek(0)
+        temp.write(dcm_array.tostring())
+        temp.flush()
+        temp.seek(0)
+        del dcm_array
+
+        img = SimpleITK.Image(shape, SimpleITK.sitkFloat32, 1)
+        SimpleITK._SimpleITK._SetImageFromArray(temp.read(), img)
+
+    return img
 
 
 def image_builder_dicom(path: Path, session_id=None) -> ImageBuilderResult:
