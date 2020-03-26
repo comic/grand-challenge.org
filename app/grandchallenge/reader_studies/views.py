@@ -13,7 +13,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import (
@@ -555,6 +555,34 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             )
         return Response(
             {"status": "Image could not be removed from reader study."},
+        )
+
+    @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
+    def ground_truth(self, request, pk=None, case_pk=None):
+        reader_study = self.get_object()
+        if not (reader_study.is_educational and reader_study.has_ground_truth):
+            raise Http404()
+        try:
+            image = reader_study.images.get(pk=case_pk)
+        except Image.DoesNotExist:
+            raise Http404()
+        answers = Answer.objects.filter(
+            images=image,
+            question__reader_study=reader_study,
+            is_ground_truth=True,
+        )
+        return JsonResponse(
+            {
+                str(answer.question_id): {
+                    "answer": answer.answer,
+                    "answer_text": answer.answer_text,
+                    "question_text": answer.question.question_text,
+                    "options": dict(
+                        answer.question.options.values_list("id", "title")
+                    ),
+                }
+                for answer in answers
+            }
         )
 
 
