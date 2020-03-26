@@ -13,6 +13,10 @@ def send_failed_file_import(
         subject += f"[{upload_session.reader_study.title.lower()}] "
         object_msg = f"for reader study {upload_session.reader_study}"
 
+    if upload_session.archive:
+        subject += f"[{upload_session.archive.title.lower()}]"
+        object_msg = f"for archive {upload_session.archive.title}"
+
     if (
         upload_session.algorithm_image
         and upload_session.algorithm_image.algorithm
@@ -25,7 +29,7 @@ def send_failed_file_import(
         )
 
     file_status = [
-        f"{f} ({filename_lookup[f].error})\n\n" for f in unconsumed_filenames
+        f"{f} {filename_lookup[f].error}\n\n" for f in unconsumed_filenames
     ]
 
     msg = (
@@ -33,7 +37,7 @@ def send_failed_file_import(
         f"{object_msg}:"
         f"\n\n{''.join(file_status)}"
         "The following file formats are supported: "
-        ".mhd/.(z)raw, .mha, .tiff, .jpg, .png, .dcm"
+        ".mha, .mhd, .raw, .zraw, .dcm, .tiff, .png, .jpeg and .jpg."
     )
 
     send_mail(
