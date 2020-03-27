@@ -10,7 +10,7 @@ def send_invalid_dockerfile_email(*, container_image):
 
     creator = container_image.creator
 
-    message = (
+    creator_message = (
         f"Dear {{}},\n\n"
         f"Unfortunately we were unable to validate your docker image at "
         f"{container_image.get_absolute_url()}. The "
@@ -22,17 +22,37 @@ def send_invalid_dockerfile_email(*, container_image):
         f"This is an automated service email from {site.domain}."
     )
 
-    recipients = list(get_user_model().objects.filter(is_staff=True))
+    staff_message = (
+        f"Dear {{}},\n\n"
+        f"Unfortunately we were unable to validate the docker image uploaded by {{}} "
+        f"at {container_image.get_absolute_url()}. The "
+        f"error message was:\n\n"
+        f"{container_image.status}\n\n"
+        f"Regards,\n"
+        f"{site.name}\n\n"
+        f"You receive this automated service email because you "
+        f"are a staff member of {site.domain}."
+    )
 
+    recipients = list(get_user_model().objects.filter(is_staff=True))
+    username = "(unknown)"
     if creator:
-        recipients.append(creator)
+        username = creator.username
+        send_mail(
+            subject=(
+                f"[{site.domain.lower()}] " f"Could not validate docker image"
+            ),
+            message=creator_message.format(username),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[creator.email],
+        )
 
     for recipient in recipients:
         send_mail(
             subject=(
                 f"[{site.domain.lower()}] " f"Could not validate docker image"
             ),
-            message=message.format(recipient.username),
+            message=staff_message.format(recipient.username, username),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[recipient.email],
         )
