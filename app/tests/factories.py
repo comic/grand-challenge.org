@@ -143,6 +143,7 @@ class ImageFactory(factory.DjangoModelFactory):
     origin = factory.SubFactory(UploadSessionFactory)
     width = 128
     height = 128
+    name = factory.Sequence(lambda n: f"image_{n}")
 
 
 class ImageFileFactory(factory.DjangoModelFactory):

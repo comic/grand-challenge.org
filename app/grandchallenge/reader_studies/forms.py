@@ -34,6 +34,7 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.reader_studies.models import (
+    CASE_TEXT_SCHEMA,
     CategoricalOption,
     HANGING_LIST_SCHEMA,
     Question,
@@ -86,9 +87,11 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "shuffle_hanging_list",
             "is_educational",
             "hanging_list",
+            "case_text",
         )
         widgets = {
             "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),
+            "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
             "help_text_markdown": MarkdownEditorWidget,
         }
         help_texts = {
@@ -104,6 +107,13 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
                 "The hanging defines which image (the hanging value) "
                 "should be assigned to which image port. "
                 'e.g., [{"main":"im1.mhd","secondary":"im2.mhd"}]'
+            ),
+            "case_text": (
+                "Free text that can be included for each case, where the key "
+                "is the filename and the value is free text. You can use "
+                "markdown formatting in the text. Not all images in the "
+                "reader study are required. "
+                'e.g., {"a73512ee-1.2.276.0.542432.3.1.3.3546325986342": "This is *image 1*"}'
             ),
         }
 

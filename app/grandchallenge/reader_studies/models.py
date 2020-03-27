@@ -162,6 +162,12 @@ HANGING_LIST_SCHEMA = {
     },
 }
 
+CASE_TEXT_SCHEMA = {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": {"type": "string"},
+}
+
 
 class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     """
@@ -216,6 +222,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "the uploaded ground truth will be readily available to "
             "the readers."
         ),
+    )
+    case_text = JSONField(
+        default=dict,
+        blank=True,
+        validators=[JSONSchemaValidator(schema=CASE_TEXT_SCHEMA)],
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
@@ -319,6 +330,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def help_text(self):
         """The cleaned help text from the markdown sources"""
         return md2html(self.help_text_markdown)
+
+    @property
+    def cleaned_case_text(self):
+        study_images = {im.name: im.api_url for im in self.images.all()}
+        return {
+            study_images.get(k): md2html(v)
+            for k, v in self.case_text.items()
+            if k in study_images
+        }
 
     @property
     def study_image_names(self):

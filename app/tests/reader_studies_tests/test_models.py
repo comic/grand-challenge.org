@@ -331,3 +331,26 @@ def test_help_markdown_is_scrubbed(client):
 
     assert response.status_code == 200
     assert response.json()["help_text"] == "<p><b>My Help Text</b>naughty</p>"
+
+
+@pytest.mark.django_db
+def test_case_text_is_scrubbed(client):
+    u = UserFactory()
+    im, im1 = ImageFactory(), ImageFactory()
+    rs = ReaderStudyFactory(
+        case_text={
+            im.name: "<b>My Help Text</b><script>naughty</script>",
+            "not an image name": "Shouldn't appear in result",
+            im1.name: "Doesn't belong to this study so ignore",
+        }
+    )
+    rs.images.add(im)
+    rs.add_reader(u)
+
+    response = get_view_for_user(client=client, url=rs.api_url, user=u)
+
+    assert response.status_code == 200
+    # Case should be indexed with the api url
+    assert response.json()["case_text"] == {
+        im.api_url: "<p><b>My Help Text</b>naughty</p>"
+    }
