@@ -343,15 +343,26 @@ def test_extract_and_flatten(tmpdir, file_name, func, is_tar):
 
     tmpdir_path = Path(tmpdir)
     with func(tmp_file) as f:
-        new_files = extract_and_flatten(f, tmpdir_path, is_tar=is_tar)
-
+        index, new_files = extract_and_flatten(
+            f, tmpdir_path, 0, is_tar=is_tar
+        )
+    assert index == 3
     expected = [
-        {"prefix": "folder-0-", "path": tmpdir_path / "folder-0-file-0.txt"},
-        {"prefix": "folder-1-", "path": tmpdir_path / "folder-1-file-1.txt"},
-        {"prefix": "folder-2-", "path": tmpdir_path / "folder-2-file-2.txt"},
         {
-            "prefix": "folder-2-",
-            "path": tmpdir_path / "folder-2-folder-3.zip",
+            "prefix": "1-folder-0-",
+            "path": tmpdir_path / "1-folder-0-file-0.txt",
+        },
+        {
+            "prefix": "2-folder-1-",
+            "path": tmpdir_path / "2-folder-1-file-1.txt",
+        },
+        {
+            "prefix": "3-folder-2-",
+            "path": tmpdir_path / "3-folder-2-file-2.txt",
+        },
+        {
+            "prefix": "3-folder-2-",
+            "path": tmpdir_path / "3-folder-2-folder-3.zip",
         },
     ]
     assert sorted(new_files, key=lambda k: k["path"]) == expected
@@ -368,14 +379,36 @@ def test_check_compressed_and_extract(tmpdir, file_name):
     assert tmpdir.listdir() == [tmp_file]
 
     tmpdir_path = Path(tmpdir)
-    check_compressed_and_extract(tmp_file, tmpdir_path)
+    check_compressed_and_extract(tmp_file, tmpdir_path, 0)
 
     expected = [
-        "folder-0-file-0.txt",
-        "folder-1-file-1.txt",
-        "folder-2-file-2.txt",
-        "folder-3-file-3.txt",
+        "1-folder-0-file-0.txt",
+        "2-folder-1-file-1.txt",
+        "3-folder-2-file-2.txt",
+        "4-folder-3-file-3.txt",
     ]
+    assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
+
+
+@pytest.mark.parametrize(
+    "file_name,add_one",
+    (("same_name.zip", False), ("same_name_zipped.zip", True)),
+)
+def test_check_compressed_and_extract_same_name(tmpdir, file_name, add_one):
+    file = RESOURCE_PATH / file_name
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    assert tmpdir.listdir() == [tmp_file]
+
+    tmpdir_path = Path(tmpdir)
+    check_compressed_and_extract(tmp_file, tmpdir_path, 0)
+
+    expected = sorted(
+        [
+            f"{x + 1 if add_one else x}-1-test_grayscale.png"
+            for x in range(1, 11)
+        ]
+    )
     assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
 
 
