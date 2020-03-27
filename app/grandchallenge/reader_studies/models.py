@@ -435,9 +435,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                         raise ValidationError(
                             f"Option '{_answer}' is not valid for question {question.question_text}"
                         )
-                if (
-                    question.answer_type
-                    == Question.ANSWER_TYPE_MULTIPLE_CHOICE
+                if question.answer_type in (
+                    Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+                    Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
                 ):
                     _answer = list(
                         question.options.filter(title__in=_answer).values_list(
@@ -669,6 +669,7 @@ ANSWER_TYPE_SCHEMA = {
         "HEAD": {"type": "null"},
         "CHOI": {"type": "number"},
         "MCHO": {"type": "array", "items": {"type": "number"}},
+        "MCHD": {"type": "array", "items": {"type": "number"}},
         "2DBB": {
             "type": "object",
             "properties": {
@@ -878,6 +879,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
+        {"$ref": "#/definitions/MCHD"},
     ],
 }
 
@@ -896,6 +898,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
     ANSWER_TYPE_CHOICE = "CHOI"
     ANSWER_TYPE_MULTIPLE_CHOICE = "MCHO"
+    ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN = "MCHD"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
@@ -914,6 +917,7 @@ class Question(UUIDModel):
         (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
         (ANSWER_TYPE_CHOICE, "Choice"),
         (ANSWER_TYPE_MULTIPLE_CHOICE, "Multiple choice"),
+        (ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN, "Multiple choice dropdown"),
     )
 
     # What is the orientation of the question form when presented on the
@@ -946,6 +950,7 @@ class Question(UUIDModel):
         ANSWER_TYPE_BOOL: "'true'",
         ANSWER_TYPE_CHOICE: "'\"option\"'",
         ANSWER_TYPE_MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
+        ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN: '\'["option1", "option2"]\'',
     }
 
     reader_study = models.ForeignKey(
@@ -1031,7 +1036,10 @@ class Question(UUIDModel):
         Calculates the score for ``answer`` by applying ``scoring_function``
         to ``answer`` and ``ground_truth``.
         """
-        if self.answer_type == self.ANSWER_TYPE_MULTIPLE_CHOICE:
+        if self.answer_type in (
+            self.ANSWER_TYPE_MULTIPLE_CHOICE,
+            self.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+        ):
             ans = np.zeros(max(len(answer), len(ground_truth)), dtype=int)
             gt = ans.copy()
             ans[: len(answer)] = answer
@@ -1215,7 +1223,10 @@ class Answer(UUIDModel):
             raise ValidationError(
                 "Provided option is not valid for this question"
             )
-        if question.answer_type == Question.ANSWER_TYPE_MULTIPLE_CHOICE:
+        if question.answer_type in (
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+        ):
             options = question.options.values_list("id", flat=True)
             if not all(x in options for x in answer):
                 raise ValidationError(
@@ -1237,7 +1248,10 @@ class Answer(UUIDModel):
                 .first()
                 or ""
             )
-        if self.question.answer_type == Question.ANSWER_TYPE_MULTIPLE_CHOICE:
+        if self.question.answer_type in (
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+        ):
             return ", ".join(
                 self.question.options.filter(pk__in=self.answer).values_list(
                     "title", flat=True
