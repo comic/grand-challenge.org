@@ -6,6 +6,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import (
@@ -257,8 +258,11 @@ class ArchiveUploadSessionList(
         qs = super().get_queryset(*args, **kwargs)
         return (
             qs.filter(archive=self.archive)
-            .prefetch_related("image_set", "rawimagefile_set")
             .select_related("creator__user_profile")
+            .annotate(
+                Count("image", distinct=True),
+                Count("rawimagefile", distinct=True),
+            )
         )
 
 
