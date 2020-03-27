@@ -9,9 +9,10 @@ def send_invalid_dockerfile_email(*, container_image):
     site = Site.objects.get_current()
 
     creator = container_image.creator
+    creator_username = creator.username if creator else "unknown"
 
     creator_message = (
-        f"Dear {{}},\n\n"
+        f"Dear {creator_username},\n\n"
         f"Unfortunately we were unable to validate your docker image at "
         f"{container_image.get_absolute_url()}. The "
         f"error message was:\n\n"
@@ -24,7 +25,7 @@ def send_invalid_dockerfile_email(*, container_image):
 
     staff_message = (
         f"Dear {{}},\n\n"
-        f"Unfortunately we were unable to validate the docker image uploaded by {{}} "
+        f"Unfortunately we were unable to validate the docker image uploaded by {creator_username} "
         f"at {container_image.get_absolute_url()}. The "
         f"error message was:\n\n"
         f"{container_image.status}\n\n"
@@ -35,14 +36,12 @@ def send_invalid_dockerfile_email(*, container_image):
     )
 
     recipients = list(get_user_model().objects.filter(is_staff=True))
-    username = "(unknown)"
     if creator:
-        username = creator.username
         send_mail(
             subject=(
                 f"[{site.domain.lower()}] " f"Could not validate docker image"
             ),
-            message=creator_message.format(username),
+            message=creator_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[creator.email],
         )
@@ -52,7 +51,7 @@ def send_invalid_dockerfile_email(*, container_image):
             subject=(
                 f"[{site.domain.lower()}] " f"Could not validate docker image"
             ),
-            message=staff_message.format(recipient.username, username),
+            message=staff_message.format(recipient.username),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[recipient.email],
         )
