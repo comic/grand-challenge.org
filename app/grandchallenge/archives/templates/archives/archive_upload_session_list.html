@@ -61,8 +61,8 @@
                         {% endif %}">{{ object.get_status_display }}</span>
                     </td>
                     <td>{{ object.error_message }}</td>
-                    <td>{{ object.rawimagefile_set.count }}</td>
-                    <td>{{ object.image_set.count }}</td>
+                    <td>{{ object.rawimagefile__count }}</td>
+                    <td>{{ object.image__count }}</td>
                 </tr>
             {% endfor %}
             </tbody>
