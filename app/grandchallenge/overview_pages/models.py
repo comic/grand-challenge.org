@@ -1,4 +1,4 @@
-from django.db.models import ManyToManyField, TextField
+from django.db.models import BooleanField, Index, ManyToManyField, TextField
 from django_extensions.db.models import TitleSlugDescriptionModel
 
 from grandchallenge.core.models import UUIDModel
@@ -18,8 +18,11 @@ class OverviewPage(TitleSlugDescriptionModel, UUIDModel):
     challenges = ManyToManyField("challenges.Challenge", blank=True)
     reader_studies = ManyToManyField("reader_studies.ReaderStudy", blank=True)
 
+    published = BooleanField(default=False)
+
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("-created",)
+        indexes = (Index(fields=["published"]),)
 
     def __str__(self):
         return self.title

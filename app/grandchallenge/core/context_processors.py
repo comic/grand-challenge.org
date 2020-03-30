@@ -58,4 +58,4 @@ def policy_pages(*_, **__):
 
 
 def overview_pages(*_, **__):
-    return {"overview_pages": OverviewPage.objects.all()}
+    return {"overview_pages": OverviewPage.objects.filter(published=True)}
