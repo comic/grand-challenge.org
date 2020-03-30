@@ -91,6 +91,12 @@ urlpatterns = [
     path(
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
+    path(
+        "",
+        include(
+            "grandchallenge.overview_pages.urls", namespace="overview-pages"
+        ),
+    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
