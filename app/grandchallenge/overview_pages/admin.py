@@ -26,7 +26,6 @@ class OverviewPageForm(ModelForm):
 
 
 class OverviewPageAdmin(MarkdownxModelAdmin):
-    can_add_related = False
     form = OverviewPageForm
 
 
