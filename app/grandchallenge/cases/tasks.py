@@ -161,8 +161,8 @@ def store_image(
 
 IMAGE_BUILDER_ALGORITHMS = [
     image_builder_mhd,
-    image_builder_tiff,
     image_builder_dicom,
+    image_builder_tiff,
     image_builder_fallback,
 ]
 
