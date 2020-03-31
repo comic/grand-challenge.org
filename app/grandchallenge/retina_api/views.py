@@ -818,7 +818,18 @@ class ArchiveAPIView(APIView):
         objects = []
         images = []
         if pk is None:
-            objects = Archive.objects.all()
+            objects = Archive.objects.filter(
+                title__in=[
+                    "AREDS - GA selection",
+                    "RS1",
+                    "kappadata",
+                    "Rotterdam_Study_1",
+                    "Rotterdam Study 1",
+                    "Australia",
+                    "RS3",
+                    "RS2",
+                ]
+            )
         else:
             if Archive.objects.filter(pk=pk).exists():
                 objects = Patient.objects.filter(
