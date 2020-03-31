@@ -170,11 +170,11 @@ def test_answer_creator_is_reader(client):
     )
 
     tests = (
-        (rs_set.editor1, 403),
+        (rs_set.editor1, 400),  # 400 as the check is done in validation
         (rs_set.reader1, 201),
-        (rs_set.editor2, 403),
-        (rs_set.reader2, 400),  # 400 as the check is done in validation
-        (rs_set.u, 403),
+        (rs_set.editor2, 400),
+        (rs_set.reader2, 400),
+        (rs_set.u, 400),
     )
 
     for test in tests:
