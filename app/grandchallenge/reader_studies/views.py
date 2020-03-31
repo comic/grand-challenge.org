@@ -32,15 +32,10 @@ from guardian.mixins import (
 )
 from guardian.shortcuts import get_perms
 from rest_framework.decorators import action
-from rest_framework.mixins import (
-    CreateModelMixin,
-    ListModelMixin,
-    RetrieveModelMixin,
-)
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import (
-    GenericViewSet,
+    ModelViewSet,
     ReadOnlyModelViewSet,
 )
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -50,6 +45,7 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
+    DjangoObjectOnlyWithCustomPostPermissions,
 )
 from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
@@ -595,16 +591,14 @@ class QuestionViewSet(ReadOnlyModelViewSet):
     filter_backends = [ObjectPermissionsFilter]
 
 
-class AnswerViewSet(
-    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
-):
+class AnswerViewSet(ModelViewSet):
     serializer_class = AnswerSerializer
     queryset = (
         Answer.objects.all()
         .select_related("creator")
         .prefetch_related("images")
     )
-    permission_classes = [DjangoObjectPermissions]
+    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["question__reader_study"]
 

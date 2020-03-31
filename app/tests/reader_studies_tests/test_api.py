@@ -98,6 +98,67 @@ def test_answer_create(client):
 
 
 @pytest.mark.django_db
+def test_answer_update(client):
+    im = ImageFactory()
+
+    rs = ReaderStudyFactory()
+    rs.images.add(im)
+    rs.save()
+
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    editor = UserFactory()
+    rs.add_editor(editor)
+
+    q = QuestionFactory(reader_study=rs, answer_type=Question.ANSWER_TYPE_BOOL)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=reader,
+        client=client,
+        method=client.post,
+        data={"answer": True, "images": [im.api_url], "question": q.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+    answer = Answer.objects.get(pk=response.data.get("pk"))
+    assert answer.answer is True
+    assert answer.history.count() == 1
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        reverse_kwargs={"pk": answer.pk},
+        user=reader,
+        client=client,
+        method=client.patch,
+        data={"answer": False},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+
+    answer.refresh_from_db()
+    assert answer.answer is False
+    assert answer.history.count() == 2
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        reverse_kwargs={"pk": answer.pk},
+        user=editor,
+        client=client,
+        method=client.patch,
+        data={"answer": False},
+        content_type="application/json",
+    )
+    assert response.status_code == 403
+
+    answer.refresh_from_db()
+    assert answer.answer is False
+    assert answer.history.count() == 2
+
+
+@pytest.mark.django_db
 def test_answer_creator_is_reader(client):
     rs_set = TwoReaderStudies()
 

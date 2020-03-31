@@ -15,6 +15,7 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
+from simple_history.models import HistoricalRecords
 from sklearn.metrics import accuracy_score
 
 from grandchallenge.cases.models import Image
@@ -1168,6 +1169,7 @@ class Answer(UUIDModel):
     answer = JSONField()
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
+    renditions = HistoricalRecords(related_name="history")
 
     csv_headers = Question.csv_headers + [
         "Created",
@@ -1201,7 +1203,13 @@ class Answer(UUIDModel):
 
     @staticmethod
     def validate(  # noqa: C901
-        *, creator, question, answer, images, is_ground_truth=False
+        *,
+        creator,
+        question,
+        answer,
+        images,
+        is_ground_truth=False,
+        instance=None,
     ):
         """Validates all fields provided for ``answer``."""
         if len(images) == 0:
@@ -1226,12 +1234,16 @@ class Answer(UUIDModel):
                     "Ground truth already added for this question/image combination"
                 )
         else:
-            if Answer.objects.filter(
-                creator=creator,
-                question=question,
-                images__in=images,
-                is_ground_truth=False,
-            ).exists():
+            if (
+                Answer.objects.filter(
+                    creator=creator,
+                    question=question,
+                    images__in=images,
+                    is_ground_truth=False,
+                )
+                .exclude(pk=getattr(instance, "pk", None))
+                .exists()
+            ):
                 raise ValidationError(
                     f"User {creator} has already answered this question "
                     f"for at least 1 of these images."
@@ -1303,3 +1315,4 @@ class Answer(UUIDModel):
             self,
         )
         assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+        assign_perm(f"change_{self._meta.model_name}", self.creator, self)
