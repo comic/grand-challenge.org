@@ -7,6 +7,12 @@
 
     <h2>Session state</h2>
 
+    {% if object.error_message %}
+        <div class="alert alert-danger">
+            {{ object.error_message }}
+        </div>
+    {% endif %}
+
     <dl class="inline">
         <dt>Created</dt>
         <dd>{{ object.created }}</dd>
@@ -16,39 +22,37 @@
 
         <dt>Status</dt>
         <dd>{{ object.get_status_display }}</dd>
-
-        <dt>Error Message</dt>
-        <dd>{{ object.error_message }}</dd>
     </dl>
 
-    {% if object.status == object.SUCCESS %}
-        <h2>Processed files</h2>
+    <h2>Uploaded Files</h2>
 
-        <div class="table-responsive">
-            <table class="table table-hover table-borderless table-sm">
-                <tbody>
-                {% for raw_file in object.rawimagefile_set.all %}
-                    <tr>
-                        <td>{{ raw_file.filename }}</td>
-                        <td>
-                            {% if raw_file.error %}
-                                {{ raw_file.error|linebreaks }}
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm">
+            <tbody>
+            {% for raw_file in object.rawimagefile_set.all %}
+                <tr>
+                    <td>{{ raw_file.filename }}</td>
+                    <td>
+                        {% if raw_file.error %}
+                            {{ raw_file.error|linebreaks }}
 
-                                {% if object.archive %}
-                                    <p>
-                                        The uploaded file has been retained, the sites administrators will investigate
-                                        why the conversion was unsuccessful.
-                                    </p>
-                                {% endif %}
-                            {% else %}
-                                succeeded
+                            {% if object.archive %}
+                                <p>
+                                    The uploaded file has been retained, the sites administrators will investigate
+                                    why the conversion was unsuccessful.
+                                </p>
                             {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                        {% elif object.status == object.SUCCESS %}
+                            succeeded
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if object.status == object.SUCCESS %}
 
         <h2>Images</h2>
 
@@ -76,5 +80,9 @@
                 </tbody>
             </table>
         </div>
+
+        {% if not object.image_set.all %}
+            <div class="alert alert-danger">No images imported.</div>
+        {% endif %}
     {% endif %}
 {% endblock %}

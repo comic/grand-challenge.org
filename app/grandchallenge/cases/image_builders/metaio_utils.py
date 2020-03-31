@@ -58,9 +58,13 @@ STUDYDATE_MATCH_REGEXP: Pattern = re.compile(r"^\d{4}\d{1,2}\d{1,2}$")
 ADDITIONAL_HEADERS: Dict[str, Pattern] = {
     "PatientID": LENGTH_LIMIT_MATCH_REGEXP,
     "PatientName": LENGTH_LIMIT_MATCH_REGEXP,
+    "PatientBirthDate": LENGTH_LIMIT_MATCH_REGEXP,
+    "PatientAge": LENGTH_LIMIT_MATCH_REGEXP,
+    "PatientSex": LENGTH_LIMIT_MATCH_REGEXP,
     "StudyDate": STUDYDATE_MATCH_REGEXP,
     "StudyInstanceUID": LENGTH_LIMIT_MATCH_REGEXP,
     "SeriesInstanceUID": LENGTH_LIMIT_MATCH_REGEXP,
+    "StudyDescription": LENGTH_LIMIT_MATCH_REGEXP,
     "Exposures": FLOAT_LIST_MATCH_REGEXP,
     "ContentTimes": CONTENT_TIMES_LIST_MATCH_REGEXP,
     "t0": FLOAT_MATCH_REGEXP,

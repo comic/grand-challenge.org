@@ -76,12 +76,18 @@ def test_imageset_annotationset_download(
 
 
 @pytest.mark.django_db
-def test_image_response(client):
+@pytest.mark.parametrize("internal", (True, False))
+def test_image_response(client, internal):
     image_file = ImageFileFactory()
     user = UserFactory()
 
+    if internal:
+        data = {"internal": True}
+    else:
+        data = {}
+
     response = get_view_for_user(
-        url=image_file.file.url, client=client, user=user
+        url=image_file.file.url, client=client, user=user, data=data
     )
 
     # Forbidden view
@@ -91,17 +97,29 @@ def test_image_response(client):
     assign_perm("view_image", user, image_file.image)
 
     response = get_view_for_user(
-        url=image_file.file.url, client=client, user=user
+        url=image_file.file.url, client=client, user=user, data=data
     )
 
-    assert response.status_code == 200
-    assert response.has_header("x-accel-redirect")
+    if internal:
+        assert response.status_code == 302
+        assert not response.has_header("x-accel-redirect")
 
-    redirect = response.get("x-accel-redirect")
+        redirect = response.url
 
-    assert redirect.startswith(
-        f"/{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
-    )
+        assert redirect.startswith(
+            f"{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}/"
+            f"{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
+        )
+    else:
+        assert response.status_code == 200
+        assert response.has_header("x-accel-redirect")
+
+        redirect = response.get("x-accel-redirect")
+
+        assert redirect.startswith(
+            f"/{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
+        )
+
     assert "AWSAccessKeyId" in redirect
     assert "Signature" in redirect
     assert "Expires" in redirect

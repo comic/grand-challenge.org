@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.archives.views import (
     ArchiveCasesList,
+    ArchiveCasesToReaderStudyUpdate,
     ArchiveCreate,
     ArchiveDetail,
     ArchiveEditorsUpdate,
@@ -57,5 +58,10 @@ urlpatterns = [
         "<slug>/cases/add/",
         ArchiveUploadSessionCreate.as_view(),
         name="cases-create",
+    ),
+    path(
+        "<slug>/cases/reader-study/update/",
+        ArchiveCasesToReaderStudyUpdate.as_view(),
+        name="cases-reader-study-update",
     ),
 ]

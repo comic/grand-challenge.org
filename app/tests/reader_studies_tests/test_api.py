@@ -9,6 +9,7 @@ from grandchallenge.reader_studies.views import ExportCSVMixin
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
+    CategoricalOptionFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
@@ -696,3 +697,73 @@ def test_remove_image_api_view(client):
     assert response.status_code == 200
     assert "Image removed from reader study." in str(response.content)
     assert im not in rs.images.all()
+
+
+@pytest.mark.django_db
+def test_ground_truth(client):
+    rs = ReaderStudyFactory(is_educational=True)
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    q1 = QuestionFactory(
+        answer_type=Question.ANSWER_TYPE_CHOICE, reader_study=rs
+    )
+    q2 = QuestionFactory(
+        answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE, reader_study=rs
+    )
+    q3 = QuestionFactory(
+        answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+        reader_study=rs,
+    )
+
+    op1 = CategoricalOptionFactory(question=q1, title="option1")
+    op2 = CategoricalOptionFactory(question=q2, title="option1")
+    op3 = CategoricalOptionFactory(question=q2, title="option1")
+    op4 = CategoricalOptionFactory(question=q3, title="option1")
+    op5 = CategoricalOptionFactory(question=q3, title="option1")
+
+    im = ImageFactory()
+    rs.images.add(im)
+
+    a1 = AnswerFactory(question=q1, answer=op1.pk, is_ground_truth=True)
+    a1.images.add(im)
+
+    a2 = AnswerFactory(
+        question=q2, answer=[op2.pk, op3.pk], is_ground_truth=True
+    )
+    a2.images.add(im)
+
+    a3 = AnswerFactory(
+        question=q3, answer=[op4.pk, op5.pk], is_ground_truth=True
+    )
+    a3.images.add(im)
+
+    response = get_view_for_user(
+        viewname="api:reader-study-ground-truth",
+        reverse_kwargs={"pk": rs.pk, "case_pk": im.pk},
+        user=reader,
+        client=client,
+        content_type="application/json",
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    response = response.json()
+    assert response[str(q1.pk)] == {
+        "answer": op1.pk,
+        "answer_text": op1.title,
+        "question_text": q1.question_text,
+        "options": {str(op1.pk): op1.title},
+    }
+    assert response[str(q2.pk)] == {
+        "answer": [op2.pk, op3.pk],
+        "answer_text": f"{op2.title}, {op3.title}",
+        "question_text": q2.question_text,
+        "options": {str(op2.pk): op2.title, str(op3.pk): op3.title},
+    }
+    assert response[str(q3.pk)] == {
+        "answer": [op4.pk, op5.pk],
+        "answer_text": f"{op4.title}, {op5.title}",
+        "question_text": q3.question_text,
+        "options": {str(op4.pk): op4.title, str(op5.pk): op5.title},
+    }

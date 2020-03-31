@@ -161,8 +161,8 @@ def store_image(
 
 IMAGE_BUILDER_ALGORITHMS = [
     image_builder_mhd,
-    image_builder_tiff,
     image_builder_dicom,
+    image_builder_tiff,
     image_builder_fallback,
 ]
 
@@ -229,7 +229,7 @@ def fix_mhd_file(file, prefix):
         pass
 
 
-def extract_and_flatten(file, path, prefix="", is_tar=False):
+def extract_and_flatten(file, path, index, prefix="", is_tar=False):
     """
     Extracts a flattened list of all files in `file` to `path`.
 
@@ -248,7 +248,8 @@ def extract_and_flatten(file, path, prefix="", is_tar=False):
     listfunc = file.getmembers if is_tar else file.infolist
     filename_attr = "name" if is_tar else "filename"
     is_dir_func = "isdir" if is_tar else "is_dir"
-    for info in listfunc():
+    indices = {}
+    for info in sorted(listfunc(), key=lambda k: getattr(k, filename_attr)):
         filename = getattr(info, filename_attr)
         # Skip directories
         if getattr(info, is_dir_func)():
@@ -257,10 +258,13 @@ def extract_and_flatten(file, path, prefix="", is_tar=False):
         # name(s) to the filename
         _filename = "-".join(Path(filename).parts[-2:])
         base_name = os.path.basename(filename)
+        folder = filename.replace(base_name, "")
+        if folder:
+            indices[folder] = indices.get(folder, index + 1)
+            index = indices[folder]
         _prefix = _filename.replace(base_name, "")
-        setattr(
-            info, filename_attr, (prefix if not _prefix else "") + _filename
-        )
+        prefix = f"{index}-{prefix if not _prefix else ''}"
+        setattr(info, filename_attr, prefix + _filename)
         file.extract(info, path)
         filename = getattr(info, filename_attr)
         new_files.append(
@@ -269,10 +273,10 @@ def extract_and_flatten(file, path, prefix="", is_tar=False):
                 "path": path / filename,
             }
         )
-    return new_files
+    return max(indices.values()), new_files
 
 
-def check_compressed_and_extract(file_path, target_path, prefix=None):
+def check_compressed_and_extract(file_path, target_path, index, prefix=None):
     """
     Checks if `file_path` is a zip or tar file and if so, extracts it.
 
@@ -292,27 +296,34 @@ def check_compressed_and_extract(file_path, target_path, prefix=None):
     new_files = []
     if tarfile.is_tarfile(file_path):
         with tarfile.TarFile(file_path) as tf:
-            new_files = extract_and_flatten(
-                tf, target_path, prefix=prefix, is_tar=True
+            index, new_files = extract_and_flatten(
+                tf, target_path, index, prefix=prefix, is_tar=True
             )
+            # index += 1
     elif zipfile.is_zipfile(file_path):
         with zipfile.ZipFile(file_path) as zf:
-            new_files = extract_and_flatten(zf, target_path, prefix=prefix)
+            index, new_files = extract_and_flatten(
+                zf, target_path, index, prefix=prefix
+            )
+            # index += 1
     # is_tarfile seems to recognize non-tarfiles as tarfiles, so check
     # if anything has been processed before removing the file.
+
     if new_files:
         file_path.unlink()
     for file in new_files:
         if file["path"].name.endswith(".mhd") and file["prefix"]:
             fix_mhd_file(file["path"], file["prefix"])
-        check_compressed_and_extract(
-            file["path"], target_path, prefix=file["prefix"]
+        index = check_compressed_and_extract(
+            file["path"], target_path, index, prefix=file["prefix"]
         )
+    return index
 
 
 def extract_files(source_path: Path):
+    index = 0
     for file_path in source_path.iterdir():
-        check_compressed_and_extract(file_path, source_path)
+        index = check_compressed_and_extract(file_path, source_path, index)
 
 
 @shared_task

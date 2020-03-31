@@ -10,25 +10,27 @@
     {{ schema|json_script:schema_id }}
 
     <script>
-        const container = document.getElementById("jsoneditor_{{ widget.attrs.id }}");
-        const options = {
-            mode: 'tree',
-            modes: ['code', 'tree'],
-            onChange: function () {
-                var json = editor.get();
-                document.getElementById("{{ widget.attrs.id }}").value = JSON.stringify(json);
-            }
-        };
-        const schema = JSON.parse(document.getElementById("{{ schema_id }}").textContent);
+        $(document).ready(function () {
+            const container = document.getElementById("jsoneditor_{{ widget.attrs.id }}");
+            const options = {
+                mode: 'tree',
+                modes: ['code', 'tree'],
+                onChange: function () {
+                    var json = editor.get();
+                    document.getElementById("{{ widget.attrs.id }}").value = JSON.stringify(json);
+                }
+            };
+            const schema = JSON.parse(document.getElementById("{{ schema_id }}").textContent);
 
-        let editor = new JSONEditor(container, options);
+            let editor = new JSONEditor(container, options);
 
-        editor.set(JSON.parse(document.getElementById("{{ widget.attrs.id }}").value));
-        editor.expandAll();
+            editor.set(JSON.parse(document.getElementById("{{ widget.attrs.id }}").value));
+            editor.expandAll();
 
-        {% if schema %}
-            editor.setSchema(schema);
-        {% endif %}
+            {% if schema %}
+                editor.setSchema(schema);
+            {% endif %}
+        })
     </script>
 
 {% endwith %}

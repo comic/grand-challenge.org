@@ -1,5 +1,7 @@
+import json
 from collections import Counter
 
+import numpy as np
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
@@ -160,6 +162,12 @@ HANGING_LIST_SCHEMA = {
     },
 }
 
+CASE_TEXT_SCHEMA = {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": {"type": "string"},
+}
+
 
 class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     """
@@ -206,12 +214,35 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         validators=[JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)],
     )
     shuffle_hanging_list = models.BooleanField(default=False)
+    is_educational = models.BooleanField(
+        default=False,
+        help_text=(
+            "If checked, readers get the option to verify their answers "
+            "against the uploaded ground truth. This also means that "
+            "the uploaded ground truth will be readily available to "
+            "the readers."
+        ),
+    )
+    case_text = JSONField(
+        default=dict,
+        blank=True,
+        validators=[JSONSchemaValidator(schema=CASE_TEXT_SCHEMA)],
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
 
     def __str__(self):
         return f"{self.title}"
+
+    def get_example_ground_truth_csv(self):
+        if len(self.hanging_list) == 0:
+            return "No cases in this reader study"
+        questions = self.questions.all()
+        return (
+            f"images,{','.join([q.question_text for q in questions])}\n"
+            f"{';'.join(self.image_groups[0])},{','.join([q.example_answer for q in questions])}"
+        )
 
     def get_absolute_url(self):
         return reverse("reader-studies:detail", kwargs={"slug": self.slug})
@@ -301,6 +332,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         return md2html(self.help_text_markdown)
 
     @property
+    def cleaned_case_text(self):
+        study_images = {im.name: im.api_url for im in self.images.all()}
+        return {
+            study_images.get(k): md2html(v)
+            for k, v in self.case_text.items()
+            if k in study_images
+        }
+
+    @property
     def study_image_names(self):
         """Names for all images added to this ``ReaderStudy``."""
         return self.images.values_list("name", flat=True)
@@ -378,6 +418,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         """Names of the images as they are grouped in the hanging list."""
         return [sorted(x.values()) for x in self.hanging_list]
 
+    @property
+    def has_ground_truth(self):
+        return Answer.objects.filter(
+            question__reader_study_id=self.id, is_ground_truth=True
+        ).exists()
+
     @cached_property
     def answerable_questions(self):
         """
@@ -400,14 +446,24 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 if key == "images":
                     continue
                 question = self.questions.get(question_text=key)
-                if question.answer_type == Question.ANSWER_TYPE_BOOL:
-                    if gt[key] not in ["1", "0"]:
+                _answer = json.loads(gt[key])
+                if question.answer_type == Question.ANSWER_TYPE_CHOICE:
+                    try:
+                        option = question.options.get(title=_answer)
+                        _answer = option.pk
+                    except CategoricalOption.DoesNotExist:
                         raise ValidationError(
-                            "Expected 1 or 0 for answer type BOOL."
+                            f"Option '{_answer}' is not valid for question {question.question_text}"
                         )
-                    _answer = bool(int(gt[key]))
-                else:
-                    _answer = gt[key]
+                if question.answer_type in (
+                    Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+                    Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+                ):
+                    _answer = list(
+                        question.options.filter(title__in=_answer).values_list(
+                            "pk", flat=True
+                        )
+                    )
                 Answer.validate(
                     creator=user,
                     question=question,
@@ -633,6 +689,7 @@ ANSWER_TYPE_SCHEMA = {
         "HEAD": {"type": "null"},
         "CHOI": {"type": "number"},
         "MCHO": {"type": "array", "items": {"type": "number"}},
+        "MCHD": {"type": "array", "items": {"type": "number"}},
         "2DBB": {
             "type": "object",
             "properties": {
@@ -842,6 +899,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
+        {"$ref": "#/definitions/MCHD"},
     ],
 }
 
@@ -860,6 +918,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
     ANSWER_TYPE_CHOICE = "CHOI"
     ANSWER_TYPE_MULTIPLE_CHOICE = "MCHO"
+    ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN = "MCHD"
     # WARNING: Do not change the display text, these are used in the front end
     ANSWER_TYPE_CHOICES = (
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
@@ -878,6 +937,7 @@ class Question(UUIDModel):
         (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
         (ANSWER_TYPE_CHOICE, "Choice"),
         (ANSWER_TYPE_MULTIPLE_CHOICE, "Multiple choice"),
+        (ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN, "Multiple choice dropdown"),
     )
 
     # What is the orientation of the question form when presented on the
@@ -902,6 +962,15 @@ class Question(UUIDModel):
 
     SCORING_FUNCTIONS = {
         SCORING_FUNCTION_ACCURACY: accuracy_score,
+    }
+
+    EXAMPLE_FOR_ANSWER_TYPE = {
+        ANSWER_TYPE_SINGLE_LINE_TEXT: "'\"answer\"'",
+        ANSWER_TYPE_MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
+        ANSWER_TYPE_BOOL: "'true'",
+        ANSWER_TYPE_CHOICE: "'\"option\"'",
+        ANSWER_TYPE_MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
+        ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN: '\'["option1", "option2"]\'',
     }
 
     reader_study = models.ForeignKey(
@@ -976,13 +1045,30 @@ class Question(UUIDModel):
             return ["question_text", "answer_type", "image_port", "required"]
         return []
 
+    @property
+    def example_answer(self):
+        return self.EXAMPLE_FOR_ANSWER_TYPE.get(
+            self.answer_type, "<NO EXAMPLE YET>"
+        )
+
     def calculate_score(self, answer, ground_truth):
         """
         Calculates the score for ``answer`` by applying ``scoring_function``
         to ``answer`` and ``ground_truth``.
         """
+        if self.answer_type in (
+            self.ANSWER_TYPE_MULTIPLE_CHOICE,
+            self.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+        ):
+            ans = np.zeros(max(len(answer), len(ground_truth)), dtype=int)
+            gt = ans.copy()
+            ans[: len(answer)] = answer
+            gt[: len(ground_truth)] = ground_truth
+        else:
+            ans = [answer]
+            gt = [ground_truth]
         return self.SCORING_FUNCTIONS[self.scoring_function](
-            [answer], [ground_truth], normalize=True
+            ans, gt, normalize=True
         )
 
     def save(self, *args, **kwargs):
@@ -1104,7 +1190,7 @@ class Answer(UUIDModel):
         """Values that are included in this ``Answer``'s csv export."""
         return self.question.csv_values + [
             self.created.isoformat(),
-            self.answer,
+            self.answer_text,
             "; ".join(self.images.values_list("name", flat=True)),
             self.creator.username,
         ]
@@ -1157,7 +1243,10 @@ class Answer(UUIDModel):
             raise ValidationError(
                 "Provided option is not valid for this question"
             )
-        if question.answer_type == Question.ANSWER_TYPE_MULTIPLE_CHOICE:
+        if question.answer_type in (
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+        ):
             options = question.options.values_list("id", flat=True)
             if not all(x in options for x in answer):
                 raise ValidationError(
@@ -1169,6 +1258,26 @@ class Answer(UUIDModel):
                 f"{question.get_answer_type_display()} expected, "
                 f"{type(answer)} found."
             )
+
+    @property
+    def answer_text(self):
+        if self.question.answer_type == Question.ANSWER_TYPE_CHOICE:
+            return (
+                self.question.options.filter(pk=self.answer)
+                .values_list("title", flat=True)
+                .first()
+                or ""
+            )
+        if self.question.answer_type in (
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+            Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+        ):
+            return ", ".join(
+                self.question.options.filter(pk__in=self.answer).values_list(
+                    "title", flat=True
+                )
+            )
+        return self.answer
 
     def calculate_score(self, ground_truth):
         """Calculate the score for this ``Answer`` based on ``ground_truth``."""

@@ -2,7 +2,7 @@ import posixpath
 import re
 
 from django.conf import settings
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.utils._os import safe_join
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
@@ -16,7 +16,7 @@ from grandchallenge.serving.permissions import (
 )
 
 
-def protected_storage_redirect(*, name):
+def protected_storage_redirect(*, name, internal=False):
     # Get the storage with the internal redirect and auth. This will prepend
     # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url'] to the url
     storage = ProtectedS3Storage(internal=True)
@@ -26,13 +26,18 @@ def protected_storage_redirect(*, name):
 
     url = storage.url(name=name)
 
-    # Now strip the endpoint_url
-    external_url = re.match(
-        f"^{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}(.*)$", url
-    ).group(1)
+    if internal:
+        # Just return the internal request if needed
+        response = HttpResponseRedirect(url)
+    else:
+        # Now strip the endpoint_url
+        external_url = re.match(
+            f"^{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}(.*)$",
+            url,
+        ).group(1)
 
-    response = HttpResponse()
-    response["X-Accel-Redirect"] = external_url
+        response = HttpResponse()
+        response["X-Accel-Redirect"] = external_url
 
     return response
 
@@ -55,7 +60,9 @@ def serve_images(request, *, pk, path, pa="", pb=""):
         user = request.user
 
     if user_can_download_image(user=user, image=image):
-        return protected_storage_redirect(name=name)
+        return protected_storage_redirect(
+            name=name, internal="internal" in request.GET
+        )
 
     raise Http404("File not found.")
 

@@ -59,6 +59,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     hanging_list_images = SerializerMethodField()
     help_text = ReadOnlyField()
+    case_text = ReadOnlyField(source="cleaned_case_text")
 
     class Meta:
         model = ReaderStudy
@@ -71,6 +72,9 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "pk",
             "questions",
             "title",
+            "is_educational",
+            "has_ground_truth",
+            "case_text",
         )
 
     def get_hanging_list_images(self, obj: ReaderStudy):

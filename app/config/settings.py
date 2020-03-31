@@ -264,6 +264,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.debug",
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.policy_pages",
+                "grandchallenge.core.context_processors.overview_pages",
             ]
         },
     }
@@ -368,6 +369,7 @@ LOCAL_APPS = [
     "grandchallenge.policies",
     "grandchallenge.favicons",
     "grandchallenge.products",
+    "grandchallenge.overview_pages",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -721,6 +723,9 @@ WORKSTATIONS_MAXIMUM_SESSIONS = int(
 WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
 WORKSTATIONS_SESSION_DURATION_LIMIT = int(
     os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
+)
+WORKSTATION_INTERNAL_NETWORK = strtobool(
+    os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
 )
 
 # The name of the group whose members will be able to create algorithms
