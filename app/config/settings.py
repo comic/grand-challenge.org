@@ -724,6 +724,9 @@ WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
 WORKSTATIONS_SESSION_DURATION_LIMIT = int(
     os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
 )
+WORKSTATION_INTERNAL_NETWORK = strtobool(
+    os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
+)
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
