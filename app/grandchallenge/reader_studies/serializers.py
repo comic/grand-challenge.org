@@ -124,6 +124,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "images",
             "pk",
             "question",
+            "modified",
         )
         swagger_schema_fields = {
             "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}
