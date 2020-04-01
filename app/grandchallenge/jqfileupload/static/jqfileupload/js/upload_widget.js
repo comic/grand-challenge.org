@@ -35,7 +35,7 @@
                 headers: {
                     "Authorization": "Token " + auth_token
                 },
-                limitConcurrentUploads: 3,
+                limitConcurrentUploads: 1,
             });
 
         var drop_overlay_timer = null;
