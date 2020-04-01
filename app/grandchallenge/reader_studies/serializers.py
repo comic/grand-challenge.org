@@ -15,6 +15,7 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
+from grandchallenge.reader_studies.tasks import add_scores
 
 
 class CategoricalOptionSerializer(ModelSerializer):
@@ -112,6 +113,16 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             images=images,
             instance=self.instance,
         )
+
+        if self.instance:
+            add_scores.apply_async(
+                kwargs={
+                    "instance_pk": str(self.instance.pk),
+                    "pk_set": list(
+                        map(str, images.values_list("pk", flat=True))
+                    ),
+                }
+            )
         return attrs if not self.instance else {"answer": answer}
 
     class Meta:
