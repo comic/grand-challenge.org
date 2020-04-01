@@ -16,6 +16,7 @@ from django.db import transaction
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -523,7 +524,7 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
         return self._create_csv_response(
             data,
             Answer.csv_headers,
-            filename=f"{reader_study.slug}-answers.csv",
+            filename=f"{reader_study.slug}-answers-{timezone.now().isoformat()}.csv",
         )
 
     @action(detail=True, methods=["patch"])
