@@ -510,20 +510,20 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     def export_answers(self, request, pk=None):
         reader_study = self.get_object()
         self._check_change_perms(request.user, reader_study)
-
-        data = [
-            answer.csv_values
-            for answer in Answer.objects.select_related(
-                "question__reader_study"
-            )
+        data = []
+        headers = []
+        for answer in (
+            Answer.objects.select_related("question__reader_study")
             .select_related("creator")
             .prefetch_related("images")
             .filter(question__reader_study=reader_study, is_ground_truth=False)
-        ]
-
+        ):
+            data += [answer.csv_values]
+            if len(answer.csv_headers) > len(headers):
+                headers = answer.csv_headers
         return self._create_csv_response(
             data,
-            Answer.csv_headers,
+            headers,
             filename=f"{reader_study.slug}-answers-{timezone.now().isoformat()}.csv",
         )
 
