@@ -1,5 +1,6 @@
 import csv
 import re
+from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
@@ -99,10 +100,10 @@ def test_answer_create(client):
 
 @pytest.mark.django_db
 def test_answer_update(client):
-    im = ImageFactory()
+    im1, im2 = ImageFactory(), ImageFactory()
 
     rs = ReaderStudyFactory()
-    rs.images.add(im)
+    rs.images.add(im1, im2)
     rs.save()
 
     reader = UserFactory()
@@ -118,13 +119,14 @@ def test_answer_update(client):
         user=reader,
         client=client,
         method=client.post,
-        data={"answer": True, "images": [im.api_url], "question": q.api_url},
+        data={"answer": True, "images": [im1.api_url], "question": q.api_url},
         content_type="application/json",
     )
     assert response.status_code == 201
 
     answer = Answer.objects.get(pk=response.data.get("pk"))
     assert answer.answer is True
+    assert answer.images.first() == im1
     assert answer.history.count() == 1
 
     response = get_view_for_user(
@@ -133,13 +135,14 @@ def test_answer_update(client):
         user=reader,
         client=client,
         method=client.patch,
-        data={"answer": False},
+        data={"answer": False, "images": [im2.api_url]},
         content_type="application/json",
     )
     assert response.status_code == 200
 
     answer.refresh_from_db()
     assert answer.answer is False
+    assert answer.images.first() == im1
     assert answer.history.count() == 2
 
     response = get_view_for_user(
@@ -633,7 +636,11 @@ def test_ground_truth_is_excluded(client):
         ),
     ),
 )
-def test_csv_export(client, answer_type, answer):
+@mock.patch(
+    "grandchallenge.reader_studies.views.timezone.now",
+    return_value=datetime(2020, 1, 1, 0, 0, tzinfo=timezone.utc),
+)
+def test_csv_export(now, client, answer_type, answer):
     im = ImageFactory()
 
     rs = ReaderStudyFactory()
@@ -668,7 +675,10 @@ def test_csv_export(client, answer_type, answer):
 
     assert response.status_code == 200
     assert "Content-Type: text/csv" in headers
-    assert f'filename="{rs.slug}-answers.csv"' in headers
+    assert (
+        f'filename="{rs.slug}-answers-2020-01-01T00:00:00+00:00.csv"'
+        in headers
+    )
     assert a.question.question_text in content
     assert a.question.get_answer_type_display() in content
     assert str(a.question.required) in content
