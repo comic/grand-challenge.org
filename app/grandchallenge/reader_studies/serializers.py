@@ -95,6 +95,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     )
 
     def validate(self, attrs):
+        answer = attrs.get("answer")
         if self.instance:
             question = self.instance.question
             images = self.instance.images.all()
@@ -103,7 +104,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             question = attrs.get("question")
             images = attrs.get("images")
             creator = self.context.get("request").user
-        answer = attrs.get("answer")
 
         Answer.validate(
             creator=creator,
@@ -112,7 +112,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             images=images,
             instance=self.instance,
         )
-        return attrs
+        return attrs if not self.instance else {"answer": answer}
 
     class Meta:
         model = Answer
