@@ -1111,9 +1111,13 @@ class Question(UUIDModel):
                 "The image port must (only) be set for annotation questions."
             )
 
-        if self.answer_type == self.ANSWER_TYPE_BOOL and self.required:
+        if (
+            self.answer_type
+            in [self.ANSWER_TYPE_BOOL, self.ANSWER_TYPE_HEADING]
+            and self.required
+        ):
             raise ValidationError(
-                "Bool answer types should not have Required checked "
+                "Bool or Heading answer types cannot not be Required "
                 "(otherwise the user will need to tick a box for each image!)"
             )
 
