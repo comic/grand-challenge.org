@@ -95,16 +95,15 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     )
 
     def validate(self, attrs):
-        question = attrs.get("question") or getattr(
-            self.instance, "question", None
-        )
-        images = attrs.get("images")
-        answer = attrs.get("answer") or getattr(self.instance, "answer", None)
-        creator = self.context.get("request").user
-        if not images:
-            images = getattr(self.instance, "images", None)
-            if images:
-                images = images.all()
+        if self.instance:
+            question = self.instance.question
+            images = self.instance.images.all()
+            creator = self.instance.creator
+        else:
+            question = attrs.get("question")
+            images = attrs.get("images")
+            creator = self.context.get("request").user
+        answer = attrs.get("answer")
 
         Answer.validate(
             creator=creator,
