@@ -1177,7 +1177,17 @@ class Answer(UUIDModel):
     answer = JSONField()
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
-    renditions = HistoricalRecords(related_name="history")
+    history = HistoricalRecords(
+        excluded_fields=[
+            "created",
+            "modified",
+            "creator",
+            "question",
+            "images",
+            "is_ground_truth",
+            "score",
+        ],
+    )
 
     _csv_headers = Question.csv_headers + [
         "Created",
