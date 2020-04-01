@@ -229,6 +229,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         validators=[JSONSchemaValidator(schema=CASE_TEXT_SCHEMA)],
     )
+    allow_answer_modification = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, readers are allowed to modify their answers for a case "
+            "by navigating back to previous cases"
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
