@@ -1335,11 +1335,23 @@ class ReaderStudyPermissionRequest(RequestBase):
     )
 
     @property
+    def base_object(self):
+        return self.reader_study
+
+    @property
     def object_name(self):
-        return self.reader_study.title
+        return self.base_object.title
+
+    @property
+    def add_method(self):
+        return self.base_object.add_reader
+
+    @property
+    def remove_method(self):
+        return self.base_object.remove_reader
 
     def __str__(self):
-        return f"{self.reader_study.title} registration request by user {self.user.username}"
+        return f"{self.object_name} registration request by user {self.user.username}"
 
     class Meta(RequestBase.Meta):
         unique_together = (("reader_study", "user"),)

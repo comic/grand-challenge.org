@@ -1,13 +1,8 @@
-from django.db.models.signals import m2m_changed, pre_save
+from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.emails import (
-    send_permission_denied_email,
-    send_permission_granted_email,
-    send_permission_request_email,
-)
-from grandchallenge.algorithms.models import AlgorithmPermissionRequest, Result
+from grandchallenge.algorithms.models import Result
 from grandchallenge.cases.models import Image
 
 
@@ -60,18 +55,3 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
             exclude_results = []
 
         image.update_public_group_permissions(exclude_results=exclude_results)
-
-
-@receiver(pre_save, sender=AlgorithmPermissionRequest)
-def process_algorithm_permission_request(sender, instance, *_, **__):
-    old_values = sender.objects.filter(pk=instance.pk).first()
-    old_status = old_values.status if old_values else None
-    if instance.status != old_status:
-        if instance.status == AlgorithmPermissionRequest.PENDING:
-            send_permission_request_email(instance)
-        elif instance.status == AlgorithmPermissionRequest.ACCEPTED:
-            instance.algorithm.add_user(instance.user)
-            send_permission_granted_email(instance)
-        else:
-            instance.algorithm.remove_user(instance.user)
-            send_permission_denied_email(instance)
