@@ -525,5 +525,5 @@ class AlgorithmPermissionRequest(RequestBase):
     def __str__(self):
         return f"{self.algorithm.title} registration request by user {self.user.username}"
 
-    class Meta:
+    class Meta(RequestBase.Meta):
         unique_together = (("algorithm", "user"),)

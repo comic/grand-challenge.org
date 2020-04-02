@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    Answer,
+    Question,
+    ReaderStudy,
+    ReaderStudyPermissionRequest,
+)
 
 
 class ReaderStudyAdmin(admin.ModelAdmin):
@@ -29,3 +34,4 @@ class QuestionsAdmin(admin.ModelAdmin):
 admin.site.register(ReaderStudy, ReaderStudyAdmin)
 admin.site.register(Question, QuestionsAdmin)
 admin.site.register(Answer, AnswersAdmin)
+admin.site.register(ReaderStudyPermissionRequest)

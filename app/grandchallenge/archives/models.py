@@ -6,7 +6,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.patients.models import Patient
 from grandchallenge.studies.models import Study
@@ -195,3 +195,34 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
 
     def get_absolute_url(self):
         return reverse("archives:detail", kwargs={"slug": self.slug})
+
+
+class ArchivePermissionRequest(RequestBase):
+    """
+    When a user wants to view an archive, editors have the option of
+    reviewing each user before accepting or rejecting them. This class records
+    the needed info for that.
+    """
+
+    archive = models.ForeignKey(
+        Archive,
+        help_text="To which archive has the user requested access?",
+        on_delete=models.CASCADE,
+    )
+    rejection_text = models.TextField(
+        blank=True,
+        help_text=(
+            "The text that will be sent to the user with the reason for their "
+            "rejection."
+        ),
+    )
+
+    @property
+    def object_name(self):
+        return self.archive.title
+
+    def __str__(self):
+        return f"{self.archive.title} registration request by user {self.user.username}"
+
+    class Meta(RequestBase.Meta):
+        unique_together = (("archive", "user"),)
