@@ -201,6 +201,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "Should this reader study be visible to all users on the "
+            "overview page? This does not grant all users permission to read "
+            "this study. Users will still need to be added to the "
+            "study's readers group in order to do that."
+        ),
+    )
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
     )
