@@ -14,8 +14,8 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.forms.utils import ErrorList
-from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import (
     CreateView,
@@ -113,8 +113,11 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         try:
             return super().check_permissions(request)
         except PermissionDenied:
-            return redirect(
-                "algorithms:permission-request-create", slug=self.object.slug
+            return HttpResponseRedirect(
+                reverse(
+                    "algorithms:permission-request-create",
+                    kwargs={"slug": self.object.slug},
+                )
             )
 
     def get_context_data(self, **kwargs):

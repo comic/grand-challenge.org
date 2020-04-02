@@ -18,9 +18,13 @@ from django.core.exceptions import (
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.forms.utils import ErrorList
-from django.http import Http404, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+)
+from django.shortcuts import get_object_or_404
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -79,6 +83,7 @@ from grandchallenge.reader_studies.serializers import (
     QuestionSerializer,
     ReaderStudySerializer,
 )
+from grandchallenge.subdomains.utils import reverse
 
 
 class ReaderStudyList(PermissionListMixin, ListView):
@@ -131,9 +136,11 @@ class ReaderStudyDetail(
         try:
             return super().check_permissions(request)
         except PermissionDenied:
-            return redirect(
-                "reader-studies:permission-request-create",
-                slug=self.object.slug,
+            return HttpResponseRedirect(
+                reverse(
+                    "reader-studies:permission-request-create",
+                    kwargs={"slug": self.object.slug},
+                )
             )
 
     def get_context_data(self, **kwargs):

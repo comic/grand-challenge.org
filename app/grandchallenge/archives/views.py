@@ -13,7 +13,8 @@ from django.core.exceptions import (
 )
 from django.db.models import Count
 from django.forms.utils import ErrorList
-from django.shortcuts import get_object_or_404, redirect
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import (
     CreateView,
@@ -95,8 +96,11 @@ class ArchiveDetail(
         try:
             return super().check_permissions(request)
         except PermissionDenied:
-            return redirect(
-                "archives:permission-request-create", slug=self.object.slug
+            return HttpResponseRedirect(
+                reverse(
+                    "archives:permission-request-create",
+                    kwargs={"slug": self.object.slug},
+                )
             )
 
     def get_context_data(self, **kwargs):
