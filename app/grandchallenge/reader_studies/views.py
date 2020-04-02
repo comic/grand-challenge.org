@@ -516,6 +516,37 @@ class ReaderStudyPermissionRequestCreate(
         return context
 
 
+class ReaderStudyPermissionRequestList(
+    ObjectPermissionRequiredMixin, ListView
+):
+    model = ReaderStudyPermissionRequest
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = (
+            queryset.filter(reader_study=self.reader_study)
+            .exclude(status=ReaderStudyPermissionRequest.ACCEPTED)
+            .select_related("user__user_profile")
+        )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"reader_study": self.reader_study})
+        return context
+
+
 class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
     model = ReaderStudyPermissionRequest
     form_class = ReaderStudyPermissionRequestUpdateForm

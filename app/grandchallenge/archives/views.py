@@ -227,6 +227,35 @@ class ArchivePermissionRequestCreate(
         return context
 
 
+class ArchivePermissionRequestList(ObjectPermissionRequiredMixin, ListView):
+    model = ArchivePermissionRequest
+    permission_required = (
+        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.archive
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = (
+            queryset.filter(archive=self.archive)
+            .exclude(status=ArchivePermissionRequest.ACCEPTED)
+            .select_related("user__user_profile")
+        )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.archive})
+        return context
+
+
 class ArchivePermissionRequestUpdate(PermissionRequestUpdate):
     model = ArchivePermissionRequest
     form_class = ArchivePermissionRequestUpdateForm
