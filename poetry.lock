@@ -451,6 +451,17 @@ pillow = "*"
 
 [[package]]
 category = "main"
+description = "Django-filter is a reusable Django application for allowing users to filter querysets dynamically."
+name = "django-filter"
+optional = false
+python-versions = ">=3.4"
+version = "2.2.0"
+
+[package.dependencies]
+Django = ">=1.11"
+
+[[package]]
+category = "main"
 description = "Implementation of per object permissions for Django."
 name = "django-guardian"
 optional = false
@@ -1882,7 +1893,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "a7dcaddfc6d62b180f80faf2a8afc82fa74e888e7d9251ebe889fa59de1266e5"
+content-hash = "707e9368eb3388a3fd5bd1cc84ccb82767bbbcafef25ac5f1736e6a0d667760e"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -2122,6 +2133,10 @@ django-extensions = [
 ]
 django-favicon-plus = [
     {file = "django-favicon-plus-0.0.8.tar.gz", hash = "sha256:3394a951d8dc611eb1ea027ad1181d7f650ca234506585b27e93d7ed06b981bf"},
+]
+django-filter = [
+    {file = "django-filter-2.2.0.tar.gz", hash = "sha256:c3deb57f0dd7ff94d7dce52a047516822013e2b441bed472b722a317658cfd14"},
+    {file = "django_filter-2.2.0-py3-none-any.whl", hash = "sha256:558c727bce3ffa89c4a7a0b13bc8976745d63e5fd576b3a9a851650ef11c401b"},
 ]
 django-guardian = [
     {file = "django-guardian-2.1.0.tar.gz", hash = "sha256:8cf4efd67a863eb32beafd4335a38ffb083630f8ab2045212d27f8f9c3abe5a6"},

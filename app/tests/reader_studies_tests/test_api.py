@@ -440,6 +440,65 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 
 
 @pytest.mark.django_db
+def test_mine(client):
+    im1, im2 = ImageFactory(), ImageFactory()
+    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+    rs1.images.add(im1)
+    rs2.images.add(im2)
+
+    reader = UserFactory()
+    rs1.add_reader(reader)
+    rs2.add_reader(reader)
+
+    q1 = QuestionFactory(
+        reader_study=rs1, answer_type=Question.ANSWER_TYPE_BOOL
+    )
+    q2 = QuestionFactory(
+        reader_study=rs2, answer_type=Question.ANSWER_TYPE_BOOL
+    )
+
+    a1 = AnswerFactory(question=q1, creator=reader, answer=True)
+    a1.images.add(im1)
+
+    a2 = AnswerFactory(question=q2, creator=reader, answer=True)
+    a2.images.add(im2)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-mine",
+        user=reader,
+        client=client,
+        method=client.get,
+        content_type="application/json",
+    )
+    response = response.json()
+    assert response["count"] == 2
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-mine",
+        user=reader,
+        client=client,
+        method=client.get,
+        data={"question__reader_study": rs1.pk},
+        content_type="application/json",
+    )
+    response = response.json()
+    assert response["count"] == 1
+    assert response["results"][0]["pk"] == str(a1.pk)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-mine",
+        user=reader,
+        client=client,
+        method=client.get,
+        data={"question__reader_study": rs2.pk},
+        content_type="application/json",
+    )
+    response = response.json()
+    assert response["count"] == 1
+    assert response["results"][0]["pk"] == str(a2.pk)
+
+
+@pytest.mark.django_db
 def test_ground_truth_is_excluded(client):
     im = ImageFactory()
     rs = ReaderStudyFactory()
