@@ -234,7 +234,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         default=False,
         help_text=(
             "If true, readers are allowed to modify their answers for a case "
-            "by navigating back to previous cases"
+            "by navigating back to previous cases. 'allow_case_browsing' must "
+            "be checked with this as well."
+        ),
+    )
+    allow_case_navigation = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, readers are allowed to navigate back and forth between "
+            "cases in this reader study."
         ),
     )
 
