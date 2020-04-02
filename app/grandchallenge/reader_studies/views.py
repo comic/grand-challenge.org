@@ -10,9 +10,10 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -48,6 +49,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
@@ -471,6 +473,47 @@ class EditorsUpdate(ReaderStudyUserGroupUpdateMixin):
 class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     form_class = ReadersForm
     success_message = "Readers successfully updated"
+
+
+class ReaderStudyPermissionRequestCreate(
+    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+):
+    model = ReaderStudyPermissionRequest
+    fields = ()
+
+    @property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+    def get_success_message(self, cleaned_data):
+        return self.object.status_to_string()
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.reader_study = self.reader_study
+        try:
+            redirect = super().form_valid(form)
+            return redirect
+
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        permission_request = ReaderStudyPermissionRequest.objects.filter(
+            reader_study=self.reader_study, user=self.request.user
+        ).first()
+        context.update(
+            {
+                "permission_request": permission_request,
+                "reader_study": self.reader_study,
+            }
+        )
+        return context
 
 
 class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):

@@ -6,7 +6,9 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db.models import Count
+from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import (
@@ -35,6 +37,7 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.views import RawImageUploadSessionDetail
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
@@ -181,6 +184,47 @@ class ArchiveUploadersUpdate(ArchiveGroupUpdateMixin):
 class ArchiveUsersUpdate(ArchiveGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+
+class ArchivePermissionRequestCreate(
+    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+):
+    model = ArchivePermissionRequest
+    fields = ()
+
+    @property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_success_url(self):
+        return self.archive.get_absolute_url()
+
+    def get_success_message(self, cleaned_data):
+        return self.object.status_to_string()
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.archive = self.archive
+        try:
+            redirect = super().form_valid(form)
+            return redirect
+
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        permission_request = ArchivePermissionRequest.objects.filter(
+            archive=self.archive, user=self.request.user
+        ).first()
+        context.update(
+            {
+                "permission_request": permission_request,
+                "archive": self.archive,
+            }
+        )
+        return context
 
 
 class ArchivePermissionRequestUpdate(PermissionRequestUpdate):
