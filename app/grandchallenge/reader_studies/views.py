@@ -84,6 +84,13 @@ class ReaderStudyList(PermissionListMixin, ListView):
     )
     ordering = "-created"
 
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset()
+        queryset = (
+            queryset | ReaderStudy.objects.filter(public=True)
+        ).distinct()
+        return queryset
+
 
 class ReaderStudyCreate(
     UserFormKwargsMixin,

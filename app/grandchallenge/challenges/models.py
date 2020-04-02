@@ -306,6 +306,11 @@ class ChallengeBase(models.Model):
         return self.short_name
 
     @property
+    def public(self):
+        """Helper property for consistency with other objects"""
+        return not self.hidden
+
+    @property
     def gravatar_url(self):
         return (
             "https://www.gravatar.com/avatar/"

@@ -40,6 +40,7 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "logo",
             "workstation",
             "workstation_config",
+            "public",
             "detail_page_markdown",
         )
         widgets = {

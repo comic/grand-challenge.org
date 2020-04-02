@@ -73,6 +73,7 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
+            "public",
         )
         help_texts = READER_STUDY_HELP_TEXTS
 
@@ -88,6 +89,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
+            "public",
             "hanging_list",
             "case_text",
         )

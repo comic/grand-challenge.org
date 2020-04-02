@@ -146,7 +146,11 @@
                 <hr>
                 <h3>Admin Info</h3>
                 <p>
-                    This reader study uses
+                    This reader study
+                    {% if object.public %}
+                        <b>is visible to the public,</b> and
+                    {% endif %}
+                    uses
                     <a href="{{ object.workstation.get_absolute_url }}">
                         {{ object.workstation.title }}</a>
                     {% if object.workstation_config %}

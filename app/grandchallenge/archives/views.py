@@ -50,6 +50,11 @@ class ArchiveList(PermissionListMixin, ListView):
     )
     ordering = "-created"
 
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset()
+        queryset = (queryset | Archive.objects.filter(public=True)).distinct()
+        return queryset
+
 
 class ArchiveCreate(
     UserFormKwargsMixin,
