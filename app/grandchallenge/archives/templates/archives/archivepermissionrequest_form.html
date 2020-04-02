@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load clean from bleach %}
+{% load guardian_tags %}
+
+
+{% block breadcrumbs %}
+    {% get_obj_perms request.user for archive as "archive_perms" %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ archive.get_absolute_url }}">{{ archive.title }}
+        </a>
+        <li class="breadcrumb-item active"
+            aria-current="page">
+            {% if "change_archive" in archive_perms %}
+                Review access request
+            {% else %}
+                Request access
+            {% endif %}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    {% get_obj_perms request.user for archive as "archive_perms" %}
+    {% if "change_archive" in archive_perms %}
+        {% if permission_request %}
+            <h2>{{ archive.title }}: review access request for user {{ permission_request.user.username }}</h2>
+            <form action="{% url 'archives:permission-request-update' slug=archive.slug pk=permission_request.pk %}"
+                  method="post">
+                {% csrf_token %}
+                {{ form | crispy }}
+                <input type="submit"
+                       value="Submit"
+                       class="btn btn-primary"/>
+            </form>
+        {% endif %}
+
+    {% else %}
+
+        <h2>Request access</h2>
+
+        {% if not permission_request %}
+            <p>
+                You currently do not have permission to view this archive.
+                If you would like to view the archive, you can request permission here.
+            </p>
+            <p>
+                An email will be sent to the archive's editors.
+                They can grant you access.
+            </p>
+
+            <form action="{% url 'archives:permission-request-create' slug=archive.slug %}" method="post">
+                {% csrf_token %}
+                {{ form | crispy }}
+                <input type="submit"
+                       value="Request access to {{ archive.title }}"
+                       class="btn btn-primary"/>
+            </form>
+        {% else %}
+            <p>
+                You currently {% if permission_request.status != 'ACPT' %}do not {% endif %}have permission to view this
+                archive.
+            </p>
+            <p>
+                You have already sent a permission request.
+                The status of your request is <span
+                    class="font-weight-bold">{{ permission_request.get_status_display|lower }}</span>.
+            </p>
+            {% if permission_request.status == 'RJCT' %}
+                {% if permission_request.rejection_text %}
+                    <p>
+                        The archive's editors have left the following reason for the rejection:
+                    </p>
+                    <p>
+                        {{ permission_request.rejection_text }}
+                    </p>
+                {% endif %}
+                <form action="{% url 'archives:permission-request-update' slug=archive.slug pk=permission_request.pk %}"
+                      method="post">
+                    {% csrf_token %}
+                    <input type="hidden"
+                           name="status"
+                           value="PEND"/>
+                    <input type="submit"
+                           value="Request access again"
+                           class="btn btn-primary"/>
+                </form>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+{% endblock %}

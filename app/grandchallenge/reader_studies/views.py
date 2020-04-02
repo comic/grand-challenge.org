@@ -10,12 +10,16 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.exceptions import (
+    NON_FIELD_ERRORS,
+    PermissionDenied,
+    ValidationError,
+)
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import (
     CreateView,
@@ -118,6 +122,19 @@ class ReaderStudyDetail(
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
+
+    def on_permission_check_fail(self, request, response, obj=None):
+        response = self.get(request)
+        return response
+
+    def check_permissions(self, request):
+        try:
+            return super().check_permissions(request)
+        except PermissionDenied:
+            return redirect(
+                "reader-studies:permission-request-create",
+                slug=self.object.slug,
+            )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

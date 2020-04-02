@@ -1350,6 +1350,13 @@ class ReaderStudyPermissionRequest(RequestBase):
     def remove_method(self):
         return self.base_object.remove_reader
 
+    @property
+    def permission_list_url(self):
+        return reverse(
+            f"reader-studies:permission-request-list",
+            kwargs={"slug": self.base_object.slug},
+        )
+
     def __str__(self):
         return f"{self.object_name} registration request by user {self.user.username}"
 

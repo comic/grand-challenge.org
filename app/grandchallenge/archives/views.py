@@ -6,10 +6,14 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.exceptions import (
+    NON_FIELD_ERRORS,
+    PermissionDenied,
+    ValidationError,
+)
 from django.db.models import Count
 from django.forms.utils import ErrorList
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.views.generic import (
     CreateView,
@@ -82,6 +86,18 @@ class ArchiveDetail(
         f"{model._meta.app_label}.view_{model._meta.model_name}"
     )
     raise_exception = True
+
+    def on_permission_check_fail(self, request, response, obj=None):
+        response = self.get(request)
+        return response
+
+    def check_permissions(self, request):
+        try:
+            return super().check_permissions(request)
+        except PermissionDenied:
+            return redirect(
+                "archives:permission-request-create", slug=self.object.slug
+            )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

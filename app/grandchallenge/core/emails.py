@@ -17,7 +17,8 @@ def send_permission_request_email(obj):
     kwargs = {
         "user": obj.user,
         "site": Site.objects.get_current(),
-        "algorithm": obj.base_object,
+        "base_object": obj.base_object,
+        "permission_list_url": obj.permission_list_url,
     }
     for editor in obj.base_object.editors_group.user_set.all():
         kwargs["editor"] = editor
@@ -43,7 +44,7 @@ def send_permission_granted_email(obj):
     kwargs = {
         "user": obj.user,
         "site": Site.objects.get_current(),
-        "algorithm": obj.base_object,
+        "base_object": obj.base_object,
     }
     send_templated_email(
         title,
@@ -68,7 +69,7 @@ def send_permission_denied_email(obj):
     kwargs = {
         "user": obj.user,
         "site": Site.objects.get_current(),
-        "algorithm": obj.base_object,
+        "base_object": obj.base_object,
         "permission_request": obj,
     }
     send_templated_email(
