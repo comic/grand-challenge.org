@@ -24,6 +24,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
@@ -604,7 +605,8 @@ class AnswerViewSet(
         .prefetch_related("images")
     )
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["question__reader_study"]
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
