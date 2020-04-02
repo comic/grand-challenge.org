@@ -12,6 +12,9 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyImages,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
+    ReaderStudyPermissionRequestCreate,
+    ReaderStudyPermissionRequestList,
+    ReaderStudyPermissionRequestUpdate,
     ReaderStudyStatistics,
     ReaderStudyUpdate,
     ReaderStudyUserAutocomplete,
@@ -71,5 +74,20 @@ urlpatterns = [
         "<slug>/readers/update/",
         ReadersUpdate.as_view(),
         name="readers-update",
+    ),
+    path(
+        "<slug>/permission-requests/",
+        ReaderStudyPermissionRequestList.as_view(),
+        name="permission-request-list",
+    ),
+    path(
+        "<slug>/permission-requests/create/",
+        ReaderStudyPermissionRequestCreate.as_view(),
+        name="permission-request-create",
+    ),
+    path(
+        "<slug>/permission-requests/<int:pk>/update/",
+        ReaderStudyPermissionRequestUpdate.as_view(),
+        name="permission-request-update",
     ),
 ]
