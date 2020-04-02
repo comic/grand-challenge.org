@@ -98,6 +98,10 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     def validate(self, attrs):
         answer = attrs.get("answer")
         if self.instance:
+            if (
+                not self.instance.question.reader_study.allow_answer_modification
+            ):
+                return {}
             question = self.instance.question
             images = self.instance.images.all()
             creator = self.instance.creator
