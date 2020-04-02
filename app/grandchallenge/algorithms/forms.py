@@ -20,6 +20,7 @@ from grandchallenge.algorithms.models import (
     Result,
 )
 from grandchallenge.core.forms import (
+    PermissionRequestUpdateForm,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
@@ -124,19 +125,23 @@ class EditorsForm(UserGroupForm):
 class UsersForm(UserGroupForm):
     role = "user"
 
-    def add_or_remove_user(self, *args, algorithm):
+    def add_or_remove_user(self, *, algorithm):
         super().add_or_remove_user(algorithm=algorithm)
+
         user = self.cleaned_data["user"]
+
         try:
             permission_request = AlgorithmPermissionRequest.objects.get(
                 user=user, algorithm=algorithm
             )
         except ObjectDoesNotExist:
             return
+
         if self.cleaned_data["action"] == self.REMOVE:
             permission_request.status = AlgorithmPermissionRequest.REJECTED
         else:
             permission_request.status = AlgorithmPermissionRequest.ACCEPTED
+
         permission_request.save()
 
 
@@ -146,15 +151,6 @@ class ResultForm(SaveFormInitMixin, ModelForm):
         fields = ("comment", "public")
 
 
-class PermissionRequestUpdateForm(SaveFormInitMixin, ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["status"].choices = (
-            c
-            for c in AlgorithmPermissionRequest.REGISTRATION_CHOICES
-            if c[0] != AlgorithmPermissionRequest.PENDING
-        )
-
-    class Meta:
+class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
+    class Meta(PermissionRequestUpdateForm.Meta):
         model = AlgorithmPermissionRequest
-        fields = ("status", "rejection_text")

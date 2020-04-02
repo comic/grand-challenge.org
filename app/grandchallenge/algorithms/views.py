@@ -38,8 +38,8 @@ from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
+    AlgorithmPermissionRequestUpdateForm,
     EditorsForm,
-    PermissionRequestUpdateForm,
     ResultForm,
     UsersForm,
 )
@@ -536,7 +536,7 @@ class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
 
 class AlgorithmPermissionRequestUpdate(SuccessMessageMixin, UpdateView):
     model = AlgorithmPermissionRequest
-    form_class = PermissionRequestUpdateForm
+    form_class = AlgorithmPermissionRequestUpdateForm
 
     @property
     def algorithm(self) -> Algorithm:
