@@ -59,7 +59,7 @@ def _get_headers_by_study(path):
     """
     studies = {}
     errors = {}
-    series_indices = {}
+    indices = {}
     for file in path.iterdir():
         if not file.is_file():
             continue
@@ -68,12 +68,13 @@ def _get_headers_by_study(path):
                 ds = pydicom.filereader.read_partial(
                     f, stop_when=pixel_data_reached
                 )
-                key = f"{ds.StudyInstanceUID}-{ds.SeriesInstanceUID}"
+                index_key = f"{ds.Rows}x{ds.Columns}"
+                key = f"{ds.StudyInstanceUID}-{index_key}"
                 studies[key] = studies.get(key, {})
-                index = series_indices.get(ds.SeriesInstanceUID)
-                if not index:
-                    index = max(list(series_indices.values()) + [-1]) + 1
-                    series_indices[ds.SeriesInstanceUID] = index
+                index = indices.get(index_key)
+                if index is None:
+                    index = max(list(indices.values()) + [-1]) + 1
+                    indices[index_key] = index
                 headers = studies[key].get("headers", [])
                 headers.append({"file": file, "data": ds})
                 studies[key]["index"] = index
@@ -110,7 +111,7 @@ def _validate_dicom_files(path):
     studies, errors = _get_headers_by_study(path)
     result = []
     dicom_dataset = namedtuple(
-        "dicom_dataset", ["headers", "n_time", "n_slices", "series_index"]
+        "dicom_dataset", ["headers", "n_time", "n_slices", "index"]
     )
     for key in studies:
         headers = studies[key]["headers"]
@@ -125,7 +126,7 @@ def _validate_dicom_files(path):
                     headers=headers,
                     n_time=n_time,
                     n_slices=len(headers),
-                    series_index=index,
+                    index=index,
                 )
             )
             continue
@@ -138,10 +139,7 @@ def _validate_dicom_files(path):
         n_slices = len(headers) // n_time
         result.append(
             dicom_dataset(
-                headers=headers,
-                n_time=n_time,
-                n_slices=n_slices,
-                series_index=index,
+                headers=headers, n_time=n_time, n_slices=n_slices, index=index,
             )
         )
     del studies
@@ -241,7 +239,7 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     # Convert the SimpleITK image to our internal representation
     return convert_itk_to_internal(
         img,
-        name=f"{str(session_id)[:8]}-{dicom_ds.headers[0]['data'].StudyInstanceUID}-{dicom_ds.series_index}",
+        name=f"{str(session_id)[:8]}-{dicom_ds.headers[0]['data'].StudyInstanceUID}-{dicom_ds.index}",
     )
 
 
