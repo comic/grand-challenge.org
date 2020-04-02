@@ -572,6 +572,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     )
                 )
                 .filter(answers_for_user=0)
+                .order_by("name")
                 .distinct()
                 .values_list("name", flat=True)
             )
