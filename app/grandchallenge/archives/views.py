@@ -25,15 +25,17 @@ from guardian.mixins import (
 from grandchallenge.archives.forms import (
     ArchiveCasesToReaderStudyForm,
     ArchiveForm,
+    ArchivePermissionRequestUpdateForm,
     EditorsForm,
     UploadersForm,
     UsersForm,
 )
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.views import RawImageUploadSessionDetail
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
@@ -179,6 +181,19 @@ class ArchiveUploadersUpdate(ArchiveGroupUpdateMixin):
 class ArchiveUsersUpdate(ArchiveGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+
+class ArchivePermissionRequestUpdate(PermissionRequestUpdate):
+    model = ArchivePermissionRequest
+    form_class = ArchivePermissionRequestUpdateForm
+    base_model = Archive
+    redirect_namespace = "archives"
+    user_check_attrs = ["is_user", "is_uploader", "is_editor"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"archive": self.base_object})
+        return context
 
 
 class ArchiveUploadSessionCreate(

@@ -51,16 +51,23 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
     EditorsForm,
     GroundTruthForm,
     QuestionForm,
     ReaderStudyCreateForm,
+    ReaderStudyPermissionRequestUpdateForm,
     ReaderStudyUpdateForm,
     ReadersForm,
 )
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    Answer,
+    Question,
+    ReaderStudy,
+    ReaderStudyPermissionRequest,
+)
 from grandchallenge.reader_studies.serializers import (
     AnswerSerializer,
     QuestionSerializer,
@@ -464,6 +471,19 @@ class EditorsUpdate(ReaderStudyUserGroupUpdateMixin):
 class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     form_class = ReadersForm
     success_message = "Readers successfully updated"
+
+
+class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
+    model = ReaderStudyPermissionRequest
+    form_class = ReaderStudyPermissionRequestUpdateForm
+    base_model = ReaderStudy
+    redirect_namespace = "reader-studies"
+    user_check_attrs = ["is_reader", "is_editor"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"reader_study": self.base_object})
+        return context
 
 
 class ExportCSVMixin(object):
