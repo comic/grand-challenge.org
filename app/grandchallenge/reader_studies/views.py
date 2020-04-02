@@ -170,6 +170,15 @@ class ReaderStudyDetail(
                 ),
             }
         )
+
+        pending_permission_requests = ReaderStudyPermissionRequest.objects.filter(
+            reader_study=context["object"],
+            status=ReaderStudyPermissionRequest.PENDING,
+        ).count()
+        context.update(
+            {"pending_permission_requests": pending_permission_requests}
+        )
+
         return context
 
 

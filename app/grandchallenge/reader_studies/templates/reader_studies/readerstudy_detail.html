@@ -35,6 +35,11 @@
                    href="#v-pills-readers" role="tab" aria-controls="v-pills-readers"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Readers
                 </a>
+                <a class="nav-link"
+                   href="{% url 'reader-studies:permission-request-list' slug=object.slug %}"
+                ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
+                        class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
+                </a>
                 <a class="nav-link" id="v-pills-cases-tab" data-toggle="pill"
                    href="#v-pills-cases" role="tab" aria-controls="v-pills-cases"
                    aria-selected="false"><i class="fas fa-image fa-fw"></i>&nbsp;Cases&nbsp;<span

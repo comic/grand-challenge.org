@@ -115,6 +115,13 @@ class ArchiveDetail(
             }
         )
 
+        pending_permission_requests = ArchivePermissionRequest.objects.filter(
+            archive=context["object"], status=ArchivePermissionRequest.PENDING,
+        ).count()
+        context.update(
+            {"pending_permission_requests": pending_permission_requests}
+        )
+
         return context
 
 

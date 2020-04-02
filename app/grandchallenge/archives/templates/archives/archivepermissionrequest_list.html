@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load url %}
+{% load profiles %}
+{% load humanize %}
+
+{% block title %}
+    Permission Requests - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
+                class="fas fa-home"></i></a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'archives:list' %}">Archives</a>
+        </li>
+
+        <li class="breadcrumb-item"><a
+                href="{{ archive.get_absolute_url }}">{{ archive.title }}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Permission requests
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Permission Requests for {{ archive.title }}</h2>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm" id="usersTable">
+            <thead class="thead-light">
+            <tr>
+                <th>Created</th>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Institution</th>
+                <th>Department</th>
+                <th>Location</th>
+                <th>Website</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {% for request in object_list %}
+
+                <tr>
+                    <td data-order='{{ request.created|date:"U" }}'>
+                        {{ request.created|naturaltime }}
+                    </td>
+                    <td>
+                        {{ request.user|user_profile_link }}
+                    </td>
+                    <td>
+                        {{ request.user.get_full_name }}
+                    </td>
+                    <td>
+                        {{ request.user.email }}
+                    </td>
+                    <td>
+                        {{ request.user.user_profile.institution }}
+                    </td>
+                    <td>
+                        {{ request.user.user_profile.department }}
+                    </td>
+                    <td>
+                        {{ request.user.user_profile.country.name }}
+                    </td>
+                    <td>
+                        <a href="{{ request.user.user_profile.website }}">
+                            {{ request.user.user_profile.website }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'archives:permission-request-update' slug=archive.slug pk=request.pk %}"
+                                {% if request.get_status_display|lower == "rejected" %}
+                           class="text-danger"
+                                {% endif %}
+                        >
+                            {{ request.get_status_display }}
+                        </a>
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#usersTable').DataTable({
+                order: [[8, "asc"], [0, "desc"]],
+                "pageLength": 25,
+                "columnDefs": [{
+                    "targets": [7],
+                    "searchable": false,
+                    "orderable": false
+                }]
+            });
+        });
+    </script>
+{% endblock %}
