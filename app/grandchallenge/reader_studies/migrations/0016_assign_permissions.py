@@ -4,9 +4,13 @@ from django.db import migrations
 def add_change_permissions(apps, schema_editor):
     Answer = apps.get_model("reader_studies", "Answer")  # noqa: N806
     Permission = apps.get_model("auth", "Permission")  # noqa: N806
-    change_answer = Permission.objects.get(
-        content_type__app_label="reader_studies", codename="change_answer"
-    )
+    try:
+        change_answer = Permission.objects.get(
+            content_type__app_label="reader_studies", codename="change_answer"
+        )
+    except Permission.DoesNotExist:
+        # We are running tests
+        return
     UserObjectPermission = apps.get_model(  # noqa: N806
         "guardian", "UserObjectPermission"
     )

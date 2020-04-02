@@ -102,7 +102,7 @@ def test_answer_create(client):
 def test_answer_update(client):
     im1, im2 = ImageFactory(), ImageFactory()
 
-    rs = ReaderStudyFactory()
+    rs = ReaderStudyFactory(allow_answer_modification=True)
     rs.images.add(im1, im2)
     rs.save()
 
