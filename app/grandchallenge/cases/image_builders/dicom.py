@@ -59,6 +59,7 @@ def _get_headers_by_study(path):
     """
     studies = {}
     errors = {}
+    indices = {}
     for file in path.iterdir():
         if not file.is_file():
             continue
@@ -67,12 +68,17 @@ def _get_headers_by_study(path):
                 ds = pydicom.filereader.read_partial(
                     f, stop_when=pixel_data_reached
                 )
-                studies[ds.StudyInstanceUID] = studies.get(
-                    ds.StudyInstanceUID, {}
-                )
-                headers = studies[ds.StudyInstanceUID].get("headers", [])
+                index_key = f"{ds.Rows}x{ds.Columns}"
+                key = f"{ds.StudyInstanceUID}-{index_key}"
+                studies[key] = studies.get(key, {})
+                index = indices.get(index_key)
+                if index is None:
+                    index = max(list(indices.values()) + [-1]) + 1
+                    indices[index_key] = index
+                headers = studies[key].get("headers", [])
                 headers.append({"file": file, "data": ds})
-                studies[ds.StudyInstanceUID]["headers"] = headers
+                studies[key]["index"] = index
+                studies[key]["headers"] = headers
             except Exception as e:
                 errors[file.name] = str(e)
 
@@ -105,10 +111,11 @@ def _validate_dicom_files(path):
     studies, errors = _get_headers_by_study(path)
     result = []
     dicom_dataset = namedtuple(
-        "dicom_dataset", ["headers", "n_time", "n_slices"]
+        "dicom_dataset", ["headers", "n_time", "n_slices", "index"]
     )
     for key in studies:
         headers = studies[key]["headers"]
+        index = studies[key]["index"]
         if not headers:
             continue
         n_time = getattr(headers[-1]["data"], "TemporalPositionIndex", None)
@@ -116,7 +123,10 @@ def _validate_dicom_files(path):
         if n_time is None:
             result.append(
                 dicom_dataset(
-                    headers=headers, n_time=n_time, n_slices=len(headers)
+                    headers=headers,
+                    n_time=n_time,
+                    n_slices=len(headers),
+                    index=index,
                 )
             )
             continue
@@ -128,7 +138,9 @@ def _validate_dicom_files(path):
             continue
         n_slices = len(headers) // n_time
         result.append(
-            dicom_dataset(headers=headers, n_time=n_time, n_slices=n_slices)
+            dicom_dataset(
+                headers=headers, n_time=n_time, n_slices=n_slices, index=index,
+            )
         )
     del studies
     return result, errors
@@ -227,7 +239,7 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     # Convert the SimpleITK image to our internal representation
     return convert_itk_to_internal(
         img,
-        name=f"{str(session_id)[:8]}-{dicom_ds.headers[0]['data'].StudyInstanceUID}",
+        name=f"{str(session_id)[:8]}-{dicom_ds.headers[0]['data'].StudyInstanceUID}-{dicom_ds.index}",
     )
 
 
