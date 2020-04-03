@@ -234,7 +234,7 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
 
     for f in OPTIONAL_METADATA_FIELDS:
         if getattr(ref_file, f, False):
-            img.SetMetaData(f, getattr(ref_file, f))
+            img.SetMetaData(f, str(getattr(ref_file, f)))
 
     # Convert the SimpleITK image to our internal representation
     return convert_itk_to_internal(
