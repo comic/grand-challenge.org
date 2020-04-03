@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from rest_framework.fields import CharField, ReadOnlyField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
@@ -101,7 +102,13 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             if (
                 not self.instance.question.reader_study.allow_answer_modification
             ):
-                return {}
+                raise ValidationError(
+                    f"This reader study does not allow answer modification."
+                )
+            if list(attrs.keys()) != ["answer"]:
+                raise ValidationError(
+                    f"Only the answer field can be modified."
+                )
             question = self.instance.question
             images = self.instance.images.all()
             creator = self.instance.creator

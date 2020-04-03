@@ -102,7 +102,7 @@ def test_answer_create(client):
 def test_answer_update(client):
     im1, im2 = ImageFactory(), ImageFactory()
 
-    rs = ReaderStudyFactory(allow_answer_modification=True)
+    rs = ReaderStudyFactory()
     rs.images.add(im1, im2)
     rs.save()
 
@@ -136,6 +136,49 @@ def test_answer_update(client):
         client=client,
         method=client.patch,
         data={"answer": False, "images": [im2.api_url]},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
+    answer.refresh_from_db()
+    assert response.json() == {
+        "non_field_errors": [
+            "This reader study does not allow answer modification."
+        ]
+    }
+    assert answer.answer is True
+    assert answer.images.first() == im1
+    assert answer.history.count() == 1
+
+    rs.allow_answer_modification = True
+    rs.save()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        reverse_kwargs={"pk": answer.pk},
+        user=reader,
+        client=client,
+        method=client.patch,
+        data={"answer": False, "images": [im2.api_url]},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
+    answer.refresh_from_db()
+    assert response.json() == {
+        "non_field_errors": ["Only the answer field can be modified."]
+    }
+    assert answer.answer is True
+    assert answer.images.first() == im1
+    assert answer.history.count() == 1
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        reverse_kwargs={"pk": answer.pk},
+        user=reader,
+        client=client,
+        method=client.patch,
+        data={"answer": False},
         content_type="application/json",
     )
     assert response.status_code == 200
