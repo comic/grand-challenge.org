@@ -273,7 +273,7 @@ def extract_and_flatten(file, path, index, prefix="", is_tar=False):
                 "path": path / filename,
             }
         )
-    return max(indices.values()), new_files
+    return max(list(indices.values()) + [index]), new_files
 
 
 def check_compressed_and_extract(file_path, target_path, index, prefix=None):
