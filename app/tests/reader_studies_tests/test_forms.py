@@ -465,8 +465,8 @@ def test_reader_study_add_ground_truth(client, settings):
         )
     assert response.status_code == 200
     assert (
-        "Fields provided do not match with reader study"
-        in response.rendered_content
+        f"Fields provided do not match with reader study. Fields should "
+        f"be: {rs.ground_truth_file_headers}" in response.rendered_content
     )
 
     q.question_text = "foo"
@@ -486,6 +486,30 @@ def test_reader_study_add_ground_truth(client, settings):
     assert (
         "Images provided do not match hanging protocol"
         in response.rendered_content
+    )
+
+    with open(RESOURCE_PATH / "ground_truth_wrong_images.csv") as gt:
+        response = get_view_for_user(
+            viewname="reader-studies:add-ground-truth",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"ground_truth": gt},
+            follow=True,
+            user=editor,
+        )
+    assert response.status_code == 200
+    assert (
+        "Images provided do not match hanging protocol"
+        in response.rendered_content
+    )
+    assert (
+        f"The following images appear in the file, but not in the hanging "
+        f"list: im5." in response.rendered_content
+    )
+    assert (
+        "These images appear in the hanging list, but not in the file: im4."
+        in response.rendered_content.replace(r"[\n']", "")
     )
 
     rs.hanging_list = [

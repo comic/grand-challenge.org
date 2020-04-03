@@ -85,23 +85,24 @@
                 </span>
             {% endif %}
             {% if not object.hanging_list_valid %}
-                {% if object.hanging_list_diff.in_study_list|length > 0 %}
-                    <hr>
-                    The following image names appear in the study but not in the
-                    hanging list: <br/>
-                    <span class="font-weight-bold">
-                        {{ object.hanging_list_diff.in_study_list|join:', ' }}
-                    </span>
-                {% endif %}
-                {% if object.hanging_list_diff.in_hanging_list|length > 0 %}
-                    <hr>
-                    The following image names appear in the hanging list but not in
-                    the study: <br/>
-                    <span class="font-weight-bold">
-                        {{ object.hanging_list_diff.in_hanging_list|join:', ' }}
-                    </span>
-                {% endif %}
-
+                {% with diff=object.hanging_list_diff %}
+                    {% if diff.in_provided_list|length > 0 %}
+                        <hr>
+                        The following image names appear in the study but not in the
+                        hanging list: <br/>
+                        <span class="font-weight-bold">
+                            {{ diff.in_provided_list|join:', ' }}
+                        </span>
+                    {% endif %}
+                    {% if diff.in_hanging_list|length > 0 %}
+                        <hr>
+                        The following image names appear in the hanging list but not in
+                        the study: <br/>
+                        <span class="font-weight-bold">
+                            {{ diff.in_hanging_list|join:', ' }}
+                        </span>
+                    {% endif %}
+                {% endwith %}
             {% endif %}
             <hr>
 

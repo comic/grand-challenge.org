@@ -235,12 +235,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def __str__(self):
         return f"{self.title}"
 
+    @property
+    def ground_truth_file_headers(self):
+        return f"images,{','.join([q.question_text for q in self.questions.all()])}"
+
     def get_example_ground_truth_csv(self):
         if len(self.hanging_list) == 0:
             return "No cases in this reader study"
         questions = self.questions.all()
         return (
-            f"images,{','.join([q.question_text for q in questions])}\n"
+            f"{self.ground_truth_file_headers}\n"
             f"{';'.join(self.image_groups[0])},{','.join([q.example_answer for q in questions])}"
         )
 
@@ -362,17 +366,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             self.hanging_image_names
         )
 
-    @property
-    def hanging_list_diff(self):
+    def hanging_list_diff(self, provided=None):
         """
         Returns the diff between the images added to the study and the images
         in the hanging list.
         """
+        comparison = provided or self.study_image_names
         return {
-            "in_study_list": set(self.study_image_names)
+            "in_provided_list": set(comparison)
             - set(self.hanging_image_names),
-            "in_hanging_list": set(self.hanging_image_names)
-            - set(self.study_image_names),
+            "in_hanging_list": set(self.hanging_image_names) - set(comparison),
         }
 
     @property
