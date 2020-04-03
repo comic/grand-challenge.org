@@ -78,6 +78,30 @@
                 <i class="fas {% if object.show_display_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
+        <tr>
+            <td class="font-weight-bold">Invert tool</td>
+            <td>
+                <i class="fas {% if object.show_invert_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Flip tool</td>
+            <td>
+                <i class="fas {% if object.show_flip_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Window level tool</td>
+            <td>
+                <i class="fas {% if object.show_window_level_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Reset tool</td>
+            <td>
+                <i class="fas {% if object.show_reset_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
     </table>
 
     {% if "change_workstationconfig" in config_perms %}
