@@ -543,6 +543,9 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
     form_class = AlgorithmPermissionRequestUpdateForm
     base_model = Algorithm
     redirect_namespace = "algorithms"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()

@@ -590,6 +590,9 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
     base_model = ReaderStudy
     redirect_namespace = "reader-studies"
     user_check_attrs = ["is_reader", "is_editor"]
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()

@@ -63,7 +63,7 @@
             </form>
         {% else %}
             <p>
-                You currently {% if permission_request.status != 'ACPT' %}do not {% endif %}have permission to view this
+                You currently {% if permission_request.status != permission_request.ACCEPTED %}do not {% endif %}have permission to view this
                 archive.
             </p>
             <p>
@@ -71,7 +71,7 @@
                 The status of your request is <span
                     class="font-weight-bold">{{ permission_request.get_status_display|lower }}</span>.
             </p>
-            {% if permission_request.status == 'RJCT' %}
+            {% if permission_request.status == permission_request.REJECTED %}
                 {% if permission_request.rejection_text %}
                     <p>
                         The archive's editors have left the following reason for the rejection:
@@ -80,16 +80,6 @@
                         {{ permission_request.rejection_text }}
                     </p>
                 {% endif %}
-                <form action="{% url 'archives:permission-request-update' slug=archive.slug pk=permission_request.pk %}"
-                      method="post">
-                    {% csrf_token %}
-                    <input type="hidden"
-                           name="status"
-                           value="PEND"/>
-                    <input type="submit"
-                           value="Request access again"
-                           class="btn btn-primary"/>
-                </form>
             {% endif %}
         {% endif %}
     {% endif %}

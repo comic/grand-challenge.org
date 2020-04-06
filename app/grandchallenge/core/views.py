@@ -7,7 +7,11 @@ from django.core.exceptions import (
 from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView, UpdateView
+from guardian.mixins import (
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
+from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -15,13 +19,19 @@ class HomeTemplate(TemplateView):
     template_name = "home.html"
 
 
-class PermissionRequestUpdate(SuccessMessageMixin, UpdateView):
+class PermissionRequestUpdate(
+    UserIsNotAnonMixin,
+    SuccessMessageMixin,
+    ObjectPermissionRequiredMixin,
+    UpdateView,
+):
     # The model that the permission request is for
     base_model = None
     # The namespace of the app to redirect to
     redirect_namespace = None
     # Checks on whether the permission request user is in these groups
     user_check_attrs = ["is_user", "is_editor"]
+    raise_exception = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,6 +44,9 @@ class PermissionRequestUpdate(SuccessMessageMixin, UpdateView):
     @property
     def base_object(self):
         return get_object_or_404(self.base_model, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.base_object
 
     def form_valid(self, form):
         permission_request = self.get_object()

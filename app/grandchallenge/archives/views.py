@@ -294,6 +294,9 @@ class ArchivePermissionRequestUpdate(PermissionRequestUpdate):
     base_model = Archive
     redirect_namespace = "archives"
     user_check_attrs = ["is_user", "is_uploader", "is_editor"]
+    permission_required = (
+        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()

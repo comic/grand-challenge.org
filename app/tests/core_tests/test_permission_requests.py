@@ -94,7 +94,7 @@ def test_permission_request_workflow(
     )
     assert response.status_code == 200
 
-    # The permission update url should viewable by this user
+    # The permission update url should not be viewable by this user
     permission_update_url = reverse(
         f"{namespace}:permission-request-update",
         kwargs={"slug": base_object.slug, "pk": pr.pk},
@@ -102,7 +102,7 @@ def test_permission_request_workflow(
     response = get_view_for_user(
         client=client, user=user, url=permission_update_url
     )
-    assert response.status_code == 200
+    assert response.status_code == 403
 
     # But this user should not be able to change it
     response = get_view_for_user(
@@ -112,16 +112,16 @@ def test_permission_request_workflow(
         method=client.post,
         data={"status": pr.ACCEPTED},
     )
-    assert response.status_code == 302
+    assert response.status_code == 403
     pr.refresh_from_db()
     assert pr.status == request_model.PENDING
 
-    # New users should be able to see the permission request status
+    # New users should not be able to see the permission request status
     editor = UserFactory()
     response = get_view_for_user(
         client=client, user=editor, url=permission_update_url
     )
-    assert response.status_code == 200
+    assert response.status_code == 403
 
     # The new user should not be able to change it
     response = get_view_for_user(
@@ -131,7 +131,7 @@ def test_permission_request_workflow(
         method=client.post,
         data={"status": pr.ACCEPTED},
     )
-    assert response.status_code == 302
+    assert response.status_code == 403
     pr.refresh_from_db()
     assert pr.status == request_model.PENDING
 

@@ -267,11 +267,9 @@ def test_algorithm_permission_request_update(client):
         follow=True,
     )
 
-    assert "review access request for user" not in response.rendered_content
-    assert "Request access" in response.rendered_content
+    assert response.status_code == 403
 
-    # User should not be able to change the status to anything other
-    # than 'pending'
+    # User should not be able to change the status
     response = get_view_for_user(
         viewname="algorithms:permission-request-update",
         reverse_kwargs={"slug": slugify(alg.slug), "pk": pr.pk},
@@ -283,8 +281,8 @@ def test_algorithm_permission_request_update(client):
     )
 
     pr.refresh_from_db()
-    assert response.status_code == 200
-    assert pr.status == AlgorithmPermissionRequest.PENDING
+    assert response.status_code == 403
+    assert pr.status == AlgorithmPermissionRequest.REJECTED
 
     response = get_view_for_user(
         viewname="algorithms:permission-request-update",
