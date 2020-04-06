@@ -16,6 +16,7 @@ from django.db import transaction
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -32,15 +33,10 @@ from guardian.mixins import (
 )
 from guardian.shortcuts import get_perms
 from rest_framework.decorators import action
-from rest_framework.mixins import (
-    CreateModelMixin,
-    ListModelMixin,
-    RetrieveModelMixin,
-)
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import (
-    GenericViewSet,
+    ModelViewSet,
     ReadOnlyModelViewSet,
 )
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -50,6 +46,7 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
+    DjangoObjectOnlyWithCustomPostPermissions,
 )
 from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
@@ -513,21 +510,21 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     def export_answers(self, request, pk=None):
         reader_study = self.get_object()
         self._check_change_perms(request.user, reader_study)
-
-        data = [
-            answer.csv_values
-            for answer in Answer.objects.select_related(
-                "question__reader_study"
-            )
+        data = []
+        headers = []
+        for answer in (
+            Answer.objects.select_related("question__reader_study")
             .select_related("creator")
             .prefetch_related("images")
             .filter(question__reader_study=reader_study, is_ground_truth=False)
-        ]
-
+        ):
+            data += [answer.csv_values]
+            if len(answer.csv_headers) > len(headers):
+                headers = answer.csv_headers
         return self._create_csv_response(
             data,
-            Answer.csv_headers,
-            filename=f"{reader_study.slug}-answers.csv",
+            headers,
+            filename=f"{reader_study.slug}-answers-{timezone.now().isoformat()}.csv",
         )
 
     @action(detail=True, methods=["patch"])
@@ -595,16 +592,14 @@ class QuestionViewSet(ReadOnlyModelViewSet):
     filter_backends = [ObjectPermissionsFilter]
 
 
-class AnswerViewSet(
-    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
-):
+class AnswerViewSet(ModelViewSet):
     serializer_class = AnswerSerializer
     queryset = (
         Answer.objects.all()
         .select_related("creator", "question__reader_study")
         .prefetch_related("images")
     )
-    permission_classes = [DjangoObjectPermissions]
+    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["question__reader_study"]
 

@@ -71,8 +71,21 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
+            "allow_answer_modification",
+            "allow_case_navigation",
         )
         help_texts = READER_STUDY_HELP_TEXTS
+
+    def clean(self):
+        super().clean()
+        if (
+            self.cleaned_data["allow_answer_modification"]
+            and not self.cleaned_data["allow_case_navigation"]
+        ):
+            self.add_error(
+                error="`allow_case_navigation` must be checked if `allow_answer_modification` is",
+                field=None,
+            )
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
@@ -86,6 +99,8 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
+            "allow_answer_modification",
+            "allow_case_navigation",
             "hanging_list",
             "case_text",
         )

@@ -1,3 +1,4 @@
+import itertools
 import json
 from collections import Counter
 
@@ -15,6 +16,7 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
+from simple_history.models import HistoricalRecords
 from sklearn.metrics import accuracy_score
 
 from grandchallenge.cases.models import Image
@@ -227,6 +229,21 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         default=dict,
         blank=True,
         validators=[JSONSchemaValidator(schema=CASE_TEXT_SCHEMA)],
+    )
+    allow_answer_modification = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, readers are allowed to modify their answers for a case "
+            "by navigating back to previous cases. 'allow_case_browsing' must "
+            "be checked with this as well."
+        ),
+    )
+    allow_case_navigation = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, readers are allowed to navigate back and forth between "
+            "cases in this reader study."
+        ),
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
@@ -1168,8 +1185,19 @@ class Answer(UUIDModel):
     answer = JSONField()
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
+    history = HistoricalRecords(
+        excluded_fields=[
+            "created",
+            "modified",
+            "creator",
+            "question",
+            "images",
+            "is_ground_truth",
+            "score",
+        ],
+    )
 
-    csv_headers = Question.csv_headers + [
+    _csv_headers = Question.csv_headers + [
         "Created",
         "Answer",
         "Images",
@@ -1189,19 +1217,44 @@ class Answer(UUIDModel):
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
 
+    @cached_property
+    def history_values(self):
+        return self.history.values_list("answer", "history_date")
+
     @property
     def csv_values(self):
         """Values that are included in this ``Answer``'s csv export."""
-        return self.question.csv_values + [
-            self.created.isoformat(),
-            self.answer_text,
-            "; ".join(self.images.values_list("name", flat=True)),
-            self.creator.username,
-        ]
+        return (
+            self.question.csv_values
+            + [
+                self.created.isoformat(),
+                self.answer_text,
+                "; ".join(self.images.values_list("name", flat=True)),
+                self.creator.username,
+            ]
+            + list(itertools.chain(*self.history_values))
+        )
+
+    @property
+    def csv_headers(self):
+        return self._csv_headers + list(
+            itertools.chain(
+                *[
+                    [f"Answer-{x}", f"Modification_date-{x}"]
+                    for x in range(len(self.history_values))
+                ]
+            )
+        )
 
     @staticmethod
     def validate(  # noqa: C901
-        *, creator, question, answer, images, is_ground_truth=False
+        *,
+        creator,
+        question,
+        answer,
+        images,
+        is_ground_truth=False,
+        instance=None,
     ):
         """Validates all fields provided for ``answer``."""
         if len(images) == 0:
@@ -1226,12 +1279,16 @@ class Answer(UUIDModel):
                     "Ground truth already added for this question/image combination"
                 )
         else:
-            if Answer.objects.filter(
-                creator=creator,
-                question=question,
-                images__in=images,
-                is_ground_truth=False,
-            ).exists():
+            if (
+                Answer.objects.filter(
+                    creator=creator,
+                    question=question,
+                    images__in=images,
+                    is_ground_truth=False,
+                )
+                .exclude(pk=getattr(instance, "pk", None))
+                .exists()
+            ):
                 raise ValidationError(
                     f"User {creator} has already answered this question "
                     f"for at least 1 of these images."
@@ -1303,3 +1360,4 @@ class Answer(UUIDModel):
             self,
         )
         assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+        assign_perm(f"change_{self._meta.model_name}", self.creator, self)
