@@ -1,5 +1,6 @@
 import csv
 import io
+import itertools
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
@@ -74,8 +75,21 @@ class ReaderStudyCreateForm(
             "workstation_config",
             "is_educational",
             "public",
+            "allow_answer_modification",
+            "allow_case_navigation",
         )
         help_texts = READER_STUDY_HELP_TEXTS
+
+    def clean(self):
+        super().clean()
+        if (
+            self.cleaned_data["allow_answer_modification"]
+            and not self.cleaned_data["allow_case_navigation"]
+        ):
+            self.add_error(
+                error="`allow_case_navigation` must be checked if `allow_answer_modification` is",
+                field=None,
+            )
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
@@ -90,6 +104,8 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "shuffle_hanging_list",
             "is_educational",
             "public",
+            "allow_answer_modification",
+            "allow_case_navigation",
             "hanging_list",
             "case_text",
         )
@@ -330,16 +346,23 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             )
         ):
             raise ValidationError(
-                "Fields provided do not match with reader study"
+                f"Fields provided do not match with reader study. Fields should "
+                f"be: {self.reader_study.ground_truth_file_headers}"
             )
 
         values = [x for x in rdr]
 
-        if sorted([sorted(x["images"].split(";")) for x in values]) != sorted(
-            self.reader_study.image_groups
-        ):
+        images = sorted([sorted(x["images"].split(";")) for x in values])
+        if images != sorted(self.reader_study.image_groups):
+            diff = self.reader_study.hanging_list_diff(
+                provided=list(itertools.chain(*images))
+            )
             raise ValidationError(
-                "Images provided do not match hanging protocol"
+                f"Images provided do not match hanging protocol. The following "
+                f"images appear in the file, but not in the hanging list: "
+                f"{', '.join(diff['in_provided_list'])}. These images appear "
+                f"in the hanging list, but not in the file: "
+                f"{', '.join(diff['in_hanging_list'])}."
             )
 
         return values

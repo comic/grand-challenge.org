@@ -105,6 +105,10 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     show_image_info_plugin = models.BooleanField(default=True)
     show_display_plugin = models.BooleanField(default=True)
+    show_invert_tool = models.BooleanField(default=True)
+    show_flip_tool = models.BooleanField(default=True)
+    show_window_level_tool = models.BooleanField(default=True)
+    show_reset_tool = models.BooleanField(default=True)
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")

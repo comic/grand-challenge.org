@@ -21,4 +21,8 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "default_zoom_scale",
             "show_image_info_plugin",
             "show_display_plugin",
+            "show_invert_tool",
+            "show_flip_tool",
+            "show_window_level_tool",
+            "show_reset_tool",
         )

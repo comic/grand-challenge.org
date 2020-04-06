@@ -36,7 +36,10 @@ def test_validate_dicom_files():
         assert study.n_slices == 4
     with mock.patch(
         "grandchallenge.cases.image_builders.dicom._get_headers_by_study",
-        return_value=({"foo": {"headers": headers[1:], "file": "bar"}}, {}),
+        return_value=(
+            {"foo": {"headers": headers[1:], "file": "bar", "index": 1}},
+            {},
+        ),
     ):
         studies, errors = _validate_dicom_files(DICOM_DIR)
         assert len(studies) == 0

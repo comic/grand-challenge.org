@@ -108,7 +108,7 @@ def test_reader_study_create(client):
     creator = get_rs_creator()
     ws = WorkstationFactory()
 
-    def try_create_rs():
+    def try_create_rs(allow_case_navigation):
         return get_view_for_user(
             viewname="reader-studies:create",
             client=client,
@@ -117,19 +117,32 @@ def test_reader_study_create(client):
                 "title": "foo bar",
                 "logo": get_temporary_image(),
                 "workstation": ws.pk,
+                "allow_answer_modification": True,
+                "allow_case_navigation": allow_case_navigation,
             },
             follow=True,
             user=creator,
         )
 
-    response = try_create_rs()
+    response = try_create_rs(False)
     assert "error_1_id_workstation" in response.rendered_content
 
     # The editor must have view permissions for the workstation to add it
     ws.add_user(user=creator)
 
-    response = try_create_rs()
+    response = try_create_rs(False)
     assert "error_1_id_workstation" not in response.rendered_content
+    assert (
+        "`allow_case_navigation` must be checked if `allow_answer_modification` is"
+        in response.rendered_content
+    )
+
+    response = try_create_rs(True)
+    assert "error_1_id_workstation" not in response.rendered_content
+    assert (
+        "`allow_case_navigation` must be checked if `allow_answer_modification` is"
+        not in response.rendered_content
+    )
     assert response.status_code == 200
 
     rs = ReaderStudy.objects.get(title="foo bar")
@@ -465,8 +478,8 @@ def test_reader_study_add_ground_truth(client, settings):
         )
     assert response.status_code == 200
     assert (
-        "Fields provided do not match with reader study"
-        in response.rendered_content
+        f"Fields provided do not match with reader study. Fields should "
+        f"be: {rs.ground_truth_file_headers}" in response.rendered_content
     )
 
     q.question_text = "foo"
@@ -486,6 +499,30 @@ def test_reader_study_add_ground_truth(client, settings):
     assert (
         "Images provided do not match hanging protocol"
         in response.rendered_content
+    )
+
+    with open(RESOURCE_PATH / "ground_truth_wrong_images.csv") as gt:
+        response = get_view_for_user(
+            viewname="reader-studies:add-ground-truth",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"ground_truth": gt},
+            follow=True,
+            user=editor,
+        )
+    assert response.status_code == 200
+    assert (
+        "Images provided do not match hanging protocol"
+        in response.rendered_content
+    )
+    assert (
+        f"The following images appear in the file, but not in the hanging "
+        f"list: im5." in response.rendered_content
+    )
+    assert (
+        "These images appear in the hanging list, but not in the file: im4."
+        in response.rendered_content.replace(r"[\n']", "")
     )
 
     rs.hanging_list = [
