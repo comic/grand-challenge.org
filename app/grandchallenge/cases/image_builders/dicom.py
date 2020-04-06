@@ -68,13 +68,13 @@ def _get_headers_by_study(path):
                 ds = pydicom.filereader.read_partial(
                     f, stop_when=pixel_data_reached
                 )
-                index_key = f"{ds.Rows}x{ds.Columns}"
-                key = f"{ds.StudyInstanceUID}-{index_key}"
+                dims = f"{ds.Rows}x{ds.Columns}"
+                key = f"{ds.StudyInstanceUID}-{dims}"
                 studies[key] = studies.get(key, {})
-                index = indices.get(index_key)
+                index = indices.get(ds.StudyInstanceUID)
                 if index is None:
                     index = max(list(indices.values()) + [-1]) + 1
-                    indices[index_key] = index
+                    indices[ds.StudyInstanceUID] = index
                 headers = studies[key].get("headers", [])
                 headers.append({"file": file, "data": ds})
                 studies[key]["index"] = index
