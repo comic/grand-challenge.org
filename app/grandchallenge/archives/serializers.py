@@ -14,4 +14,4 @@ class ArchiveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Archive
-        fields = ("id", "name", "title", "images")
+        fields = ("id", "name", "title", "images", "api_url")

@@ -9,6 +9,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
+from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -23,7 +24,6 @@ from guardian.mixins import (
 )
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework_csv.renderers import PaginatedCSVRenderer
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import (
@@ -42,6 +42,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
+from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
@@ -90,10 +91,15 @@ class ArchiveDetail(
         uploader_remove_form = UploadersForm()
         uploader_remove_form.fields["action"].initial = UploadersForm.REMOVE
 
+        limit = 1000
+
         context.update(
             {
                 "user_remove_form": user_remove_form,
                 "uploader_remove_form": uploader_remove_form,
+                "now": now().isoformat(),
+                "limit": limit,
+                "offsets": range(0, context["object"].images.count(), limit),
             }
         )
 
