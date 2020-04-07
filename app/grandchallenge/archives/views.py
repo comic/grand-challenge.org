@@ -9,6 +9,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
+from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -21,6 +22,9 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework.settings import api_settings
+from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import (
     ArchiveCasesToReaderStudyForm,
@@ -30,10 +34,15 @@ from grandchallenge.archives.forms import (
     UsersForm,
 )
 from grandchallenge.archives.models import Archive
+from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.views import RawImageUploadSessionDetail
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyPermissions,
+)
+from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
@@ -82,10 +91,15 @@ class ArchiveDetail(
         uploader_remove_form = UploadersForm()
         uploader_remove_form.fields["action"].initial = UploadersForm.REMOVE
 
+        limit = 1000
+
         context.update(
             {
                 "user_remove_form": user_remove_form,
                 "uploader_remove_form": uploader_remove_form,
+                "now": now().isoformat(),
+                "limit": limit,
+                "offsets": range(0, context["object"].images.count(), limit),
             }
         )
 
@@ -337,3 +351,14 @@ class ArchiveCasesToReaderStudyUpdate(
         self.success_message = f"Added {len(images)} cases to {reader_study}."
 
         return super().form_valid(form)
+
+
+class ArchiveViewSet(ReadOnlyModelViewSet):
+    serializer_class = ArchiveSerializer
+    queryset = Archive.objects.all()
+    permission_classes = (DjangoObjectOnlyPermissions,)
+    filter_backends = (ObjectPermissionsFilter,)
+    renderer_classes = (
+        *api_settings.DEFAULT_RENDERER_CLASSES,
+        PaginatedCSVRenderer,
+    )
