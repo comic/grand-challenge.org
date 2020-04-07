@@ -157,7 +157,9 @@ class UploadImage(generics.CreateAPIView):
             response_obj.update(
                 {
                     "image_created": image_created,
-                    "image": ImageSerializer(img).data,
+                    "image": ImageSerializer(
+                        img, context={"request": request}
+                    ).data,
                 }
             )
         except ValidationError as e:
