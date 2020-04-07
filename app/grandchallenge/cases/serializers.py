@@ -26,6 +26,9 @@ class ImageSerializer(serializers.ModelSerializer):
     job_set = HyperlinkedRelatedField(
         read_only=True, many=True, view_name="api:algorithms-job-detail"
     )
+    archive_set = HyperlinkedRelatedField(
+        read_only=True, many=True, view_name="api:archive-detail"
+    )
 
     class Meta:
         model = Image
@@ -34,6 +37,7 @@ class ImageSerializer(serializers.ModelSerializer):
             "name",
             "study",
             "files",
+            "archive_set",
             "job_set",
             "width",
             "height",
@@ -48,6 +52,7 @@ class ImageSerializer(serializers.ModelSerializer):
             "voxel_width_mm",
             "voxel_height_mm",
             "voxel_depth_mm",
+            "api_url",
         )
 
 

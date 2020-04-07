@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.http import Http404
 from django.views.generic import DetailView
+from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
@@ -15,7 +16,9 @@ from rest_framework.mixins import (
 )
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
+from rest_framework_csv.renderers import PaginatedCSVRenderer
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.models import (
@@ -46,20 +49,21 @@ class RawImageUploadSessionDetail(
 class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = ImageSerializer
     queryset = Image.objects.all()
-    permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
-
-    def get_queryset(self):
-        filters = {
-            "worklist": self.request.query_params.get("worklist", None),
-            "study": self.request.query_params.get("study", None),
-            "origin": self.request.query_params.get("origin", None),
-        }
-        filters = {k: v for k, v in filters.items() if v is not None}
-
-        queryset = super().get_queryset().filter(**filters)
-
-        return queryset
+    permission_classes = (DjangoObjectPermissions,)
+    filter_backends = (
+        DjangoFilterBackend,
+        ObjectPermissionsFilter,
+    )
+    filterset_fields = (
+        "worklist",
+        "study",
+        "origin",
+        "archive",
+    )
+    renderer_classes = (
+        *api_settings.DEFAULT_RENDERER_CLASSES,
+        PaginatedCSVRenderer,
+    )
 
 
 def show_image(request, *, pk):
