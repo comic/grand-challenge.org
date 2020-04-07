@@ -25,6 +25,10 @@
 {% block content %}
     <h2>Workstation Session</h2>
 
+    {% if unsupported_browser_message %}
+        <div class="alert alert-danger">{{ unsupported_browser_message }}</div>
+    {% endif %}
+
     {% if object.status != object.STOPPED and object.status != object.FAILED %}
         <p>
             This session will expire in {{ object.expires_at|timeuntil }}.
