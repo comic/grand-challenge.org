@@ -32,7 +32,7 @@ def check_if_valid(model_or_factory, serializer):
     return valid
 
 
-def check_if_valid_unique(model_or_factory, serializer):
+def check_if_valid_unique(model_or_factory, serializer, request=None):
     """
     Function that checks if a model is valid according to the passed serializer.
     Ignores validation errors for uniqueness
@@ -46,7 +46,13 @@ def check_if_valid_unique(model_or_factory, serializer):
     else:
         # factory, create model
         model = model_or_factory()
-    model_serializer = serializer(data=serializer(model).data)
+
+    if request is not None:
+        context = {"request": request}
+    else:
+        context = {}
+
+    model_serializer = serializer(data=serializer(model, context=context).data)
     valid = model_serializer.is_valid()
     if not valid and "non_field_errors" in model_serializer.errors:
         for error in model_serializer.errors["non_field_errors"]:
@@ -60,11 +66,13 @@ def check_if_valid_unique(model_or_factory, serializer):
     return valid
 
 
-def do_test_serializer_valid(serializer_data):
+def do_test_serializer_valid(serializer_data, request=None):
     if not serializer_data.get("no_valid_check"):
         if serializer_data["unique"]:
             assert check_if_valid_unique(
-                serializer_data["factory"], serializer_data["serializer"]
+                serializer_data["factory"],
+                serializer_data["serializer"],
+                request,
             )
         else:
             assert check_if_valid(
@@ -72,11 +80,17 @@ def do_test_serializer_valid(serializer_data):
             )
 
 
-def do_test_serializer_fields(serializer_data):
+def do_test_serializer_fields(serializer_data, request=None):
     if not serializer_data.get("no_contains_check"):
+
+        if request is not None:
+            context = {"request": request}
+        else:
+            context = {}
+
         check_if_field_in_serializer(
             serializer_data["fields"],
             serializer_data["serializer"](
-                serializer_data["factory"]()
+                serializer_data["factory"](), context=context
             ).data.keys(),
         )

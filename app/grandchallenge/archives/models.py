@@ -196,6 +196,10 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
     def get_absolute_url(self):
         return reverse("archives:detail", kwargs={"slug": self.slug})
 
+    @property
+    def api_url(self):
+        return reverse("api:archive-detail", kwargs={"pk": self.pk})
+
 
 class ArchivePermissionRequest(RequestBase):
     """

@@ -74,6 +74,11 @@
                href="{% url 'archives:cases-reader-study-update' slug=object.slug %}"
             ><i class="fas fa-plus fa-fw"></i>&nbsp;Add to Reader Study
             </a>
+
+            <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
+               href="#v-pills-export" role="tab" aria-controls="v-pills-export"
+               aria-selected="false"><i class="fas fa-file-download fa-fw"></i>&nbsp;Export
+            </a>
         </div>
     </div>
 {% endblock %}
@@ -243,5 +248,32 @@
                 </p>
             </div>
         {% endif %}
+
+        <div class="tab-pane fade" id="v-pills-export" role="tabpanel"
+             aria-labelledby="v-pills-export-tab">
+
+            <h2>Export</h2>
+
+            <p>Download CSV snapshots of the archive here.</p>
+
+            <p>
+                <a class="btn btn-primary"
+                   href="{{ object.api_url }}?format=csv"
+                   download="archive_{{ object.slug }}_{{ now }}.csv">
+                    <i class="fas fa-file-csv"></i> Archive
+                </a>
+            </p>
+
+            {% for offset in offsets %}
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'api:image-list' %}?format=csv&archive={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
+                       download="archive_{{ object.slug }}_images_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
+                        <i class="fas fa-file-csv"></i> Archive Images ({{ offset|add:1 }} to {{ offset|add:limit }})
+                    </a>
+                </p>
+            {% endfor %}
+        </div>
+
     </div>
 {% endblock %}
