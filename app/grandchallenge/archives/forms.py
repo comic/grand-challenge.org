@@ -1,7 +1,7 @@
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
     Form,
@@ -15,9 +15,10 @@ from django_select2.forms import Select2MultipleWidget
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.cases.models import Image
 from grandchallenge.core.forms import (
+    PermissionRequestUpdateForm,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
@@ -39,6 +40,7 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "logo",
             "workstation",
             "workstation_config",
+            "public",
             "detail_page_markdown",
         )
         widgets = {
@@ -91,6 +93,30 @@ class UploadersForm(UserGroupForm):
 
 class UsersForm(UserGroupForm):
     role = "user"
+
+    def add_or_remove_user(self, *, archive):
+        super().add_or_remove_user(archive=archive)
+
+        user = self.cleaned_data["user"]
+
+        try:
+            permission_request = ArchivePermissionRequest.objects.get(
+                user=user, archive=archive
+            )
+        except ObjectDoesNotExist:
+            return
+
+        if self.cleaned_data["action"] == self.REMOVE:
+            permission_request.status = ArchivePermissionRequest.REJECTED
+        else:
+            permission_request.status = ArchivePermissionRequest.ACCEPTED
+
+        permission_request.save()
+
+
+class ArchivePermissionRequestUpdateForm(PermissionRequestUpdateForm):
+    class Meta(PermissionRequestUpdateForm.Meta):
+        model = ArchivePermissionRequest
 
 
 class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):

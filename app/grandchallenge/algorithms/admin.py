@@ -3,6 +3,7 @@ from django.contrib import admin
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmPermissionRequest,
     Job,
     Result,
 )
@@ -44,3 +45,4 @@ admin.site.register(Algorithm)
 admin.site.register(AlgorithmImage)
 admin.site.register(Job, JobAdmin)
 admin.site.register(Result)
+admin.site.register(AlgorithmPermissionRequest)

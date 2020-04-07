@@ -47,6 +47,11 @@
                    href="#v-pills-users" role="tab" aria-controls="v-pills-users"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Users
                 </a>
+                <a class="nav-link"
+                   href="{% url 'archives:permission-request-list' slug=object.slug %}"
+                ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
+                        class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
+                </a>
             {% endif %}
 
             {% if "upload_archive" in object_perms %}

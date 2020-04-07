@@ -45,7 +45,12 @@
                         </a>
                     </div>
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ reader_study.title }}</h5>
+                        <h5 class="card-title">
+                            {{ reader_study.title }}
+                            {% if not reader_study.public %}
+                                <i class="fas fa-lock" title="Reader Study is private"></i>
+                            {% endif %}
+                        </h5>
                         <p class="card-text">{{ reader_study.description }}</p>
                         <a href="{{ reader_study.get_absolute_url }}"
                            class="btn btn-primary mt-auto mr-auto"

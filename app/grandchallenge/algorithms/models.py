@@ -519,11 +519,30 @@ class AlgorithmPermissionRequest(RequestBase):
     )
 
     @property
+    def base_object(self):
+        return self.algorithm
+
+    @property
     def object_name(self):
-        return self.algorithm.title
+        return self.base_object.title
+
+    @property
+    def add_method(self):
+        return self.base_object.add_user
+
+    @property
+    def remove_method(self):
+        return self.base_object.remove_user
+
+    @property
+    def permission_list_url(self):
+        return reverse(
+            f"algorithms:permission-request-list",
+            kwargs={"slug": self.base_object.slug},
+        )
 
     def __str__(self):
-        return f"{self.algorithm.title} registration request by user {self.user.username}"
+        return f"{self.object_name} registration request by user {self.user.username}"
 
-    class Meta:
+    class Meta(RequestBase.Meta):
         unique_together = (("algorithm", "user"),)

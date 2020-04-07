@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 
 
 class ArchiveAdmin(admin.ModelAdmin):
@@ -9,3 +9,4 @@ class ArchiveAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Archive, ArchiveAdmin)
+admin.site.register(ArchivePermissionRequest)

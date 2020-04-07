@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.urls import reverse
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -15,6 +14,7 @@ from guardian.mixins import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstation_configs.forms import WorkstationConfigForm
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstation_configs.serializers import (

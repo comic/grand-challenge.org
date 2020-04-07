@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pytest
+from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -35,7 +36,7 @@ def test_duration():
     assert jbs[0].duration is None
     assert Job.objects.average_duration() is None
 
-    now = datetime.now()
+    now = timezone.now()
     j.started_at = now - timedelta(minutes=5)
     j.completed_at = now
     j.save()
@@ -50,7 +51,7 @@ def test_duration():
 
 @pytest.mark.django_db
 def test_average_duration_filtering():
-    completed_at = datetime.now()
+    completed_at = timezone.now()
     j1, _ = (
         AlgorithmJobFactory(
             completed_at=completed_at,

@@ -6,7 +6,14 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import (
+    NON_FIELD_ERRORS,
+    PermissionDenied,
+    ValidationError,
+)
 from django.db.models import Count
+from django.forms.utils import ErrorList
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -29,20 +36,23 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.archives.forms import (
     ArchiveCasesToReaderStudyForm,
     ArchiveForm,
+    ArchivePermissionRequestUpdateForm,
     EditorsForm,
     UploadersForm,
     UsersForm,
 )
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.views import RawImageUploadSessionDetail
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
@@ -53,6 +63,11 @@ class ArchiveList(PermissionListMixin, ListView):
         f"{model._meta.app_label}.view_{model._meta.model_name}"
     )
     ordering = "-created"
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset()
+        queryset = (queryset | Archive.objects.filter(public=True)).distinct()
+        return queryset
 
 
 class ArchiveCreate(
@@ -82,6 +97,21 @@ class ArchiveDetail(
     )
     raise_exception = True
 
+    def on_permission_check_fail(self, request, response, obj=None):
+        response = self.get(request)
+        return response
+
+    def check_permissions(self, request):
+        try:
+            return super().check_permissions(request)
+        except PermissionDenied:
+            return HttpResponseRedirect(
+                reverse(
+                    "archives:permission-request-create",
+                    kwargs={"slug": self.object.slug},
+                )
+            )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -101,6 +131,13 @@ class ArchiveDetail(
                 "limit": limit,
                 "offsets": range(0, context["object"].images.count(), limit),
             }
+        )
+
+        pending_permission_requests = ArchivePermissionRequest.objects.filter(
+            archive=context["object"], status=ArchivePermissionRequest.PENDING,
+        ).count()
+        context.update(
+            {"pending_permission_requests": pending_permission_requests}
         )
 
         return context
@@ -193,6 +230,92 @@ class ArchiveUploadersUpdate(ArchiveGroupUpdateMixin):
 class ArchiveUsersUpdate(ArchiveGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+
+class ArchivePermissionRequestCreate(
+    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+):
+    model = ArchivePermissionRequest
+    fields = ()
+
+    @property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_success_url(self):
+        return self.archive.get_absolute_url()
+
+    def get_success_message(self, cleaned_data):
+        return self.object.status_to_string()
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.archive = self.archive
+        try:
+            redirect = super().form_valid(form)
+            return redirect
+
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        permission_request = ArchivePermissionRequest.objects.filter(
+            archive=self.archive, user=self.request.user
+        ).first()
+        context.update(
+            {
+                "permission_request": permission_request,
+                "archive": self.archive,
+            }
+        )
+        return context
+
+
+class ArchivePermissionRequestList(ObjectPermissionRequiredMixin, ListView):
+    model = ArchivePermissionRequest
+    permission_required = (
+        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def archive(self):
+        return get_object_or_404(Archive, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.archive
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = (
+            queryset.filter(archive=self.archive)
+            .exclude(status=ArchivePermissionRequest.ACCEPTED)
+            .select_related("user__user_profile")
+        )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.archive})
+        return context
+
+
+class ArchivePermissionRequestUpdate(PermissionRequestUpdate):
+    model = ArchivePermissionRequest
+    form_class = ArchivePermissionRequestUpdateForm
+    base_model = Archive
+    redirect_namespace = "archives"
+    user_check_attrs = ["is_user", "is_uploader", "is_editor"]
+    permission_required = (
+        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
+    )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"archive": self.base_object})
+        return context
 
 
 class ArchiveUploadSessionCreate(

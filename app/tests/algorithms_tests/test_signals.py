@@ -97,7 +97,7 @@ def test_user_can_download_images(client, reverse):
 def test_process_algorithm_permission_request():
     # signals.pre_save.connect(process_algorithm_permission_request, sender=AlgorithmPermissionRequest, weak=False)
     with mock.patch(
-        "grandchallenge.algorithms.signals.send_permission_request_email"
+        "grandchallenge.core.signals.send_permission_request_email"
     ) as send_email:
         pr = AlgorithmPermissionRequestFactory()
         assert pr.status == AlgorithmPermissionRequest.PENDING
@@ -105,7 +105,7 @@ def test_process_algorithm_permission_request():
         assert not pr.algorithm.is_user(pr.user)
 
     with mock.patch(
-        "grandchallenge.algorithms.signals.send_permission_denied_email"
+        "grandchallenge.core.signals.send_permission_denied_email"
     ) as send_email:
         pr.status = AlgorithmPermissionRequest.REJECTED
         pr.save()
@@ -113,7 +113,7 @@ def test_process_algorithm_permission_request():
         assert not pr.algorithm.is_user(pr.user)
 
     with mock.patch(
-        "grandchallenge.algorithms.signals.send_permission_granted_email"
+        "grandchallenge.core.signals.send_permission_granted_email"
     ) as send_email:
         pr.status = AlgorithmPermissionRequest.ACCEPTED
         pr.save()

@@ -15,7 +15,7 @@ from crispy_forms.layout import (
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
     FileField,
@@ -29,6 +29,7 @@ from django.forms.models import inlineformset_factory
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.forms import (
+    PermissionRequestUpdateForm,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
@@ -40,6 +41,7 @@ from grandchallenge.reader_studies.models import (
     HANGING_LIST_SCHEMA,
     Question,
     ReaderStudy,
+    ReaderStudyPermissionRequest,
 )
 
 READER_STUDY_HELP_TEXTS = {
@@ -72,6 +74,7 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
+            "public",
             "allow_answer_modification",
             "allow_case_navigation",
         )
@@ -100,6 +103,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
+            "public",
             "allow_answer_modification",
             "allow_case_navigation",
             "hanging_list",
@@ -282,6 +286,30 @@ class EditorsForm(UserGroupForm):
 
 class ReadersForm(UserGroupForm):
     role = "reader"
+
+    def add_or_remove_user(self, *, reader_study):
+        super().add_or_remove_user(reader_study=reader_study)
+
+        user = self.cleaned_data["user"]
+
+        try:
+            permission_request = ReaderStudyPermissionRequest.objects.get(
+                user=user, reader_study=reader_study
+            )
+        except ObjectDoesNotExist:
+            return
+
+        if self.cleaned_data["action"] == self.REMOVE:
+            permission_request.status = ReaderStudyPermissionRequest.REJECTED
+        else:
+            permission_request.status = ReaderStudyPermissionRequest.ACCEPTED
+
+        permission_request.save()
+
+
+class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):
+    class Meta(PermissionRequestUpdateForm.Meta):
+        model = ReaderStudyPermissionRequest
 
 
 class GroundTruthForm(SaveFormInitMixin, Form):

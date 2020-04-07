@@ -21,7 +21,7 @@ from sklearn.metrics import accuracy_score
 
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
@@ -202,6 +202,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
+    )
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "Should this reader study be visible to all users on the "
+            "overview page? This does not grant all users permission to read "
+            "this study. Users will still need to be added to the "
+            "study's readers group in order to do that."
+        ),
     )
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
@@ -583,6 +592,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     )
                 )
                 .filter(answers_for_user=0)
+                .order_by("name")
                 .distinct()
                 .values_list("name", flat=True)
             )
@@ -1364,3 +1374,53 @@ class Answer(UUIDModel):
         )
         assign_perm(f"view_{self._meta.model_name}", self.creator, self)
         assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+
+
+class ReaderStudyPermissionRequest(RequestBase):
+    """
+    When a user wants to read a reader study, editors have the option of
+    reviewing each user before accepting or rejecting them. This class records
+    the needed info for that.
+    """
+
+    reader_study = models.ForeignKey(
+        ReaderStudy,
+        help_text="To which reader study has the user requested access?",
+        on_delete=models.CASCADE,
+    )
+    rejection_text = models.TextField(
+        blank=True,
+        help_text=(
+            "The text that will be sent to the user with the reason for their "
+            "rejection."
+        ),
+    )
+
+    @property
+    def base_object(self):
+        return self.reader_study
+
+    @property
+    def object_name(self):
+        return self.base_object.title
+
+    @property
+    def add_method(self):
+        return self.base_object.add_reader
+
+    @property
+    def remove_method(self):
+        return self.base_object.remove_reader
+
+    @property
+    def permission_list_url(self):
+        return reverse(
+            f"reader-studies:permission-request-list",
+            kwargs={"slug": self.base_object.slug},
+        )
+
+    def __str__(self):
+        return f"{self.object_name} registration request by user {self.user.username}"
+
+    class Meta(RequestBase.Meta):
+        unique_together = (("reader_study", "user"),)

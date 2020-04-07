@@ -1,0 +1,24 @@
+<p>Dear {{ user.username }},</p>
+
+<p>
+    Your request for access to
+    <a href="{{ base_object.get_absolute_url }}">{{ base_object.title }}</a>
+    on {{ site.domain }} has been rejected.
+</p>
+
+{% if permission_request.rejection_text %}
+    <p>
+        The editors have provided the following information regarding the rejection:<br/>
+        {{ permission_request.rejection_text }}
+    </p>
+{% endif %}
+
+<p>
+    Regards,<br/>
+
+    {{ site.name }}
+</p>
+
+<p>
+    <small>This is an automated service email from {{ site.domain }}.</small>
+</p>

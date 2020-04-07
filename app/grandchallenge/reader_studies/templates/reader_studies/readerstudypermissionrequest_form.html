@@ -5,17 +5,17 @@
 
 
 {% block breadcrumbs %}
-    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
+    {% get_obj_perms request.user for reader_study as "reader_study_perms" %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+                href="{{ reader_study.get_absolute_url }}">{{ reader_study.title }}
         </a>
         <li class="breadcrumb-item active"
             aria-current="page">
-            {% if "change_algorithm" in algorithm_perms %}
+            {% if "change_readerstudy" in reader_study_perms %}
                 Review access request
             {% else %}
                 Request access
@@ -26,11 +26,12 @@
 
 {% block content %}
 
-    {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
-    {% if "change_algorithm" in algorithm_perms %}
+    {% get_obj_perms request.user for reader_study as "reader_study_perms" %}
+    {% if "change_readerstudy" in reader_study_perms %}
         {% if permission_request %}
-            <h2>{{ algorithm.title }}: review access request for user {{ permission_request.user.username }}</h2>
-            <form action="{% url 'algorithms:permission-request-update' slug=algorithm.slug pk=permission_request.pk %}" method="post">
+            <h2>{{ reader_study.title }}: review access request for user {{ permission_request.user.username }}</h2>
+            <form action="{% url 'reader-studies:permission-request-update' slug=reader_study.slug pk=permission_request.pk %}"
+                  method="post">
                 {% csrf_token %}
                 {{ form | crispy }}
                 <input type="submit"
@@ -45,33 +46,35 @@
 
         {% if not permission_request %}
             <p>
-                You currently do not have permission to use this algorithm.
-                If you would like to use the algorithm, you can request permission here.
+                You currently do not have permission to view this reader study.
+                If you would like to view the reader study, you can request permission here.
             </p>
             <p>
-                An email will be sent to the algorithm's editors.
+                An email will be sent to the reader study's editors.
                 They can grant you access.
             </p>
 
-            <form action="{% url 'algorithms:permission-request-create' slug=algorithm.slug %}" method="post">
+            <form action="{% url 'reader-studies:permission-request-create' slug=reader_study.slug %}" method="post">
                 {% csrf_token %}
                 {{ form | crispy }}
                 <input type="submit"
-                       value="Request access to {{ algorithm.title }}"
+                       value="Request access to {{ reader_study.title }}"
                        class="btn btn-primary"/>
             </form>
         {% else %}
             <p>
-                You currently {% if permission_request.status != permission_request.ACCEPTED %}do not {% endif%}have permission to view this algorithm.
+                You currently {% if permission_request.status != permission_request.ACCEPTED %}do not {% endif %}have permission to view this
+                reader study.
             </p>
             <p>
                 You have already sent a permission request.
-                The status of your request is <span class="font-weight-bold">{{ permission_request.get_status_display|lower }}</span>.
+                The status of your request is <span
+                    class="font-weight-bold">{{ permission_request.get_status_display|lower }}</span>.
             </p>
             {% if permission_request.status == permission_request.REJECTED %}
                 {% if permission_request.rejection_text %}
                     <p>
-                        The algorithm's editors have left the following reason for the rejection:
+                        The reader study's editors have left the following reason for the rejection:
                     </p>
                     <p>
                         {{ permission_request.rejection_text }}
