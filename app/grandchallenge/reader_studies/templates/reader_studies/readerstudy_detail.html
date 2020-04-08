@@ -4,6 +4,7 @@
 {% load profiles %}
 {% load workstations %}
 {% load guardian_tags %}
+{% load bleach %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -127,7 +128,7 @@
 
             <h2>{{ object.title }}</h2>
 
-            <p>{{ object.description }}</p>
+            {{ object.help_text_markdown|md2html }}
 
             {% if user_score.score__sum is not None and progress.hangings == 100.0 %}
                 <div class="alert alert-info" role="alert">

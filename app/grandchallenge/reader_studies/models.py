@@ -359,7 +359,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def help_text(self):
         """The cleaned help text from the markdown sources"""
-        return md2html(self.help_text_markdown)
+        return md2html(self.help_text_markdown, link_blank_target=True)
 
     @property
     def cleaned_case_text(self):

@@ -476,7 +476,7 @@ BLEACH_ALLOWED_TAGS = [
 ]
 BLEACH_ALLOWED_ATTRIBUTES = {
     "*": ["class", "data-toggle", "id", "style", "role"],
-    "a": ["href", "title"],
+    "a": ["href", "title", "target", "rel"],
     "abbr": ["title"],
     "acronym": ["title"],
     "img": ["height", "src", "width"],
@@ -499,6 +499,7 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"
 )
+MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
 
 AUTH_PASSWORD_VALIDATORS = [
