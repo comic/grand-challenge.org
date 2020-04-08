@@ -151,7 +151,6 @@ class UploadImage(generics.CreateAPIView):
                 img.voxel_height_mm = spacing[1]
                 try:
                     img.voxel_depth_mm = spacing[2]
-                    print("done")
                 except IndexError:
                     pass
                 img.save()
