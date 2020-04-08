@@ -125,6 +125,9 @@ class TestBytesImageSerializer:
                     "modality",
                     "study",
                     "archive_set",
+                    "voxel_width_mm",
+                    "voxel_height_mm",
+                    "voxel_depth_mm",
                 ),
             },
         )
