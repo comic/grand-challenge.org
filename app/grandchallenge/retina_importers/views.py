@@ -81,7 +81,9 @@ class UploadImage(generics.CreateAPIView):
                 response_obj.update(
                     {
                         "archive_created": archive_created,
-                        "archive": ArchiveSerializer(archive).data,
+                        "archive": ArchiveSerializer(
+                            archive, context={"request": request}
+                        ).data,
                     }
                 )
 
