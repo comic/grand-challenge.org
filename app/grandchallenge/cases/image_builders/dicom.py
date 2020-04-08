@@ -71,10 +71,16 @@ def _get_headers_by_study(path):
                 dims = f"{ds.Rows}x{ds.Columns}"
                 key = f"{ds.StudyInstanceUID}-{dims}"
                 studies[key] = studies.get(key, {})
-                index = indices.get(ds.StudyInstanceUID)
+                indices[ds.StudyInstanceUID] = indices.get(
+                    ds.StudyInstanceUID, {}
+                )
+                index = indices[ds.StudyInstanceUID].get(dims)
                 if index is None:
-                    index = max(list(indices.values()) + [-1]) + 1
-                    indices[ds.StudyInstanceUID] = index
+                    index = (
+                        max(list(indices[ds.StudyInstanceUID].values()) + [-1])
+                        + 1
+                    )
+                    indices[ds.StudyInstanceUID][dims] = index
                 headers = studies[key].get("headers", [])
                 headers.append({"file": file, "data": ds})
                 studies[key]["index"] = index
