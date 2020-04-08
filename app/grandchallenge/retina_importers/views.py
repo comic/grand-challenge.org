@@ -145,6 +145,17 @@ class UploadImage(generics.CreateAPIView):
                 else:
                     self.save_mhd_and_raw_files(request, img)
 
+                # Set spacing from header file on image object
+                spacing = img.spacing
+                img.voxel_width_mm = spacing[0]
+                img.voxel_height_mm = spacing[1]
+                try:
+                    img.voxel_depth_mm = spacing[2]
+                    print("done")
+                except IndexError:
+                    pass
+                img.save()
+
                 # Link images to archive
                 if archive is not None:
                     archive.images.add(img)
