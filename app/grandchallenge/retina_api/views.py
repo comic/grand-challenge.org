@@ -760,20 +760,13 @@ class ImageElementSpacingView(RetinaAPIPermissionMixin, View):
     raise_exception = True  # Raise 403 on unauthenticated request
 
     def get(self, request, image_id):
-        image_object = get_object_or_404(Image, pk=image_id)
+        image = get_object_or_404(Image, pk=image_id)
 
-        if not user_can_download_image(user=request.user, image=image_object):
+        if not user_can_download_image(user=request.user, image=image):
             return HttpResponse(status=status.HTTP_403_FORBIDDEN)
 
-        image_itk = image_object.get_sitk_image()
-        if image_itk is None:
-            return HttpResponse(status=status.HTTP_404_NOT_FOUND)
-
-        spacing = image_itk.GetSpacing()
-
-        return HttpResponse(
-            json.dumps(spacing), content_type="application/json"
-        )
+        response_json = json.dumps(image.spacing)
+        return HttpResponse(response_json, content_type="application/json")
 
 
 class ImageQualityAnnotationViewSet(viewsets.ModelViewSet):
