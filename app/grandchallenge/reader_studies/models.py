@@ -502,19 +502,26 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 )
                 answers.append(
                     {
-                        "answer": Answer(
+                        "answer_obj": Answer.objects.filter(
+                            images__in=images,
+                            question=question,
+                            is_ground_truth=True,
+                        ).first()
+                        or Answer(
                             creator=user,
                             question=question,
-                            answer=_answer,
                             is_ground_truth=True,
                         ),
+                        "answer": _answer,
                         "images": images,
                     }
                 )
+
         for answer in answers:
-            answer["answer"].save()
-            answer["answer"].images.set(answer["images"])
-            answer["answer"].save()
+            answer["answer_obj"].answer = answer["answer"]
+            answer["answer_obj"].save()
+            answer["answer_obj"].images.set(answer["images"])
+            answer["answer_obj"].save()
 
     def get_hanging_list_images_for_user(self, *, user):
         """
@@ -1282,16 +1289,7 @@ class Answer(UUIDModel):
                     f"Image {im} does not belong to this reader study."
                 )
 
-        if is_ground_truth:
-            if Answer.objects.filter(
-                question=question,
-                is_ground_truth=True,
-                images__in=images.values_list("id", flat=True),
-            ).exists():
-                raise ValidationError(
-                    "Ground truth already added for this question/image combination"
-                )
-        else:
+        if not is_ground_truth:
             if (
                 Answer.objects.filter(
                     creator=creator,
