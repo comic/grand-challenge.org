@@ -404,7 +404,7 @@ def test_reader_study_add_ground_truth(client, settings):
         question_text="bar",
         answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
     )
-    QuestionFactory(
+    q0 = QuestionFactory(
         reader_study=rs,
         question_text="bool",
         answer_type=Question.ANSWER_TYPE_BOOL,
@@ -419,9 +419,12 @@ def test_reader_study_add_ground_truth(client, settings):
         question_text="mchoice",
         answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE,
     )
-    for q_ in [q1, q2]:
+    options = {}
+    for i, q_ in enumerate([q1, q2]):
         for x in range(3):
-            CategoricalOptionFactory(question=q_, title=f"option{x}")
+            options[f"{i}-{x}"] = CategoricalOptionFactory(
+                question=q_, title=f"option{x}"
+            )
     im1, im2, im3, im4 = (
         ImageFactory(name="im1"),
         ImageFactory(name="im2"),
@@ -564,8 +567,17 @@ def test_reader_study_add_ground_truth(client, settings):
     answer_count = len(rs.hanging_list) * rs.answerable_question_count
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
+    assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "yes"
+    assert Answer.objects.get(images__in=[im1.pk], question=q0).answer is True
+    assert (
+        Answer.objects.get(images__in=[im1.pk], question=q1).answer
+        == options["0-1"].pk
+    )
+    assert sorted(
+        Answer.objects.get(images__in=[im1.pk], question=q2).answer
+    ) == sorted([options["1-1"].pk, options["1-2"].pk])
 
-    with open(RESOURCE_PATH / "ground_truth.csv") as gt:
+    with open(RESOURCE_PATH / "ground_truth_new.csv") as gt:
         response = get_view_for_user(
             viewname="reader-studies:add-ground-truth",
             client=client,
@@ -575,10 +587,16 @@ def test_reader_study_add_ground_truth(client, settings):
             follow=True,
             user=editor,
         )
+
     assert response.status_code == 200
-    assert (
-        "Ground truth already added for this question/image combination"
-        in response.rendered_content
-    )
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
+    assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "no"
+    assert Answer.objects.get(images__in=[im1.pk], question=q0).answer is False
+    assert (
+        Answer.objects.get(images__in=[im1.pk], question=q1).answer
+        == options["0-2"].pk
+    )
+    assert Answer.objects.get(images__in=[im1.pk], question=q2).answer == [
+        options["1-0"].pk
+    ]
