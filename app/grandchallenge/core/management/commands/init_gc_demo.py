@@ -138,6 +138,9 @@ class Command(BaseCommand):
             name=settings.WORKSTATIONS_CREATORS_GROUP_NAME
         )
         self.users["workstation"].groups.add(workstation_group)
+        self.users["workstation"].user_permissions.add(
+            Permission.objects.get(codename="add_workstationconfig")
+        )
 
         algorithm_group = Group.objects.get(
             name=settings.ALGORITHMS_CREATORS_GROUP_NAME
