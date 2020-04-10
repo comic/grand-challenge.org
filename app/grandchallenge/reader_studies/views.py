@@ -10,12 +10,22 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ValidationError
+from django.core.exceptions import (
+    NON_FIELD_ERRORS,
+    PermissionDenied,
+    ValidationError,
+)
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.http import Http404, HttpResponse, JsonResponse
+from django.forms.utils import ErrorList
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -24,6 +34,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
@@ -31,15 +42,10 @@ from guardian.mixins import (
 )
 from guardian.shortcuts import get_perms
 from rest_framework.decorators import action
-from rest_framework.mixins import (
-    CreateModelMixin,
-    ListModelMixin,
-    RetrieveModelMixin,
-)
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import (
-    GenericViewSet,
+    ModelViewSet,
     ReadOnlyModelViewSet,
 )
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -47,24 +53,34 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
+from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
+    DjangoObjectOnlyWithCustomPostPermissions,
 )
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.reader_studies.forms import (
     CategoricalOptionFormSet,
     EditorsForm,
     GroundTruthForm,
     QuestionForm,
     ReaderStudyCreateForm,
+    ReaderStudyPermissionRequestUpdateForm,
     ReaderStudyUpdateForm,
     ReadersForm,
 )
-from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    Answer,
+    Question,
+    ReaderStudy,
+    ReaderStudyPermissionRequest,
+)
 from grandchallenge.reader_studies.serializers import (
     AnswerSerializer,
     QuestionSerializer,
     ReaderStudySerializer,
 )
+from grandchallenge.subdomains.utils import reverse
 
 
 class ReaderStudyList(PermissionListMixin, ListView):
@@ -73,6 +89,13 @@ class ReaderStudyList(PermissionListMixin, ListView):
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     ordering = "-created"
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset()
+        queryset = (
+            queryset | ReaderStudy.objects.filter(public=True)
+        ).distinct()
+        return queryset
 
 
 class ReaderStudyCreate(
@@ -101,6 +124,21 @@ class ReaderStudyDetail(
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
+
+    def on_permission_check_fail(self, request, response, obj=None):
+        response = self.get(request)
+        return response
+
+    def check_permissions(self, request):
+        try:
+            return super().check_permissions(request)
+        except PermissionDenied:
+            return HttpResponseRedirect(
+                reverse(
+                    "reader-studies:permission-request-create",
+                    kwargs={"slug": self.object.slug},
+                )
+            )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -136,6 +174,15 @@ class ReaderStudyDetail(
                 ),
             }
         )
+
+        pending_permission_requests = ReaderStudyPermissionRequest.objects.filter(
+            reader_study=context["object"],
+            status=ReaderStudyPermissionRequest.PENDING,
+        ).count()
+        context.update(
+            {"pending_permission_requests": pending_permission_requests}
+        )
+
         return context
 
 
@@ -465,6 +512,94 @@ class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     success_message = "Readers successfully updated"
 
 
+class ReaderStudyPermissionRequestCreate(
+    UserIsNotAnonMixin, SuccessMessageMixin, CreateView
+):
+    model = ReaderStudyPermissionRequest
+    fields = ()
+
+    @property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+    def get_success_message(self, cleaned_data):
+        return self.object.status_to_string()
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.reader_study = self.reader_study
+        try:
+            redirect = super().form_valid(form)
+            return redirect
+
+        except ValidationError as e:
+            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
+            return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        permission_request = ReaderStudyPermissionRequest.objects.filter(
+            reader_study=self.reader_study, user=self.request.user
+        ).first()
+        context.update(
+            {
+                "permission_request": permission_request,
+                "reader_study": self.reader_study,
+            }
+        )
+        return context
+
+
+class ReaderStudyPermissionRequestList(
+    ObjectPermissionRequiredMixin, ListView
+):
+    model = ReaderStudyPermissionRequest
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = (
+            queryset.filter(reader_study=self.reader_study)
+            .exclude(status=ReaderStudyPermissionRequest.ACCEPTED)
+            .select_related("user__user_profile")
+        )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"reader_study": self.reader_study})
+        return context
+
+
+class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
+    model = ReaderStudyPermissionRequest
+    form_class = ReaderStudyPermissionRequestUpdateForm
+    base_model = ReaderStudy
+    redirect_namespace = "reader-studies"
+    user_check_attrs = ["is_reader", "is_editor"]
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"reader_study": self.base_object})
+        return context
+
+
 class ExportCSVMixin(object):
     def _create_dicts(self, headers, data):
         return map(lambda x: dict(zip(headers, x)), data)
@@ -512,21 +647,21 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     def export_answers(self, request, pk=None):
         reader_study = self.get_object()
         self._check_change_perms(request.user, reader_study)
-
-        data = [
-            answer.csv_values
-            for answer in Answer.objects.select_related(
-                "question__reader_study"
-            )
+        data = []
+        headers = []
+        for answer in (
+            Answer.objects.select_related("question__reader_study")
             .select_related("creator")
             .prefetch_related("images")
             .filter(question__reader_study=reader_study, is_ground_truth=False)
-        ]
-
+        ):
+            data += [answer.csv_values]
+            if len(answer.csv_headers) > len(headers):
+                headers = answer.csv_headers
         return self._create_csv_response(
             data,
-            Answer.csv_headers,
-            filename=f"{reader_study.slug}-answers.csv",
+            headers,
+            filename=f"{reader_study.slug}-answers-{timezone.now().isoformat()}.csv",
         )
 
     @action(detail=True, methods=["patch"])
@@ -594,17 +729,16 @@ class QuestionViewSet(ReadOnlyModelViewSet):
     filter_backends = [ObjectPermissionsFilter]
 
 
-class AnswerViewSet(
-    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
-):
+class AnswerViewSet(ModelViewSet):
     serializer_class = AnswerSerializer
     queryset = (
         Answer.objects.all()
-        .select_related("creator")
+        .select_related("creator", "question__reader_study")
         .prefetch_related("images")
     )
-    permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["question__reader_study"]
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)

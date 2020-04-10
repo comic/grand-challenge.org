@@ -1,0 +1,4 @@
+images,foo,bool,choice,mchoice
+im1,'"no"','false','"option2"','["option0"]'
+im2,'"no"','false','"option1"','["option1", "option2"]'
+im3;im4,'"yes"','true','"option1"','["option1", "option2"]'

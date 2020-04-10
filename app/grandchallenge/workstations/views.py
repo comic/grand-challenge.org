@@ -31,6 +31,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
+from ua_parser.user_agent_parser import ParseUserAgent
 
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
@@ -321,6 +322,45 @@ class SessionDetail(
         f"{Session._meta.app_label}.view_{Session._meta.model_name}"
     )
     raise_exception = True
+
+    def _get_unsupported_browser_message(self):
+        user_agent = ParseUserAgent(
+            self.request.META.get("HTTP_USER_AGENT", "")
+        )
+
+        unsupported_browser = user_agent["family"].lower() not in [
+            "firefox",
+            "chrome",
+        ]
+
+        unsupported_chrome_version = (
+            user_agent["family"].lower() == "chrome"
+            and int(user_agent["major"]) < 79
+        )
+
+        if unsupported_browser:
+            unsupported_browser_message = (
+                "Unfortunately your browser is not supported. "
+                "Please try again with the latest version of Firefox or Chrome."
+            )
+        elif unsupported_chrome_version:
+            unsupported_browser_message = (
+                "Unfortunately your version of Chrome is not supported. "
+                "Please update to the latest version and try again."
+            )
+        else:
+            unsupported_browser_message = None
+
+        return unsupported_browser_message
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "unsupported_browser_message": self._get_unsupported_browser_message()
+            }
+        )
+        return context
 
 
 def session_proxy(request, *, pk, path, **_):

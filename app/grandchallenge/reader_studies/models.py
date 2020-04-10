@@ -1,3 +1,4 @@
+import itertools
 import json
 from collections import Counter
 
@@ -15,11 +16,12 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
+from simple_history.models import HistoricalRecords
 from sklearn.metrics import accuracy_score
 
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
@@ -201,6 +203,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "Should this reader study be visible to all users on the "
+            "overview page? This does not grant all users permission to read "
+            "this study. Users will still need to be added to the "
+            "study's readers group in order to do that."
+        ),
+    )
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
     )
@@ -228,6 +239,21 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         validators=[JSONSchemaValidator(schema=CASE_TEXT_SCHEMA)],
     )
+    allow_answer_modification = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, readers are allowed to modify their answers for a case "
+            "by navigating back to previous cases. 'allow_case_browsing' must "
+            "be checked with this as well."
+        ),
+    )
+    allow_case_navigation = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, readers are allowed to navigate back and forth between "
+            "cases in this reader study."
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -235,12 +261,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     def __str__(self):
         return f"{self.title}"
 
+    @property
+    def ground_truth_file_headers(self):
+        return f"images,{','.join([q.question_text for q in self.questions.all()])}"
+
     def get_example_ground_truth_csv(self):
         if len(self.hanging_list) == 0:
             return "No cases in this reader study"
         questions = self.questions.all()
         return (
-            f"images,{','.join([q.question_text for q in questions])}\n"
+            f"{self.ground_truth_file_headers}\n"
             f"{';'.join(self.image_groups[0])},{','.join([q.example_answer for q in questions])}"
         )
 
@@ -329,7 +359,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     @property
     def help_text(self):
         """The cleaned help text from the markdown sources"""
-        return md2html(self.help_text_markdown)
+        return md2html(self.help_text_markdown, link_blank_target=True)
 
     @property
     def cleaned_case_text(self):
@@ -362,17 +392,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             self.hanging_image_names
         )
 
-    @property
-    def hanging_list_diff(self):
+    def hanging_list_diff(self, provided=None):
         """
         Returns the diff between the images added to the study and the images
         in the hanging list.
         """
+        comparison = provided or self.study_image_names
         return {
-            "in_study_list": set(self.study_image_names)
+            "in_provided_list": set(comparison)
             - set(self.hanging_image_names),
-            "in_hanging_list": set(self.hanging_image_names)
-            - set(self.study_image_names),
+            "in_hanging_list": set(self.hanging_image_names) - set(comparison),
         }
 
     @property
@@ -473,19 +502,26 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 )
                 answers.append(
                     {
-                        "answer": Answer(
+                        "answer_obj": Answer.objects.filter(
+                            images__in=images,
+                            question=question,
+                            is_ground_truth=True,
+                        ).first()
+                        or Answer(
                             creator=user,
                             question=question,
-                            answer=_answer,
                             is_ground_truth=True,
                         ),
+                        "answer": _answer,
                         "images": images,
                     }
                 )
+
         for answer in answers:
-            answer["answer"].save()
-            answer["answer"].images.set(answer["images"])
-            answer["answer"].save()
+            answer["answer_obj"].answer = answer["answer"]
+            answer["answer_obj"].save()
+            answer["answer_obj"].images.set(answer["images"])
+            answer["answer_obj"].save()
 
     def get_hanging_list_images_for_user(self, *, user):
         """
@@ -563,6 +599,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     )
                 )
                 .filter(answers_for_user=0)
+                .order_by("name")
                 .distinct()
                 .values_list("name", flat=True)
             )
@@ -1111,9 +1148,13 @@ class Question(UUIDModel):
                 "The image port must (only) be set for annotation questions."
             )
 
-        if self.answer_type == self.ANSWER_TYPE_BOOL and self.required:
+        if (
+            self.answer_type
+            in [self.ANSWER_TYPE_BOOL, self.ANSWER_TYPE_HEADING]
+            and self.required
+        ):
             raise ValidationError(
-                "Bool answer types should not have Required checked "
+                "Bool or Heading answer types cannot not be Required "
                 "(otherwise the user will need to tick a box for each image!)"
             )
 
@@ -1164,8 +1205,19 @@ class Answer(UUIDModel):
     answer = JSONField()
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
+    history = HistoricalRecords(
+        excluded_fields=[
+            "created",
+            "modified",
+            "creator",
+            "question",
+            "images",
+            "is_ground_truth",
+            "score",
+        ],
+    )
 
-    csv_headers = Question.csv_headers + [
+    _csv_headers = Question.csv_headers + [
         "Created",
         "Answer",
         "Images",
@@ -1185,19 +1237,44 @@ class Answer(UUIDModel):
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
 
+    @cached_property
+    def history_values(self):
+        return self.history.values_list("answer", "history_date")
+
     @property
     def csv_values(self):
         """Values that are included in this ``Answer``'s csv export."""
-        return self.question.csv_values + [
-            self.created.isoformat(),
-            self.answer_text,
-            "; ".join(self.images.values_list("name", flat=True)),
-            self.creator.username,
-        ]
+        return (
+            self.question.csv_values
+            + [
+                self.created.isoformat(),
+                self.answer_text,
+                "; ".join(self.images.values_list("name", flat=True)),
+                self.creator.username,
+            ]
+            + list(itertools.chain(*self.history_values))
+        )
+
+    @property
+    def csv_headers(self):
+        return self._csv_headers + list(
+            itertools.chain(
+                *[
+                    [f"Answer-{x}", f"Modification_date-{x}"]
+                    for x in range(len(self.history_values))
+                ]
+            )
+        )
 
     @staticmethod
     def validate(  # noqa: C901
-        *, creator, question, answer, images, is_ground_truth=False
+        *,
+        creator,
+        question,
+        answer,
+        images,
+        is_ground_truth=False,
+        instance=None,
     ):
         """Validates all fields provided for ``answer``."""
         if len(images) == 0:
@@ -1212,22 +1289,17 @@ class Answer(UUIDModel):
                     f"Image {im} does not belong to this reader study."
                 )
 
-        if is_ground_truth:
-            if Answer.objects.filter(
-                question=question,
-                is_ground_truth=True,
-                images__in=images.values_list("id", flat=True),
-            ).exists():
-                raise ValidationError(
-                    "Ground truth already added for this question/image combination"
+        if not is_ground_truth:
+            if (
+                Answer.objects.filter(
+                    creator=creator,
+                    question=question,
+                    images__in=images,
+                    is_ground_truth=False,
                 )
-        else:
-            if Answer.objects.filter(
-                creator=creator,
-                question=question,
-                images__in=images,
-                is_ground_truth=False,
-            ).exists():
+                .exclude(pk=getattr(instance, "pk", None))
+                .exists()
+            ):
                 raise ValidationError(
                     f"User {creator} has already answered this question "
                     f"for at least 1 of these images."
@@ -1299,3 +1371,54 @@ class Answer(UUIDModel):
             self,
         )
         assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+        assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+
+
+class ReaderStudyPermissionRequest(RequestBase):
+    """
+    When a user wants to read a reader study, editors have the option of
+    reviewing each user before accepting or rejecting them. This class records
+    the needed info for that.
+    """
+
+    reader_study = models.ForeignKey(
+        ReaderStudy,
+        help_text="To which reader study has the user requested access?",
+        on_delete=models.CASCADE,
+    )
+    rejection_text = models.TextField(
+        blank=True,
+        help_text=(
+            "The text that will be sent to the user with the reason for their "
+            "rejection."
+        ),
+    )
+
+    @property
+    def base_object(self):
+        return self.reader_study
+
+    @property
+    def object_name(self):
+        return self.base_object.title
+
+    @property
+    def add_method(self):
+        return self.base_object.add_reader
+
+    @property
+    def remove_method(self):
+        return self.base_object.remove_reader
+
+    @property
+    def permission_list_url(self):
+        return reverse(
+            f"reader-studies:permission-request-list",
+            kwargs={"slug": self.base_object.slug},
+        )
+
+    def __str__(self):
+        return f"{self.object_name} registration request by user {self.user.username}"
+
+    class Meta(RequestBase.Meta):
+        unique_together = (("reader_study", "user"),)

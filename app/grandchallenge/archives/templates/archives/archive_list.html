@@ -46,7 +46,12 @@
                         {% endif %}
                     </div>
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ object.title }}</h5>
+                        <h5 class="card-title">
+                            {{ object.title }}
+                            {% if not object.public %}
+                                <i class="fas fa-lock" title="{{ object_list.model|meta_attr:'verbose_name'|title }} is private"></i>
+                            {% endif %}
+                        </h5>
                         <p class="card-text">{{ object.description }}</p>
                         <a href="{{ object.get_absolute_url }}"
                            class="btn btn-primary mt-auto mr-auto"

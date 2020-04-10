@@ -1,0 +1,17 @@
+<p>Dear {{ user.username }},</p>
+
+<p>
+    Congratulations, you have been granted access to
+    <a href="{{ base_object.get_absolute_url }}">{{ base_object.title }}</a>
+    on {{ site.domain }}.
+</p>
+
+<p>
+    Regards,<br/>
+
+    {{ site.name }}
+</p>
+
+<p>
+    <small>This is an automated service email from {{ site.domain }}.</small>
+</p>

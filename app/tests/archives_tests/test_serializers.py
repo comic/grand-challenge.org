@@ -17,14 +17,14 @@ from tests.serializer_helpers import (
                 "unique": True,
                 "factory": ArchiveFactory,
                 "serializer": ArchiveSerializer,
-                "fields": ("id", "name", "images", "title"),
+                "fields": ("id", "name", "images", "title", "api_url"),
             },
         )
     ),
 )
 class TestSerializers:
-    def test_serializer_valid(self, serializer_data):
-        do_test_serializer_valid(serializer_data)
+    def test_serializer_valid(self, serializer_data, rf):
+        do_test_serializer_valid(serializer_data, request=rf.get("/foo"))
 
-    def test_serializer_fields(self, serializer_data):
-        do_test_serializer_fields(serializer_data)
+    def test_serializer_fields(self, serializer_data, rf):
+        do_test_serializer_fields(serializer_data, request=rf.get("/foo"))

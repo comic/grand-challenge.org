@@ -70,9 +70,14 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_overlay_alpha",
             "default_overlay_lut",
             "default_overlay_interpolation",
+            "overlay_segments",
             "default_zoom_scale",
             "show_image_info_plugin",
             "show_display_plugin",
+            "show_invert_tool",
+            "show_flip_tool",
+            "show_window_level_tool",
+            "show_reset_tool",
         ]
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             default_orientation=model._meta.get_field("default_orientation"),

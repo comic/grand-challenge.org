@@ -1,6 +1,7 @@
 import pytest
 from guardian.shortcuts import assign_perm, get_perms
 
+from grandchallenge.subdomains.utils import reverse
 from tests.factories import UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -86,18 +87,18 @@ def test_rs_detail_view_permissions(client):
     tests = (
         (None, rs_set.rs1, 302),
         (None, rs_set.rs2, 302),
-        (rs_set.creator, rs_set.rs1, 403),
-        (rs_set.creator, rs_set.rs2, 403),
+        (rs_set.creator, rs_set.rs1, 302),
+        (rs_set.creator, rs_set.rs2, 302),
         (rs_set.editor1, rs_set.rs1, 200),
-        (rs_set.editor1, rs_set.rs2, 403),
+        (rs_set.editor1, rs_set.rs2, 302),
         (rs_set.reader1, rs_set.rs1, 200),
-        (rs_set.reader1, rs_set.rs2, 403),
-        (rs_set.editor2, rs_set.rs1, 403),
+        (rs_set.reader1, rs_set.rs2, 302),
+        (rs_set.editor2, rs_set.rs1, 302),
         (rs_set.editor2, rs_set.rs2, 200),
-        (rs_set.reader2, rs_set.rs1, 403),
+        (rs_set.reader2, rs_set.rs1, 302),
         (rs_set.reader2, rs_set.rs2, 200),
-        (rs_set.u, rs_set.rs1, 403),
-        (rs_set.u, rs_set.rs2, 403),
+        (rs_set.u, rs_set.rs1, 302),
+        (rs_set.u, rs_set.rs2, 302),
     )
 
     for test in tests:
@@ -105,6 +106,11 @@ def test_rs_detail_view_permissions(client):
             url=test[1].get_absolute_url(), client=client, user=test[0]
         )
         assert response.status_code == test[2]
+        if response.status_code == 302 and test[0] is not None:
+            assert response.url == reverse(
+                "reader-studies:permission-request-create",
+                kwargs={"slug": test[1].slug},
+            )
 
 
 @pytest.mark.django_db

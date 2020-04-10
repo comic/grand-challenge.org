@@ -1,5 +1,6 @@
 import csv
 import io
+import itertools
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
@@ -14,7 +15,7 @@ from crispy_forms.layout import (
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
     FileField,
@@ -28,6 +29,7 @@ from django.forms.models import inlineformset_factory
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.forms import (
+    PermissionRequestUpdateForm,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
@@ -39,12 +41,13 @@ from grandchallenge.reader_studies.models import (
     HANGING_LIST_SCHEMA,
     Question,
     ReaderStudy,
+    ReaderStudyPermissionRequest,
 )
 
 READER_STUDY_HELP_TEXTS = {
-    "title": "The title of this reader study",
-    "logo": "The logo for this reader study",
-    "description": "Describe what this reader study is for",
+    "title": "The title of this reader study.",
+    "logo": "The logo for this reader study.",
+    "description": "Describe what this reader study is for.",
     "workstation": (
         "Which workstation should be used for this reader study? "
         "Note that in order to add a workstation you must be a member "
@@ -54,7 +57,7 @@ READER_STUDY_HELP_TEXTS = {
     ),
     "help_text_markdown": (
         "Extra information that will be presented to the reader in the help "
-        "text modal"
+        "text modal and on the reader study detail page."
     ),
 }
 
@@ -71,8 +74,25 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
+            "public",
+            "allow_answer_modification",
+            "allow_case_navigation",
         )
         help_texts = READER_STUDY_HELP_TEXTS
+        widgets = {
+            "description": TextInput,
+        }
+
+    def clean(self):
+        super().clean()
+        if (
+            self.cleaned_data["allow_answer_modification"]
+            and not self.cleaned_data["allow_case_navigation"]
+        ):
+            self.add_error(
+                error="`allow_case_navigation` must be checked if `allow_answer_modification` is",
+                field=None,
+            )
 
 
 class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
@@ -86,6 +106,9 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
+            "public",
+            "allow_answer_modification",
+            "allow_case_navigation",
             "hanging_list",
             "case_text",
         )
@@ -93,6 +116,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
             "help_text_markdown": MarkdownEditorWidget,
+            "description": TextInput,
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
@@ -267,6 +291,30 @@ class EditorsForm(UserGroupForm):
 class ReadersForm(UserGroupForm):
     role = "reader"
 
+    def add_or_remove_user(self, *, reader_study):
+        super().add_or_remove_user(reader_study=reader_study)
+
+        user = self.cleaned_data["user"]
+
+        try:
+            permission_request = ReaderStudyPermissionRequest.objects.get(
+                user=user, reader_study=reader_study
+            )
+        except ObjectDoesNotExist:
+            return
+
+        if self.cleaned_data["action"] == self.REMOVE:
+            permission_request.status = ReaderStudyPermissionRequest.REJECTED
+        else:
+            permission_request.status = ReaderStudyPermissionRequest.ACCEPTED
+
+        permission_request.save()
+
+
+class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):
+    class Meta(PermissionRequestUpdateForm.Meta):
+        model = ReaderStudyPermissionRequest
+
 
 class GroundTruthForm(SaveFormInitMixin, Form):
     ground_truth = FileField(
@@ -302,16 +350,23 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             )
         ):
             raise ValidationError(
-                "Fields provided do not match with reader study"
+                f"Fields provided do not match with reader study. Fields should "
+                f"be: {self.reader_study.ground_truth_file_headers}"
             )
 
         values = [x for x in rdr]
 
-        if sorted([sorted(x["images"].split(";")) for x in values]) != sorted(
-            self.reader_study.image_groups
-        ):
+        images = sorted([sorted(x["images"].split(";")) for x in values])
+        if images != sorted(self.reader_study.image_groups):
+            diff = self.reader_study.hanging_list_diff(
+                provided=list(itertools.chain(*images))
+            )
             raise ValidationError(
-                "Images provided do not match hanging protocol"
+                f"Images provided do not match hanging protocol. The following "
+                f"images appear in the file, but not in the hanging list: "
+                f"{', '.join(diff['in_provided_list'])}. These images appear "
+                f"in the hanging list, but not in the file: "
+                f"{', '.join(diff['in_hanging_list'])}."
             )
 
         return values

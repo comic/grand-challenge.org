@@ -4,6 +4,7 @@
 {% load user_profile_link from profiles %}
 {% load workstations %}
 {% load guardian_tags %}
+{% load evaluation_extras %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -63,6 +64,10 @@
             <td>{{ object.get_default_overlay_interpolation_display }}</td>
         </tr>
         <tr>
+            <td class="font-weight-bold">Overlay Segments</td>
+            <td><pre>{{ object.overlay_segments|json_dumps }}</pre></td>
+        </tr>
+        <tr>
             <td class="font-weight-bold">Default zoom scale</td>
             <td>{{ object.default_zoom_scale }}</td>
         </tr>
@@ -76,6 +81,30 @@
             <td class="font-weight-bold">Display plugin</td>
             <td>
                 <i class="fas {% if object.show_display_plugin %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Invert tool</td>
+            <td>
+                <i class="fas {% if object.show_invert_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Flip tool</td>
+            <td>
+                <i class="fas {% if object.show_flip_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Window level tool</td>
+            <td>
+                <i class="fas {% if object.show_window_level_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Reset tool</td>
+            <td>
+                <i class="fas {% if object.show_reset_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
     </table>

@@ -1,5 +1,6 @@
 import csv
 import re
+from datetime import datetime, timezone
 from unittest import mock
 
 import pytest
@@ -98,6 +99,112 @@ def test_answer_create(client):
 
 
 @pytest.mark.django_db
+def test_answer_update(client):
+    im1, im2 = ImageFactory(), ImageFactory()
+
+    rs = ReaderStudyFactory()
+    rs.images.add(im1, im2)
+    rs.save()
+
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    editor = UserFactory()
+    rs.add_editor(editor)
+
+    q = QuestionFactory(reader_study=rs, answer_type=Question.ANSWER_TYPE_BOOL)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-list",
+        user=reader,
+        client=client,
+        method=client.post,
+        data={"answer": True, "images": [im1.api_url], "question": q.api_url},
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+    answer = Answer.objects.get(pk=response.data.get("pk"))
+    assert answer.answer is True
+    assert answer.images.first() == im1
+    assert answer.history.count() == 1
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        reverse_kwargs={"pk": answer.pk},
+        user=reader,
+        client=client,
+        method=client.patch,
+        data={"answer": False, "images": [im2.api_url]},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
+    answer.refresh_from_db()
+    assert response.json() == {
+        "non_field_errors": [
+            "This reader study does not allow answer modification."
+        ]
+    }
+    assert answer.answer is True
+    assert answer.images.first() == im1
+    assert answer.history.count() == 1
+
+    rs.allow_answer_modification = True
+    rs.save()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        reverse_kwargs={"pk": answer.pk},
+        user=reader,
+        client=client,
+        method=client.patch,
+        data={"answer": False, "images": [im2.api_url]},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
+    answer.refresh_from_db()
+    assert response.json() == {
+        "non_field_errors": ["Only the answer field can be modified."]
+    }
+    assert answer.answer is True
+    assert answer.images.first() == im1
+    assert answer.history.count() == 1
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        reverse_kwargs={"pk": answer.pk},
+        user=reader,
+        client=client,
+        method=client.patch,
+        data={"answer": False},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+
+    answer.refresh_from_db()
+    assert answer.answer is False
+    assert answer.images.first() == im1
+    assert answer.history.count() == 2
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-detail",
+        reverse_kwargs={"pk": answer.pk},
+        user=editor,
+        client=client,
+        method=client.patch,
+        data={"answer": False},
+        content_type="application/json",
+    )
+    assert response.status_code == 403
+
+    answer.refresh_from_db()
+    assert answer.answer is False
+    assert answer.history.count() == 2
+
+
+@pytest.mark.django_db
 def test_answer_creator_is_reader(client):
     rs_set = TwoReaderStudies()
 
@@ -109,11 +216,11 @@ def test_answer_creator_is_reader(client):
     )
 
     tests = (
-        (rs_set.editor1, 403),
+        (rs_set.editor1, 400),  # 400 as the check is done in validation
         (rs_set.reader1, 201),
-        (rs_set.editor2, 403),
-        (rs_set.reader2, 400),  # 400 as the check is done in validation
-        (rs_set.u, 403),
+        (rs_set.editor2, 400),
+        (rs_set.reader2, 400),
+        (rs_set.u, 400),
     )
 
     for test in tests:
@@ -440,6 +547,65 @@ def test_answer_is_correct_type(client, answer_type, answer, expected):
 
 
 @pytest.mark.django_db
+def test_mine(client):
+    im1, im2 = ImageFactory(), ImageFactory()
+    rs1, rs2 = ReaderStudyFactory(), ReaderStudyFactory()
+    rs1.images.add(im1)
+    rs2.images.add(im2)
+
+    reader = UserFactory()
+    rs1.add_reader(reader)
+    rs2.add_reader(reader)
+
+    q1 = QuestionFactory(
+        reader_study=rs1, answer_type=Question.ANSWER_TYPE_BOOL
+    )
+    q2 = QuestionFactory(
+        reader_study=rs2, answer_type=Question.ANSWER_TYPE_BOOL
+    )
+
+    a1 = AnswerFactory(question=q1, creator=reader, answer=True)
+    a1.images.add(im1)
+
+    a2 = AnswerFactory(question=q2, creator=reader, answer=True)
+    a2.images.add(im2)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-mine",
+        user=reader,
+        client=client,
+        method=client.get,
+        content_type="application/json",
+    )
+    response = response.json()
+    assert response["count"] == 2
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-mine",
+        user=reader,
+        client=client,
+        method=client.get,
+        data={"question__reader_study": rs1.pk},
+        content_type="application/json",
+    )
+    response = response.json()
+    assert response["count"] == 1
+    assert response["results"][0]["pk"] == str(a1.pk)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-answer-mine",
+        user=reader,
+        client=client,
+        method=client.get,
+        data={"question__reader_study": rs2.pk},
+        content_type="application/json",
+    )
+    response = response.json()
+    assert response["count"] == 1
+    assert response["results"][0]["pk"] == str(a2.pk)
+
+
+@pytest.mark.django_db
 def test_ground_truth_is_excluded(client):
     im = ImageFactory()
     rs = ReaderStudyFactory()
@@ -513,7 +679,11 @@ def test_ground_truth_is_excluded(client):
         ),
     ),
 )
-def test_csv_export(client, answer_type, answer):
+@mock.patch(
+    "grandchallenge.reader_studies.views.timezone.now",
+    return_value=datetime(2020, 1, 1, 0, 0, tzinfo=timezone.utc),
+)
+def test_csv_export(now, client, answer_type, answer):
     im = ImageFactory()
 
     rs = ReaderStudyFactory()
@@ -548,7 +718,10 @@ def test_csv_export(client, answer_type, answer):
 
     assert response.status_code == 200
     assert "Content-Type: text/csv" in headers
-    assert f'filename="{rs.slug}-answers.csv"' in headers
+    assert (
+        f'filename="{rs.slug}-answers-2020-01-01T00:00:00+00:00.csv"'
+        in headers
+    )
     assert a.question.question_text in content
     assert a.question.get_answer_type_display() in content
     assert str(a.question.required) in content

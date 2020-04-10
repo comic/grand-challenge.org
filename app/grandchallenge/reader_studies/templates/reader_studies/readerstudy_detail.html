@@ -4,6 +4,7 @@
 {% load profiles %}
 {% load workstations %}
 {% load guardian_tags %}
+{% load bleach %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -34,6 +35,11 @@
                 <a class="nav-link" id="v-pills-readers-tab" data-toggle="pill"
                    href="#v-pills-readers" role="tab" aria-controls="v-pills-readers"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Readers
+                </a>
+                <a class="nav-link"
+                   href="{% url 'reader-studies:permission-request-list' slug=object.slug %}"
+                ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
+                        class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
                 </a>
                 <a class="nav-link" id="v-pills-cases-tab" data-toggle="pill"
                    href="#v-pills-cases" role="tab" aria-controls="v-pills-cases"
@@ -85,23 +91,24 @@
                 </span>
             {% endif %}
             {% if not object.hanging_list_valid %}
-                {% if object.hanging_list_diff.in_study_list|length > 0 %}
-                    <hr>
-                    The following image names appear in the study but not in the
-                    hanging list: <br/>
-                    <span class="font-weight-bold">
-                        {{ object.hanging_list_diff.in_study_list|join:', ' }}
-                    </span>
-                {% endif %}
-                {% if object.hanging_list_diff.in_hanging_list|length > 0 %}
-                    <hr>
-                    The following image names appear in the hanging list but not in
-                    the study: <br/>
-                    <span class="font-weight-bold">
-                        {{ object.hanging_list_diff.in_hanging_list|join:', ' }}
-                    </span>
-                {% endif %}
-
+                {% with diff=object.hanging_list_diff %}
+                    {% if diff.in_provided_list|length > 0 %}
+                        <hr>
+                        The following image names appear in the study but not in the
+                        hanging list: <br/>
+                        <span class="font-weight-bold">
+                            {{ diff.in_provided_list|join:', ' }}
+                        </span>
+                    {% endif %}
+                    {% if diff.in_hanging_list|length > 0 %}
+                        <hr>
+                        The following image names appear in the hanging list but not in
+                        the study: <br/>
+                        <span class="font-weight-bold">
+                            {{ diff.in_hanging_list|join:', ' }}
+                        </span>
+                    {% endif %}
+                {% endwith %}
             {% endif %}
             <hr>
 
@@ -121,7 +128,7 @@
 
             <h2>{{ object.title }}</h2>
 
-            <p>{{ object.description }}</p>
+            {{ object.help_text_markdown|md2html }}
 
             {% if user_score.score__sum is not None and progress.hangings == 100.0 %}
                 <div class="alert alert-info" role="alert">
@@ -146,7 +153,11 @@
                 <hr>
                 <h3>Admin Info</h3>
                 <p>
-                    This reader study uses
+                    This reader study
+                    {% if object.public %}
+                        <b>is visible to the public,</b> and
+                    {% endif %}
+                    uses
                     <a href="{{ object.workstation.get_absolute_url }}">
                         {{ object.workstation.title }}</a>
                     {% if object.workstation_config %}
@@ -263,7 +274,7 @@
                        href="{% url 'reader-studies:add-images' slug=object.slug %}">
                         <i class="fas fa-plus"></i> Add Cases
                     </a>
-                     <a class="btn btn-primary ml-1"
+                    <a class="btn btn-primary ml-1"
                        href="{% url 'reader-studies:images' slug=object.slug %}">
                         <i class="fas fa-eye mr-1"></i> View / Delete Cases
                     </a>
@@ -315,12 +326,16 @@
                                     </div>
                                 </div>
                                 <div class="col-6 mb-1">
-                                    <div class="progress h-100">
-                                        <div class="progress-bar" role="progressbar"
-                                             style="width: {{ reader.progress.questions }}%"
-                                             aria-valuenow="{{ reader.progress.questions }}"
-                                             aria-valuemin="0" aria-valuemax="100">
-                                            Progress: {{ reader.progress.questions|floatformat }}%
+                                    <div class="h-100 d-flex align-items-center">
+                                        <div class="flex-fill progress h-100">
+                                            <div class="progress-bar" role="progressbar"
+                                                 style="width: {{ reader.progress.questions }}%"
+                                                 aria-valuenow="{{ reader.progress.questions }}"
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            &nbsp;Progress: {{ reader.progress.questions|floatformat }}%
                                         </div>
                                     </div>
                                 </div>

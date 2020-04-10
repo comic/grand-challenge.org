@@ -7,6 +7,9 @@ from grandchallenge.archives.views import (
     ArchiveDetail,
     ArchiveEditorsUpdate,
     ArchiveList,
+    ArchivePermissionRequestCreate,
+    ArchivePermissionRequestList,
+    ArchivePermissionRequestUpdate,
     ArchiveUpdate,
     ArchiveUploadSessionCreate,
     ArchiveUploadSessionDetail,
@@ -42,6 +45,21 @@ urlpatterns = [
         "<slug>/users/update/",
         ArchiveUsersUpdate.as_view(),
         name="users-update",
+    ),
+    path(
+        "<slug>/permission-requests/",
+        ArchivePermissionRequestList.as_view(),
+        name="permission-request-list",
+    ),
+    path(
+        "<slug>/permission-requests/create/",
+        ArchivePermissionRequestCreate.as_view(),
+        name="permission-request-create",
+    ),
+    path(
+        "<slug>/permission-requests/<int:pk>/update/",
+        ArchivePermissionRequestUpdate.as_view(),
+        name="permission-request-update",
     ),
     path(
         "<slug>/uploads/",

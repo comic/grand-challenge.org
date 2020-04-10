@@ -14,8 +14,8 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.forms.utils import ErrorList
-from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import (
     CreateView,
@@ -38,8 +38,8 @@ from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
+    AlgorithmPermissionRequestUpdateForm,
     EditorsForm,
-    PermissionRequestUpdateForm,
     ResultForm,
     UsersForm,
 )
@@ -60,6 +60,7 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -112,8 +113,11 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         try:
             return super().check_permissions(request)
         except PermissionDenied:
-            return redirect(
-                "algorithms:permission-request-create", slug=self.object.slug
+            return HttpResponseRedirect(
+                reverse(
+                    "algorithms:permission-request-create",
+                    kwargs={"slug": self.object.slug},
+                )
             )
 
     def get_context_data(self, **kwargs):
@@ -534,51 +538,16 @@ class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
         return context
 
 
-class AlgorithmPermissionRequestUpdate(SuccessMessageMixin, UpdateView):
+class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
     model = AlgorithmPermissionRequest
-    form_class = PermissionRequestUpdateForm
-
-    @property
-    def algorithm(self) -> Algorithm:
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
-
-    def form_valid(self, form):
-        permission_request = self.get_object()
-        user = permission_request.user
-        form.instance.user = user
-        if (
-            not self.algorithm.is_editor(self.request.user)
-            and not self.algorithm.is_user(user)
-            and not self.algorithm.is_editor(user)
-        ):
-            form.instance.status = AlgorithmPermissionRequest.PENDING
-        try:
-            redirect = super().form_valid(form)
-            return redirect
-
-        except ValidationError as e:
-            form._errors[NON_FIELD_ERRORS] = ErrorList(e.messages)
-            return super().form_invalid(form)
+    form_class = AlgorithmPermissionRequestUpdateForm
+    base_model = Algorithm
+    redirect_namespace = "algorithms"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "permission_request": self.get_object(),
-                "algorithm": self.algorithm,
-            }
-        )
+        context.update({"algorithm": self.base_object})
         return context
-
-    def get_success_message(self, cleaned_data):
-        if not self.algorithm.is_editor(self.request.user):
-            return "You request for access has been sent to editors"
-        return "Permission request successfully updated"
-
-    def get_success_url(self):
-        if not self.algorithm.is_editor(self.request.user):
-            return reverse("algorithms:list")
-        return reverse(
-            "algorithms:permission-request-list",
-            kwargs={"slug": self.algorithm.slug},
-        )

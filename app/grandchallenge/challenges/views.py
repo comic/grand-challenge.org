@@ -49,7 +49,7 @@ class ChallengeList(TemplateView):
     template_name = "challenges/challenge_list.html"
 
     def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data()
+        context = super().get_context_data(**kwargs)
 
         challenges = chain(
             Challenge.objects.filter(hidden=False)

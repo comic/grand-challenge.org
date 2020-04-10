@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from rest_framework.fields import CharField, ReadOnlyField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
@@ -15,6 +16,7 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
+from grandchallenge.reader_studies.tasks import add_scores
 
 
 class CategoricalOptionSerializer(ModelSerializer):
@@ -75,6 +77,8 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "is_educational",
             "has_ground_truth",
             "case_text",
+            "allow_answer_modification",
+            "allow_case_navigation",
         )
 
     def get_hanging_list_images(self, obj: ReaderStudy):
@@ -95,15 +99,44 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     )
 
     def validate(self, attrs):
-        question = attrs["question"]
-        images = attrs["images"]
-        answer = attrs["answer"]
-        creator = self.context.get("request").user
+        answer = attrs.get("answer")
+        if self.instance:
+            if (
+                not self.instance.question.reader_study.allow_answer_modification
+            ):
+                raise ValidationError(
+                    f"This reader study does not allow answer modification."
+                )
+            if list(attrs.keys()) != ["answer"]:
+                raise ValidationError(
+                    f"Only the answer field can be modified."
+                )
+            question = self.instance.question
+            images = self.instance.images.all()
+            creator = self.instance.creator
+        else:
+            question = attrs.get("question")
+            images = attrs.get("images")
+            creator = self.context.get("request").user
 
         Answer.validate(
-            creator=creator, question=question, answer=answer, images=images
+            creator=creator,
+            question=question,
+            answer=answer,
+            images=images,
+            instance=self.instance,
         )
-        return attrs
+
+        if self.instance:
+            add_scores.apply_async(
+                kwargs={
+                    "instance_pk": str(self.instance.pk),
+                    "pk_set": list(
+                        map(str, images.values_list("pk", flat=True))
+                    ),
+                }
+            )
+        return attrs if not self.instance else {"answer": answer}
 
     class Meta:
         model = Answer
@@ -115,6 +148,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "images",
             "pk",
             "question",
+            "modified",
         )
         swagger_schema_fields = {
             "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}
