@@ -1,14 +1,25 @@
 import pytest
+from django.conf import settings
+from django.contrib.auth.models import Group
+from django.core.cache import cache
 
 from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.tasks import cache_archive_data
+from tests.factories import UserFactory
 from tests.retina_api_tests.helpers import create_datastructures_data
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("permission", [False, True])
 class TestCacheArchiveDataTasks:
-    def test_caching(self):
+    def test_caching(self, permission):
+        cache.clear()
         # Create data
+        user = UserFactory()
+        retina_group = Group.objects.get(
+            name=settings.RETINA_GRADERS_GROUP_NAME
+        )
+        retina_group.user_set.add(user)
         (
             datastructures,
             datastructures_aus,
@@ -16,12 +27,27 @@ class TestCacheArchiveDataTasks:
             oct_obs_registration_aus,
         ) = create_datastructures_data(archive_pars={"title": "RS1"})
 
+        if permission:
+            datastructures["archive"].add_user(user)
+            datastructures_aus["archive"].add_user(user)
+
         # Run task synchronously
         cache_archive_data()
 
         # Check cached data
         archive_data_object, _ = ArchiveDataModel.objects.get_or_create(pk=1)
         archive_data = archive_data_object.value
+
+        if not permission:
+            expected_archive_data = {
+                "id": "none",
+                "images": {},
+                "info": "level 2",
+                "name": "Archives",
+                "subfolders": {},
+            }
+            assert archive_data == expected_archive_data
+            return
 
         expected_archive_data = {
             "subfolders": {
