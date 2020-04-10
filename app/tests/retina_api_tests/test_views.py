@@ -191,6 +191,17 @@ class TestArchiveAPIView:
         return client.get(url, **kwargs)
 
     @staticmethod
+    def perform_request_as_user(client, user, pk=None):
+        url = reverse(
+            "retina:api:archive-data-api-view",
+            args=[pk] if pk is not None else [],
+        )
+        kwargs = {}
+        token_object, _ = Token.objects.get_or_create(user=user)
+        kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
+        return client.get(url, **kwargs)
+
+    @staticmethod
     def expected_result_json(objects, images):
         objects_serialized = TreeObjectSerializer(objects, many=True).data
         images_serialized = TreeImageSerializer(images, many=True).data
@@ -230,6 +241,9 @@ class TestArchiveAPIView:
         assert response.content == b'{"directories":[],"images":[]}'
 
     @pytest.mark.parametrize(
+        "permission", (True, False),
+    )
+    @pytest.mark.parametrize(
         "pk,objects,images",
         [
             (None, ["archive1", "archive2"], None),
@@ -239,24 +253,38 @@ class TestArchiveAPIView:
             ("archive2", [], "images211"),
         ],
     )
-    def test_with_data_patient(
-        self, client, archive_patient_study_image_set, pk, objects, images
+    def test_with_data(
+        self,
+        client,
+        archive_patient_study_image_set,
+        permission,
+        pk,
+        objects,
+        images,
     ):
         # Clear cache manually
         cache.clear()
+        user = get_user_from_str("retina_user")
+        if permission:
+            archive_patient_study_image_set.archive1.add_user(user)
+            archive_patient_study_image_set.archive2.add_user(user)
         if pk is not None:
             pk = getattr(archive_patient_study_image_set, pk).pk
-        response = self.perform_request(client, "retina_user", pk)
-        assert response.status_code == status.HTTP_200_OK
-        objects = [
-            getattr(archive_patient_study_image_set, o) for o in objects
-        ]
-        imgs = []
-        if images is not None:
-            imgs = getattr(archive_patient_study_image_set, images)
-        assert response.content.decode() == self.expected_result_json(
-            objects, imgs
-        )
+        response = self.perform_request_as_user(client, user, pk)
+        if permission:
+            assert response.status_code == status.HTTP_200_OK
+            objects = [
+                getattr(archive_patient_study_image_set, o) for o in objects
+            ]
+            imgs = []
+            if images is not None:
+                imgs = getattr(archive_patient_study_image_set, images)
+            assert response.content.decode() == self.expected_result_json(
+                objects, imgs
+            )
+        else:
+            assert response.status_code == status.HTTP_200_OK
+            assert response.content == b'{"directories":[],"images":[]}'
 
     def test_caching(self, client, archive_patient_study_image_set):
         # Clear cache manually

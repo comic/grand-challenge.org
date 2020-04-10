@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
+from guardian.shortcuts import get_objects_for_user
 from rest_framework import authentication, mixins, status, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -813,21 +814,37 @@ class ArchiveAPIView(APIView):
         objects = []
         images = []
         if pk is None:
-            objects = Archive.objects.all()
+            objects = get_objects_for_user(
+                request.user, "archives.view_archive"
+            )
         else:
             if Archive.objects.filter(pk=pk).exists():
-                objects = Patient.objects.filter(
-                    study__image__archive__pk=pk
-                ).distinct()
-                images = Image.objects.filter(
-                    archive__pk=pk, study=None
-                ).prefetch_related(*image_prefetch_related)
+                if (
+                    get_objects_for_user(request.user, "archives.view_archive")
+                    .filter(pk=pk)
+                    .exists()
+                ):
+                    objects = Patient.objects.filter(
+                        study__image__archive__pk=pk
+                    ).distinct()
+                    images = Image.objects.filter(
+                        archive__pk=pk, study=None
+                    ).prefetch_related(*image_prefetch_related)
             elif Patient.objects.filter(pk=pk).exists():
-                objects = Study.objects.filter(patient__pk=pk)
+                objects = Study.objects.filter(
+                    patient__pk=pk,
+                    image__archive__in=get_objects_for_user(
+                        request.user, "archives.view_archive"
+                    ),
+                ).distinct()
+
             elif Study.objects.filter(pk=pk).exists():
-                images = Image.objects.filter(study__pk=pk).prefetch_related(
-                    *image_prefetch_related
-                )
+                images = Image.objects.filter(
+                    study__pk=pk,
+                    archive__in=get_objects_for_user(
+                        request.user, "archives.view_archive"
+                    ),
+                ).prefetch_related(*image_prefetch_related)
             else:
                 return HttpResponse(status=status.HTTP_404_NOT_FOUND)
 
