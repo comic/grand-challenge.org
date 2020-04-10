@@ -17,6 +17,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
+    BooleanField,
     ChoiceField,
     FileField,
     Form,
@@ -140,6 +141,20 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
                 'e.g., {"a73512ee-1.2.276.0.542432.3.1.3.3546325986342": "This is *image 1*"}'
             ),
         }
+
+
+class ReaderStudyCopyForm(Form):
+    copy_images = BooleanField(required=False)
+    copy_hanging_list = BooleanField(required=False)
+    copy_case_text = BooleanField(required=False)
+    copy_questions = BooleanField(required=False)
+    copy_readers = BooleanField(required=False)
+    copy_editors = BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Copy"))
 
 
 class QuestionForm(SaveFormInitMixin, ModelForm):

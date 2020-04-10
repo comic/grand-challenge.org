@@ -347,6 +347,203 @@ def test_image_port_only_with_bounding_box(
 
 
 @pytest.mark.django_db
+def test_reader_study_copy(client):
+    rs = ReaderStudyFactory(title="copied")
+    editor = UserFactory()
+    editor2 = UserFactory()
+    reader = UserFactory()
+    rs.add_reader(reader)
+    rs.add_editor(editor)
+    rs.add_editor(editor2)
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.ANSWER_TYPE_BOOL,
+        question_text="q1",
+    ),
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.ANSWER_TYPE_BOOL,
+        question_text="q2",
+    )
+
+    im1, im2 = ImageFactory(), ImageFactory()
+
+    rs.images.set([im1, im2])
+    rs.generate_hanging_list()
+    rs.case_text = {im1.name: "test", im2.name: "test2"}
+    rs.save()
+
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={},
+        user=reader,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 2
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "copied"
+    assert _rs.images.count() == 0
+    assert _rs.questions.count() == 0
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"copy_questions": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 3
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "copied"
+    assert _rs.questions.count() == 2
+    assert _rs.images.count() == 0
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"copy_images": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 4
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "copied"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 2
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"copy_images": True, "copy_hanging_list": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 5
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "copied"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 2
+    assert _rs.hanging_list == rs.hanging_list
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"copy_images": True, "copy_case_text": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 6
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "copied"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 2
+    assert _rs.hanging_list == []
+    assert _rs.case_text == rs.case_text
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"copy_readers": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 7
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "copied"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 0
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 1
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"copy_editors": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 8
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "copied"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 0
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 2
+
+
+@pytest.mark.django_db
 def test_reader_study_delete(client):
     rs = ReaderStudyFactory()
     editor = UserFactory()
