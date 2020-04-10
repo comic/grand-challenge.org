@@ -409,13 +409,17 @@
                 <p>
                     An example of the first two lines of the csv for this reader study is:
                     <code>
-                        {{ object.get_example_ground_truth_csv|linebreaks }}
+                        {{ example_ground_truth|linebreaks }}
                     </code>
                 </p>
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
                         <i class="fas fa-upload"></i> Upload Ground Truth
+                    </a>
+                    <a class="btn btn-secondary"
+                       href="{% url 'reader-studies:example-ground-truth' slug=object.slug %}">
+                        <i class="fas fa-download"></i> Download Example CSV
                     </a>
                 </p>
 

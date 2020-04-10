@@ -9,6 +9,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyCreate,
     ReaderStudyDelete,
     ReaderStudyDetail,
+    ReaderStudyExampleGroundTruth,
     ReaderStudyImages,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
@@ -49,6 +50,11 @@ urlpatterns = [
         "<slug>/ground-truth/add/",
         AddGroundTruthToReaderStudy.as_view(),
         name="add-ground-truth",
+    ),
+    path(
+        "<slug>/ground-truth/example/",
+        ReaderStudyExampleGroundTruth.as_view(),
+        name="example-ground-truth",
     ),
     path(
         "<slug>/images/add/",

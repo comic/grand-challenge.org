@@ -351,7 +351,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         ):
             raise ValidationError(
                 f"Fields provided do not match with reader study. Fields should "
-                f"be: {self.reader_study.ground_truth_file_headers}"
+                f"be: {','.join(self.reader_study.ground_truth_file_headers)}"
             )
 
         values = [x for x in rdr]
