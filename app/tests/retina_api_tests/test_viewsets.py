@@ -2367,19 +2367,20 @@ class TestImageLevelAnnotationsForImageViewSet:
 class TestPolygonAnnotationSetViewSetWithImageFilter:
     @staticmethod
     def perform_request(rf, image_id, user):
-        url = f"{reverse('api:retina-polygon-annotation-set-list')}?image_id={image_id}"
+        url = f"{reverse('api:retina-polygon-annotation-set-list')}?image={image_id}"
         request = rf.get(url)
         force_authenticate(request, user=user)
         view = PolygonAnnotationSetViewSet.as_view(actions={"get": "list"})
         return view(request)
 
-    def test_filter_none(self, rf, two_retina_polygon_annotation_sets):
+    def test_filter_nonexistant_image(
+        self, rf, two_retina_polygon_annotation_sets
+    ):
         grader = two_retina_polygon_annotation_sets.grader1
         response = self.perform_request(
             rf, "00000000-0000-0000-0000-000000000000", grader
         )
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data == []
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_filter_all(self, rf, two_retina_polygon_annotation_sets):
         image = two_retina_polygon_annotation_sets.polygonset1.image

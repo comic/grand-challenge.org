@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django_filters import rest_framework as drf_filters
 from rest_framework import authentication, mixins, status, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -52,7 +53,6 @@ from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
 from grandchallenge.retina_api.filters import (
-    ImageAnnotationFilter,
     RetinaAnnotationFilter,
     RetinaChildAnnotationFilter,
 )
@@ -990,9 +990,10 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     filter_backends = (
         filters.ObjectPermissionsFilter,
         RetinaAnnotationFilter,
-        ImageAnnotationFilter,
+        drf_filters.DjangoFilterBackend,
     )
     pagination_class = None
+    filterset_fields = ("image",)
     queryset = PolygonAnnotationSet.objects.all()
 
 
