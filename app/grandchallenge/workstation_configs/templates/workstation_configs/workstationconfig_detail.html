@@ -4,6 +4,7 @@
 {% load user_profile_link from profiles %}
 {% load workstations %}
 {% load guardian_tags %}
+{% load evaluation_extras %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -61,6 +62,10 @@
         <tr>
             <td class="font-weight-bold">Default overlay interpolation</td>
             <td>{{ object.get_default_overlay_interpolation_display }}</td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Overlay Segments</td>
+            <td><pre>{{ object.overlay_segments|json_dumps }}</pre></td>
         </tr>
         <tr>
             <td class="font-weight-bold">Default zoom scale</td>
