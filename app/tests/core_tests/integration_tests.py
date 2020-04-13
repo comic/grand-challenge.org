@@ -299,7 +299,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             ),
         )
         validationlink = validationlink_result.group(1).strip()
-        response = self.client.get(validationlink)
+        response = self.client.post(validationlink)
         self.assertEqual(
             response.status_code,
             302,
