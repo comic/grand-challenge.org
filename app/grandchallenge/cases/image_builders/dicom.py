@@ -35,6 +35,7 @@ OPTIONAL_METADATA_FIELDS = (
     "StudyInstanceUID",
     "SeriesInstanceUID",
     "StudyDescription",
+    "SliceThickness",
 )
 
 
