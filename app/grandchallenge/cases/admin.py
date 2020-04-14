@@ -41,8 +41,10 @@ class ImageAdmin(admin.ModelAdmin):
         "eye_choice",
         "field_of_view",
         "stereoscopic_choice",
+        "archive__slug",
     )
     inlines = [ImageFileInline]
+    readonly_fields = ("origin",)
 
 
 class ImageInline(admin.StackedInline):
@@ -67,7 +69,7 @@ class MhdOrRawFilter(admin.SimpleListFilter):
 
 
 class ImageFileAdmin(admin.ModelAdmin):
-    search_fields = ("pk", "file", "image")
+    search_fields = ("pk", "file", "image__name")
     list_filter = (MhdOrRawFilter,)
 
 
