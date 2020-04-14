@@ -941,16 +941,19 @@ def test_ground_truth(client):
         "answer_text": op1.title,
         "question_text": q1.question_text,
         "options": {str(op1.pk): op1.title},
+        "explanation": "",
     }
     assert response[str(q2.pk)] == {
         "answer": [op2.pk, op3.pk],
         "answer_text": f"{op2.title}, {op3.title}",
         "question_text": q2.question_text,
         "options": {str(op2.pk): op2.title, str(op3.pk): op3.title},
+        "explanation": "",
     }
     assert response[str(q3.pk)] == {
         "answer": [op4.pk, op5.pk],
         "answer_text": f"{op4.title}, {op5.title}",
         "question_text": q3.question_text,
         "options": {str(op4.pk): op4.title, str(op5.pk): op5.title},
+        "explanation": "",
     }
