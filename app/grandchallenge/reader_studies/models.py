@@ -507,7 +507,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         for gt in data:
             images = self.images.filter(name__in=gt["images"].split(";"))
             for key in gt.keys():
-                if key == "images":
+                if key == "images" or key.endswith("_explanation"):
                     continue
                 question = self.questions.get(question_text=key)
                 _answer = json.loads(gt[key])
@@ -546,14 +546,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                             creator=user,
                             question=question,
                             is_ground_truth=True,
+                            explanation="",
                         ),
                         "answer": _answer,
+                        "explanation": gt.get(key + "_explanation") or "",
                         "images": images,
                     }
                 )
 
         for answer in answers:
             answer["answer_obj"].answer = answer["answer"]
+            answer["answer_obj"].explanation = answer["explanation"]
             answer["answer_obj"].save()
             answer["answer_obj"].images.set(answer["images"])
             answer["answer_obj"].save()
@@ -1249,6 +1252,7 @@ class Answer(UUIDModel):
     )
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
+    explanation = models.TextField(blank=True)
     history = HistoricalRecords(
         excluded_fields=[
             "created",

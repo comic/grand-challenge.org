@@ -394,7 +394,9 @@ class GroundTruthForm(SaveFormInitMixin, Form):
             quotechar="'",
         )
         headers = rdr.fieldnames
-        if sorted(headers) != sorted(
+        if sorted(
+            filter(lambda x: not x.endswith("_explanation"), headers)
+        ) != sorted(
             ["images"]
             + list(
                 self.reader_study.questions.values_list(

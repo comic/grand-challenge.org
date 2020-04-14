@@ -892,6 +892,7 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
                     "options": dict(
                         answer.question.options.values_list("id", "title")
                     ),
+                    "explanation": answer.explanation,
                 }
                 for answer in answers
             }
