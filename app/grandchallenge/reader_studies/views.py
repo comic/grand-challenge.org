@@ -116,6 +116,34 @@ class ReaderStudyCreate(
         return response
 
 
+class ReaderStudyExampleGroundTruth(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get(self, request, *args, **kwargs):
+        reader_study = self.get_object()
+        response = HttpResponse(content_type="text/csv")
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="ground-truth-{reader_study.slug}"'
+        writer = csv.DictWriter(
+            response,
+            fieldnames=reader_study.ground_truth_file_headers,
+            escapechar="\\",
+            quoting=csv.QUOTE_NONE,
+            quotechar="`",
+        )
+        writer.writeheader()
+        writer.writerows(reader_study.get_ground_truth_csv_dict())
+
+        return response
+
+
 class ReaderStudyDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
@@ -171,6 +199,9 @@ class ReaderStudyDetail(
                 "reader_remove_form": reader_remove_form,
                 "user_is_reader": self.object.is_reader(
                     user=self.request.user
+                ),
+                "example_ground_truth": self.object.get_example_ground_truth_csv_text(
+                    limit=2
                 ),
             }
         )

@@ -482,7 +482,8 @@ def test_reader_study_add_ground_truth(client, settings):
     assert response.status_code == 200
     assert (
         f"Fields provided do not match with reader study. Fields should "
-        f"be: {rs.ground_truth_file_headers}" in response.rendered_content
+        f"be: {','.join(rs.ground_truth_file_headers)}"
+        in response.rendered_content
     )
 
     q.question_text = "foo"
