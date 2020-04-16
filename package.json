@@ -4,7 +4,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.7.2",
     "@github/markdown-toolbar-element": "^1.1.1",
-    "jquery": "^3.4.1",
+    "jquery": "3.4.1",
     "jquery-ui": "^1.12.1",
     "popper.js": "^1.14.3",
     "bootstrap": "^4.3.1",
