@@ -27,8 +27,10 @@ from grandchallenge.retina_api.views import (
     ImageLevelAnnotationsForImageViewSet,
     LandmarkAnnotationSetViewSet,
     PathologyAnnotationViewSet,
+    PolygonAnnotationSetViewSet,
     QualityAnnotationViewSet,
     RetinaPathologyAnnotationViewSet,
+    SinglePolygonViewSet,
     TextAnnotationViewSet,
 )
 from grandchallenge.statistics.views import MetricsAPIView
@@ -110,6 +112,16 @@ router.register(
     r"retina/text-annotation",
     TextAnnotationViewSet,
     basename="retina-text-annotation",
+)
+router.register(
+    r"retina/polygon-annotation-set",
+    PolygonAnnotationSetViewSet,
+    basename="retina-polygon-annotation-set",
+)
+router.register(
+    r"retina/single-polygon-annotation",
+    SinglePolygonViewSet,
+    basename="retina-single-polygon-annotation",
 )
 
 # Workstations
