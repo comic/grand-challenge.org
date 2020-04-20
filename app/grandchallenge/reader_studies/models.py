@@ -258,6 +258,18 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
 
+    copy_fields = (
+        "title",
+        "workstation",
+        "workstation",
+        "logo",
+        "help_text_markdown",
+        "shuffle_hanging_list",
+        "is_educational",
+        "allow_answer_modification",
+        "allow_case_navigation",
+    )
+
     def __str__(self):
         return f"{self.title}"
 

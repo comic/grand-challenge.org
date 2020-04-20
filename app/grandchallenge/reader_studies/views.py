@@ -424,12 +424,7 @@ class ReaderStudyCopy(
         reader_study = self.get_permission_object()
 
         rs = ReaderStudy.objects.create(
-            title=reader_study.title,
-            workstation=reader_study.workstation,
-            workstation_config=reader_study.workstation_config,
-            logo=reader_study.logo,
-            help_text_markdown=reader_study.help_text_markdown,
-            shuffle_hanging_list=reader_study.shuffle_hanging_list,
+            **{field: getattr(reader_study, field) for field in ReaderStudy.copy_fields}
         )
         rs.add_editor(self.request.user)
         if form.cleaned_data["copy_images"]:
