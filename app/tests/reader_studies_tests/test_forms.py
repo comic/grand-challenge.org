@@ -1,6 +1,7 @@
 import html
 
 import pytest
+from django.contrib.auth.models import Permission
 
 from grandchallenge.core.management.commands.init_gc_demo import (
     get_temporary_image,
@@ -385,8 +386,26 @@ def test_reader_study_copy(client):
         follow=True,
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 403
     assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 403
+    assert ReaderStudy.objects.count() == 1
+
+    add_perm = Permission.objects.get(
+        codename=f"add_{ReaderStudy._meta.model_name}"
+    )
+    editor.user_permissions.add(add_perm)
 
     response = get_view_for_user(
         viewname="reader-studies:copy",

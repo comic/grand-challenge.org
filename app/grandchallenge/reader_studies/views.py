@@ -426,8 +426,13 @@ class ReaderStudyCopy(
     def check_permissions(self, request):
         obj = self.get_permission_object()
         if not (
-            request.user.has_perm(f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}")
-            and request.user.has_perm(f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}", obj)
+            request.user.has_perm(
+                f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
+            )
+            and request.user.has_perm(
+                f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
+                obj,
+            )
         ):
             raise PermissionDenied
 
@@ -435,7 +440,10 @@ class ReaderStudyCopy(
         reader_study = self.get_permission_object()
 
         rs = ReaderStudy.objects.create(
-            **{field: getattr(reader_study, field) for field in ReaderStudy.copy_fields}
+            **{
+                field: getattr(reader_study, field)
+                for field in ReaderStudy.copy_fields
+            }
         )
         rs.add_editor(self.request.user)
         if form.cleaned_data["copy_images"]:
