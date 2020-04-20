@@ -144,12 +144,12 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
 
 
 class ReaderStudyCopyForm(Form):
-    copy_images = BooleanField(required=False)
-    copy_hanging_list = BooleanField(required=False)
-    copy_case_text = BooleanField(required=False)
-    copy_questions = BooleanField(required=False)
-    copy_readers = BooleanField(required=False)
-    copy_editors = BooleanField(required=False)
+    copy_images = BooleanField(required=False, initial=True)
+    copy_hanging_list = BooleanField(required=False, initial=True)
+    copy_case_text = BooleanField(required=False, initial=True)
+    copy_questions = BooleanField(required=False, initial=True)
+    copy_readers = BooleanField(required=False, initial=True)
+    copy_editors = BooleanField(required=False, initial=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
