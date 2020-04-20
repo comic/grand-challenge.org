@@ -412,13 +412,24 @@ class ReaderStudyCopy(
 ):
     form_class = ReaderStudyCopyForm
     template_name = "reader_studies/readerstudy_copy.html"
+    # Note: these are explicitly checked in the check_permission function
+    # and only left here for reference.
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+        f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}",
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
     )
     reader_study = None
 
     def get_permission_object(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def check_permissions(self, request):
+        obj = self.get_permission_object()
+        if not (
+            request.user.has_perm(f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}")
+            and request.user.has_perm(f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}", obj)
+        ):
+            raise PermissionDenied
 
     def form_valid(self, form):  # noqa: C901
         reader_study = self.get_permission_object()
