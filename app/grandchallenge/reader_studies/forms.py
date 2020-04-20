@@ -156,6 +156,16 @@ class ReaderStudyCopyForm(Form):
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Copy"))
 
+    def clean(self, *args, **kwargs):
+        if (
+            self.cleaned_data["copy_hanging_list"]
+            or self.cleaned_data["copy_case_text"]
+        ) and not self.cleaned_data["copy_images"]:
+            self.add_error(
+                error="Hanging list and case text can only be copied if the images are copied as well",
+                field=None,
+            )
+
 
 class QuestionForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, **kwargs):

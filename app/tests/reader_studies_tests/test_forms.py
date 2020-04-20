@@ -478,6 +478,23 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
+        data={"copy_hanging_list": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "Hanging list and case text can only be copied if the images are copied as well"
+        in response.rendered_content
+    )
+    assert ReaderStudy.objects.count() == 4
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
         data={"copy_images": True, "copy_hanging_list": True},
         user=editor,
         follow=True,
