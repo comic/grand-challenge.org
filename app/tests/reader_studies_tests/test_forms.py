@@ -381,7 +381,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={},
+        data={"title": "1"},
         user=reader,
         follow=True,
     )
@@ -394,7 +394,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={},
+        data={"title": "1"},
         user=editor,
         follow=True,
     )
@@ -412,7 +412,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={},
+        data={"title": "1"},
         user=editor,
         follow=True,
     )
@@ -421,7 +421,7 @@ def test_reader_study_copy(client):
     assert ReaderStudy.objects.count() == 2
 
     _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "copied"
+    assert _rs.title == "1"
     assert _rs.images.count() == 0
     assert _rs.questions.count() == 0
     assert _rs.readers_group.user_set.count() == 0
@@ -434,7 +434,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"copy_questions": True},
+        data={"title": "2", "copy_questions": True},
         user=editor,
         follow=True,
     )
@@ -443,7 +443,7 @@ def test_reader_study_copy(client):
     assert ReaderStudy.objects.count() == 3
 
     _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "copied"
+    assert _rs.title == "2"
     assert _rs.questions.count() == 2
     assert _rs.images.count() == 0
     assert _rs.hanging_list == []
@@ -456,7 +456,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"copy_images": True},
+        data={"title": "3", "copy_images": True},
         user=editor,
         follow=True,
     )
@@ -465,7 +465,7 @@ def test_reader_study_copy(client):
     assert ReaderStudy.objects.count() == 4
 
     _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "copied"
+    assert _rs.title == "3"
     assert _rs.questions.count() == 0
     assert _rs.images.count() == 2
     assert _rs.hanging_list == []
@@ -478,7 +478,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"copy_hanging_list": True},
+        data={"title": "4", "copy_hanging_list": True},
         user=editor,
         follow=True,
     )
@@ -495,7 +495,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"copy_images": True, "copy_hanging_list": True},
+        data={"title": "4", "copy_images": True, "copy_hanging_list": True},
         user=editor,
         follow=True,
     )
@@ -504,7 +504,7 @@ def test_reader_study_copy(client):
     assert ReaderStudy.objects.count() == 5
 
     _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "copied"
+    assert _rs.title == "4"
     assert _rs.questions.count() == 0
     assert _rs.images.count() == 2
     assert _rs.hanging_list == rs.hanging_list
@@ -517,7 +517,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"copy_images": True, "copy_case_text": True},
+        data={"title": "5", "copy_images": True, "copy_case_text": True},
         user=editor,
         follow=True,
     )
@@ -526,7 +526,7 @@ def test_reader_study_copy(client):
     assert ReaderStudy.objects.count() == 6
 
     _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "copied"
+    assert _rs.title == "5"
     assert _rs.questions.count() == 0
     assert _rs.images.count() == 2
     assert _rs.hanging_list == []
@@ -539,7 +539,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"copy_readers": True},
+        data={"title": "6", "copy_readers": True},
         user=editor,
         follow=True,
     )
@@ -548,7 +548,7 @@ def test_reader_study_copy(client):
     assert ReaderStudy.objects.count() == 7
 
     _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "copied"
+    assert _rs.title == "6"
     assert _rs.questions.count() == 0
     assert _rs.images.count() == 0
     assert _rs.hanging_list == []
@@ -561,7 +561,7 @@ def test_reader_study_copy(client):
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"copy_editors": True},
+        data={"title": "7", "copy_editors": True},
         user=editor,
         follow=True,
     )
@@ -570,7 +570,7 @@ def test_reader_study_copy(client):
     assert ReaderStudy.objects.count() == 8
 
     _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "copied"
+    assert _rs.title == "7"
     assert _rs.questions.count() == 0
     assert _rs.images.count() == 0
     assert _rs.hanging_list == []

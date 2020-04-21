@@ -259,7 +259,6 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         verbose_name_plural = "reader studies"
 
     copy_fields = (
-        "title",
         "workstation",
         "workstation",
         "logo",

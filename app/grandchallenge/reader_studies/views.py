@@ -440,10 +440,11 @@ class ReaderStudyCopy(
         reader_study = self.get_permission_object()
 
         rs = ReaderStudy.objects.create(
+            title=form.cleaned_data["title"],
             **{
                 field: getattr(reader_study, field)
                 for field in ReaderStudy.copy_fields
-            }
+            },
         )
         rs.add_editor(self.request.user)
         if form.cleaned_data["copy_images"]:

@@ -18,6 +18,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     BooleanField,
+    CharField,
     ChoiceField,
     FileField,
     Form,
@@ -144,6 +145,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
 
 
 class ReaderStudyCopyForm(Form):
+    title = CharField(required=True)
     copy_images = BooleanField(required=False, initial=True)
     copy_hanging_list = BooleanField(required=False, initial=True)
     copy_case_text = BooleanField(required=False, initial=True)
