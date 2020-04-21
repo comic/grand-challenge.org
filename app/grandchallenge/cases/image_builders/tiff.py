@@ -1,8 +1,9 @@
 from pathlib import Path
 from tempfile import TemporaryFile
 from typing import Optional
-from uuid import uuid4, UUID
 from dataclasses import dataclass
+from uuid import UUID, uuid4
+
 
 import pyvips
 import tifffile
@@ -52,11 +53,61 @@ def load_tiff_file(path: Path) -> GrandChallengeTiffFile:
     except ValueError:
         raise ValidationError("Image isn't a TIFF file")
 
-    return _validate_tiff_file(gc_file, file.pages)
+    return _validate_tiff_file(gc_file=gc_file, pages=file.pages)
+
+
+def _get_tag_value(tags, tag, required=True):
+    try:
+        return tags[tag].value
+    except KeyError:
+        if required:
+            raise ValidationError(f"Tiff file is missing required tag {tag}")
+
+
+def _get_voxel_spacing_mm(tags, tag):
+    """
+    Calculate the voxel spacing in mm.
+
+    Use the set of tags from the tiff image to calculate the spacing for a
+    particular dimension. Supports INCH and CENTIMETER resolution units.
+
+    Parameters
+    ----------
+    tags
+        The collection of tags from the tif file.
+    tag
+        The tag that contains the resolution of the tif file along the
+        dimension of interest.
+
+    Raises
+    ------
+    ValidationError
+        Raised if an unrecognised resolution unit is used.
+
+
+    Returns
+    -------
+        The voxel spacing in mm.
+
+    """
+    try:
+        # Resolution is a tuple of the number of pixels and the length of the
+        # image in cm or inches, depending on resolution unit
+        resolution_unit = str(_get_tag_value(tags, "ResolutionUnit"))
+        resolution = _get_tag_value(tags, tag)
+        if resolution_unit == "RESUNIT.INCH":
+            return 25.4 / (resolution[0] / resolution[1])
+        elif resolution_unit == "RESUNIT.CENTIMETER":
+            return 10 / (resolution[0] / resolution[1])
+        raise ValidationError(
+            f"Invalid resolution unit {resolution_unit}" f" in tiff file"
+        )
+    except ZeroDivisionError:
+        raise ValidationError(f"Invalid resolution in tiff file")
 
 
 def _validate_tiff_file(
-    gc_file: GrandChallengeTiffFile, pages: tifffile.tifffile.TiffPages
+    *, gc_file: GrandChallengeTiffFile, pages: tifffile.tifffile.TiffPages
 ) -> GrandChallengeTiffFile:
     """
     Validates a tiff file loaded with tifffile for use in grand challenge
@@ -64,63 +115,13 @@ def _validate_tiff_file(
     :return: The extracted tags that are needed by the rest of the framework
     """
 
-    def get_tag_value(tags, tag, required=True):
-        try:
-            return tags[tag].value
-        except KeyError:
-            if required:
-                raise ValidationError(
-                    f"Tiff file is missing required tag {tag}"
-                )
-
-    def get_voxel_spacing_mm(tags, tag):
-        """
-        Calculate the voxel spacing in mm.
-
-        Use the set of tags from the tiff image to calculate the spacing for a
-        particular dimension. Supports INCH and CENTIMETER resolution units.
-
-        Parameters
-        ----------
-        tags
-            The collection of tags from the tif file.
-        tag
-            The tag that contains the resolution of the tif file along the
-            dimension of interest.
-
-        Raises
-        ------
-        ValidationError
-            Raised if an unrecognised resolution unit is used.
-
-
-        Returns
-        -------
-            The voxel spacing in mm.
-
-        """
-        try:
-            # Resolution is a tuple of the number of pixels and the length of the
-            # image in cm or inches, depending on resolution unit
-            resolution_unit = str(get_tag_value(tags, "ResolutionUnit"))
-            resolution = get_tag_value(tags, tag)
-            if resolution_unit == "RESUNIT.INCH":
-                return 25.4 / (resolution[0] / resolution[1])
-            elif resolution_unit == "RESUNIT.CENTIMETER":
-                return 10 / (resolution[0] / resolution[1])
-            raise ValidationError(
-                f"Invalid resolution unit {resolution_unit}" f" in tiff file"
-            )
-        except ZeroDivisionError:
-            raise ValidationError(f"Invalid resolution in tiff file")
-
     required_tile_tags = ("TileOffsets", "TileByteCounts")
 
     tags = pages[0].tags
 
     # Fails if the image doesn't have all required tile tags
     for tag in required_tile_tags:
-        get_tag_value(tags, tag, True)
+        _get_tag_value(tags, tag, True)
 
     # Fails if the image only has a single resolution page
     gc_file.resolution_levels = len(pages)
@@ -129,7 +130,7 @@ def _validate_tiff_file(
 
     # Fails if the image doesn't have the chunky format
     if (
-        str(get_tag_value(tags, "PlanarConfiguration"))
+        str(_get_tag_value(tags, "PlanarConfiguration"))
         != "PLANARCONFIG.CONTIG"
     ):
         raise ValidationError(
@@ -137,23 +138,25 @@ def _validate_tiff_file(
         )
 
     # Fails if the color space isn't supported
-    gc_file.color_space = get_color_space(
-        str(get_tag_value(tags, "PhotometricInterpretation"))
+    gc_file.color_space = _get_color_space(
+        color_space_string=str(
+            _get_tag_value(tags, "PhotometricInterpretation")
+        )
     )
-    gc_file.image_width = get_tag_value(tags, "ImageWidth")
-    gc_file.image_height = get_tag_value(tags, "ImageLength")
+    gc_file.image_width = _get_tag_value(tags, "ImageWidth")
+    gc_file.image_height = _get_tag_value(tags, "ImageLength")
 
     #  some formats like the Philips tiff don't have the spacing in their tags,
     #  we retrieve them later with OpenSlide
     if "XResolution" in tags:
-        gc_file.voxel_width_mm = get_voxel_spacing_mm(tags, "XResolution")
-        gc_file.voxel_height_mm = get_voxel_spacing_mm(tags, "YResolution")
+        gc_file.voxel_width_mm = _get_voxel_spacing_mm(tags, "XResolution")
+        gc_file.voxel_height_mm = _get_voxel_spacing_mm(tags, "YResolution")
     gc_file.voxel_depth_mm = None
 
     return gc_file
 
 
-def get_color_space(color_space_string) -> Image.COLOR_SPACES:
+def _get_color_space(*, color_space_string) -> Image.COLOR_SPACES:
     color_space_string = color_space_string.split(".")[1].upper()
 
     if color_space_string == "MINISBLACK":
@@ -167,7 +170,29 @@ def get_color_space(color_space_string) -> Image.COLOR_SPACES:
     return color_space
 
 
-def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
+def _create_image_file(*, path: str, image: Image):
+    temp_file = TemporaryFile()
+    with open(path, "rb") as open_file:
+        buffer = True
+        while buffer:
+            buffer = open_file.read(1024)
+            temp_file.write(buffer)
+
+    if path.lower().endswith("dzi"):
+        return ImageFile(
+            image=image,
+            image_type=ImageFile.IMAGE_TYPE_DZI,
+            file=File(temp_file, name=f"{image.pk}.dzi"),
+        )
+    else:
+        return ImageFile(
+            image=image,
+            image_type=ImageFile.IMAGE_TYPE_TIFF,
+            file=File(temp_file, name=f"{image.pk}.tif"),
+        )
+
+
+def image_builder_tiff(*, path: Path, session_id=None) -> ImageBuilderResult:
     new_images = []
     new_image_files = []
     consumed_files = set()
@@ -178,53 +203,32 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
         pk = uuid4()
         dzi_output = None
         try:
-            tiff_file = load_tiff_file(file_path)
+            gc_file = load_tiff_file(file_path)
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message  # noqa: B306
             continue
 
         try:
-            dzi_output, tiff_file = create_dzi_images(tiff_file, pk)
+            dzi_output, gc_file = _create_dzi_images(gc_file=gc_file, pk=pk)
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message  # noqa: B306
 
         # make sure all requirements are met
         try:
-            tiff_file.validate()
+            gc_file.validate()
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message  # noqa: B306
             continue
-        image = create_tiff_image_entry(tiff_file, pk)
 
-        temp_file = TemporaryFile()
-        with open(tiff_file.path.absolute(), "rb") as open_file:
-            buffer = True
-            while buffer:
-                buffer = open_file.read(1024)
-                temp_file.write(buffer)
+        image = _create_tiff_image_entry(tiff_file=gc_file, pk=pk)
 
         new_image_files.append(
-            ImageFile(
-                image=image,
-                image_type=ImageFile.IMAGE_TYPE_TIFF,
-                file=File(temp_file, name=f"{image.pk}.tif"),
-            )
+            _create_image_file(path=str(gc_file.path.absolute()), image=image)
         )
 
         if dzi_output:
-            temp_dzi_file = TemporaryFile()
-            with open(dzi_output + ".dzi", "rb") as open_file:
-                buffer = True
-                while buffer:
-                    buffer = open_file.read(1024)
-                    temp_dzi_file.write(buffer)
-
             new_image_files.append(
-                ImageFile(
-                    image=image,
-                    image_type=ImageFile.IMAGE_TYPE_DZI,
-                    file=File(temp_dzi_file, name=f"{image.pk}.dzi"),
-                )
+                _create_image_file(path=dzi_output + ".dzi", image=image)
             )
 
             dzi_folder_upload = FolderUpload(
@@ -233,7 +237,7 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
             new_folder_upload.append(dzi_folder_upload)
 
         new_images.append(image)
-        consumed_files.add(tiff_file.path.name)
+        consumed_files.add(gc_file.path.name)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
@@ -244,8 +248,8 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
     )
 
 
-def create_tiff_image_entry(
-    tiff_file: GrandChallengeTiffFile, pk: UUID
+def _create_tiff_image_entry(
+    *, tiff_file: GrandChallengeTiffFile, pk: UUID
 ) -> Image:
     # Builds a new Image model item
     return Image(
@@ -265,8 +269,8 @@ def create_tiff_image_entry(
     )
 
 
-def create_dzi_images(
-    gc_file: GrandChallengeTiffFile, pk: UUID
+def _create_dzi_images(
+    *, gc_file: GrandChallengeTiffFile, pk: UUID
 ) -> (str, GrandChallengeTiffFile):
     # Creates a dzi file(out.dzi) and corresponding tiles in folder {pk}_files
     dzi_output = str(gc_file.path.parent / str(pk))

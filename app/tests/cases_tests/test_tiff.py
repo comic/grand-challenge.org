@@ -9,9 +9,9 @@ from django.core.exceptions import ValidationError
 from pytest import approx
 
 from grandchallenge.cases.image_builders.tiff import (
-    create_dzi_images,
-    create_tiff_image_entry,
-    get_color_space,
+    _create_dzi_images,
+    _create_tiff_image_entry,
+    _get_color_space,
     image_builder_tiff,
     load_tiff_file,
 )
@@ -35,7 +35,7 @@ def test_get_color_space(color_space_string, expected):
     color_space = None
 
     try:
-        color_space = get_color_space(color_space_string)
+        color_space = _get_color_space(color_space_string=color_space_string)
     except ValidationError:
         pass
 
@@ -98,7 +98,7 @@ def test_dzi_creation(
     try:
         # Load the tiff file and create dzi
         tiff_file = load_tiff_file(temp_file)
-        create_dzi_images(tiff_file, uuid4())
+        _create_dzi_images(gc_file=tiff_file, pk=uuid4())
     except ValidationError as e:
         error_message = str(e)
 
@@ -127,7 +127,7 @@ def test_tiff_image_entry_creation(
     pk = uuid4()
     try:
         tiff_file = load_tiff_file(resource)
-        image_entry = create_tiff_image_entry(tiff_file, pk)
+        image_entry = _create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
     except ValidationError as e:
         error_message = str(e)
 
@@ -146,8 +146,10 @@ def test_tiff_image_entry_creation(
         assert image_entry.height == tiff_tags["ImageLength"].value
         assert image_entry.depth == 1
         assert image_entry.resolution_levels == len(tiff_file.pages)
-        assert image_entry.color_space == get_color_space(
-            str(tiff_tags["PhotometricInterpretation"].value)
+        assert image_entry.color_space == _get_color_space(
+            color_space_string=str(
+                tiff_tags["PhotometricInterpretation"].value
+            )
         )
         assert image_entry.voxel_width_mm == approx(voxel_size[0])
         assert image_entry.voxel_height_mm == approx(voxel_size[1])
@@ -164,7 +166,7 @@ def test_image_builder_tiff(tmpdir_factory):
         RESOURCE_PATH, temp_dir, ignore=shutil.ignore_patterns("dicom*")
     )
 
-    image_builder_result = image_builder_tiff(temp_dir)
+    image_builder_result = image_builder_tiff(path=temp_dir)
 
     # Assumes the RESOURCE_PATH folder only contains a single correct TIFF file
     assert len(image_builder_result.consumed_files) == 1
