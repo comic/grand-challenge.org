@@ -191,7 +191,7 @@ def _create_image_file(*, path: str, image: Image):
         )
 
 
-def image_builder_tiff(*, path: Path, session_id=None) -> ImageBuilderResult:
+def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
     new_images = []
     new_image_files = []
     consumed_files = set()
