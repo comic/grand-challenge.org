@@ -743,6 +743,7 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
 ANSWER_TYPE_SCHEMA = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
+        "null": {"type": "null"},
         "STXT": {"type": "string"},
         "MTXT": {"type": "string"},
         "BOOL": {"type": "boolean"},
@@ -946,6 +947,7 @@ ANSWER_TYPE_SCHEMA = {
     },
     # anyOf should exist, check Question.is_answer_valid
     "anyOf": [
+        {"$ref": "#/definitions/null"},
         {"$ref": "#/definitions/STXT"},
         {"$ref": "#/definitions/MTXT"},
         {"$ref": "#/definitions/BOOL"},
@@ -1155,18 +1157,9 @@ class Question(UUIDModel):
     def clean(self):
         # Make sure that the image port is only set when using drawn
         # annotations.
-        if (
-            self.answer_type
-            in [
-                self.ANSWER_TYPE_2D_BOUNDING_BOX,
-                self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
-                self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
-                self.ANSWER_TYPE_POINT,
-                self.ANSWER_TYPE_MULTIPLE_POINTS,
-                self.ANSWER_TYPE_POLYGON,
-                self.ANSWER_TYPE_MULTIPLE_POLYGONS,
-            ]
-        ) != bool(self.image_port):
+        if (self.answer_type in self.annotation_types) != bool(
+            self.image_port
+        ):
             raise ValidationError(
                 "The image port must (only) be set for annotation questions."
             )
@@ -1181,17 +1174,32 @@ class Question(UUIDModel):
                 "(otherwise the user will need to tick a box for each image!)"
             )
 
+    @property
+    def annotation_types(self):
+        return [
+            self.ANSWER_TYPE_2D_BOUNDING_BOX,
+            self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            self.ANSWER_TYPE_POINT,
+            self.ANSWER_TYPE_MULTIPLE_POINTS,
+            self.ANSWER_TYPE_POLYGON,
+            self.ANSWER_TYPE_MULTIPLE_POLYGONS,
+        ]
+
     def is_answer_valid(self, *, answer):
         """Validates ``answer`` against ``ANSWER_TYPE_SCHEMA``."""
+        allowed_types = [
+            {"$ref": f"#/definitions/{self.answer_type}"},
+        ]
+
+        allow_null = self.answer_type in self.annotation_types
+        if allow_null:
+            allowed_types.append({"$ref": "#/definitions/null"})
+
         try:
             return (
                 JSONSchemaValidator(
-                    schema={
-                        **ANSWER_TYPE_SCHEMA,
-                        "anyOf": [
-                            {"$ref": f"#/definitions/{self.answer_type}"}
-                        ],
-                    }
+                    schema={**ANSWER_TYPE_SCHEMA, "anyOf": allowed_types}
                 )(answer)
                 is None
             )
@@ -1224,8 +1232,9 @@ class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
-    # TODO: add validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
-    answer = JSONField()
+    answer = JSONField(
+        null=True, validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
+    )
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
     history = HistoricalRecords(
@@ -1300,6 +1309,16 @@ class Answer(UUIDModel):
         instance=None,
     ):
         """Validates all fields provided for ``answer``."""
+        if question.answer_type == question.ANSWER_TYPE_HEADING:
+            raise ValidationError("Headings are not answerable.")
+
+        if not question.is_answer_valid(answer=answer):
+            raise ValidationError(
+                f"Your answer is not the correct type. "
+                f"{question.get_answer_type_display()} expected, "
+                f"{type(answer)} found."
+            )
+
         if len(images) == 0:
             raise ValidationError(
                 "You must specify the images that this answer corresponds to."
@@ -1331,6 +1350,7 @@ class Answer(UUIDModel):
                 raise ValidationError(
                     "This user is not a reader for this study."
                 )
+
         if (
             question.answer_type == Question.ANSWER_TYPE_CHOICE
             and answer not in question.options.values_list("id", flat=True)
@@ -1338,6 +1358,7 @@ class Answer(UUIDModel):
             raise ValidationError(
                 "Provided option is not valid for this question"
             )
+
         if question.answer_type in (
             Question.ANSWER_TYPE_MULTIPLE_CHOICE,
             Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
@@ -1347,12 +1368,6 @@ class Answer(UUIDModel):
                 raise ValidationError(
                     "Provided options are not valid for this question"
                 )
-        if not question.is_answer_valid(answer=answer):
-            raise ValidationError(
-                f"Your answer is not the correct type. "
-                f"{question.get_answer_type_display()} expected, "
-                f"{type(answer)} found."
-            )
 
     @property
     def answer_text(self):
