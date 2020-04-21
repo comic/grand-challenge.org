@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django_filters import rest_framework as drf_filters
 from rest_framework import authentication, mixins, status, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView, RetrieveAPIView
@@ -37,6 +38,7 @@ from grandchallenge.annotations.serializers import (
     ImageQualityAnnotationSerializer,
     ImageTextAnnotationSerializer,
     LandmarkAnnotationSetSerializer,
+    NestedPolygonAnnotationSetSerializer,
     PolygonAnnotationSetSerializer,
     RetinaImagePathologyAnnotationSerializer,
     SinglePolygonAnnotationSerializer,
@@ -50,7 +52,10 @@ from grandchallenge.patients.models import Patient
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
-from grandchallenge.retina_api.filters import RetinaAnnotationFilter
+from grandchallenge.retina_api.filters import (
+    RetinaAnnotationFilter,
+    RetinaChildAnnotationFilter,
+)
 from grandchallenge.retina_api.mixins import (
     RetinaAPIPermission,
     RetinaAPIPermissionMixin,
@@ -663,7 +668,7 @@ class PolygonListView(ListAPIView):
         ).filter(grader__id=user_id)
 
 
-class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
+class LegacyPolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = PolygonAnnotationSetSerializer
@@ -672,7 +677,7 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     queryset = PolygonAnnotationSet.objects.all()
 
 
-class SinglePolygonViewSet(viewsets.ModelViewSet):
+class LegacySinglePolygonViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaOwnerAPIPermission,)
     authentication_classes = (authentication.SessionAuthentication,)
     serializer_class = SinglePolygonAnnotationSerializer
@@ -813,7 +818,18 @@ class ArchiveAPIView(APIView):
         objects = []
         images = []
         if pk is None:
-            objects = Archive.objects.all()
+            objects = Archive.objects.filter(
+                title__in=[
+                    "AREDS - GA selection",
+                    "RS1",
+                    "kappadata",
+                    "Rotterdam_Study_1",
+                    "Rotterdam Study 1",
+                    "Australia",
+                    "RS3",
+                    "RS2",
+                ]
+            )
         else:
             if Archive.objects.filter(pk=pk).exists():
                 objects = Patient.objects.filter(
@@ -965,3 +981,29 @@ class TextAnnotationViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
     queryset = ImageTextAnnotation.objects.all()
+
+
+class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = NestedPolygonAnnotationSetSerializer
+    filter_backends = (
+        filters.ObjectPermissionsFilter,
+        RetinaAnnotationFilter,
+        drf_filters.DjangoFilterBackend,
+    )
+    pagination_class = None
+    filterset_fields = ("image",)
+    queryset = PolygonAnnotationSet.objects.all()
+
+
+class SinglePolygonViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = SinglePolygonAnnotationSerializer
+    filter_backends = (
+        filters.ObjectPermissionsFilter,
+        RetinaChildAnnotationFilter,
+    )
+    pagination_class = None
+    queryset = SinglePolygonAnnotation.objects.all()

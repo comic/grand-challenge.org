@@ -8,6 +8,7 @@ from grandchallenge.annotations.serializers import (
     ImageTextAnnotationSerializer,
     LandmarkAnnotationSetSerializer,
     MeasurementAnnotationSerializer,
+    NestedPolygonAnnotationSetSerializer,
     PolygonAnnotationSetSerializer,
     RetinaImagePathologyAnnotationSerializer,
     SingleLandmarkAnnotationSerializer,
@@ -92,9 +93,8 @@ from tests.serializer_helpers import (
                     "value",
                     "annotation_set",
                     "created",
-                    "x_axis_orientation",
-                    "y_axis_orientation",
                     "z",
+                    "interpolated",
                 ),
             },
             {
@@ -324,3 +324,195 @@ class TestNestedLandmarkSerializer:
         assert not saved_set.singlelandmarkannotation_set.filter(
             image=old_slas[0].image.id
         ).exists()
+
+
+@pytest.mark.django_db
+class TestNestedPolygonAnnotationSetSerializer:
+    def test_serialization(self, two_retina_polygon_annotation_sets):
+        serialized_model = NestedPolygonAnnotationSetSerializer(
+            instance=two_retina_polygon_annotation_sets.polygonset1
+        )
+        assert serialized_model.data.get("id") is not None
+        assert serialized_model.data.get("created") is not None
+        assert (
+            serialized_model.data.get("grader")
+            == two_retina_polygon_annotation_sets.grader1.id
+        )
+        assert (
+            len(serialized_model.data.get("singlepolygonannotation_set")) == 10
+        )
+        assert (
+            serialized_model.data["singlepolygonannotation_set"][0].get("id")
+            is not None
+        )
+        assert (
+            serialized_model.data["singlepolygonannotation_set"][0].get(
+                "value"
+            )
+            is not None
+        )
+        assert (
+            len(
+                serialized_model.data["singlepolygonannotation_set"][0][
+                    "value"
+                ]
+            )
+            > 0
+        )
+
+    @staticmethod
+    def create_annotation_set():
+        user = UserFactory()
+        image1 = ImageFactory()
+        return {
+            "image": image1.id,
+            "grader": user.id,
+            "name": "bla",
+            "singlepolygonannotation_set": [
+                {
+                    "value": [[0, 0], [1, 1], [2, 2]],
+                    "z": 1,
+                    "interpolated": True,
+                },
+                {
+                    "value": [[1, 1], [2, 2], [3, 3]],
+                    "z": None,
+                    "interpolated": False,
+                },
+            ],
+        }
+
+    def save_annotation_set(self):
+        polygonset = self.create_annotation_set()
+        serializer = NestedPolygonAnnotationSetSerializer(data=polygonset)
+        serializer.is_valid()
+        annotation_set_obj = serializer.save()
+        return polygonset, annotation_set_obj
+
+    def test_create_method(self, two_retina_polygon_annotation_sets):
+        polygonset = self.create_annotation_set()
+        serializer = NestedPolygonAnnotationSetSerializer(data=polygonset)
+        serializer.is_valid()
+        assert serializer.errors == {}
+        try:
+            obj = serializer.save()
+            assert obj.singlepolygonannotation_set.count() == 2
+        except Exception as e:
+            pytest.fail(f"Saving serializer failed with error: {str(e)}")
+
+    def test_update_method_instance_fields_do_not_change(self):
+        polygonset, annotation_set_obj = self.save_annotation_set()
+        other_user = UserFactory()
+        updated_set = {
+            **polygonset,
+            "id": annotation_set_obj.id,
+            "grader": other_user.id,
+        }
+        serializer = NestedPolygonAnnotationSetSerializer(
+            annotation_set_obj, data=updated_set
+        )
+        serializer.is_valid()
+        saved_set = None
+        try:
+            saved_set = serializer.save()
+        except Exception as e:
+            pytest.fail(f"Saving serializer failed with error: {str(e)}")
+        assert saved_set.grader == annotation_set_obj.grader
+
+    def test_update_method_new_spas_get_added_existing_get_updated(self):
+        annotation_set_dict, annotation_set_obj = self.save_annotation_set()
+        old_spas = list(annotation_set_obj.singlepolygonannotation_set.all())
+        new_spas = [
+            {"value": [[2, 2], [3, 3], [4, 4]], "z": 3},
+            {"id": str(old_spas[0].id), "value": [[4, 4], [5, 5], [6, 6]]},
+            {"id": str(old_spas[1].id), "value": [[5, 5], [6, 6], [7, 7]]},
+        ]
+        updated_set = {
+            **annotation_set_dict,
+            "singlepolygonannotation_set": new_spas,
+        }
+        serializer = NestedPolygonAnnotationSetSerializer(
+            annotation_set_obj, data=updated_set
+        )
+        serializer.is_valid()
+        saved_set = None
+        try:
+            saved_set = serializer.save()
+        except Exception as e:
+            pytest.fail(f"Saving serializer failed with error: {str(e)}")
+        assert saved_set.singlepolygonannotation_set.count() == 3
+        assert saved_set.singlepolygonannotation_set.get(
+            id=old_spas[0].id
+        ).value == [[4.0, 4.0], [5.0, 5.0], [6.0, 6.0]]
+        assert saved_set.singlepolygonannotation_set.get(
+            id=old_spas[1].id
+        ).value == [[5.0, 5.0], [6.0, 6.0], [7.0, 7.0]]
+
+    def test_update_method_removes_empty_sla(self):
+        annotation_set_dict, annotation_set_obj = self.save_annotation_set()
+        old_slas = list(annotation_set_obj.singlepolygonannotation_set.all())
+        new_slas = [
+            {"id": str(old_slas[0].id), "value": [[4, 4], [5, 5], [6, 6]]}
+        ]
+        updated_set = {
+            **annotation_set_dict,
+            "singlepolygonannotation_set": new_slas,
+        }
+        serializer = NestedPolygonAnnotationSetSerializer(
+            annotation_set_obj, data=updated_set
+        )
+        serializer.is_valid()
+        saved_set = None
+        try:
+            saved_set = serializer.save()
+        except Exception as e:
+            pytest.fail(f"Saving serializer failed with error: {str(e)}")
+        assert saved_set.singlepolygonannotation_set.count() == 1
+        assert not saved_set.singlepolygonannotation_set.filter(
+            id=old_slas[1].id
+        ).exists()
+
+    def test_update_method_invalid_uuid(self):
+        annotation_set_dict, annotation_set_obj = self.save_annotation_set()
+        new_slas = [{"id": "invalid_uuid", "value": [[4, 4], [5, 5], [6, 6]]}]
+        updated_set = {
+            **annotation_set_dict,
+            "singlepolygonannotation_set": new_slas,
+        }
+        serializer = NestedPolygonAnnotationSetSerializer(
+            annotation_set_obj, data=updated_set
+        )
+        serializer.is_valid()
+        assert (
+            str(serializer.errors["singlepolygonannotation_set"][0]["id"][0])
+            == "Must be a valid UUID."
+        )
+
+    def test_update_method_valid_but_nonexistent_uuid(self):
+        annotation_set_dict, annotation_set_obj = self.save_annotation_set()
+        valid_nonexistent_uuid = "00000000-0000-0000-0000-000000000000"
+        new_slas = [
+            {"id": valid_nonexistent_uuid, "value": [[4, 4], [5, 5], [6, 6]]}
+        ]
+        updated_set = {
+            **annotation_set_dict,
+            "singlepolygonannotation_set": new_slas,
+        }
+        serializer = NestedPolygonAnnotationSetSerializer(
+            annotation_set_obj, data=updated_set
+        )
+        serializer.is_valid()
+        saved_set = None
+        try:
+            saved_set = serializer.save()
+        except Exception as e:
+            pytest.fail(f"Saving serializer failed with error: {str(e)}")
+        assert saved_set.singlepolygonannotation_set.count() == 1
+        assert not saved_set.singlepolygonannotation_set.filter(
+            id=valid_nonexistent_uuid
+        ).exists()
+        assert saved_set.singlepolygonannotation_set.first().value == [
+            [4.0, 4.0],
+            [5.0, 5.0],
+            [6.0, 6.0],
+        ]

@@ -1,6 +1,7 @@
 import html
 
 import pytest
+from django.contrib.auth.models import Permission
 
 from grandchallenge.core.management.commands.init_gc_demo import (
     get_temporary_image,
@@ -344,6 +345,238 @@ def test_image_port_only_with_bounding_box(
         assert response.status_code == 200
 
     assert Question.objects.all().count() == questions_created
+
+
+@pytest.mark.django_db
+def test_reader_study_copy(client):
+    rs = ReaderStudyFactory(title="copied")
+    editor = UserFactory()
+    editor2 = UserFactory()
+    reader = UserFactory()
+    rs.add_reader(reader)
+    rs.add_editor(editor)
+    rs.add_editor(editor2)
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.ANSWER_TYPE_BOOL,
+        question_text="q1",
+    ),
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.ANSWER_TYPE_BOOL,
+        question_text="q2",
+    )
+
+    im1, im2 = ImageFactory(), ImageFactory()
+
+    rs.images.set([im1, im2])
+    rs.generate_hanging_list()
+    rs.case_text = {im1.name: "test", im2.name: "test2"}
+    rs.save()
+
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "1"},
+        user=reader,
+        follow=True,
+    )
+
+    assert response.status_code == 403
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "1"},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 403
+    assert ReaderStudy.objects.count() == 1
+
+    add_perm = Permission.objects.get(
+        codename=f"add_{ReaderStudy._meta.model_name}"
+    )
+    editor.user_permissions.add(add_perm)
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "1"},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 2
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "1"
+    assert _rs.images.count() == 0
+    assert _rs.questions.count() == 0
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "2", "copy_questions": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 3
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "2"
+    assert _rs.questions.count() == 2
+    assert _rs.images.count() == 0
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "3", "copy_images": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 4
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "3"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 2
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "4", "copy_hanging_list": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert (
+        "Hanging list and case text can only be copied if the images are copied as well"
+        in response.rendered_content
+    )
+    assert ReaderStudy.objects.count() == 4
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "4", "copy_images": True, "copy_hanging_list": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 5
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "4"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 2
+    assert _rs.hanging_list == rs.hanging_list
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "5", "copy_images": True, "copy_case_text": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 6
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "5"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 2
+    assert _rs.hanging_list == []
+    assert _rs.case_text == rs.case_text
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "6", "copy_readers": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 7
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "6"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 0
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 1
+    assert _rs.editors_group.user_set.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "7", "copy_editors": True},
+        user=editor,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 8
+
+    _rs = ReaderStudy.objects.order_by("created").last()
+    assert _rs.title == "7"
+    assert _rs.questions.count() == 0
+    assert _rs.images.count() == 0
+    assert _rs.hanging_list == []
+    assert _rs.case_text == {}
+    assert _rs.readers_group.user_set.count() == 0
+    assert _rs.editors_group.user_set.count() == 2
 
 
 @pytest.mark.django_db
