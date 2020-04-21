@@ -436,6 +436,11 @@ class ReaderStudyCopy(
         ):
             raise PermissionDenied
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.get_permission_object()})
+        return context
+
     def form_valid(self, form):  # noqa: C901
         reader_study = self.get_permission_object()
 
