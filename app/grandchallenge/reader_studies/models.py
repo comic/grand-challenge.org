@@ -1310,6 +1310,7 @@ class Answer(UUIDModel):
     ):
         """Validates all fields provided for ``answer``."""
         if question.answer_type == question.ANSWER_TYPE_HEADING:
+            # Maintained for historical consistency
             raise ValidationError("Headings are not answerable.")
 
         if not question.is_answer_valid(answer=answer):
