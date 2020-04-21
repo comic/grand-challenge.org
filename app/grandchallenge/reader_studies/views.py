@@ -746,7 +746,7 @@ class ExportCSVMixin(object):
 class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
-        "images", "questions"
+        "images", "questions__options"
     )
     permission_classes = [DjangoObjectOnlyPermissions]
     filter_backends = [ObjectPermissionsFilter]
