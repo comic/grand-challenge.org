@@ -24,6 +24,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from django_filters.rest_framework import DjangoFilterBackend
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -451,21 +452,24 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     queryset = AlgorithmImage.objects.all()
     serializer_class = AlgorithmImageSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["algorithm"]
 
 
 class JobViewSet(ReadOnlyModelViewSet):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["algorithm_image__algorithm"]
 
 
 class ResultViewSet(ReadOnlyModelViewSet):
-    queryset = Result.objects.all()
+    queryset = Result.objects.all().prefetch_related("job")
     serializer_class = ResultSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["job__algorithm_image__algorithm"]
 
 
 class AlgorithmPermissionRequestCreate(
