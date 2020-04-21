@@ -461,7 +461,7 @@ class JobViewSet(ReadOnlyModelViewSet):
     serializer_class = JobSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
-    filterset_fields = ["algorithm_image__algorithm"]
+    filterset_fields = ["algorithm_image__algorithm", "image"]
 
 
 class ResultViewSet(ReadOnlyModelViewSet):
@@ -469,7 +469,7 @@ class ResultViewSet(ReadOnlyModelViewSet):
     serializer_class = ResultSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
-    filterset_fields = ["job__algorithm_image__algorithm"]
+    filterset_fields = ["job__algorithm_image__algorithm", "job__image"]
 
 
 class AlgorithmPermissionRequestCreate(
