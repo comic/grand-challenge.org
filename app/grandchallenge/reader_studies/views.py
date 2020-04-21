@@ -64,6 +64,7 @@ from grandchallenge.reader_studies.forms import (
     EditorsForm,
     GroundTruthForm,
     QuestionForm,
+    ReaderStudyCopyForm,
     ReaderStudyCreateForm,
     ReaderStudyPermissionRequestUpdateForm,
     ReaderStudyUpdateForm,
@@ -71,6 +72,7 @@ from grandchallenge.reader_studies.forms import (
 )
 from grandchallenge.reader_studies.models import (
     Answer,
+    CategoricalOption,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -431,6 +433,88 @@ class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
         except ValidationError as e:
             form.errors["ground_truth"] = e
             return self.form_invalid(form)
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+
+class ReaderStudyCopy(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, FormView
+):
+    form_class = ReaderStudyCopyForm
+    template_name = "reader_studies/readerstudy_copy.html"
+    # Note: these are explicitly checked in the check_permission function
+    # and only left here for reference.
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}",
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
+    )
+    reader_study = None
+
+    def get_permission_object(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def check_permissions(self, request):
+        obj = self.get_permission_object()
+        if not (
+            request.user.has_perm(
+                f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
+            )
+            and request.user.has_perm(
+                f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
+                obj,
+            )
+        ):
+            raise PermissionDenied
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.get_permission_object()})
+        return context
+
+    def form_valid(self, form):  # noqa: C901
+        reader_study = self.get_permission_object()
+
+        rs = ReaderStudy.objects.create(
+            title=form.cleaned_data["title"],
+            **{
+                field: getattr(reader_study, field)
+                for field in ReaderStudy.copy_fields
+            },
+        )
+        rs.add_editor(self.request.user)
+        if form.cleaned_data["copy_images"]:
+            rs.images.set(reader_study.images.all())
+        if form.cleaned_data["copy_hanging_list"]:
+            rs.hanging_list = reader_study.hanging_list
+        if form.cleaned_data["copy_case_text"]:
+            rs.case_text = reader_study.case_text
+        if form.cleaned_data["copy_readers"]:
+            for reader in reader_study.readers_group.user_set.all():
+                rs.add_reader(reader)
+        if form.cleaned_data["copy_editors"]:
+            for editor in reader_study.editors_group.user_set.all():
+                rs.add_editor(editor)
+        if form.cleaned_data["copy_questions"]:
+            for question in reader_study.questions.all():
+                q = Question.objects.create(
+                    reader_study=rs,
+                    question_text=question.question_text,
+                    help_text=question.help_text,
+                    answer_type=question.answer_type,
+                    image_port=question.image_port,
+                    required=question.required,
+                    direction=question.direction,
+                    scoring_function=question.scoring_function,
+                    order=question.order,
+                )
+                for option in question.options.all():
+                    CategoricalOption.objects.create(
+                        question=q, title=option.title, default=option.default
+                    )
+        rs.save()
+        self.reader_study = rs
+        return super().form_valid(form)
 
     def get_success_url(self):
         return self.reader_study.get_absolute_url()
