@@ -1,9 +1,8 @@
+from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryFile
 from typing import Optional
-from dataclasses import dataclass
 from uuid import UUID, uuid4
-
 
 import pyvips
 import tifffile
