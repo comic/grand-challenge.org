@@ -48,10 +48,6 @@ def test_get_color_space(color_space_string, expected):
         (RESOURCE_PATH / "valid_tiff.tif", ""),
         (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
         (
-            RESOURCE_PATH / "invalid_meta_data_tiff.tif",
-            "Image contains unauthorized information",
-        ),
-        (
             RESOURCE_PATH / "invalid_resolutions_tiff.tif",
             "Image only has a single resolution level",
         ),
@@ -65,7 +61,7 @@ def test_tiff_validation(resource, expected_error_message):
     error_message = ""
 
     try:
-        load_tiff_file(path=resource)
+        load_tiff_file(resource)
     except ValidationError as e:
         error_message = str(e)
 
@@ -79,11 +75,6 @@ def test_tiff_validation(resource, expected_error_message):
     [
         (RESOURCE_PATH, "valid_tiff.tif", ""),
         (RESOURCE_PATH, "image5x6x7.mhd", "Image isn't a TIFF file"),
-        (
-            RESOURCE_PATH,
-            "invalid_meta_data_tiff.tif",
-            "Image contains unauthorized information",
-        ),
         (
             RESOURCE_PATH,
             "invalid_resolutions_tiff.tif",
@@ -106,8 +97,8 @@ def test_dzi_creation(
 
     try:
         # Load the tiff file and create dzi
-        tiff_file = load_tiff_file(path=temp_file)
-        create_dzi_images(tiff_file=tiff_file, pk=uuid4())
+        tiff_file = load_tiff_file(temp_file)
+        create_dzi_images(tiff_file, uuid4())
     except ValidationError as e:
         error_message = str(e)
 
@@ -135,8 +126,8 @@ def test_tiff_image_entry_creation(
     image_entry = None
     pk = uuid4()
     try:
-        tiff_file = load_tiff_file(path=resource)
-        image_entry = create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
+        tiff_file = load_tiff_file(resource)
+        image_entry = create_tiff_image_entry(tiff_file, pk)
     except ValidationError as e:
         error_message = str(e)
 
