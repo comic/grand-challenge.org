@@ -765,7 +765,8 @@ class ImageElementSpacingView(RetinaAPIPermissionMixin, View):
         if not user_can_download_image(user=request.user, image=image):
             return HttpResponse(status=status.HTTP_403_FORBIDDEN)
 
-        response_json = json.dumps(image.spacing)
+        # This endpoint expects spacing in SimpleITK ordering (x, y, (z)), so reverse image.spacing
+        response_json = json.dumps(list(reversed(image.spacing)))
         return HttpResponse(response_json, content_type="application/json")
 
 

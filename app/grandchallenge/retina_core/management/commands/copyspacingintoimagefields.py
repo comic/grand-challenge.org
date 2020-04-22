@@ -30,10 +30,10 @@ class Command(BaseCommand):
             for im in page.object_list:
                 try:
                     spacing = im.spacing
-                    im.voxel_width_mm = spacing[0]
-                    im.voxel_height_mm = spacing[1]
+                    im.voxel_width_mm = spacing[-1]
+                    im.voxel_height_mm = spacing[-2]
                     if len(spacing) > 2:
-                        im.voxel_depth_mm = spacing[2]
+                        im.voxel_depth_mm = spacing[0]
                     im.save()
                     self.stdout.write(
                         f"Copied spacing {spacing} for {im.name}"

@@ -368,23 +368,25 @@ class Image(UUIDModel):
 
         Returns
         -------
-            The voxel spacing in mm in SimpleITK ordering [x, y, (z)]
-            Defaults to [1, 1, (1)]
+            The voxel spacing in mm in NumPy ordering [(z), y, x]
+            Defaults to [(1), 1, 1]
         """
         spacing = [
-            self.voxel_width_mm,
-            self.voxel_height_mm,
             self.voxel_depth_mm,
+            self.voxel_height_mm,
+            self.voxel_width_mm,
         ]
-        if spacing[2] is None:
-            spacing = spacing[:2]
-        if None in spacing[:2]:
+        if spacing[0] is None:
+            spacing = spacing[-2:]
+        if None in spacing:
             mh_header = self.get_mh_header()
             spacing_str = mh_header.get(
                 "ElementSpacing", mh_header.get("ElementSize")
             )
             if spacing_str is not None:
-                spacing = [float(x) for x in spacing_str.split(" ")]
+                spacing = list(
+                    reversed([float(x) for x in spacing_str.split(" ")])
+                )
             else:
                 spacing = [1] * int(mh_header["NDims"])
         return spacing

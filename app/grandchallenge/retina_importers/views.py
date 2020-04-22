@@ -147,12 +147,10 @@ class UploadImage(generics.CreateAPIView):
 
                 # Set spacing from header file on image object
                 spacing = img.spacing
-                img.voxel_width_mm = spacing[0]
-                img.voxel_height_mm = spacing[1]
-                try:
-                    img.voxel_depth_mm = spacing[2]
-                except IndexError:
-                    pass
+                if len(spacing) > 2:
+                    img.voxel_depth_mm = spacing[0]
+                img.voxel_width_mm = spacing[-1]
+                img.voxel_height_mm = spacing[-2]
                 img.save()
 
                 # Link images to archive

@@ -190,7 +190,7 @@ class TestImageSpacing:
             kwargs["files"] = [f() for f in files]
         image = factory(**kwargs)
         sitk_image = image.get_sitk_image()
-        assert sitk_image.GetSpacing() == tuple(image.spacing)
+        assert tuple(reversed(sitk_image.GetSpacing())) == tuple(image.spacing)
 
     @pytest.mark.parametrize(
         "factory,spacing",
@@ -201,10 +201,10 @@ class TestImageSpacing:
     )
     def test_spacing_equals_expected_spacing(self, factory, spacing):
         voxel_kwargs = {
-            "voxel_width_mm": spacing[0],
-            "voxel_height_mm": spacing[1],
+            "voxel_width_mm": spacing[-1],
+            "voxel_height_mm": spacing[-2],
         }
         if len(spacing) == 3:
-            voxel_kwargs["voxel_depth_mm"] = spacing[2]
+            voxel_kwargs["voxel_depth_mm"] = spacing[0]
         image = factory(**voxel_kwargs)
         assert image.spacing == spacing
