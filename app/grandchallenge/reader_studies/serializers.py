@@ -77,6 +77,8 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "is_educational",
             "has_ground_truth",
             "case_text",
+            "allow_answer_modification",
+            "allow_case_navigation",
         )
 
     def get_hanging_list_images(self, obj: ReaderStudy):

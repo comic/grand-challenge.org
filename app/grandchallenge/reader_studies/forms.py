@@ -45,9 +45,9 @@ from grandchallenge.reader_studies.models import (
 )
 
 READER_STUDY_HELP_TEXTS = {
-    "title": "The title of this reader study",
-    "logo": "The logo for this reader study",
-    "description": "Describe what this reader study is for",
+    "title": "The title of this reader study.",
+    "logo": "The logo for this reader study.",
+    "description": "Describe what this reader study is for.",
     "workstation": (
         "Which workstation should be used for this reader study? "
         "Note that in order to add a workstation you must be a member "
@@ -57,7 +57,7 @@ READER_STUDY_HELP_TEXTS = {
     ),
     "help_text_markdown": (
         "Extra information that will be presented to the reader in the help "
-        "text modal"
+        "text modal and on the reader study detail page."
     ),
 }
 
@@ -79,6 +79,9 @@ class ReaderStudyCreateForm(
             "allow_case_navigation",
         )
         help_texts = READER_STUDY_HELP_TEXTS
+        widgets = {
+            "description": TextInput,
+        }
 
     def clean(self):
         super().clean()
@@ -113,6 +116,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "hanging_list": JSONEditorWidget(schema=HANGING_LIST_SCHEMA),
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
             "help_text_markdown": MarkdownEditorWidget,
+            "description": TextInput,
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
