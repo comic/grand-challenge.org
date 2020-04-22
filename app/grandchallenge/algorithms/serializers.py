@@ -48,31 +48,6 @@ class AlgorithmImageSerializer(serializers.ModelSerializer):
         fields = ["pk", "api_url", "algorithm"]
 
 
-class ResultSerializer(serializers.ModelSerializer):
-    job = HyperlinkedRelatedField(
-        read_only=True, view_name="api:algorithms-job-detail"
-    )
-    images = HyperlinkedRelatedField(
-        many=True, read_only=True, view_name="api:image-detail"
-    )
-    import_session = HyperlinkedRelatedField(
-        source="rawimageuploadsession",
-        read_only=True,
-        view_name="api:upload-session-detail",
-    )
-
-    class Meta:
-        model = Result
-        fields = [
-            "pk",
-            "api_url",
-            "job",
-            "images",
-            "output",
-            "import_session",
-        ]
-
-
 class JobSerializer(serializers.ModelSerializer):
     algorithm_image = HyperlinkedRelatedField(
         queryset=AlgorithmImage.objects.all(),
@@ -99,3 +74,26 @@ class JobSerializer(serializers.ModelSerializer):
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             status=model._meta.get_field("status")
         )
+
+
+class ResultSerializer(serializers.ModelSerializer):
+    job = JobSerializer()
+    images = HyperlinkedRelatedField(
+        many=True, read_only=True, view_name="api:image-detail"
+    )
+    import_session = HyperlinkedRelatedField(
+        source="rawimageuploadsession",
+        read_only=True,
+        view_name="api:upload-session-detail",
+    )
+
+    class Meta:
+        model = Result
+        fields = [
+            "pk",
+            "api_url",
+            "job",
+            "images",
+            "output",
+            "import_session",
+        ]
