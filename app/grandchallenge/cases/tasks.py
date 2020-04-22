@@ -249,6 +249,7 @@ def extract_and_flatten(file, path, index, prefix="", is_tar=False):
     filename_attr = "name" if is_tar else "filename"
     is_dir_func = "isdir" if is_tar else "is_dir"
     indices = {}
+    prefix = prefix or ""
     for info in sorted(listfunc(), key=lambda k: getattr(k, filename_attr)):
         filename = getattr(info, filename_attr)
         # Skip directories
@@ -263,8 +264,8 @@ def extract_and_flatten(file, path, index, prefix="", is_tar=False):
             indices[folder] = indices.get(folder, index + 1)
             index = indices[folder]
         _prefix = _filename.replace(base_name, "")
-        prefix = f"{index}-{prefix if not _prefix else ''}"
-        setattr(info, filename_attr, prefix + _filename)
+        prefix = f"{prefix if not _prefix else ''}"
+        setattr(info, filename_attr, f"{index}-{prefix}{_filename}")
         file.extract(info, path)
         filename = getattr(info, filename_attr)
         new_files.append(

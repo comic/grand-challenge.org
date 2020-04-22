@@ -64,6 +64,7 @@ from grandchallenge.reader_studies.forms import (
     EditorsForm,
     GroundTruthForm,
     QuestionForm,
+    ReaderStudyCopyForm,
     ReaderStudyCreateForm,
     ReaderStudyPermissionRequestUpdateForm,
     ReaderStudyUpdateForm,
@@ -71,6 +72,7 @@ from grandchallenge.reader_studies.forms import (
 )
 from grandchallenge.reader_studies.models import (
     Answer,
+    CategoricalOption,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -113,6 +115,34 @@ class ReaderStudyCreate(
     def form_valid(self, form):
         response = super().form_valid(form)
         self.object.add_editor(self.request.user)
+        return response
+
+
+class ReaderStudyExampleGroundTruth(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get(self, request, *args, **kwargs):
+        reader_study = self.get_object()
+        response = HttpResponse(content_type="text/csv")
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="ground-truth-{reader_study.slug}"'
+        writer = csv.DictWriter(
+            response,
+            fieldnames=reader_study.ground_truth_file_headers,
+            escapechar="\\",
+            quoting=csv.QUOTE_NONE,
+            quotechar="`",
+        )
+        writer.writeheader()
+        writer.writerows(reader_study.get_ground_truth_csv_dict())
+
         return response
 
 
@@ -171,6 +201,9 @@ class ReaderStudyDetail(
                 "reader_remove_form": reader_remove_form,
                 "user_is_reader": self.object.is_reader(
                     user=self.request.user
+                ),
+                "example_ground_truth": self.object.get_example_ground_truth_csv_text(
+                    limit=2
                 ),
             }
         )
@@ -405,6 +438,88 @@ class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
         return self.reader_study.get_absolute_url()
 
 
+class ReaderStudyCopy(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, FormView
+):
+    form_class = ReaderStudyCopyForm
+    template_name = "reader_studies/readerstudy_copy.html"
+    # Note: these are explicitly checked in the check_permission function
+    # and only left here for reference.
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}",
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
+    )
+    reader_study = None
+
+    def get_permission_object(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def check_permissions(self, request):
+        obj = self.get_permission_object()
+        if not (
+            request.user.has_perm(
+                f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
+            )
+            and request.user.has_perm(
+                f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
+                obj,
+            )
+        ):
+            raise PermissionDenied
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"object": self.get_permission_object()})
+        return context
+
+    def form_valid(self, form):  # noqa: C901
+        reader_study = self.get_permission_object()
+
+        rs = ReaderStudy.objects.create(
+            title=form.cleaned_data["title"],
+            **{
+                field: getattr(reader_study, field)
+                for field in ReaderStudy.copy_fields
+            },
+        )
+        rs.add_editor(self.request.user)
+        if form.cleaned_data["copy_images"]:
+            rs.images.set(reader_study.images.all())
+        if form.cleaned_data["copy_hanging_list"]:
+            rs.hanging_list = reader_study.hanging_list
+        if form.cleaned_data["copy_case_text"]:
+            rs.case_text = reader_study.case_text
+        if form.cleaned_data["copy_readers"]:
+            for reader in reader_study.readers_group.user_set.all():
+                rs.add_reader(reader)
+        if form.cleaned_data["copy_editors"]:
+            for editor in reader_study.editors_group.user_set.all():
+                rs.add_editor(editor)
+        if form.cleaned_data["copy_questions"]:
+            for question in reader_study.questions.all():
+                q = Question.objects.create(
+                    reader_study=rs,
+                    question_text=question.question_text,
+                    help_text=question.help_text,
+                    answer_type=question.answer_type,
+                    image_port=question.image_port,
+                    required=question.required,
+                    direction=question.direction,
+                    scoring_function=question.scoring_function,
+                    order=question.order,
+                )
+                for option in question.options.all():
+                    CategoricalOption.objects.create(
+                        question=q, title=option.title, default=option.default
+                    )
+        rs.save()
+        self.reader_study = rs
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+
 class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
@@ -631,7 +746,7 @@ class ExportCSVMixin(object):
 class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
-        "images", "questions"
+        "images", "questions__options"
     )
     permission_classes = [DjangoObjectOnlyPermissions]
     filter_backends = [ObjectPermissionsFilter]

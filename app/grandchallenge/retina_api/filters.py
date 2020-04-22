@@ -17,3 +17,19 @@ class RetinaAnnotationFilter(filters.BaseFilterBackend):
         if is_in_retina_admins_group(request.user):
             return queryset
         return queryset.filter(grader=request.user)
+
+
+class RetinaChildAnnotationFilter(filters.BaseFilterBackend):
+    """
+    Filter backend that only returns objects of which the parent belongs to the current
+    user, except if the user is in the `retina_admins` group.
+
+    This filter is created for annotation models and requires that the parent of the
+    model has a `grader` field that defines the user that is the owner of the object.
+    As defined in `annotations.AbstractSingleAnnotationModel`.
+    """
+
+    def filter_queryset(self, request, queryset, view):
+        if is_in_retina_admins_group(request.user):
+            return queryset
+        return queryset.filter(annotation_set__grader=request.user)

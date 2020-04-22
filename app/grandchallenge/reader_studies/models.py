@@ -258,20 +258,54 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
 
+    copy_fields = (
+        "workstation",
+        "workstation",
+        "logo",
+        "help_text_markdown",
+        "shuffle_hanging_list",
+        "is_educational",
+        "allow_answer_modification",
+        "allow_case_navigation",
+    )
+
     def __str__(self):
         return f"{self.title}"
 
     @property
     def ground_truth_file_headers(self):
-        return f"images,{','.join([q.question_text for q in self.questions.all()])}"
+        return ["images"] + [
+            q.question_text for q in self.answerable_questions
+        ]
 
-    def get_example_ground_truth_csv(self):
+    def get_ground_truth_csv_dict(self):
+        if len(self.hanging_list) == 0:
+            return {}
+        result = []
+        answers = {
+            q.question_text: q.example_answer
+            for q in self.answerable_questions
+        }
+        for images in self.image_groups:
+            _answers = answers.copy()
+            _answers["images"] = ";".join(images)
+            result.append(_answers)
+        return result
+
+    def get_example_ground_truth_csv_text(self, limit=None):
         if len(self.hanging_list) == 0:
             return "No cases in this reader study"
-        questions = self.questions.all()
-        return (
-            f"{self.ground_truth_file_headers}\n"
-            f"{';'.join(self.image_groups[0])},{','.join([q.example_answer for q in questions])}"
+        headers = self.ground_truth_file_headers
+        return "\n".join(
+            [
+                ",".join(headers),
+                "\n".join(
+                    [
+                        ",".join([x[header] for header in headers])
+                        for x in self.get_ground_truth_csv_dict()[:limit]
+                    ]
+                ),
+            ]
         )
 
     def get_absolute_url(self):

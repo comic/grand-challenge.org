@@ -26,4 +26,5 @@ PatientBirthDate = 20200101
 PatientAge = 001Y
 PatientSex = M
 StudyDescription = super awesome study
+SliceThickness = 2
 ElementDataFile = image3x4.zraw
