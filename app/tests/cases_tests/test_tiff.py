@@ -96,7 +96,6 @@ def test_dzi_creation(
     shutil.copy(source_dir / filename, temp_file)
 
     try:
-
         # Load the tiff file and create dzi
         tiff_file = load_tiff_file(temp_file)
         _create_dzi_images(gc_file=tiff_file, pk=uuid4())
