@@ -113,7 +113,8 @@ class DockerConnection:
 
     def _pull_images(self):
         if self._exec_image_sha256 not in [
-            img.id for img in self._client.images.list()
+            *[img.id for img in self._client.images.list()],
+            None,
         ]:
             with self._exec_image.open("rb") as f:
                 self._client.images.load(f)
