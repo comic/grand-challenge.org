@@ -594,6 +594,9 @@ CELERY_TASK_SOFT_TIME_LIMIT = int(
     os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", "7200")
 )
 CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7260"))
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
+}
 
 CONTAINER_EXEC_DOCKER_BASE_URL = os.environ.get(
     "CONTAINER_EXEC_DOCKER_BASE_URL", "unix://var/run/docker.sock"
