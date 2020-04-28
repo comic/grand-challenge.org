@@ -203,6 +203,9 @@ class Executor(DockerConnection):
                 name=f"{self._job_label}-executor",
                 remove=True,
                 labels=self._labels,
+                environment={
+                    "NVIDIA_VISIBLE_DEVICES": settings.CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES
+                },
                 stdout=True,
                 stderr=True,
                 **self._run_kwargs,

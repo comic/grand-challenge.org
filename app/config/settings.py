@@ -55,7 +55,7 @@ DATABASES = {
         "USER": os.environ.get("POSTGRES_USER", "grandchallenge"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
-        "PORT": "",
+        "PORT": os.environ.get("POSTGRES_PORT", ""),
     }
 }
 
@@ -631,6 +631,9 @@ CONTAINER_EXEC_CPU_SHARES = int(
 )
 CONTAINER_EXEC_DOCKER_RUNTIME = os.environ.get(
     "CONTAINER_EXEC_DOCKER_RUNTIME", None
+)
+CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES = os.environ.get(
+    "CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES", "void"
 )
 
 CELERY_BEAT_SCHEDULE = {
