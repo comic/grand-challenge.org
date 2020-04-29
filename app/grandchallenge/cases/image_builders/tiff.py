@@ -173,19 +173,43 @@ def _create_image_file(*, path: str, image: Image):
         )
 
 
-def load_with_tiff(gc_file):
+def _load_with_tiff(*, gc_file: GrandChallengeTiffFile):
     tiff_file = tifffile.TiffFile(str(gc_file.path.absolute()))
     gc_file = _extract_tags(gc_file=gc_file, pages=tiff_file.pages)
     return tiff_file, gc_file
 
 
-def load_with_open_slide(gc_file, pk):
+def _load_with_open_slide(*, gc_file: GrandChallengeTiffFile, pk: UUID):
     open_slide_file = openslide.open_slide(str(gc_file.path.absolute()))
     gc_file = _extract_openslide_properties(
         gc_file=gc_file, image=open_slide_file
     )
     dzi_output = _create_dzi_images(gc_file=gc_file, pk=pk)
     return dzi_output, gc_file
+
+
+def _add_image_files(
+    *, tiff_file, gc_file, dzi_output, image, new_image_files
+):
+    if tiff_file:
+        new_image_files.append(
+            _create_image_file(path=str(gc_file.path.absolute()), image=image)
+        )
+
+    if dzi_output:
+        new_image_files.append(
+            _create_image_file(path=dzi_output + ".dzi", image=image)
+        )
+    return new_image_files
+
+
+def _add_folder_uploads(*, dzi_output, image, new_folder_upload):
+    if dzi_output:
+        dzi_folder_upload = FolderUpload(
+            folder=dzi_output + "_files", image=image
+        )
+        new_folder_upload.append(dzi_folder_upload)
+    return new_folder_upload
 
 
 def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
@@ -201,10 +225,20 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
         tiff_file = None
         gc_file = GrandChallengeTiffFile(file_path)
 
-        # try and load image
+        # try and load image with tiff file
         try:
-            tiff_file, gc_file = load_with_tiff(gc_file)
-            dzi_output, gc_file = load_with_open_slide(gc_file, pk)
+            tiff_file, gc_file = _load_with_tiff(gc_file=gc_file)
+        except Exception as e:
+            invalid_file_errors[file_path.name] = e  # noqa: B306
+
+        # try and load image with open_slide
+        try:
+            dzi_output, gc_file = _load_with_open_slide(gc_file=gc_file, pk=pk)
+        except Exception as e:
+            invalid_file_errors[file_path.name] = e  # noqa: B306
+
+        # validate
+        try:
             gc_file.validate()
             if not tiff_file and not dzi_output:
                 raise ValidationError(
@@ -213,28 +247,21 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message  # noqa: B306
             continue
-        except Exception as e:
-            invalid_file_errors[file_path.name] = e  # noqa: B306
 
         image = _create_tiff_image_entry(tiff_file=gc_file, pk=pk)
+        new_image_files = _add_image_files(
+            tiff_file=tiff_file,
+            gc_file=gc_file,
+            dzi_output=dzi_output,
+            image=image,
+            new_image_files=new_image_files,
+        )
 
-        if tiff_file:
-            new_image_files.append(
-                _create_image_file(
-                    path=str(gc_file.path.absolute()), image=image
-                )
-            )
-
-        if dzi_output:
-            new_image_files.append(
-                _create_image_file(path=dzi_output + ".dzi", image=image)
-            )
-
-            dzi_folder_upload = FolderUpload(
-                folder=dzi_output + "_files", image=image
-            )
-            new_folder_upload.append(dzi_folder_upload)
-
+        new_folder_upload = _add_folder_uploads(
+            dzi_output=dzi_output,
+            image=image,
+            new_folder_upload=new_folder_upload,
+        )
         new_images.append(image)
         consumed_files.add(gc_file.path.name)
 
