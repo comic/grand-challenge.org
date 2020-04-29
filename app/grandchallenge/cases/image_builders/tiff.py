@@ -93,10 +93,11 @@ def _get_voxel_spacing_mm(tags, tag):
 def _extract_openslide_properties(
     *, gc_file: GrandChallengeTiffFile, image: any
 ):
-    if not gc_file.voxel_width_mm:
+    if not gc_file.voxel_width_mm and "openslide.mpp-x" in image.properties:
         gc_file.voxel_width_mm = (
             float(image.properties["openslide.mpp-x"]) / 1000
         )
+    if not gc_file.voxel_height_mm and "openslide.mpp-y" in image.properties:
         gc_file.voxel_height_mm = (
             float(image.properties["openslide.mpp-y"]) / 1000
         )
