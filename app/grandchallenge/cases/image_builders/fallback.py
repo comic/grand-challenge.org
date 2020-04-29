@@ -3,6 +3,7 @@ from pathlib import Path
 import SimpleITK
 import numpy as np
 from PIL import Image
+from PIL.Image import DecompressionBombError
 from django.core.exceptions import ValidationError
 
 from grandchallenge.cases.image_builders import ImageBuilderResult
@@ -49,7 +50,7 @@ def image_builder_fallback(path: Path, session_id=None) -> ImageBuilderResult:
             new_images.append(n_image)
             new_image_files += n_image_files
             consumed_files.append(file_path.name)
-        except (IOError, ValidationError):
+        except (IOError, ValidationError, DecompressionBombError):
             errors[file_path.name] = "Not a valid image file"
 
     return ImageBuilderResult(

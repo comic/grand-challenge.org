@@ -980,6 +980,17 @@ signedtoken = ["cryptography", "pyjwt (>=1.0.0)"]
 
 [[package]]
 category = "main"
+description = "Python interface to OpenSlide"
+name = "openslide-python"
+optional = false
+python-versions = "*"
+version = "1.1.1"
+
+[package.dependencies]
+Pillow = "*"
+
+[[package]]
+category = "main"
 description = "Core utilities for Python packages"
 name = "packaging"
 optional = false
@@ -1939,7 +1950,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "b9f1177af47775912fc6b370b6b40de74cc07c1802e3b3ead6a50674280fc171"
+content-hash = "d85f23db10724a2232c317c2e9f5ac41084094eca4c045403f895ddc6761f253"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -2440,6 +2451,19 @@ oauth2 = [
 oauthlib = [
     {file = "oauthlib-3.1.0-py2.py3-none-any.whl", hash = "sha256:df884cd6cbe20e32633f1db1072e9356f53638e4361bef4e8b03c9127c9328ea"},
     {file = "oauthlib-3.1.0.tar.gz", hash = "sha256:bee41cc35fcca6e988463cacc3bcb8a96224f470ca547e697b604cc697b2f889"},
+]
+openslide-python = [
+    {file = "openslide-python-1.1.1.tar.gz", hash = "sha256:b460764914f3b9736f9bdd551da7927e194ed28d78588759a0a793dffe1749a6"},
+    {file = "openslide_python-1.1.1-cp27-cp27m-win32.whl", hash = "sha256:f08eeb52e3bb3faa3f0aa511401cbd35fdf1b68a41f56ef1178c8c28ebf26ba0"},
+    {file = "openslide_python-1.1.1-cp27-cp27m-win_amd64.whl", hash = "sha256:610fa497e982e996003c78adba3d2d047a6dd5de9ad394253246d45b2b35ca53"},
+    {file = "openslide_python-1.1.1-cp33-none-win32.whl", hash = "sha256:e340eec2f0823218afe369fd87c62dccdc09fed089396804d016b523bdd2bd55"},
+    {file = "openslide_python-1.1.1-cp33-none-win_amd64.whl", hash = "sha256:665882d5356639c0c12b782992234cf1f3369866c5b7b95a0a32539205de7c96"},
+    {file = "openslide_python-1.1.1-cp34-cp34m-win32.whl", hash = "sha256:27f47f3979b09e902a9cb74a1437990d23d60284d72d6b8076d6db7530e8b113"},
+    {file = "openslide_python-1.1.1-cp34-cp34m-win_amd64.whl", hash = "sha256:8d478c4a37b400ac2b6aad3f6d627c4a328ee845f5ffef5b9c998640cf1856d1"},
+    {file = "openslide_python-1.1.1-cp35-cp35m-win32.whl", hash = "sha256:3396524de1a77d0a5cd7cb10b272258328c4db64e3e1923f11adde78696fa571"},
+    {file = "openslide_python-1.1.1-cp35-cp35m-win_amd64.whl", hash = "sha256:6a7cc6d0a225f04d963bf91141012b0d66bd3a89970f5931341213bbf8cc7c3d"},
+    {file = "openslide_python-1.1.1-cp36-cp36m-win32.whl", hash = "sha256:b2e1055062ace17b09397d666efdfdaa388211ceacb00a8dac56353e92a490c6"},
+    {file = "openslide_python-1.1.1-cp36-cp36m-win_amd64.whl", hash = "sha256:ec675fd016da72ee9a76f7bd4b9bba8ae26b90b986685784d9fa7f6e08c6129f"},
 ]
 packaging = [
     {file = "packaging-20.3-py2.py3-none-any.whl", hash = "sha256:82f77b9bee21c1bafbf35a84905d604d5d1223801d639cf3ed140bd651c08752"},
