@@ -15,6 +15,8 @@ from grandchallenge.cases.image_builders.tiff import (
     _create_tiff_image_entry,
     _extract_tags,
     _get_color_space,
+    _load_with_open_slide,
+    _load_with_tiff,
     image_builder_tiff,
 )
 from grandchallenge.cases.models import Image
@@ -122,6 +124,65 @@ def test_grandchallengetifffile_validation(
         gc_file.voxel_height_mm = voxel_height_mm
         gc_file.voxel_width_mm = voxel_width_mm
         gc_file.validate()
+    except ValidationError as e:
+        error_message = str(e)
+
+    assert expected_error_message in error_message
+    if not expected_error_message:
+        assert not error_message
+
+
+@pytest.mark.parametrize(
+    "source_dir, filename, expected_error_message",
+    [
+        (RESOURCE_PATH, "valid_tiff.tif", ""),
+        (
+            RESOURCE_PATH,
+            "invalid_resolutions_tiff.tif",
+            "Invalid resolution unit RESUNIT.NONE in tiff file",
+        ),
+    ],
+)
+def test_load_with_tiff(
+    source_dir, filename, expected_error_message, tmpdir_factory
+):
+    error_message = ""
+    # Copy resource file to writable temp folder
+    temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
+    shutil.copy(source_dir / filename, temp_file)
+    gc_file = GrandChallengeTiffFile(temp_file)
+    try:
+        _load_with_tiff(gc_file=gc_file)
+    except ValidationError as e:
+        error_message = str(e)
+
+    assert expected_error_message in error_message
+    if not expected_error_message:
+        assert not error_message
+
+
+@pytest.mark.parametrize(
+    "source_dir, filename, expected_error_message",
+    [
+        (RESOURCE_PATH, "valid_tiff.tif", ""),
+        (
+            RESOURCE_PATH,
+            "no_dzi.tif",
+            "Image can't be converted to dzi: unable to call dzsave",
+        ),
+    ],
+)
+def test_load_with_open_slide(
+    source_dir, filename, expected_error_message, tmpdir_factory
+):
+    error_message = ""
+    # Copy resource file to writable temp folder
+    temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
+    shutil.copy(source_dir / filename, temp_file)
+    gc_file = GrandChallengeTiffFile(temp_file)
+    pk = uuid4()
+    try:
+        _load_with_open_slide(gc_file=gc_file, pk=pk)
     except ValidationError as e:
         error_message = str(e)
 
