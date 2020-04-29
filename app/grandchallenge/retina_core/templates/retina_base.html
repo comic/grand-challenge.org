@@ -14,6 +14,7 @@
         <script>
             // Setup sentry in production before anything else loads
             Sentry.init({ dsn: '{{ SENTRY_DSN }}' });
+            Sentry.setTag('workstation', 'Legacy retina workstation');
         </script>
     {% endif %}
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
