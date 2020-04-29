@@ -4,6 +4,7 @@ from tempfile import TemporaryFile
 from typing import Optional
 from uuid import UUID, uuid4
 
+import openslide
 import pyvips
 import tifffile
 from django.conf import settings
@@ -37,30 +38,14 @@ class GrandChallengeTiffFile:
         if not self.voxel_width_mm:
             raise ValidationError("Voxel width could not be determined")
         if not self.voxel_height_mm:
-            raise ValidationError("Voxel heigth could not be determined")
+            raise ValidationError("Voxel height could not be determined")
 
 
-def load_tiff_file(path: Path) -> GrandChallengeTiffFile:
-    """
-    Loads and validates a file using tifffile
-    :param path: The path to the potential tiff file
-    :return: A tiff file that can be used in the rest of grand challenge
-    """
-    try:
-        file = tifffile.TiffFile(str(path.absolute()))
-        gc_file = GrandChallengeTiffFile(path)
-    except ValueError:
-        raise ValidationError("Image isn't a TIFF file")
-
-    return _validate_tiff_file(gc_file=gc_file, pages=file.pages)
-
-
-def _get_tag_value(tags, tag, required=True):
+def _get_tag_value(tags, tag):
     try:
         return tags[tag].value
     except KeyError:
-        if required:
-            raise ValidationError(f"Tiff file is missing required tag {tag}")
+        return None
 
 
 def _get_voxel_spacing_mm(tags, tag):
@@ -105,38 +90,34 @@ def _get_voxel_spacing_mm(tags, tag):
         raise ValidationError(f"Invalid resolution in tiff file")
 
 
-def _validate_tiff_file(
+def _extract_openslide_properties(
+    *, gc_file: GrandChallengeTiffFile, image: any
+):
+    if not gc_file.voxel_width_mm:
+        gc_file.voxel_width_mm = (
+            float(image.properties["openslide.mpp-x"]) / 1000
+        )
+        gc_file.voxel_height_mm = (
+            float(image.properties["openslide.mpp-y"]) / 1000
+        )
+    return gc_file
+
+
+def _extract_tags(
     *, gc_file: GrandChallengeTiffFile, pages: tifffile.tifffile.TiffPages
 ) -> GrandChallengeTiffFile:
     """
-    Validates a tiff file loaded with tifffile for use in grand challenge
-    :param pages: The pages and tags from tiffile
-    :return: The extracted tags that are needed by the rest of the framework
+    Extracts tags form a tiff file loaded with tifffile for use in grand challenge
+    :param pages: The pages and tags from tifffile
+    :return: The GrandChallengeTiffFile with the properties defined in the tags
     """
-
-    required_tile_tags = ("TileOffsets", "TileByteCounts")
+    if not pages:
+        return gc_file
 
     tags = pages[0].tags
 
-    # Fails if the image doesn't have all required tile tags
-    for tag in required_tile_tags:
-        _get_tag_value(tags, tag, True)
-
-    # Fails if the image only has a single resolution page
     gc_file.resolution_levels = len(pages)
-    if gc_file.resolution_levels == 1:
-        raise ValidationError("Image only has a single resolution level")
 
-    # Fails if the image doesn't have the chunky format
-    if (
-        str(_get_tag_value(tags, "PlanarConfiguration"))
-        != "PLANARCONFIG.CONTIG"
-    ):
-        raise ValidationError(
-            "Image planar configuration isn't configured as 'Chunky' format"
-        )
-
-    # Fails if the color space isn't supported
     gc_file.color_space = _get_color_space(
         color_space_string=str(
             _get_tag_value(tags, "PhotometricInterpretation")
@@ -150,6 +131,7 @@ def _validate_tiff_file(
     if "XResolution" in tags:
         gc_file.voxel_width_mm = _get_voxel_spacing_mm(tags, "XResolution")
         gc_file.voxel_height_mm = _get_voxel_spacing_mm(tags, "YResolution")
+
     gc_file.voxel_depth_mm = None
 
     return gc_file
@@ -164,7 +146,7 @@ def _get_color_space(*, color_space_string) -> Image.COLOR_SPACES:
         try:
             color_space = dict(Image.COLOR_SPACES)[color_space_string]
         except KeyError:
-            raise ValidationError("Invalid color space")
+            return None
 
     return color_space
 
@@ -191,6 +173,21 @@ def _create_image_file(*, path: str, image: Image):
         )
 
 
+def load_with_tiff(gc_file):
+    tiff_file = tifffile.TiffFile(str(gc_file.path.absolute()))
+    gc_file = _extract_tags(gc_file=gc_file, pages=tiff_file.pages)
+    return tiff_file, gc_file
+
+
+def load_with_open_slide(gc_file, pk):
+    open_slide_file = openslide.open_slide(str(gc_file.path.absolute()))
+    gc_file = _extract_openslide_properties(
+        gc_file=gc_file, image=open_slide_file
+    )
+    dzi_output = _create_dzi_images(gc_file=gc_file, pk=pk)
+    return dzi_output, gc_file
+
+
 def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
     new_images = []
     new_image_files = []
@@ -201,29 +198,32 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
     for file_path in path.iterdir():
         pk = uuid4()
         dzi_output = None
-        try:
-            gc_file = load_tiff_file(file_path)
-        except ValidationError as e:
-            invalid_file_errors[file_path.name] = e.message  # noqa: B306
-            continue
+        tiff_file = None
+        gc_file = GrandChallengeTiffFile(file_path)
 
+        # try and load image
         try:
-            dzi_output, gc_file = _create_dzi_images(gc_file=gc_file, pk=pk)
-        except ValidationError as e:
-            invalid_file_errors[file_path.name] = e.message  # noqa: B306
-
-        # make sure all requirements are met
-        try:
+            tiff_file, gc_file = load_with_tiff(gc_file)
+            dzi_output, gc_file = load_with_open_slide(gc_file, pk)
             gc_file.validate()
+            if not tiff_file and not dzi_output:
+                raise ValidationError(
+                    "File could not be opened by either TIFFILE or OpenSlide"
+                )
         except ValidationError as e:
             invalid_file_errors[file_path.name] = e.message  # noqa: B306
             continue
+        except Exception as e:
+            invalid_file_errors[file_path.name] = e  # noqa: B306
 
         image = _create_tiff_image_entry(tiff_file=gc_file, pk=pk)
 
-        new_image_files.append(
-            _create_image_file(path=str(gc_file.path.absolute()), image=image)
-        )
+        if tiff_file:
+            new_image_files.append(
+                _create_image_file(
+                    path=str(gc_file.path.absolute()), image=image
+                )
+            )
 
         if dzi_output:
             new_image_files.append(
@@ -268,27 +268,17 @@ def _create_tiff_image_entry(
     )
 
 
-def _create_dzi_images(
-    *, gc_file: GrandChallengeTiffFile, pk: UUID
-) -> (str, GrandChallengeTiffFile):
+def _create_dzi_images(*, gc_file: GrandChallengeTiffFile, pk: UUID) -> str:
     # Creates a dzi file(out.dzi) and corresponding tiles in folder {pk}_files
     dzi_output = str(gc_file.path.parent / str(pk))
     try:
         image = pyvips.Image.new_from_file(
             str(gc_file.path.absolute()), access="sequential"
         )
-        if not gc_file.voxel_width_mm:
-            gc_file.voxel_width_mm = (
-                float(image.get("openslide.mpp-x")) / 1000,
-            )
-            gc_file.voxel_height_mm = (
-                float(image.get("openslide.mpp-y")) / 1000,
-            )
-
         pyvips.Image.dzsave(
             image, dzi_output, tile_size=settings.DZI_TILE_SIZE
         )
     except Exception as e:
-        raise ValidationError("Image can't be converted to dzi: " + str(e))
+        raise ValidationError(f"Image can't be converted to dzi: {e}")
 
-    return dzi_output, gc_file
+    return dzi_output
