@@ -44,7 +44,7 @@ class GrandChallengeTiffFile:
 def _get_tag_value(tags, tag):
     try:
         return tags[tag].value
-    except KeyError:
+    except (KeyError, AttributeError):
         return None
 
 
@@ -86,7 +86,7 @@ def _get_voxel_spacing_mm(tags, tag):
         raise ValidationError(
             f"Invalid resolution unit {resolution_unit}" f" in tiff file"
         )
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError, IndexError):
         raise ValidationError(f"Invalid resolution in tiff file")
 
 

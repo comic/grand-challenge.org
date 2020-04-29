@@ -183,7 +183,7 @@ def test_load_with_open_slide(
     pk = uuid4()
     try:
         _load_with_open_slide(gc_file=gc_file, pk=pk)
-    except ValidationError as e:
+    except Exception as e:
         error_message = str(e)
 
     assert expected_error_message in error_message
