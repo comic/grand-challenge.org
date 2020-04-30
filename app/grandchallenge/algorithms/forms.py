@@ -11,6 +11,7 @@ from django.forms import (
     ModelForm,
     TextInput,
 )
+from django.utils.text import format_lazy
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.algorithms.models import (
@@ -28,6 +29,7 @@ from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
+from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
@@ -49,6 +51,16 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "detail_page_markdown": MarkdownEditorWidget,
             "job_create_page_markdown": MarkdownEditorWidget,
             "additional_terms_markdown": MarkdownEditorWidget,
+        }
+        help_texts = {
+            "workstation_config": format_lazy(
+                (
+                    "The workstation configuration to use for this algorithm. "
+                    "If a suitable configuration does not exist you can "
+                    '<a href="{}">create a new one</a>.'
+                ),
+                reverse_lazy("workstation-configs:create"),
+            ),
         }
 
 
