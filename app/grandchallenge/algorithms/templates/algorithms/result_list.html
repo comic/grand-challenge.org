@@ -83,10 +83,11 @@
                     </td>
                     <td>
                         <ul class="list-unstyled">
-                            {% if result.images %}
+                            {% if result.job.image %}
                                 <li>
                                     <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_result=result config=algorithm.workstation_config %}">
-                                        <span class="badge badge-primary">
+                                        <span class="badge badge-primary"
+                                              title="View algorithm result">
                                             <i class="fa fa-eye"></i> View Result
                                         </span>
                                     </a>
@@ -108,13 +109,6 @@
                                           title="No output images were found">
                                         <i class="fa fa-eye-slash"></i>
                                     </span>
-                                </li>
-                                <li>
-                                    <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image config=algorithm.workstation_config %}">
-                                        <span class="badge badge-primary">
-                                            <i class="fa fa-eye"></i> View Input
-                                        </span>
-                                    </a>
                                 </li>
                             {% endfor %}
                             {% for file in result.job.image.files.all %}
