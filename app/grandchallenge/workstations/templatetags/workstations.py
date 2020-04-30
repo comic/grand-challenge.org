@@ -7,7 +7,11 @@ register = template.Library()
 
 @register.simple_tag()
 def workstation_query(
-    image=None, overlay=None, reader_study=None, config=None
+    image=None,
+    overlay=None,
+    reader_study=None,
+    algorithm_result=None,
+    config=None,
 ):
     """
     Generate the workstation query string.
@@ -31,6 +35,10 @@ def workstation_query(
     elif reader_study:
         query = {
             settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM: reader_study.pk
+        }
+    elif algorithm_result:
+        query = {
+            settings.WORKSTATIONS_ALGORITHM_RESULT_QUERY_PARAM: algorithm_result.pk
         }
     else:
         query = {}
