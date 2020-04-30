@@ -198,25 +198,28 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
     invalid_file_errors = {}
     new_folder_upload = []
 
+    def format_error(message):
+        return f"Tiff image builder: {message}"
+
     for file_path in path.iterdir():
         pk = uuid4()
         dzi_output = None
         try:
             gc_file = load_tiff_file(file_path)
         except ValidationError as e:
-            invalid_file_errors[file_path.name] = e.message  # noqa: B306
+            invalid_file_errors[file_path.name] = format_error(e)
             continue
 
         try:
             dzi_output, gc_file = _create_dzi_images(gc_file=gc_file, pk=pk)
         except ValidationError as e:
-            invalid_file_errors[file_path.name] = e.message  # noqa: B306
+            invalid_file_errors[file_path.name] = format_error(e)
 
         # make sure all requirements are met
         try:
             gc_file.validate()
         except ValidationError as e:
-            invalid_file_errors[file_path.name] = e.message  # noqa: B306
+            invalid_file_errors[file_path.name] = format_error(e)
             continue
 
         image = _create_tiff_image_entry(tiff_file=gc_file, pk=pk)

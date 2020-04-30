@@ -68,6 +68,9 @@ def image_builder_mhd(  # noqa: C901
 
         return convert_itk_to_internal(simple_itk_image, name=filename.name)
 
+    def format_error(message):
+        return f"Mhd image builder: {message}"
+
     new_images = []
     new_image_files = []
     consumed_files = set()
@@ -84,7 +87,7 @@ def image_builder_mhd(  # noqa: C901
                 parsed_headers
             )
         except ValueError as e:
-            invalid_file_errors[file.name] = str(e)
+            invalid_file_errors[file.name] = format_error(e)
             continue
 
         if is_hd_or_mha:
@@ -92,7 +95,9 @@ def image_builder_mhd(  # noqa: C901
             if parsed_headers[element_data_file_key] != "LOCAL":
                 file_dependency = Path(parsed_headers[element_data_file_key])
                 if not (path / file_dependency).is_file():
-                    invalid_file_errors[file.name] = "cannot find data file"
+                    invalid_file_errors[file.name] = format_error(
+                        "Cannot find data file"
+                    )
                     continue
 
             n_image, n_image_files = convert_itk_file(parsed_headers, file)
