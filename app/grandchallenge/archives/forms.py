@@ -11,6 +11,7 @@ from django.forms import (
     ModelMultipleChoiceField,
     TextInput,
 )
+from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
@@ -24,6 +25,7 @@ from grandchallenge.core.forms import (
 )
 from grandchallenge.core.widgets import MarkdownEditorWidget
 from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
@@ -46,6 +48,16 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         widgets = {
             "description": TextInput,
             "detail_page_markdown": MarkdownEditorWidget,
+        }
+        help_texts = {
+            "workstation_config": format_lazy(
+                (
+                    "The workstation configuration to use for this archive. "
+                    "If a suitable configuration does not exist you can "
+                    '<a href="{}">create a new one</a>.'
+                ),
+                reverse_lazy("workstation-configs:create"),
+            ),
         }
 
 
