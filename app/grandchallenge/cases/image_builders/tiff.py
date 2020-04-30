@@ -185,6 +185,7 @@ def _load_with_open_slide(*, gc_file: GrandChallengeTiffFile, pk: UUID):
     gc_file = _extract_openslide_properties(
         gc_file=gc_file, image=open_slide_file
     )
+    gc_file.validate()
     dzi_output = _create_dzi_images(gc_file=gc_file, pk=pk)
     return dzi_output, gc_file
 

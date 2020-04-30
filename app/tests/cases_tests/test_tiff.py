@@ -182,6 +182,7 @@ def test_load_with_open_slide(
     gc_file = GrandChallengeTiffFile(temp_file)
     pk = uuid4()
     try:
+        _, gc_file = _load_with_tiff(gc_file=gc_file)
         _load_with_open_slide(gc_file=gc_file, pk=pk)
     except Exception as e:
         error_message = str(e)
