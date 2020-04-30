@@ -221,6 +221,9 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
     invalid_file_errors = {}
     new_folder_upload = []
 
+    def format_error(message):
+        return f"Tiff image builder: {message}"
+
     for file_path in path.iterdir():
         pk = uuid4()
         dzi_output = None
@@ -231,13 +234,13 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
         try:
             tiff_file, gc_file = _load_with_tiff(gc_file=gc_file)
         except Exception as e:
-            invalid_file_errors[file_path.name] = e  # noqa: B306
+            invalid_file_errors[file_path.name] = format_error(e)
 
         # try and load image with open_slide
         try:
             dzi_output, gc_file = _load_with_open_slide(gc_file=gc_file, pk=pk)
         except Exception as e:
-            invalid_file_errors[file_path.name] = e  # noqa: B306
+            invalid_file_errors[file_path.name] = format_error(e)
 
         # validate
         try:
@@ -247,7 +250,7 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
                     "File could not be opened by either TIFFILE or OpenSlide"
                 )
         except ValidationError as e:
-            invalid_file_errors[file_path.name] = e.message  # noqa: B306
+            invalid_file_errors[file_path.name] = format_error(e)
             continue
 
         image = _create_tiff_image_entry(tiff_file=gc_file, pk=pk)
