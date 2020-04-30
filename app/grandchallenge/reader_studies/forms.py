@@ -28,6 +28,7 @@ from django.forms import (
     TextInput,
 )
 from django.forms.models import inlineformset_factory
+from django.utils.text import format_lazy
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.forms import (
@@ -45,6 +46,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
+from grandchallenge.subdomains.utils import reverse_lazy
 
 READER_STUDY_HELP_TEXTS = {
     "title": "The title of this reader study.",
@@ -56,6 +58,14 @@ READER_STUDY_HELP_TEXTS = {
         "of that workstations users group. "
         "If you do not see the workstation that you want to use, "
         "please contact the admin for that workstation."
+    ),
+    "workstation_config": format_lazy(
+        (
+            "The workstation configuration to use for this reader study. "
+            "If a suitable configuration does not exist you can "
+            '<a href="{}">create a new one</a>.'
+        ),
+        reverse_lazy("workstation-configs:create"),
     ),
     "help_text_markdown": (
         "Extra information that will be presented to the reader in the help "

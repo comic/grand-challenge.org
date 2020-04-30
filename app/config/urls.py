@@ -62,7 +62,7 @@ urlpatterns = [
         ),
     ),
     path(
-        "workstation-configs/",
+        "workstation-configurations/",
         include(
             "grandchallenge.workstation_configs.urls",
             namespace="workstation-configs",
