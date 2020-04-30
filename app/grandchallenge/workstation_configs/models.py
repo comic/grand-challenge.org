@@ -27,7 +27,12 @@ OVERLAY_SEGMENTS_SCHEMA = {
         "description": "Defines what each segment of the LUT represents.",
         "default": {},
         "examples": [
-            {"name": "Metastasis", "voxel_value": 1, "visible": True}
+            {
+                "name": "Metastasis",
+                "voxel_value": 1,
+                "visible": True,
+                "metric_template": "{{metrics.volumes[0]}} mm³",
+            }
         ],
         "required": ["voxel_value", "name", "visible"],
         "additionalProperties": False,
@@ -55,6 +60,14 @@ OVERLAY_SEGMENTS_SCHEMA = {
                 "description": "Whether this segment is visible by default.",
                 "default": True,
                 "examples": [True],
+            },
+            "metric_template": {
+                "$id": "#/items/properties/metric_template",
+                "type": "string",
+                "title": "The Metric Template Schema",
+                "description": "The jinja template to determine which property from the results.json should be used as the label text.",
+                "default": "",
+                "examples": ["{{metrics.volumes[0]}} mm³"],
             },
         },
     },
