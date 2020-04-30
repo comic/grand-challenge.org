@@ -95,10 +95,14 @@ def test_image_file_creation(settings):
         "invalid_utf8.mhd",
         "no_image",
         "valid_tiff.tif",
-        "invalid_tiles_tiff.tif",
+        "invalid_resolutions_tiff.tif",
     ]
 
-    invalid_images = ("no_image", "invalid_utf8.mhd", "invalid_tiles_tiff.tif")
+    invalid_images = (
+        "no_image",
+        "invalid_utf8.mhd",
+        "invalid_resolutions_tiff.tif",
+    )
     session, uploaded_images = create_raw_upload_image_session(images)
 
     session.refresh_from_db()
