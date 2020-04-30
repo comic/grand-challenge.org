@@ -70,6 +70,7 @@ djangorestframework-csv = "*"
 docutils = "0.15.2" # We do not depend on this directly, but required for Boto resolution
 prometheus_client = "^0.7.1"
 openslide-python = "*"
+humanize = "^2.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

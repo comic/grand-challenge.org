@@ -7,6 +7,7 @@
 {% load bleach %}
 {% load humanize %}
 {% load remove_whitespace %}
+{% load naturaldelta %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -135,7 +136,7 @@
                 {% if average_job_duration %}
                     <p>
                         On average, successful jobs for this algorithm have
-                        taken {{ average_job_duration }}.
+                        taken {{ average_job_duration|naturaldelta }}.
                     </p>
                 {% endif %}
                 <p>

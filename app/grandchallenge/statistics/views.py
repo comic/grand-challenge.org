@@ -110,14 +110,27 @@ class StatisticsDetail(TemplateView):
             "public_algorithms": (
                 Algorithm.objects.filter(public=True).count()
             ),
-            "hidden_algorithms": (
+            "private_algorithms": (
                 Algorithm.objects.filter(public=False).count()
             ),
             "algorithm_jobs": Job.objects.count(),
-            "reader_studies": ReaderStudy.objects.count(),
+            "algorithm_jobs_period": Job.objects.filter(
+                created__gt=time_period
+            ).count(),
+            "public_reader_studies": ReaderStudy.objects.filter(
+                public=True
+            ).count(),
+            "private_reader_studies": ReaderStudy.objects.filter(
+                public=False
+            ).count(),
             "questions": Question.objects.count(),
             "answers": Answer.objects.count(),
-            "workstations": Workstation.objects.count(),
+            "public_workstations": Workstation.objects.filter(
+                public=True
+            ).count(),
+            "private_workstations": Workstation.objects.filter(
+                public=False
+            ).count(),
             "workstation_sessions": Session.objects.count(),
             "total_session_duration": (
                 Session.objects.aggregate(Sum("maximum_duration"))[
