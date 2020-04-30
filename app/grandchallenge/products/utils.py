@@ -79,7 +79,7 @@ class DataImporter(object):
         c.description = row["Company description"]
         c.description_short = self._split(row["Company description"], 200)
         image_name = row["Company name"]
-        for ch in [" ", ".", "-"]:
+        for ch in [" ", ".", "-", ","]:
             image_name = image_name.replace(ch, "")
         img_file = self.images_path.glob(f"**/logo/{image_name.lower()}.*")
         for file in img_file:
