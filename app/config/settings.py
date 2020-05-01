@@ -55,7 +55,7 @@ DATABASES = {
         "USER": os.environ.get("POSTGRES_USER", "grandchallenge"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
-        "PORT": "",
+        "PORT": os.environ.get("POSTGRES_PORT", ""),
     }
 }
 
@@ -562,6 +562,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.TokenAuthentication",
+        "grandchallenge.api.authentication.BearerTokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
@@ -593,6 +594,9 @@ CELERY_TASK_SOFT_TIME_LIMIT = int(
     os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", "7200")
 )
 CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7260"))
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
+}
 
 CONTAINER_EXEC_DOCKER_BASE_URL = os.environ.get(
     "CONTAINER_EXEC_DOCKER_BASE_URL", "unix://var/run/docker.sock"
@@ -612,10 +616,7 @@ CONTAINER_EXEC_DOCKER_TLSKEY = os.environ.get(
 CONTAINER_EXEC_MEMORY_LIMIT = os.environ.get(
     "CONTAINER_EXEC_MEMORY_LIMIT", "4g"
 )
-CONTAINER_EXEC_IO_IMAGE = "alpine:3.9"
-CONTAINER_EXEC_IO_SHA256 = (
-    "sha256:82f67be598ebc8d968137c18521fe174ca6afc9b542aa5773c32b3a3970e647c"
-)
+CONTAINER_EXEC_IO_IMAGE = "alpine:3.11"
 CONTAINER_EXEC_CPU_QUOTA = int(
     os.environ.get("CONTAINER_EXEC_CPU_QUOTA", "100000")
 )
@@ -630,6 +631,9 @@ CONTAINER_EXEC_CPU_SHARES = int(
 )
 CONTAINER_EXEC_DOCKER_RUNTIME = os.environ.get(
     "CONTAINER_EXEC_DOCKER_RUNTIME", None
+)
+CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES = os.environ.get(
+    "CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES", "void"
 )
 
 CELERY_BEAT_SCHEDULE = {

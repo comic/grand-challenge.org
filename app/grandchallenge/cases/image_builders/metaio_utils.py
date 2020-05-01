@@ -65,6 +65,7 @@ ADDITIONAL_HEADERS: Dict[str, Pattern] = {
     "StudyInstanceUID": LENGTH_LIMIT_MATCH_REGEXP,
     "SeriesInstanceUID": LENGTH_LIMIT_MATCH_REGEXP,
     "StudyDescription": LENGTH_LIMIT_MATCH_REGEXP,
+    "SliceThickness": FLOAT_MATCH_REGEXP,
     "Exposures": FLOAT_LIST_MATCH_REGEXP,
     "ContentTimes": CONTENT_TIMES_LIST_MATCH_REGEXP,
     "t0": FLOAT_MATCH_REGEXP,

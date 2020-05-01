@@ -2,7 +2,6 @@ import uuid
 from datetime import timedelta
 from pathlib import Path
 
-from django.conf import settings
 from django.core.files import File
 from django.db import models
 from django.utils import timezone
@@ -148,8 +147,8 @@ class SubmissionToAnnotationSetJob(UUIDModel, ContainerExecJobModel):
     def container(self):
         class FakeContainer:
             ready = True
-            image = settings.CONTAINER_EXEC_IO_IMAGE
-            image_sha256 = settings.CONTAINER_EXEC_IO_SHA256
+            image = None
+            image_sha256 = None
             requires_gpu = False
 
         return FakeContainer()

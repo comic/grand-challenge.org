@@ -14,6 +14,7 @@ RUN apt-get update && \
     libffi-dev \
     wget \
     gettext \
+    libopenslide-dev \
     libvips-dev
 
 ENV PYTHONUNBUFFERED 1

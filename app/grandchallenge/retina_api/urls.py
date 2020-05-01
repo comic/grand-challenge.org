@@ -10,12 +10,12 @@ app_name = "retina_api"
 annotation_router = SimpleRouter()
 annotation_router.register(
     "singlepolygonannotation",
-    views.SinglePolygonViewSet,
+    views.LegacySinglePolygonViewSet,
     basename="singlepolygonannotation",
 )
 annotation_router.register(
     "polygonannotationset",
-    views.PolygonAnnotationSetViewSet,
+    views.LegacyPolygonAnnotationSetViewSet,
     basename="polygonannotationset",
 )
 annotation_router.register(
@@ -44,7 +44,7 @@ annotation_router.register(
     basename="imagetextannotation",
 )
 urlpatterns = [
-    path("archives/", views.ArchiveView.as_view(), name="archives-api-view",),
+    path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
         "archive_data/",
         cache_page(settings.RETINA_IMAGE_CACHE_TIME)(

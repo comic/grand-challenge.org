@@ -113,6 +113,9 @@ class ContainerExecJobModel(models.Model):
         if self.container.requires_gpu:
             kwargs.update({"queue": "gpu"})
 
+        if getattr(self.container, "queue_override", None):
+            kwargs.update({"queue": self.container.queue_override})
+
         execute_job.apply_async(
             **kwargs,
             kwargs={

@@ -146,7 +146,11 @@ def execute_job(
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
-    job.update_status(status=job.STARTED)
+
+    if job.status in [job.PENDING, job.RETRY]:
+        job.update_status(status=job.STARTED)
+    else:
+        raise RuntimeError("Job is not set to be executed.")
 
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used."

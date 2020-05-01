@@ -232,6 +232,7 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
         on_delete=models.CASCADE,
         related_name="algorithm_container_images",
     )
+    queue_override = models.CharField(max_length=128, blank=True)
 
     class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
         ordering = ("created", "creator")

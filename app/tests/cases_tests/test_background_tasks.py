@@ -371,6 +371,31 @@ def test_extract_and_flatten(tmpdir, file_name, func, is_tar):
     )
 
 
+def test_extract_and_flatten_prefixes(tmpdir):
+    # This zip file containes only files, no folders.
+    file = RESOURCE_PATH / "zip_flat.zip"
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    assert tmpdir.listdir() == [tmp_file]
+
+    tmpdir_path = Path(tmpdir)
+    with zipfile.ZipFile(tmp_file) as f:
+        index, new_files = extract_and_flatten(f, tmpdir_path, 0, is_tar=False)
+    assert index == 0
+    expected = [
+        {"prefix": "0-", "path": tmpdir_path / "0-0.txt"},
+        {"prefix": "0-", "path": tmpdir_path / "0-1.txt"},
+        {"prefix": "0-", "path": tmpdir_path / "0-2.txt"},
+        {"prefix": "0-", "path": tmpdir_path / "0-3.txt"},
+        {"prefix": "0-", "path": tmpdir_path / "0-4.txt"},
+        {"prefix": "0-", "path": tmpdir_path / "0-5.txt"},
+    ]
+    assert sorted(new_files, key=lambda k: k["path"]) == expected
+    assert sorted(tmpdir.listdir()) == sorted(
+        [x["path"] for x in expected] + [tmpdir_path / "zip_flat.zip"]
+    )
+
+
 @pytest.mark.parametrize("file_name", ("test.zip", "test.tar"))
 def test_check_compressed_and_extract(tmpdir, file_name):
     file = RESOURCE_PATH / file_name

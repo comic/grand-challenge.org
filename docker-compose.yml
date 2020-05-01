@@ -3,7 +3,7 @@ version: '2.3'
 services:
 
   postgres:
-    image: postgres:10.7
+    image: postgres:10.12
     command: "postgres -c 'config_file=/etc/postgresql/postgresql.conf'"
     environment: &postgresenv
       POSTGRES_PASSWORD: secretpassword
@@ -153,11 +153,11 @@ services:
         condition: service_started
 
   memcached:
-    image: memcached:1.5
+    image: memcached:1.6
     restart: always
 
   redis:
-    image: redis:4.0
+    image: redis:5.0.9
     command: redis-server --appendonly yes
     restart: always
     ports:

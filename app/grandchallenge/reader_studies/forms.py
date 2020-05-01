@@ -17,6 +17,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
+    BooleanField,
+    CharField,
     ChoiceField,
     FileField,
     Form,
@@ -140,6 +142,31 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
                 'e.g., {"a73512ee-1.2.276.0.542432.3.1.3.3546325986342": "This is *image 1*"}'
             ),
         }
+
+
+class ReaderStudyCopyForm(Form):
+    title = CharField(required=True)
+    copy_images = BooleanField(required=False, initial=True)
+    copy_hanging_list = BooleanField(required=False, initial=True)
+    copy_case_text = BooleanField(required=False, initial=True)
+    copy_questions = BooleanField(required=False, initial=True)
+    copy_readers = BooleanField(required=False, initial=True)
+    copy_editors = BooleanField(required=False, initial=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Copy"))
+
+    def clean(self, *args, **kwargs):
+        if (
+            self.cleaned_data["copy_hanging_list"]
+            or self.cleaned_data["copy_case_text"]
+        ) and not self.cleaned_data["copy_images"]:
+            self.add_error(
+                error="Hanging list and case text can only be copied if the images are copied as well",
+                field=None,
+            )
 
 
 class QuestionForm(SaveFormInitMixin, ModelForm):
@@ -351,7 +378,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         ):
             raise ValidationError(
                 f"Fields provided do not match with reader study. Fields should "
-                f"be: {self.reader_study.ground_truth_file_headers}"
+                f"be: {','.join(self.reader_study.ground_truth_file_headers)}"
             )
 
         values = [x for x in rdr]

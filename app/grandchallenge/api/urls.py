@@ -27,10 +27,13 @@ from grandchallenge.retina_api.views import (
     ImageLevelAnnotationsForImageViewSet,
     LandmarkAnnotationSetViewSet,
     PathologyAnnotationViewSet,
+    PolygonAnnotationSetViewSet,
     QualityAnnotationViewSet,
     RetinaPathologyAnnotationViewSet,
+    SinglePolygonViewSet,
     TextAnnotationViewSet,
 )
+from grandchallenge.statistics.views import MetricsAPIView
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
@@ -110,6 +113,16 @@ router.register(
     TextAnnotationViewSet,
     basename="retina-text-annotation",
 )
+router.register(
+    r"retina/polygon-annotation-set",
+    PolygonAnnotationSetViewSet,
+    basename="retina-polygon-annotation-set",
+)
+router.register(
+    r"retina/single-polygon-annotation",
+    SinglePolygonViewSet,
+    basename="retina-single-polygon-annotation",
+)
 
 # Workstations
 router.register(
@@ -131,7 +144,10 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    patterns=[path("api/v1/", include(router.urls))],
+    patterns=[
+        path("api/v1/", include(router.urls)),
+        path("api/v1/metrics/", MetricsAPIView.as_view()),
+    ],
 )
 
 urlpatterns = [
@@ -143,6 +159,7 @@ urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),
+    path("v1/metrics/", MetricsAPIView.as_view(), name="metrics"),
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
     path("", schema_view.with_ui("swagger"), name="schema-docs"),
 ]
