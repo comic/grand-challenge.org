@@ -39,6 +39,7 @@ from grandchallenge.core.forms import (
 from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.reader_studies.models import (
+    Answer,
     CASE_TEXT_SCHEMA,
     CategoricalOption,
     HANGING_LIST_SCHEMA,
@@ -346,6 +347,21 @@ class ReadersForm(UserGroupForm):
             permission_request.status = ReaderStudyPermissionRequest.ACCEPTED
 
         permission_request.save()
+
+
+class AnswersRemoveForm(Form):
+    user = ModelChoiceField(
+        queryset=get_user_model().objects.all().order_by("username"),
+        required=True,
+    )
+
+    def remove_answers(self, *, reader_study):
+        user = self.cleaned_data["user"]
+        Answer.objects.filter(
+            question__reader_study=reader_study,
+            creator=user,
+            is_ground_truth=False,
+        ).delete()
 
 
 class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):

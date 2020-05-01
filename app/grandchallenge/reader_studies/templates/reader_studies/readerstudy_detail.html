@@ -119,8 +119,12 @@
             <hr>
 
             You might be able to solve these issues by re-generating the hanging list:
-            <button type="button" class="btn btn-primary" data-toggle="modal"
-                    data-target="#hangingListModal">
+            <button type="button" class="btn btn-primary"
+                    data-toggle="modal"
+                    data-target="#warningModal"
+                    data-title="Generate hanging list"
+                    data-warning="The generated hanging list will overwrite any existig hanging list by setting 1 image per hanging protocol."
+                    data-action="Re-generate the hanging list">
                 <i class="fas fa-sync"></i> Re-generate the hanging list
             </button>
 
@@ -331,7 +335,7 @@
                                         {{ reader.obj|user_profile_link }}
                                     </div>
                                 </div>
-                                <div class="col-6 mb-1">
+                                <div class="col-5 mb-1">
                                     <div class="h-100 d-flex align-items-center">
                                         <div class="flex-fill progress h-100">
                                             <div class="progress-bar" role="progressbar"
@@ -345,7 +349,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-3 mb-1">
+                                <div class="col-4 mb-1">
                                     <div class="d-flex justify-content-end align-items-center">
                                         <form
                                                 action="{% url 'reader-studies:readers-update' slug=object.slug %}"
@@ -362,10 +366,20 @@
                                                 {% endif %}
                                             {% endfor %}
                                             <button type="submit"
-                                                    class="btn btn-danger">
-                                                Remove
+                                                    class="btn btn-danger mr-1">
+                                                <small>Remove reader</small>
                                             </button>
                                         </form>
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                data-toggle="modal"
+                                                data-target="#warningModal"
+                                                data-title="Remove answers"
+                                                data-warning="This will remove all answers for user '{{ reader.obj }}'. This action cannot be undone."
+                                                data-user="{{ reader.obj.id }}"
+                                                data-action="Remove answers">
+                                            <small>Remove Answers</small>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -476,22 +490,19 @@
         {% endif %}
 
         <!-- Modal -->
-        <div class="modal fade" id="hangingListModal" tabindex="-1" role="dialog"
-             aria-labelledby="hangingListModalLabel" aria-hidden="true">
+        <div class="modal fade" id="warningModal" tabindex="-1" role="dialog"
+             aria-labelledby="warningModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="hangingListModalLabel">Generate
-                            hanging list</h5>
+                        <h5 class="modal-title" id="warningModalLabel"></h5>
                         <button type="button" class="close" data-dismiss="modal"
                                 aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>The generated hanging list will overwrite any existing
-                            hanging
-                            list by setting 1 image per hanging protocol.</p>
+                        <p class="warning-text"></p>
 
                         <p><b>Are you sure that you want to continue?</b></p>
                     </div>
@@ -500,8 +511,8 @@
                                 data-dismiss="modal">Cancel
                         </button>
                         <button type="button" class="btn btn-danger"
-                                id="generateHangingList">
-                            <i class="fa fa-trash"></i> Re-generate the hanging list
+                                id="proceed">
+                            <i class="fa fa-trash"></i> <span class="modal-action"></span>
                         </button>
                     </div>
                 </div>
@@ -520,22 +531,43 @@
             csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
         };
 
+        let user;
+
         $(document).ready(() => {
-            $('#generateHangingList').on('click', () => {
-                $.ajax({
-                    type: 'PATCH',
-                    url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
-                    data: {},
-                    contentType: 'application/json',
-                    complete: (response) => {
-                        $('#page').prepend(
-                            '<div class="alert alert-success" role="alert">' +
-                            `${response.responseJSON.status}` +
-                            '</div>'
-                        );
-                        window.location.replace(window.location.href);
-                    }
-                })
+
+            $('#warningModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const modal = $(this);
+                modal.find(".warning-text").text(button.data("warning"));
+                modal.find(".modal-action").text(button.data("action"));
+                $("#warningModalLabel").text(button.data("title"));
+                user = button.data("user");
+            });
+            $('#proceed').on('click', () => {
+                if (user) {
+                    $.post({
+                        url: "{% url 'reader-studies:answers-remove' slug=object.slug %}",
+                        data: {user: user, csrfmiddlewaretoken: window.drf.csrfToken},
+                        success: () => {
+                            window.location.replace(window.location.href);
+                        }
+                    })
+                } else {
+                    $.ajax({
+                        type: 'PATCH',
+                        url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
+                        data: {},
+                        contentType: 'application/json',
+                        complete: (response) => {
+                            $('#page').prepend(
+                                '<div class="alert alert-success" role="alert">' +
+                                `${response.responseJSON.status}` +
+                                '</div>'
+                            );
+                            window.location.replace(window.location.href);
+                        }
+                    })
+                }
             });
         });
     </script>
