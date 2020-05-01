@@ -2,6 +2,7 @@
 {% load humanize %}
 {% load url %}
 {% load static %}
+{% load naturaldelta %}
 
 {% block title %}Statistics{% endblock %}
 
@@ -15,9 +16,9 @@
 
 {% block content %}
 
-    <h1>Site Statistics</h1> <br/>
+    <h2>Site Statistics</h2>
 
-    <h2>Users</h2>
+    <h3>Users</h3>
 
     {% include 'grandchallenge/partials/geochart.html' %}
 
@@ -34,14 +35,14 @@
 
     </dl>
 
-    <h2>Challenges</h2>
+    <h3>Challenges</h3>
 
     <dl class="inline">
 
         <dt>Public challenges</dt>
         <dd>{{ public_challenges|intcomma }}</dd>
 
-        <dt>Hidden challenges</dt>
+        <dt>Private challenges</dt>
         <dd>{{ hidden_challenges|intcomma }}</dd>
 
         <dt>Public challenge with the most participants</dt>
@@ -60,13 +61,14 @@
 
     </dl>
 
-    <h3>Registrations to public challenges in the past {{ days }} days
-        (top {{ max_num_results }})</h3>
+    <h4>Registrations to public challenges in the past {{ days }} days
+        (top {{ max_num_results }})</h4>
 
     <canvas id="registrationsChart"></canvas>
 
+    <br>
 
-    <h2>Evaluations</h2>
+    <h3>Evaluations</h3>
 
     <dl class="inline">
         <dt>Challenges using automated evaluation</dt>
@@ -95,57 +97,69 @@
 
     </dl>
 
-    <h3>Submissions to public challenges in the past {{ days }} days
-        (top {{ max_num_results }})</h3>
+    <h4>Submissions to public challenges in the past {{ days }} days
+        (top {{ max_num_results }})</h4>
 
     <canvas id="submissionsChart"></canvas>
 
-    <h2>Algorithms</h2>
+    <br>
 
+    <h3>Archives</h3>
+    <dl class="inline">
+        <dt>Public archives</dt>
+        <dd>{{ public_archives|intcomma }}</dd>
+
+        <dt>Private archives</dt>
+        <dd>{{ private_archives|intcomma }}</dd>
+
+        <dt>Images</dt>
+        <dd>{{ images|intcomma }}</dd>
+    </dl>
+
+    <h3>Reader Studies</h3>
+    <dl class="inline">
+        <dt>Public reader studies</dt>
+        <dd>{{ public_reader_studies|intcomma }}</dd>
+
+        <dt>Public reader studies</dt>
+        <dd>{{ private_reader_studies|intcomma }}</dd>
+
+        <dt>Questions</dt>
+        <dd>{{ questions|intcomma }}</dd>
+
+        <dt>Answers</dt>
+        <dd>{{ answers|intcomma }}</dd>
+    </dl>
+
+    <h3>Workstations</h3>
+    <dl class="inline">
+        <dt>Public workstations</dt>
+        <dd>{{ public_workstations|intcomma }}</dd>
+
+        <dt>Private workstations</dt>
+        <dd>{{ private_workstations|intcomma }}</dd>
+
+        <dt>Sessions</dt>
+        <dd>{{ workstation_sessions|intcomma }}</dd>
+
+        <dt>Total session duration</dt>
+        <dd>{{ total_session_duration|naturaldelta }}</dd>
+    </dl>
+
+    <h3>Algorithms</h3>
     <dl class="inline">
         <dt>Public algorithms</dt>
         <dd>{{ public_algorithms|intcomma }}</dd>
 
-        <dt>Hidden algorithms</dt>
-        <dd>{{ hidden_algorithms|intcomma }}</dd>
+        <dt>Private algorithms</dt>
+        <dd>{{ private_algorithms|intcomma }}</dd>
 
-        <dt>Number of algorithm runs</dt>
+        <dt>Total algorithm runs</dt>
         <dd>{{ algorithm_jobs|intcomma }}</dd>
+
+        <dt>Total algorithms runs (last {{ days }} days)</dt>
+        <dd>{{ algorithm_jobs_period|intcomma }}</dd>
     </dl>
-
-    <h2>Reader Studies</h2>
-
-    <dl class="inline">
-        <dt>Number of reader studies</dt>
-        <dd>{{ reader_studies|intcomma }}</dd>
-
-        <dt>Number of questions</dt>
-        <dd>{{ questions|intcomma }}</dd>
-
-        <dt>Number of answers</dt>
-        <dd>{{ answers|intcomma }}</dd>
-    </dl>
-
-    <h2>Workstations</h2>
-
-    <dl class="inline">
-        <dt>Number of workstations</dt>
-        <dd>{{ workstations|intcomma }}</dd>
-
-        <dt>Number of sessions</dt>
-        <dd>{{ workstation_sessions|intcomma }}</dd>
-
-        <dt>Total session duration</dt>
-        <dd>{{ total_session_duration }}</dd>
-    </dl>
-
-    {% if request.user.is_staff %}
-        <h2>Deployment</h2>
-        <dl class="inline">
-            <dt>Commit ID</dt>
-            <dd>{{ COMMIT_ID }}</dd>
-        </dl>
-    {% endif %}
 {% endblock %}
 
 {% block script %}

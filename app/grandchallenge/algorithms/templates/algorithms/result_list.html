@@ -94,8 +94,8 @@
                                 {% for file in image.files.all %}
                                     <li>
                                         <a href="{{ file.file.url }}">
-                                            <span class="badge badge-primary">
-                                                <i class="fa fa-download"></i> Output ({{ file.file|suffix }})
+                                            <span class="badge badge-primary" title="Download Output {{ forloop.parentloop.counter }} {{ image.name|stem }} ({{ file.file|suffix }})">
+                                                <i class="fa fa-download"></i> Output {{ forloop.parentloop.counter }} ({{ file.file|suffix }})
                                             </span>
                                         </a>
                                     </li>
@@ -118,7 +118,7 @@
                             {% for file in result.job.image.files.all %}
                                 <li>
                                     <a href="{{ file.file.url }}">
-                                        <span class="badge badge-primary">
+                                        <span class="badge badge-primary" title="Download Input {{ result.job.image.name|stem }} ({{ file.file|suffix }})">
                                             <i class="fa fa-download"></i> Input ({{ file.file|suffix }})
                                         </span>
                                     </a>

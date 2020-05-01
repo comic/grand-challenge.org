@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List
+from typing import List, Mapping, Union
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -11,7 +11,10 @@ from django.db import models
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.cases.image_builders.metaio_utils import load_sitk_image
+from grandchallenge.cases.image_builders.metaio_utils import (
+    load_sitk_image,
+    parse_mh_header,
+)
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
@@ -147,7 +150,7 @@ class RawImageUploadSession(UUIDModel):
         from grandchallenge.cases.tasks import build_images
 
         RawImageUploadSession.objects.filter(pk=self.pk).update(
-            status=RawImageUploadSession.REQUEUED,
+            status=RawImageUploadSession.REQUEUED
         )
         build_images.apply_async(args=(self.pk,))
 
@@ -357,6 +360,69 @@ class Image(UUIDModel):
         if color_components > 1:
             result.append(color_components)
         return result
+
+    @property
+    def spacing(self) -> List[float]:
+        """
+        Return the voxel spacing (or size if spacing is nonexistent) of the image.
+
+        Returns
+        -------
+            The voxel spacing in mm in NumPy ordering [(z), y, x]
+            Defaults to [(1), 1, 1]
+        """
+        spacing = [
+            self.voxel_depth_mm,
+            self.voxel_height_mm,
+            self.voxel_width_mm,
+        ]
+        if spacing[0] is None:
+            spacing = spacing[-2:]
+        if None in spacing:
+            mh_header = self.get_mh_header()
+            spacing_str = mh_header.get(
+                "ElementSpacing", mh_header.get("ElementSize")
+            )
+            if spacing_str is not None:
+                spacing = list(
+                    reversed([float(x) for x in spacing_str.split(" ")])
+                )
+            else:
+                spacing = [1] * int(mh_header["NDims"])
+        return spacing
+
+    def get_mh_header(self) -> Mapping[str, Union[str, None]]:
+        """
+        Return header from mhd/mha file as key value pairs
+
+        Returns
+        -------
+            MetaIO headers as key value pairs.
+
+        Raises
+        ------
+        FileNotFoundError
+            Raised when Image has no related mhd/mha ImageFile or actual file
+            cannot be found on storage
+        """
+
+        mh_file = None
+        try:
+            mh_file = self.files.get(
+                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mha"
+            )
+        except ObjectDoesNotExist:
+            # Fallback to files that are still stored as mhd/(z)raw
+            mh_file = self.files.get(
+                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mhd"
+            )
+
+        if mh_file is None or not mh_file.file.storage.exists(
+            name=mh_file.file.name
+        ):
+            raise FileNotFoundError(f"No file found for {mh_file.file}")
+
+        return parse_mh_header(mh_file.file)
 
     def get_sitk_image(self):
         """

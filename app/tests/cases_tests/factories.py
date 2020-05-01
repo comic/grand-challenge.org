@@ -82,6 +82,42 @@ class ImageFileFactoryWithRAWFile4D(ImageFileFactory):
     )
 
 
+class ImageFileFactoryWithMHDFile2D12Spacing(ImageFileFactory):
+    file = factory.django.FileField(
+        from_path=RESOURCE_PATH / "image3x4-with-12-spacing.mhd"
+    )
+
+
+class ImageFileFactoryWithMHDFile2DNoSpacing(ImageFileFactory):
+    file = factory.django.FileField(
+        from_path=RESOURCE_PATH / "image3x4-no-spacing.mhd"
+    )
+
+
+class ImageFileFactoryWithMHDFile2DNoSpacingWith12Size(ImageFileFactory):
+    file = factory.django.FileField(
+        from_path=RESOURCE_PATH / "image3x4-no-spacing-with-12-size.mhd"
+    )
+
+
+class ImageFileFactoryWithMHDFile123Spacing(ImageFileFactory):
+    file = factory.django.FileField(
+        from_path=RESOURCE_PATH / "image5x6x7-with-123-spacing.mhd"
+    )
+
+
+class ImageFileFactoryWithMHDFileNoSpacing(ImageFileFactory):
+    file = factory.django.FileField(
+        from_path=RESOURCE_PATH / "image5x6x7-no-spacing.mhd"
+    )
+
+
+class ImageFileFactoryWithMHDFileNoSpacingWith123Size(ImageFileFactory):
+    file = factory.django.FileField(
+        from_path=RESOURCE_PATH / "image5x6x7-no-spacing-with-123-size.mhd"
+    )
+
+
 class ImageFactoryWithoutImageFile(ImageFactory):
     eye_choice = factory.Iterator([x[0] for x in Image.EYE_CHOICES])
     stereoscopic_choice = factory.Iterator(

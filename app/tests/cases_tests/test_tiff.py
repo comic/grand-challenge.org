@@ -7,13 +7,17 @@ import pytest
 import tifffile as tiff_lib
 from django.core.exceptions import ValidationError
 from pytest import approx
+from tifffile import tifffile
 
 from grandchallenge.cases.image_builders.tiff import (
+    GrandChallengeTiffFile,
     _create_dzi_images,
     _create_tiff_image_entry,
+    _extract_tags,
     _get_color_space,
+    _load_with_open_slide,
+    _load_with_tiff,
     image_builder_tiff,
-    load_tiff_file,
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
@@ -43,25 +47,83 @@ def test_get_color_space(color_space_string, expected):
 
 
 @pytest.mark.parametrize(
-    "resource, expected_error_message",
+    "path, color_space, resolution_levels, image_height, image_width, voxel_height_mm, voxel_width_mm, expected_error_message",
     [
-        (RESOURCE_PATH / "valid_tiff.tif", ""),
-        (RESOURCE_PATH / "image5x6x7.mhd", "Image isn't a TIFF file"),
+        ("dummy.tiff", 1, 1, 10, 10, 0.1, 0.1, ""),
+        ("dummy.tiff", None, 1, 10, 10, 0.1, 0.1, "ColorSpace not valid"),
         (
-            RESOURCE_PATH / "invalid_resolutions_tiff.tif",
-            "Image only has a single resolution level",
+            "dummy.tiff",
+            1,
+            None,
+            10,
+            10,
+            0.1,
+            0.1,
+            "Resolution levels not valid",
         ),
         (
-            RESOURCE_PATH / "invalid_tiles_tiff.tif",
-            "Tiff file is missing required tag TileOffsets",
+            "dummy.tiff",
+            1,
+            1,
+            None,
+            10,
+            0.1,
+            0.1,
+            "ImageHeigth could not be determined",
+        ),
+        (
+            "dummy.tiff",
+            1,
+            1,
+            10,
+            None,
+            0.1,
+            0.1,
+            "ImageWidth could not be determined",
+        ),
+        (
+            "dummy.tiff",
+            1,
+            1,
+            10,
+            10,
+            None,
+            0.1,
+            "Voxel height could not be determined",
+        ),
+        (
+            "dummy.tiff",
+            1,
+            1,
+            10,
+            10,
+            0.1,
+            None,
+            "Voxel width could not be determined",
         ),
     ],
 )
-def test_tiff_validation(resource, expected_error_message):
+def test_grandchallengetifffile_validation(
+    path,
+    color_space,
+    resolution_levels,
+    image_height,
+    image_width,
+    voxel_height_mm,
+    voxel_width_mm,
+    expected_error_message,
+):
     error_message = ""
 
     try:
-        load_tiff_file(resource)
+        gc_file = GrandChallengeTiffFile(path)
+        gc_file.color_space = color_space
+        gc_file.resolution_levels = resolution_levels
+        gc_file.image_height = image_height
+        gc_file.image_width = image_width
+        gc_file.voxel_height_mm = voxel_height_mm
+        gc_file.voxel_width_mm = voxel_width_mm
+        gc_file.validate()
     except ValidationError as e:
         error_message = str(e)
 
@@ -74,16 +136,70 @@ def test_tiff_validation(resource, expected_error_message):
     "source_dir, filename, expected_error_message",
     [
         (RESOURCE_PATH, "valid_tiff.tif", ""),
-        (RESOURCE_PATH, "image5x6x7.mhd", "Image isn't a TIFF file"),
         (
             RESOURCE_PATH,
             "invalid_resolutions_tiff.tif",
-            "Image only has a single resolution level",
+            "Invalid resolution unit RESUNIT.NONE in tiff file",
         ),
+    ],
+)
+def test_load_with_tiff(
+    source_dir, filename, expected_error_message, tmpdir_factory
+):
+    error_message = ""
+    # Copy resource file to writable temp folder
+    temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
+    shutil.copy(source_dir / filename, temp_file)
+    gc_file = GrandChallengeTiffFile(temp_file)
+    try:
+        _load_with_tiff(gc_file=gc_file)
+    except ValidationError as e:
+        error_message = str(e)
+
+    assert expected_error_message in error_message
+    if not expected_error_message:
+        assert not error_message
+
+
+@pytest.mark.parametrize(
+    "source_dir, filename, expected_error_message",
+    [
+        (RESOURCE_PATH, "valid_tiff.tif", ""),
         (
             RESOURCE_PATH,
-            "invalid_tiles_tiff.tif",
-            "Tiff file is missing required tag TileOffsets",
+            "no_dzi.tif",
+            "Image can't be converted to dzi: unable to call dzsave",
+        ),
+    ],
+)
+def test_load_with_open_slide(
+    source_dir, filename, expected_error_message, tmpdir_factory
+):
+    error_message = ""
+    # Copy resource file to writable temp folder
+    temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
+    shutil.copy(source_dir / filename, temp_file)
+    gc_file = GrandChallengeTiffFile(temp_file)
+    pk = uuid4()
+    try:
+        _, gc_file = _load_with_tiff(gc_file=gc_file)
+        _load_with_open_slide(gc_file=gc_file, pk=pk)
+    except Exception as e:
+        error_message = str(e)
+
+    assert expected_error_message in error_message
+    if not expected_error_message:
+        assert not error_message
+
+
+@pytest.mark.parametrize(
+    "source_dir, filename, expected_error_message",
+    [
+        (RESOURCE_PATH, "valid_tiff.tif", ""),
+        (
+            RESOURCE_PATH,
+            "no_dzi.tif",
+            "Image can't be converted to dzi: unable to call dzsave",
         ),
     ],
 )
@@ -94,11 +210,10 @@ def test_dzi_creation(
     # Copy resource file to writable temp folder
     temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
     shutil.copy(source_dir / filename, temp_file)
-
+    gc_file = GrandChallengeTiffFile(temp_file)
+    pk = uuid4()
     try:
-        # Load the tiff file and create dzi
-        tiff_file = load_tiff_file(temp_file)
-        _create_dzi_images(gc_file=tiff_file, pk=uuid4())
+        _create_dzi_images(gc_file=gc_file, pk=pk)
     except ValidationError as e:
         error_message = str(e)
 
@@ -110,14 +225,7 @@ def test_dzi_creation(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "resource, expected_error_message, voxel_size",
-    [
-        (RESOURCE_PATH / "valid_tiff.tif", "", [1, 1, None],),
-        (
-            RESOURCE_PATH / "image5x6x7.mhd",
-            "Image isn't a TIFF file",
-            [0, 0, 0],
-        ),
-    ],
+    [(RESOURCE_PATH / "valid_tiff.tif", "", [1, 1, None])],
 )
 def test_tiff_image_entry_creation(
     resource, expected_error_message, voxel_size
@@ -125,9 +233,11 @@ def test_tiff_image_entry_creation(
     error_message = ""
     image_entry = None
     pk = uuid4()
+    gc_file = GrandChallengeTiffFile(resource)
     try:
-        tiff_file = load_tiff_file(resource)
-        image_entry = _create_tiff_image_entry(tiff_file=tiff_file, pk=pk)
+        tiff_file = tifffile.TiffFile(str(gc_file.path.absolute()))
+        gc_file = _extract_tags(gc_file=gc_file, pages=tiff_file.pages)
+        image_entry = _create_tiff_image_entry(tiff_file=gc_file, pk=pk)
     except ValidationError as e:
         error_message = str(e)
 
@@ -159,23 +269,32 @@ def test_tiff_image_entry_creation(
 
 # Integration test of all features being accessed through the image builder
 @pytest.mark.django_db
-def test_image_builder_tiff(tmpdir_factory):
+@pytest.mark.parametrize(
+    "resource, expected_files, expected_image_files, expected_dzi_files",
+    [(RESOURCE_PATH, 4, 7, 31)],
+)
+def test_image_builder_tiff(
+    resource,
+    expected_files,
+    expected_image_files,
+    expected_dzi_files,
+    tmpdir_factory,
+):
     # Copy resource files to writable temp folder
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(
-        RESOURCE_PATH, temp_dir, ignore=shutil.ignore_patterns("dicom*")
+        resource, temp_dir, ignore=shutil.ignore_patterns("dicom*"),
     )
 
     image_builder_result = image_builder_tiff(path=temp_dir)
 
-    # Assumes the RESOURCE_PATH folder only contains a single correct TIFF file
-    assert len(image_builder_result.consumed_files) == 1
-    assert len(image_builder_result.new_images) == 1
-    assert len(image_builder_result.new_image_files) == 2
+    assert len(image_builder_result.consumed_files) == expected_files
+    assert len(image_builder_result.new_images) == expected_files
+    assert len(image_builder_result.new_image_files) == expected_image_files
 
     # Asserts successful creation of files
     new_image_pk = image_builder_result.new_images[0].pk
     assert os.path.isfile(temp_dir / f"{new_image_pk}.dzi")
     assert os.path.isdir(temp_dir / f"{new_image_pk}_files")
 
-    assert len(list(temp_dir.glob("**/*.jpeg"))) == 9
+    assert len(list(temp_dir.glob("**/*.jpeg"))) == expected_dzi_files

@@ -6,6 +6,8 @@ from contextlib import contextmanager
 from json import JSONDecodeError
 from pathlib import Path
 from random import randint
+from shutil import copyfileobj
+from tempfile import SpooledTemporaryFile
 from time import sleep
 from typing import Tuple
 
@@ -116,8 +118,19 @@ class DockerConnection:
             *[img.id for img in self._client.images.list()],
             None,
         ]:
-            with self._exec_image.open("rb") as f:
-                self._client.images.load(f)
+            # This can take a long time so increase the default timeout #1330
+            old_timeout = self._client.api.timeout
+            self._client.api.timeout = 600  # 10 minutes
+            max_size = 10 * 1024 * 1024 * 1024
+
+            with SpooledTemporaryFile(
+                max_size=max_size
+            ) as fdst, self._exec_image.open("rb") as fsrc:
+                copyfileobj(fsrc=fsrc, fdst=fdst)
+                fdst.seek(0)
+                self._client.images.load(fdst)
+
+            self._client.api.timeout = old_timeout
 
 
 class Executor(DockerConnection):
@@ -204,7 +217,8 @@ class Executor(DockerConnection):
                 remove=True,
                 labels=self._labels,
                 environment={
-                    "NVIDIA_VISIBLE_DEVICES": settings.CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES
+                    "NVIDIA_VISIBLE_DEVICES": settings.CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES,
+                    "OPENBLAS_NUM_THREADS": 1,
                 },
                 stdout=True,
                 stderr=True,

@@ -81,7 +81,9 @@ class UploadImage(generics.CreateAPIView):
                 response_obj.update(
                     {
                         "archive_created": archive_created,
-                        "archive": ArchiveSerializer(archive).data,
+                        "archive": ArchiveSerializer(
+                            archive, context={"request": request}
+                        ).data,
                     }
                 )
 
@@ -142,6 +144,14 @@ class UploadImage(generics.CreateAPIView):
                     self.save_mha_files(request, img)
                 else:
                     self.save_mhd_and_raw_files(request, img)
+
+                # Set spacing from header file on image object
+                spacing = img.spacing
+                if len(spacing) > 2:
+                    img.voxel_depth_mm = spacing[0]
+                img.voxel_width_mm = spacing[-1]
+                img.voxel_height_mm = spacing[-2]
+                img.save()
 
                 # Link images to archive
                 if archive is not None:
