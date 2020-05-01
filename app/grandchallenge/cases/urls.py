@@ -13,5 +13,5 @@ urlpatterns = [
         RawImageUploadSessionDetail.as_view(),
         name="raw-files-session-detail",
     ),
-    path("uploads/show_image/<uuid:pk>/", show_image, name="show_image"),
+    path("uploads/show-image/<uuid:pk>/", show_image, name="show-image"),
 ]

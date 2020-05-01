@@ -2,6 +2,7 @@
 {% load crispy_forms_tags %}
 {% load url %}
 {% load workstations %}
+{% load pathlib %}
 
 {% block content %}
 
@@ -33,17 +34,21 @@
                 <tr>
                     <td>{{ raw_file.filename }}</td>
                     <td>
-                        {% if raw_file.error %}
-                            {{ raw_file.error|linebreaks }}
+                        {% if object.status == object.SUCCESS %}
+                            {% if raw_file.error %}
+                                {{ raw_file.error|linebreaks }}
 
-                            {% if object.archive %}
-                                <p>
-                                    The uploaded file has been retained, the sites administrators will investigate
-                                    why the conversion was unsuccessful.
-                                </p>
+                                {% if object.archive %}
+                                    <p>
+                                        The uploaded file has been retained, the sites administrators will investigate
+                                        why the conversion was unsuccessful.
+                                    </p>
+                                {% endif %}
+                            {% else %}
+                                succeeded
                             {% endif %}
-                        {% elif object.status == object.SUCCESS %}
-                            succeeded
+                        {% else %}
+                            {{ object.get_status_display }}
                         {% endif %}
                     </td>
                 </tr>
@@ -61,19 +66,39 @@
                 <tbody>
                 {% for image in object.image_set.all %}
                     <tr>
-                        <td style="padding-right:1cm;">{{ image.name }}</td>
-                        <td style="padding-right:1cm;">{{ image.shape_without_color|join:"x" }}</td>
-                        <td style="padding-right:1cm;">
+                        <td>{{ image.name }}</td>
+                        <td>{{ image.shape_without_color|join:"x" }}</td>
+                        <td>
+                            <ul class="list-unstyled">
+                                {% for file in image.files.all %}
+                                    <li>
+                                        <a href="{{ file.file.url }}">
+                                        <span class="badge badge-primary"
+                                              title="Download Image {{ image.name|stem }} ({{ file.file|suffix }})">
+                                            <i class="fa fa-download"></i> Image ({{ file.file|suffix }})
+                                        </span>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
                             <a href="{% url 'workstations:default-session-redirect' %}?{% workstation_query image=image %}">
-                                Show image in workstation
+                                <span class="badge badge-primary">
+                                    <i class="fa fa-eye"></i> View Image
+                                </span>
                             </a>
                         </td>
-                        <td style="padding-right:1cm;">
-                            {% if ".tif" in image.name %}
-                                <a href="../show_image/{{ image.pk }}/">
-                                    Show image in browser
-                                </a>
-                            {% endif %}
+                        <td>
+                            {% for file in image.files.all %}
+                                {% if file.image_type == file.IMAGE_TYPE_DZI %}
+                                    <a href="{% url 'cases:show-image' pk=image.pk %}">
+                                    <span class="badge badge-primary">
+                                        <i class="fa fa-eye"></i> View with OpenSeaDragon
+                                    </span>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
                         </td>
                     </tr>
                 {% endfor %}
