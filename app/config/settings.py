@@ -2,6 +2,7 @@ import os
 import re
 from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
+from itertools import product
 
 import sentry_sdk
 from corsheaders.defaults import default_headers
@@ -186,8 +187,9 @@ CACHES = {
 }
 SPEEDINFO_STORAGE = "speedinfo.storage.cache.storage.CacheStorage"
 
-ROOT_URLCONF = "config.urls"
-SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
+ROOT_URLCONF = "config.urls.root"
+CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
+RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 
 SESSION_COOKIE_DOMAIN = os.environ.get(
@@ -732,6 +734,24 @@ WORKSTATIONS_SESSION_DURATION_LIMIT = int(
 WORKSTATION_INTERNAL_NETWORK = strtobool(
     os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
 )
+WORKSTATIONS_RENDERING_SUBDOMAINS = [
+    "-".join(z)
+    for z in product(
+        ["us", "af", "ap", "ca", "cn", "eu", "me", "sa"],
+        [
+            "east",
+            "west",
+            "south",
+            "north",
+            "central",
+            "northeast",
+            "southeast",
+            "northwest",
+            "southwest",
+        ],
+        ["1", "2", "3"],
+    )
+]
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
@@ -754,6 +774,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     "cache",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
+    *WORKSTATIONS_RENDERING_SUBDOMAINS,
 ]
 
 # Modality name constants
