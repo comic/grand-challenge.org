@@ -38,17 +38,17 @@ def challenge_subdomain_middleware(get_response):
         to the main site if the challenge is not valid. Requires the
         subdomain to be set on the request (eg, by using subdomain_middleware)
         """
-        challenge_name = request.subdomain
+        subdomain = request.subdomain
 
-        if challenge_name is None:
+        if subdomain in [*settings.WORKSTATIONS_RENDERING_SUBDOMAINS, None]:
             request.challenge = None
         else:
             try:
                 request.challenge = Challenge.objects.get(
-                    short_name__iexact=challenge_name
+                    short_name__iexact=subdomain
                 )
             except Challenge.DoesNotExist:
-                logger.warning(f"Could not find challenge {challenge_name}")
+                logger.warning(f"Could not find challenge {subdomain}")
                 domain = request.site.domain.lower()
                 return HttpResponseRedirect(f"{request.scheme}://{domain}/")
 
@@ -66,8 +66,10 @@ def subdomain_urlconf_middleware(get_response):
         with this request, ensures that the correct urls are matched by the
         request
         """
-        if request.subdomain:
-            request.urlconf = settings.SUBDOMAIN_URL_CONF
+        if request.challenge:
+            request.urlconf = settings.CHALLENGE_SUBDOMAIN_URL_CONF
+        elif request.subdomain in settings.WORKSTATIONS_RENDERING_SUBDOMAINS:
+            request.urlconf = settings.RENDERING_SUBDOMAIN_URL_CONF
         else:
             request.urlconf = settings.ROOT_URLCONF
 

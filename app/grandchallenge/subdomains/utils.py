@@ -18,7 +18,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     if "challenge_short_name" in kwargs:
         challenge_short_name = kwargs.pop("challenge_short_name")
         domain = f"{scheme}://{challenge_short_name}.{host}"
-        urlconf = urlconf or settings.SUBDOMAIN_URL_CONF
+        urlconf = urlconf or settings.CHALLENGE_SUBDOMAIN_URL_CONF
     else:
         urlconf = urlconf or settings.ROOT_URLCONF
 
