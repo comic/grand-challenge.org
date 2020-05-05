@@ -140,7 +140,7 @@ services:
       <<: *protected_storage_connections
     command: >-
         bash -c "envsubst '$$SERVER_NAME $$SENDFILE_STATUS $$PROTECTED_S3_STORAGE_BUCKET_NAME $$PROTECTED_S3_STORAGE_ENDPOINT_URL $$WORKSTATION_PROXY_HOSTNAME $$WORKSTATION_PROXY_HTTP_PORT $$WORKSTATION_PROXY_WEBSOCKET_PORT' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
-        && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/$$SERVER_NAME.key -out /etc/ssl/certs/$$SERVER_NAME.crt -days 365 -nodes -subj '/CN=$$SERVER_NAME'
+        && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/privkey.pem -out /etc/ssl/certs/fullchain.pem -days 365 -nodes -subj '/CN=$$SERVER_NAME'
         && nginx -g 'daemon off;'"
     restart: always
     ports:
