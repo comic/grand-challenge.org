@@ -638,69 +638,6 @@ CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES", "void"
 )
 
-CELERY_BEAT_SCHEDULE = {
-    "cleanup_stale_uploads": {
-        "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
-        "schedule": timedelta(hours=1),
-    },
-    "clear_sessions": {
-        "task": "grandchallenge.core.tasks.clear_sessions",
-        "schedule": timedelta(days=1),
-    },
-    "update_filter_classes": {
-        "task": "grandchallenge.challenges.tasks.update_filter_classes",
-        "schedule": timedelta(minutes=5),
-    },
-    "validate_external_challenges": {
-        "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
-        "schedule": timedelta(days=1),
-    },
-    "stop_expired_services": {
-        "task": "grandchallenge.container_exec.tasks.stop_expired_services",
-        "kwargs": {"app_label": "workstations", "model_name": "session"},
-        "schedule": timedelta(minutes=5),
-    },
-    # Cleanup evaluation jobs on the evaluation queue
-    "mark_long_running_evaluation_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
-        "kwargs": {"app_label": "evaluation", "model_name": "job"},
-        "options": {"queue": "evaluation"},
-        "schedule": timedelta(hours=1),
-    },
-    "mark_long_running_algorithm_gpu_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
-        "kwargs": {
-            "app_label": "algorithms",
-            "model_name": "job",
-            "extra_filters": {"algorithm_image__requires_gpu": True},
-        },
-        "options": {"queue": "gpu"},
-        "schedule": timedelta(hours=1),
-    },
-    "mark_long_running_algorithm_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
-        "kwargs": {
-            "app_label": "algorithms",
-            "model_name": "job",
-            "extra_filters": {"algorithm_image__requires_gpu": False},
-        },
-        "options": {"queue": "evaluation"},
-        "schedule": timedelta(hours=1),
-    },
-    "cache_retina_archive_data": {
-        "task": "grandchallenge.retina_api.tasks.cache_archive_data",
-        "schedule": timedelta(hours=1),
-    },
-}
-
-CELERY_TASK_ROUTES = {
-    "grandchallenge.container_exec.tasks.execute_job": "evaluation",
-    "grandchallenge.container_exec.tasks.start_service": "workstations",
-    "grandchallenge.container_exec.tasks.stop_service": "workstations",
-    "grandchallenge.container_exec.tasks.stop_expired_services": "workstations",
-    "grandchallenge.cases.tasks.build_images": "images",
-}
-
 # Set which template pack to use for forms
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
@@ -760,6 +697,74 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
     # User defined regions
     "eu-nl-1",
     "eu-nl-2",
+}
+
+CELERY_BEAT_SCHEDULE = {
+    "cleanup_stale_uploads": {
+        "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
+        "schedule": timedelta(hours=1),
+    },
+    "clear_sessions": {
+        "task": "grandchallenge.core.tasks.clear_sessions",
+        "schedule": timedelta(days=1),
+    },
+    "update_filter_classes": {
+        "task": "grandchallenge.challenges.tasks.update_filter_classes",
+        "schedule": timedelta(minutes=5),
+    },
+    "validate_external_challenges": {
+        "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
+        "schedule": timedelta(days=1),
+    },
+    **{
+        f"stop_expired_services_{region}": {
+            "task": "grandchallenge.container_exec.tasks.stop_expired_services",
+            "kwargs": {
+                "app_label": "workstations",
+                "model_name": "session",
+                "region": region,
+            },
+            "options": {"queue": f"workstations-{region}"},
+            "schedule": timedelta(minutes=5),
+        }
+        for region in WORKSTATIONS_ACTIVE_REGIONS
+    },
+    # Cleanup evaluation jobs on the evaluation queue
+    "mark_long_running_evaluation_jobs_failed": {
+        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "kwargs": {"app_label": "evaluation", "model_name": "job"},
+        "options": {"queue": "evaluation"},
+        "schedule": timedelta(hours=1),
+    },
+    "mark_long_running_algorithm_gpu_jobs_failed": {
+        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "kwargs": {
+            "app_label": "algorithms",
+            "model_name": "job",
+            "extra_filters": {"algorithm_image__requires_gpu": True},
+        },
+        "options": {"queue": "gpu"},
+        "schedule": timedelta(hours=1),
+    },
+    "mark_long_running_algorithm_jobs_failed": {
+        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "kwargs": {
+            "app_label": "algorithms",
+            "model_name": "job",
+            "extra_filters": {"algorithm_image__requires_gpu": False},
+        },
+        "options": {"queue": "evaluation"},
+        "schedule": timedelta(hours=1),
+    },
+    "cache_retina_archive_data": {
+        "task": "grandchallenge.retina_api.tasks.cache_archive_data",
+        "schedule": timedelta(hours=1),
+    },
+}
+
+CELERY_TASK_ROUTES = {
+    "grandchallenge.container_exec.tasks.execute_job": "evaluation",
+    "grandchallenge.cases.tasks.build_images": "images",
 }
 
 # The name of the group whose members will be able to create algorithms

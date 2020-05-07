@@ -130,23 +130,41 @@ def test_session_cleanup(http_image, docker_client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
+    default_region = "eu-nl-1"
+
     try:
-        s1, s2 = (
-            SessionFactory(workstation_image=wsi),
+        s1, s2, s3 = (
+            SessionFactory(workstation_image=wsi, region=default_region),
             SessionFactory(
-                workstation_image=wsi, maximum_duration=timedelta(seconds=0)
+                workstation_image=wsi,
+                maximum_duration=timedelta(seconds=0),
+                region=default_region,
+            ),
+            # An expired service in a different region
+            SessionFactory(
+                workstation_image=wsi,
+                maximum_duration=timedelta(seconds=0),
+                region="us-east-1",
             ),
         )
 
         assert s1.service.container
         assert s2.service.container
+        assert s3.service.container
 
-        stop_expired_services(app_label="workstations", model_name="session")
+        # Stop expired services in the default region
+        stop_expired_services(
+            app_label="workstations",
+            model_name="session",
+            region=default_region,
+        )
 
         assert s1.service.container
         with pytest.raises(NotFound):
             # noinspection PyStatementEffect
             s2.service.container
+        assert s3.service.container
+
     finally:
         stop_all_sessions()
 
