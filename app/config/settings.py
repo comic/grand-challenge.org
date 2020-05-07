@@ -588,6 +588,9 @@ CORS_ALLOW_HEADERS = [
     "content-disposition",
     "content-description",
 ]
+# SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
+# across domains, but this will allow workstations to access the api
+CORS_ALLOW_CREDENTIALS = True
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
@@ -638,6 +641,68 @@ CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES", "void"
 )
 
+# Set which template pack to use for forms
+CRISPY_TEMPLATE_PACK = "bootstrap4"
+
+# When using bootstrap error messages need to be renamed to danger
+MESSAGE_TAGS = {messages.ERROR: "danger"}
+
+# The name of the group whose members will be able to create reader studies
+READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
+
+# The workstation that is accessible by all authorised users
+DEFAULT_WORKSTATION_SLUG = os.environ.get(
+    "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
+)
+WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
+WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
+WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
+WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
+# The name of the network that the workstations will be attached to
+WORKSTATIONS_NETWORK_NAME = os.environ.get(
+    "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
+)
+# The total limit on the number of sessions
+WORKSTATIONS_MAXIMUM_SESSIONS = int(
+    os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
+)
+# The name of the group whose members will be able to create workstations
+WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
+WORKSTATIONS_SESSION_DURATION_LIMIT = int(
+    os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
+)
+WORKSTATION_INTERNAL_NETWORK = strtobool(
+    os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
+)
+# Which regions are available for workstations to run in
+WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
+    "WORKSTATIONS_ACTIVE_REGIONS", "eu-nl-1"
+).split(",")
+WORKSTATIONS_RENDERING_SUBDOMAINS = {
+    # Possible AWS regions
+    *[
+        "-".join(z)
+        for z in product(
+            ["us", "af", "ap", "ca", "cn", "eu", "me", "sa"],
+            [
+                "east",
+                "west",
+                "south",
+                "north",
+                "central",
+                "northeast",
+                "southeast",
+                "northwest",
+                "southwest",
+            ],
+            ["1", "2", "3"],
+        )
+    ],
+    # User defined regions
+    "eu-nl-1",
+    "eu-nl-2",
+}
+
 CELERY_BEAT_SCHEDULE = {
     "cleanup_stale_uploads": {
         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
@@ -655,10 +720,18 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
         "schedule": timedelta(days=1),
     },
-    "stop_expired_services": {
-        "task": "grandchallenge.container_exec.tasks.stop_expired_services",
-        "kwargs": {"app_label": "workstations", "model_name": "session"},
-        "schedule": timedelta(minutes=5),
+    **{
+        f"stop_expired_services_{region}": {
+            "task": "grandchallenge.container_exec.tasks.stop_expired_services",
+            "kwargs": {
+                "app_label": "workstations",
+                "model_name": "session",
+                "region": region,
+            },
+            "options": {"queue": f"workstations-{region}"},
+            "schedule": timedelta(minutes=5),
+        }
+        for region in WORKSTATIONS_ACTIVE_REGIONS
     },
     # Cleanup evaluation jobs on the evaluation queue
     "mark_long_running_evaluation_jobs_failed": {
@@ -695,63 +768,8 @@ CELERY_BEAT_SCHEDULE = {
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.container_exec.tasks.execute_job": "evaluation",
-    "grandchallenge.container_exec.tasks.start_service": "workstations",
-    "grandchallenge.container_exec.tasks.stop_service": "workstations",
-    "grandchallenge.container_exec.tasks.stop_expired_services": "workstations",
     "grandchallenge.cases.tasks.build_images": "images",
 }
-
-# Set which template pack to use for forms
-CRISPY_TEMPLATE_PACK = "bootstrap4"
-
-# When using bootstrap error messages need to be renamed to danger
-MESSAGE_TAGS = {messages.ERROR: "danger"}
-
-# The name of the group whose members will be able to create reader studies
-READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
-
-# The workstation that is accessible by all authorised users
-DEFAULT_WORKSTATION_SLUG = os.environ.get(
-    "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
-)
-WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
-WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
-WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
-WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
-# The name of the network that the workstations will be attached to
-WORKSTATIONS_NETWORK_NAME = os.environ.get(
-    "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
-)
-# The total limit on the number of sessions
-WORKSTATIONS_MAXIMUM_SESSIONS = int(
-    os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
-)
-# The name of the group whose members will be able to create workstations
-WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
-WORKSTATIONS_SESSION_DURATION_LIMIT = int(
-    os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
-)
-WORKSTATION_INTERNAL_NETWORK = strtobool(
-    os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
-)
-WORKSTATIONS_RENDERING_SUBDOMAINS = [
-    "-".join(z)
-    for z in product(
-        ["us", "af", "ap", "ca", "cn", "eu", "me", "sa"],
-        [
-            "east",
-            "west",
-            "south",
-            "north",
-            "central",
-            "northeast",
-            "southeast",
-            "northwest",
-            "southwest",
-        ],
-        ["1", "2", "3"],
-    )
-]
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
@@ -760,7 +778,7 @@ ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 DICOM_DATA_CREATORS_GROUP_NAME = "dicom_creators"
 
 # Disallow some challenge names due to subdomain or media folder clashes
-DISALLOWED_CHALLENGE_NAMES = [
+DISALLOWED_CHALLENGE_NAMES = {
     "m",
     IMAGE_FILES_SUBDIRECTORY,
     "logos",
@@ -775,7 +793,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
     *WORKSTATIONS_RENDERING_SUBDOMAINS,
-]
+}
 
 # Modality name constants
 MODALITY_OCT = "OCT"  # Optical coherence tomography

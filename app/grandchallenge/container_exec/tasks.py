@@ -238,7 +238,7 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
 
 @shared_task
-def stop_expired_services(*, app_label: str, model_name: str):
+def stop_expired_services(*, app_label: str, model_name: str, region: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     services_to_stop = (
@@ -248,7 +248,7 @@ def stop_expired_services(*, app_label: str, model_name: str):
                 output_field=DateTimeField(),
             )
         )
-        .filter(expires__lt=now())
+        .filter(expires__lt=now(), region=region)
         .exclude(status=model.STOPPED)
     )
 
