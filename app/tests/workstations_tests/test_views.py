@@ -256,32 +256,6 @@ def test_session_create(client):
 
 
 @pytest.mark.django_db
-def test_session_update(client):
-    session = SessionFactory()
-
-    assert not session.user_finished
-
-    response = get_view_for_user(
-        client=client,
-        method=client.post,
-        viewname="workstations:session-update",
-        reverse_kwargs={
-            "slug": session.workstation_image.workstation.slug,
-            "pk": session.pk,
-        },
-        user=session.creator,
-        data={"user_finished": True},
-    )
-
-    assert response.status_code == 302
-    assert response.url == session.get_absolute_url()
-
-    session.refresh_from_db()
-
-    assert session.user_finished
-
-
-@pytest.mark.django_db
 def test_session_redirect(client):
     user = UserFactory()
     wsi = WorkstationImageFactory(

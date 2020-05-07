@@ -3,7 +3,6 @@ from django.urls import path
 from grandchallenge.workstations.views import (
     SessionCreate,
     SessionRedirectView,
-    SessionUpdate,
     WorkstationCreate,
     WorkstationDetail,
     WorkstationEditorsUpdate,
@@ -70,10 +69,5 @@ urlpatterns = [
         "<slug>/sessions/create/",
         SessionCreate.as_view(),
         name="session-create",
-    ),
-    path(
-        "<slug>/sessions/<uuid:pk>/update/",
-        SessionUpdate.as_view(),
-        name="session-update",
     ),
 ]

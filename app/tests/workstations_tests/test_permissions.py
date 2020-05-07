@@ -97,12 +97,7 @@ def test_workstation_editor_permissions(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "viewname",
-    [
-        "workstations:detail",
-        "workstations:session-create",
-        "session-detail",
-        "workstations:session-update",
-    ],
+    ["workstations:detail", "workstations:session-create", "session-detail"],
 )
 def test_workstation_user_permissions(client, two_workstation_sets, viewname):
     tests = (
@@ -117,19 +112,12 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
-    if viewname in [
-        "session-detail",
-        "workstations:session-update",
-    ]:
+    if viewname in "session-detail":
         s = SessionFactory(
             workstation_image=two_workstation_sets.ws1.image,
             creator=two_workstation_sets.ws1.user,
         )
-        kwargs.update({"pk": s.pk})
-
-        if viewname == "session-detail":
-            kwargs.update({"rendering_subdomain": s.region})
-
+        kwargs.update({"pk": s.pk, "rendering_subdomain": s.region})
         tests += ((two_workstation_sets.ws1.user1, 403),)
 
     for test in tests:
