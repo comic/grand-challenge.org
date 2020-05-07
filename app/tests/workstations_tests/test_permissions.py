@@ -112,7 +112,7 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
-    if viewname in "session-detail":
+    if viewname == "session-detail":
         s = SessionFactory(
             workstation_image=two_workstation_sets.ws1.image,
             creator=two_workstation_sets.ws1.user,
