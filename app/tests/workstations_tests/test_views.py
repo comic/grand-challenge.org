@@ -309,10 +309,11 @@ def test_session_detail(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="workstations:session-detail",
+        viewname="session-detail",
         reverse_kwargs={
             "slug": s1.workstation_image.workstation.slug,
             "pk": s1.pk,
+            "rendering_subdomain": s1.region,
         },
         user=s1.creator,
     )
@@ -328,11 +329,12 @@ def test_workstation_proxy(client):
     session = SessionFactory(creator=u1)
 
     url = reverse(
-        "workstations:session-proxy",
+        "session-proxy",
         kwargs={
             "slug": session.workstation_image.workstation.slug,
             "pk": session.pk,
             "path": "foo/bar/../baz/test",
+            "rendering_subdomain": session.region,
         },
     )
 

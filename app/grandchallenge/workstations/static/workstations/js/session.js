@@ -6,7 +6,7 @@ const max_attempts = 60;
 function getSessionStatus(statusUrl, statusButton, workstationUrl) {
     // Checks on the status of the Session (queued, running, started, etc)
 
-    fetch(statusUrl)
+    fetch(statusUrl, {credentials: 'include'})
         .then(response => response.json())
         .then(session => handleSessionStatus(statusUrl, statusButton, session.status, workstationUrl));
 }

@@ -256,3 +256,10 @@ def test_group_deletion_reverse(group):
 
     with pytest.raises(ObjectDoesNotExist):
         ws.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_all_regions_are_in_settings(settings):
+    for region in Session.Region.values:
+        assert region in settings.WORKSTATIONS_RENDERING_SUBDOMAINS
+        assert region in settings.DISALLOWED_CHALLENGE_NAMES

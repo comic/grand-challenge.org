@@ -100,7 +100,7 @@ def test_workstation_editor_permissions(
     [
         "workstations:detail",
         "workstations:session-create",
-        "workstations:session-detail",
+        "session-detail",
         "workstations:session-update",
     ],
 )
@@ -118,7 +118,7 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
     if viewname in [
-        "workstations:session-detail",
+        "session-detail",
         "workstations:session-update",
     ]:
         s = SessionFactory(
@@ -126,6 +126,10 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
             creator=two_workstation_sets.ws1.user,
         )
         kwargs.update({"pk": s.pk})
+
+        if viewname == "session-detail":
+            kwargs.update({"rendering_subdomain": s.region})
+
         tests += ((two_workstation_sets.ws1.user1, 403),)
 
     for test in tests:
@@ -213,13 +217,14 @@ def test_session_proxy_permissions(client, two_workstation_sets):
 
     for test in tests:
         response = get_view_for_user(
-            viewname="workstations:session-proxy",
+            viewname="session-proxy",
             client=client,
             user=test[0],
             reverse_kwargs={
                 "slug": s.workstation_image.workstation.slug,
                 "pk": s.pk,
                 "path": "foo/bar/../../baz",
+                "rendering_subdomain": s.region,
             },
         )
         assert response.status_code == test[1]

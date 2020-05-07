@@ -588,6 +588,9 @@ CORS_ALLOW_HEADERS = [
     "content-disposition",
     "content-description",
 ]
+# SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
+# across domains, but this will allow workstations to access the api
+CORS_ALLOW_CREDENTIALS = True
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
@@ -671,12 +674,10 @@ WORKSTATIONS_SESSION_DURATION_LIMIT = int(
 WORKSTATION_INTERNAL_NETWORK = strtobool(
     os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
 )
+# Which regions are available for workstations to run in
 WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
     "WORKSTATIONS_ACTIVE_REGIONS", "eu-nl-1"
 ).split(",")
-WORKSTATIONS_CURRENT_REGION = os.environ.get(
-    "WORKSTATIONS_CURRENT_REGION", "eu-nl-1"
-)
 WORKSTATIONS_RENDERING_SUBDOMAINS = {
     # Possible AWS regions
     *[

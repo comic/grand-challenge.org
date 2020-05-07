@@ -2,7 +2,6 @@ from django.urls import path
 
 from grandchallenge.workstations.views import (
     SessionCreate,
-    SessionDetail,
     SessionRedirectView,
     SessionUpdate,
     WorkstationCreate,
@@ -15,7 +14,6 @@ from grandchallenge.workstations.views import (
     WorkstationUpdate,
     WorkstationUsersAutocomplete,
     WorkstationUsersUpdate,
-    session_proxy,
 )
 
 app_name = "workstations"
@@ -74,18 +72,8 @@ urlpatterns = [
         name="session-create",
     ),
     path(
-        "<slug>/sessions/<uuid:pk>/",
-        SessionDetail.as_view(),
-        name="session-detail",
-    ),
-    path(
         "<slug>/sessions/<uuid:pk>/update/",
         SessionUpdate.as_view(),
         name="session-update",
-    ),
-    path(
-        "<slug>/sessions/<uuid:pk>/<path:path>",
-        session_proxy,
-        name="session-proxy",
     ),
 ]

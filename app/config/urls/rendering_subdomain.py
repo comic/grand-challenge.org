@@ -4,7 +4,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
-from grandchallenge.workstations.views import session_proxy
+from grandchallenge.workstations.views import SessionDetail, session_proxy
 
 
 def handler404(request, exception):
@@ -29,8 +29,13 @@ urlpatterns = [
     ),
     path("", include("grandchallenge.favicons.urls", namespace="favicons")),
     path(
+        "workstations/<slug>/sessions/<uuid:pk>/",
+        SessionDetail.as_view(),
+        name="session-detail",
+    ),
+    path(
         "workstations/<slug>/sessions/<uuid:pk>/<path:path>",
         session_proxy,
-        name="workstations:session-proxy",
+        name="session-proxy",
     ),
 ]

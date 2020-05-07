@@ -15,6 +15,10 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, current_app=None):
     host = Site.objects.get_current().domain.lower()
     domain = f"{scheme}://{host}"
 
+    if "rendering_subdomain" in kwargs:
+        region = kwargs.pop("rendering_subdomain")
+        domain = f"{scheme}://{region}.{host}"
+        urlconf = urlconf or settings.RENDERING_SUBDOMAIN_URL_CONF
     if "challenge_short_name" in kwargs:
         challenge_short_name = kwargs.pop("challenge_short_name")
         domain = f"{scheme}://{challenge_short_name}.{host}"

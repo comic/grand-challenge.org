@@ -424,7 +424,7 @@ class Session(UUIDModel):
         """
         Starts the service for this session, ensuring that the
         ``workstation_image`` is ready to be used and that
-        ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached.
+        ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached in this region.
 
         Raises
         ------
@@ -437,7 +437,10 @@ class Session(UUIDModel):
 
             if (
                 Session.objects.all()
-                .filter(status__in=[Session.RUNNING, Session.STARTED])
+                .filter(
+                    status__in=[Session.RUNNING, Session.STARTED],
+                    region=self.region,
+                )
                 .count()
                 >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
             ):
@@ -474,10 +477,11 @@ class Session(UUIDModel):
 
     def get_absolute_url(self):
         return reverse(
-            "workstations:session-detail",
+            "session-detail",
             kwargs={
                 "slug": self.workstation_image.workstation.slug,
                 "pk": self.pk,
+                "rendering_subdomain": self.region,
             },
         )
 
