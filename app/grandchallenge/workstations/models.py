@@ -505,6 +505,10 @@ class Session(UUIDModel):
 
         if created:
             self.assign_permissions()
-            start_service.apply_async(kwargs=self.task_kwargs)
+            start_service.apply_async(
+                kwargs=self.task_kwargs, queue=f"workstations-{self.region}"
+            )
         elif self.user_finished and self.status != self.STOPPED:
-            stop_service.apply_async(kwargs=self.task_kwargs)
+            stop_service.apply_async(
+                kwargs=self.task_kwargs, queue=f"workstations-{self.region}"
+            )
