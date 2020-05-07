@@ -734,24 +734,33 @@ WORKSTATIONS_SESSION_DURATION_LIMIT = int(
 WORKSTATION_INTERNAL_NETWORK = strtobool(
     os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
 )
-WORKSTATIONS_RENDERING_SUBDOMAINS = [
-    "-".join(z)
-    for z in product(
-        ["us", "af", "ap", "ca", "cn", "eu", "me", "sa"],
-        [
-            "east",
-            "west",
-            "south",
-            "north",
-            "central",
-            "northeast",
-            "southeast",
-            "northwest",
-            "southwest",
-        ],
-        ["1", "2", "3"],
-    )
-]
+WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
+    "WORKSTATIONS_ACTIVE_REGIONS", "eu-nl-1"
+).split(",")
+WORKSTATIONS_RENDERING_SUBDOMAINS = {
+    # Possible AWS regions
+    *[
+        "-".join(z)
+        for z in product(
+            ["us", "af", "ap", "ca", "cn", "eu", "me", "sa"],
+            [
+                "east",
+                "west",
+                "south",
+                "north",
+                "central",
+                "northeast",
+                "southeast",
+                "northwest",
+                "southwest",
+            ],
+            ["1", "2", "3"],
+        )
+    ],
+    # User defined regions
+    "eu-nl-1",
+    "eu-nl-2",
+}
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
@@ -760,7 +769,7 @@ ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 DICOM_DATA_CREATORS_GROUP_NAME = "dicom_creators"
 
 # Disallow some challenge names due to subdomain or media folder clashes
-DISALLOWED_CHALLENGE_NAMES = [
+DISALLOWED_CHALLENGE_NAMES = {
     "m",
     IMAGE_FILES_SUBDIRECTORY,
     "logos",
@@ -775,7 +784,7 @@ DISALLOWED_CHALLENGE_NAMES = [
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
     *WORKSTATIONS_RENDERING_SUBDOMAINS,
-]
+}
 
 # Modality name constants
 MODALITY_OCT = "OCT"  # Optical coherence tomography
