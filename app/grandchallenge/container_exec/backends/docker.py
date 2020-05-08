@@ -243,7 +243,6 @@ class Executor(DockerConnection):
                 labels=self._labels,
                 environment={
                     "NVIDIA_VISIBLE_DEVICES": settings.CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES,
-                    "OPENBLAS_NUM_THREADS": 1,
                 },
                 stdout=True,
                 stderr=True,
