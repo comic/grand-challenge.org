@@ -71,6 +71,7 @@ class DockerConnection:
             "cpu_period": settings.CONTAINER_EXEC_CPU_PERIOD,
             "cpu_quota": settings.CONTAINER_EXEC_CPU_QUOTA,
             "cpu_shares": settings.CONTAINER_EXEC_CPU_SHARES,
+            "cpuset_cpus": self.cpuset_cpus,
             "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
             "cap_drop": ["all"],
             "security_opt": ["no-new-privileges"],
@@ -79,6 +80,30 @@ class DockerConnection:
                 type=LogConfig.types.JSON, config={"max-size": "1g"}
             ),
         }
+
+    @property
+    def cpuset_cpus(self):
+        """
+        The cpuset_cpus as a string.
+
+        Returns
+        -------
+            The setting CONTAINER_EXEC_CPUSET_CPUS if this is set to a
+            none-empty string. Otherwise, works out the available cpu
+            from the os.
+        """
+        if settings.CONTAINER_EXEC_CPUSET_CPUS:
+            return settings.CONTAINER_EXEC_CPUSET_CPUS
+        else:
+            # Get the cpu count, note that this is setting up the container
+            # so that it can use all of the CPUs on the system. To limit
+            # the containers execution set CONTAINER_EXEC_CPUSET_CPUS
+            # externally.
+            cpus = os.cpu_count()
+            if cpus in [None, 1]:
+                return "0"
+            else:
+                return f"0-{cpus-1}"
 
     @staticmethod
     def __retry_docker_obj_prune(*, obj, filters: dict):
