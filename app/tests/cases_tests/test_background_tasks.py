@@ -357,16 +357,16 @@ def test_extract_and_flatten(tmpdir, file_name, func, is_tar):
             "path": tmpdir_path / "1-folder-0-file-0.txt",
         },
         {
-            "prefix": "2-folder-1-",
-            "path": tmpdir_path / "2-folder-1-file-1.txt",
+            "prefix": "2-folder-0-folder-1-",
+            "path": tmpdir_path / "2-folder-0-folder-1-file-1.txt",
         },
         {
-            "prefix": "3-folder-2-",
-            "path": tmpdir_path / "3-folder-2-file-2.txt",
+            "prefix": "3-folder-0-folder-1-folder-2-",
+            "path": tmpdir_path / "3-folder-0-folder-1-folder-2-file-2.txt",
         },
         {
-            "prefix": "3-folder-2-",
-            "path": tmpdir_path / "3-folder-2-folder-3.zip",
+            "prefix": "3-folder-0-folder-1-folder-2-",
+            "path": tmpdir_path / "3-folder-0-folder-1-folder-2-folder-3.zip",
         },
     ]
     assert sorted(new_files, key=lambda k: k["path"]) == expected
@@ -376,7 +376,7 @@ def test_extract_and_flatten(tmpdir, file_name, func, is_tar):
 
 
 def test_extract_and_flatten_prefixes(tmpdir):
-    # This zip file containes only files, no folders.
+    # This zip file contains only files, no folders.
     file = RESOURCE_PATH / "zip_flat.zip"
     tmp_file = shutil.copy(str(file), str(tmpdir))
     tmp_file = Path(tmp_file)
@@ -412,18 +412,49 @@ def test_check_compressed_and_extract(tmpdir, file_name):
 
     expected = [
         "1-folder-0-file-0.txt",
-        "2-folder-1-file-1.txt",
-        "3-folder-2-file-2.txt",
+        "2-folder-0-folder-1-file-1.txt",
+        "3-folder-0-folder-1-folder-2-file-2.txt",
         "4-folder-3-file-3.txt",
     ]
     assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
 
 
 @pytest.mark.parametrize(
-    "file_name,add_one",
-    (("same_name.zip", False), ("same_name_zipped.zip", True)),
+    "file_name,expected",
+    (
+        (
+            "same_name.zip",
+            [
+                "1-same_name-1-1-test_grayscale.png",
+                "10-same_name-9-1-test_grayscale.png",
+                "2-same_name-10-1-test_grayscale.png",
+                "3-same_name-2-1-test_grayscale.png",
+                "4-same_name-3-1-test_grayscale.png",
+                "5-same_name-4-1-test_grayscale.png",
+                "6-same_name-5-1-test_grayscale.png",
+                "7-same_name-6-1-test_grayscale.png",
+                "8-same_name-7-1-test_grayscale.png",
+                "9-same_name-8-1-test_grayscale.png",
+            ],
+        ),
+        (
+            "same_name_zipped.zip",
+            [
+                "10-8-1-test_grayscale.png",
+                "11-9-1-test_grayscale.png",
+                "2-1-1-test_grayscale.png",
+                "3-10-1-test_grayscale.png",
+                "4-2-1-test_grayscale.png",
+                "5-3-1-test_grayscale.png",
+                "6-4-1-test_grayscale.png",
+                "7-5-1-test_grayscale.png",
+                "8-6-1-test_grayscale.png",
+                "9-7-1-test_grayscale.png",
+            ],
+        ),
+    ),
 )
-def test_check_compressed_and_extract_same_name(tmpdir, file_name, add_one):
+def test_check_compressed_and_extract_same_name(tmpdir, file_name, expected):
     file = RESOURCE_PATH / file_name
     tmp_file = shutil.copy(str(file), str(tmpdir))
     tmp_file = Path(tmp_file)
@@ -431,13 +462,6 @@ def test_check_compressed_and_extract_same_name(tmpdir, file_name, add_one):
 
     tmpdir_path = Path(tmpdir)
     check_compressed_and_extract(tmp_file, tmpdir_path, 0)
-
-    expected = sorted(
-        [
-            f"{x + 1 if add_one else x}-1-test_grayscale.png"
-            for x in range(1, 11)
-        ]
-    )
     assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
 
 

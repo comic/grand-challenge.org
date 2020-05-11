@@ -11,11 +11,13 @@ from tifffile import tifffile
 
 from grandchallenge.cases.image_builders.tiff import (
     GrandChallengeTiffFile,
+    _convert_to_tiff,
     _create_dzi_images,
     _create_tiff_image_entry,
     _extract_tags,
     _get_color_space,
-    _load_with_open_slide,
+    _load_and_create_dzi,
+    _load_gc_files,
     _load_with_tiff,
     image_builder_tiff,
 )
@@ -50,7 +52,6 @@ def test_get_color_space(color_space_string, expected):
     "path, color_space, resolution_levels, image_height, image_width, voxel_height_mm, voxel_width_mm, expected_error_message",
     [
         ("dummy.tiff", 1, 1, 10, 10, 0.1, 0.1, ""),
-        ("dummy.tiff", None, 1, 10, 10, 0.1, 0.1, "ColorSpace not valid"),
         (
             "dummy.tiff",
             1,
@@ -59,7 +60,7 @@ def test_get_color_space(color_space_string, expected):
             10,
             0.1,
             0.1,
-            "Resolution levels not valid",
+            "Not a valid tif: Resolution levels not valid",
         ),
         (
             "dummy.tiff",
@@ -69,7 +70,7 @@ def test_get_color_space(color_space_string, expected):
             10,
             0.1,
             0.1,
-            "ImageHeigth could not be determined",
+            "Not a valid tif: ImageHeigth could not be determined",
         ),
         (
             "dummy.tiff",
@@ -79,7 +80,7 @@ def test_get_color_space(color_space_string, expected):
             None,
             0.1,
             0.1,
-            "ImageWidth could not be determined",
+            "Not a valid tif: ImageWidth could not be determined",
         ),
         (
             "dummy.tiff",
@@ -89,7 +90,7 @@ def test_get_color_space(color_space_string, expected):
             10,
             None,
             0.1,
-            "Voxel height could not be determined",
+            "Not a valid tif: Voxel height could not be determined",
         ),
         (
             "dummy.tiff",
@@ -99,7 +100,7 @@ def test_get_color_space(color_space_string, expected):
             10,
             0.1,
             None,
-            "Voxel width could not be determined",
+            "Not a valid tif: Voxel width could not be determined",
         ),
     ],
 )
@@ -116,7 +117,7 @@ def test_grandchallengetifffile_validation(
     error_message = ""
 
     try:
-        gc_file = GrandChallengeTiffFile(path)
+        gc_file = GrandChallengeTiffFile(Path(path))
         gc_file.color_space = color_space
         gc_file.resolution_levels = resolution_levels
         gc_file.image_height = image_height
@@ -151,6 +152,7 @@ def test_load_with_tiff(
     temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
     shutil.copy(source_dir / filename, temp_file)
     gc_file = GrandChallengeTiffFile(temp_file)
+    gc_file.pk = uuid4()
     try:
         _load_with_tiff(gc_file=gc_file)
     except ValidationError as e:
@@ -180,10 +182,9 @@ def test_load_with_open_slide(
     temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
     shutil.copy(source_dir / filename, temp_file)
     gc_file = GrandChallengeTiffFile(temp_file)
-    pk = uuid4()
     try:
-        _, gc_file = _load_with_tiff(gc_file=gc_file)
-        _load_with_open_slide(gc_file=gc_file, pk=pk)
+        gc_file = _load_with_tiff(gc_file=gc_file)
+        _load_and_create_dzi(gc_file=gc_file)
     except Exception as e:
         error_message = str(e)
 
@@ -211,9 +212,8 @@ def test_dzi_creation(
     temp_file = Path(tmpdir_factory.mktemp("temp") / filename)
     shutil.copy(source_dir / filename, temp_file)
     gc_file = GrandChallengeTiffFile(temp_file)
-    pk = uuid4()
     try:
-        _create_dzi_images(gc_file=gc_file, pk=pk)
+        _create_dzi_images(gc_file=gc_file)
     except ValidationError as e:
         error_message = str(e)
 
@@ -232,12 +232,11 @@ def test_tiff_image_entry_creation(
 ):
     error_message = ""
     image_entry = None
-    pk = uuid4()
     gc_file = GrandChallengeTiffFile(resource)
     try:
         tiff_file = tifffile.TiffFile(str(gc_file.path.absolute()))
         gc_file = _extract_tags(gc_file=gc_file, pages=tiff_file.pages)
-        image_entry = _create_tiff_image_entry(tiff_file=gc_file, pk=pk)
+        image_entry = _create_tiff_image_entry(tiff_file=gc_file)
     except ValidationError as e:
         error_message = str(e)
 
@@ -264,7 +263,7 @@ def test_tiff_image_entry_creation(
         assert image_entry.voxel_width_mm == approx(voxel_size[0])
         assert image_entry.voxel_height_mm == approx(voxel_size[1])
         assert image_entry.voxel_depth_mm == voxel_size[2]
-        assert image_entry.pk == pk
+        assert image_entry.pk == gc_file.pk
 
 
 # Integration test of all features being accessed through the image builder
@@ -298,3 +297,79 @@ def test_image_builder_tiff(
     assert os.path.isdir(temp_dir / f"{new_image_pk}_files")
 
     assert len(list(temp_dir.glob("**/*.jpeg"))) == expected_dzi_files
+
+
+@pytest.mark.skip(
+    reason="skip for now as we don't want to upload a large testset"
+)
+@pytest.mark.parametrize(
+    "resource, filelist",
+    [
+        (
+            RESOURCE_PATH / "complex_tiff",
+            [
+                "0-CMU-1-Saved-1_16/Index.dat",
+                "0-CMU-1-Saved-1_16/Slidedat.ini",
+                "0-CMU-1-Saved-1_16/Data0000.dat",
+                "0-CMU-1-Saved-1_16/Data0001.dat",
+                "0-CMU-1-Saved-1_16/Data0002.dat",
+                "0-CMU-1-Saved-1_16/Data0003.dat",
+                "0-CMU-1-Saved-1_16/Data0004.dat",
+                "0-CMU-1-Saved-1_16/Data0005.dat",
+                "0-CMU-1-Saved-1_16/Data0006.dat",
+                "0-CMU-1-Saved-1_16/Data0007.dat",
+                "0-CMU-1-Saved-1_16/Data0008.dat",
+                "0-CMU-1-Saved-1_16/Data0009.dat",
+                "0-CMU-1-Saved-1_16/Data0010.dat",
+                "0-CMU-1-Saved-1_16/Data0011.dat",
+                "0-CMU-1-Saved-1_16/Data0012.dat",
+                "0-CMU-1-Saved-1_16/Data0013.dat",
+                "0-CMU-1-Saved-1_16/Data0014.dat",
+                "0-CMU-1-Saved-1_16/Data0015.dat",
+                "0-CMU-1-Saved-1_16/Data0016.dat",
+                "0-CMU-1-Saved-1_16/Data0017.dat",
+                "0-CMU-1-Saved-1_16/Data0018.dat",
+                "CMU-1-40x - 2010-01-12 13.24.05.jpg",
+                "CMU-1-40x - 2010-01-12 13.24.05(1,0).jpg",
+                "CMU-1-40x - 2010-01-12 13.24.05(0,1).jpg",
+                "CMU-1-40x - 2010-01-12 13.24.05(1,1).jpg",
+                "CMU-1-40x - 2010-01-12 13.24.05_map2.jpg",
+                "CMU-1-40x - 2010-01-12 13.24.05.opt",
+                "CMU-1-40x - 2010-01-12 13.24.05_macro.jpg",
+            ],
+        ),
+    ],
+)
+def test_handle_complex_files(resource, filelist, tmpdir_factory):
+    # Copy resource files to writable temp folder
+    temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
+    shutil.copytree(resource, temp_dir)
+    gc_list = _load_gc_files(path=temp_dir)
+    assert len(gc_list) == 2
+    for file in filelist:
+        assert os.path.isfile(temp_dir / file)
+
+
+@pytest.mark.skip(
+    reason="skip for now as we don't want to upload a large testset"
+)
+@pytest.mark.parametrize(
+    "resource, filename",
+    [
+        (
+            RESOURCE_PATH / "convert_to_tiff" / "Hamamatsu-VMS",
+            "0-Test-CMU-1-40x - 2010-01-12 13.24.05.vms",
+        ),
+        (RESOURCE_PATH / "convert_to_tiff", "Aperio JP2K-33003-1.svs"),
+        (RESOURCE_PATH / "convert_to_tiff", "Hamamatsu CMU-1.ndpi"),
+        (RESOURCE_PATH / "convert_to_tiff", "Leica-1.scn"),
+        (RESOURCE_PATH / "convert_to_tiff", "Mirax2-Fluorescence-1.mrxs"),
+        (RESOURCE_PATH / "convert_to_tiff", "Ventana OS-1.bif",),
+    ],
+)
+def test_convert_to_tiff(resource, filename, tmpdir_factory):
+    pk = uuid4()
+    temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
+    shutil.copytree(resource, temp_dir)
+    tiff_file = _convert_to_tiff(path=resource / filename, pk=pk)
+    assert tiff_file is not None

@@ -257,7 +257,7 @@ def extract_and_flatten(file, path, index, prefix="", is_tar=False):
             continue
         # For any file that is inside a directory, prepend the directory
         # name(s) to the filename
-        _filename = "-".join(Path(filename).parts[-2:])
+        _filename = "-".join(Path(filename).parts)
         base_name = os.path.basename(filename)
         folder = filename.replace(base_name, "")
         if folder:
