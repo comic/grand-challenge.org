@@ -10,6 +10,10 @@ from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 
 
+def format_error(message):
+    return f"Fallback image builder: {message}"
+
+
 def image_builder_fallback(path: Path, session_id=None) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -51,7 +55,7 @@ def image_builder_fallback(path: Path, session_id=None) -> ImageBuilderResult:
             new_image_files += n_image_files
             consumed_files.append(file_path.name)
         except (IOError, ValidationError, DecompressionBombError):
-            errors[file_path.name] = "Not a valid image file"
+            errors[file_path.name] = format_error("Not a valid image file")
 
     return ImageBuilderResult(
         consumed_files=consumed_files,

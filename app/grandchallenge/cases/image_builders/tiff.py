@@ -439,6 +439,9 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
     invalid_file_errors = {}
     new_folder_upload = []
 
+    def format_error(message):
+        return f"Tiff image builder: {message}"
+
     loaded_files = _load_gc_files(path=path)
     for gc_file in loaded_files:
         dzi_output = None
@@ -447,19 +450,19 @@ def image_builder_tiff(path: Path, session_id=None) -> ImageBuilderResult:
         try:
             gc_file = _load_with_tiff(gc_file=gc_file)
         except Exception as e:
-            invalid_file_errors[gc_file.path.name] = e  # noqa: B306
+            invalid_file_errors[gc_file.path.name] = format_error(e)
 
         # try and load image with open_slide
         try:
             dzi_output, gc_file = _load_and_create_dzi(gc_file=gc_file)
         except Exception as e:
-            invalid_file_errors[gc_file.path.name] = e  # noqa: B306
+            invalid_file_errors[gc_file.path.name] = format_error(e)
 
         # validate
         try:
             gc_file.validate()
         except ValidationError as e:
-            invalid_file_errors[gc_file.path.name] = e.message  # noqa: B306
+            invalid_file_errors[gc_file.path.name] = format_error(e)
             continue
 
         image = _create_tiff_image_entry(tiff_file=gc_file)
