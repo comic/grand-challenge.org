@@ -371,5 +371,5 @@ def test_convert_to_tiff(resource, filename, tmpdir_factory):
     pk = uuid4()
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(resource, temp_dir)
-    tiff_file = _convert_to_tiff(path=resource / filename, pk=pk)
+    tiff_file = _convert_to_tiff(path=temp_dir / filename, pk=pk)
     assert tiff_file is not None
