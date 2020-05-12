@@ -91,7 +91,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
         if not user.has_perm("execute_algorithm", value.algorithm):
             raise ValidationError(
-                f"User does not have permission to execute this algorithm"
+                "User does not have permission to execute this algorithm"
             )
 
         return value
@@ -145,7 +145,7 @@ class RawImageFileSerializer(serializers.ModelSerializer):
 
         if not user.has_perm("change_rawimageuploadsession", value):
             raise ValidationError(
-                f"User does not have permission to change this raw image upload session"
+                "User does not have permission to change this raw image upload session"
             )
 
         return value

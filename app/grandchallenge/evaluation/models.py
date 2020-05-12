@@ -437,7 +437,7 @@ class SubmissionEvaluator(Executor):
 
                 # Remove a duplicated directory
                 input_files = (
-                    writer.exec_run(f"ls -1 /input/")
+                    writer.exec_run("ls -1 /input/")
                     .output.decode()
                     .splitlines()
                 )

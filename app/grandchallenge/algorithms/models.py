@@ -42,13 +42,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         Group,
         on_delete=models.CASCADE,
         editable=False,
-        related_name=f"editors_of_algorithm",
+        related_name="editors_of_algorithm",
     )
     users_group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
         editable=False,
-        related_name=f"users_of_algorithm",
+        related_name="users_of_algorithm",
     )
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
@@ -538,7 +538,7 @@ class AlgorithmPermissionRequest(RequestBase):
     @property
     def permission_list_url(self):
         return reverse(
-            f"algorithms:permission-request-list",
+            "algorithms:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
 
