@@ -105,12 +105,10 @@ class AnswerSerializer(HyperlinkedModelSerializer):
                 not self.instance.question.reader_study.allow_answer_modification
             ):
                 raise ValidationError(
-                    f"This reader study does not allow answer modification."
+                    "This reader study does not allow answer modification."
                 )
             if list(attrs.keys()) != ["answer"]:
-                raise ValidationError(
-                    f"Only the answer field can be modified."
-                )
+                raise ValidationError("Only the answer field can be modified.")
             question = self.instance.question
             images = self.instance.images.all()
             creator = self.instance.creator

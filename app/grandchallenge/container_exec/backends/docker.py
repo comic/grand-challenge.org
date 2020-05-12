@@ -224,7 +224,7 @@ class Executor(DockerConnection):
                 self._output_volume: {"bind": "/output/", "mode": "rw"},
             },
             name=f"{self._job_label}-chmod-volumes",
-            command=f"chmod -R 0777 /input/ /output/",
+            command="chmod -R 0777 /input/ /output/",
             remove=True,
             labels=self._labels,
             **self._run_kwargs,
@@ -362,13 +362,13 @@ class Service(DockerConnection):
             "traefik.enable": "true",
             f"traefik.http.routers.{hostname}-http.rule": f"Host(`{hostname}`)",
             f"traefik.http.routers.{hostname}-http.service": f"{hostname}-http",
-            f"traefik.http.routers.{hostname}-http.entrypoints": f"workstation-http",
+            f"traefik.http.routers.{hostname}-http.entrypoints": "workstation-http",
             f"traefik.http.services.{hostname}-http.loadbalancer.server.port": str(
                 http_port
             ),
             f"traefik.http.routers.{hostname}-websocket.rule": f"Host(`{hostname}`)",
             f"traefik.http.routers.{hostname}-websocket.service": f"{hostname}-websocket",
-            f"traefik.http.routers.{hostname}-websocket.entrypoints": f"workstation-websocket",
+            f"traefik.http.routers.{hostname}-websocket.entrypoints": "workstation-websocket",
             f"traefik.http.services.{hostname}-websocket.loadbalancer.server.port": str(
                 websocket_port
             ),

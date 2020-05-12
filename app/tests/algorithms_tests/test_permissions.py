@@ -180,7 +180,7 @@ def test_algorithm_results_list_view(client):
 
     for test in tests:
         response = get_view_for_user(
-            viewname=f"algorithms:results-list",
+            viewname="algorithms:results-list",
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],
@@ -245,7 +245,7 @@ def test_algorithm_execution_session_list_view(client):
 
     for test in tests:
         response = get_view_for_user(
-            viewname=f"algorithms:execution-session-list",
+            viewname="algorithms:execution-session-list",
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],

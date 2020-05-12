@@ -2171,7 +2171,7 @@ class TestLandmarkAnnotationSetViewSetForImage:
 
         user = get_user_from_user_type(user_type, **kwargs)
 
-        url = reverse(f"api:retina-landmark-annotation-list") + querystring
+        url = reverse("api:retina-landmark-annotation-list") + querystring
 
         request = rf.get(url)
 
@@ -2189,7 +2189,7 @@ class TestLandmarkAnnotationSetViewSetForImage:
 
     def test_invalid_image_uuid(self, rf, user_type):
         response = self.perform_request(
-            rf, user_type, f"?image_id=invalid_uuid"
+            rf, user_type, "?image_id=invalid_uuid"
         )
 
         if user_type in (None, "normal_user"):
