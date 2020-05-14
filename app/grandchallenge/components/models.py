@@ -14,7 +14,7 @@ from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import ExtensionValidator
 
 
-class ComponentQuerySet(models.QuerySet):
+class DurationQuerySet(models.QuerySet):
     def with_duration(self):
         """Annotate the queryset with the duration of completed jobs"""
         return self.annotate(duration=F("completed_at") - F("started_at"))
@@ -54,7 +54,7 @@ class ComponentJob(models.Model):
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
 
-    objects = ComponentQuerySet.as_manager()
+    objects = DurationQuerySet.as_manager()
 
     def update_status(self, *, status: STATUS_CHOICES, output: str = ""):
         self.status = status
