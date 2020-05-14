@@ -1,7 +1,7 @@
 import docker
 from django.conf import settings
 
-from grandchallenge.container_exec.backends.docker import Service
+from grandchallenge.components.backends.docker import Service
 
 
 def test_service_start_cleanup():

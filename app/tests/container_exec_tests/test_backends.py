@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from grandchallenge.container_exec.backends.docker import DockerConnection
+from grandchallenge.components.backends.docker import DockerConnection
 
 
 @pytest.mark.django_db

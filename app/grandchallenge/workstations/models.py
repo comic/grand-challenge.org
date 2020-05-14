@@ -15,12 +15,12 @@ from rest_framework.authtoken.models import Token
 from simple_history.models import HistoricalRecords
 
 from grandchallenge.challenges.models import get_logo_path
-from grandchallenge.container_exec.backends.docker import (
+from grandchallenge.components.backends.docker import (
     ContainerExecException,
     Service,
 )
-from grandchallenge.container_exec.models import ContainerImageModel
-from grandchallenge.container_exec.tasks import start_service, stop_service
+from grandchallenge.components.models import ContainerImageModel
+from grandchallenge.components.tasks import start_service, stop_service
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.subdomains.utils import reverse

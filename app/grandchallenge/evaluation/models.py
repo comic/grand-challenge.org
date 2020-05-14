@@ -9,8 +9,8 @@ from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.container_exec.backends.docker import Executor, put_file
-from grandchallenge.container_exec.models import (
+from grandchallenge.components.backends.docker import Executor, put_file
+from grandchallenge.components.models import (
     ContainerExecJobModel,
     ContainerImageModel,
 )

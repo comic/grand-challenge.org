@@ -352,7 +352,7 @@ LOCAL_APPS = [
     "grandchallenge.uploads",
     "grandchallenge.cases",
     "grandchallenge.algorithms",
-    "grandchallenge.container_exec",
+    "grandchallenge.components",
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
@@ -725,7 +725,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     **{
         f"stop_expired_services_{region}": {
-            "task": "grandchallenge.container_exec.tasks.stop_expired_services",
+            "task": "grandchallenge.components.tasks.stop_expired_services",
             "kwargs": {
                 "app_label": "workstations",
                 "model_name": "session",
@@ -738,13 +738,13 @@ CELERY_BEAT_SCHEDULE = {
     },
     # Cleanup evaluation jobs on the evaluation queue
     "mark_long_running_evaluation_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {"app_label": "evaluation", "model_name": "job"},
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
     },
     "mark_long_running_algorithm_gpu_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {
             "app_label": "algorithms",
             "model_name": "job",
@@ -754,7 +754,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(hours=1),
     },
     "mark_long_running_algorithm_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {
             "app_label": "algorithms",
             "model_name": "job",
@@ -770,7 +770,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_TASK_ROUTES = {
-    "grandchallenge.container_exec.tasks.execute_job": "evaluation",
+    "grandchallenge.components.tasks.execute_job": "evaluation",
     "grandchallenge.cases.tasks.build_images": "images",
 }
 
