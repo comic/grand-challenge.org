@@ -16,7 +16,7 @@ from grandchallenge.components.backends.docker import DockerConnection
     ),
 )
 def test_cpuset_cpus(settings, cpuset, expected):
-    settings.CONTAINER_EXEC_CPUSET_CPUS = cpuset
+    settings.COMPONENTS_CPUSET_CPUS = cpuset
 
     c = DockerConnection(
         job_id="", job_model="", exec_image=None, exec_image_sha256=""
