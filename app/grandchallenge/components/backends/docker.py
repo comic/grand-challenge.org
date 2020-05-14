@@ -45,16 +45,16 @@ class DockerConnection:
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
 
-        client_kwargs = {"base_url": settings.CONTAINER_EXEC_DOCKER_BASE_URL}
+        client_kwargs = {"base_url": settings.COMPONENTS_DOCKER_BASE_URL}
 
-        if settings.CONTAINER_EXEC_DOCKER_TLSVERIFY:
+        if settings.COMPONENTS_DOCKER_TLSVERIFY:
             tlsconfig = TLSConfig(
                 verify=True,
                 client_cert=(
-                    settings.CONTAINER_EXEC_DOCKER_TLSCERT,
-                    settings.CONTAINER_EXEC_DOCKER_TLSKEY,
+                    settings.COMPONENTS_DOCKER_TLSCERT,
+                    settings.COMPONENTS_DOCKER_TLSKEY,
                 ),
-                ca_cert=settings.CONTAINER_EXEC_DOCKER_TLSCACERT,
+                ca_cert=settings.COMPONENTS_DOCKER_TLSCACERT,
             )
             client_kwargs.update({"tls": tlsconfig})
 
@@ -65,17 +65,17 @@ class DockerConnection:
         self._run_kwargs = {
             "init": True,
             "network_disabled": True,
-            "mem_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
+            "mem_limit": settings.COMPONENTS_MEMORY_LIMIT,
             # Set to the same as mem_limit to avoid using swap
-            "memswap_limit": settings.CONTAINER_EXEC_MEMORY_LIMIT,
-            "cpu_period": settings.CONTAINER_EXEC_CPU_PERIOD,
-            "cpu_quota": settings.CONTAINER_EXEC_CPU_QUOTA,
-            "cpu_shares": settings.CONTAINER_EXEC_CPU_SHARES,
+            "memswap_limit": settings.COMPONENTS_MEMORY_LIMIT,
+            "cpu_period": settings.COMPONENTS_CPU_PERIOD,
+            "cpu_quota": settings.COMPONENTS_CPU_QUOTA,
+            "cpu_shares": settings.COMPONENTS_CPU_SHARES,
             "cpuset_cpus": self.cpuset_cpus,
-            "runtime": settings.CONTAINER_EXEC_DOCKER_RUNTIME,
+            "runtime": settings.COMPONENTS_DOCKER_RUNTIME,
             "cap_drop": ["all"],
             "security_opt": ["no-new-privileges"],
-            "pids_limit": settings.CONTAINER_EXEC_PIDS_LIMIT,
+            "pids_limit": settings.COMPONENTS_PIDS_LIMIT,
             "log_config": LogConfig(
                 type=LogConfig.types.JSON, config={"max-size": "1g"}
             ),
@@ -88,16 +88,16 @@ class DockerConnection:
 
         Returns
         -------
-            The setting CONTAINER_EXEC_CPUSET_CPUS if this is set to a
+            The setting COMPONENTS_CPUSET_CPUS if this is set to a
             none-empty string. Otherwise, works out the available cpu
             from the os.
         """
-        if settings.CONTAINER_EXEC_CPUSET_CPUS:
-            return settings.CONTAINER_EXEC_CPUSET_CPUS
+        if settings.COMPONENTS_CPUSET_CPUS:
+            return settings.COMPONENTS_CPUSET_CPUS
         else:
             # Get the cpu count, note that this is setting up the container
             # so that it can use all of the CPUs on the system. To limit
-            # the containers execution set CONTAINER_EXEC_CPUSET_CPUS
+            # the containers execution set COMPONENTS_CPUSET_CPUS
             # externally.
             cpus = os.cpu_count()
             if cpus in [None, 1]:
@@ -169,7 +169,7 @@ class Executor(DockerConnection):
         super().__init__(*args, **kwargs)
         self._input_files = input_files
         self._results_file = results_file
-        self._io_image = settings.CONTAINER_EXEC_IO_IMAGE
+        self._io_image = settings.COMPONENTS_IO_IMAGE
 
         self._input_volume = f"{self._job_label}-input"
         self._output_volume = f"{self._job_label}-output"
@@ -242,7 +242,7 @@ class Executor(DockerConnection):
                 remove=True,
                 labels=self._labels,
                 environment={
-                    "NVIDIA_VISIBLE_DEVICES": settings.CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES,
+                    "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
                 },
                 stdout=True,
                 stderr=True,

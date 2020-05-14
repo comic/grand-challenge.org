@@ -1,7 +1,7 @@
 import docker
 from django.conf import settings
 
-from grandchallenge.container_exec.backends.docker import Service
+from grandchallenge.components.backends.docker import Service
 
 
 def test_service_start_cleanup():
@@ -11,7 +11,7 @@ def test_service_start_cleanup():
     filters = {"label": f"job={job_model}-{job_id}"}
 
     dockerclient = docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
+        base_url=settings.COMPONENTS_DOCKER_BASE_URL
     )
     dockerclient.images.pull(exec_image)
 

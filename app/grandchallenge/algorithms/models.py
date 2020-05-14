@@ -18,12 +18,12 @@ from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from grandchallenge.algorithms.emails import send_failed_job_email
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import get_logo_path
-from grandchallenge.container_exec.backends.docker import (
+from grandchallenge.components.backends.docker import (
     Executor,
     cleanup,
     get_file,
 )
-from grandchallenge.container_exec.models import (
+from grandchallenge.components.models import (
     ContainerExecJobModel,
     ContainerImageModel,
 )

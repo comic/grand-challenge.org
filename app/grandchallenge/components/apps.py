@@ -2,8 +2,8 @@ from django.apps import AppConfig
 
 
 class CoreConfig(AppConfig):
-    name = "grandchallenge.container_exec"
+    name = "grandchallenge.components"
 
     def ready(self):
         # noinspection PyUnresolvedReferences
-        import grandchallenge.container_exec.signals  # noqa: F401
+        import grandchallenge.components.signals  # noqa: F401

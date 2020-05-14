@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 
-import grandchallenge.container_exec.models
+import grandchallenge.components.models
 import grandchallenge.core.validators
 
 
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             field=models.FileField(
                 blank=True,
                 help_text="Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/",
-                upload_to=grandchallenge.container_exec.models.docker_image_path,
+                upload_to=grandchallenge.components.models.docker_image_path,
                 validators=[
                     grandchallenge.core.validators.ExtensionValidator(
                         allowed_extensions=(".tar",)

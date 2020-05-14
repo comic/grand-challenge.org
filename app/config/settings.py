@@ -352,7 +352,7 @@ LOCAL_APPS = [
     "grandchallenge.uploads",
     "grandchallenge.cases",
     "grandchallenge.algorithms",
-    "grandchallenge.container_exec",
+    "grandchallenge.components",
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
@@ -603,45 +603,27 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
 
-CONTAINER_EXEC_DOCKER_BASE_URL = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_BASE_URL", "unix://var/run/docker.sock"
+COMPONENTS_DOCKER_BASE_URL = os.environ.get(
+    "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )
-CONTAINER_EXEC_DOCKER_TLSVERIFY = strtobool(
-    os.environ.get("CONTAINER_EXEC_DOCKER_TLSVERIFY", "False")
+COMPONENTS_DOCKER_TLSVERIFY = strtobool(
+    os.environ.get("COMPONENTS_DOCKER_TLSVERIFY", "False")
 )
-CONTAINER_EXEC_DOCKER_TLSCACERT = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSCACERT", ""
+COMPONENTS_DOCKER_TLSCACERT = os.environ.get("COMPONENTS_DOCKER_TLSCACERT", "")
+COMPONENTS_DOCKER_TLSCERT = os.environ.get("COMPONENTS_DOCKER_TLSCERT", "")
+COMPONENTS_DOCKER_TLSKEY = os.environ.get("COMPONENTS_DOCKER_TLSKEY", "")
+COMPONENTS_MEMORY_LIMIT = os.environ.get("COMPONENTS_MEMORY_LIMIT", "4g")
+COMPONENTS_IO_IMAGE = "alpine:3.11"
+COMPONENTS_CPU_QUOTA = int(os.environ.get("COMPONENTS_CPU_QUOTA", "100000"))
+COMPONENTS_CPU_PERIOD = int(os.environ.get("COMPONENTS_CPU_PERIOD", "100000"))
+COMPONENTS_PIDS_LIMIT = int(os.environ.get("COMPONENTS_PIDS_LIMIT", "128"))
+COMPONENTS_CPU_SHARES = int(
+    os.environ.get("COMPONENTS_CPU_SHARES", "1024")  # Default weight
 )
-CONTAINER_EXEC_DOCKER_TLSCERT = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSCERT", ""
-)
-CONTAINER_EXEC_DOCKER_TLSKEY = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSKEY", ""
-)
-CONTAINER_EXEC_MEMORY_LIMIT = os.environ.get(
-    "CONTAINER_EXEC_MEMORY_LIMIT", "4g"
-)
-CONTAINER_EXEC_IO_IMAGE = "alpine:3.11"
-CONTAINER_EXEC_CPU_QUOTA = int(
-    os.environ.get("CONTAINER_EXEC_CPU_QUOTA", "100000")
-)
-CONTAINER_EXEC_CPU_PERIOD = int(
-    os.environ.get("CONTAINER_EXEC_CPU_PERIOD", "100000")
-)
-CONTAINER_EXEC_PIDS_LIMIT = int(
-    os.environ.get("CONTAINER_EXEC_PIDS_LIMIT", "128")
-)
-CONTAINER_EXEC_CPU_SHARES = int(
-    os.environ.get("CONTAINER_EXEC_CPU_SHARES", "1024")  # Default weight
-)
-CONTAINER_EXEC_CPUSET_CPUS = str(
-    os.environ.get("CONTAINER_EXEC_CPUSET_CPUS", "")
-)
-CONTAINER_EXEC_DOCKER_RUNTIME = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_RUNTIME", None
-)
-CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES = os.environ.get(
-    "CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES", "void"
+COMPONENTS_CPUSET_CPUS = str(os.environ.get("COMPONENTS_CPUSET_CPUS", ""))
+COMPONENTS_DOCKER_RUNTIME = os.environ.get("COMPONENTS_DOCKER_RUNTIME", None)
+COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
+    "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
 )
 
 # Set which template pack to use for forms
@@ -725,7 +707,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     **{
         f"stop_expired_services_{region}": {
-            "task": "grandchallenge.container_exec.tasks.stop_expired_services",
+            "task": "grandchallenge.components.tasks.stop_expired_services",
             "kwargs": {
                 "app_label": "workstations",
                 "model_name": "session",
@@ -738,13 +720,13 @@ CELERY_BEAT_SCHEDULE = {
     },
     # Cleanup evaluation jobs on the evaluation queue
     "mark_long_running_evaluation_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {"app_label": "evaluation", "model_name": "job"},
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
     },
     "mark_long_running_algorithm_gpu_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {
             "app_label": "algorithms",
             "model_name": "job",
@@ -754,7 +736,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(hours=1),
     },
     "mark_long_running_algorithm_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {
             "app_label": "algorithms",
             "model_name": "job",
@@ -770,7 +752,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_TASK_ROUTES = {
-    "grandchallenge.container_exec.tasks.execute_job": "evaluation",
+    "grandchallenge.components.tasks.execute_job": "evaluation",
     "grandchallenge.cases.tasks.build_images": "images",
 }
 

@@ -90,14 +90,12 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
 @pytest.fixture(scope="session")
 def docker_client():
-    return docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
-    )
+    return docker.DockerClient(base_url=settings.COMPONENTS_DOCKER_BASE_URL)
 
 
 @pytest.fixture(scope="session")
 def docker_api_client():
-    return docker.APIClient(base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL)
+    return docker.APIClient(base_url=settings.COMPONENTS_DOCKER_BASE_URL)
 
 
 class ChallengeSet(NamedTuple):

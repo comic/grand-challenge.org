@@ -8,8 +8,8 @@ from django.db.models import Avg, F
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 
-from grandchallenge.container_exec.backends.docker import Executor
-from grandchallenge.container_exec.tasks import execute_job
+from grandchallenge.components.backends.docker import Executor
+from grandchallenge.components.tasks import execute_job
 from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import ExtensionValidator
 
