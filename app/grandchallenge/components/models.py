@@ -1,17 +1,130 @@
 from decimal import Decimal
+from pathlib import Path
 from typing import Tuple, Type
 
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.core.files import File
 from django.db import models
 from django.db.models import Avg, F
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
+from django_extensions.db.fields import AutoSlugField
 
+from grandchallenge.cases.models import Image
 from grandchallenge.components.backends.docker import Executor
 from grandchallenge.components.tasks import execute_job
-from grandchallenge.core.storage import private_s3_storage
+from grandchallenge.core.storage import (
+    private_s3_storage,
+    protected_s3_storage,
+)
 from grandchallenge.core.validators import ExtensionValidator
+
+
+class InterfaceKindChoices(models.TextChoices):
+    STRING = "STR", _("String")
+    INTEGER = "INT", _("Integer")
+    FLOAT = "FLT", _("Float")
+    BOOL = "BOOL", _("Bool")
+
+    # Annotation Types
+    TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
+    MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
+    DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
+    MULTIPLE_DISTANCE_MEASUREMENTS = (
+        "MDIS",
+        _("Multiple distance measurements"),
+    )
+    POINT = "POIN", _("Point")
+    MULTIPLE_POINTS = "MPOI", _("Multiple points")
+    POLYGON = "POLY", _("Polygon")
+    MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
+
+    # Choice Types
+    CHOICE = "CHOI", _("Choice")
+    MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
+
+    # Image types
+    IMAGE = "IMG", _("Image")
+    MASK = "MASK", _("Mask")
+
+    # Legacy support
+    MULTIPLE_IMAGES = "MIMG", _("Multiple images")
+    JSON = "JSON", _("JSON file")
+    CSV = "CSV", _("CSV file")
+    ZIP = "ZIP", _("ZIP file")
+
+
+class ComponentInterface(models.Model):
+    Kind = InterfaceKindChoices
+
+    title = models.CharField(
+        max_length=255,
+        help_text="Human readable name of this input/output field.",
+    )
+    slug = AutoSlugField(populate_from="title")
+    description = models.TextField(
+        blank=True, help_text="Description of this input/output field.",
+    )
+    default_value = JSONField(
+        help_text="Default value for this field, only valid for inputs."
+    )
+    kind = models.CharField(
+        blank=False,
+        max_length=4,
+        choices=Kind.choices,
+        help_text="What kind of field is this interface?",
+    )
+
+    relative_path = models.CharField(
+        max_length=255,
+        help_text=(
+            "The path to the entity that implements this interface relative "
+            "to the input or output directory."
+        ),
+    )
+
+    @property
+    def input_path(self):
+        return Path("/input") / str(self.relative_path)
+
+    @property
+    def output_path(self):
+        return Path("/output") / str(self.relative_path)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(kind__in=InterfaceKindChoices.values),
+                name="kind_valid",
+            )
+        ]
+
+
+def component_interface_value_path(instance, filename):
+    # Convert the pk to a hex, padded to 4 chars with zeros
+    pk_as_padded_hex = f"{instance.pk:04x}"
+
+    return (
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{pk_as_padded_hex[-4:-2]}/{pk_as_padded_hex[-2:]}/{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class ComponentInterfaceValue(models.Model):
+    """Encapsulates the value of an interface at a certain point in the graph."""
+
+    interface = models.ForeignKey(
+        to=ComponentInterface, on_delete=models.CASCADE
+    )
+    value = JSONField()
+    file = models.FileField(
+        upload_to=component_interface_value_path, storage=protected_s3_storage
+    )
+    image = models.ForeignKey(to=Image, null=True, on_delete=models.CASCADE)
 
 
 class DurationQuerySet(models.QuerySet):
@@ -53,6 +166,15 @@ class ComponentJob(models.Model):
     output = models.TextField()
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
+
+    inputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)s_inputs",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)s_outputs",
+    )
 
     objects = DurationQuerySet.as_manager()
 
