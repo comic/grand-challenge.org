@@ -16,10 +16,10 @@ from simple_history.models import HistoricalRecords
 
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.components.backends.docker import (
-    ContainerExecException,
+    ComponentException,
     Service,
 )
-from grandchallenge.components.models import ContainerImageModel
+from grandchallenge.components.models import ComponentImage
 from grandchallenge.components.tasks import start_service, stop_service
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import public_s3_storage
@@ -168,7 +168,7 @@ def delete_workstation_groups_hook(*_, instance: Workstation, using, **__):
         pass
 
 
-class WorkstationImage(UUIDModel, ContainerImageModel):
+class WorkstationImage(UUIDModel, ComponentImage):
     """
     A ``WorkstationImage`` is a docker container image of a workstation.
 
@@ -205,7 +205,7 @@ class WorkstationImage(UUIDModel, ContainerImageModel):
         ],
     )
 
-    class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
+    class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
 
     def __str__(self):
@@ -428,12 +428,12 @@ class Session(UUIDModel):
 
         Raises
         ------
-        ContainerExecException
+        ComponentException
             If the service cannot be started.
         """
         try:
             if not self.workstation_image.ready:
-                raise ContainerExecException("Workstation image was not ready")
+                raise ComponentException("Workstation image was not ready")
 
             if (
                 Session.objects.all()
@@ -444,7 +444,7 @@ class Session(UUIDModel):
                 .count()
                 >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
             ):
-                raise ContainerExecException("Too many sessions are running")
+                raise ComponentException("Too many sessions are running")
 
             self.service.start(
                 http_port=self.workstation_image.http_port,

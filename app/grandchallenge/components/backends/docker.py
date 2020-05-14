@@ -21,7 +21,7 @@ from docker.types import LogConfig
 from requests import HTTPError
 
 
-class ContainerExecException(Exception):
+class ComponentException(Exception):
     """These exceptions will be sent to the user."""
 
 
@@ -249,7 +249,7 @@ class Executor(DockerConnection):
                 **self._run_kwargs,
             )
         except ContainerError as e:
-            raise ContainerExecException(e.stderr.decode())
+            raise ComponentException(e.stderr.decode())
 
         return logs.decode()
 
@@ -278,7 +278,7 @@ class Executor(DockerConnection):
             # The container exited without error, but no results file was
             # produced. This shouldn't happen, but does with poorly programmed
             # evaluation containers.
-            raise ContainerExecException(
+            raise ComponentException(
                 "The evaluation failed for an unknown reason as no results "
                 "file was produced. Please contact the organisers for "
                 "assistance."
@@ -290,9 +290,7 @@ class Executor(DockerConnection):
                 parse_constant=lambda x: None,  # Removes -inf, inf and NaN
             )
         except JSONDecodeError as e:
-            raise ContainerExecException(
-                f"Could not decode results file: {e.msg}"
-            )
+            raise ComponentException(f"Could not decode results file: {e.msg}")
 
         return result
 

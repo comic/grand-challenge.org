@@ -13,7 +13,7 @@ from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils.timezone import now
 
-from grandchallenge.components.backends.docker import ContainerExecException
+from grandchallenge.components.backends.docker import ComponentException
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -164,7 +164,7 @@ def execute_job(
             exec_image_sha256=job.container.image_sha256,
         ) as ev:
             result, logs = ev.execute()  # This call is potentially very long
-    except ContainerExecException as e:
+    except ComponentException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )

@@ -14,7 +14,7 @@ from grandchallenge.core.storage import private_s3_storage
 from grandchallenge.core.validators import ExtensionValidator
 
 
-class ContainerExecQuerySet(models.QuerySet):
+class ComponentQuerySet(models.QuerySet):
     def with_duration(self):
         """Annotate the queryset with the duration of completed jobs"""
         return self.annotate(duration=F("completed_at") - F("started_at"))
@@ -28,7 +28,7 @@ class ContainerExecQuerySet(models.QuerySet):
         )
 
 
-class ContainerExecJobModel(models.Model):
+class ComponentJob(models.Model):
     # The job statuses come directly from celery.result.AsyncResult.status:
     # http://docs.celeryproject.org/en/latest/reference/celery.result.html
     PENDING = 0
@@ -54,7 +54,7 @@ class ContainerExecJobModel(models.Model):
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
 
-    objects = ContainerExecQuerySet.as_manager()
+    objects = ComponentQuerySet.as_manager()
 
     def update_status(self, *, status: STATUS_CHOICES, output: str = ""):
         self.status = status
@@ -73,11 +73,11 @@ class ContainerExecJobModel(models.Model):
         self.save()
 
     @property
-    def container(self) -> "ContainerImageModel":
+    def container(self) -> "ComponentImage":
         """
         Returns the container object associated with this instance, which
         should be a foreign key to an object that is a subclass of
-        ContainerImageModel
+        ComponentImage
         """
         raise NotImplementedError
 
@@ -140,7 +140,7 @@ def docker_image_path(instance, filename):
     )
 
 
-class ContainerImageModel(models.Model):
+class ComponentImage(models.Model):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )

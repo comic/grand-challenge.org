@@ -1,10 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from grandchallenge.components.models import (
-    ContainerExecJobModel,
-    ContainerImageModel,
-)
+from grandchallenge.components.models import ComponentImage, ComponentJob
 from grandchallenge.components.tasks import validate_docker_image_async
 from grandchallenge.core.utils import disable_for_loaddata
 
@@ -12,9 +9,9 @@ from grandchallenge.core.utils import disable_for_loaddata
 @receiver(post_save)
 @disable_for_loaddata
 def validate_docker_image(
-    instance: ContainerImageModel = None, created: bool = False, *_, **__
+    instance: ComponentImage = None, created: bool = False, *_, **__
 ):
-    if isinstance(instance, ContainerImageModel) and created:
+    if isinstance(instance, ComponentImage) and created:
         validate_docker_image_async.apply_async(
             kwargs={
                 "app_label": instance._meta.app_label,
@@ -27,7 +24,7 @@ def validate_docker_image(
 @receiver(post_save)
 @disable_for_loaddata
 def schedule_job(
-    instance: ContainerExecJobModel = None, created: bool = False, *_, **__
+    instance: ComponentJob = None, created: bool = False, *_, **__
 ):
-    if isinstance(instance, ContainerExecJobModel) and created:
+    if isinstance(instance, ComponentJob) and created:
         return instance.schedule_job()

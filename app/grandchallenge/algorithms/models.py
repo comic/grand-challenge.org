@@ -23,10 +23,7 @@ from grandchallenge.components.backends.docker import (
     cleanup,
     get_file,
 )
-from grandchallenge.components.models import (
-    ContainerExecJobModel,
-    ContainerImageModel,
-)
+from grandchallenge.components.models import ComponentImage, ComponentJob
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.jqfileupload.models import StagedFile
@@ -226,7 +223,7 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
         pass
 
 
-class AlgorithmImage(UUIDModel, ContainerImageModel):
+class AlgorithmImage(UUIDModel, ComponentImage):
     algorithm = models.ForeignKey(
         Algorithm,
         on_delete=models.CASCADE,
@@ -234,7 +231,7 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
     )
     queue_override = models.CharField(max_length=128, blank=True)
 
-    class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
+    class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
 
     def get_absolute_url(self):
@@ -421,7 +418,7 @@ class AlgorithmExecutor(Executor):
         upload_session.process_images()
 
 
-class Job(UUIDModel, ContainerExecJobModel):
+class Job(UUIDModel, ComponentJob):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
