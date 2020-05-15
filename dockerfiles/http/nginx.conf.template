@@ -161,7 +161,7 @@ http {
       return 200 '443$ref';
     }
 
-    location ~ ^/workstation-proxy/([^/]*)/mlab4d4c4142/(.*)$ {
+    location ~ ^/workstation-proxy/([^/]*)/(.*)mlab4d4c4142/(.*)$ {
       # MeVisLab uses a magic string to determine if this should
       # be routed to the websocket handler, this is handled here
 
@@ -169,7 +169,7 @@ http {
 
       proxy_buffering off;
       proxy_set_header Host $1;
-      proxy_pass http://workstations_websocket/mlab4d4c4142/$2;
+      proxy_pass http://workstations_websocket/mlab4d4c4142/$3;
 
       proxy_set_header X-Real-IP $remote_addr;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
