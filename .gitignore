@@ -78,6 +78,7 @@ docker-compose
 
 # Docs build directory
 docs/_build/
+docs/?/
 
 # Pytest cache
 .pytest_cache/
