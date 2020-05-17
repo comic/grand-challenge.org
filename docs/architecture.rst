@@ -5,7 +5,7 @@ Architecture
 System Context
 --------------
 
-.. uml:: diagrams/samples/system_context.puml
+.. uml:: diagrams/system_context.puml
 
 Containers
 ----------
