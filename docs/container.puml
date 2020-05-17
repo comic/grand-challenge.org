@@ -1,9 +1,0 @@
-@startuml C4_Elements
-!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
-
-Person(personAlias, "Label", "Description")
-Container(containerAlias, "Label", "Technology", "Optional Description")
-System(systemAlias, "Label", "Optional Description")
-
-Rel(personAlias, containerAlias, "Label", "Optional Technology")
-@enduml

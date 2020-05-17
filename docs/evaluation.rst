@@ -19,10 +19,6 @@ Input
 The participants submission will be extracted and mounted as a docker volume
 on `/input/`.
 
-
-.. uml:: container.puml
-
-
 Entrypoint
 ~~~~~~~~~~
 
