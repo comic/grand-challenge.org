@@ -3,3 +3,4 @@ sphinx
 sphinx-autobuild
 sphinx-rtd-theme
 sphinx_autodoc_typehints
+sphinxcontrib-plantuml
