@@ -103,6 +103,7 @@ todo_include_todos = True
 
 plantuml = f"java -Djava.awt.headless=true -jar {(Path(__file__).parent / 'plantuml.jar').resolve()}"
 plantuml_output_format = "svg_img"
+plantuml_latex_output_format = "pdf"
 plantuml_syntax_error_image = True
 
 
