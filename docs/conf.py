@@ -18,6 +18,7 @@
 #
 import os
 import sys
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("../app"))
 
@@ -46,6 +47,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
     "sphinx_rtd_theme",
+    "sphinxcontrib.plantuml",
 ]
 
 napoleon_google_docstring = False
@@ -95,6 +97,13 @@ pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+
+# -- PlantUML Settings ----------------------------------------------------
+
+plantuml = f"java -Djava.awt.headless=true -jar {(Path(__file__).parent / 'plantuml.jar').resolve()}"
+plantuml_output_format = "svg_img"
+plantuml_syntax_error_image = True
 
 
 # -- Options for HTML output ----------------------------------------------
