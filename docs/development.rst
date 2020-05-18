@@ -1,6 +1,6 @@
-===============
-Getting Started
-===============
+===========
+Development
+===========
 
 Grand-challenge is distributed as a set of containers that are defined and linked together in ``docker-compose.yml``. 
 To develop the platform you need to have docker and docker-compose running on your system.

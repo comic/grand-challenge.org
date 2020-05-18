@@ -6,16 +6,16 @@ LAYOUT_WITH_LEGEND()
 
 title System Context diagram for grand-challenge.org
 
+Person(clinicians, "Clinician", "User who annotates data, or has new clinical data for algorithm validation.")
 Person(challenge_orgs, "Researcher", "User who poses challenges and compares state of the art algorithms.")
 Person(data_scientists, "Data Scientist", "User who develops machine learning algorithms.")
-Person(clinicians, "Clinician", "User who annotates data, or has new clinical data for algorithm validation.")
 
 System(grand_challenge, "grand-challenge.org", "Allows users to gather data, run workstations, train clinicians, annotate data, pose a challenge, evaluate solutions and deploy algorithms.")
 
 System_Ext(grand_challenge_bridge, "Grand Challenge Bridge", "Connects to hospital systems, de-itentifies data, uploads data for algorithm execution and returns algorithm results.")
-System_Ext(oauth, "Authentication", "Authenticates users from external providers (OAuth2, Google, GitHub).")
+System_Ext(oauth, "Authentication", "Authenticates users through external providers (Google, GitHub).")
 System_Ext(monitoring, "Monitoring and Alerting", "Monitors the system and sends alerts (Sentry, Prometheus).")
-System_Ext(cdn, "CDN", "Stores and serves static data (S3, CloudFront).")
+System_Ext(cdn, "Content Delivery Network", "Stores and serves static data (S3, CloudFront).")
 System_Ext(mail, "E-mail", "Sends emails to users (SES).")
 
 Rel(challenge_orgs, grand_challenge, "Uses")
