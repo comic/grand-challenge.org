@@ -270,8 +270,8 @@ def _compile_mrx(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
             lines = [
                 line for line in f.readlines() if re.match(mirax_pattern, line)
             ]
-            for l in lines:
-                original_name = l.split("=")[1].strip()
+            for line in lines:
+                original_name = line.split("=")[1].strip()
                 file_matched.append(ini_file.parent / original_name)
             file_matched.append(ini_file)
             return file_matched
@@ -312,8 +312,8 @@ def _compile_vms(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
             lines = [
                 line for line in f.readlines() if re.match(vms_pattern, line)
             ]
-            for l in lines:
-                original_name = l.split("=")[1].strip()
+            for line in lines:
+                original_name = line.split("=")[1].strip()
                 if os.path.exists(vms_file.parent / original_name):
                     file_matched.append(vms_file.parent / original_name)
             return file_matched
