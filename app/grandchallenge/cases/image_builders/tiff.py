@@ -267,7 +267,9 @@ def _compile_mrx(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
                 if f.name.lower() == ini_file.name.lower()
             ][0]
         with open(ini_file, "r") as f:
-            lines = [l for l in f.readlines() if re.match(mirax_pattern, l)]
+            lines = [
+                line for line in f.readlines() if re.match(mirax_pattern, line)
+            ]
             for l in lines:
                 original_name = l.split("=")[1].strip()
                 file_matched.append(ini_file.parent / original_name)
@@ -286,7 +288,7 @@ def _compile_mrx(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
 
             # Find Slidedat.ini, which provides us with all the other file names
             name, _ = os.path.splitext(file.name)
-            slide_dat = file.parent / name / f"Slidedat.ini"
+            slide_dat = file.parent / name / "Slidedat.ini"
             matching_files = get_filenames_from_ini(slide_dat)
             # convert to tif
             tiff_file = _convert_to_tiff(
@@ -307,7 +309,9 @@ def _compile_vms(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
     def get_filenames_from_vms(vms_file: Path):
         file_matched = []
         with open(str(vms_file.absolute()), "r") as f:
-            lines = [l for l in f.readlines() if re.match(vms_pattern, l)]
+            lines = [
+                line for line in f.readlines() if re.match(vms_pattern, line)
+            ]
             for l in lines:
                 original_name = l.split("=")[1].strip()
                 if os.path.exists(vms_file.parent / original_name):
