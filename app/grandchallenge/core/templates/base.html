@@ -36,7 +36,7 @@
             {% include "grandchallenge/partials/jumbotron.html" %}
         {% endblock %}
 
-        <div id="page" class="container pb-3">
+        <div class="container pb-3">
 
             {% block messages %}
                 {% include "grandchallenge/partials/messages.html" %}
@@ -47,17 +47,18 @@
                 {% endblock %}
             </nav>
 
-            {% block outerContent %}
-                <div class="my-3 p-3 bg-white rounded shadow-sm">
-                    <div class="row">
-                        {% block sidebar %}{% endblock %}
-                        <div class="col overflow-auto">
-                            {% block content %}{% endblock %}
-                        </div>
+            {% block outer_content %}
+                <div class="row">
+                    {% block sidebar %}{% endblock %}
+                    <div class="col overflow-auto">
+                        {% block content %}{% endblock %}
                     </div>
                 </div>
             {% endblock %}
         </div>
+
+        {% block post_content %}
+        {% endblock %}
     </main>
 
     {% block footer %}

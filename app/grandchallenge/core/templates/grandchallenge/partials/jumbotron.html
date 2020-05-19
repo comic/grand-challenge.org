@@ -1,18 +1,20 @@
 {% load static %}
 
-<div class="jumbotron rounded-0 bg-primary"
-     {% if background_url %}
-     style="background-image: linear-gradient(to bottom, rgba(44,62,80,0.65) 0%, rgba(44,62,80,0.65) 100%), url('{{ background_url }}');"
-     {% elif background_static_url %}
-     style="background-image: linear-gradient(to bottom, rgba(44,62,80,0.65) 0%, rgba(44,62,80,0.65) 100%), url('{% static background_static_url %}');"
-     {% endif %}
->
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-10 col-md-8 col-lg-6 col-xl-4 text-light">
-                <h2>{{ title|title }}</h2>
-                <h4>{{ description }}</h4>
+{% with 0.5 as alpha %}
+    <div class="jumbotron rounded-0 bg-primary"
+            {% if background_url %}
+         style="background-image: linear-gradient(to bottom, rgba(44,62,80,{{ alpha }}) 0%, rgba(44,62,80,{{ alpha }}) 100%), url('{{ background_url }}');"
+            {% elif background_static_url %}
+         style="background-image: linear-gradient(to bottom, rgba(44,62,80,{{ alpha }}) 0%, rgba(44,62,80,{{ alpha }}) 100%), url('{% static background_static_url %}');"
+            {% endif %}
+    >
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-10 col-md-8 col-lg-6 col-xl-4 text-light">
+                    <h2>{{ title|title }}</h2>
+                    <h4>{{ description }}</h4>
+                </div>
             </div>
         </div>
     </div>
-</div>
+{% endwith %}
