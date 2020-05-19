@@ -257,40 +257,49 @@ mirax_pattern = r"INDEXFILE\s?=\s?.|FILE_\d+\s?=\s?."
 vms_pattern = r"ImageFile(\(\d*,\d*(,\d)?\))?\s?=\s?.|MapFile\s?=\s?.|OptimisationFile\s?=\s?.|MacroImage\s?=\s?."
 
 
-def _compile_mrx(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
-    def get_filenames_from_ini(ini_file: Path):
-        file_matched = []
-        if not ini_file.exists():
-            ini_file = [
-                f
-                for f in ini_file.parent.iterdir()
-                if f.name.lower() == ini_file.name.lower()
-            ][0]
-        with open(ini_file, "r") as f:
-            lines = [
-                line for line in f.readlines() if re.match(mirax_pattern, line)
-            ]
-            for line in lines:
-                original_name = line.split("=")[1].strip()
-                file_matched.append(ini_file.parent / original_name)
-            file_matched.append(ini_file)
-            return file_matched
+def _get_mrxs_files(mrxs_file: Path):
+    # Find Slidedat.ini, which provides us with all the other file names
+    name, _ = os.path.splitext(mrxs_file.name)
+    slide_dat = mrxs_file.parent / name / "Slidedat.ini"
+    file_matched = []
+    if not slide_dat.exists():
+        slide_dat = [
+            f
+            for f in slide_dat.parent.iterdir()
+            if f.name.lower() == slide_dat.name.lower()
+        ][0]
+    with open(slide_dat, "r") as f:
+        lines = [
+            line for line in f.readlines() if re.match(mirax_pattern, line)
+        ]
+        for line in lines:
+            original_name = line.split("=")[1].strip()
+            file_matched.append(slide_dat.parent / original_name)
+        file_matched.append(slide_dat)
+        return file_matched
 
-    # OpenSlide expects the following for a Mirax file:
-    # The filename ends with .mrxs.
-    # A directory exists in the same location as the file, with the same name as the
-    # file minus the extension.
-    # A file named Slidedat.ini exists in the directory.
+
+def _get_vms_files(vms_file: Path):
+    file_matched = []
+    with open(str(vms_file.absolute()), "r") as f:
+        lines = [line for line in f.readlines() if re.match(vms_pattern, line)]
+        for line in lines:
+            original_name = line.split("=")[1].strip()
+            if os.path.exists(vms_file.parent / original_name):
+                file_matched.append(vms_file.parent / original_name)
+        return file_matched
+
+
+def _convert(
+    files: List[Path], associated_files_getter: Optional[callable], converter
+) -> List[GrandChallengeTiffFile]:
     compiled_files: List = []
+    associated_files: List = []
     for file in files:
         try:
             gc_file = GrandChallengeTiffFile(file)
-
-            # Find Slidedat.ini, which provides us with all the other file names
-            name, _ = os.path.splitext(file.name)
-            slide_dat = file.parent / name / "Slidedat.ini"
-            matching_files = get_filenames_from_ini(slide_dat)
-            # convert to tif
+            if associated_files_getter:
+                associated_files = associated_files_getter(gc_file.path)
             tiff_file = _convert_to_tiff(
                 path=file, pk=gc_file.pk, converter=converter
             )
@@ -298,57 +307,7 @@ def _compile_mrx(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
             continue
         else:
             gc_file.path = tiff_file
-            gc_file.associated_files = matching_files
-            gc_file.associated_files.append(file)
-            compiled_files.append(gc_file)
-
-    return compiled_files
-
-
-def _compile_vms(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
-    def get_filenames_from_vms(vms_file: Path):
-        file_matched = []
-        with open(str(vms_file.absolute()), "r") as f:
-            lines = [
-                line for line in f.readlines() if re.match(vms_pattern, line)
-            ]
-            for line in lines:
-                original_name = line.split("=")[1].strip()
-                if os.path.exists(vms_file.parent / original_name):
-                    file_matched.append(vms_file.parent / original_name)
-            return file_matched
-
-    compiled_files: List = []
-    for file in files:
-        try:
-            gc_file = GrandChallengeTiffFile(file)
-            vms_files = get_filenames_from_vms(gc_file.path)
-            tiff_file = _convert_to_tiff(
-                path=file, pk=gc_file.pk, converter=converter
-            )
-        except Exception:
-            continue
-        else:
-            gc_file.path = tiff_file
-            gc_file.associated_files = vms_files
-            gc_file.associated_files.append(file)
-            compiled_files.append(gc_file)
-
-    return compiled_files
-
-
-def _convert(files: List[Path], converter) -> List[GrandChallengeTiffFile]:
-    compiled_files: List = []
-    for file in files:
-        try:
-            gc_file = GrandChallengeTiffFile(file)
-            tiff_file = _convert_to_tiff(
-                path=file, pk=gc_file.pk, converter=converter
-            )
-        except Exception:
-            continue
-        else:
-            gc_file.path = tiff_file
+            gc_file.associated_files = associated_files
             gc_file.associated_files.append(file)
             compiled_files.append(gc_file)
     return compiled_files
@@ -377,18 +336,18 @@ def _load_gc_files(
 ) -> List[GrandChallengeTiffFile]:
     loaded_files = []
     complex_file_handlers = {
-        ".mrxs": _compile_mrx,
-        ".vms": _compile_vms,
-        ".vmu": _compile_vms,
-        ".svs": _convert,
-        ".ndpi": _convert,
-        ".scn": _convert,
-        ".bif": _convert,
+        ".mrxs": _get_mrxs_files,
+        ".vms": _get_vms_files,
+        ".vmu": _get_vms_files,
+        ".svs": None,
+        ".ndpi": None,
+        ".scn": None,
+        ".bif": None,
     }
     for ext, handler in complex_file_handlers.items():
         complex_files = [file for file in files if file.suffix.lower() == ext]
         if len(complex_files) > 0:
-            loaded_files += handler(complex_files, converter)
+            loaded_files += _convert(complex_files, handler, converter)
 
     # don't handle files that are associated files
     for file in files:
