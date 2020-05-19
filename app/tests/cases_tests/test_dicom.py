@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from unittest import mock
 
 import numpy as np
@@ -17,19 +19,25 @@ DICOM_DIR = RESOURCE_PATH / "dicom"
 
 
 def test_get_headers_by_study():
-    studies, _ = _get_headers_by_study(DICOM_DIR)
+    files = [Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]]
+    studies, _ = _get_headers_by_study(files)
     assert len(studies) == 1
     for key in studies:
         assert [str(x["file"]) for x in studies[key]["headers"]] == [
             f"{DICOM_DIR}/{x}.dcm" for x in range(1, 77)
         ]
 
-    studies, _ = _get_headers_by_study(RESOURCE_PATH)
+    for root, _, files in os.walk(RESOURCE_PATH):
+        files = [Path(root).joinpath(f) for f in files]
+        break
+
+    studies, _ = _get_headers_by_study(files)
     assert len(studies) == 0
 
 
 def test_validate_dicom_files():
-    studies, _ = _validate_dicom_files(DICOM_DIR)
+    files = [Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]]
+    studies, _ = _validate_dicom_files(files)
     assert len(studies) == 1
     for study in studies:
         headers = study.headers
@@ -42,17 +50,20 @@ def test_validate_dicom_files():
             {},
         ),
     ):
-        studies, errors = _validate_dicom_files(DICOM_DIR)
+        studies, errors = _validate_dicom_files(files)
         assert len(studies) == 0
         for header in headers[1:]:
-            assert errors[header["file"].name] == format_error(
+            assert errors[header["file"]] == format_error(
                 "Number of slices per time point differs"
             )
 
 
 def test_image_builder_dicom_4dct():
-    result = image_builder_dicom(DICOM_DIR)
-    assert result.consumed_files == [f"{x}.dcm" for x in range(1, 77)]
+    files = [Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]]
+    result = image_builder_dicom(files)
+    assert result.consumed_files == [
+        Path(DICOM_DIR).joinpath(f"{x}.dcm") for x in range(1, 77)
+    ]
 
     image = result.new_images[0]
     assert image.shape == [19, 4, 2, 3]
@@ -101,7 +112,12 @@ def test_dicom_rescaling(folder, element_type):
     2.dcm in dicom_intercept and dicom_slope has been modified to add a
     small intercept (0.01) or slope (1.001) respectively.
     """
-    result = image_builder_dicom(RESOURCE_PATH / folder)
+    files = [
+        Path(d[0]).joinpath(f)
+        for d in os.walk(RESOURCE_PATH / folder)
+        for f in d[2]
+    ]
+    result = image_builder_dicom(files)
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [

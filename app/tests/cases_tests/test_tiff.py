@@ -4,6 +4,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+import pyvips
 import tifffile as tiff_lib
 from django.core.exceptions import ValidationError
 from pytest import approx
@@ -23,6 +24,28 @@ from grandchallenge.cases.image_builders.tiff import (
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
+
+
+class MockConverter:
+    def __init__(self):
+        pass
+
+    class Image:
+        def __init__(self):
+            pass
+
+        def new_from_file(*args, access):  # noqa B902
+            return None
+
+        def write_to_file(
+            *args,  # noqa B902
+            tile,  # noqa N805
+            pyramid,
+            bigtiff,
+            compression,
+            Q,  # noqa N803
+        ):
+            return None
 
 
 @pytest.mark.parametrize(
@@ -268,86 +291,68 @@ def test_tiff_image_entry_creation(
 
 # Integration test of all features being accessed through the image builder
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "resource, expected_files, expected_image_files, expected_dzi_files",
-    [(RESOURCE_PATH, 4, 7, 31)],
-)
-def test_image_builder_tiff(
-    resource,
-    expected_files,
-    expected_image_files,
-    expected_dzi_files,
-    tmpdir_factory,
-):
+def test_image_builder_tiff(tmpdir_factory,):
     # Copy resource files to writable temp folder
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(
-        resource, temp_dir, ignore=shutil.ignore_patterns("dicom*"),
+        RESOURCE_PATH,
+        temp_dir,
+        ignore=shutil.ignore_patterns("dicom*", "complex_tiff", "dzi_tiff"),
+    )
+    files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
+    image_builder_result = image_builder_tiff(files=files)
+    expected_files = [
+        temp_dir / "valid_tiff.tif",
+        temp_dir / "no_dzi.tif",
+    ]
+
+    assert sorted(image_builder_result.consumed_files) == sorted(
+        expected_files
     )
 
-    image_builder_result = image_builder_tiff(path=temp_dir)
+    for file in expected_files:
+        assert file.name in [i.name for i in image_builder_result.new_images]
 
-    assert len(image_builder_result.consumed_files) == expected_files
-    assert len(image_builder_result.new_images) == expected_files
-    assert len(image_builder_result.new_image_files) == expected_image_files
+    valid_tiff_pk = [
+        new_image.pk
+        for new_image in image_builder_result.new_images
+        if new_image.name == "valid_tiff.tif"
+    ][0]
 
-    # Asserts successful creation of files
-    new_image_pk = image_builder_result.new_images[0].pk
-    assert os.path.isfile(temp_dir / f"{new_image_pk}.dzi")
-    assert os.path.isdir(temp_dir / f"{new_image_pk}_files")
-
-    assert len(list(temp_dir.glob("**/*.jpeg"))) == expected_dzi_files
-
-
-@pytest.mark.skip(
-    reason="skip for now as we don't want to upload a large testset"
-)
-@pytest.mark.parametrize(
-    "resource, filelist",
-    [
-        (
-            RESOURCE_PATH / "complex_tiff",
+    # Assert the valid tif results in 2 new image file objects
+    assert (
+        len(
             [
-                "0-CMU-1-Saved-1_16/Index.dat",
-                "0-CMU-1-Saved-1_16/Slidedat.ini",
-                "0-CMU-1-Saved-1_16/Data0000.dat",
-                "0-CMU-1-Saved-1_16/Data0001.dat",
-                "0-CMU-1-Saved-1_16/Data0002.dat",
-                "0-CMU-1-Saved-1_16/Data0003.dat",
-                "0-CMU-1-Saved-1_16/Data0004.dat",
-                "0-CMU-1-Saved-1_16/Data0005.dat",
-                "0-CMU-1-Saved-1_16/Data0006.dat",
-                "0-CMU-1-Saved-1_16/Data0007.dat",
-                "0-CMU-1-Saved-1_16/Data0008.dat",
-                "0-CMU-1-Saved-1_16/Data0009.dat",
-                "0-CMU-1-Saved-1_16/Data0010.dat",
-                "0-CMU-1-Saved-1_16/Data0011.dat",
-                "0-CMU-1-Saved-1_16/Data0012.dat",
-                "0-CMU-1-Saved-1_16/Data0013.dat",
-                "0-CMU-1-Saved-1_16/Data0014.dat",
-                "0-CMU-1-Saved-1_16/Data0015.dat",
-                "0-CMU-1-Saved-1_16/Data0016.dat",
-                "0-CMU-1-Saved-1_16/Data0017.dat",
-                "0-CMU-1-Saved-1_16/Data0018.dat",
-                "CMU-1-40x - 2010-01-12 13.24.05.jpg",
-                "CMU-1-40x - 2010-01-12 13.24.05(1,0).jpg",
-                "CMU-1-40x - 2010-01-12 13.24.05(0,1).jpg",
-                "CMU-1-40x - 2010-01-12 13.24.05(1,1).jpg",
-                "CMU-1-40x - 2010-01-12 13.24.05_map2.jpg",
-                "CMU-1-40x - 2010-01-12 13.24.05.opt",
-                "CMU-1-40x - 2010-01-12 13.24.05_macro.jpg",
-            ],
-        ),
-    ],
-)
-def test_handle_complex_files(resource, filelist, tmpdir_factory):
+                imagefile
+                for imagefile in image_builder_result.new_image_files
+                if imagefile.image.pk == valid_tiff_pk
+            ]
+        )
+        == 2
+    )
+
+    # Asserts successful creation of dzi files
+    assert os.path.isfile(temp_dir / f"{valid_tiff_pk}.dzi")
+    assert os.path.isdir(temp_dir / f"{valid_tiff_pk}_files")
+
+    assert len(list(temp_dir.glob("**/*.jpeg"))) == 9
+
+
+def test_handle_complex_files(tmpdir_factory):
     # Copy resource files to writable temp folder
+    # The content files are dummy files and won't compile to tiff.
+    # The point is to test the loading of gc_files and make sure all
+    # related files are associated with the gc_file
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
-    shutil.copytree(resource, temp_dir)
-    gc_list = _load_gc_files(path=temp_dir)
+    shutil.copytree(RESOURCE_PATH / "complex_tiff", temp_dir)
+    files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
+    gc_list = _load_gc_files(files=files, converter=MockConverter)
     assert len(gc_list) == 2
-    for file in filelist:
-        assert os.path.isfile(temp_dir / file)
+    all_associated_files = []
+    for gc in gc_list:
+        all_associated_files.append(gc.path)
+        all_associated_files += gc.associated_files
+    assert all(f in all_associated_files for f in files)
 
 
 @pytest.mark.skip(
@@ -371,5 +376,7 @@ def test_convert_to_tiff(resource, filename, tmpdir_factory):
     pk = uuid4()
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(resource, temp_dir)
-    tiff_file = _convert_to_tiff(path=temp_dir / filename, pk=pk)
+    tiff_file = _convert_to_tiff(
+        path=temp_dir / filename, pk=pk, converter=pyvips
+    )
     assert tiff_file is not None

@@ -1,0 +1,21 @@
+[Virtual Microscope Specimen]
+NoLayers=1
+NoJpegColumns=2
+NoJpegRows=2
+ImageFile=CMU-1-40x - 2010-01-12 13.24.05.jpg
+ImageFile(1,0)=CMU-1-40x - 2010-01-12 13.24.05(1,0).jpg
+ImageFile(0,1)=CMU-1-40x - 2010-01-12 13.24.05(0,1).jpg
+ImageFile(1,1)=CMU-1-40x - 2010-01-12 13.24.05(1,1).jpg
+MapFile=CMU-1-40x - 2010-01-12 13.24.05_map2.jpg
+OptimisationFile=CMU-1-40x - 2010-01-12 13.24.05.opt
+AuthCode=635108335
+SourceLens=40.000000
+PhysicalWidth=23367500
+PhysicalHeight=17357904
+LayerSpacing=2032236150
+MacroImage=CMU-1-40x - 2010-01-12 13.24.05_macro.jpg
+PhysicalMacroWidth=76000000
+PhysicalMacroHeight=26000000
+XOffsetFromSlideCentre=4876667
+YOffsetFromSlideCentre=-2340000
+Reference=CMU-1-40x

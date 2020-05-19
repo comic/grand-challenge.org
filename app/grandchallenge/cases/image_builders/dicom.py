@@ -2,6 +2,7 @@ import tempfile
 from collections import namedtuple
 from math import isclose
 from pathlib import Path
+from typing import List
 
 import SimpleITK
 import numpy as np
@@ -43,7 +44,7 @@ def pixel_data_reached(tag, vr, length):
     return pydicom.datadict.keyword_for_tag(tag) == "PixelData"
 
 
-def _get_headers_by_study(path):
+def _get_headers_by_study(files: List[Path]):
     """
     Gets all headers from dicom files found in path.
 
@@ -61,7 +62,8 @@ def _get_headers_by_study(path):
     studies = {}
     errors = {}
     indices = {}
-    for file in path.iterdir():
+
+    for file in files:
         if not file.is_file():
             continue
         with file.open("rb") as f:
@@ -87,7 +89,7 @@ def _get_headers_by_study(path):
                 studies[key]["index"] = index
                 studies[key]["headers"] = headers
             except Exception as e:
-                errors[file.name] = format_error(e)
+                errors[file] = format_error(e)
 
     for key in studies:
         studies[key]["headers"].sort(
@@ -100,7 +102,7 @@ def format_error(message):
     return f"Dicom image builder: {message}"
 
 
-def _validate_dicom_files(path):
+def _validate_dicom_files(files: List[Path]):
     """
     Gets the headers for all dicom files on path and validates them.
 
@@ -119,7 +121,7 @@ def _validate_dicom_files(path):
 
     Any study with an inconsistent amount of slices per time point is discarded.
     """
-    studies, errors = _get_headers_by_study(path)
+    studies, errors = _get_headers_by_study(files)
     result = []
     dicom_dataset = namedtuple(
         "dicom_dataset", ["headers", "n_time", "n_slices", "index"]
@@ -143,7 +145,7 @@ def _validate_dicom_files(path):
             continue
         if len(headers) % n_time > 0:
             for d in headers:
-                errors[d["file"].name] = format_error(
+                errors[d["file"]] = format_error(
                     "Number of slices per time point differs"
                 )
             continue
@@ -320,7 +322,9 @@ def _create_itk_from_dcm(
     return img
 
 
-def image_builder_dicom(path: Path, session_id=None) -> ImageBuilderResult:
+def image_builder_dicom(
+    files: List[Path], session_id=None
+) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -338,7 +342,7 @@ def image_builder_dicom(path: Path, session_id=None) -> ImageBuilderResult:
      - a list files associated with the detected images
      - path->error message map describing what is wrong with a given file
     """
-    studies, file_errors_map = _validate_dicom_files(path)
+    studies, file_errors_map = _validate_dicom_files(files)
     new_images = []
     new_image_files = []
     consumed_files = []
@@ -347,10 +351,10 @@ def image_builder_dicom(path: Path, session_id=None) -> ImageBuilderResult:
             n_image, n_image_files = _process_dicom_file(dicom_ds, session_id)
             new_images.append(n_image)
             new_image_files += n_image_files
-            consumed_files += [d["file"].name for d in dicom_ds.headers]
+            consumed_files += [d["file"] for d in dicom_ds.headers]
         except Exception as e:
             for d in dicom_ds.headers:
-                file_errors_map[d["file"].name] = format_error(e)
+                file_errors_map[d["file"]] = format_error(e)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,

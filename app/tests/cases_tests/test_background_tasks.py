@@ -1,13 +1,12 @@
-import re
+import os
 import shutil
-import tarfile
-import zipfile
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 import SimpleITK
 import pytest
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 
 from grandchallenge.cases.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,
@@ -20,11 +19,7 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
-from grandchallenge.cases.tasks import (
-    check_compressed_and_extract,
-    extract_and_flatten,
-    fix_mhd_file,
-)
+from grandchallenge.cases.tasks import check_compressed_and_extract
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UserFactory
@@ -312,94 +307,6 @@ def test_mhd_file_annotation_creation(settings, format):
     assert [e for e in reversed(sitk_image.GetSize())] == image.shape
 
 
-def test_fix_mhd_file(tmpdir):
-    file = RESOURCE_PATH / "image3x4.mhd"
-    tmp_file = shutil.copy(str(file), str(tmpdir))
-    tmp_file = Path(tmp_file)
-    with tmp_file.open("r") as f:
-        headers = f.read()
-    headers = re.match(
-        r".*ElementDataFile = (?P<data_file>[^\n]*)", headers, flags=re.DOTALL,
-    )
-    assert headers.group("data_file") == "image3x4.zraw"
-
-    fix_mhd_file(tmp_file, "foo-")
-    with tmp_file.open("r") as f:
-        headers = f.read()
-    headers = re.match(
-        r".*ElementDataFile = (?P<data_file>[^\n]*)", headers, flags=re.DOTALL,
-    )
-    assert headers.group("data_file") == "foo-image3x4.zraw"
-
-
-@pytest.mark.parametrize(
-    "file_name,func,is_tar",
-    (
-        ("test.zip", zipfile.ZipFile, False),
-        ("test.tar", tarfile.TarFile, True),
-    ),
-)
-def test_extract_and_flatten(tmpdir, file_name, func, is_tar):
-    file = RESOURCE_PATH / file_name
-    tmp_file = shutil.copy(str(file), str(tmpdir))
-    tmp_file = Path(tmp_file)
-    assert tmpdir.listdir() == [tmp_file]
-
-    tmpdir_path = Path(tmpdir)
-    with func(tmp_file) as f:
-        index, new_files = extract_and_flatten(
-            f, tmpdir_path, 0, is_tar=is_tar
-        )
-    assert index == 3
-    expected = [
-        {
-            "prefix": "1-folder-0-",
-            "path": tmpdir_path / "1-folder-0-file-0.txt",
-        },
-        {
-            "prefix": "2-folder-0-folder-1-",
-            "path": tmpdir_path / "2-folder-0-folder-1-file-1.txt",
-        },
-        {
-            "prefix": "3-folder-0-folder-1-folder-2-",
-            "path": tmpdir_path / "3-folder-0-folder-1-folder-2-file-2.txt",
-        },
-        {
-            "prefix": "3-folder-0-folder-1-folder-2-",
-            "path": tmpdir_path / "3-folder-0-folder-1-folder-2-folder-3.zip",
-        },
-    ]
-    assert sorted(new_files, key=lambda k: k["path"]) == expected
-    assert sorted(tmpdir.listdir()) == sorted(
-        [x["path"] for x in expected] + [tmpdir_path / file_name]
-    )
-
-
-def test_extract_and_flatten_prefixes(tmpdir):
-    # This zip file contains only files, no folders.
-    file = RESOURCE_PATH / "zip_flat.zip"
-    tmp_file = shutil.copy(str(file), str(tmpdir))
-    tmp_file = Path(tmp_file)
-    assert tmpdir.listdir() == [tmp_file]
-
-    tmpdir_path = Path(tmpdir)
-    with zipfile.ZipFile(tmp_file) as f:
-        index, new_files = extract_and_flatten(f, tmpdir_path, 0, is_tar=False)
-    assert index == 0
-    expected = [
-        {"prefix": "0-", "path": tmpdir_path / "0-0.txt"},
-        {"prefix": "0-", "path": tmpdir_path / "0-1.txt"},
-        {"prefix": "0-", "path": tmpdir_path / "0-2.txt"},
-        {"prefix": "0-", "path": tmpdir_path / "0-3.txt"},
-        {"prefix": "0-", "path": tmpdir_path / "0-4.txt"},
-        {"prefix": "0-", "path": tmpdir_path / "0-5.txt"},
-    ]
-    assert sorted(new_files, key=lambda k: k["path"]) == expected
-    assert sorted(tmpdir.listdir()) == sorted(
-        [x["path"] for x in expected] + [tmpdir_path / "zip_flat.zip"]
-    )
-
-
 @pytest.mark.parametrize("file_name", ("test.zip", "test.tar"))
 def test_check_compressed_and_extract(tmpdir, file_name):
     file = RESOURCE_PATH / file_name
@@ -408,61 +315,90 @@ def test_check_compressed_and_extract(tmpdir, file_name):
     assert tmpdir.listdir() == [tmp_file]
 
     tmpdir_path = Path(tmpdir)
-    check_compressed_and_extract(tmp_file, tmpdir_path, 0)
+    check_compressed_and_extract(tmp_file, tmpdir_path)
 
     expected = [
-        "1-folder-0-file-0.txt",
-        "2-folder-0-folder-1-file-1.txt",
-        "3-folder-0-folder-1-folder-2-file-2.txt",
-        "4-folder-3-file-3.txt",
+        os.path.join(tmpdir_path, "folder-0/file-0.txt"),
+        os.path.join(tmpdir_path, "folder-0/folder-1/file-1.txt"),
+        os.path.join(tmpdir_path, "folder-0/folder-1/folder-2/file-2.txt"),
+        os.path.join(
+            tmpdir_path, "folder-0/folder-1/folder-2/folder-3/file-3.txt"
+        ),
     ]
-    assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
+    actual = []
+    for root, _, files in os.walk(tmpdir_path):
+        for file in files:
+            actual.append(os.path.join(root, file))
+    actual = sorted(actual)
+    assert actual == expected
 
 
 @pytest.mark.parametrize(
-    "file_name,expected",
-    (
-        (
-            "same_name.zip",
-            [
-                "1-same_name-1-1-test_grayscale.png",
-                "10-same_name-9-1-test_grayscale.png",
-                "2-same_name-10-1-test_grayscale.png",
-                "3-same_name-2-1-test_grayscale.png",
-                "4-same_name-3-1-test_grayscale.png",
-                "5-same_name-4-1-test_grayscale.png",
-                "6-same_name-5-1-test_grayscale.png",
-                "7-same_name-6-1-test_grayscale.png",
-                "8-same_name-7-1-test_grayscale.png",
-                "9-same_name-8-1-test_grayscale.png",
-            ],
-        ),
-        (
-            "same_name_zipped.zip",
-            [
-                "10-8-1-test_grayscale.png",
-                "11-9-1-test_grayscale.png",
-                "2-1-1-test_grayscale.png",
-                "3-10-1-test_grayscale.png",
-                "4-2-1-test_grayscale.png",
-                "5-3-1-test_grayscale.png",
-                "6-4-1-test_grayscale.png",
-                "7-5-1-test_grayscale.png",
-                "8-6-1-test_grayscale.png",
-                "9-7-1-test_grayscale.png",
-            ],
-        ),
-    ),
+    "file_name", ("tar_with_link.tar", "tar_with_sym_link.tar",)
 )
-def test_check_compressed_and_extract_same_name(tmpdir, file_name, expected):
+def test_check_compressed_and_extract_with_symlink(tmpdir, file_name):
+
     file = RESOURCE_PATH / file_name
     tmp_file = shutil.copy(str(file), str(tmpdir))
     tmp_file = Path(tmp_file)
     assert tmpdir.listdir() == [tmp_file]
 
     tmpdir_path = Path(tmpdir)
-    check_compressed_and_extract(tmp_file, tmpdir_path, 0)
-    assert sorted([x.name for x in tmpdir_path.iterdir()]) == expected
+    with pytest.raises(ValidationError):
+        check_compressed_and_extract(tmp_file, tmpdir_path)
+
+
+@pytest.mark.parametrize("file_name", ("deep_folder.tar",))
+def test_check_compressed_and_extract_with_deep_folder_structure(
+    tmpdir, file_name
+):
+
+    file = RESOURCE_PATH / file_name
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    assert tmpdir.listdir() == [tmp_file]
+
+    tmpdir_path = Path(tmpdir)
+    check_compressed_and_extract(tmp_file, tmpdir_path)
+    expected = [
+        os.path.join(
+            tmpdir_path,
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345/123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890/t.png",
+        ),
+    ]
+    actual = []
+    for root, _, files in os.walk(tmpdir_path):
+        for file in files:
+            actual.append(os.path.join(root, file))
+    actual = sorted(actual)
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "file_name", ("same_name.zip", "same_name_zipped.zip")
+)
+def test_check_compressed_and_extract_same_name(tmpdir, file_name):
+    file = RESOURCE_PATH / file_name
+    tmp_file = shutil.copy(str(file), str(tmpdir))
+    tmp_file = Path(tmp_file)
+    assert tmpdir.listdir() == [tmp_file]
+    file_basename, _ = os.path.splitext(file_name)
+    tmpdir_path = Path(tmpdir)
+    check_compressed_and_extract(tmp_file, tmpdir_path)
+    expected = sorted(
+        [
+            os.path.join(
+                tmpdir_path, file_basename, str(x), "1", "test_grayscale.png",
+            )
+            for x in range(1, 11)
+        ]
+    )
+    actual = []
+    for root, _, files in os.walk(tmpdir_path):
+        for file in files:
+            actual.append(os.path.join(root, file))
+    actual = sorted(actual)
+    assert actual == expected
 
 
 @pytest.mark.django_db
