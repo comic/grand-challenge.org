@@ -3,17 +3,7 @@
 {% load static %}
 
 {% block jumbotron %}
-    <div class="row mb-3">
-        <div class="col-12">
-            <a class="w-100"
-               href="{% url 'home' %}">
-                <img alt="{{ request.site.name }} Banner"
-                     class="rounded w-100"
-                     src="{% static 'images/gcheader.png' %}"
-                >
-            </a>
-        </div>
-    </div>
+    {% include "grandchallenge/partials/jumbotron.html" with background_static_url="images/home_pathology_crop_1.jpg" title="Grand Challenge" description="A platform to empower biomedical image analysis research worldwide." %}
 {% endblock %}
 
 {% block content %}

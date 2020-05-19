@@ -4,6 +4,12 @@ html {
     min-height: 100%;
 }
 
+.jumbotron {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+
 /* fix modal display with overflow-y: scroll on html */
 .modal, .modal-open {
     padding-right: 0 !important;

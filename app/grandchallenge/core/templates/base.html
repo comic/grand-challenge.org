@@ -27,10 +27,15 @@
     <body class="d-flex flex-column min-vh-100">
 
     {% block navbar %}
-        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=challenge.hide_signin %}
+        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
     {% endblock %}
 
     <main role="main" class="flex-fill">
+
+        {% block jumbotron %}
+            {% include "grandchallenge/partials/jumbotron.html" %}
+        {% endblock %}
+
         <div id="page" class="container pb-3">
 
             {% block messages %}
@@ -41,8 +46,6 @@
                 {% block breadcrumbs %}
                 {% endblock %}
             </nav>
-
-            {% block jumbotron %}{% endblock %}
 
             {% block outerContent %}
                 <div class="my-3 p-3 bg-white rounded shadow-sm">
