@@ -87,13 +87,17 @@ def _get_headers_by_study(path):
                 studies[key]["index"] = index
                 studies[key]["headers"] = headers
             except Exception as e:
-                errors[file.name] = str(e)
+                errors[file.name] = format_error(e)
 
     for key in studies:
         studies[key]["headers"].sort(
             key=lambda x: int(x["data"].InstanceNumber)
         )
     return studies, errors
+
+
+def format_error(message):
+    return f"Dicom image builder: {message}"
 
 
 def _validate_dicom_files(path):
@@ -139,9 +143,9 @@ def _validate_dicom_files(path):
             continue
         if len(headers) % n_time > 0:
             for d in headers:
-                errors[
-                    d["file"].name
-                ] = "Number of slices per time point differs"
+                errors[d["file"].name] = format_error(
+                    "Number of slices per time point differs"
+                )
             continue
         n_slices = len(headers) // n_time
         result.append(
@@ -346,7 +350,7 @@ def image_builder_dicom(path: Path, session_id=None) -> ImageBuilderResult:
             consumed_files += [d["file"].name for d in dicom_ds.headers]
         except Exception as e:
             for d in dicom_ds.headers:
-                file_errors_map[d["file"].name] = str(e)
+                file_errors_map[d["file"].name] = format_error(e)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,

@@ -754,8 +754,8 @@ def test_reader_study_add_ground_truth(client, settings):
         in response.rendered_content
     )
     assert (
-        f"The following images appear in the file, but not in the hanging "
-        f"list: im5." in response.rendered_content
+        "The following images appear in the file, but not in the hanging "
+        "list: im5." in response.rendered_content
     )
     assert (
         "These images appear in the hanging list, but not in the file: im4."

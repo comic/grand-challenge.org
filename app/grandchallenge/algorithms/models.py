@@ -18,15 +18,12 @@ from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from grandchallenge.algorithms.emails import send_failed_job_email
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import get_logo_path
-from grandchallenge.container_exec.backends.docker import (
+from grandchallenge.components.backends.docker import (
     Executor,
     cleanup,
     get_file,
 )
-from grandchallenge.container_exec.models import (
-    ContainerExecJobModel,
-    ContainerImageModel,
-)
+from grandchallenge.components.models import ComponentImage, ComponentJob
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.jqfileupload.models import StagedFile
@@ -42,13 +39,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         Group,
         on_delete=models.CASCADE,
         editable=False,
-        related_name=f"editors_of_algorithm",
+        related_name="editors_of_algorithm",
     )
     users_group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
         editable=False,
-        related_name=f"users_of_algorithm",
+        related_name="users_of_algorithm",
     )
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
@@ -226,7 +223,7 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
         pass
 
 
-class AlgorithmImage(UUIDModel, ContainerImageModel):
+class AlgorithmImage(UUIDModel, ComponentImage):
     algorithm = models.ForeignKey(
         Algorithm,
         on_delete=models.CASCADE,
@@ -234,7 +231,7 @@ class AlgorithmImage(UUIDModel, ContainerImageModel):
     )
     queue_override = models.CharField(max_length=128, blank=True)
 
-    class Meta(UUIDModel.Meta, ContainerImageModel.Meta):
+    class Meta(UUIDModel.Meta, ComponentImage.Meta):
         ordering = ("created", "creator")
 
     def get_absolute_url(self):
@@ -421,7 +418,7 @@ class AlgorithmExecutor(Executor):
         upload_session.process_images()
 
 
-class Job(UUIDModel, ContainerExecJobModel):
+class Job(UUIDModel, ComponentJob):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
@@ -538,7 +535,7 @@ class AlgorithmPermissionRequest(RequestBase):
     @property
     def permission_list_url(self):
         return reverse(
-            f"algorithms:permission-request-list",
+            "algorithms:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
 

@@ -46,8 +46,8 @@ class Command(BaseCommand):
 
         if len(failed_ids) > 0:
             self.stdout.write(
-                f"Done, but some images failed. IDs of failed images:"
+                "Done, but some images failed. IDs of failed images:"
             )
             self.stdout.writelines([str(uuid) for uuid in failed_ids])
         else:
-            self.stdout.write(self.style.SUCCESS(f"Finished successfully!"))
+            self.stdout.write(self.style.SUCCESS("Finished successfully!"))

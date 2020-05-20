@@ -303,17 +303,6 @@ class SessionCreate(
         return super().form_valid(form)
 
 
-class SessionUpdate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
-):
-    model = Session
-    fields = ["user_finished"]
-    permission_required = (
-        f"{Session._meta.app_label}.change_{Session._meta.model_name}"
-    )
-    raise_exception = True
-
-
 class SessionDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):

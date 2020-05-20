@@ -51,6 +51,11 @@ RUN npm install && npm run build
 ###################
 FROM base as test
 
+# Add java and graphviz for plantuml documentation
+USER root:root
+RUN apt-get update && apt-get install -y default-jre graphviz
+USER django:django
+
 RUN poetry install --no-root
 COPY --chown=django:django setup.cfg /home/django
 

@@ -256,32 +256,6 @@ def test_session_create(client):
 
 
 @pytest.mark.django_db
-def test_session_update(client):
-    session = SessionFactory()
-
-    assert not session.user_finished
-
-    response = get_view_for_user(
-        client=client,
-        method=client.post,
-        viewname="workstations:session-update",
-        reverse_kwargs={
-            "slug": session.workstation_image.workstation.slug,
-            "pk": session.pk,
-        },
-        user=session.creator,
-        data={"user_finished": True},
-    )
-
-    assert response.status_code == 302
-    assert response.url == session.get_absolute_url()
-
-    session.refresh_from_db()
-
-    assert session.user_finished
-
-
-@pytest.mark.django_db
 def test_session_redirect(client):
     user = UserFactory()
     wsi = WorkstationImageFactory(
@@ -309,10 +283,11 @@ def test_session_detail(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="workstations:session-detail",
+        viewname="session-detail",
         reverse_kwargs={
             "slug": s1.workstation_image.workstation.slug,
             "pk": s1.pk,
+            "rendering_subdomain": s1.region,
         },
         user=s1.creator,
     )
@@ -328,11 +303,12 @@ def test_workstation_proxy(client):
     session = SessionFactory(creator=u1)
 
     url = reverse(
-        "workstations:session-proxy",
+        "session-proxy",
         kwargs={
             "slug": session.workstation_image.workstation.slug,
             "pk": session.pk,
             "path": "foo/bar/../baz/test",
+            "rendering_subdomain": session.region,
         },
     )
 

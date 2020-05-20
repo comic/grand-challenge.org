@@ -10,3 +10,9 @@ register = template.Library()
 @stringfilter
 def suffix(value):
     return Path(value).suffix
+
+
+@register.filter
+@stringfilter
+def stem(value):
+    return Path(value).stem

@@ -75,14 +75,18 @@ function handleJobStatus(jobs) {
     let jobStatuses = jobs.map(j => j.status.toLowerCase());
     let jobUrls = jobs.map(j => j.api_url);
 
-    let remainingJobs = jobStatuses.filter(s => ["started", "queued"].includes(s)).length;
-    let estimatedRemainingTime = moment.duration(remainingJobs * averageJobDuration);
+    let queuedJobs = jobStatuses.filter(s => ["queued",].includes(s)).length;
+    let estimatedRemainingTime = queuedJobs * averageJobDuration;
+
+    if (jobStatuses.some(s => s === "started")) {
+        estimatedRemainingTime += averageJobDuration;
+    }
 
     if (jobStatuses.every(s => s === "succeeded")) {
         setCardCompleteMessage(cards.job, "");
         getResults(jobs.map(j => j.result));
     } else if (jobStatuses.some(s => s === "started")) {
-        setCardActiveMessage(cards.job, `Started, ${estimatedRemainingTime.humanize()} remaining`);
+        setCardActiveMessage(cards.job, `Started, ${moment.duration(estimatedRemainingTime).humanize()} remaining`);
         setTimeout(function () {
             getJobStatus(jobUrls)
         }, Math.floor(Math.random() * timeout) + 100);

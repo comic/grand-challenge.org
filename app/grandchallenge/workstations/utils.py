@@ -1,3 +1,5 @@
+from random import choice
+
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -39,8 +41,13 @@ def get_or_create_active_session(
     )
 
     if session is None:
+        # Start a session in one of the available regions. In the future,
+        # rather than doing a random choice here we could look at the
+        # region with the least connections, or the region closest to the user.
         session = Session.objects.create(
-            creator=user, workstation_image=workstation_image
+            creator=user,
+            workstation_image=workstation_image,
+            region=choice(settings.WORKSTATIONS_ACTIVE_REGIONS),
         )
 
     return session

@@ -60,6 +60,7 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.reader_studies.forms import (
+    AnswersRemoveForm,
     CategoricalOptionFormSet,
     EditorsForm,
     GroundTruthForm,
@@ -192,6 +193,8 @@ class ReaderStudyDetail(
         reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
         editor_remove_form = EditorsForm()
         editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+        answers_remove_form = AnswersRemoveForm()
+
         context.update(
             {
                 "user_score": self.object.score_for_user(self.request.user),
@@ -199,6 +202,7 @@ class ReaderStudyDetail(
                 * len(self.object.hanging_list),
                 "editor_remove_form": editor_remove_form,
                 "reader_remove_form": reader_remove_form,
+                "answers_remove_form": answers_remove_form,
                 "user_is_reader": self.object.is_reader(
                     user=self.request.user
                 ),
@@ -625,6 +629,36 @@ class EditorsUpdate(ReaderStudyUserGroupUpdateMixin):
 class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     form_class = ReadersForm
     success_message = "Readers successfully updated"
+
+
+class AnswersRemove(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+
+    template_name = "reader_studies/readerstudy_user_groups_form.html"
+    form_class = AnswersRemoveForm
+    success_message = "Answers removed"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    @property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def form_valid(self, form):
+        form.remove_answers(reader_study=self.reader_study)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
 
 
 class ReaderStudyPermissionRequestCreate(

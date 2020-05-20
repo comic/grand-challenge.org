@@ -97,12 +97,7 @@ def test_workstation_editor_permissions(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "viewname",
-    [
-        "workstations:detail",
-        "workstations:session-create",
-        "workstations:session-detail",
-        "workstations:session-update",
-    ],
+    ["workstations:detail", "workstations:session-create", "session-detail"],
 )
 def test_workstation_user_permissions(client, two_workstation_sets, viewname):
     tests = (
@@ -117,15 +112,12 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
-    if viewname in [
-        "workstations:session-detail",
-        "workstations:session-update",
-    ]:
+    if viewname == "session-detail":
         s = SessionFactory(
             workstation_image=two_workstation_sets.ws1.image,
             creator=two_workstation_sets.ws1.user,
         )
-        kwargs.update({"pk": s.pk})
+        kwargs.update({"pk": s.pk, "rendering_subdomain": s.region})
         tests += ((two_workstation_sets.ws1.user1, 403),)
 
     for test in tests:
@@ -213,13 +205,14 @@ def test_session_proxy_permissions(client, two_workstation_sets):
 
     for test in tests:
         response = get_view_for_user(
-            viewname="workstations:session-proxy",
+            viewname="session-proxy",
             client=client,
             user=test[0],
             reverse_kwargs={
                 "slug": s.workstation_image.workstation.slug,
                 "pk": s.pk,
                 "path": "foo/bar/../../baz",
+                "rendering_subdomain": s.region,
             },
         )
         assert response.status_code == test[1]

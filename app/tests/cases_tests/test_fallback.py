@@ -3,7 +3,10 @@ from pathlib import Path
 
 import pytest
 
-from grandchallenge.cases.image_builders.fallback import image_builder_fallback
+from grandchallenge.cases.image_builders.fallback import (
+    format_error,
+    image_builder_fallback,
+)
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
 
@@ -38,6 +41,6 @@ def test_image_builder_fallback_corrupt_file(tmpdir):
 
     result = image_builder_fallback(Path(tmpdir))
     assert result.file_errors_map == {
-        src.name: "Not a valid image file",
+        src.name: format_error("Not a valid image file"),
     }
     assert result.consumed_files == []

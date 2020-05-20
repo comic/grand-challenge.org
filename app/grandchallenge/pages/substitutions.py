@@ -36,7 +36,7 @@ class Substitution:
     def pattern(self) -> str:
         pattern = rf"{self._markers[0]}\s*{self._tag_name}"
         if self._use_arg:
-            pattern += rf"\s+[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?"
+            pattern += r"\s+[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?"
         pattern += rf"\s*{self._markers[1]}"
         return pattern
 

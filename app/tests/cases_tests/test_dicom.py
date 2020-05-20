@@ -7,6 +7,7 @@ import pytest
 from grandchallenge.cases.image_builders.dicom import (
     _get_headers_by_study,
     _validate_dicom_files,
+    format_error,
     image_builder_dicom,
 )
 from grandchallenge.cases.image_builders.metaio_utils import parse_mh_header
@@ -44,9 +45,8 @@ def test_validate_dicom_files():
         studies, errors = _validate_dicom_files(DICOM_DIR)
         assert len(studies) == 0
         for header in headers[1:]:
-            assert (
-                errors[header["file"].name]
-                == "Number of slices per time point differs"
+            assert errors[header["file"].name] == format_error(
+                "Number of slices per time point differs"
             )
 
 
