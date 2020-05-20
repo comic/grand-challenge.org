@@ -279,7 +279,7 @@ class Image(UUIDModel):
         (FOV_EMPTY, "Not applicable"),
     )
 
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=4096)
     study = models.ForeignKey(Study, on_delete=models.CASCADE, null=True)
     origin = models.ForeignKey(
         to=RawImageUploadSession, null=True, on_delete=models.SET_NULL
