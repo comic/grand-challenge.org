@@ -1,6 +1,4 @@
-import fileinput
 import os
-import re
 import tarfile
 import zipfile
 from datetime import timedelta
@@ -204,32 +202,6 @@ def remove_duplicate_files(
     )
 
 
-def fix_mhd_file(file, prefix):
-    """
-    Fixes the reference to the data file for extracted mhd files in place.
-
-    This is needed because we prepend folder names to extraced files to prevent
-    duplicate file names.
-
-    Parameters
-    ----------
-    file:
-        A .mhd file.
-    prefix:
-        The prefix that was added to the file and should be added to the
-        ElementDataFile entry.
-    """
-    try:
-        with fileinput.input(file, inplace=True) as f:
-            for line in f:
-                new_line = re.sub(
-                    r"(ElementDataFile)\s+=\s+(.*)", fr"\1 = {prefix}\2", line,
-                )
-                print(new_line, end="")
-    except Exception:
-        pass
-
-
 def _check_sanity(info, is_tar, path):
     # Check tar files for symlinks and reject upload session if any.
     if is_tar:
@@ -283,7 +255,7 @@ def check_compressed_and_extract(file_path, target_path, checked_paths=None):
         Files that have already been extracted.
     """
 
-    def do_extraction(file_path):
+    def extract_file(file_path):
         if tarfile.is_tarfile(file_path):
             with tarfile.open(file_path) as tf:
                 extract(tf, target_path, is_tar=True)
@@ -302,7 +274,7 @@ def check_compressed_and_extract(file_path, target_path, checked_paths=None):
         return
     checked_paths.append(file_path)
 
-    extracted = do_extraction(file_path)
+    extracted = extract_file(file_path)
 
     # check zips in zips
     if extracted:
@@ -314,8 +286,9 @@ def check_compressed_and_extract(file_path, target_path, checked_paths=None):
 
 
 def extract_files(source_path: Path):
+    checked_paths = []
     for file_path in source_path.iterdir():
-        check_compressed_and_extract(file_path, source_path)
+        check_compressed_and_extract(file_path, source_path, checked_paths)
 
 
 @shared_task
@@ -378,8 +351,8 @@ def build_images(upload_session_uuid: UUID):
             upload_session.status = upload_session.FAILURE
             upload_session.save()
             return
-        except Exception as e:
-            upload_session.error_message = f"An unknown error occurred {e}"
+        except Exception:
+            upload_session.error_message = "An unknown error occurred"
             upload_session.status = upload_session.FAILURE
             upload_session.save()
             raise
@@ -400,7 +373,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         for f in unconsumed_files
     ]
 
-    filename_lookup = {
+    filepath_lookup = {
         raw_image_file.staged_file_id
         and os.path.join(
             tmp_dir, StagedAjaxFile(raw_image_file.staged_file_id).name
@@ -424,20 +397,20 @@ def _handle_raw_image_files(tmp_dir, upload_session):
             algorithm_result.new_folder_upload
         )
 
-        for filename in algorithm_result.consumed_files:
-            if filename in unconsumed_files:
-                unconsumed_files.remove(filename)
-                raw_image = filename_lookup[
-                    str(filename)
+        for filepath in algorithm_result.consumed_files:
+            if filepath in unconsumed_files:
+                unconsumed_files.remove(filepath)
+                raw_image = filepath_lookup[
+                    str(filepath)
                 ]  # type: RawImageFile
                 raw_image.error = None
                 raw_image.consumed = True
                 raw_image.save()
 
-        for (filename, msg,) in algorithm_result.file_errors_map.items():
-            if filename in unconsumed_files:
-                raw_image = filename_lookup[
-                    str(filename)
+        for (filepath, msg,) in algorithm_result.file_errors_map.items():
+            if filepath in unconsumed_files:
+                raw_image = filepath_lookup[
+                    str(filepath)
                 ]  # type: RawImageFile
                 raw_image.error = raw_image.error or ""
                 raw_image.error += f"{msg}\n"
@@ -454,7 +427,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     )
 
     _handle_unconsumed_files(
-        filename_lookup=filename_lookup,
+        filepath_lookup=filepath_lookup,
         unconsumed_files=unconsumed_files,
         upload_session=upload_session,
     )
@@ -490,11 +463,11 @@ def _handle_image_relations(*, collected_images, upload_session):
 
 
 def _handle_unconsumed_files(
-    *, filename_lookup, unconsumed_files, upload_session
+    *, filepath_lookup, unconsumed_files, upload_session
 ):
     errors = []
-    for unconsumed_filename in unconsumed_files:
-        raw_file = filename_lookup[str(unconsumed_filename)]
+    for unconsumed_filepath in unconsumed_files:
+        raw_file = filepath_lookup[str(unconsumed_filepath)]
         error = raw_file.error or ""
         raw_file.error = (
             f"File could not be processed by any image builder:\n\n{error}"

@@ -93,7 +93,7 @@ def test_get_color_space(color_space_string, expected):
             10,
             0.1,
             0.1,
-            "Not a valid tif: ImageHeigth could not be determined",
+            "Not a valid tif: Image heigth could not be determined",
         ),
         (
             "dummy.tiff",
@@ -103,7 +103,7 @@ def test_get_color_space(color_space_string, expected):
             None,
             0.1,
             0.1,
-            "Not a valid tif: ImageWidth could not be determined",
+            "Not a valid tif: Image width could not be determined",
         ),
         (
             "dummy.tiff",
@@ -346,7 +346,7 @@ def test_handle_complex_files(tmpdir_factory):
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(RESOURCE_PATH / "complex_tiff", temp_dir)
     files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
-    gc_list = _load_gc_files(files=files, converter=MockConverter)
+    gc_list, errors = _load_gc_files(files=files, converter=MockConverter)
     assert len(gc_list) == 2
     all_associated_files = []
     for gc in gc_list:
@@ -380,3 +380,15 @@ def test_convert_to_tiff(resource, filename, tmpdir_factory):
         path=temp_dir / filename, pk=pk, converter=pyvips
     )
     assert tiff_file is not None
+
+
+def test_error_handling(tmpdir_factory):
+    # Copy resource files to writable temp folder
+    # The content files are dummy files and won't compile to tiff.
+    # The point is to test the loading of gc_files and make sure all
+    # related files are associated with the gc_file
+    temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
+    shutil.copytree(RESOURCE_PATH / "complex_tiff", temp_dir)
+    files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
+    image_builder_result = image_builder_tiff(files=files)
+    assert len(image_builder_result.file_errors_map) == 8

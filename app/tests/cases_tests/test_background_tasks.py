@@ -432,6 +432,20 @@ def test_build_zip_file(settings):
 
 
 @pytest.mark.django_db
+def test_build_multiple_zip_files(settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # valid.zip contains a tarred version of the dicom folder,
+    # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff
+    images = ["valid.zip", "deep_folder.tar"]
+    session, uploaded_images = create_raw_upload_image_session(images)
+
+    session.refresh_from_db()
+    assert session.error_message is None
+
+
+@pytest.mark.django_db
 def test_failed_dicom_files_are_retained(settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)

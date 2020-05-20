@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
 import openslide
@@ -34,11 +34,11 @@ class GrandChallengeTiffFile:
     def validate(self):
         if not self.image_width:
             raise ValidationError(
-                "Not a valid tif: ImageWidth could not be determined"
+                "Not a valid tif: Image width could not be determined"
             )
         if not self.image_height:
             raise ValidationError(
-                "Not a valid tif: ImageHeigth could not be determined"
+                "Not a valid tif: Image heigth could not be determined"
             )
         if not self.resolution_levels:
             raise ValidationError(
@@ -251,7 +251,7 @@ def _add_folder_uploads(
 
 
 mirax_pattern = r"INDEXFILE\s?=\s?.|FILE_\d+\s?=\s?."
-# vms (and vmu) files conatin key value pairs, where the ImageFile keys
+# vms (and vmu) files contain key value pairs, where the ImageFile keys
 # can have the following format:
 # ImageFile =, ImageFile(x,y) ImageFile(z,x,y)
 vms_pattern = r"ImageFile(\(\d*,\d*(,\d)?\))?\s?=\s?.|MapFile\s?=\s?.|OptimisationFile\s?=\s?.|MacroImage\s?=\s?."
@@ -274,9 +274,10 @@ def _get_mrxs_files(mrxs_file: Path):
         ]
         for line in lines:
             original_name = line.split("=")[1].strip()
-            file_matched.append(slide_dat.parent / original_name)
+            if os.path.exists(slide_dat.parent / original_name):
+                file_matched.append(slide_dat.parent / original_name)
         file_matched.append(slide_dat)
-        return file_matched
+    return file_matched
 
 
 def _get_vms_files(vms_file: Path):
@@ -292,9 +293,10 @@ def _get_vms_files(vms_file: Path):
 
 def _convert(
     files: List[Path], associated_files_getter: Optional[callable], converter
-) -> List[GrandChallengeTiffFile]:
-    compiled_files: List = []
-    associated_files: List = []
+) -> (List[GrandChallengeTiffFile], Dict):
+    compiled_files: List[GrandChallengeTiffFile] = []
+    associated_files: List[Path] = []
+    errors = {}
     for file in files:
         try:
             gc_file = GrandChallengeTiffFile(file)
@@ -303,14 +305,15 @@ def _convert(
             tiff_file = _convert_to_tiff(
                 path=file, pk=gc_file.pk, converter=converter
             )
-        except Exception:
+        except Exception as e:
+            errors[file] = str(e)
             continue
         else:
             gc_file.path = tiff_file
             gc_file.associated_files = associated_files
             gc_file.associated_files.append(file)
             compiled_files.append(gc_file)
-    return compiled_files
+    return compiled_files, errors
 
 
 def _convert_to_tiff(*, path: Path, pk: UUID, converter) -> Path:
@@ -333,8 +336,9 @@ def _convert_to_tiff(*, path: Path, pk: UUID, converter) -> Path:
 
 def _load_gc_files(
     *, files: List[Path], converter
-) -> List[GrandChallengeTiffFile]:
+) -> (List[GrandChallengeTiffFile], Dict):
     loaded_files = []
+    errors = {}
     complex_file_handlers = {
         ".mrxs": _get_mrxs_files,
         ".vms": _get_vms_files,
@@ -347,7 +351,11 @@ def _load_gc_files(
     for ext, handler in complex_file_handlers.items():
         complex_files = [file for file in files if file.suffix.lower() == ext]
         if len(complex_files) > 0:
-            loaded_files += _convert(complex_files, handler, converter)
+            converted_files, convert_errors = _convert(
+                complex_files, handler, converter
+            )
+            loaded_files += converted_files
+            errors.update(convert_errors)
 
     # don't handle files that are associated files
     for file in files:
@@ -358,10 +366,10 @@ def _load_gc_files(
         ):
             gc_file = GrandChallengeTiffFile(file)
             loaded_files.append(gc_file)
-    return loaded_files
+    return loaded_files, errors
 
 
-def image_builder_tiff(
+def image_builder_tiff(  # noqa: C901
     files: List[Path], session_id=None
 ) -> ImageBuilderResult:
     new_images = []
@@ -373,27 +381,31 @@ def image_builder_tiff(
     def format_error(message):
         return f"Tiff image builder: {message}"
 
-    loaded_files = _load_gc_files(files=files, converter=pyvips)
+    loaded_files, errors = _load_gc_files(files=files, converter=pyvips)
     for gc_file in loaded_files:
         dzi_output = None
+        error = ""
+        if gc_file.path in errors:
+            error = errors[gc_file.path]
 
         # try and load image with tiff file
         try:
             gc_file = _load_with_tiff(gc_file=gc_file)
         except Exception as e:
-            invalid_file_errors[gc_file.path] = format_error(e)
+            error += f"Load error: {e}. "
 
         # try and load image with open_slide
         try:
             dzi_output, gc_file = _load_and_create_dzi(gc_file=gc_file)
         except Exception as e:
-            invalid_file_errors[gc_file.path] = format_error(e)
+            error += f"Dzi error: {e}. "
 
         # validate
         try:
             gc_file.validate()
         except ValidationError as e:
-            invalid_file_errors[gc_file.path] = format_error(e)
+            error += f"Validation error: {e}. "
+            invalid_file_errors[gc_file.path] = format_error(error)
             continue
 
         image = _create_tiff_image_entry(tiff_file=gc_file)
