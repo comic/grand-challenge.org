@@ -391,7 +391,5 @@ def test_error_handling(tmpdir_factory):
     shutil.copytree(RESOURCE_PATH / "complex_tiff", temp_dir)
     files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
     image_builder_result = image_builder_tiff(files=files)
-    for error in image_builder_result.file_errors_map:
-        print(f"{image_builder_result.file_errors_map[error]}")
 
-    assert len(image_builder_result.file_errors_map) == 8
+    assert len(image_builder_result.file_errors_map) == 14
