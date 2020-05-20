@@ -68,6 +68,8 @@ ADDITIONAL_HEADERS: Dict[str, Pattern] = {
     "SliceThickness": FLOAT_MATCH_REGEXP,
     "Exposures": FLOAT_LIST_MATCH_REGEXP,
     "ContentTimes": CONTENT_TIMES_LIST_MATCH_REGEXP,
+    "WindowCenter": FLOAT_MATCH_REGEXP,
+    "WindowWidth": FLOAT_MATCH_REGEXP,
     "t0": FLOAT_MATCH_REGEXP,
     "t1": FLOAT_MATCH_REGEXP,
 }
