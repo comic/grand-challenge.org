@@ -66,8 +66,11 @@ class TaskType(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-light" title="{0} challenge">'
-            '<i class="fas fa-tasks fa-fw"></i> {0}</span>',
+            (
+                '<span class="badge badge-light above-stretched-link" '
+                'title="{0} challenge"><i class="fas fa-tasks fa-fw">'
+                "</i> {0}</span>"
+            ),
             self.type,
         )
 
@@ -91,8 +94,11 @@ class ImagingModality(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-secondary" title="Uses {0} data">'
-            '<i class="fas fa-microscope fa-fw"></i> {0}</span>',
+            (
+                '<span class="badge badge-secondary above-stretched-link" '
+                'title="Uses {0} data"><i class="fas fa-microscope fa-fw">'
+                "</i> {0}</span>"
+            ),
             self.modality,
         )
 
@@ -136,8 +142,11 @@ class BodyStructure(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-dark" title="Uses {0} data">'
-            '<i class="fas fa-child fa-fw"></i> {0}</span>',
+            (
+                '<span class="badge badge-dark above-stretched-link" '
+                'title="Uses {0} data"><i class="fas fa-child fa-fw">'
+                "</i> {0}</span>"
+            ),
             self.structure,
         )
 
@@ -161,8 +170,11 @@ class ChallengeSeries(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-info" title="Associated with {0}">'
-            '<i class="fas fa-globe fa-fw"></i> {0}</span>',
+            (
+                '<span class="badge badge-info above-stretched-link" '
+                'title="Associated with {0}"><i class="fas fa-globe fa-fw">'
+                "</i> {0}</span>"
+            ),
             self.name,
         )
 
