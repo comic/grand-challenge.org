@@ -37,6 +37,8 @@ OPTIONAL_METADATA_FIELDS = (
     "SeriesInstanceUID",
     "StudyDescription",
     "SliceThickness",
+    "WindowCenter",
+    "WindowWidth",
 )
 
 
@@ -239,11 +241,6 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     img.SetDirection(sitk_direction)
     img.SetSpacing(sitk_spacing)
     img.SetOrigin(sitk_origin)
-
-    if "WindowCenter" in ref_file:
-        img.SetMetaData("WindowCenter", str(ref_file.WindowCenter))
-    if "WindowWidth" in ref_file:
-        img.SetMetaData("WindowWidth", str(ref_file.WindowWidth))
 
     if dimensions == 4:
         # Set Additional Meta Data
