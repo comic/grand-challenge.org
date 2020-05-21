@@ -4,6 +4,8 @@ from itertools import chain
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
+from django.templatetags.static import static
+from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -31,6 +33,7 @@ from grandchallenge.core.permissions.mixins import (
     UserIsNotAnonMixin,
     UserIsStaffMixin,
 )
+from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse
 
@@ -111,6 +114,19 @@ class ChallengeList(TemplateView):
                     [h for h in hosts if h.host and host_count[h.host] > 1],
                     key=lambda h: host_count[h.host],
                     reverse=True,
+                ),
+                "jumbotron_background_url": static("images/archive_2.jpg"),
+                "jumbotron_title": "Challenges",
+                "jumbotron_description": format_html(
+                    (
+                        "Here is an overview of all challenges that have been "
+                        "organized within the area of medical image analysis "
+                        "that we are aware of. If you know of any study that "
+                        "would fit in this overview, or want to advertise "
+                        "your challenge, please <a href='{}'>contact us</a> "
+                        "and we will list the challenge on this page."
+                    ),
+                    random_encode("mailto:support@grand-challenge.org"),
                 ),
             }
         )

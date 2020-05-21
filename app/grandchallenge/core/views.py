@@ -100,7 +100,12 @@ class HomeTemplate(TemplateView):
                 "all_challenges": Challenge.objects.all(),
                 "all_algorithms": Algorithm.objects.all(),
                 "highlights": highlights,
-                "background_url": background_url,
+                "jumbotron_background_url": background_url,
+                "jumbotron_title": "Grand Challenge",
+                "jumbotron_description": (
+                    "A platform to empower biomedical image analysis research "
+                    "worldwide."
+                ),
             }
         )
         return context

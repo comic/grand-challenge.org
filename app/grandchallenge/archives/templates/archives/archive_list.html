@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
 {% load meta_attr %}
-{% load random_encode %}
 
 {% block title %}
     {{ object_list.model|meta_attr:'verbose_name_plural'|title }} - {{ block.super }}
@@ -18,16 +17,6 @@
 {% endblock %}
 
 {% block content %}
-    <h2>{{ object_list.model|meta_attr:'verbose_name_plural'|title }}</h2>
-
-    <p>
-        An archive can be used to collect set of medical images,
-        which can later be used in a reader study, challenge or algorithm. Please
-        <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}">
-            contact us</a>
-        if you would like to set up your own archive.
-    </p>
-
     {% if perms.archives.add_archive %}
         <p>
             <a href="{% url 'archives:create' %}"

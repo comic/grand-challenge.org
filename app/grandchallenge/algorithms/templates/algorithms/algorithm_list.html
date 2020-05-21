@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% load url %}
-{% load random_encode %}
 {% load user_profile_link from profiles %}
 
 {% block title %}
@@ -17,20 +16,6 @@
 {% endblock %}
 
 {% block content %}
-
-    <h2>Algorithms</h2>
-
-    <p>
-        Here we have made available several machine learning algorithms for medical
-        imaging. If you are granted access to an algorithm you will be able to try
-        the algorithm out by uploading your own anonymised medical imaging data.
-        Several web-based workstations are available for interacting with the results.
-        Please
-        <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}">
-            contact us</a>
-        if you would like to make your own algorithm available here.
-    </p>
-
     {% if perms.algorithms.add_algorithm %}
         <p>
             <a href="{% url "algorithms:create" %}"

@@ -6,10 +6,6 @@
 {% load round_to %}
 {% load image_filter %}
 
-{% block jumbotron %}
-    {% include "grandchallenge/partials/jumbotron.html" with background_url=background_url title="Grand Challenge" description="A platform to empower biomedical image analysis research worldwide." %}
-{% endblock %}
-
 {% block content %}
     {% for highlight in highlights %}
         <div class="row {% if forloop.counter0|divisibleby:2 %}flex-md-row-reverse{% endif %}">

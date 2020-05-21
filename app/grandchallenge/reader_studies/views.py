@@ -25,7 +25,9 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
+from django.templatetags.static import static
 from django.utils import timezone
+from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -58,6 +60,7 @@ from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
     DjangoObjectOnlyWithCustomPostPermissions,
 )
+from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.reader_studies.forms import (
     AnswersRemoveForm,
@@ -99,6 +102,27 @@ class ReaderStudyList(PermissionListMixin, ListView):
             queryset | ReaderStudy.objects.filter(public=True)
         ).distinct()
         return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context.update(
+            {
+                "jumbotron_background_url": static("images/challenge_1.jpg"),
+                "jumbotron_title": "Reader Studies",
+                "jumbotron_description": format_html(
+                    (
+                        "A reader study can be used to collect annotations or "
+                        "score algorithm results for a set of medical images. "
+                        "Please <a href='{}'>contact us</a> if you would like "
+                        "to set up your own reader study."
+                    ),
+                    random_encode("mailto:support@grand-challenge.org"),
+                ),
+            }
+        )
+
+        return context
 
 
 class ReaderStudyCreate(

@@ -12,13 +12,13 @@
     {% endif %}
 {% endblock %}
 
-{% block title %} {{ challenge.short_name }} {% endblock %}
+{% block title %} {{ challenge.short_name }} - {{ block.super }} {% endblock %}
 
 {% block jumbotron %}
     {% if challenge.banner %}
-        {% include "grandchallenge/partials/jumbotron.html" with background_url=challenge.banner.url title=challenge.short_name %}
+        {% include "grandchallenge/partials/jumbotron.html" with jumbotron_background_url=challenge.banner.url jumbotron_title=challenge.short_name %}
     {% else %}
-        {% include "grandchallenge/partials/jumbotron.html" with title=challenge.short_name %}
+        {% include "grandchallenge/partials/jumbotron.html" with jumbotron_title=challenge.short_name %}
     {% endif %}
 {% endblock %}
 

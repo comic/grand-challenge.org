@@ -4,8 +4,9 @@
 {% load clean from bleach %}
 {% load static %}
 
-{% block title %} {{ currentpage.challenge.short_name }} -
-    {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
+{% block title %}
+    {% firstof currentpage.display_title currentpage.title "page" %} - {{ block.super }}
+{% endblock %}
 
 {% block content %}
     {% if challenge.disclaimer %}
