@@ -115,7 +115,9 @@ class ChallengeList(TemplateView):
                     key=lambda h: host_count[h.host],
                     reverse=True,
                 ),
-                "jumbotron_background_url": static("images/archive_2.jpg"),
+                "jumbotron_background_url": static(
+                    "images/challenge_2_banner_size.jpg"
+                ),
                 "jumbotron_title": "Challenges",
                 "jumbotron_description": format_html(
                     (
