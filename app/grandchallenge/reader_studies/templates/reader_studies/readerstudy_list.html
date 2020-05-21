@@ -4,15 +4,6 @@
 
 {% block title %}Reader Studies - {{ block.super }}{% endblock %}
 
-{% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item active" aria-current="page">Reader Studies
-        </li>
-    </ol>
-{% endblock %}
-
 {% block content %}
     {% if perms.reader_studies.add_readerstudy %}
         <p>
@@ -49,7 +40,9 @@
     </div>
 
     {% if not object_list %}
-        <p>You do not have permission to view any of the reader studies.</p>
+        <h3>
+            You do not have permission to view any of the reader studies
+        </h3>
     {% endif %}
 
 {% endblock %}

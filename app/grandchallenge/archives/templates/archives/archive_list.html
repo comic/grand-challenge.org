@@ -6,16 +6,6 @@
     {{ object_list.model|meta_attr:'verbose_name_plural'|title }} - {{ block.super }}
 {% endblock %}
 
-{% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item active"
-            aria-current="page">{{ object_list.model|meta_attr:'verbose_name_plural'|title }}
-        </li>
-    </ol>
-{% endblock %}
-
 {% block content %}
     {% if perms.archives.add_archive %}
         <p>
@@ -55,8 +45,8 @@
     </div>
 
     {% if not object_list %}
-        <p>
-            You do not have permission to view any of the {{ object_list.model|meta_attr:"verbose_name_plural" }}.
-        </p>
+        <h3>
+            You do not have permission to view any of the {{ object_list.model|meta_attr:"verbose_name_plural" }}
+        </h3>
     {% endif %}
 {% endblock %}

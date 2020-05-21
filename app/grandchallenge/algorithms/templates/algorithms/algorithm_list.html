@@ -7,15 +7,6 @@
     Algorithms - {{ block.super }}
 {% endblock %}
 
-{% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item active" aria-current="page">Algorithms
-        </li>
-    </ol>
-{% endblock %}
-
 {% block content %}
     {% if perms.algorithms.add_algorithm %}
         <p>
@@ -52,7 +43,9 @@
     </div>
 
     {% if not object_list %}
-        <p>You do not have permission to view any of the algorithms.</p>
+        <h3>
+            You do not have permission to view any of the algorithms
+        </h3>
     {% endif %}
 
 {% endblock %}
