@@ -83,14 +83,17 @@
                     </td>
                     <td>
                         <ul class="list-unstyled">
-                            {% for image in result.images.all %}
+                            {% if result.job.image %}
                                 <li>
-                                    <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image overlay=image config=algorithm.workstation_config %}">
-                                            <span class="badge badge-primary">
-                                                <i class="fa fa-eye"></i> View Input &amp; Output
-                                            </span>
+                                    <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_result=result config=algorithm.workstation_config %}">
+                                        <span class="badge badge-primary"
+                                              title="View algorithm result">
+                                            <i class="fa fa-eye"></i> View Result
+                                        </span>
                                     </a>
                                 </li>
+                            {% endif %}
+                            {% for image in result.images.all %}
                                 {% for file in image.files.all %}
                                     <li>
                                         <a href="{{ file.file.url }}">
@@ -106,13 +109,6 @@
                                           title="No output images were found">
                                         <i class="fa fa-eye-slash"></i>
                                     </span>
-                                </li>
-                                <li>
-                                    <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image config=algorithm.workstation_config %}">
-                                        <span class="badge badge-primary">
-                                            <i class="fa fa-eye"></i> View Input
-                                        </span>
-                                    </a>
                                 </li>
                             {% endfor %}
                             {% for file in result.job.image.files.all %}

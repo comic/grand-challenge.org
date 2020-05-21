@@ -5,7 +5,7 @@ See: https://itk.org/Wiki/MetaIO/Documentation
 """
 
 from pathlib import Path
-from typing import Mapping, Sequence, Tuple, Union
+from typing import List, Mapping, Sequence, Tuple, Union
 
 import SimpleITK
 
@@ -19,7 +19,7 @@ from grandchallenge.cases.models import Image, ImageFile
 
 
 def image_builder_mhd(  # noqa: C901
-    path: Path, session_id=None
+    files: List[Path], session_id=None
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -39,7 +39,9 @@ def image_builder_mhd(  # noqa: C901
     """
     element_data_file_key = "ElementDataFile"
 
-    def detect_mhd_file(headers: Mapping[str, Union[str, None]]) -> bool:
+    def detect_mhd_file(
+        headers: Mapping[str, Union[str, None]], path: Path
+    ) -> bool:
         data_file = headers.get(element_data_file_key, None)
         if data_file in [None, "LOCAL"]:
             return False
@@ -75,7 +77,7 @@ def image_builder_mhd(  # noqa: C901
     new_image_files = []
     consumed_files = set()
     invalid_file_errors = {}
-    for file in path.iterdir():
+    for file in files:
         try:
             parsed_headers = parse_mh_header(file)
         except ValueError:
@@ -83,19 +85,21 @@ def image_builder_mhd(  # noqa: C901
             continue
 
         try:
-            is_hd_or_mha = detect_mhd_file(parsed_headers) or detect_mha_file(
-                parsed_headers
-            )
+            is_hd_or_mha = detect_mhd_file(
+                parsed_headers, file.parent
+            ) or detect_mha_file(parsed_headers)
         except ValueError as e:
-            invalid_file_errors[file.name] = format_error(e)
+            invalid_file_errors[file] = format_error(e)
             continue
 
         if is_hd_or_mha:
             file_dependency = None
             if parsed_headers[element_data_file_key] != "LOCAL":
-                file_dependency = Path(parsed_headers[element_data_file_key])
-                if not (path / file_dependency).is_file():
-                    invalid_file_errors[file.name] = format_error(
+                file_dependency = (
+                    file.parent / parsed_headers[element_data_file_key]
+                )
+                if not file_dependency.is_file():
+                    invalid_file_errors[file] = format_error(
                         "Cannot find data file"
                     )
                     continue
@@ -104,9 +108,9 @@ def image_builder_mhd(  # noqa: C901
             new_images.append(n_image)
             new_image_files += list(n_image_files)
 
-            consumed_files.add(file.name)
+            consumed_files.add(file)
             if file_dependency is not None:
-                consumed_files.add(str(file_dependency.name))
+                consumed_files.add(file_dependency)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
