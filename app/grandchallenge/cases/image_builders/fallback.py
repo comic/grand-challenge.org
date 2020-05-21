@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 import SimpleITK
 import numpy as np
@@ -14,7 +15,9 @@ def format_error(message):
     return f"Fallback image builder: {message}"
 
 
-def image_builder_fallback(path: Path, session_id=None) -> ImageBuilderResult:
+def image_builder_fallback(
+    files: List[Path], session_id=None
+) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -36,9 +39,9 @@ def image_builder_fallback(path: Path, session_id=None) -> ImageBuilderResult:
     new_images = []
     new_image_files = []
     consumed_files = []
-    for file_path in path.iterdir():
+    for file in files:
         try:
-            img = Image.open(file_path)
+            img = Image.open(file)
 
             if img.format.lower() not in ["jpeg", "png"]:
                 raise ValidationError(
@@ -49,13 +52,13 @@ def image_builder_fallback(path: Path, session_id=None) -> ImageBuilderResult:
             is_vector = img.mode != "L"
             img = SimpleITK.GetImageFromArray(img_array, isVector=is_vector)
             n_image, n_image_files = convert_itk_to_internal(
-                img, name=file_path.name, use_spacing=False
+                img, name=file.name, use_spacing=False
             )
             new_images.append(n_image)
             new_image_files += n_image_files
-            consumed_files.append(file_path.name)
+            consumed_files.append(file)
         except (IOError, ValidationError, DecompressionBombError):
-            errors[file_path.name] = format_error("Not a valid image file")
+            errors[file] = format_error("Not a valid image file")
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
