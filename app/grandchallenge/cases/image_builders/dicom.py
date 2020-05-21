@@ -37,6 +37,8 @@ OPTIONAL_METADATA_FIELDS = (
     "SeriesInstanceUID",
     "StudyDescription",
     "SliceThickness",
+    "WindowCenter",
+    "WindowWidth",
 )
 
 

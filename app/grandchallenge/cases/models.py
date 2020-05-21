@@ -175,7 +175,7 @@ class RawImageFile(UUIDModel):
     )
 
     # Copy in case staged_file_id is set to None
-    filename = models.CharField(max_length=4095, blank=False)
+    filename = models.CharField(max_length=4096, blank=False)
 
     staged_file_id = models.UUIDField(blank=True, null=True)
 
@@ -296,6 +296,8 @@ class Image(UUIDModel):
     voxel_depth_mm = models.FloatField(null=True)
     timepoints = models.IntegerField(null=True)
     resolution_levels = models.IntegerField(null=True)
+    window_center = models.IntegerField(null=True)
+    window_width = models.IntegerField(null=True)
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
     )

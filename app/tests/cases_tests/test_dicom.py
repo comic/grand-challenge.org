@@ -126,3 +126,25 @@ def test_dicom_rescaling(folder, element_type):
 
     headers = parse_mh_header(mha_file_obj.file)
     assert headers["ElementType"] == element_type
+
+
+def test_dicom_window_level():
+    files = [
+        Path(d[0]).joinpath(f)
+        for d in os.walk(RESOURCE_PATH / "dicom")
+        for f in d[2]
+    ]
+    result = image_builder_dicom(files)
+
+    assert len(result.new_image_files) == 1
+    mha_file_obj = [
+        x for x in result.new_image_files if x.file.name.endswith("mha")
+    ][0]
+
+    headers = parse_mh_header(mha_file_obj.file)
+    assert headers["WindowCenter"] == "30"
+    assert headers["WindowWidth"] == "200"
+
+    image_obj = result.new_images[0]
+    assert image_obj.window_center == 30
+    assert image_obj.window_width == 200
