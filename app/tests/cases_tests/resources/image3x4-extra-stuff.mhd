@@ -27,4 +27,6 @@ PatientAge = 001Y
 PatientSex = M
 StudyDescription = super awesome study
 SliceThickness = 2
+WindowCenter = 20
+WindowWidth = 200
 ElementDataFile = image3x4.zraw
