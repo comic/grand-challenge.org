@@ -129,7 +129,12 @@ def test_dicom_rescaling(folder, element_type):
 
 
 def test_dicom_window_level():
-    result = image_builder_dicom(RESOURCE_PATH / "dicom")
+    files = [
+        Path(d[0]).joinpath(f)
+        for d in os.walk(RESOURCE_PATH / "dicom")
+        for f in d[2]
+    ]
+    result = image_builder_dicom(files)
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
