@@ -5,10 +5,17 @@ html {
 }
 
 .jumbotron {
+    text-shadow: 1px 1px 3px #000000;
+}
+
+.background-fill {
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
-    text-shadow: 1px 1px 3px #000000;
+}
+
+.min-vh-25 {
+    min-height: 25vh;
 }
 
 /* fix modal display with overflow-y: scroll on html */

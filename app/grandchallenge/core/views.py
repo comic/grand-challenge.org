@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from random import choice
 
 from django.contrib.auth import get_user_model
@@ -21,6 +22,14 @@ from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.subdomains.utils import reverse
 
 
+@dataclass
+class Highlight:
+    title: str
+    description: str
+    image: str
+    url: str
+
+
 class HomeTemplate(TemplateView):
     template_name = "home.html"
 
@@ -38,11 +47,59 @@ class HomeTemplate(TemplateView):
             )
         )
 
+        highlights = [
+            Highlight(
+                title="Archives",
+                description=(
+                    "Archives are the place to host your dataset if you want "
+                    "to create reader studies, challenges or use an "
+                    "algorithm. Archives can be kept private or made public."
+                ),
+                url=reverse("archives:list"),
+                image="images/archive_1.jpg",
+            ),
+            Highlight(
+                title="Reader Studies",
+                description=(
+                    "Reader studies can have many purposes. Need structured "
+                    "labels of medical data for algorithm training? Want to "
+                    "do an observer study and collect data from multiple "
+                    "readers? Wish to create a teaching file or test "
+                    "someone’s skills?"
+                ),
+                url=reverse("reader-studies:list"),
+                image="images/challenge_1.jpg",
+            ),
+            Highlight(
+                title="Challenges",
+                description=(
+                    "Challenges allow for a fair and transparent comparison "
+                    "of algorithms. Created an algorithm with the same "
+                    "purpose as one of the existing challenges? Join the "
+                    "challenge and see how well it performs. Or create a "
+                    "challenge yourself."
+                ),
+                url=reverse("challenges:list"),
+                image="images/challenge_2.jpg",
+            ),
+            Highlight(
+                title="Algorithms",
+                description=(
+                    "Once the algorithms are developed enough to be shared "
+                    "with the world, this is the place. Use algorithms by "
+                    "uploading your images. Or add your own algorithm."
+                ),
+                url=reverse("algorithms:list"),
+                image="images/algorithms_1.png",
+            ),
+        ]
+
         context.update(
             {
                 "all_users": get_user_model().objects.all(),
                 "all_challenges": Challenge.objects.all(),
                 "all_algorithms": Algorithm.objects.all(),
+                "highlights": highlights,
                 "background_url": background_url,
             }
         )

@@ -4,9 +4,27 @@
 {% load humanize %}
 {% load cache %}
 {% load round_to %}
+{% load image_filter %}
 
 {% block jumbotron %}
     {% include "grandchallenge/partials/jumbotron.html" with background_url=background_url title="Grand Challenge" description="A platform to empower biomedical image analysis research worldwide." %}
+{% endblock %}
+
+{% block content %}
+    {% for highlight in highlights %}
+        <div class="row {% if forloop.counter0|divisibleby:2 %}flex-md-row-reverse{% endif %}">
+            <div class="col-md-6 {% if forloop.counter0|divisibleby:2 %}pl-md-0{% else %}pr-md-0{% endif %}">
+                <div class="min-vh-25 h-100 rounded background-fill"
+                     style="background-image: {% image_filter alpha="0.25" %}, url('{% static highlight.image %}');">
+                </div>
+            </div>
+            <div class="col-md-6 py-3 align-self-center">
+                <h3>{{ highlight.title }}</h3>
+                <p>{{ highlight.description }}</p>
+                <p><a class="btn btn-info" href="{{ highlight.url }}">Read More</a></p>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}
 
 {% block post_content %}
