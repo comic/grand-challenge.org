@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import logging
 import re
 from collections import namedtuple
@@ -321,14 +320,6 @@ class ChallengeBase(models.Model):
     def public(self):
         """Helper property for consistency with other objects"""
         return not self.hidden
-
-    @property
-    def gravatar_url(self):
-        return (
-            "https://www.gravatar.com/avatar/"
-            f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
-            "?s=320"
-        )
 
     def get_absolute_url(self):
         raise NotImplementedError
