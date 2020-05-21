@@ -41,12 +41,25 @@ def convert_itk_to_internal(
         else:
             timepoints = None
         depth = simple_itk_image.GetDepth()
+        metadata_keys = simple_itk_image.GetMetaDataKeys()
+        window_center = (
+            int(simple_itk_image.GetMetaData("WindowCenter"))
+            if "WindowCenter" in metadata_keys
+            else None
+        )
+        window_width = (
+            int(simple_itk_image.GetMetaData("WindowWidth"))
+            if "WindowWidth" in metadata_keys
+            else None
+        )
         db_image = Image(
             pk=pk,
             name=name,
             width=simple_itk_image.GetWidth(),
             height=simple_itk_image.GetHeight(),
             depth=depth if depth else None,
+            window_center=window_center,
+            window_width=window_width,
             timepoints=timepoints,
             resolution_levels=None,
             color_space=color_space,
