@@ -110,9 +110,7 @@ class AlgorithmList(PermissionListMixin, ListView):
                         "learning algorithms for medical imaging. If you are "
                         "granted access to an algorithm you will be able to "
                         "try the algorithm out by uploading your own "
-                        "anonymised medical imaging data. Several web-based "
-                        "workstations are available for interacting with the "
-                        "results."
+                        "anonymised medical imaging data. "
                         "Please <a href='{}'>contact us</a> if you would like "
                         "to make your own algorithm available here."
                     ),

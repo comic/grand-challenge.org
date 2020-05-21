@@ -122,11 +122,10 @@ class ChallengeList(TemplateView):
                 "jumbotron_description": format_html(
                     (
                         "Here is an overview of all challenges that have been "
-                        "organized within the area of medical image analysis "
-                        "that we are aware of. If you know of any study that "
-                        "would fit in this overview, or want to advertise "
-                        "your challenge, please <a href='{}'>contact us</a> "
-                        "and we will list the challenge on this page."
+                        "organised within the area of medical image analysis "
+                        "that we are aware of. Please <a href='{}'>contact "
+                        "us</a> if you want to advertise your challenge or "
+                        "know of any study that would fit in this overview."
                     ),
                     random_encode("mailto:support@grand-challenge.org"),
                 ),

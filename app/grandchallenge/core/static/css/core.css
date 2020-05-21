@@ -29,6 +29,12 @@ html {
     margin-right: 0;
 }
 
+/* fix title tooltips when using .stretched-link */
+.above-stretched-link {
+    z-index: 1;
+    position: relative;
+}
+
 /* for square images */
 .embed-responsive .card-img-top {
     object-fit: cover;

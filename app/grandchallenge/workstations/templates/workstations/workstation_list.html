@@ -28,29 +28,23 @@
 
     <div class="row equal-height mx-n2">
         {% for workstation in workstation_list %}
-            <div class="col-12 col-md-6 col-lg-4 mb-3 px-2">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">
                 <div class="card">
+                    <a class="stretched-link" href="{{ workstation.get_absolute_url }}"></a>
                     <div class="embed-responsive embed-responsive-1by1">
-                        <a href="{{ workstation.get_absolute_url }}">
-                            <img class="card-img-top embed-responsive-item"
-                                 src="{{ workstation.logo.url }}"
-                                 alt="{{ workstation }} Logo">
-                        </a>
+                        <img class="card-img-top embed-responsive-item"
+                             src="{{ workstation.logo.url }}"
+                             alt="{{ workstation }} Logo">
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">
                             {{ workstation.title }}
                             {% if not workstation.public %}
-                                <i class="fas fa-lock" title="Workstation is private"></i>
+                                <i class="fas fa-lock above-stretched-link" title="Workstation is private"></i>
                             {% endif %}
                         </h5>
                         <p class="card-text">{{ workstation.description }}</p>
-                        <div class="mt-auto mr-auto">
-                            <a href="{{ workstation.get_absolute_url }}"
-                               class="btn btn-primary"
-                               title="View Workstation">
-                                <i class="fa fa-eye"></i>
-                            </a>
+                        <div class="mt-auto mr-auto above-stretched-link">
                             {% get_obj_perms request.user for workstation as "workstation_perms" %}
                             {% if "change_workstation" in workstation_perms %}
                                 <a href="{% url 'workstations:update' slug=workstation.slug %}"
