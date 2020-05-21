@@ -3,9 +3,10 @@
 {% load static %}
 {% load humanize %}
 {% load cache %}
+{% load round_to %}
 
 {% block jumbotron %}
-    {% include "grandchallenge/partials/jumbotron.html" with background_static_url=background_static_url title="Grand Challenge" description="A platform to empower biomedical image analysis research worldwide." %}
+    {% include "grandchallenge/partials/jumbotron.html" with background_url=background_url title="Grand Challenge" description="A platform to empower biomedical image analysis research worldwide." %}
 {% endblock %}
 
 {% block post_content %}
@@ -16,19 +17,19 @@
                     <div class="col-sm-6 col-md-3 card bg-primary border-0">
                         <div class="card-body text-center">
                             <h4 class="card-title">Users</h4>
-                            <h4 class="card-text">{{ n_users|intcomma }}</h4>
+                            <h4 class="card-text">{{ all_users.count|round_to:1000|intcomma }}</h4>
                         </div>
                     </div>
                     <div class="col-sm-6 col-md-3 card bg-primary border-0">
                         <div class="card-body text-center">
                             <h4 class="card-title">Challenges</h4>
-                            <h4 class="card-text">{{ n_challenges|intcomma }}</h4>
+                            <h4 class="card-text">{{ all_challenges.count|intcomma }}</h4>
                         </div>
                     </div>
                     <div class="col-sm-6 col-md-3 card bg-primary border-0">
                         <div class="card-body text-center">
                             <h4 class="card-title">Algorithms</h4>
-                            <h4 class="card-text">{{ n_algorithms|intcomma }}</h4>
+                            <h4 class="card-text">{{ all_algorithms.count|intcomma }}</h4>
                         </div>
                     </div>
                     <div class="col-sm-6 col-md-3 card bg-primary border-0">

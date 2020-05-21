@@ -2,11 +2,7 @@
 
 {% with 0.5 as alpha %}
     <div class="jumbotron rounded-0 bg-primary"
-            {% if background_url %}
          style="background-image: linear-gradient(to bottom, rgba(44,62,80,{{ alpha }}) 0%, rgba(44,62,80,{{ alpha }}) 100%), url('{{ background_url }}');"
-            {% elif background_static_url %}
-         style="background-image: linear-gradient(to bottom, rgba(44,62,80,{{ alpha }}) 0%, rgba(44,62,80,{{ alpha }}) 100%), url('{% static background_static_url %}');"
-            {% endif %}
     >
         <div class="container">
             <div class="row">

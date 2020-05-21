@@ -1,4 +1,3 @@
-from math import floor
 from random import choice
 
 from django.contrib.auth import get_user_model
@@ -10,20 +9,16 @@ from django.core.exceptions import (
 )
 from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
-from django.utils.functional import SimpleLazyObject
+from django.templatetags.static import static
 from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
 from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.subdomains.utils import reverse
-
-
-def _round_down(x: int, to: float) -> int:
-    return int(floor(x / to)) * int(to)
 
 
 class HomeTemplate(TemplateView):
@@ -32,32 +27,23 @@ class HomeTemplate(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        def get_n_challenges():
-            return (
-                Challenge.objects.count() + ExternalChallenge.objects.count()
+        background_url = static(
+            choice(
+                [
+                    "images/home_pathology_crop_1_bannersize.jpg",
+                    "images/home_ophthalmology_1_bannersize.png",
+                    "images/home_radiology_1_bannersize.png",
+                    "images/home_radiology_2_bannersize.png",
+                ]
             )
-
-        def get_n_users():
-            return _round_down(get_user_model().objects.count(), 1000.0)
-
-        def get_n_algorithms():
-            return Algorithm.objects.count()
-
-        background_static_url = choice(
-            [
-                "images/home_pathology_crop_1_bannersize.jpg",
-                "images/home_ophthalmology_1_bannersize.png",
-                "images/home_radiology_1_bannersize.png",
-                "images/home_radiology_2_bannersize.png",
-            ]
         )
 
         context.update(
             {
-                "n_challenges": SimpleLazyObject(get_n_challenges),
-                "n_users": SimpleLazyObject(get_n_users),
-                "n_algorithms": SimpleLazyObject(get_n_algorithms),
-                "background_static_url": background_static_url,
+                "all_users": get_user_model().objects.all(),
+                "all_challenges": Challenge.objects.all(),
+                "all_algorithms": Algorithm.objects.all(),
+                "background_url": background_url,
             }
         )
         return context
