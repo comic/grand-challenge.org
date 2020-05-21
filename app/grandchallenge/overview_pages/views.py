@@ -16,7 +16,8 @@ class OverviewPageDetail(DetailView):
                     *self.object.reader_studies.all(),
                     *self.object.challenges.all(),
                     *self.object.algorithms.all(),
-                ]
+                ],
+                "jumbotron_title": self.object.title,
             }
         )
 
