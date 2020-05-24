@@ -114,3 +114,10 @@ def test_cloudfront_urls(settings, tmpdir):
     )
 
     assert signed_url == expected_url
+
+
+def test_private_storage_url_generation_fails():
+    storage = grandchallenge.core.storage.PrivateS3Storage()
+
+    with pytest.raises(NotImplementedError):
+        storage.url(name="test.jpg")

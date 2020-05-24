@@ -48,6 +48,13 @@ class PrivateS3Storage(S3Storage):
             *args, config=settings.PRIVATE_S3_STORAGE_KWARGS, **kwargs
         )
 
+    def url(self, *args, **kwargs):
+        """
+        Urls for private storage should never be used, as S3Storage will
+        generate a signed URL which will allow users to download the file.
+        """
+        raise NotImplementedError
+
 
 @deconstructible
 class ProtectedS3Storage(S3Storage):
