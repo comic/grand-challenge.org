@@ -2,6 +2,7 @@ import posixpath
 import re
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.utils._os import safe_join
 from rest_framework.authentication import TokenAuthentication
@@ -52,7 +53,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
     try:
         image = Image.objects.get(pk=pk)
     except Image.DoesNotExist:
-        raise Http404("File not found.")
+        raise Http404("Image not found.")
 
     try:
         user, _ = TokenAuthentication().authenticate(request)
@@ -64,16 +65,16 @@ def serve_images(request, *, pk, path, pa="", pb=""):
             name=name, internal="internal" in request.GET
         )
 
-    raise Http404("File not found.")
+    raise PermissionDenied
 
 
 def serve_submissions(request, *, submission_pk, **_):
     try:
         submission = Submission.objects.get(pk=submission_pk)
     except Submission.DoesNotExist:
-        raise Http404("File not found.")
+        raise Http404("Submission not found.")
 
     if user_can_download_submission(user=request.user, submission=submission):
         return protected_storage_redirect(name=submission.file.name)
 
-    raise Http404("File not found.")
+    raise PermissionDenied
