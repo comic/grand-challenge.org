@@ -14,6 +14,7 @@ from grandchallenge.serving.permissions import (
     user_can_download_image,
     user_can_download_submission,
 )
+from grandchallenge.serving.tasks import create_download
 
 
 def protected_storage_redirect(*, name, internal=False):
@@ -60,6 +61,9 @@ def serve_images(request, *, pk, path, pa="", pb=""):
         user = request.user
 
     if user_can_download_image(user=user, image=image):
+        create_download.apply_async(
+            kwargs={"creator_id": user.pk, "image_id": image.pk}
+        )
         return protected_storage_redirect(
             name=name, internal="internal" in request.GET
         )
@@ -74,6 +78,12 @@ def serve_submissions(request, *, submission_pk, **_):
         raise Http404("File not found.")
 
     if user_can_download_submission(user=request.user, submission=submission):
+        create_download.apply_async(
+            kwargs={
+                "creator_id": request.user.pk,
+                "submission_id": submission.pk,
+            }
+        )
         return protected_storage_redirect(name=submission.file.name)
 
     raise Http404("File not found.")
