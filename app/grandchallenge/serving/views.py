@@ -25,20 +25,25 @@ def protected_storage_redirect(*, name, internal=False):
     if not storage.exists(name=name):
         raise Http404("File not found.")
 
-    url = storage.url(name=name)
-
-    if internal:
-        # Just return the internal request if needed
-        response = HttpResponseRedirect(url)
+    if settings.PROTECTED_S3_STORAGE_USE_CLOUDFRONT:
+        response = HttpResponseRedirect(
+            storage.cloudfront_signed_url(name=name)
+        )
     else:
-        # Now strip the endpoint_url
-        external_url = re.match(
-            f"^{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}(.*)$",
-            url,
-        ).group(1)
+        url = storage.url(name=name)
 
-        response = HttpResponse()
-        response["X-Accel-Redirect"] = external_url
+        if internal:
+            # Just return the internal request if needed
+            response = HttpResponseRedirect(url)
+        else:
+            # Now strip the endpoint_url
+            external_url = re.match(
+                f"^{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}(.*)$",
+                url,
+            ).group(1)
+
+            response = HttpResponse()
+            response["X-Accel-Redirect"] = external_url
 
     return response
 

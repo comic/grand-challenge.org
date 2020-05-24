@@ -141,6 +141,7 @@ PRIVATE_S3_STORAGE_KWARGS = {
     "file_overwrite": False,
     "default_acl": "private",
 }
+
 PROTECTED_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
     "secret_key": os.environ.get("PROTECTED_S3_STORAGE_SECRET_KEY", ""),
@@ -160,6 +161,13 @@ PROTECTED_S3_STORAGE_KWARGS = {
     "file_overwrite": False,
     "default_acl": "private",
 }
+PROTECTED_S3_STORAGE_USE_CLOUDFRONT = strtobool(
+    os.environ.get("PROTECTED_S3_STORAGE_USE_CLOUDFRONT", "False")
+)
+PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
+    "PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN_NAME", ""
+)
+
 PUBLIC_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
     "secret_key": os.environ.get("PUBLIC_S3_STORAGE_SECRET_KEY", ""),
@@ -171,6 +179,14 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "querystring_auth": False,
     "default_acl": "public-read",
 }
+
+# Key pair used for signing CloudFront URLS, only used if
+# PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
+CLOUDFRONT_KEY_PAIR_ID = os.environ.get("CLOUDFRONT_KEY_PAIR_ID", "")
+CLOUDFRONT_PRIVATE_KEY_PATH = os.environ.get("CLOUDFRONT_PRIVATE_KEY_PATH", "")
+CLOUDFRONT_URL_EXPIRY_SECONDS = int(
+    os.environ.get("CLOUDFRONT_URL_EXPIRY_SECONDS", "300")  # 5 mins
+)
 
 ##############################################################################
 #

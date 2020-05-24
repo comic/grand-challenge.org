@@ -1,5 +1,7 @@
 import copy
 import importlib
+from datetime import datetime
+from textwrap import dedent
 
 import pytest
 from django.conf import settings as dj_settings
@@ -72,3 +74,43 @@ def test_custom_domain():
     assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] not in url
     assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["endpoint_url"] in url
     assert "AWSAccessKeyId" in url
+
+
+def test_cloudfront_urls(settings, tmpdir):
+    pem = tmpdir.join("cf.pem")
+    pem.write(
+        dedent(
+            """
+            -----BEGIN RSA PRIVATE KEY-----
+            MIICXQIBAAKBgQDA7ki9gI/lRygIoOjV1yymgx6FYFlzJ+z1ATMaLo57nL57AavW
+            hb68HYY8EA0GJU9xQdMVaHBogF3eiCWYXSUZCWM/+M5+ZcdQraRRScucmn6g4EvY
+            2K4W2pxbqH8vmUikPxir41EeBPLjMOzKvbzzQy9e/zzIQVREKSp/7y1mywIDAQAB
+            AoGABc7mp7XYHynuPZxChjWNJZIq+A73gm0ASDv6At7F8Vi9r0xUlQe/v0AQS3yc
+            N8QlyR4XMbzMLYk3yjxFDXo4ZKQtOGzLGteCU2srANiLv26/imXA8FVidZftTAtL
+            viWQZBVPTeYIA69ATUYPEq0a5u5wjGyUOij9OWyuy01mbPkCQQDluYoNpPOekQ0Z
+            WrPgJ5rxc8f6zG37ZVoDBiexqtVShIF5W3xYuWhW5kYb0hliYfkq15cS7t9m95h3
+            1QJf/xI/AkEA1v9l/WN1a1N3rOK4VGoCokx7kR2SyTMSbZgF9IWJNOugR/WZw7HT
+            njipO3c9dy1Ms9pUKwUF46d7049ck8HwdQJARgrSKuLWXMyBH+/l1Dx/I4tXuAJI
+            rlPyo+VmiOc7b5NzHptkSHEPfR9s1OK0VqjknclqCJ3Ig86OMEtEFBzjZQJBAKYz
+            470hcPkaGk7tKYAgP48FvxRsnzeooptURW5E+M+PQ2W9iDPPOX9739+Xi02hGEWF
+            B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
+            7uwwr7XTroMv8dIFQIPreoPhRKmd/SbJzbiKfS/4QDhU
+            -----END RSA PRIVATE KEY-----
+            """
+        )
+    )
+
+    expected_url = "https://d604721fxaaqy9.cloudfront.net/horizon.jpg?Expires=1258237200&Signature=Y70zPbq2rNoDXWLHJrdrx9KXgyXXrEQJY1i1EaBrIgPhyalCM5wPUegH6h4fn0FBysV85ZyXlS8CTM-yotLUd~HwXFJT-c3HgkZaACxQwaxetHMmFFUOdMVj-7qyphMbI4wScfG4s-rV5pBBIKtNHZ6HV64Xnp6beqCFpUBcniQ_&Key-Pair-Id=PK123456789754"
+
+    settings.CLOUDFRONT_PRIVATE_KEY_PATH = pem.strpath
+    settings.CLOUDFRONT_KEY_PAIR_ID = "PK123456789754"
+
+    storage = grandchallenge.core.storage.ProtectedS3Storage()
+
+    signed_url = storage.cloudfront_signed_url(
+        name="horizon.jpg",
+        domain="d604721fxaaqy9.cloudfront.net",
+        expire=datetime.utcfromtimestamp(1258237200),
+    )
+
+    assert signed_url == expected_url

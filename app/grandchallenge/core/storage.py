@@ -1,8 +1,16 @@
 import copy
+import datetime
 
+from botocore.signers import CloudFrontSigner
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.deconstruct import deconstructible
+from django.utils.encoding import filepath_to_uri
+from django.utils.timezone import now
 from storages.backends.s3boto3 import S3Boto3Storage
 
 
@@ -52,6 +60,43 @@ class ProtectedS3Storage(S3Storage):
             config["custom_domain"] = None
 
         super().__init__(*args, config=config, **kwargs)
+
+    def cloudfront_signed_url(self, *, name, domain=None, expire=None):
+        """
+        Create a signed url that will be valid until the specific expiry date
+        provided using a canned policy.
+
+        Note: This grants the user permission to read the file.
+
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudfront.html#id57
+        """
+        name = self._normalize_name(self._clean_name(name))
+
+        if domain is None:
+            domain = settings.PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN
+
+        url = f"https://{domain}/{filepath_to_uri(name)}"
+
+        if expire is None:
+            expire = now() + datetime.timedelta(
+                seconds=settings.CLOUDFRONT_URL_EXPIRY_SECONDS
+            )
+
+        return self._cloudfront_signer.generate_presigned_url(
+            url, date_less_than=expire
+        )
+
+    @property
+    def _cloudfront_signer(self):
+        with open(settings.CLOUDFRONT_PRIVATE_KEY_PATH, "rb") as key_file:
+            private_key = serialization.load_pem_private_key(
+                key_file.read(), password=None, backend=default_backend()
+            )
+
+        return CloudFrontSigner(
+            settings.CLOUDFRONT_KEY_PAIR_ID,
+            lambda m: private_key.sign(m, padding.PKCS1v15(), hashes.SHA1()),
+        )
 
 
 @deconstructible
