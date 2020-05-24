@@ -29,8 +29,8 @@ def test_submission_evaluation(
     )
 
     # We should not be able to download methods
-    response = client.get(method.image.url)
-    assert response.status_code == 404
+    with pytest.raises(NotImplementedError):
+        _ = method.image.url
 
     num_containers_before = len(dockerclient.containers.list())
     num_volumes_before = len(dockerclient.volumes.list())
