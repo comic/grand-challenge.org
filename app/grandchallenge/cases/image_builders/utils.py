@@ -43,12 +43,12 @@ def convert_itk_to_internal(
         depth = simple_itk_image.GetDepth()
         metadata_keys = simple_itk_image.GetMetaDataKeys()
         window_center = (
-            int(simple_itk_image.GetMetaData("WindowCenter"))
+            float(simple_itk_image.GetMetaData("WindowCenter"))
             if "WindowCenter" in metadata_keys
             else None
         )
         window_width = (
-            int(simple_itk_image.GetMetaData("WindowWidth"))
+            float(simple_itk_image.GetMetaData("WindowWidth"))
             if "WindowWidth" in metadata_keys
             else None
         )
