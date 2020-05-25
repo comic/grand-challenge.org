@@ -11,8 +11,9 @@ class Download(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
+    # Allow null creators to anonymous users
     creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE
     )
 
     image = models.ForeignKey(Image, null=True, on_delete=models.CASCADE)
