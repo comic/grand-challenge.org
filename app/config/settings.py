@@ -619,6 +619,11 @@ CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7260"))
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
+if "CELERY_BROKER_REGION" in os.environ:
+    # Set the region if using the SQS queue
+    CELERY_BROKER_TRANSPORT_OPTIONS.update(
+        {"region": os.environ["CELERY_BROKER_REGION"]}
+    )
 
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
