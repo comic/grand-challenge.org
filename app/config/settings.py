@@ -7,6 +7,7 @@ from itertools import product
 import sentry_sdk
 from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
+from kombu.utils.url import safequote
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -619,10 +620,22 @@ CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7260"))
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
-if "CELERY_BROKER_REGION" in os.environ:
-    # Set the region if using the SQS queue
+
+if CELERY_BROKER_URL.lower().startswith("sqs://"):
+    celery_access_key = safequote(os.environ.get("CELERY_AWS_ACCESS_KEY_ID"))
+    celery_secret_key = safequote(os.environ.get("CELERY_AWS_SECRET_KEY_ID"))
+    CELERY_BROKER_URL = f"sqs://{celery_access_key}:{celery_secret_key}@"
+
     CELERY_BROKER_TRANSPORT_OPTIONS.update(
-        {"region": os.environ["CELERY_BROKER_REGION"]}
+        {
+            "queue_name_prefix": os.environ.get(
+                "CELERY_BROKER_QUEUE_NAME_PREFIX", "gclocalhost-"
+            ),
+            "region": os.environ.get("CELERY_BROKER_REGION", "eu-central-1"),
+            "polling_interval": int(
+                os.environ.get("CELERY_BROKER_POLLING_INTERVAL", "1")
+            ),
+        }
     )
 
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
