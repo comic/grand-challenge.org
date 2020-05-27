@@ -7,13 +7,13 @@ from django.db import models
 from django.utils import timezone
 
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
-from grandchallenge.container_exec.backends.docker import (
+from grandchallenge.components.backends.docker import (
     Executor,
     cleanup,
     get_file,
     put_file,
 )
-from grandchallenge.container_exec.models import ContainerExecJobModel
+from grandchallenge.components.models import ComponentJob
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
@@ -139,7 +139,7 @@ class SubmissionToAnnotationSetExecutor(Executor):
             annotationset.save()
 
 
-class SubmissionToAnnotationSetJob(UUIDModel, ContainerExecJobModel):
+class SubmissionToAnnotationSetJob(UUIDModel, ComponentJob):
     base = models.ForeignKey(to=ImageSet, on_delete=models.CASCADE)
     submission = models.OneToOneField(to=Submission, on_delete=models.CASCADE)
 

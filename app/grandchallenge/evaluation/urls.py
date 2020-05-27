@@ -2,7 +2,6 @@ from django.urls import path
 
 from grandchallenge.evaluation.views import (
     ConfigUpdate,
-    JobCreate,
     JobDetail,
     JobList,
     LegacySubmissionCreate,
@@ -41,7 +40,6 @@ urlpatterns = [
         name="submission-detail",
     ),
     path("jobs/", JobList.as_view(), name="job-list"),
-    path("jobs/create/", JobCreate.as_view(), name="job-create"),
     path("jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path("results/", ResultList.as_view(), name="result-list"),
     path("results/<uuid:pk>/", ResultDetail.as_view(), name="result-detail"),

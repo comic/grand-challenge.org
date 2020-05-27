@@ -2,10 +2,12 @@ import os
 import re
 from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
+from itertools import product
 
 import sentry_sdk
 from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
+from kombu.utils.url import safequote
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -140,6 +142,7 @@ PRIVATE_S3_STORAGE_KWARGS = {
     "file_overwrite": False,
     "default_acl": "private",
 }
+
 PROTECTED_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
     "secret_key": os.environ.get("PROTECTED_S3_STORAGE_SECRET_KEY", ""),
@@ -159,6 +162,13 @@ PROTECTED_S3_STORAGE_KWARGS = {
     "file_overwrite": False,
     "default_acl": "private",
 }
+PROTECTED_S3_STORAGE_USE_CLOUDFRONT = strtobool(
+    os.environ.get("PROTECTED_S3_STORAGE_USE_CLOUDFRONT", "False")
+)
+PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
+    "PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN_NAME", ""
+)
+
 PUBLIC_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
     "secret_key": os.environ.get("PUBLIC_S3_STORAGE_SECRET_KEY", ""),
@@ -170,6 +180,14 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "querystring_auth": False,
     "default_acl": "public-read",
 }
+
+# Key pair used for signing CloudFront URLS, only used if
+# PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
+CLOUDFRONT_KEY_PAIR_ID = os.environ.get("CLOUDFRONT_KEY_PAIR_ID", "")
+CLOUDFRONT_PRIVATE_KEY_PATH = os.environ.get("CLOUDFRONT_PRIVATE_KEY_PATH", "")
+CLOUDFRONT_URL_EXPIRY_SECONDS = int(
+    os.environ.get("CLOUDFRONT_URL_EXPIRY_SECONDS", "300")  # 5 mins
+)
 
 ##############################################################################
 #
@@ -186,8 +204,9 @@ CACHES = {
 }
 SPEEDINFO_STORAGE = "speedinfo.storage.cache.storage.CacheStorage"
 
-ROOT_URLCONF = "config.urls"
-SUBDOMAIN_URL_CONF = "grandchallenge.subdomains.urls"
+ROOT_URLCONF = "config.urls.root"
+CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
+RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 
 SESSION_COOKIE_DOMAIN = os.environ.get(
@@ -350,7 +369,7 @@ LOCAL_APPS = [
     "grandchallenge.uploads",
     "grandchallenge.cases",
     "grandchallenge.algorithms",
-    "grandchallenge.container_exec",
+    "grandchallenge.components",
     "grandchallenge.datasets",
     "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
@@ -370,6 +389,7 @@ LOCAL_APPS = [
     "grandchallenge.favicons",
     "grandchallenge.products",
     "grandchallenge.overview_pages",
+    "grandchallenge.serving",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -586,6 +606,9 @@ CORS_ALLOW_HEADERS = [
     "content-disposition",
     "content-description",
 ]
+# SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
+# across domains, but this will allow workstations to access the api
+CORS_ALLOW_CREDENTIALS = True
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
@@ -598,43 +621,108 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
 
-CONTAINER_EXEC_DOCKER_BASE_URL = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_BASE_URL", "unix://var/run/docker.sock"
+if CELERY_BROKER_URL.lower().startswith("sqs://"):
+    celery_access_key = safequote(os.environ.get("CELERY_AWS_ACCESS_KEY_ID"))
+    celery_secret_key = safequote(os.environ.get("CELERY_AWS_SECRET_KEY_ID"))
+    CELERY_BROKER_URL = f"sqs://{celery_access_key}:{celery_secret_key}@"
+
+    CELERY_BROKER_TRANSPORT_OPTIONS.update(
+        {
+            "queue_name_prefix": os.environ.get(
+                "CELERY_BROKER_QUEUE_NAME_PREFIX", "gclocalhost-"
+            ),
+            "region": os.environ.get("CELERY_BROKER_REGION", "eu-central-1"),
+            "polling_interval": int(
+                os.environ.get("CELERY_BROKER_POLLING_INTERVAL", "1")
+            ),
+        }
+    )
+
+COMPONENTS_DOCKER_BASE_URL = os.environ.get(
+    "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )
-CONTAINER_EXEC_DOCKER_TLSVERIFY = strtobool(
-    os.environ.get("CONTAINER_EXEC_DOCKER_TLSVERIFY", "False")
+COMPONENTS_DOCKER_TLSVERIFY = strtobool(
+    os.environ.get("COMPONENTS_DOCKER_TLSVERIFY", "False")
 )
-CONTAINER_EXEC_DOCKER_TLSCACERT = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSCACERT", ""
+COMPONENTS_DOCKER_TLSCACERT = os.environ.get("COMPONENTS_DOCKER_TLSCACERT", "")
+COMPONENTS_DOCKER_TLSCERT = os.environ.get("COMPONENTS_DOCKER_TLSCERT", "")
+COMPONENTS_DOCKER_TLSKEY = os.environ.get("COMPONENTS_DOCKER_TLSKEY", "")
+COMPONENTS_MEMORY_LIMIT = os.environ.get("COMPONENTS_MEMORY_LIMIT", "4g")
+COMPONENTS_IO_IMAGE = "alpine:3.11"
+COMPONENTS_CPU_QUOTA = int(os.environ.get("COMPONENTS_CPU_QUOTA", "100000"))
+COMPONENTS_CPU_PERIOD = int(os.environ.get("COMPONENTS_CPU_PERIOD", "100000"))
+COMPONENTS_PIDS_LIMIT = int(os.environ.get("COMPONENTS_PIDS_LIMIT", "128"))
+COMPONENTS_CPU_SHARES = int(
+    os.environ.get("COMPONENTS_CPU_SHARES", "1024")  # Default weight
 )
-CONTAINER_EXEC_DOCKER_TLSCERT = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSCERT", ""
+COMPONENTS_CPUSET_CPUS = str(os.environ.get("COMPONENTS_CPUSET_CPUS", ""))
+COMPONENTS_DOCKER_RUNTIME = os.environ.get("COMPONENTS_DOCKER_RUNTIME", None)
+COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
+    "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
 )
-CONTAINER_EXEC_DOCKER_TLSKEY = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_TLSKEY", ""
+
+# Set which template pack to use for forms
+CRISPY_TEMPLATE_PACK = "bootstrap4"
+
+# When using bootstrap error messages need to be renamed to danger
+MESSAGE_TAGS = {messages.ERROR: "danger"}
+
+# The name of the group whose members will be able to create reader studies
+READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
+
+# The workstation that is accessible by all authorised users
+DEFAULT_WORKSTATION_SLUG = os.environ.get(
+    "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
 )
-CONTAINER_EXEC_MEMORY_LIMIT = os.environ.get(
-    "CONTAINER_EXEC_MEMORY_LIMIT", "4g"
+WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
+WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
+WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
+WORKSTATIONS_ALGORITHM_RESULT_QUERY_PARAM = "algorithmResult"
+WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
+# The name of the network that the workstations will be attached to
+WORKSTATIONS_NETWORK_NAME = os.environ.get(
+    "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
 )
-CONTAINER_EXEC_IO_IMAGE = "alpine:3.11"
-CONTAINER_EXEC_CPU_QUOTA = int(
-    os.environ.get("CONTAINER_EXEC_CPU_QUOTA", "100000")
+# The total limit on the number of sessions
+WORKSTATIONS_MAXIMUM_SESSIONS = int(
+    os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
 )
-CONTAINER_EXEC_CPU_PERIOD = int(
-    os.environ.get("CONTAINER_EXEC_CPU_PERIOD", "100000")
+# The name of the group whose members will be able to create workstations
+WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
+WORKSTATIONS_SESSION_DURATION_LIMIT = int(
+    os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
 )
-CONTAINER_EXEC_PIDS_LIMIT = int(
-    os.environ.get("CONTAINER_EXEC_PIDS_LIMIT", "128")
+WORKSTATION_INTERNAL_NETWORK = strtobool(
+    os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
 )
-CONTAINER_EXEC_CPU_SHARES = int(
-    os.environ.get("CONTAINER_EXEC_CPU_SHARES", "1024")  # Default weight
-)
-CONTAINER_EXEC_DOCKER_RUNTIME = os.environ.get(
-    "CONTAINER_EXEC_DOCKER_RUNTIME", None
-)
-CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES = os.environ.get(
-    "CONTAINER_EXEC_NVIDIA_VISIBLE_DEVICES", "void"
-)
+# Which regions are available for workstations to run in
+WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
+    "WORKSTATIONS_ACTIVE_REGIONS", "eu-nl-1"
+).split(",")
+WORKSTATIONS_RENDERING_SUBDOMAINS = {
+    # Possible AWS regions
+    *[
+        "-".join(z)
+        for z in product(
+            ["us", "af", "ap", "ca", "cn", "eu", "me", "sa"],
+            [
+                "east",
+                "west",
+                "south",
+                "north",
+                "central",
+                "northeast",
+                "southeast",
+                "northwest",
+                "southwest",
+            ],
+            ["1", "2", "3"],
+        )
+    ],
+    # User defined regions
+    "eu-nl-1",
+    "eu-nl-2",
+}
 
 CELERY_BEAT_SCHEDULE = {
     "cleanup_stale_uploads": {
@@ -653,20 +741,28 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.check_external_challenge_urls",
         "schedule": timedelta(days=1),
     },
-    "stop_expired_services": {
-        "task": "grandchallenge.container_exec.tasks.stop_expired_services",
-        "kwargs": {"app_label": "workstations", "model_name": "session"},
-        "schedule": timedelta(minutes=5),
+    **{
+        f"stop_expired_services_{region}": {
+            "task": "grandchallenge.components.tasks.stop_expired_services",
+            "kwargs": {
+                "app_label": "workstations",
+                "model_name": "session",
+                "region": region,
+            },
+            "options": {"queue": f"workstations-{region}"},
+            "schedule": timedelta(minutes=5),
+        }
+        for region in WORKSTATIONS_ACTIVE_REGIONS
     },
     # Cleanup evaluation jobs on the evaluation queue
     "mark_long_running_evaluation_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {"app_label": "evaluation", "model_name": "job"},
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
     },
     "mark_long_running_algorithm_gpu_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {
             "app_label": "algorithms",
             "model_name": "job",
@@ -676,7 +772,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(hours=1),
     },
     "mark_long_running_algorithm_jobs_failed": {
-        "task": "grandchallenge.container_exec.tasks.mark_long_running_jobs_failed",
+        "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
         "kwargs": {
             "app_label": "algorithms",
             "model_name": "job",
@@ -692,46 +788,9 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_TASK_ROUTES = {
-    "grandchallenge.container_exec.tasks.execute_job": "evaluation",
-    "grandchallenge.container_exec.tasks.start_service": "workstations",
-    "grandchallenge.container_exec.tasks.stop_service": "workstations",
-    "grandchallenge.container_exec.tasks.stop_expired_services": "workstations",
+    "grandchallenge.components.tasks.execute_job": "evaluation",
     "grandchallenge.cases.tasks.build_images": "images",
 }
-
-# Set which template pack to use for forms
-CRISPY_TEMPLATE_PACK = "bootstrap4"
-
-# When using bootstrap error messages need to be renamed to danger
-MESSAGE_TAGS = {messages.ERROR: "danger"}
-
-# The name of the group whose members will be able to create reader studies
-READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
-
-# The workstation that is accessible by all authorised users
-DEFAULT_WORKSTATION_SLUG = os.environ.get(
-    "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
-)
-WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
-WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
-WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
-WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
-# The name of the network that the workstations will be attached to
-WORKSTATIONS_NETWORK_NAME = os.environ.get(
-    "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
-)
-# The total limit on the number of sessions
-WORKSTATIONS_MAXIMUM_SESSIONS = int(
-    os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
-)
-# The name of the group whose members will be able to create workstations
-WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
-WORKSTATIONS_SESSION_DURATION_LIMIT = int(
-    os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
-)
-WORKSTATION_INTERNAL_NETWORK = strtobool(
-    os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
-)
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
@@ -740,7 +799,7 @@ ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 DICOM_DATA_CREATORS_GROUP_NAME = "dicom_creators"
 
 # Disallow some challenge names due to subdomain or media folder clashes
-DISALLOWED_CHALLENGE_NAMES = [
+DISALLOWED_CHALLENGE_NAMES = {
     "m",
     IMAGE_FILES_SUBDIRECTORY,
     "logos",
@@ -754,7 +813,8 @@ DISALLOWED_CHALLENGE_NAMES = [
     "cache",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
-]
+    *WORKSTATIONS_RENDERING_SUBDOMAINS,
+}
 
 # Modality name constants
 MODALITY_OCT = "OCT"  # Optical coherence tomography

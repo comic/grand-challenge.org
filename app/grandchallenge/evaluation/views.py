@@ -210,11 +210,6 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
     model = Submission
 
 
-class JobCreate(UserIsChallengeAdminMixin, CreateView):
-    model = Job
-    fields = "__all__"
-
-
 class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Job
 

@@ -183,13 +183,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Group,
         on_delete=models.CASCADE,
         editable=False,
-        related_name=f"editors_of_readerstudy",
+        related_name="editors_of_readerstudy",
     )
     readers_group = models.OneToOneField(
         Group,
         on_delete=models.CASCADE,
         editable=False,
-        related_name=f"readers_of_readerstudy",
+        related_name="readers_of_readerstudy",
     )
     images = models.ManyToManyField(
         "cases.Image", related_name="readerstudies"
@@ -1463,7 +1463,7 @@ class ReaderStudyPermissionRequest(RequestBase):
     @property
     def permission_list_url(self):
         return reverse(
-            f"reader-studies:permission-request-list",
+            "reader-studies:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
 

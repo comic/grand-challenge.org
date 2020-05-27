@@ -9,11 +9,8 @@ from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.container_exec.backends.docker import Executor, put_file
-from grandchallenge.container_exec.models import (
-    ContainerExecJobModel,
-    ContainerImageModel,
-)
+from grandchallenge.components.backends.docker import Executor, put_file
+from grandchallenge.components.models import ComponentImage, ComponentJob
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
 from grandchallenge.core.validators import (
@@ -328,7 +325,7 @@ def method_image_path(instance, filename):
     )
 
 
-class Method(UUIDModel, ContainerImageModel):
+class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
@@ -437,7 +434,7 @@ class SubmissionEvaluator(Executor):
 
                 # Remove a duplicated directory
                 input_files = (
-                    writer.exec_run(f"ls -1 /input/")
+                    writer.exec_run("ls -1 /input/")
                     .output.decode()
                     .splitlines()
                 )
@@ -504,7 +501,7 @@ class Result(UUIDModel):
         )
 
 
-class Job(UUIDModel, ContainerExecJobModel):
+class Job(UUIDModel, ComponentJob):
     """Stores information about a job for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)

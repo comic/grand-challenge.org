@@ -240,7 +240,7 @@ class ArchivePermissionRequest(RequestBase):
     @property
     def permission_list_url(self):
         return reverse(
-            f"archives:permission-request-list",
+            "archives:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
 

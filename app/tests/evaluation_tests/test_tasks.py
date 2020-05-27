@@ -4,7 +4,7 @@ import docker
 import pytest
 from django.core.exceptions import ValidationError
 
-from grandchallenge.container_exec.tasks import validate_docker_image_async
+from grandchallenge.components.tasks import validate_docker_image_async
 from grandchallenge.evaluation.models import Method
 from tests.factories import MethodFactory, SubmissionFactory
 
@@ -19,7 +19,7 @@ def test_submission_evaluation(
 
     # Upload a submission and create a job
     dockerclient = docker.DockerClient(
-        base_url=settings.CONTAINER_EXEC_DOCKER_BASE_URL
+        base_url=settings.COMPONENTS_DOCKER_BASE_URL
     )
 
     eval_container, sha256 = evaluation_image
@@ -29,8 +29,8 @@ def test_submission_evaluation(
     )
 
     # We should not be able to download methods
-    response = client.get(method.image.url)
-    assert response.status_code == 404
+    with pytest.raises(NotImplementedError):
+        _ = method.image.url
 
     num_containers_before = len(dockerclient.containers.list())
     num_volumes_before = len(dockerclient.volumes.list())

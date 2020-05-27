@@ -68,6 +68,8 @@ ADDITIONAL_HEADERS: Dict[str, Pattern] = {
     "SliceThickness": FLOAT_MATCH_REGEXP,
     "Exposures": FLOAT_LIST_MATCH_REGEXP,
     "ContentTimes": CONTENT_TIMES_LIST_MATCH_REGEXP,
+    "WindowCenter": FLOAT_MATCH_REGEXP,
+    "WindowWidth": FLOAT_MATCH_REGEXP,
     "t0": FLOAT_MATCH_REGEXP,
     "t1": FLOAT_MATCH_REGEXP,
 }
@@ -286,7 +288,7 @@ def add_additional_mh_headers_to_sitk_image(
         if header in cleaned_headers:
             value = cleaned_headers[header]
             if isinstance(value, (list, tuple)):
-                value = " ".format([str(v) for v in value])
+                value = " ".join([str(v) for v in value])
             else:
                 value = str(value)
             sitk_image.SetMetaData(header, value)
