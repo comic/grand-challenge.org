@@ -23,16 +23,7 @@ class Command(BaseCommand):
             name=settings.RETINA_ADMINS_GROUP_NAME
         ).user_set.all()
         archives = Archive.objects.filter(
-            title__in=[
-                "AREDS - GA selection",
-                "kappadata",
-                "Rotterdam_Study_1",
-                "Rotterdam Study 1",
-                "Australia",
-                "RS1",
-                "RS2",
-                "RS3",
-            ]
+            title__in=settings.RETINA_ARCHIVE_NAMES
         )
         for archive in archives:
             self.stdout.write(

@@ -1,9 +1,8 @@
 from celery import shared_task
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from guardian.shortcuts import get_objects_for_user
 
+from grandchallenge.archives.models import Archive
 from grandchallenge.patients.models import Patient
 from grandchallenge.retina_api.models import ArchiveDataModel
 
@@ -17,15 +16,10 @@ def cache_archive_data():
 
 
 def create_archive_data_object():
-    # This task creates the archive data object for the first user in the
-    # retina_graders group. The object does not have to be user specific
-    # currently because all retina_graders have access to all retina
-    # archives . This should be made user specific when different graders
-    # get different access rights.
-    user = Group.objects.get(
-        name=settings.RETINA_GRADERS_GROUP_NAME
-    ).user_set.first()
-    archives = get_objects_for_user(user, "archives.view_archive")
+    # This task creates the archive data object containing all archives
+    # in RETINA_ARCHIVES_NAMES. This is used for the legacy workstation
+    # and should be removed when it is not in use anymore.
+    archives = Archive.objects.filter(title__in=settings.RETINA_ARCHIVE_NAMES)
     patients = Patient.objects.prefetch_related(
         "study_set",
         "study_set__image_set",
