@@ -2,7 +2,9 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from grandchallenge.components.models import ComponentImage, ComponentJob
-from grandchallenge.components.tasks import validate_docker_image_async
+from grandchallenge.components.tasks import (
+    validate_docker_image as validate_docker_image_async,
+)
 from grandchallenge.core.utils import disable_for_loaddata
 
 

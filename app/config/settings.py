@@ -789,6 +789,7 @@ CELERY_BEAT_SCHEDULE = {
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.components.tasks.execute_job": "evaluation",
+    "grandchallenge.components.tasks.validate_docker_image": "images",
     "grandchallenge.cases.tasks.build_images": "images",
 }
 

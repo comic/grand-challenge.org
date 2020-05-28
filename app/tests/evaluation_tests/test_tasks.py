@@ -4,7 +4,7 @@ import docker
 import pytest
 from django.core.exceptions import ValidationError
 
-from grandchallenge.components.tasks import validate_docker_image_async
+from grandchallenge.components.tasks import validate_docker_image
 from grandchallenge.evaluation.models import Method
 from tests.factories import MethodFactory, SubmissionFactory
 
@@ -68,7 +68,7 @@ def test_method_validation(evaluation_image):
     assert method.image_sha256 != sha256
     assert method.ready is False
 
-    validate_docker_image_async(
+    validate_docker_image(
         pk=method.pk,
         app_label=method._meta.app_label,
         model_name=method._meta.model_name,
@@ -86,7 +86,7 @@ def test_method_validation_invalid_dockerfile(alpine_images):
     assert method.ready is False
 
     with pytest.raises(ValidationError):
-        validate_docker_image_async(
+        validate_docker_image(
             pk=method.pk,
             app_label=method._meta.app_label,
             model_name=method._meta.model_name,
@@ -104,7 +104,7 @@ def test_method_validation_root_dockerfile(root_image):
     assert method.ready is False
 
     with pytest.raises(ValidationError):
-        validate_docker_image_async(
+        validate_docker_image(
             pk=method.pk,
             app_label=method._meta.app_label,
             model_name=method._meta.model_name,
@@ -122,7 +122,7 @@ def test_method_validation_not_a_docker_tar(submission_file):
     assert method.ready is False
 
     with pytest.raises(ValidationError):
-        validate_docker_image_async(
+        validate_docker_image(
             pk=method.pk,
             app_label=method._meta.app_label,
             model_name=method._meta.model_name,
