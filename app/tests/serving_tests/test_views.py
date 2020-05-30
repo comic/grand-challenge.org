@@ -43,18 +43,18 @@ def test_imageset_annotationset_download(
         (403, 403, UserFactory()),
         (403, 403, UserFactory(is_staff=True)),
         (403, 403, two_challenge_sets.challenge_set_1.non_participant),
-        (200, 403, two_challenge_sets.challenge_set_1.participant),
-        (200, 403, two_challenge_sets.challenge_set_1.participant1),
-        (200, 200, two_challenge_sets.challenge_set_1.creator),
-        (200, 200, two_challenge_sets.challenge_set_1.admin),
+        (302, 403, two_challenge_sets.challenge_set_1.participant),
+        (302, 403, two_challenge_sets.challenge_set_1.participant1),
+        (302, 302, two_challenge_sets.challenge_set_1.creator),
+        (302, 302, two_challenge_sets.challenge_set_1.admin),
         (403, 403, two_challenge_sets.challenge_set_2.non_participant),
         (403, 403, two_challenge_sets.challenge_set_2.participant),
         (403, 403, two_challenge_sets.challenge_set_2.participant1),
         (403, 403, two_challenge_sets.challenge_set_2.creator),
         (403, 403, two_challenge_sets.challenge_set_2.admin),
-        (200, 200, two_challenge_sets.admin12),
-        (200, 403, two_challenge_sets.participant12),
-        (200, 200, two_challenge_sets.admin1participant2),
+        (302, 302, two_challenge_sets.admin12),
+        (302, 403, two_challenge_sets.participant12),
+        (302, 302, two_challenge_sets.admin1participant2),
     ]
 
     for test in tests:
@@ -77,9 +77,8 @@ def test_imageset_annotationset_download(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("internal", (True, False))
 @pytest.mark.parametrize("cloudfront", (True, False))
-def test_image_response(client, internal, settings, cloudfront, tmpdir):
+def test_image_response(client, settings, cloudfront, tmpdir):
     pem = tmpdir.join("cf.pem")
     pem.write(
         dedent(
@@ -110,13 +109,8 @@ def test_image_response(client, internal, settings, cloudfront, tmpdir):
     image_file = ImageFileFactory()
     user = UserFactory()
 
-    if internal:
-        data = {"internal": True}
-    else:
-        data = {}
-
     response = get_view_for_user(
-        url=image_file.file.url, client=client, user=user, data=data
+        url=image_file.file.url, client=client, user=user
     )
 
     # Forbidden view
@@ -126,19 +120,13 @@ def test_image_response(client, internal, settings, cloudfront, tmpdir):
     assign_perm("view_image", user, image_file.image)
 
     response = get_view_for_user(
-        url=image_file.file.url, client=client, user=user, data=data
+        url=image_file.file.url, client=client, user=user
     )
 
-    if internal or cloudfront:
-        assert response.status_code == 302
-        assert not response.has_header("x-accel-redirect")
+    assert response.status_code == 302
+    assert not response.has_header("x-accel-redirect")
 
-        redirect = response.url
-    else:
-        assert response.status_code == 200
-        assert response.has_header("x-accel-redirect")
-
-        redirect = response.get("x-accel-redirect")
+    redirect = response.url
 
     if cloudfront:
         assert redirect.startswith(
@@ -149,15 +137,10 @@ def test_image_response(client, internal, settings, cloudfront, tmpdir):
         assert "Signature" in redirect
         assert "Expires" in redirect
     else:
-        if internal:
-            assert redirect.startswith(
-                f"{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}/"
-                f"{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
-            )
-        else:
-            assert redirect.startswith(
-                f"/{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
-            )
+        assert redirect.startswith(
+            f"{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}/"
+            f"{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
+        )
 
         assert "AWSAccessKeyId" in redirect
         assert "Signature" in redirect
@@ -181,16 +164,16 @@ def test_submission_download(client, two_challenge_sets):
         (403, two_challenge_sets.challenge_set_1.non_participant),
         (403, two_challenge_sets.challenge_set_1.participant),
         (403, two_challenge_sets.challenge_set_1.participant1),
-        (200, two_challenge_sets.challenge_set_1.creator),
-        (200, two_challenge_sets.challenge_set_1.admin),
+        (302, two_challenge_sets.challenge_set_1.creator),
+        (302, two_challenge_sets.challenge_set_1.admin),
         (403, two_challenge_sets.challenge_set_2.non_participant),
         (403, two_challenge_sets.challenge_set_2.participant),
         (403, two_challenge_sets.challenge_set_2.participant1),
         (403, two_challenge_sets.challenge_set_2.creator),
         (403, two_challenge_sets.challenge_set_2.admin),
-        (200, two_challenge_sets.admin12),
+        (302, two_challenge_sets.admin12),
         (403, two_challenge_sets.participant12),
-        (200, two_challenge_sets.admin1participant2),
+        (302, two_challenge_sets.admin1participant2),
     ]
 
     for test in tests:
