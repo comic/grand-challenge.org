@@ -127,6 +127,13 @@ JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 
+AWS_AUTO_CREATE_BUCKET = strtobool(
+    os.environ.get("AWS_AUTO_CREATE_BUCKET", "False")
+)
+AWS_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = "private"
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
+
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
@@ -134,13 +141,7 @@ PRIVATE_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
-    "auto_create_bucket": True,
-    "endpoint_url": os.environ.get(
-        "PRIVATE_S3_STORAGE_ENDPOINT_URL", "http://minio-private:9000"
-    ),
-    # Do not overwrite files, we get problems with jqfileupload otherwise
-    "file_overwrite": False,
-    "default_acl": "private",
+    "endpoint_url": os.environ.get("PRIVATE_S3_STORAGE_ENDPOINT_URL", None),
 }
 
 PROTECTED_S3_STORAGE_KWARGS = {
@@ -149,18 +150,13 @@ PROTECTED_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PROTECTED_S3_STORAGE_BUCKET_NAME", "grand-challenge-protected"
     ),
-    "auto_create_bucket": True,
-    "endpoint_url": os.environ.get(
-        "PROTECTED_S3_STORAGE_ENDPOINT_URL", "http://minio-protected:9000"
-    ),
+    "endpoint_url": os.environ.get("PROTECTED_S3_STORAGE_ENDPOINT_URL", None),
     # This is the domain where people will be able to go to download data
     # from this bucket. Usually we would use reverse to find this out,
     # but this needs to be defined before the database is populated
     "custom_domain": os.environ.get(
         "PROTECTED_S3_CUSTOM_DOMAIN", "gc.localhost/media"
     ),
-    "file_overwrite": False,
-    "default_acl": "private",
 }
 PROTECTED_S3_STORAGE_USE_CLOUDFRONT = strtobool(
     os.environ.get("PROTECTED_S3_STORAGE_USE_CLOUDFRONT", "False")
@@ -175,7 +171,6 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
-    "file_overwrite": False,
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
     "default_acl": "public-read",
@@ -860,7 +855,6 @@ if DEBUG:
     PUBLIC_S3_STORAGE_KWARGS.update(
         {
             "custom_domain": f"localhost:9000/{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}",
-            "auto_create_bucket": True,
             "secure_urls": False,
             "endpoint_url": "http://minio-public:9000",
         }

@@ -77,9 +77,8 @@ def test_imageset_annotationset_download(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("internal", (True, False))
 @pytest.mark.parametrize("cloudfront", (True, False))
-def test_image_response(client, internal, settings, cloudfront, tmpdir):
+def test_image_response(client, settings, cloudfront, tmpdir):
     pem = tmpdir.join("cf.pem")
     pem.write(
         dedent(
@@ -110,13 +109,8 @@ def test_image_response(client, internal, settings, cloudfront, tmpdir):
     image_file = ImageFileFactory()
     user = UserFactory()
 
-    if internal:
-        data = {"internal": True}
-    else:
-        data = {}
-
     response = get_view_for_user(
-        url=image_file.file.url, client=client, user=user, data=data
+        url=image_file.file.url, client=client, user=user
     )
 
     # Forbidden view
@@ -126,10 +120,10 @@ def test_image_response(client, internal, settings, cloudfront, tmpdir):
     assign_perm("view_image", user, image_file.image)
 
     response = get_view_for_user(
-        url=image_file.file.url, client=client, user=user, data=data
+        url=image_file.file.url, client=client, user=user
     )
 
-    if internal or cloudfront:
+    if cloudfront:
         assert response.status_code == 302
         assert not response.has_header("x-accel-redirect")
 
@@ -149,15 +143,9 @@ def test_image_response(client, internal, settings, cloudfront, tmpdir):
         assert "Signature" in redirect
         assert "Expires" in redirect
     else:
-        if internal:
-            assert redirect.startswith(
-                f"{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}/"
-                f"{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
-            )
-        else:
-            assert redirect.startswith(
-                f"/{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
-            )
+        assert redirect.startswith(
+            f"/{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
+        )
 
         assert "AWSAccessKeyId" in redirect
         assert "Signature" in redirect

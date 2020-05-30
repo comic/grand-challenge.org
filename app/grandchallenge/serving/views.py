@@ -1,9 +1,8 @@
 import posixpath
-import re
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
@@ -18,7 +17,7 @@ from grandchallenge.serving.permissions import (
 from grandchallenge.serving.tasks import create_download
 
 
-def protected_storage_redirect(*, name, internal=False):
+def protected_storage_redirect(*, name):
     # Get the storage with the internal redirect and auth. This will prepend
     # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url'] to the url
     storage = ProtectedS3Storage(internal=True)
@@ -32,19 +31,7 @@ def protected_storage_redirect(*, name, internal=False):
         )
     else:
         url = storage.url(name=name)
-
-        if internal:
-            # Just return the internal request if needed
-            response = HttpResponseRedirect(url)
-        else:
-            # Now strip the endpoint_url
-            external_url = re.match(
-                f"^{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}(.*)$",
-                url,
-            ).group(1)
-
-            response = HttpResponse()
-            response["X-Accel-Redirect"] = external_url
+        response = HttpResponseRedirect(url)
 
     return response
 
@@ -70,9 +57,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
         create_download.apply_async(
             kwargs={"creator_id": user.pk, "image_id": image.pk}
         )
-        return protected_storage_redirect(
-            name=name, internal="internal" in request.GET
-        )
+        return protected_storage_redirect(name=name)
 
     raise PermissionDenied
 
