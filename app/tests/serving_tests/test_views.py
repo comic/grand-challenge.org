@@ -43,18 +43,18 @@ def test_imageset_annotationset_download(
         (403, 403, UserFactory()),
         (403, 403, UserFactory(is_staff=True)),
         (403, 403, two_challenge_sets.challenge_set_1.non_participant),
-        (200, 403, two_challenge_sets.challenge_set_1.participant),
-        (200, 403, two_challenge_sets.challenge_set_1.participant1),
-        (200, 200, two_challenge_sets.challenge_set_1.creator),
-        (200, 200, two_challenge_sets.challenge_set_1.admin),
+        (302, 403, two_challenge_sets.challenge_set_1.participant),
+        (302, 403, two_challenge_sets.challenge_set_1.participant1),
+        (302, 302, two_challenge_sets.challenge_set_1.creator),
+        (302, 302, two_challenge_sets.challenge_set_1.admin),
         (403, 403, two_challenge_sets.challenge_set_2.non_participant),
         (403, 403, two_challenge_sets.challenge_set_2.participant),
         (403, 403, two_challenge_sets.challenge_set_2.participant1),
         (403, 403, two_challenge_sets.challenge_set_2.creator),
         (403, 403, two_challenge_sets.challenge_set_2.admin),
-        (200, 200, two_challenge_sets.admin12),
-        (200, 403, two_challenge_sets.participant12),
-        (200, 200, two_challenge_sets.admin1participant2),
+        (302, 302, two_challenge_sets.admin12),
+        (302, 403, two_challenge_sets.participant12),
+        (302, 302, two_challenge_sets.admin1participant2),
     ]
 
     for test in tests:
@@ -123,16 +123,10 @@ def test_image_response(client, settings, cloudfront, tmpdir):
         url=image_file.file.url, client=client, user=user
     )
 
-    if cloudfront:
-        assert response.status_code == 302
-        assert not response.has_header("x-accel-redirect")
+    assert response.status_code == 302
+    assert not response.has_header("x-accel-redirect")
 
-        redirect = response.url
-    else:
-        assert response.status_code == 200
-        assert response.has_header("x-accel-redirect")
-
-        redirect = response.get("x-accel-redirect")
+    redirect = response.url
 
     if cloudfront:
         assert redirect.startswith(
@@ -144,7 +138,8 @@ def test_image_response(client, settings, cloudfront, tmpdir):
         assert "Expires" in redirect
     else:
         assert redirect.startswith(
-            f"/{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
+            f"{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}/"
+            f"{settings.PROTECTED_S3_STORAGE_KWARGS['bucket_name']}/"
         )
 
         assert "AWSAccessKeyId" in redirect
@@ -169,16 +164,16 @@ def test_submission_download(client, two_challenge_sets):
         (403, two_challenge_sets.challenge_set_1.non_participant),
         (403, two_challenge_sets.challenge_set_1.participant),
         (403, two_challenge_sets.challenge_set_1.participant1),
-        (200, two_challenge_sets.challenge_set_1.creator),
-        (200, two_challenge_sets.challenge_set_1.admin),
+        (302, two_challenge_sets.challenge_set_1.creator),
+        (302, two_challenge_sets.challenge_set_1.admin),
         (403, two_challenge_sets.challenge_set_2.non_participant),
         (403, two_challenge_sets.challenge_set_2.participant),
         (403, two_challenge_sets.challenge_set_2.participant1),
         (403, two_challenge_sets.challenge_set_2.creator),
         (403, two_challenge_sets.challenge_set_2.admin),
-        (200, two_challenge_sets.admin12),
+        (302, two_challenge_sets.admin12),
         (403, two_challenge_sets.participant12),
-        (200, two_challenge_sets.admin1participant2),
+        (302, two_challenge_sets.admin1participant2),
     ]
 
     for test in tests:
