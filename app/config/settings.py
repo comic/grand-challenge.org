@@ -58,6 +58,12 @@ DATABASES = {
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
         "PORT": os.environ.get("POSTGRES_PORT", ""),
+        "OPTIONS": {
+            "sslmode": os.environ.get("POSTGRES_SSL_MODE", "prefer"),
+            "sslrootcert": os.path.join(
+                SITE_ROOT, "config", "certs", "rds-ca-2019-root.pem"
+            ),
+        },
     }
 }
 
