@@ -3,11 +3,11 @@ import re
 from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
 from itertools import product
+from urllib.parse import quote
 
 import sentry_sdk
 from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
-from kombu.utils.url import safequote
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -605,7 +605,6 @@ CORS_ALLOW_HEADERS = [
 # across domains, but this will allow workstations to access the api
 CORS_ALLOW_CREDENTIALS = True
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = int(
@@ -616,10 +615,13 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
 
-if CELERY_BROKER_URL.lower().startswith("sqs://"):
-    celery_access_key = safequote(os.environ.get("CELERY_AWS_ACCESS_KEY_ID"))
-    celery_secret_key = safequote(os.environ.get("CELERY_AWS_SECRET_KEY_ID"))
+if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
+    celery_access_key = quote(os.environ.get("BROKER_AWS_ACCESS_KEY"), safe="")
+    celery_secret_key = quote(os.environ.get("BROKER_AWS_SECRET_KEY"), safe="")
     CELERY_BROKER_URL = f"sqs://{celery_access_key}:{celery_secret_key}@"
+
+    CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
+    CELERY_BROKER_USE_SSL = True
 
     CELERY_BROKER_TRANSPORT_OPTIONS.update(
         {
@@ -632,6 +634,8 @@ if CELERY_BROKER_URL.lower().startswith("sqs://"):
             ),
         }
     )
+else:
+    CELERY_BROKER_URL = os.environ.get("BROKER_URL", "redis://redis:6379/0")
 
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
