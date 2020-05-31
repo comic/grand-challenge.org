@@ -3,7 +3,7 @@ version: '2.3'
 services:
 
   postgres:
-    image: postgres:10.12
+    image: postgres:11.6
     command: "postgres -c 'config_file=/etc/postgresql/postgresql.conf'"
     environment: &postgresenv
       POSTGRES_PASSWORD: secretpassword
