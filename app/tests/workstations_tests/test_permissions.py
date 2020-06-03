@@ -97,7 +97,11 @@ def test_workstation_editor_permissions(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "viewname",
-    ["workstations:detail", "workstations:session-create", "session-detail"],
+    [
+        "workstations:detail",
+        "workstations:workstation-session-create",
+        "session-detail",
+    ],
 )
 def test_workstation_user_permissions(client, two_workstation_sets, viewname):
     tests = (
@@ -109,6 +113,9 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
         (UserFactory(is_staff=True), 403),
         (None, 302),
     )
+
+    two_workstation_sets.ws1.image.ready = True
+    two_workstation_sets.ws1.image.save()
 
     kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
 
@@ -134,9 +141,9 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
 @pytest.mark.parametrize(
     "viewname",
     [
-        "workstations:default-session-redirect",
-        "workstations:workstation-session-redirect",
-        "workstations:workstation-image-session-redirect",
+        "workstations:default-session-create",
+        "workstations:workstation-session-create",
+        "workstations:workstation-image-session-create",
     ],
 )
 def test_workstation_redirect_permissions(
@@ -163,12 +170,12 @@ def test_workstation_redirect_permissions(
     kwargs = {}
 
     if viewname in [
-        "workstations:workstation-session-redirect",
-        "workstations:workstation-image-session-redirect",
+        "workstations:workstation-session-create",
+        "workstations:workstation-image-session-create",
     ]:
         kwargs.update({"slug": two_workstation_sets.ws1.workstation.slug})
 
-    if viewname == "workstations:workstation-image-session-redirect":
+    if viewname == "workstations:workstation-image-session-create":
         kwargs.update({"pk": two_workstation_sets.ws1.image.pk})
 
     for test in tests:
@@ -177,6 +184,7 @@ def test_workstation_redirect_permissions(
             client=client,
             user=test[0],
             reverse_kwargs=kwargs,
+            method=client.post,
         )
         assert response.status_code == test[1]
 

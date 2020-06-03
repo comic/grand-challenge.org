@@ -153,7 +153,7 @@
             {% if user_is_reader and object.is_valid %}
                 <p>
                     <a class="btn btn-primary"
-                       href="{% url 'workstations:workstation-session-redirect' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
+                       href="{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
                         <i class="fas fa-eye"></i> Launch this Reader Study
                     </a>
                 </p>

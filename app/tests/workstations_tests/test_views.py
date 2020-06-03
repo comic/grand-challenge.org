@@ -239,7 +239,7 @@ def test_session_create(client):
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="workstations:session-create",
+        viewname="workstations:workstation-session-create",
         reverse_kwargs={"slug": ws.slug},
         user=user,
     )
@@ -266,7 +266,8 @@ def test_session_redirect(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="workstations:default-session-redirect",
+        method=client.post,
+        viewname="workstations:default-session-create",
         user=user,
     )
 
