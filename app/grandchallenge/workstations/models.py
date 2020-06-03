@@ -505,6 +505,10 @@ class Session(UUIDModel):
         """Save the session instance, starting or stopping the service if needed."""
         created = self._state.adding
 
+        if created and not self.region:
+            # Launch in the first active region if no preference set
+            self.region = settings.WORKSTATIONS_ACTIVE_REGIONS[0]
+
         super().save(*args, **kwargs)
 
         if created:

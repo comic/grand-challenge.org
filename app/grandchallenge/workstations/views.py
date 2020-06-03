@@ -38,6 +38,7 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.workstations.forms import (
     EditorsForm,
+    SessionForm,
     UsersForm,
     WorkstationForm,
     WorkstationImageForm,
@@ -257,7 +258,7 @@ class SessionCreate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
 ):
     model = Session
-    fields = []
+    form_class = SessionForm
     permission_required = (
         f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
     )
@@ -277,7 +278,9 @@ class SessionCreate(
 
     def form_valid(self, form):
         session = get_or_create_active_session(
-            user=self.request.user, workstation_image=self.workstation_image
+            user=self.request.user,
+            workstation_image=self.workstation_image,
+            region=form.cleaned_data["region"],
         )
 
         url = session.get_absolute_url()

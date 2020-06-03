@@ -185,6 +185,7 @@ def test_workstation_redirect_permissions(
             user=test[0],
             reverse_kwargs=kwargs,
             method=client.post,
+            data={"region": "eu-central-1"},
         )
         assert response.status_code == test[1]
 

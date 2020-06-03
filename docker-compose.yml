@@ -195,7 +195,7 @@ services:
       <<: *protected_storage_credentials
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: "celery -A config worker -l info -Q evaluation,images,workstations-eu-nl-1 -c 1"
+    command: "celery -A config worker -l info -Q evaluation,images,workstations-eu-central-1 -c 1"
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:
