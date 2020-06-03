@@ -10,6 +10,7 @@ from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import ignore_logger
 from sentry_sdk.integrations.redis import RedisIntegration
 
 from config.denylist import USERNAME_DENYLIST
@@ -40,6 +41,8 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/gen204.*"),
     re.compile(r"^/wp-content.*"),
     re.compile(r"^/wp.*"),
+    re.compile(r"^/wordpress/.*"),
+    re.compile(r"^/old/.*", flags=re.IGNORECASE),
     re.compile(r".*/trackback.*"),
     re.compile(r"^/site/.*"),
     re.compile(r"^/media/cache/.*"),
@@ -578,6 +581,7 @@ sentry_sdk.init(
     ],
     release=COMMIT_ID,
 )
+ignore_logger("django.security.DisallowedHost")
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
