@@ -61,7 +61,10 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
-from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.core.views import (
+    PaginatedTableListView,
+    PermissionRequestUpdate,
+)
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -386,42 +389,53 @@ class AlgorithmExecutionSessionDetail(
         return context
 
 
-class AlgorithmResultsList(PermissionListMixin, ListView):
+class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
     model = Result
     permission_required = (
         f"{Result._meta.app_label}.view_{Result._meta.model_name}"
     )
+    row_template = "algorithms/data_tables/result_list.html"
+    search_fields = [
+        "job__creator__username",
+        "job__image__name",
+        "images__files__file",
+        "comment",
+    ]
+    columns = [
+        "job__created",
+        "job__creator__username",
+        "job__image__name",
+        "visibility",
+        "images__files__file",
+        "comment",
+    ]
+    order_by = "job__created"
+
+    def get_row_context(self, result, *args, **kwargs):
+        checker = ObjectPermissionChecker(self.request.user)
+        return {
+            "result": result,
+            "algorithm": self.algorithm,
+            "change_result": checker.has_perm("change_result", result),
+        }
 
     @cached_property
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
-        checker = ObjectPermissionChecker(self.request.user)
-        checker.prefetch_perms(context["object_list"])
-
-        change_result = {}
-
-        for result in context["object_list"]:
-            change_result[str(result.pk)] = checker.has_perm(
-                "change_result", result
-            )
-
-        context.update(
-            {"algorithm": self.algorithm, "change_result": change_result}
-        )
-
-        return context
-
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset(*args, **kwargs)
+    def get_unfiltered_queryset(self):
+        queryset = super().get_unfiltered_queryset()
         return (
-            qs.filter(job__algorithm_image__algorithm=self.algorithm)
+            queryset.filter(job__algorithm_image__algorithm=self.algorithm)
             .prefetch_related("images__files", "job__image__files")
             .select_related("job__creator__user_profile")
         )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+
+        return context
 
 
 class AlgorithmResultUpdate(
