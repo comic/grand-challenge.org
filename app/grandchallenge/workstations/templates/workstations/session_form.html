@@ -15,11 +15,17 @@
                 href="{{ object.get_absolute_url }}">{{ object }}</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">Create Session</li>
+            aria-current="page">Create Session
+        </li>
     </ol>
 {% endblock %}
 
 {% block content %}
     <h2>Create Session</h2>
+
+    {% if unsupported_browser_message %}
+        <div class="alert alert-danger">{{ unsupported_browser_message }}</div>
+    {% endif %}
+
     {% crispy form %}
 {% endblock %}

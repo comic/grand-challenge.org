@@ -254,53 +254,7 @@ class WorkstationImageUpdate(
     raise_exception = True
 
 
-class SessionCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
-):
-    model = Session
-    form_class = SessionForm
-    permission_required = (
-        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
-    )
-    raise_exception = True
-
-    @cached_property
-    def workstation_image(self):
-        return get_workstation_image_or_404(**self.kwargs)
-
-    def get_permission_object(self):
-        return self.workstation_image.workstation
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data()
-        context.update({"object": self.workstation_image})
-        return context
-
-    def form_valid(self, form):
-        session = get_or_create_active_session(
-            user=self.request.user,
-            workstation_image=self.workstation_image,
-            region=form.cleaned_data["region"],
-        )
-
-        url = session.get_absolute_url()
-
-        qs = self.request.META.get("QUERY_STRING", "")
-        if qs:
-            url = f"{url}?{qs}"
-
-        return HttpResponseRedirect(url)
-
-
-class SessionDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Session
-    permission_required = (
-        f"{Session._meta.app_label}.view_{Session._meta.model_name}"
-    )
-    raise_exception = True
-
+class UnsupportedBrowserWarningMixin:
     def _get_unsupported_browser_message(self):
         user_agent = ParseUserAgent(
             self.request.META.get("HTTP_USER_AGENT", "")
@@ -339,6 +293,60 @@ class SessionDetail(
             }
         )
         return context
+
+
+class SessionCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UnsupportedBrowserWarningMixin,
+    CreateView,
+):
+    model = Session
+    form_class = SessionForm
+    permission_required = (
+        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
+    )
+    raise_exception = True
+
+    @cached_property
+    def workstation_image(self):
+        return get_workstation_image_or_404(**self.kwargs)
+
+    def get_permission_object(self):
+        return self.workstation_image.workstation
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"object": self.workstation_image})
+        return context
+
+    def form_valid(self, form):
+        session = get_or_create_active_session(
+            user=self.request.user,
+            workstation_image=self.workstation_image,
+            region=form.cleaned_data["region"],
+        )
+
+        url = session.get_absolute_url()
+
+        qs = self.request.META.get("QUERY_STRING", "")
+        if qs:
+            url = f"{url}?{qs}"
+
+        return HttpResponseRedirect(url)
+
+
+class SessionDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UnsupportedBrowserWarningMixin,
+    DetailView,
+):
+    model = Session
+    permission_required = (
+        f"{Session._meta.app_label}.view_{Session._meta.model_name}"
+    )
+    raise_exception = True
 
 
 def session_proxy(request, *, pk, path, **_):
