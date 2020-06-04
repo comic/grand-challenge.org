@@ -29,6 +29,25 @@
     {% endif %}
 
     {% crispy form %}
+
+    <div class="modal fade" id="sessionModal" tabindex="-1"
+         data-keyboard="false" data-backdrop="static" role="dialog"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" id="sessionState">
+                <div class="modal-body" id="sessionStateBody">
+                    <div class="d-flex align-items-center">
+                        <span class="spinner-border"
+                              role="status"
+                              aria-hidden="true"></span>
+                        <b class="ml-3" id="sessionStateMsg">
+                            Determining best available server...
+                        </b>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block script %}

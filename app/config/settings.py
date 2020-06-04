@@ -706,7 +706,7 @@ WORKSTATION_INTERNAL_NETWORK = strtobool(
 )
 # Which regions are available for workstations to run in
 WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
-    "WORKSTATIONS_ACTIVE_REGIONS", "eu-central-1,ap-northeast-1"
+    "WORKSTATIONS_ACTIVE_REGIONS", "eu-central-1"
 ).split(",")
 WORKSTATIONS_RENDERING_SUBDOMAINS = {
     # Possible AWS regions

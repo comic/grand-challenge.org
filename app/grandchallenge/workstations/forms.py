@@ -67,6 +67,11 @@ class SessionForm(ModelForm):
         ],
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.attrs.update({"class": "d-none"})
+
     class Meta:
         model = Session
         fields = ("region",)
