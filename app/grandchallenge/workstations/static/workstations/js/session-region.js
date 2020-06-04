@@ -1,5 +1,37 @@
 function setModalLoadingMessage(msg) {
-    document.getElementById("sessionStateMsg").innerHTML = msg;
+    document.getElementById("sessionStateMsg").textContent = msg;
+}
+
+function ping(url) {
+    let end = null;
+
+    const start = performance.now();
+
+    $.ajax({
+        url: url,
+        async: false,
+        cache: false,
+        timeout: 200,
+        success: function () {
+            end = performance.now();
+        },
+        error: function (error) {
+            console.log(error);
+            end = null;
+        }
+    });
+
+    if (end === null) {
+        return Infinity;
+    } else {
+        return end - start;
+    }
+}
+
+function ping_regions(regions, endpoint) {
+    return regions.map(region => {
+        return {"id": region.value, "ping": ping(`https://${region.value}.${endpoint}`)}
+    })
 }
 
 $(document).ready(function () {
@@ -9,38 +41,16 @@ $(document).ready(function () {
 
     const ping_endpoint = JSON.parse(document.getElementById("ping-endpoint-data").textContent);
     const region_selection = document.getElementById("id_region");
-    const urls = [...region_selection.options].map(function (o) {
-        return `https://${o.value}.${ping_endpoint}`
-    });
+    const regions = [...region_selection.options]
 
-    Promise.race(
-        urls.map(
-            u => fetch(u)
-                .then(
-                    response => {
-                        return response.ok ? response : Promise.reject(response)
-                    }
-                )
-                .catch(
-                    // Nothing resolved
-                    error => console.log(error)
-                )
-        )
-    )
-        .then(
-            response => {
-                if (response !== undefined) {
-                    // If we have a match, find out what server this is for
-                    let regexp = /^https:\/\/([\w-]+).*/;
-                    let m = response.url.match(regexp);
+    // Ping the regions twice, the first will establish tls
+    ping_regions(regions, ping_endpoint);
+    let timings = ping_regions(regions, ping_endpoint);
+    
+    const server = timings.reduce((prev, current) => (prev.ping < current.ping) ? prev : current);
 
-                    if (m !== undefined) {
-                        region_selection.value = m[1];
-                    }
-                }
+    region_selection.value = server.id;
 
-                setModalLoadingMessage(`Connecting to ${region_selection.value}...`);
-                region_selection.form.submit();
-            }
-        )
+    setModalLoadingMessage(`Connecting to ${region_selection.value}...`);
+    region_selection.form.submit();
 })
