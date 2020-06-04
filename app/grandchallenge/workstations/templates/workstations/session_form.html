@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}Create Session - {{ block.super }}{% endblock %}
 
@@ -28,4 +29,15 @@
     {% endif %}
 
     {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    {{ ping_endpoint|json_script:"ping-endpoint-data" }}
+
+    <script src="{% static 'workstations/js/session-region.js' %}"
+            type="text/javascript">
+    </script>
+
 {% endblock %}

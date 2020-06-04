@@ -317,7 +317,12 @@ class SessionCreate(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        context.update({"object": self.workstation_image})
+        context.update(
+            {
+                "object": self.workstation_image,
+                "ping_endpoint": f"{self.request.site.domain.lower()}/ping",
+            }
+        )
         return context
 
     def form_valid(self, form):

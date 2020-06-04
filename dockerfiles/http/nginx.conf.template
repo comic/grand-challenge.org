@@ -141,6 +141,17 @@ http {
       return 301 $scheme://${SERVER_NAME}/challenges/;
     }
 
+    location =/ping {
+      # Used for determining if a workstation rendering region is active
+
+      add_header 'Access-Control-Allow-Origin' 'https://${SERVER_NAME}';
+
+      expires -1;
+
+      add_header Content-Type text/plain;
+      return 200 'healthy';
+    }
+
     location =/Settings/webSocketPort {
       # MeVisLab will query this endpoint to find out how to connect to the
       # websocket. It assumes that each worker gets its own host, which is
