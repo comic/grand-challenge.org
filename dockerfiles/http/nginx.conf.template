@@ -144,7 +144,7 @@ http {
     location =/ping {
       # Used for determining if a workstation rendering region is active
 
-      add_header 'Access-Control-Allow-Origin' 'https://${SERVER_NAME}';
+      add_header 'Access-Control-Allow-Origin' '*';
 
       expires -1;
 
