@@ -6,7 +6,7 @@ sphinx_autodoc_typehints
 sphinxcontrib-plantuml
 
 # Direct dependencies of the app
-"beautifulsoup4"
+beautifulsoup4
 celery
 django
 django-countries
@@ -14,7 +14,7 @@ django-crispy-forms
 django-userena-ce
 djangorestframework
 docker
-"oauth2"
+oauth2
 python-magic
 python-memcached
 pytz
@@ -24,8 +24,8 @@ uvicorn
 django-celery-email
 simpleitk
 django-favicon-plus
-"psycopg2"
-"django-select2"
+psycopg2
+django-select2
 django-celery-results
 django-summernote
 bleach
