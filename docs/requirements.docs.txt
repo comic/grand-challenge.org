@@ -60,3 +60,6 @@ prometheus_client
 openslide-python
 humanize
 future
+
+# Other dependencies
+redis
