@@ -194,14 +194,8 @@ def test_algorithm_results_list_view(client):
             expected_results = test[3]
             excluded_results = all_results - expected_results
             data = response.json()["data"]
-            assert all(
-                str(j.pk) in str(data)
-                for j in expected_results
-            )
-            assert all(
-                str(j.pk) not in str(data)
-                for j in excluded_results
-            )
+            assert all(str(j.pk) in str(data) for j in expected_results)
+            assert all(str(j.pk) not in str(data) for j in excluded_results)
 
 
 @pytest.mark.django_db
