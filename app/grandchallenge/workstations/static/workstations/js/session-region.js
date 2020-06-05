@@ -3,9 +3,8 @@ function setModalLoadingMessage(msg) {
 }
 
 function ping(url) {
-    let errored = false;
-
     // First try establishes TLS
+    let errored = false;
     $.ajax({
         url: url,
         async: false,
@@ -21,9 +20,9 @@ function ping(url) {
         return Infinity;
     }
 
-    let end = null;
+    // Now measure the response time
+    let end = Infinity;
     const start = performance.now();
-
     $.ajax({
         url: url,
         async: false,
@@ -31,17 +30,11 @@ function ping(url) {
         success: () => {
             end = performance.now();
         },
-        error: (error) => {
-            console.log(error);
-            end = null;
+        error: () => {
         }
     });
 
-    if (end === null) {
-        return Infinity;
-    } else {
-        return end - start;
-    }
+    return end - start;
 }
 
 function ping_regions(regions, endpoint) {
