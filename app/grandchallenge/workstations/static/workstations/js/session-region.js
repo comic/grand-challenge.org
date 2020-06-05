@@ -10,8 +10,9 @@ function ping(url) {
         url: url,
         async: false,
         cache: false,
-        success: ()=>{},
-        error: function () {
+        success: () => {
+        },
+        error: () => {
             errored = true;
         }
     });
@@ -27,10 +28,10 @@ function ping(url) {
         url: url,
         async: false,
         cache: false,
-        success: function () {
+        success: () => {
             end = performance.now();
         },
-        error: function (error) {
+        error: (error) => {
             console.log(error);
             end = null;
         }
