@@ -10,14 +10,22 @@ from grandchallenge.workstations.models import (
 
 class SessionHistoryAdmin(SimpleHistoryAdmin):
     ordering = ("-created",)
-    list_display = ["pk", "created", "status", "creator", "region"]
-    list_filter = ["status"]
+    list_display = [
+        "pk",
+        "created",
+        "status",
+        "creator",
+        "region",
+        "ping_times",
+    ]
+    list_filter = ["status", "region"]
     readonly_fields = [
         "creator",
         "workstation_image",
         "status",
         "logs",
         "region",
+        "ping_times",
     ]
     search_fields = [
         "creator__username",
