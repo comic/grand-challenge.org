@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}Create Session - {{ block.super }}{% endblock %}
 
@@ -9,17 +10,53 @@
         <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ object.workstation_image.workstation.get_absolute_url }}">{{ object.workstation_image.workstation.title }}</a>
+                href="{{ object.workstation.get_absolute_url }}">{{ object.workstation.title }}</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ object.workstation_image.get_absolute_url }}">{{ object.workstation_image }}</a>
+                href="{{ object.get_absolute_url }}">{{ object }}</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">Create Session</li>
+            aria-current="page">Create Session
+        </li>
     </ol>
 {% endblock %}
 
 {% block content %}
     <h2>Create Session</h2>
+
+    {% if unsupported_browser_message %}
+        <div class="alert alert-danger">{{ unsupported_browser_message }}</div>
+    {% endif %}
+
     {% crispy form %}
+
+    <div class="modal fade" id="sessionModal" tabindex="-1"
+         data-keyboard="false" data-backdrop="static" role="dialog"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" id="sessionState">
+                <div class="modal-body" id="sessionStateBody">
+                    <div class="d-flex align-items-center">
+                        <span class="spinner-border"
+                              role="status"
+                              aria-hidden="true"></span>
+                        <b class="ml-3" id="sessionStateMsg">
+                            Determining best available server...
+                        </b>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    {{ ping_endpoint|json_script:"ping-endpoint-data" }}
+
+    <script src="{% static 'workstations/js/session-region.js' %}"
+            type="text/javascript">
+    </script>
+
 {% endblock %}

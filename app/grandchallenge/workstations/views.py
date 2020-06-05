@@ -9,16 +9,16 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
+from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
     DetailView,
     FormView,
     ListView,
-    RedirectView,
     UpdateView,
 )
 from guardian.mixins import (
@@ -38,6 +38,7 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.workstations.forms import (
     EditorsForm,
+    SessionForm,
     UsersForm,
     WorkstationForm,
     WorkstationImageForm,
@@ -260,65 +261,7 @@ class WorkstationImageUpdate(
     raise_exception = True
 
 
-class SessionRedirectView(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, RedirectView
-):
-    permanent = False
-    permission_required = (
-        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
-    )
-    raise_exception = True
-
-    def get_permission_object(self):
-        return get_workstation_image_or_404(**self.kwargs).workstation
-
-    def get_redirect_url(self, *args, **kwargs):
-        workstation_image = get_workstation_image_or_404(**kwargs)
-        session = get_or_create_active_session(
-            user=self.request.user, workstation_image=workstation_image
-        )
-
-        url = session.get_absolute_url()
-
-        qs = self.request.META.get("QUERY_STRING", "")
-        if qs:
-            url = f"{url}?{qs}"
-
-        return url
-
-
-class SessionCreate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
-):
-    model = Session
-    fields = []
-    permission_required = (
-        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
-    )
-    raise_exception = True
-
-    @property
-    def workstation(self):
-        return get_object_or_404(Workstation, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.workstation
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        form.instance.workstation_image = self.workstation.latest_ready_image
-        return super().form_valid(form)
-
-
-class SessionDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Session
-    permission_required = (
-        f"{Session._meta.app_label}.view_{Session._meta.model_name}"
-    )
-    raise_exception = True
-
+class UnsupportedBrowserWarningMixin:
     def _get_unsupported_browser_message(self):
         user_agent = ParseUserAgent(
             self.request.META.get("HTTP_USER_AGENT", "")
@@ -357,6 +300,65 @@ class SessionDetail(
             }
         )
         return context
+
+
+class SessionCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UnsupportedBrowserWarningMixin,
+    CreateView,
+):
+    model = Session
+    form_class = SessionForm
+    permission_required = (
+        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
+    )
+    raise_exception = True
+
+    @cached_property
+    def workstation_image(self):
+        return get_workstation_image_or_404(**self.kwargs)
+
+    def get_permission_object(self):
+        return self.workstation_image.workstation
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {
+                "object": self.workstation_image,
+                "ping_endpoint": f"{self.request.site.domain.lower()}/ping",
+            }
+        )
+        return context
+
+    def form_valid(self, form):
+        session = get_or_create_active_session(
+            user=self.request.user,
+            workstation_image=self.workstation_image,
+            region=form.cleaned_data["region"],
+        )
+
+        url = session.get_absolute_url()
+
+        qs = self.request.META.get("QUERY_STRING", "")
+        if qs:
+            url = f"{url}?{qs}"
+
+        return HttpResponseRedirect(url)
+
+
+class SessionDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UnsupportedBrowserWarningMixin,
+    DetailView,
+):
+    model = Session
+    permission_required = (
+        f"{Session._meta.app_label}.view_{Session._meta.model_name}"
+    )
+    raise_exception = True
 
 
 def session_proxy(request, *, pk, path, **_):

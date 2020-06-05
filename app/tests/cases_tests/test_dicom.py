@@ -146,5 +146,5 @@ def test_dicom_window_level():
     assert headers["WindowWidth"] == "200"
 
     image_obj = result.new_images[0]
-    assert image_obj.window_center == 30
-    assert image_obj.window_width == 200
+    assert image_obj.window_center == 30.0
+    assert image_obj.window_width == 200.0

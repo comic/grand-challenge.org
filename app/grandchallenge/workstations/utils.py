@@ -1,5 +1,3 @@
-from random import choice
-
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -12,7 +10,7 @@ from grandchallenge.workstations.models import (
 
 
 def get_or_create_active_session(
-    *, user, workstation_image: WorkstationImage
+    *, user, workstation_image: WorkstationImage, region: str,
 ) -> Session:
     """
     Queries the database to see if there is an active session for this user and
@@ -35,19 +33,15 @@ def get_or_create_active_session(
             creator=user,
             status__in=[Session.QUEUED, Session.STARTED, Session.RUNNING],
             workstation_image=workstation_image,
+            region=region,
         )
         .order_by("-created")
         .first()
     )
 
     if session is None:
-        # Start a session in one of the available regions. In the future,
-        # rather than doing a random choice here we could look at the
-        # region with the least connections, or the region closest to the user.
         session = Session.objects.create(
-            creator=user,
-            workstation_image=workstation_image,
-            region=choice(settings.WORKSTATIONS_ACTIVE_REGIONS),
+            creator=user, workstation_image=workstation_image, region=region,
         )
 
     return session

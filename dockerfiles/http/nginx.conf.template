@@ -137,11 +137,19 @@ http {
 
     server_name .${SERVER_NAME};
 
-    # Required for minio proxy
-    ignore_invalid_headers off;
-
     location ~* ^/all_challenges/?$ {
       return 301 $scheme://${SERVER_NAME}/challenges/;
+    }
+
+    location =/ping {
+      # Used for determining if a workstation rendering region is active
+
+      add_header 'Access-Control-Allow-Origin' '*';
+
+      expires -1;
+
+      add_header Content-Type text/plain;
+      return 200 'healthy';
     }
 
     location =/Settings/webSocketPort {
@@ -189,19 +197,6 @@ http {
       proxy_buffering off;
       proxy_set_header Host $1;
       proxy_pass http://workstations_http/$2;
-    }
-
-    location /${PROTECTED_S3_STORAGE_BUCKET_NAME}/ {
-      internal;
-
-      # From https://docs.minio.io/docs/setup-nginx-proxy-with-minio
-      proxy_buffering off;
-      proxy_http_version 1.1;
-      proxy_set_header Host $http_host;
-      proxy_read_timeout 15m; # Default value is 60s which is not sufficient for MinIO.
-      proxy_send_timeout 15m; # Default value is 60s which is not sufficient for MinIO.
-      proxy_request_buffering off; # Disable any internal request buffering.
-      proxy_pass ${PROTECTED_S3_STORAGE_ENDPOINT_URL};
     }
 
     location / {
