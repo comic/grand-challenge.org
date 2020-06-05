@@ -424,7 +424,7 @@ class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
     def get_unfiltered_queryset(self):
-        queryset = super().get_unfiltered_queryset()
+        queryset = self.object_list
         return (
             queryset.filter(job__algorithm_image__algorithm=self.algorithm)
             .prefetch_related("images__files", "job__image__files")

@@ -138,6 +138,9 @@ class PaginatedTableListView(ListView):
             )
         return response
 
+    def get_unfiltered_queryset(self):
+        return self.object_list
+
     def get_filtered_queryset(self, queryset, search, order_by):
         if search:
             q = reduce(
@@ -147,9 +150,3 @@ class PaginatedTableListView(ListView):
             )
             queryset = queryset.filter(q)
         return queryset.order_by(order_by)
-
-    def get_unfiltered_queryset(self):
-        return super().get_queryset()
-
-    def get_queryset(self):
-        return self.model.objects.none()

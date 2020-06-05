@@ -339,7 +339,7 @@ def test_algorithm_permission_request_list(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_result_list_view(client):
+def test_algorithm_results_list_view(client):
     editor = UserFactory()
 
     alg = AlgorithmFactory(public=True)

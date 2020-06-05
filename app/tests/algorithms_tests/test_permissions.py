@@ -184,6 +184,8 @@ def test_algorithm_results_list_view(client):
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],
+            data={"length": 50, "draw": 1},
+            **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
         assert response.status_code == test[2]
 
@@ -191,12 +193,13 @@ def test_algorithm_results_list_view(client):
         if response.status_code == 200:
             expected_results = test[3]
             excluded_results = all_results - expected_results
+            data = response.json()["data"]
             assert all(
-                str(j.pk) in response.rendered_content
+                str(j.pk) in str(data)
                 for j in expected_results
             )
             assert all(
-                str(j.pk) not in response.rendered_content
+                str(j.pk) not in str(data)
                 for j in excluded_results
             )
 
