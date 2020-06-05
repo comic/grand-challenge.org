@@ -74,7 +74,10 @@ class SessionForm(ModelForm):
 
     class Meta:
         model = Session
-        fields = ("region",)
+        fields = (
+            "region",
+            "ping_times",
+        )
 
 
 class UserGroupForm(SaveFormInitMixin, Form):

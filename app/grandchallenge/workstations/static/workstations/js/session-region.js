@@ -3,15 +3,30 @@ function setModalLoadingMessage(msg) {
 }
 
 function ping(url) {
-    let end = null;
+    let errored = false;
 
+    // First try establishes TLS
+    $.ajax({
+        url: url,
+        async: false,
+        cache: false,
+        success: ()=>{},
+        error: function () {
+            errored = true;
+        }
+    });
+
+    if (errored === true) {
+        return Infinity;
+    }
+
+    let end = null;
     const start = performance.now();
 
     $.ajax({
         url: url,
         async: false,
         cache: false,
-        timeout: 200,
         success: function () {
             end = performance.now();
         },
@@ -30,8 +45,8 @@ function ping(url) {
 
 function ping_regions(regions, endpoint) {
     return regions.map(region => {
-        return {"id": region.value, "ping": ping(`https://${region.value}.${endpoint}`)}
-    })
+        return {"id": region.value, "ping": ping(`https://${region.value}.${endpoint}`)};
+    });
 }
 
 $(document).ready(function () {
@@ -41,14 +56,14 @@ $(document).ready(function () {
 
     const ping_endpoint = JSON.parse(document.getElementById("ping-endpoint-data").textContent);
     const region_selection = document.getElementById("id_region");
-    const regions = [...region_selection.options]
+    const ping_widget = document.getElementById("id_ping_times");
+    const regions = [...region_selection.options];
 
-    // Ping the regions twice, the first will establish tls
-    ping_regions(regions, ping_endpoint);
     let timings = ping_regions(regions, ping_endpoint);
-    
-    const server = timings.reduce((prev, current) => (prev.ping < current.ping) ? prev : current);
 
+    ping_widget.value = JSON.stringify(timings);
+
+    const server = timings.reduce((prev, current) => (prev.ping < current.ping) ? prev : current);
     region_selection.value = server.id;
 
     setModalLoadingMessage(`Connecting to ${region_selection.value}...`);

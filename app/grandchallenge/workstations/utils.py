@@ -10,7 +10,11 @@ from grandchallenge.workstations.models import (
 
 
 def get_or_create_active_session(
-    *, user, workstation_image: WorkstationImage, region: str,
+    *,
+    user,
+    workstation_image: WorkstationImage,
+    region: str,
+    ping_times: str = None,
 ) -> Session:
     """
     Queries the database to see if there is an active session for this user and
@@ -41,7 +45,10 @@ def get_or_create_active_session(
 
     if session is None:
         session = Session.objects.create(
-            creator=user, workstation_image=workstation_image, region=region,
+            creator=user,
+            workstation_image=workstation_image,
+            region=region,
+            ping_times=ping_times,
         )
 
     return session
