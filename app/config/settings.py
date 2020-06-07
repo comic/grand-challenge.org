@@ -137,6 +137,8 @@ IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 
 AWS_FILE_OVERWRITE = False
+# Note: deprecated in django storages 2.0
+AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
 
