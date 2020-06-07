@@ -11,7 +11,4 @@ formats: all
 python:
   version: 3.8
   install:
-    - method: pip
-      path: .
-    # TODO: Remove this requirements file once rtd fully supports dev-dependencies
     - requirements: docs/requirements.docs.txt

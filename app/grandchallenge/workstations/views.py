@@ -337,6 +337,7 @@ class SessionCreate(
             user=self.request.user,
             workstation_image=self.workstation_image,
             region=form.cleaned_data["region"],
+            ping_times=form.cleaned_data["ping_times"],
         )
 
         url = session.get_absolute_url()
