@@ -31,7 +31,6 @@ def test_cors_headers_are_set(settings):
 
 
 @pytest.mark.django_db
-@pytest.mark.minio
 def test_single_chunk_api(client):
     filename = "test.bin"
     token = Token.objects.create(user=UserFactory())

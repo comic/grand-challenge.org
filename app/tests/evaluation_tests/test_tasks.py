@@ -10,7 +10,6 @@ from tests.factories import MethodFactory, SubmissionFactory
 
 
 @pytest.mark.django_db
-@pytest.mark.minio
 def test_submission_evaluation(
     client, evaluation_image, submission_file, settings
 ):

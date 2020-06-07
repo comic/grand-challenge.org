@@ -15,7 +15,6 @@ from tests.utils import get_http_host
 
 
 @pytest.mark.django_db
-@pytest.mark.minio
 def test_imageset_add_images(client, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)

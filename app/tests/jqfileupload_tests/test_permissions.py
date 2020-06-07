@@ -9,7 +9,6 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-@pytest.mark.minio
 def test_create_permission(client):
     filename = "test.bin"
     content = load_test_data()
