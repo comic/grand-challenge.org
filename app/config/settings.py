@@ -136,10 +136,9 @@ JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 
-AWS_AUTO_CREATE_BUCKET = strtobool(
-    os.environ.get("AWS_AUTO_CREATE_BUCKET", "False")
-)
-AWS_FILE_OVERWRITE = False
+AWS_S3_FILE_OVERWRITE = False
+# Note: deprecated in django storages 2.0
+AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
 
@@ -572,16 +571,17 @@ SENTRY_ENABLE_JS_REPORTING = strtobool(
 )
 WORKSTATION_SENTRY_DSN = os.environ.get("WORKSTATION_SENTRY_DSN", "")
 
-sentry_sdk.init(
-    dsn=SENTRY_DSN,
-    integrations=[
-        DjangoIntegration(),
-        CeleryIntegration(),
-        RedisIntegration(),
-    ],
-    release=COMMIT_ID,
-)
-ignore_logger("django.security.DisallowedHost")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            RedisIntegration(),
+        ],
+        release=COMMIT_ID,
+    )
+    ignore_logger("django.security.DisallowedHost")
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),

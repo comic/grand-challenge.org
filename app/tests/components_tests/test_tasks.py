@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pytest
+from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job as AlgorithmJob
 from grandchallenge.components.tasks import mark_long_running_jobs_failed
@@ -18,7 +19,7 @@ def test_mark_long_running_jobs_failed():
     # Long running jobs should be marked as failed
     j2 = EvaluationJobFactory()
     j2.update_status(status=EvaluationJob.STARTED)
-    j2.started_at = datetime.now() - timedelta(days=1)
+    j2.started_at = timezone.now() - timedelta(days=1)
     j2.save()
 
     # A job that has not been started should not be marked as failed, even if
