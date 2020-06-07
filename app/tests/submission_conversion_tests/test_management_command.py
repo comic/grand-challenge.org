@@ -13,6 +13,7 @@ from tests.factories import ChallengeFactory, SubmissionFactory
 
 
 @pytest.mark.django_db
+@pytest.mark.minio
 def test_submission_conversion(capsys, submission_file, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)

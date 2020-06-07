@@ -11,6 +11,7 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
+@pytest.mark.minio
 def test_raw_image_file_download(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)

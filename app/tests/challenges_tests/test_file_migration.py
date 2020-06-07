@@ -22,6 +22,7 @@ def original_image_file_path(instance, filename):
 
 
 @pytest.mark.django_db
+@pytest.mark.minio
 def test_image_file_migration():
     filename = f"{uuid.uuid4()}.zraw"
 

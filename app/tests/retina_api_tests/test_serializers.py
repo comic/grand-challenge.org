@@ -37,6 +37,7 @@ class TestPILImageSerializer:
     @pytest.mark.parametrize(
         "factory", [ImageFactoryWithImageFile, ImageFactoryWithImageFile3D]
     )
+    @pytest.mark.minio
     def test_image_no_parameters(self, factory):
         image = factory()
         serializer = PILImageSerializer(image)

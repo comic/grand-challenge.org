@@ -43,6 +43,7 @@ def test_session_environ(settings, debug):
 
 
 @pytest.mark.django_db
+@pytest.mark.minio
 def test_session_start(http_image, docker_client, settings):
     path, sha256 = http_image
 
