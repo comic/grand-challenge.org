@@ -14,7 +14,7 @@ Container(gc_web_app, "Web Application", "Nginx, Django", "Provides the grand ch
 
 Container_Boundary(api, "Workstation Worker") {
     Component(nginx, "Reverse Proxy", "Nginx", "SSL termination and routing")
-    Component(webapp, "Web Application", "Django, Celery", "Authn and Authz for workstation services, manages workstation container lifecycles.")
+    Component(webapp, "Web Application", "Django, Celery", "Authorization for workstation connections, manages workstation container lifecycles.")
     Component(traefik, "Workstation Reverse Proxy", "Traefik", "Routes users to their workstation service")
     Component(docker, "Compute Pool", "Docker", "Provides compute resources for workstation services, 1 workstation container instance per user.")
 
@@ -27,7 +27,7 @@ Container_Boundary(api, "Workstation Worker") {
 
 Rel(workstation_user, nginx, "Uses", "HTTPS, WSS, JSON")
 
-Rel(webapp, message_queue, "Fetches messages from", "SSL/SQS/Redis/Celery")
+Rel(webapp, message_queue, "Fetches messages from", "SSL, SQS/Redis, Celery")
 Rel(webapp, postgres, "Reads and writes to", "SQL")
 Rel(webapp, private_s3, "Fetches container images from", "HTTPS, S3")
 

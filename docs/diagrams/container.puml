@@ -11,7 +11,7 @@ Person(challenge_orgs, "Researcher", "User who poses challenges and compares sta
 Person(data_scientists, "Data Scientist", "User who develops machine learning algorithms.")
 
 System_Boundary(s1, "grand-challenge.org") {
-    Container(gc_web_app, "Web Application", "Nginx, Django", "Provides the grand challenge functionality via HTML and a REST API.")
+    Container(gc_web_app, "API", "Nginx, Django", "Provides the grand challenge functionality via HTML and a REST API.")
     Container(gc_algorithm_worker, "Algorithm and Evaluation Worker", "Django, Docker, Celery, Redis", "Executes algorithm and evaluation container images on medical imaging data.")
     Container(gc_workstation_worker, "Workstation Worker", "Nginx, Django, Docker, Traefik, Celery, Redis", "Instantiates and proxies workstation container images for users.")
 

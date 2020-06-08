@@ -54,8 +54,14 @@ Components
 Logical modules and their interactions with containers.
 *Note: a component is a grouping of related functionality behind a well defined interface,
 not components in the sense of pipelines.*
+Grand-challenge.org is a Django monolith, but several components can be deployed and scaled independently.
 
-.. .. uml:: diagrams/samples/component.puml
+API
+~~~
+
+The API layer provides the HTML views and REST services to the user.
+
+.. uml:: diagrams/component_api.puml
 
 Workstations
 ~~~~~~~~~~~~
