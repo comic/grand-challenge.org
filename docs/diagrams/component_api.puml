@@ -6,7 +6,7 @@ LAYOUT_WITH_LEGEND()
 
 title Component diagram for grand-challenge.org - API
 
-Person(data_scientists, "Data Scientist", "User who intracts with the API.")
+Person(users, "Users", "")
 
 Container_Boundary(s1, "API") {
     Component(gc_web_app, "Web Application", "Django", "Provides the grand challenge functionality via HTML and a REST API.")
@@ -22,7 +22,7 @@ Container(private_s3, "Private Data Store", "S3/Minio", "Stores private objects,
 System_Ext(oauth, "Authentication", "Authenticates users through external providers (Google, GitHub).")
 System_Ext(cdn, "Content Delivery Network", "Stores and serves static data (S3, CloudFront).")
 
-Rel(data_scientists, nginx, "Uses", "HTTPS, HTML, JSON")
+Rel(users, nginx, "Use", "HTTPS, HTML, JSON")
 
 Rel(gc_web_app, oauth, "Authenticates users against", "HTTPS, OAuth2")
 Rel(gc_web_app, cdn, "Sends static data to", "HTTPS")
