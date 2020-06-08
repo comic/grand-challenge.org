@@ -57,5 +57,15 @@ not components in the sense of pipelines.*
 
 .. .. uml:: diagrams/samples/component.puml
 
+Workstations
+~~~~~~~~~~~~
+
+Grand Challenge is able to launch :ref:`workstations <workstations>` for users.
+Workstations are container images that allow for interaction with medical data in the browser.
+One workstation container image is instantiated per user, which provides a single page application.
+A secure web socket connection is then established between the user and their container instance.
+
+.. uml:: diagrams/component_workstations.puml
+
 
 .. _`C4 Model`: https://c4model.com/

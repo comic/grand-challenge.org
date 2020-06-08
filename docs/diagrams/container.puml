@@ -17,10 +17,10 @@ System_Boundary(s1, "grand-challenge.org") {
 
     Container(workstation_instance, "Web Workstation", "SPA, MeVisLab, VueJS, Docker", "Provides a web based workstation for server side rendering of medical imaging data. 1 container image per active user.")
 
-    ContainerDb(postgres, "Database", "PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
+    ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
 
-    Container(protected_s3, "Protected Data Store", "Minio", "Stores protected medical imaging objects.")
-    Container(private_s3, "Private Data Store", "Minio", "Stores private objects, container images etc.")
+    Container(protected_s3, "Protected Data Store", "S3/Minio", "Stores protected medical imaging objects.")
+    Container(private_s3, "Private Data Store", "S3/Minio", "Stores private objects, container images etc.")
 }
 
 System_Ext(oauth, "Authentication", "Authenticates users through external providers (Google, GitHub).")
@@ -37,17 +37,16 @@ Rel(s1, mail, "Sends emails through", "SMTP")
 Rel(gc_web_app, cdn, "Sends static data to", "HTTPS")
 Rel(monitoring, s1, "Scrapes monitoring endpoints of", "HTTPS")
 
-Rel(gc_web_app, postgres, "Reads and writes to", "SQL")
+Rel(gc_web_app, postgres, "Reads and writes to", "SSL, SQL")
 Rel(gc_web_app, protected_s3, "Stores objects in, and proxies access to", "HTTPS, S3")
 Rel(gc_web_app, private_s3, "Stores objects in", "HTTPS, S3")
 
-Rel(gc_workstation_worker, postgres, "Reads and writes to", "SQL")
+Rel(gc_workstation_worker, postgres, "Reads and writes to", "SSL, SQL")
 Rel(gc_workstation_worker, private_s3, "Fetches container images from", "HTTPS, S3")
-Rel(gc_workstation_worker, protected_s3, "Reads objects from", "HTTPS, S3")
 Rel_Neighbor(gc_workstation_worker, workstation_instance, "Instantiates and proxies", "HTTPS, Docker")
 Rel_U(gc_workstation_worker, clinicians, "Provides SPA workstation to", "HTTPS, WSS, HTML, JSON")
 
-Rel_U(gc_algorithm_worker, postgres, "Reads and writes to", "SQL")
+Rel_U(gc_algorithm_worker, postgres, "Reads and writes to", "SSL, SQL")
 Rel_U(gc_algorithm_worker, private_s3, "Fetches container images from", "HTTPS, S3")
 Rel_U(gc_algorithm_worker, protected_s3, "Reads objects from", "HTTPS, S3")
 @enduml

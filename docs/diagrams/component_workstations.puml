@@ -1,0 +1,36 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component diagram for grand-challenge.org - Workstation Worker
+
+Person(workstation_user, "Workstation User", "User who wants to view a workstation.")
+
+ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
+Container(private_s3, "Private Data Store", "S3/Minio", "Stores private objects, container images etc.")
+Container(message_queue, "Message Queue", "SQS/Redis", "Queue of units of work Celery messages.")
+Container(gc_web_app, "Web Application", "Nginx, Django", "Provides the grand challenge functionality via HTML and a REST API.")
+
+Container_Boundary(api, "Workstation Worker") {
+    Component(nginx, "Reverse Proxy", "Nginx", "SSL termination and routing")
+    Component(webapp, "Web Application", "Django, Celery", "Authn and Authz for workstation services, manages workstation container lifecycles.")
+    Component(traefik, "Workstation Reverse Proxy", "Traefik", "Routes users to their workstation service")
+    Component(docker, "Compute Pool", "Docker", "Provides compute resources for workstation services, 1 workstation container instance per user.")
+
+    Rel(nginx, webapp, "Fetches routing information from", "HTTP")
+    Rel(nginx, traefik, "Internally redirects to", "HTTP, WS")
+
+    Rel(traefik, docker, "Proxies", "HTTP, WS")
+    Rel(webapp, docker, "Schedules workstation services on", "HTTPS, JSON")
+}
+
+Rel(workstation_user, nginx, "Uses", "HTTPS, WSS, JSON")
+
+Rel(webapp, message_queue, "Fetches messages from", "SSL/SQS/Redis/Celery")
+Rel(webapp, postgres, "Reads and writes to", "SQL")
+Rel(webapp, private_s3, "Fetches container images from", "HTTPS, S3")
+
+Rel(docker, gc_web_app, "Fetches medical images, algorithm results, etc, from", "HTTPS, JSON")
+
+@enduml
