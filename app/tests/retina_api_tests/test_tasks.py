@@ -1,4 +1,5 @@
 import pytest
+from django.core.cache import cache
 
 from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.tasks import cache_archive_data
@@ -8,7 +9,8 @@ from tests.retina_api_tests.helpers import create_datastructures_data
 @pytest.mark.django_db
 class TestCacheArchiveDataTasks:
     def test_caching(self):
-        # Create data
+        # This test requires "Australia" and "RS1" to be in settings.RETINA_ARCHIVE_NAMES
+        cache.clear()
         (
             datastructures,
             datastructures_aus,
