@@ -73,5 +73,15 @@ A secure web socket connection is then established between the user and their co
 
 .. uml:: diagrams/component_workstations.puml
 
+Image, Evaluation and Algorithm Workers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are several tasks that require asynchronous processing that require
+long compute times, high memory usage and potentially the docker api and/or a GPU.
+These tasks include medical image importing, challenge submission evaluation (requires docker), and
+algorithm execution (requires docker and a GPU).
+These tasks are scheduled using Celery, and then executed by worker nodes that can horizontally scale.
+
+.. uml:: diagrams/component_celery.puml
 
 .. _`C4 Model`: https://c4model.com/
