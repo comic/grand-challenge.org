@@ -28,7 +28,7 @@ Container_Boundary(api, "Workstation Worker") {
 Rel(workstation_user, nginx, "Uses", "HTTPS, WSS, JSON")
 
 Rel(webapp, message_queue, "Fetches messages from", "SSL, SQS/Redis, Celery")
-Rel(webapp, postgres, "Reads and writes to", "SQL")
+Rel(webapp, postgres, "Reads and writes to", "SSL, SQL")
 Rel(webapp, private_s3, "Fetches container images from", "HTTPS, S3")
 
 Rel(docker, gc_web_app, "Fetches medical images, algorithm results, etc, from", "HTTPS, JSON")
