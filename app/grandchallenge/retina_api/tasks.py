@@ -11,24 +11,15 @@ from grandchallenge.retina_api.models import ArchiveDataModel
 def cache_archive_data():
     archive_data = create_archive_data_object()
     ArchiveDataModel.objects.update_or_create(
-        pk=1, defaults={"value": archive_data},
+        pk=1, defaults={"value": archive_data}
     )
 
 
 def create_archive_data_object():
-    # TODO: use the guardian filters
-    archives = Archive.objects.filter(
-        title__in=[
-            "AREDS - GA selection",
-            "RS1",
-            "kappadata",
-            "Rotterdam_Study_1",
-            "Rotterdam Study 1",
-            "Australia",
-            "RS3",
-            "RS2",
-        ]
-    )
+    # This task creates the archive data object containing all archives
+    # in RETINA_ARCHIVES_NAMES. This is used for the legacy workstation
+    # and should be removed when it is not in use anymore.
+    archives = Archive.objects.filter(title__in=settings.RETINA_ARCHIVE_NAMES)
     patients = Patient.objects.prefetch_related(
         "study_set",
         "study_set__image_set",

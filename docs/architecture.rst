@@ -54,8 +54,34 @@ Components
 Logical modules and their interactions with containers.
 *Note: a component is a grouping of related functionality behind a well defined interface,
 not components in the sense of pipelines.*
+Grand-challenge.org is a Django monolith, but several components can be deployed and scaled independently.
 
-.. .. uml:: diagrams/samples/component.puml
+API
+~~~
 
+The API layer provides the HTML views and REST services to the user.
+
+.. uml:: diagrams/component_api.puml
+
+Workstations
+~~~~~~~~~~~~
+
+Grand Challenge is able to launch :ref:`workstations <workstations>` for users.
+Workstations are container images that allow for interaction with medical data in the browser.
+One workstation container image is instantiated per user, which provides a single page application.
+A secure web socket connection is then established between the user and their container instance.
+
+.. uml:: diagrams/component_workstations.puml
+
+Image, Evaluation and Algorithm Workers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are several tasks that require asynchronous processing that require
+long compute times, high memory usage and potentially the docker api and/or a GPU.
+These tasks include medical image importing, challenge submission evaluation (requires docker), and
+algorithm execution (requires docker and a GPU).
+These tasks are scheduled using Celery, and then executed by worker nodes that can horizontally scale.
+
+.. uml:: diagrams/component_celery.puml
 
 .. _`C4 Model`: https://c4model.com/
