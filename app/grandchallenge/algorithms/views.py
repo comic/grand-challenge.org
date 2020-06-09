@@ -420,7 +420,7 @@ class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
 
     def get_data(self, results, *args, **kwargs):
         checker = ObjectPermissionChecker(self.request.user)
-        checker.prefetch_perms(results)
+        checker.prefetch_perms(results.object_list)
         return [
             self.render_row_data(result, checker=checker) for result in results
         ]
