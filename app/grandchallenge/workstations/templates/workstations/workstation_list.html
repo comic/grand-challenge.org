@@ -6,13 +6,6 @@
 
 {% block title %}Workstations - {{ block.super }}{% endblock %}
 
-{% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active" aria-current="page">Workstations
-        </li>
-    </ol>
-{% endblock %}
-
 {% block content %}
     {% if perms.workstations.add_workstation %}
         <p>
