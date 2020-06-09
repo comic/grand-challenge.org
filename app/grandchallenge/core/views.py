@@ -55,7 +55,7 @@ class HomeTemplate(TemplateView):
                 bullet_points=[
                     "Upload medical imaging data easily and securely",
                     "Control who has access to the data",
-                    "Use our globally available browser-based workstations to view the data",
+                    "View data with our globally available browser-based workstations",
                 ],
                 url=reverse("archives:list"),
                 url_title="Archives",
@@ -65,7 +65,7 @@ class HomeTemplate(TemplateView):
                 title="Train Expert Annotators",
                 bullet_points=[
                     "Create sets of questions that users must answer about a dataset",
-                    "Manage clinical experts and invite them to take part in the training",
+                    "Invite clinical experts take part in the training",
                     "Deliver immediate feedback on performance",
                 ],
                 url=reverse("reader-studies:list"),

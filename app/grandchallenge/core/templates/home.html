@@ -14,13 +14,13 @@
     </div>
 
     {% for highlight in highlights %}
-        <div class="row {% if forloop.counter0|divisibleby:2 %}flex-md-row-reverse{% endif %}">
-            <div class="col-md-6 p-4">
-                <div class="min-vh-25 h-100 rounded background-fill shadow"
-                     style="background-image: url('{% static highlight.image %}');">
-                </div>
+        <div class="row {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
+            <div class="col-lg-6 py-4 px-3">
+                <img src="{% static highlight.image %}"
+                     class="w-100 rounded shadow"
+                     alt="{{ highlight.url_title }} Image">
             </div>
-            <div class="col-md-6 p-4 align-self-center">
+            <div class="col-lg-6 py-4 px-5 align-self-center">
                 <h4>{{ highlight.title }}</h4>
                 <ul>
                     {% for point in highlight.bullet_points %}
