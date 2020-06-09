@@ -70,7 +70,7 @@ class HomeTemplate(TemplateView):
                 ],
                 url=reverse("reader-studies:list"),
                 url_title="Courses",
-                image="images/challenge_1.jpg",
+                image="images/education.png",
             ),
             Highlight(
                 title="Gather Annotations for Your Data",
@@ -81,7 +81,7 @@ class HomeTemplate(TemplateView):
                 ],
                 url=reverse("reader-studies:list"),
                 url_title="Reader Studies",
-                image="images/challenge_1.jpg",
+                image="images/annotation.png",
             ),
             Highlight(
                 title="Benchmark Algorithms",
@@ -92,7 +92,7 @@ class HomeTemplate(TemplateView):
                 ],
                 url=reverse("challenges:list"),
                 url_title="Challenges",
-                image="images/challenge_2.jpg",
+                image="images/challenge.png",
             ),
             Highlight(
                 title="Deploy Your Algorithms for Researchers",
@@ -103,7 +103,7 @@ class HomeTemplate(TemplateView):
                 ],
                 url=reverse("algorithms:list"),
                 url_title="Algorithms",
-                image="images/algorithms_1.png",
+                image="images/algorithms.png",
             ),
             Highlight(
                 title="Discover Certified Solutions",
@@ -114,7 +114,7 @@ class HomeTemplate(TemplateView):
                 ],
                 url=reverse("products:product-list"),
                 url_title="Products",
-                image="images/algorithms_1.png",
+                image="images/products.png",
             ),
         ]
 
