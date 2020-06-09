@@ -7,12 +7,6 @@
 {% load image_filter %}
 
 {% block content %}
-    <div class="row justify-content-center">
-        <div class="col-lg-10 p-4 text-center">
-            <h2>Develop Machine Learning Solutions in Biomedical Imaging with Grand Challenge</h2>
-        </div>
-    </div>
-
     {% for highlight in highlights %}
         <div class="row {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
             <div class="col-lg-6 py-4 px-3">

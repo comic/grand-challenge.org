@@ -133,8 +133,8 @@ class HomeTemplate(TemplateView):
                 "jumbotron_background_url": background_url,
                 "jumbotron_title": "Grand Challenge",
                 "jumbotron_description": (
-                    "A platform to empower biomedical image analysis research "
-                    "worldwide."
+                    "A platform for end-to-end development of machine "
+                    "learning solutions in biomedical imaging."
                 ),
             }
         )
