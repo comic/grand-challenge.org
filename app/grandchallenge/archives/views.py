@@ -15,7 +15,6 @@ from django.db.models import Count
 from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.templatetags.static import static
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.timezone import now
@@ -77,7 +76,6 @@ class ArchiveList(PermissionListMixin, ListView):
 
         context.update(
             {
-                "jumbotron_background_url": static("images/archive_2.jpg"),
                 "jumbotron_title": "Archives",
                 "jumbotron_description": format_html(
                     (

@@ -4,7 +4,6 @@ from itertools import chain
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
-from django.templatetags.static import static
 from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
@@ -114,9 +113,6 @@ class ChallengeList(TemplateView):
                     [h for h in hosts if h.host and host_count[h.host] > 1],
                     key=lambda h: host_count[h.host],
                     reverse=True,
-                ),
-                "jumbotron_background_url": static(
-                    "images/challenge_2_banner_size.jpg"
                 ),
                 "jumbotron_title": "Challenges",
                 "jumbotron_description": format_html(

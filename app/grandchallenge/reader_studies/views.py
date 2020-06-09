@@ -25,7 +25,6 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
-from django.templatetags.static import static
 from django.utils import timezone
 from django.utils.html import format_html
 from django.views.generic import (
@@ -108,7 +107,6 @@ class ReaderStudyList(PermissionListMixin, ListView):
 
         context.update(
             {
-                "jumbotron_background_url": static("images/challenge_1.jpg"),
                 "jumbotron_title": "Reader Studies",
                 "jumbotron_description": format_html(
                     (

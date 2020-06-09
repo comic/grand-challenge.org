@@ -16,7 +16,6 @@ from django.core.exceptions import (
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.templatetags.static import static
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import (
@@ -100,9 +99,6 @@ class AlgorithmList(PermissionListMixin, ListView):
 
         context.update(
             {
-                "jumbotron_background_url": static(
-                    "images/algorithms_1_bannersize.png"
-                ),
                 "jumbotron_title": "Algorithms",
                 "jumbotron_description": format_html(
                     (

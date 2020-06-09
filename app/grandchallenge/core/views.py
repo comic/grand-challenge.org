@@ -41,10 +41,10 @@ class HomeTemplate(TemplateView):
         background_url = static(
             choice(
                 [
-                    "images/home_pathology_crop_1_bannersize.jpg",
-                    "images/home_ophthalmology_1_bannersize.png",
-                    "images/home_radiology_1_bannersize.png",
-                    "images/home_radiology_2_bannersize.png",
+                    "images/pathology_banner.jpg",
+                    "images/ophthalmology_banner.png",
+                    "images/radiology_banner_1.png",
+                    "images/radiology_banner_2.png",
                 ]
             )
         )
@@ -73,7 +73,7 @@ class HomeTemplate(TemplateView):
                 image="images/education.png",
             ),
             Highlight(
-                title="Gather Annotations for Your Data",
+                title="Gather Annotations",
                 bullet_points=[
                     "Create your own set of questions for your dataset",
                     "Customise the hanging protocols and overlays",
@@ -106,7 +106,7 @@ class HomeTemplate(TemplateView):
                 image="images/algorithms.png",
             ),
             Highlight(
-                title="Discover Certified Solutions",
+                title="Find Certified Solutions",
                 bullet_points=[
                     "Filter to easily find solutions to your clinical questions",
                     "Compare product specifications",
