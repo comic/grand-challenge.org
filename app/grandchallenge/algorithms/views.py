@@ -405,7 +405,7 @@ class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
         "job__created",
         "job__creator__username",
         "job__image__name",
-        "visibility",
+        "public",
         "images__files__file",
         "comment",
     ]
