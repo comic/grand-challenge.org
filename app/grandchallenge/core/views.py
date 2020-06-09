@@ -59,10 +59,10 @@ class HomeTemplate(TemplateView):
                 ],
                 url=reverse("archives:list"),
                 url_title="Archives",
-                image="images/archive_1.jpg",
+                image="images/archive.png",
             ),
             Highlight(
-                title="Train Annotators for Your Data",
+                title="Train Expert Annotators",
                 bullet_points=[
                     "Create sets of questions that users must answer about a dataset",
                     "Manage clinical experts and invite them to take part in the training",
@@ -95,9 +95,9 @@ class HomeTemplate(TemplateView):
                 image="images/challenge.png",
             ),
             Highlight(
-                title="Deploy Your Algorithms for Researchers",
+                title="Deploy Your Algorithms",
                 bullet_points=[
-                    "Upload algorithm containers",
+                    "Upload algorithm container images",
                     "Manage access for clinical and non-clinical researchers",
                     "Upload data for execution by your algorithm on our infractructure",
                 ],
