@@ -105,11 +105,14 @@ class PaginatedTableListView(ListView):
 
     def render_row_data(self, result, *args, **kwargs):
         return render_to_string(
-            self.row_template, context=self.get_row_context(result)
+            self.row_template,
+            context=self.get_row_context(result, *args, **kwargs),
         ).split("<split/>")
 
     def get_data(self, results, *args, **kwargs):
-        return [self.render_row_data(result) for result in results]
+        return [
+            self.render_row_data(result, *args, **kwargs) for result in results
+        ]
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)

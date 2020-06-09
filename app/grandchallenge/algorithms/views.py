@@ -411,13 +411,21 @@ class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
     ]
     order_by = "job__created"
 
-    def get_row_context(self, result, *args, **kwargs):
-        checker = ObjectPermissionChecker(self.request.user)
+    def get_row_context(self, result, *args, checker=None, **kwargs):
+        if not checker:
+            checker = ObjectPermissionChecker(self.request.user)
         return {
             "result": result,
             "algorithm": self.algorithm,
             "change_result": checker.has_perm("change_result", result),
         }
+
+    def get_data(self, results, *args, **kwargs):
+        checker = ObjectPermissionChecker(self.request.user)
+        checker.prefetch_perms(results)
+        return [
+            self.render_row_data(result, checker=checker) for result in results
+        ]
 
     @cached_property
     def algorithm(self):
