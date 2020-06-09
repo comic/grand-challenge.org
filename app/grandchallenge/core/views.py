@@ -25,9 +25,11 @@ from grandchallenge.subdomains.utils import reverse
 @dataclass
 class Highlight:
     title: str
-    description: str
     image: str
     url: str
+    url_title: str
+    description: str = ""
+    bullet_points: list = list
 
 
 class HomeTemplate(TemplateView):
@@ -49,47 +51,69 @@ class HomeTemplate(TemplateView):
 
         highlights = [
             Highlight(
-                title="Archives",
-                description=(
-                    "Archives are the place to host your dataset if you want "
-                    "to create reader studies, challenges or use an "
-                    "algorithm. Archives can be kept private or made public."
-                ),
+                title="Manage Your Data",
+                bullet_points=[
+                    "Upload medical imaging data easily and securely",
+                    "Control who has access to the data",
+                    "Use our globally available browser-based workstations to view the data",
+                ],
                 url=reverse("archives:list"),
+                url_title="Archives",
                 image="images/archive_1.jpg",
             ),
             Highlight(
-                title="Reader Studies",
-                description=(
-                    "Reader studies can have many purposes. Need structured "
-                    "labels of medical data for algorithm training? Want to "
-                    "do an observer study and collect data from multiple "
-                    "readers? Wish to create a teaching file or test "
-                    "someone’s skills?"
-                ),
+                title="Train Annotators for Your Data",
+                bullet_points=[
+                    "Create sets of questions that users must answer about a dataset",
+                    "Manage clinical experts and invite them to take part in the training",
+                    "Deliver immediate feedback on performance",
+                ],
                 url=reverse("reader-studies:list"),
+                url_title="Courses",
                 image="images/challenge_1.jpg",
             ),
             Highlight(
-                title="Challenges",
-                description=(
-                    "Challenges allow for a fair and transparent comparison "
-                    "of algorithms. Created an algorithm with the same "
-                    "purpose as one of the existing challenges? Join the "
-                    "challenge and see how well it performs. Or create a "
-                    "challenge yourself."
-                ),
+                title="Gather Annotations for Your Data",
+                bullet_points=[
+                    "Create your own set of questions for your dataset",
+                    "Customise the hanging protocols and overlays",
+                    "Use our intuitive workstations to view and report the images",
+                ],
+                url=reverse("reader-studies:list"),
+                url_title="Reader Studies",
+                image="images/challenge_1.jpg",
+            ),
+            Highlight(
+                title="Benchmark Algorithms",
+                bullet_points=[
+                    "Manage your annotated training, test and validation data sets",
+                    "Gather machine learning solutions for your clinical question",
+                    "Objectively assess the performance of algorithms",
+                ],
                 url=reverse("challenges:list"),
+                url_title="Challenges",
                 image="images/challenge_2.jpg",
             ),
             Highlight(
-                title="Algorithms",
-                description=(
-                    "Once the algorithms are developed enough to be shared "
-                    "with the world, this is the place. Use algorithms by "
-                    "uploading your images. Or add your own algorithm."
-                ),
+                title="Deploy Your Algorithms for Researchers",
+                bullet_points=[
+                    "Upload algorithm containers",
+                    "Manage access for clinical and non-clinical researchers",
+                    "Upload data for execution by your algorithm on our infractructure",
+                ],
                 url=reverse("algorithms:list"),
+                url_title="Algorithms",
+                image="images/algorithms_1.png",
+            ),
+            Highlight(
+                title="Discover Certified Solutions",
+                bullet_points=[
+                    "Filter to easily find solutions to your clinical questions",
+                    "Compare product specifications",
+                    "Verify CE and FDA certification",
+                ],
+                url=reverse("products:product-list"),
+                url_title="Products",
                 image="images/algorithms_1.png",
             ),
         ]

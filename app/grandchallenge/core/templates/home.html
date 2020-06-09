@@ -7,17 +7,28 @@
 {% load image_filter %}
 
 {% block content %}
+    <div class="row justify-content-center">
+        <div class="col-lg-7 p-4 text-center">
+            <h3>Develop Machine Learning Solutions in Biomedical Imaging with Grand Challenge</h3>
+        </div>
+    </div>
+
     {% for highlight in highlights %}
         <div class="row {% if forloop.counter0|divisibleby:2 %}flex-md-row-reverse{% endif %}">
-            <div class="col-md-6 {% if forloop.counter0|divisibleby:2 %}pl-md-0{% else %}pr-md-0{% endif %}">
-                <div class="min-vh-25 h-100 rounded background-fill"
+            <div class="col-md-6 p-4">
+                <div class="min-vh-25 h-100 rounded background-fill shadow"
                      style="background-image: {% image_filter alpha="0.25" %}, url('{% static highlight.image %}');">
                 </div>
             </div>
-            <div class="col-md-6 py-3 align-self-center">
-                <h3>{{ highlight.title }}</h3>
+            <div class="col-md-6 p-4 align-self-center">
+                <h4>{{ highlight.title }}</h4>
+                <ul>
+                    {% for point in highlight.bullet_points %}
+                        <li>{{ point }}</li>
+                    {% endfor %}
+                </ul>
                 <p>{{ highlight.description }}</p>
-                <p><a class="btn btn-info" href="{{ highlight.url }}">Read More</a></p>
+                <p><a class="btn btn-info" href="{{ highlight.url }}">View {{ highlight.url_title }}</a></p>
             </div>
         </div>
     {% endfor %}
@@ -26,7 +37,7 @@
 {% block post_content %}
     {% cache 600 home-statistics %}
         <div class="container-fluid bg-primary">
-            <div class="container">
+            <div class="container py-4">
                 <div class="row align-items-center text-light">
                     <div class="col-sm-6 col-md-3 card bg-primary border-0">
                         <div class="card-body text-center">
