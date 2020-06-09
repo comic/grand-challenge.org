@@ -411,9 +411,7 @@ class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
     ]
     order_by = "job__created"
 
-    def get_row_context(self, result, *args, checker=None, **kwargs):
-        if not checker:
-            checker = ObjectPermissionChecker(self.request.user)
+    def get_row_context(self, result, *args, checker, **kwargs):
         return {
             "result": result,
             "algorithm": self.algorithm,
