@@ -1,7 +1,8 @@
 {% load static %}
 {% load image_filter %}
 
-<div class="jumbotron background-fill rounded-0 bg-primary"
+{% if jumbotron_title or jumbotron_background_url %}
+<div class="jumbotron background-fill rounded-0 bg-primary mb-0"
      style="background-image: {% image_filter %}, url('{{ jumbotron_background_url }}');"
 >
     <div class="container">
@@ -13,3 +14,4 @@
         </div>
     </div>
 </div>
+{% endif %}

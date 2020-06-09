@@ -6,7 +6,6 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
             Studies</a></li>
         <li class="breadcrumb-item"><a href="{{ reader_study.get_absolute_url }}">{{ reader_study }}</a></li>

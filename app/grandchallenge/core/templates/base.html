@@ -30,22 +30,26 @@
         {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
     {% endblock %}
 
+    <div class="container-fluid bg-primary">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                {% block breadcrumbs %}
+                {% endblock %}
+            </nav>
+        </div>
+    </div>
+
     <main role="main" class="flex-fill">
 
         {% block jumbotron %}
             {% include "grandchallenge/partials/jumbotron.html" %}
         {% endblock %}
 
-        <div class="container pb-3">
+        <div class="container pb-3 mt-3">
 
             {% block messages %}
                 {% include "grandchallenge/partials/messages.html" %}
             {% endblock %}
-
-            <nav aria-label="breadcrumb">
-                {% block breadcrumbs %}
-                {% endblock %}
-            </nav>
 
             {% block outer_content %}
                 <div class="row">

@@ -113,3 +113,18 @@ div.table-responsive .dt-button-collection-title {
 .dropdown-menu + .btn {
     margin-left: -3px;
 }
+
+.breadcrumb {
+    margin-bottom: 0;
+    background-color: inherit;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.breadcrumb-item.active {
+    color: var(--light);
+}
+
+.breadcrumb-item > a {
+    color: var(--secondary);
+}
