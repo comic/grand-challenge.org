@@ -7,9 +7,9 @@
 {% load evaluation_extras %}
 
 {{ result.job.created|naturaltime }}
-<td>
+<split/>
     {{ result.job.creator|user_profile_link }}
-<td>
+<split/>
     <a href="#resultInfoModal"
        class="badge badge-primary"
        data-toggle="modal"
@@ -20,7 +20,7 @@
        title="Result Info">
         <i class="fa fa-file"></i> {{ result.job.image.name }}
     </a>
-<td>
+<split/>
     {% if result.public %}
         <i class="fa fa-eye text-success"
            title="Result is public"></i>
@@ -28,7 +28,7 @@
         <i class="fa fa-eye-slash text-danger"
            title="Result is private"></i>
     {% endif %}
-<td>
+<split/>
     <ul class="list-unstyled">
         {% if result.job.image %}
             <li>
@@ -68,7 +68,7 @@
             </li>
         {% endfor %}
     </ul>
-<td>
+<split/>
     {% if result.comment %}
         <a href="#resultInfoModal"
            class="badge badge-primary"
