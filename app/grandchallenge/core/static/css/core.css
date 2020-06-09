@@ -4,6 +4,20 @@ html {
     min-height: 100%;
 }
 
+.jumbotron {
+    text-shadow: 1px 1px 3px #000000;
+}
+
+.background-fill {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+
+.min-vh-25 {
+    min-height: 25vh;
+}
+
 /* fix modal display with overflow-y: scroll on html */
 .modal, .modal-open {
     padding-right: 0 !important;
@@ -13,6 +27,12 @@ html {
     margin-left: 15px;
     float: left;
     margin-right: 0;
+}
+
+/* fix title tooltips when using .stretched-link */
+.above-stretched-link {
+    z-index: 1;
+    position: relative;
 }
 
 /* for square images */
@@ -92,4 +112,19 @@ div.table-responsive .dt-button-collection-title {
 .btn-group-vertical .btn-group + .btn-group,
 .dropdown-menu + .btn {
     margin-left: -3px;
+}
+
+.breadcrumb {
+    margin-bottom: 0;
+    background-color: inherit;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.breadcrumb-item.active {
+    color: var(--light);
+}
+
+.breadcrumb-item > a {
+    color: var(--secondary);
 }

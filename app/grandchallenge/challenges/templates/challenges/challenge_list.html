@@ -2,42 +2,22 @@
 {% load static %}
 {% load url %}
 {% load humanize %}
-{% load random_encode %}
+{% load meta_attr %}
 
-{% block title %}Challenges{% endblock %}
-
-{% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item active" aria-current="page">Challenges</li>
-    </ol>
-{% endblock %}
+{% block title %}Challenges - {{ block.super }}{% endblock %}
 
 {% block content %}
-
-    <h2>Challenges</h2>
-
-    <p>Here is an overview of all challenges that have been organized within
-        the area of medical image analysis that we are aware of. If you know
-        any study that would fit in this overview, or want to advertise your
-        challenge, please
-        <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}">
-            contact us</a>
-        challenge to the list on this page.
-    </p>
-
     {% if request.user.is_staff %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'challenges:external-create' %}"
                title="Add an External Challenge">
-                <i class="fas fa-plus"></i>
+                <i class="fas fa-plus"></i> Add a new external challenge
             </a>
             <a class="btn btn-primary"
                href="{% url 'challenges:external-list' %}"
                title="Edit External Challenges">
-                <i class="fas fa-edit"></i>
+                <i class="fas fa-edit"></i> Edit external challenges
             </a>
         </p>
     {% endif %}
@@ -324,42 +304,35 @@
 
             </div>
         </div>
-
         <div class="col">
             <div class='row equal-height mx-n2'>
                 {% for year, challenges in challenges_by_year.items %}
                     {% for challenge in challenges %}
-                        <div class="col-12 col-md-6 col-lg-4 mb-3 px-2 projectlink {{ challenge.filter_classes|join:" " }}">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2 projectlink {{ challenge.filter_classes|join:" " }}">
                             <div class="card">
+                                <a class="stretched-link" href="{{ challenge.get_absolute_url }}"
+                                   title="View {{ challenge|meta_attr:'verbose_name'|title }}"></a>
                                 <div class="embed-responsive embed-responsive-1by1">
-                                    <a id="{{ challenge.short_name }}"
-                                       title="{% firstof challenge.title challenge.short_name %}"
-                                       href="{{ challenge.get_absolute_url }}">
-                                        <img class="card-img-top embed-responsive-item lazyload"
-                                             alt="{{ challenge.short_name }} logo"
-                                             src="{% static 'images/3697E1-0.8.png' %}"
-                                                {% if challenge.logo %}
-                                             data-src="{{ challenge.logo.url }}"
-                                                {% else %}
-                                             data-src="{{ challenge.gravatar_url }}"
-                                                {% endif %}
-                                        >
-                                    </a>
+                                    <img class="card-img-top embed-responsive-item lazyload"
+                                         alt="{{ challenge.short_name }} logo"
+                                         src="{% static 'images/3697E1-0.8.png' %}"
+                                            {% if challenge.logo %}
+                                         data-src="{{ challenge.logo.url }}"
+                                            {% else %}
+                                         data-src="{% static 'images/3697E1-0.8.png' %}"
+                                            {% endif %}
+                                    >
                                 </div>
 
                                 <div class="card-body">
                                     <h5 class="card-title text-truncate mb-0">
-                                        <a id="{{ challenge.short_name }}"
-                                           title="{% firstof challenge.title challenge.short_name %}"
-                                           href="{{ challenge.get_absolute_url }}">
-                                            {% firstof challenge.title challenge.short_name %}
-                                        </a>
+                                        {% firstof challenge.title challenge.short_name %}
                                     </h5>
 
                                     <div class="mb-2">
                                         {% if challenge.description %}
                                             <a href="#challengeInfoModal"
-                                               class="badge badge-info"
+                                               class="badge badge-info above-stretched-link"
                                                data-toggle="modal"
                                                data-target="#challengeInfoModal"
                                                data-title="{% firstof challenge.title challenge.short_name %}"
@@ -371,14 +344,14 @@
                                         {% endif %}
 
                                         {% if challenge.educational %}
-                                            <span class="badge badge-info"
+                                            <span class="badge badge-info above-stretched-link"
                                                   title="This is an educational challenge">
                                             <i class="fas fa-university fa-fw"></i>
                                             </span>
                                         {% endif %}
 
                                         {% if challenge.cached_num_participants %}
-                                            <span class="badge badge-info"
+                                            <span class="badge badge-info above-stretched-link"
                                                   title="{{ challenge.cached_num_participants }} participant{{ challenge.cached_num_participants|pluralize }}">
                                             <i class="fas fa-user fa-fw"></i>
                                             {{ challenge.cached_num_participants|intcomma }}
@@ -386,7 +359,7 @@
                                         {% endif %}
 
                                         {% if challenge.use_evaluation and challenge.cached_num_results %}
-                                            <a class="badge badge-info"
+                                            <a class="badge badge-info above-stretched-link"
                                                href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}"
                                                title="{{ challenge.cached_num_results }} result{{ challenge.cached_num_results|pluralize }}, latest {{ challenge.cached_latest_result|naturaltime }}">
                                                 <i class="fas fa-trophy fa-fw"></i>
@@ -400,7 +373,7 @@
                                     {% endfor %}
 
                                     {% if challenge.event_name %}
-                                        <a class="badge badge-info"
+                                        <a class="badge badge-info above-stretched-link"
                                            href="{% firstof challenge.event_url challenge.get_absolute_url %}"
                                            title="Associated with {{ challenge.event_name }}">
                                             <i class="fas fa-globe fa-fw"></i>
@@ -409,7 +382,7 @@
                                     {% endif %}
 
                                     {% if challenge.publication_journal_name or challenge.publication_url %}
-                                        <a class="badge badge-info"
+                                        <a class="badge badge-info above-stretched-link"
                                            href="{% firstof challenge.publication_url '#' %}"
                                            title="Article">
                                             <i class="fas fa-file fa-fw"></i>
@@ -418,7 +391,7 @@
                                     {% endif %}
 
                                     {% if challenge.registered_domain %}
-                                        <a class="badge badge-info"
+                                        <a class="badge badge-info above-stretched-link"
                                            href="{{ challenge.get_absolute_url }}"
                                            title="Hosted on {{ challenge.registered_domain }}">
                                             <i class="fas fa-link fa-fw"></i>
@@ -427,14 +400,14 @@
                                     {% endif %}
 
                                     {% if challenge.upcoming_workshop_date %}
-                                        <a class="badge badge-info"
+                                        <a class="badge badge-info above-stretched-link"
                                            href="{% firstof challenge.event_url challenge.get_absolute_url %}"
                                            title="There will be a workshop on {{ challenge.upcoming_workshop_date }}">
                                             <i class="fas fa-calendar-day fa-fw"></i>
                                             {{ challenge.upcoming_workshop_date }}
                                         </a>
                                     {% else %}
-                                        <span class="badge badge-info"
+                                        <span class="badge badge-info above-stretched-link"
                                               title="Held in {{ challenge.year }}">
                                             <i class="fas fa-calendar-day fa-fw"></i>
                                             {{ challenge.year }}
@@ -442,12 +415,12 @@
                                     {% endif %}
 
                                     {% if not challenge.is_self_hosted and request.user.is_staff %}
-                                        <a class="badge badge-primary"
+                                        <a class="badge badge-primary above-stretched-link"
                                            href="{% url 'challenges:external-update' challenge.short_name %}"
                                            title="Edit Challenge">
                                             <i class="fas fa-edit fa-fw"></i>
                                         </a>
-                                        <a class="badge badge-danger"
+                                        <a class="badge badge-danger above-stretched-link"
                                            href="{% url 'challenges:external-delete' challenge.short_name %}"
                                            title="Delete Challenge">
                                             <i class="fas fa-trash fa-fw"></i>

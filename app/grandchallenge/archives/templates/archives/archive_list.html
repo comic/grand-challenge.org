@@ -1,33 +1,12 @@
 {% extends "base.html" %}
 {% load url %}
 {% load meta_attr %}
-{% load random_encode %}
 
 {% block title %}
     {{ object_list.model|meta_attr:'verbose_name_plural'|title }} - {{ block.super }}
 {% endblock %}
 
-{% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item active"
-            aria-current="page">{{ object_list.model|meta_attr:'verbose_name_plural'|title }}
-        </li>
-    </ol>
-{% endblock %}
-
 {% block content %}
-    <h2>{{ object_list.model|meta_attr:'verbose_name_plural'|title }}</h2>
-
-    <p>
-        An archive can be used to collect set of medical images,
-        which can later be used in a reader study, challenge or algorithm. Please
-        <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}">
-            contact us</a>
-        if you would like to set up your own archive.
-    </p>
-
     {% if perms.archives.add_archive %}
         <p>
             <a href="{% url 'archives:create' %}"
@@ -39,30 +18,26 @@
 
     <div class="row equal-height mx-n2">
         {% for object in object_list %}
-            <div class="col-12 col-md-6 col-lg-4 mb-3 px-2">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">
                 <div class="card">
+                    <a class="stretched-link" href="{{ object.get_absolute_url }}"
+                       title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
                     <div class="embed-responsive embed-responsive-1by1">
                         {% if object.logo %}
-                            <a href="{{ object.get_absolute_url }}">
-                                <img class="card-img-top embed-responsive-item"
-                                     src="{{ object.logo.url }}"
-                                     alt="{{ object }} Logo">
-                            </a>
+                            <img class="card-img-top embed-responsive-item"
+                                 src="{{ object.logo.url }}"
+                                 alt="{{ object }} Logo">
                         {% endif %}
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">
                             {{ object.title }}
                             {% if not object.public %}
-                                <i class="fas fa-lock" title="{{ object_list.model|meta_attr:'verbose_name'|title }} is private"></i>
+                                <i class="fas fa-lock above-stretched-link"
+                                   title="{{ object_list.model|meta_attr:'verbose_name'|title }} is private"></i>
                             {% endif %}
                         </h5>
                         <p class="card-text">{{ object.description }}</p>
-                        <a href="{{ object.get_absolute_url }}"
-                           class="btn btn-primary mt-auto mr-auto"
-                           title="View {{ object_list.model|meta_attr:'verbose_name'|title }}">
-                            <i class="fa fa-eye"></i>
-                        </a>
                     </div>
                 </div>
             </div>
@@ -70,8 +45,8 @@
     </div>
 
     {% if not object_list %}
-        <p>
-            You do not have permission to view any of the {{ object_list.model|meta_attr:"verbose_name_plural" }}.
-        </p>
+        <h3>
+            You do not have permission to view any of the {{ object_list.model|meta_attr:"verbose_name_plural" }}
+        </h3>
     {% endif %}
 {% endblock %}

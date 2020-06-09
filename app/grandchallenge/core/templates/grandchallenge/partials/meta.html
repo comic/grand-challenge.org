@@ -20,7 +20,7 @@
     {% if challenge.logo %}
         <meta property="og:image" content="{{ request.scheme }}://{{ request.site.domain }}{{ challenge.logo.url }}">
     {% else %}
-        <meta property="og:image" content="{% static 'images/gcheader.png' %}">
+        <meta property="og:image" content="{% static 'images/pathology_banner.jpg' %}">
     {% endif %}
 {% else %}
     <meta name="title" content="{{ request.site.name }}">
@@ -29,5 +29,5 @@
     <meta name="description" content="The home of challenges in biomedical image analysis">
     <meta property="og:description" content="The home of challenges in biomedical image analysis">
 
-    <meta property="og:image" content="{% static 'images/gcheader.png' %}">
+    <meta property="og:image" content="{% static 'images/pathology_banner.jpg' %}">
 {% endif %}

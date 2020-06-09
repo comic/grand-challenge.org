@@ -1,6 +1,9 @@
+from dataclasses import dataclass
 from functools import reduce
 from operator import or_
+from random import choice
 
+from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     ImproperlyConfigured,
@@ -13,17 +16,129 @@ from django.forms.utils import ErrorList
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from django.views.generic import ListView, TemplateView, UpdateView
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
+from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.subdomains.utils import reverse
 
 
+@dataclass
+class Highlight:
+    title: str
+    image: str
+    url: str
+    url_title: str
+    description: str = ""
+    bullet_points: list = list
+
+
 class HomeTemplate(TemplateView):
     template_name = "home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        background_url = static(
+            choice(
+                [
+                    "images/pathology_banner.jpg",
+                    "images/ophthalmology_banner.png",
+                    "images/radiology_banner_1.png",
+                    "images/radiology_banner_2.png",
+                ]
+            )
+        )
+
+        highlights = [
+            Highlight(
+                title="Manage Your Data",
+                bullet_points=[
+                    "Upload medical imaging data easily and securely",
+                    "Control who has access to the data",
+                    "View data with our globally available browser-based workstations",
+                ],
+                url=reverse("archives:list"),
+                url_title="Archives",
+                image="images/archive.png",
+            ),
+            Highlight(
+                title="Train Expert Annotators",
+                bullet_points=[
+                    "Create sets of questions that users must answer about a dataset",
+                    "Invite clinical experts take part in the training",
+                    "Deliver immediate feedback on performance",
+                ],
+                url=reverse("reader-studies:list"),
+                url_title="Courses",
+                image="images/education.png",
+            ),
+            Highlight(
+                title="Gather Annotations",
+                bullet_points=[
+                    "Create your own set of questions for your dataset",
+                    "Customise the hanging protocols and overlays",
+                    "Use our intuitive workstations to view and report the images",
+                ],
+                url=reverse("reader-studies:list"),
+                url_title="Reader Studies",
+                image="images/annotation.png",
+            ),
+            Highlight(
+                title="Benchmark Algorithms",
+                bullet_points=[
+                    "Manage your annotated training, test and validation data sets",
+                    "Gather machine learning solutions for your clinical question",
+                    "Objectively assess the performance of algorithms",
+                ],
+                url=reverse("challenges:list"),
+                url_title="Challenges",
+                image="images/challenge.png",
+            ),
+            Highlight(
+                title="Deploy Your Algorithms",
+                bullet_points=[
+                    "Upload algorithm container images",
+                    "Manage access for clinical and non-clinical researchers",
+                    "Upload data for execution by your algorithm on our infractructure",
+                ],
+                url=reverse("algorithms:list"),
+                url_title="Algorithms",
+                image="images/algorithms.png",
+            ),
+            Highlight(
+                title="Find Certified Solutions",
+                bullet_points=[
+                    "Filter to easily find solutions to your clinical questions",
+                    "Compare product specifications",
+                    "Verify CE and FDA certification",
+                ],
+                url=reverse("products:product-list"),
+                url_title="Products",
+                image="images/products.png",
+            ),
+        ]
+
+        context.update(
+            {
+                "all_users": get_user_model().objects.all(),
+                "all_challenges": Challenge.objects.all(),
+                "all_algorithms": Algorithm.objects.all(),
+                "highlights": highlights,
+                "jumbotron_background_url": background_url,
+                "jumbotron_title": "Grand Challenge",
+                "jumbotron_description": (
+                    "A platform to empower biomedical image analysis research "
+                    "worldwide."
+                ),
+            }
+        )
+        return context
 
 
 class PermissionRequestUpdate(

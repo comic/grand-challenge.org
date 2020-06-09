@@ -27,34 +27,42 @@
     <body class="d-flex flex-column min-vh-100">
 
     {% block navbar %}
-        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=challenge.hide_signin %}
+        {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
     {% endblock %}
 
+    <div class="container-fluid bg-primary">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                {% block breadcrumbs %}
+                {% endblock %}
+            </nav>
+        </div>
+    </div>
+
     <main role="main" class="flex-fill">
-        <div id="page" class="container pb-3">
+
+        {% block jumbotron %}
+            {% include "grandchallenge/partials/jumbotron.html" %}
+        {% endblock %}
+
+        <div class="container pb-3 mt-3">
 
             {% block messages %}
                 {% include "grandchallenge/partials/messages.html" %}
             {% endblock %}
 
-            <nav aria-label="breadcrumb">
-                {% block breadcrumbs %}
-                {% endblock %}
-            </nav>
-
-            {% block jumbotron %}{% endblock %}
-
-            {% block outerContent %}
-                <div class="my-3 p-3 bg-white rounded shadow-sm">
-                    <div class="row">
-                        {% block sidebar %}{% endblock %}
-                        <div class="col overflow-auto">
-                            {% block content %}{% endblock %}
-                        </div>
+            {% block outer_content %}
+                <div class="row">
+                    {% block sidebar %}{% endblock %}
+                    <div class="col overflow-auto">
+                        {% block content %}{% endblock %}
                     </div>
                 </div>
             {% endblock %}
         </div>
+
+        {% block post_content %}
+        {% endblock %}
     </main>
 
     {% block footer %}

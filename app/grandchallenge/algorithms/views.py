@@ -17,6 +17,7 @@ from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -61,6 +62,7 @@ from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
+from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import (
     PaginatedTableListView,
     PermissionRequestUpdate,
@@ -94,6 +96,29 @@ class AlgorithmList(PermissionListMixin, ListView):
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     }
     ordering = "-created"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context.update(
+            {
+                "jumbotron_title": "Algorithms",
+                "jumbotron_description": format_html(
+                    (
+                        "Here we have made available several machine "
+                        "learning algorithms for medical imaging. If you are "
+                        "granted access to an algorithm you will be able to "
+                        "try the algorithm out by uploading your own "
+                        "anonymised medical imaging data. "
+                        "Please <a href='{}'>contact us</a> if you would like "
+                        "to make your own algorithm available here."
+                    ),
+                    random_encode("mailto:support@grand-challenge.org"),
+                ),
+            }
+        )
+
+        return context
 
 
 class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):

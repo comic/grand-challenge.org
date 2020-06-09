@@ -90,6 +90,13 @@ class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):
         f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
     )
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context.update({"jumbotron_title": "Workstations"})
+
+        return context
+
 
 class WorkstationCreate(
     LoginRequiredMixin, PermissionRequiredMixin, CreateView
