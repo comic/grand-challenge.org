@@ -7,7 +7,7 @@ class OverviewPagesSitemap(SubdomainSitemap):
     priority = 0.9
 
     def items(self):
-        return OverviewPage.objects.all(published=True)
+        return OverviewPage.objects.filter(published=True)
 
     def lastmod(self, item: OverviewPage):
         return item.modified
