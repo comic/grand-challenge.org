@@ -16,6 +16,13 @@ def test_main(client):
 
 
 @pytest.mark.django_db
+def test_sitemap(client):
+    url = reverse("django.contrib.sitemaps.views.sitemap")
+    response = client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_paginated_table_list_view():
     view = PaginatedTableListView()
     request = HttpRequest()

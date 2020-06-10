@@ -332,6 +332,7 @@ DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.postgres",
     "django.contrib.flatpages",
+    "django.contrib.sitemaps",
 ]
 
 THIRD_PARTY_APPS = [
@@ -734,6 +735,10 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 }
 
 CELERY_BEAT_SCHEDULE = {
+    "ping_google": {
+        "task": "grandchallenge.core.tasks.ping_google",
+        "schedule": timedelta(days=1),
+    },
     "cleanup_stale_uploads": {
         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
         "schedule": timedelta(hours=1),
