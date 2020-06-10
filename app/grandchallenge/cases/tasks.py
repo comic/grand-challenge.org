@@ -232,6 +232,7 @@ def extract(file, path, is_tar=False):
     list_func = file.getmembers if is_tar else file.infolist
     filename_attr = "name" if is_tar else "filename"
     is_dir_func = "isdir" if is_tar else "is_dir"
+    extracted = False
     for info in sorted(list_func(), key=lambda k: getattr(k, filename_attr)):
         # Skip directories
         if getattr(info, is_dir_func)():
@@ -239,6 +240,8 @@ def extract(file, path, is_tar=False):
 
         _check_sanity(info, is_tar, path)
         file.extract(info, path)
+        extracted = True
+    return extracted
 
 
 def check_compressed_and_extract(file_path, target_path, checked_paths=None):
@@ -256,17 +259,18 @@ def check_compressed_and_extract(file_path, target_path, checked_paths=None):
     """
 
     def extract_file(file_path):
+        is_extracted = False
         if tarfile.is_tarfile(file_path):
             with tarfile.open(file_path) as tf:
-                extract(tf, target_path, is_tar=True)
-                file_path.unlink()
-                return True
+                is_extracted = extract(tf, target_path, is_tar=True)
         elif zipfile.is_zipfile(file_path):
             with zipfile.ZipFile(file_path) as zf:
-                extract(zf, target_path)
-                file_path.unlink()
-                return True
-        return False
+                is_extracted = extract(zf, target_path)
+
+        # Make sure files have actually been extracted, then delete the archive
+        if is_extracted:
+            file_path.unlink()
+        return is_extracted
 
     if checked_paths is None:
         checked_paths = []
