@@ -105,11 +105,9 @@ class AlgorithmList(PermissionListMixin, ListView):
                 "jumbotron_title": "Algorithms",
                 "jumbotron_description": format_html(
                     (
-                        "Here we have made available several machine "
-                        "learning algorithms for medical imaging. If you are "
-                        "granted access to an algorithm you will be able to "
-                        "try the algorithm out by uploading your own "
-                        "anonymised medical imaging data. "
+                        "We have made several machine learning algorithms "
+                        "available that you can try out by uploading your "
+                        "own anonymised medical imaging data. "
                         "Please <a href='{}'>contact us</a> if you would like "
                         "to make your own algorithm available here."
                     ),

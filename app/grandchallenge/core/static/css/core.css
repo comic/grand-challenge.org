@@ -14,10 +14,6 @@ html {
     background-size: cover;
 }
 
-.min-vh-25 {
-    min-height: 25vh;
-}
-
 /* fix modal display with overflow-y: scroll on html */
 .modal, .modal-open {
     padding-right: 0 !important;
