@@ -14,7 +14,11 @@
         </li>
         {% if object %}
             <li class="breadcrumb-item"><a
-                    href="{{ object.get_absolute_url }}">{% firstof object.display_title object.title %}</a></li>
+                    href="{{ object.get_absolute_url }}">
+                {% filter title %}
+                    {% firstof object.display_title object.title %}
+                {% endfilter %}
+            </a></li>
         {% endif %}
         <li class="breadcrumb-item active"
             aria-current="page">{% if object %}Update{% else %}Create{% endif %} Page

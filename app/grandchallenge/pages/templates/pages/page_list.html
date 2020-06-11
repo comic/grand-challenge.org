@@ -9,7 +9,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Pages</li>
+            aria-current="page">Pages
+        </li>
     </ol>
 {% endblock %}
 
@@ -45,7 +46,9 @@
                     </td>
                     <td>
                         <a href="{{ page.get_absolute_url }}">
-                            {% firstof page.display_title page.title %}
+                            {% filter title %}
+                                {% firstof page.display_title page.title %}
+                            {% endfilter %}
                         </a>
                     </td>
                     <td data-order="{{ page.hidden }}">
