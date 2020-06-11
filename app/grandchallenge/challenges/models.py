@@ -392,18 +392,10 @@ class ChallengeBase(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ("pk",)
 
 
 class Challenge(ChallengeBase):
-    """
-    A collection of HTML pages using a certain skin. Pages can be browsed and
-    edited.
-    """
-
-    public_folder = "public_html"
-    skin = models.TextField(
-        default="", blank=True, help_text="CSS for this challenge.",
-    )
     banner = models.ImageField(
         upload_to=get_banner_path,
         storage=public_s3_storage,
@@ -411,17 +403,6 @@ class Challenge(ChallengeBase):
         help_text=(
             "Image that gets displayed at the top of each page. "
             "Recommended resolution 2200x440 px."
-        ),
-    )
-    hide_signin = models.BooleanField(
-        default=False,
-        help_text="Do no show the Sign in / Register link on any page",
-    )
-    hide_footer = models.BooleanField(
-        default=False,
-        help_text=(
-            "Do not show the general links or "
-            "the grey divider line in page footers"
         ),
     )
     disclaimer = models.CharField(
@@ -537,7 +518,7 @@ class Challenge(ChallengeBase):
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
 
-    class Meta:
+    class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
 

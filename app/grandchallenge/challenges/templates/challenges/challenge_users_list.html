@@ -2,6 +2,16 @@
 {% load url %}
 {% load user_profile_link from profiles %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Your Challenges</li>
+    </ol>
+{% endblock %}
+
 {% block title %}Your Challenges - {{ block.super }}{% endblock %}
 
 {% block content %}

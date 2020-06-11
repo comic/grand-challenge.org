@@ -3,23 +3,34 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
-{% block style %}
-    {{ block.super }}
-    {% if challenge.skin %}
-        <style>
-            {{ challenge.skin }}
-        </style>
-    {% endif %}
+{% block title %} {% firstof challenge.title challenge.short_name %} - {{ block.super }} {% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{% firstof challenge.title challenge.short_name %}</li>
+    </ol>
 {% endblock %}
 
-{% block title %} {{ challenge.short_name }} - {{ block.super }} {% endblock %}
-
-{% block jumbotron %}
+{% block messages %}
     {% if challenge.banner %}
-        {% include "grandchallenge/partials/jumbotron.html" with jumbotron_background_url=challenge.banner.url %}
-    {% else %}
-        {% include "grandchallenge/partials/jumbotron.html" with jumbotron_title=challenge.short_name %}
+        <div class="row mb-3">
+            <div class="col-12">
+                <a style="width: 100%;"
+                   href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
+                    <img alt="{% firstof challenge.title challenge.short_name %} Banner"
+                         class="rounded w-100"
+                         src="{{ challenge.banner.url }}"
+                    >
+                </a>
+            </div>
+        </div>
     {% endif %}
+
+    {{ block.super }}
 {% endblock %}
 
 {% block sidebar %}

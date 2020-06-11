@@ -3,11 +3,24 @@
 {% load url %}
 {% load user_profile_link from profiles %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object.name|title }}</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
 
     {% get_obj_perms user for object as "team_perms" %}
 
-    <h2>{{ object.name }}</h2>
+    <h2>{{ object.name|title }}</h2>
 
     <dl>
         <dt>Challenge</dt>
