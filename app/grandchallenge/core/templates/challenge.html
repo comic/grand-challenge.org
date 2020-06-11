@@ -18,8 +18,6 @@
 {% block jumbotron %}
     {% if challenge.banner %}
         {% include "grandchallenge/partials/jumbotron.html" with jumbotron_background_url=challenge.banner.url %}
-    {% else %}
-        {% include "grandchallenge/partials/jumbotron.html" with jumbotron_title=challenge.short_name %}
     {% endif %}
 {% endblock %}
 
