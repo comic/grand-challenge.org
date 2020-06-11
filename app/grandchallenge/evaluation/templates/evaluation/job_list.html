@@ -4,6 +4,18 @@
 {% load guardian_tags %}
 {% load url %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Evaluation Jobs</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
 
     <h2>Evaluation Jobs</h2>
