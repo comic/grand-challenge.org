@@ -8,6 +8,7 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'challenges:external-list' %}">External</a></li>
         <li class="breadcrumb-item active" aria-current="page">Update {{ object.short_name }}</li>
     </ol>
 {% endblock %}
