@@ -3,7 +3,17 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
-{% block title %} {{ challenge.short_name }} - {{ block.super }} {% endblock %}
+{% block title %} {% firstof challenge.title challenge.short_name %} - {{ block.super }} {% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{% firstof challenge.title challenge.short_name %}</li>
+    </ol>
+{% endblock %}
 
 {% block jumbotron %}
     {% if challenge.banner %}
