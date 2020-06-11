@@ -178,7 +178,7 @@ def test_team_creation(client, two_challenge_sets, team_name):
         user=two_challenge_sets.challenge_set_1.participant,
     )
     assert response.status_code == 200
-    assert team_name in response.rendered_content
+    assert team_name in response.rendered_content.lower()
 
 
 @pytest.mark.django_db
