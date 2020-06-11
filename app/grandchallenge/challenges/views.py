@@ -1,5 +1,4 @@
 from functools import reduce
-from itertools import chain
 from operator import or_
 
 from django.contrib import messages
@@ -110,7 +109,7 @@ class ChallengeList(TemplateView):
         except EmptyPage:
             ext_page = []
 
-        return chain(int_page, ext_page), num_pages
+        return [*int_page, *ext_page], num_pages
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
