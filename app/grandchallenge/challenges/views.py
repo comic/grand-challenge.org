@@ -26,7 +26,6 @@ from grandchallenge.challenges.models import (
     ImagingModality,
     TaskType,
 )
-from grandchallenge.challenges.tasks import update_filter_classes
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsNotAnonMixin,
@@ -158,11 +157,6 @@ class ChallengeUpdate(
     success_message = "Challenge successfully updated"
     template_name_suffix = "_update"
 
-    def form_valid(self, form):
-        result = super().form_valid(form=form)
-        update_filter_classes.apply_async()
-        return result
-
 
 class ExternalChallengeCreate(
     UserIsStaffMixin, SuccessMessageMixin, CreateView
@@ -194,11 +188,6 @@ class ExternalChallengeUpdate(
 
     def get_success_url(self):
         return reverse("challenges:list")
-
-    def form_valid(self, form):
-        result = super().form_valid(form=form)
-        update_filter_classes.apply_async()
-        return result
 
 
 class ExternalChallengeList(UserIsStaffMixin, ListView):
