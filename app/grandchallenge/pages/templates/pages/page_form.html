@@ -10,9 +10,12 @@
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
-        <li class="breadcrumb-item active"
-            aria-current="page"><a href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">Pages</a>
+        <li class="breadcrumb-item"><a href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">Pages</a>
         </li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">{% firstof object.display_title object.title %}</a></li>
+        {% endif %}
         <li class="breadcrumb-item active"
             aria-current="page">{% if object %}Update{% else %}Create{% endif %} Page
         </li>

@@ -8,6 +8,8 @@
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">Pages</a>
+        </li>
         <li class="breadcrumb-item"><a
                 href="{{ object.get_absolute_url }}">{% firstof object.display_title object.title %}</a></li>
         <li class="breadcrumb-item active"
