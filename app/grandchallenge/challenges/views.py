@@ -1,4 +1,6 @@
+from functools import reduce
 from itertools import chain
+from operator import or_
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
@@ -51,18 +53,48 @@ class ChallengeList(TemplateView):
     template_name = "challenges/challenge_list.html"
 
     @property
+    def _search_filter(self):
+        search_query = self._current_search
+
+        q = Q()
+
+        if search_query:
+            search_fields = [
+                "title",
+                "short_name",
+                "description",
+                "event_name",
+            ]
+            q = reduce(
+                or_,
+                [
+                    Q(**{f"{f}__icontains": search_query})
+                    for f in search_fields
+                ],
+                Q(),
+            )
+
+        return q
+
+    @property
     def _current_page(self):
         return int(self.request.GET.get("page", 1))
 
+    @property
+    def _current_search(self):
+        return self.request.GET.get("search", "")
+
     def _get_page(self):
         int_paginator = Paginator(
-            Challenge.objects.filter(hidden=False).order_by("-created"),
+            Challenge.objects.filter(hidden=False)
+            .filter(self._search_filter)
+            .order_by("-created"),
             self.paginate_by // 2,
         )
         ext_paginator = Paginator(
-            ExternalChallenge.objects.filter(hidden=False).order_by(
-                "-created"
-            ),
+            ExternalChallenge.objects.filter(hidden=False)
+            .filter(self._search_filter)
+            .order_by("-created"),
             self.paginate_by // 2,
         )
 
@@ -101,6 +133,7 @@ class ChallengeList(TemplateView):
                 "page_obj": page_obj,
                 "num_pages": num_pages,
                 "current_page": self._current_page,
+                "current_search": self._current_search,
                 "jumbotron_title": "Challenges",
                 "jumbotron_description": format_html(
                     (
