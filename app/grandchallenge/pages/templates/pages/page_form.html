@@ -21,7 +21,7 @@
             </a></li>
         {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">{% if object %}Update{% else %}Create{% endif %} Page
+            aria-current="page">{% if object %}Update{% else %}Create{% endif %}
         </li>
     </ol>
 {% endblock %}
@@ -31,11 +31,7 @@
 
 {% block content %}
 
-    <h2>
-        {% block pageHeading %}
-            Create Page
-        {% endblock %}
-    </h2>
+    <h2>{% if object %}Update{% else %}Create{% endif %} Page</h2>
 
     {% crispy form %}
 {% endblock %}
