@@ -36,6 +36,12 @@
         </form>
     </div>
 
+    <div>
+        <p class="text-right text-muted">
+            {{ num_results }} challenge{{ num_results|pluralize }} found
+        </p>
+    </div>
+
     <div class='row equal-height mx-n2'>
         {% for challenge in page_obj %}
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">

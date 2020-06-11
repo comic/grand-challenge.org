@@ -98,6 +98,7 @@ class ChallengeList(TemplateView):
         )
 
         num_pages = max(int_paginator.num_pages, ext_paginator.num_pages)
+        num_results = int_paginator.count + ext_paginator.count
 
         try:
             int_page = int_paginator.page(self._current_page)
@@ -109,7 +110,7 @@ class ChallengeList(TemplateView):
         except EmptyPage:
             ext_page = []
 
-        return [*int_page, *ext_page], num_pages
+        return [*int_page, *ext_page], num_pages, num_results
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -121,7 +122,7 @@ class ChallengeList(TemplateView):
         )
         challenge_series = ChallengeSeries.objects.all()
 
-        page_obj, num_pages = self._get_page()
+        page_obj, num_pages, num_results = self._get_page()
 
         context.update(
             {
@@ -131,6 +132,7 @@ class ChallengeList(TemplateView):
                 "challenge_series": challenge_series,
                 "page_obj": page_obj,
                 "num_pages": num_pages,
+                "num_results": num_results,
                 "current_page": self._current_page,
                 "current_search": self._current_search,
                 "jumbotron_title": "Challenges",
