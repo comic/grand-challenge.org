@@ -3,15 +3,6 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
-{% block style %}
-    {{ block.super }}
-    {% if challenge.skin %}
-        <style>
-            {{ challenge.skin }}
-        </style>
-    {% endif %}
-{% endblock %}
-
 {% block title %} {{ challenge.short_name }} - {{ block.super }} {% endblock %}
 
 {% block jumbotron %}

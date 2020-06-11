@@ -330,7 +330,6 @@ class GrandChallengeFrameworkTestCase(TestCase):
         data = {
             "short_name": short_name,
             "description": description,
-            "skin": "fake_test_dir/fakecss.css",
             "logo": "fakelogo.jpg",
             "banner": banner,
             "prefix": "form",
