@@ -392,6 +392,7 @@ class ChallengeBase(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ("pk",)
 
 
 class Challenge(ChallengeBase):
@@ -517,7 +518,7 @@ class Challenge(ChallengeBase):
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
 
-    class Meta:
+    class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
 

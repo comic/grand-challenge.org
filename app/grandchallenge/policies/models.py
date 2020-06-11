@@ -12,5 +12,8 @@ class Policy(TitleSlugDescriptionModel):
     def __str__(self):
         return f"{self.title}"
 
+    class Meta(TitleSlugDescriptionModel.Meta):
+        ordering = ("pk",)
+
     def get_absolute_url(self):
         return reverse("policies:detail", kwargs={"slug": self.slug})
