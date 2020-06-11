@@ -48,7 +48,7 @@ class ChallengeCreate(UserIsNotAnonMixin, SuccessMessageMixin, CreateView):
 
 
 class ChallengeList(TemplateView):
-    paginate_by = 50
+    paginate_by = 40
     template_name = "challenges/challenge_list.html"
 
     @property
