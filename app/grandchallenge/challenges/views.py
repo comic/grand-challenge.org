@@ -1,8 +1,9 @@
-from collections import OrderedDict, defaultdict
-from itertools import chain
+from functools import reduce
+from operator import or_
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.utils.html import format_html
 from django.views.generic import (
@@ -26,7 +27,6 @@ from grandchallenge.challenges.models import (
     ImagingModality,
     TaskType,
 )
-from grandchallenge.challenges.tasks import update_filter_classes
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsNotAnonMixin,
@@ -48,23 +48,72 @@ class ChallengeCreate(UserIsNotAnonMixin, SuccessMessageMixin, CreateView):
 
 
 class ChallengeList(TemplateView):
+    paginate_by = 50
     template_name = "challenges/challenge_list.html"
+
+    @property
+    def _search_filter(self):
+        search_query = self._current_search
+
+        q = Q()
+
+        if search_query:
+            search_fields = [
+                "title",
+                "short_name",
+                "description",
+                "event_name",
+            ]
+            q = reduce(
+                or_,
+                [
+                    Q(**{f"{f}__icontains": search_query})
+                    for f in search_fields
+                ],
+                Q(),
+            )
+
+        return q
+
+    @property
+    def _current_page(self):
+        return int(self.request.GET.get("page", 1))
+
+    @property
+    def _current_search(self):
+        return self.request.GET.get("search", "")
+
+    def _get_page(self):
+        int_paginator = Paginator(
+            Challenge.objects.filter(hidden=False)
+            .filter(self._search_filter)
+            .order_by("-created"),
+            self.paginate_by // 2,
+        )
+        ext_paginator = Paginator(
+            ExternalChallenge.objects.filter(hidden=False)
+            .filter(self._search_filter)
+            .order_by("-created"),
+            self.paginate_by // 2,
+        )
+
+        num_pages = max(int_paginator.num_pages, ext_paginator.num_pages)
+        num_results = int_paginator.count + ext_paginator.count
+
+        try:
+            int_page = int_paginator.page(self._current_page)
+        except EmptyPage:
+            int_page = []
+
+        try:
+            ext_page = ext_paginator.page(self._current_page)
+        except EmptyPage:
+            ext_page = []
+
+        return [*int_page, *ext_page], num_pages, num_results
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        challenges = chain(
-            Challenge.objects.filter(hidden=False)
-            .order_by("-created")
-            .select_related("creator",),
-            ExternalChallenge.objects.filter(hidden=False)
-            .order_by("-created")
-            .select_related("creator",),
-        )
-
-        challenges_by_year = defaultdict(list)
-        hosts = set()
-        host_count = defaultdict(int)
 
         modalities = ImagingModality.objects.all()
         task_types = TaskType.objects.all()
@@ -73,47 +122,19 @@ class ChallengeList(TemplateView):
         )
         challenge_series = ChallengeSeries.objects.all()
 
-        structures = {s for r in regions for s in r.bodystructure_set.all()}
+        page_obj, num_pages, num_results = self._get_page()
 
-        tag_lookup = {
-            t.filter_tag: t
-            for t in chain(
-                modalities, task_types, structures, challenge_series
-            )
-        }
-
-        for c in challenges:
-            c.filter_tags = [
-                tag_lookup[t]
-                for t in sorted(c.filter_classes)
-                if t in tag_lookup
-            ]
-            challenges_by_year[c.year].append(c)
-            hosts.add(c.host_filter)
-            host_count[c.host_filter.host] += 1
-
-        # Cannot use a defaultdict in django template so convert to dict,
-        # and this must be ordered by year for display
         context.update(
             {
                 "modalities": modalities,
                 "body_regions": regions,
                 "task_types": task_types,
                 "challenge_series": challenge_series,
-                "challenges_by_year": OrderedDict(
-                    sorted(
-                        challenges_by_year.items(),
-                        key=lambda t: t[0],
-                        reverse=True,
-                    )
-                ),
-                "hosts": sorted(
-                    # Order the hosts and only display hosts with more than
-                    # 1 challenge
-                    [h for h in hosts if h.host and host_count[h.host] > 1],
-                    key=lambda h: host_count[h.host],
-                    reverse=True,
-                ),
+                "page_obj": page_obj,
+                "num_pages": num_pages,
+                "num_results": num_results,
+                "current_page": self._current_page,
+                "current_search": self._current_search,
                 "jumbotron_title": "Challenges",
                 "jumbotron_description": format_html(
                     (
@@ -158,11 +179,6 @@ class ChallengeUpdate(
     success_message = "Challenge successfully updated"
     template_name_suffix = "_update"
 
-    def form_valid(self, form):
-        result = super().form_valid(form=form)
-        update_filter_classes.apply_async()
-        return result
-
 
 class ExternalChallengeCreate(
     UserIsStaffMixin, SuccessMessageMixin, CreateView
@@ -194,11 +210,6 @@ class ExternalChallengeUpdate(
 
     def get_success_url(self):
         return reverse("challenges:list")
-
-    def form_valid(self, form):
-        result = super().form_valid(form=form)
-        update_filter_classes.apply_async()
-        return result
 
 
 class ExternalChallengeList(UserIsStaffMixin, ListView):

@@ -340,40 +340,6 @@ class ChallengeBase(models.Model):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
 
-    def get_filter_classes(self):
-        """
-        Warning! Do not call this directly, it takes a while. This is used
-        in a background task.
-        """
-        classes = set()
-
-        if self.host_filter.host:
-            classes.add(self.host_filter.filter_tag)
-
-        # Filter by modality
-        for mod in self.modalities.all():
-            classes.add(mod.filter_tag)
-
-        # Filter by body region and structure
-        for struc in self.structures.all():
-            classes.add(struc.region.filter_tag)
-            classes.add(struc.filter_tag)
-
-        # Filter by task type
-        for tas in self.task_types.all():
-            classes.add(tas.filter_tag)
-
-        # Filter by challenge series
-        for series in self.series.all():
-            classes.add(series.filter_tag)
-
-        if self.educational:
-            classes.add("educational")
-
-        classes.add(f"year-{self.year}")
-
-        return list(classes)
-
     @property
     def host_filter(self):
         host_filter = namedtuple("host_filter", ["host", "filter_tag"])

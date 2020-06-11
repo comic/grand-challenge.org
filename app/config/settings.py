@@ -747,8 +747,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.core.tasks.clear_sessions",
         "schedule": timedelta(days=1),
     },
-    "update_filter_classes": {
-        "task": "grandchallenge.challenges.tasks.update_filter_classes",
+    "update_challenge_results_cache": {
+        "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": timedelta(minutes=5),
     },
     "validate_external_challenges": {
