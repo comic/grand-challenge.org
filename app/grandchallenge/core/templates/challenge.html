@@ -15,10 +15,22 @@
     </ol>
 {% endblock %}
 
-{% block jumbotron %}
+{% block messages %}
     {% if challenge.banner %}
-        {% include "grandchallenge/partials/jumbotron.html" with jumbotron_background_url=challenge.banner.url %}
+        <div class="row mb-3">
+            <div class="col-12">
+                <a style="width: 100%;"
+                   href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
+                    <img alt="{% firstof challenge.title challenge.short_name %} Banner"
+                         class="rounded w-100"
+                         src="{{ challenge.banner.url }}"
+                    >
+                </a>
+            </div>
+        </div>
     {% endif %}
+
+    {{ block.super }}
 {% endblock %}
 
 {% block sidebar %}
