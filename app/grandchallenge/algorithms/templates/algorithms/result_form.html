@@ -25,7 +25,18 @@
 
 {% block content %}
 
-    <h2>Update Result {{ object.pk }}</h2>
+    <h2>Update Result</h2>
+
+    <dl class="inline">
+        <dt>Result ID</dt>
+        <dd>{{ object.pk }}</dd>
+
+        <dt>Input Image ID</dt>
+        <dd>{{ object.job.image.pk }}</dd>
+
+        <dt>Input Image Name</dt>
+        <dd>{{ object.job.image.name }}</dd>
+    </dl>
 
     {% crispy form %}
 
