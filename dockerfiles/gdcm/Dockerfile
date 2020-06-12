@@ -30,7 +30,8 @@ RUN apt-get update \
     && make \
     && make install \
     && ldconfig \
-    && rm -r /opt/gdcm
+    && rm -r /opt/gdcm \
+    && apt-get purge -y swig cmake
 
 # If this work this next line should output something like
 #   (7fe0,0010)     ??      0
