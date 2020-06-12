@@ -15,8 +15,6 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a
                 href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
@@ -34,7 +32,7 @@
             <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
                href="#v-pills-home" role="tab" aria-controls="v-pills-home"
                aria-selected="true"><i
-                    class="fas fa-info fa-fw"></i>&nbsp;{{ object.title }}
+                    class="fas fa-info fa-fw"></i>&nbsp;Information
             </a>
 
             {% if "change_algorithm" in algorithm_perms %}

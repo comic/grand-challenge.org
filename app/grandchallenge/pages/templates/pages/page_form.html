@@ -1,17 +1,37 @@
 {% extends "challenge.html" %}
 {% load crispy from crispy_forms_tags %}
 {% load static %}
+{% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">Pages</a>
+        </li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">
+                {% filter title %}
+                    {% firstof object.display_title object.title %}
+                {% endfilter %}
+            </a></li>
+        {% endif %}
+        <li class="breadcrumb-item active"
+            aria-current="page">{% if object %}Update{% else %}Create{% endif %}
+        </li>
+    </ol>
+{% endblock %}
 
 {# Do not show the footer as this is broken with SummernoteInplaceWidget #}
 {% block footer %}{% endblock %}
 
 {% block content %}
 
-    <h2>
-        {% block pageHeading %}
-            Create Page
-        {% endblock %}
-    </h2>
+    <h2>{% if object %}Update{% else %}Create{% endif %} Page</h2>
 
     {% crispy form %}
 {% endblock %}

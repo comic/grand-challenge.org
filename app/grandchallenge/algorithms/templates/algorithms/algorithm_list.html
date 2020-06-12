@@ -1,36 +1,13 @@
 {% extends "base.html" %}
 {% load url %}
-{% load random_encode %}
 {% load user_profile_link from profiles %}
+{% load meta_attr %}
 
 {% block title %}
     Algorithms - {{ block.super }}
 {% endblock %}
 
-{% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item active" aria-current="page">Algorithms
-        </li>
-    </ol>
-{% endblock %}
-
 {% block content %}
-
-    <h2>Algorithms</h2>
-
-    <p>
-        Here we have made available several machine learning algorithms for medical
-        imaging. If you are granted access to an algorithm you will be able to try
-        the algorithm out by uploading your own anonymised medical imaging data.
-        Several web-based workstations are available for interacting with the results.
-        Please
-        <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}">
-            contact us</a>
-        if you would like to make your own algorithm available here.
-    </p>
-
     {% if perms.algorithms.add_algorithm %}
         <p>
             <a href="{% url "algorithms:create" %}"
@@ -41,29 +18,24 @@
     {% endif %}
 
     <div class="row equal-height mx-n2">
-        {% for algorithm in object_list %}
-            <div class="col-12 col-md-6 col-lg-4 mb-3 px-2">
+        {% for object in object_list %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">
                 <div class="card">
+                    <a class="stretched-link" href="{{ object.get_absolute_url }}"
+                       title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
                     <div class="embed-responsive embed-responsive-1by1">
-                        <a href="{{ algorithm.get_absolute_url }}">
-                            <img class="card-img-top embed-responsive-item"
-                                 src="{{ algorithm.logo.url }}"
-                                 alt="{{ algorithm }} Logo">
-                        </a>
+                        <img class="card-img-top embed-responsive-item"
+                             src="{{ object.logo.url }}"
+                             alt="{{ object }} Logo">
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">
-                            {{ algorithm.title }}
-                            {% if not algorithm.public %}
-                                <i class="fas fa-lock" title="Algorithm is private"></i>
+                            {{ object.title }}
+                            {% if not object.public %}
+                                <i class="fas fa-lock above-stretched-link" title="Algorithm is private"></i>
                             {% endif %}
                         </h5>
-                        <p class="card-text">{{ algorithm.description }}</p>
-                        <a href="{{ algorithm.get_absolute_url }}"
-                           class="btn btn-primary mt-auto mr-auto"
-                           title="View Algorithm">
-                            <i class="fa fa-eye"></i>
-                        </a>
+                        <p class="card-text">{{ object.description }}</p>
                     </div>
                 </div>
             </div>
@@ -71,7 +43,9 @@
     </div>
 
     {% if not object_list %}
-        <p>You do not have permission to view any of the algorithms.</p>
+        <h3>
+            You do not have permission to view any of the algorithms
+        </h3>
     {% endif %}
 
 {% endblock %}

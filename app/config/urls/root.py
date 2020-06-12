@@ -1,11 +1,21 @@
 from django.conf import settings
 from django.conf.urls import include
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
 
+from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
+from grandchallenge.archives.sitemaps import ArchivesSitemap
+from grandchallenge.challenges.sitemaps import ChallengesSitemap
+from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
 from grandchallenge.core.views import HomeTemplate
+from grandchallenge.overview_pages.sitemaps import OverviewPagesSitemap
+from grandchallenge.pages.sitemaps import PagesSitemap
+from grandchallenge.policies.sitemaps import PoliciesSitemap
+from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
+from grandchallenge.reader_studies.sitemaps import ReaderStudiesSiteMap
 
 admin.autodiscover()
 
@@ -16,6 +26,20 @@ def handler500(request):
     return TemplateResponse(request, template_name, context, status=500)
 
 
+sitemaps = {
+    "algorithms": AlgorithmsSitemap,
+    "archives": ArchivesSitemap,
+    "challenges": ChallengesSitemap,
+    "companies": CompaniesSitemap,
+    "core": CoreSitemap,
+    "flatpages": FlatPagesSitemap,
+    "overview-pages": OverviewPagesSitemap,
+    "pages": PagesSitemap,
+    "policies": PoliciesSitemap,
+    "products": ProductsSitemap,
+    "reader-studies": ReaderStudiesSiteMap,
+}
+
 urlpatterns = [
     path("", HomeTemplate.as_view(), name="home"),
     path(
@@ -23,6 +47,12 @@ urlpatterns = [
         TemplateView.as_view(
             template_name="robots.txt", content_type="text/plain"
         ),
+    ),
+    path(
+        "sitemap.xml/",
+        sitemap,
+        {"sitemaps": sitemaps},
+        name="django.contrib.sitemaps.views.sitemap",
     ),
     path("", include("grandchallenge.favicons.urls", namespace="favicons")),
     path(settings.ADMIN_URL, admin.site.urls),

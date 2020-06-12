@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import logging
 import re
 from collections import namedtuple
@@ -66,8 +65,11 @@ class TaskType(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-light" title="{0} challenge">'
-            '<i class="fas fa-tasks fa-fw"></i> {0}</span>',
+            (
+                '<span class="badge badge-light above-stretched-link" '
+                'title="{0} challenge"><i class="fas fa-tasks fa-fw">'
+                "</i> {0}</span>"
+            ),
             self.type,
         )
 
@@ -91,8 +93,11 @@ class ImagingModality(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-secondary" title="Uses {0} data">'
-            '<i class="fas fa-microscope fa-fw"></i> {0}</span>',
+            (
+                '<span class="badge badge-secondary above-stretched-link" '
+                'title="Uses {0} data"><i class="fas fa-microscope fa-fw">'
+                "</i> {0}</span>"
+            ),
             self.modality,
         )
 
@@ -136,8 +141,11 @@ class BodyStructure(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-dark" title="Uses {0} data">'
-            '<i class="fas fa-child fa-fw"></i> {0}</span>',
+            (
+                '<span class="badge badge-dark above-stretched-link" '
+                'title="Uses {0} data"><i class="fas fa-child fa-fw">'
+                "</i> {0}</span>"
+            ),
             self.structure,
         )
 
@@ -161,8 +169,11 @@ class ChallengeSeries(models.Model):
     @property
     def badge(self):
         return format_html(
-            '<span class="badge badge-info" title="Associated with {0}">'
-            '<i class="fas fa-globe fa-fw"></i> {0}</span>',
+            (
+                '<span class="badge badge-info above-stretched-link" '
+                'title="Associated with {0}"><i class="fas fa-globe fa-fw">'
+                "</i> {0}</span>"
+            ),
             self.name,
         )
 
@@ -310,14 +321,6 @@ class ChallengeBase(models.Model):
         """Helper property for consistency with other objects"""
         return not self.hidden
 
-    @property
-    def gravatar_url(self):
-        return (
-            "https://www.gravatar.com/avatar/"
-            f"{hashlib.md5(self.creator.email.lower().encode()).hexdigest()}"
-            "?s=320"
-        )
-
     def get_absolute_url(self):
         raise NotImplementedError
 
@@ -337,40 +340,6 @@ class ChallengeBase(models.Model):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
 
-    def get_filter_classes(self):
-        """
-        Warning! Do not call this directly, it takes a while. This is used
-        in a background task.
-        """
-        classes = set()
-
-        if self.host_filter.host:
-            classes.add(self.host_filter.filter_tag)
-
-        # Filter by modality
-        for mod in self.modalities.all():
-            classes.add(mod.filter_tag)
-
-        # Filter by body region and structure
-        for struc in self.structures.all():
-            classes.add(struc.region.filter_tag)
-            classes.add(struc.filter_tag)
-
-        # Filter by task type
-        for tas in self.task_types.all():
-            classes.add(tas.filter_tag)
-
-        # Filter by challenge series
-        for series in self.series.all():
-            classes.add(series.filter_tag)
-
-        if self.educational:
-            classes.add("educational")
-
-        classes.add(f"year-{self.year}")
-
-        return list(classes)
-
     @property
     def host_filter(self):
         host_filter = namedtuple("host_filter", ["host", "filter_tag"])
@@ -389,18 +358,10 @@ class ChallengeBase(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ("pk",)
 
 
 class Challenge(ChallengeBase):
-    """
-    A collection of HTML pages using a certain skin. Pages can be browsed and
-    edited.
-    """
-
-    public_folder = "public_html"
-    skin = models.TextField(
-        default="", blank=True, help_text="CSS for this challenge.",
-    )
     banner = models.ImageField(
         upload_to=get_banner_path,
         storage=public_s3_storage,
@@ -408,17 +369,6 @@ class Challenge(ChallengeBase):
         help_text=(
             "Image that gets displayed at the top of each page. "
             "Recommended resolution 2200x440 px."
-        ),
-    )
-    hide_signin = models.BooleanField(
-        default=False,
-        help_text="Do no show the Sign in / Register link on any page",
-    )
-    hide_footer = models.BooleanField(
-        default=False,
-        help_text=(
-            "Do not show the general links or "
-            "the grey divider line in page footers"
         ),
     )
     disclaimer = models.CharField(
@@ -534,7 +484,7 @@ class Challenge(ChallengeBase):
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
 
-    class Meta:
+    class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"
         verbose_name_plural = "challenges"
 

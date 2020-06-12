@@ -1,0 +1,27 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
+
+LAYOUT_TOP_DOWN
+LAYOUT_WITH_LEGEND()
+
+title Component diagram for grand-challenge.org - Images, Evaluation and Algorithm Workers
+
+Container_Boundary(s1, "Celery Worker") {
+    Component(gc_algorithm_worker, "Web Application", "Django, Celery", "Manages container lifecycle and generates job results.")
+    Component(docker, "Compute Pool", "Docker", "Provides compute resources for container images.")
+}
+
+ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
+Container(protected_s3, "Protected Data Store", "S3/Minio", "Stores protected medical imaging objects.")
+Container(private_s3, "Private Data Store", "S3/Minio", "Stores private objects, container images etc.")
+Container(message_queue, "Message Queue", "SQS/Redis", "Queue of units of work Celery messages.")
+
+Rel(gc_algorithm_worker, message_queue, "Fetches messages from", "SSL, SQS/Redis, Celery")
+
+Rel(gc_algorithm_worker, postgres, "Reads and writes to", "SSL, SQL")
+Rel(gc_algorithm_worker, private_s3, "Fetches container images from", "HTTPS, S3")
+Rel(gc_algorithm_worker, protected_s3, "Reads objects from", "HTTPS, S3")
+
+Rel(gc_algorithm_worker, docker, "Provisions volumes, instantiates containers with GPU access on", "HTTPS, JSON")
+
+@enduml

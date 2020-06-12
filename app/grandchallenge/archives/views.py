@@ -16,6 +16,7 @@ from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
@@ -52,6 +53,7 @@ from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
+from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
@@ -68,6 +70,26 @@ class ArchiveList(PermissionListMixin, ListView):
         queryset = super().get_queryset()
         queryset = (queryset | Archive.objects.filter(public=True)).distinct()
         return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context.update(
+            {
+                "jumbotron_title": "Archives",
+                "jumbotron_description": format_html(
+                    (
+                        "An archive can be used to collect set of medical "
+                        "images, which can later be used in a reader study, "
+                        "challenge or algorithm. Please <a href='{}'>contact "
+                        "us</a> if you would like to set up your own archive."
+                    ),
+                    random_encode("mailto:support@grand-challenge.org"),
+                ),
+            }
+        )
+
+        return context
 
 
 class ArchiveCreate(

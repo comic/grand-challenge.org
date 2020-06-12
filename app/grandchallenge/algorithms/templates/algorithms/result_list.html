@@ -13,8 +13,6 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a
                 href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
@@ -54,101 +52,6 @@
             </tr>
             </thead>
             <tbody>
-            {% for result in object_list %}
-                <tr>
-                    <td data-order="{{ result.job.created|date:"U" }}">{{ result.job.created|naturaltime }}</td>
-                    <td>
-                        {{ result.job.creator|user_profile_link }}
-                    </td>
-                    <td>
-                        <a href="#resultInfoModal"
-                           class="badge badge-primary"
-                           data-toggle="modal"
-                           data-target="#resultInfoModal"
-                           data-title="Result Info"
-                           data-output="{% firstof result.output 'No output produced.' %}"
-                           data-pk="{{ result.pk }}"
-                           title="Result Info">
-                            <i class="fa fa-file"></i> {{ result.job.image.name }}
-                        </a>
-                    </td>
-                    <td>
-                        {% if result.public %}
-                            <i class="fa fa-eye text-success"
-                               title="Result is public"></i>
-                        {% else %}
-                            <i class="fa fa-eye-slash text-danger"
-                               title="Result is private"></i>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <ul class="list-unstyled">
-                            {% for image in result.images.all %}
-                                <li>
-                                    <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image overlay=image config=algorithm.workstation_config %}">
-                                            <span class="badge badge-primary">
-                                                <i class="fa fa-eye"></i> View Input &amp; Output
-                                            </span>
-                                    </a>
-                                </li>
-                                {% for file in image.files.all %}
-                                    <li>
-                                        <a href="{{ file.file.url }}">
-                                            <span class="badge badge-primary" title="Download Output {{ forloop.parentloop.counter }} {{ image.name|stem }} ({{ file.file|suffix }})">
-                                                <i class="fa fa-download"></i> Output {{ forloop.parentloop.counter }} ({{ file.file|suffix }})
-                                            </span>
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                            {% empty %}
-                                <li>
-                                    <span class="badge badge-warning"
-                                          title="No output images were found">
-                                        <i class="fa fa-eye-slash"></i>
-                                    </span>
-                                </li>
-                                <li>
-                                    <a href="{% url 'workstations:workstation-session-redirect' slug=algorithm.workstation.slug %}?{% workstation_query image=result.job.image config=algorithm.workstation_config %}">
-                                        <span class="badge badge-primary">
-                                            <i class="fa fa-eye"></i> View Input
-                                        </span>
-                                    </a>
-                                </li>
-                            {% endfor %}
-                            {% for file in result.job.image.files.all %}
-                                <li>
-                                    <a href="{{ file.file.url }}">
-                                        <span class="badge badge-primary" title="Download Input {{ result.job.image.name|stem }} ({{ file.file|suffix }})">
-                                            <i class="fa fa-download"></i> Input ({{ file.file|suffix }})
-                                        </span>
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                    <td>
-                        {% if result.comment %}
-                            <a href="#resultInfoModal"
-                               class="badge badge-primary"
-                               data-toggle="modal"
-                               data-target="#resultInfoModal"
-                               data-title="Result Comment"
-                               data-output="{{ result.comment }}"
-                               data-pk="{{ result.pk }}"
-                               title="Result Comment">
-                                <i class="fa fa-file"></i>
-                            </a>
-                        {% endif %}
-                        {% if change_result|get_jsonpath:result.pk %}
-                            <a href="{% url 'algorithms:result-update' slug=algorithm.slug pk=result.pk %}">
-                                <span class="badge badge-primary" title="Edit result">
-                                    <i class="fa fa-edit"></i>
-                                </span>
-                            </a>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -181,8 +84,12 @@
         $(document).ready(function () {
             $('.table').DataTable({
                 order: [[0, "desc"]],
-                "pageLength": 50,
-                ordering: true
+                pageLength: 50,
+                serverSide: true,
+                ajax: {
+                    url: "",
+                },
+                ordering: true,
             });
         });
     </script>

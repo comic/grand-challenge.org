@@ -7,8 +7,6 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
         <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
         </li>
         <li class="breadcrumb-item active"
@@ -162,14 +160,9 @@
 
         <h3>Sessions</h3>
 
-        <form method="post"
-              action="{% url 'workstations:session-create' slug=object.slug %}">
-            {% csrf_token %}
-            <button type="submit"
-                    class="btn btn-primary">
-                <i class="fas fa-flask"></i> Start a new session
-            </button>
-        </form>
+        <a class="btn btn-primary" href="{% url 'workstations:workstation-session-create' slug=object.slug %}">
+            <i class="fas fa-flask"></i> Start a new session
+        </a>
 
     {% endif %}
 {% endblock %}

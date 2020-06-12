@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 
 from grandchallenge.challenges.models import get_logo_path
+from grandchallenge.subdomains.utils import reverse
 
 
 class Company(models.Model):
@@ -27,6 +28,10 @@ class Company(models.Model):
 
     class Meta:
         verbose_name_plural = "companies"
+        ordering = ("pk",)
+
+    def get_absolute_url(self):
+        return reverse("products:company-detail", kwargs={"pk": self.pk})
 
 
 class ProductImage(models.Model):
@@ -147,3 +152,9 @@ class Product(models.Model):
 
     def __str__(self):
         return self.short_name
+
+    class Meta:
+        ordering = ("pk",)
+
+    def get_absolute_url(self):
+        return reverse("products:product-detail", kwargs={"pk": self.pk})

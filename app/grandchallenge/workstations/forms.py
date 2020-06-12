@@ -15,7 +15,11 @@ from guardian.utils import get_anonymous_user
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.jqfileupload.widgets import uploader
-from grandchallenge.workstations.models import Workstation, WorkstationImage
+from grandchallenge.workstations.models import (
+    Session,
+    Workstation,
+    WorkstationImage,
+)
 
 
 class WorkstationForm(SaveFormInitMixin, ModelForm):
@@ -50,6 +54,32 @@ class WorkstationImageForm(ModelForm):
             "http_port",
             "websocket_port",
             "chunked_upload",
+        )
+
+
+class SessionForm(ModelForm):
+    region = ChoiceField(
+        required=True,
+        choices=[
+            c
+            for c in Session.Region.choices
+            if c[0] in settings.WORKSTATIONS_ACTIVE_REGIONS
+        ],
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
+        self.helper.attrs.update({"class": "d-none"})
+
+        self.fields["ping_times"].required = False
+
+    class Meta:
+        model = Session
+        fields = (
+            "region",
+            "ping_times",
         )
 
 

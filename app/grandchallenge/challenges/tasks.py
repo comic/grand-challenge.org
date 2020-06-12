@@ -8,44 +8,30 @@ from grandchallenge.subdomains.utils import reverse
 
 
 @shared_task
-def update_filter_classes():
-    lookup = (
-        "creator",
-        "modalities",
-        "series",
-        "structures__region",
-        "task_types",
-    )
+def update_challenge_results_cache():
+    for c in Challenge.objects.all():
+        kwargs = {
+            "cached_num_participants": c.participants_group.user_set.all().count()
+        }
 
-    for obj in [Challenge, ExternalChallenge]:
-        for c in obj.objects.prefetch_related(*lookup).all():
-            kwargs = {"filter_classes": c.get_filter_classes()}
+        challenge_results = Result.objects.filter(
+            job__submission__challenge=c, published=True
+        ).order_by("-created")
 
-            if isinstance(c, Challenge):
-                kwargs.update(
-                    {
-                        "cached_num_participants": c.participants_group.user_set.all().count()
-                    }
-                )
+        try:
+            kwargs.update(
+                {
+                    "cached_num_results": challenge_results.count(),
+                    "cached_latest_result": challenge_results.first().created,
+                }
+            )
+        except AttributeError:
+            # No results for this challenge
+            kwargs.update(
+                {"cached_num_results": 0, "cached_latest_result": None}
+            )
 
-                challenge_results = Result.objects.filter(
-                    job__submission__challenge=c, published=True
-                ).order_by("-created")
-
-                try:
-                    kwargs.update(
-                        {
-                            "cached_num_results": challenge_results.count(),
-                            "cached_latest_result": challenge_results.first().created,
-                        }
-                    )
-                except AttributeError:
-                    # No results for this challenge
-                    kwargs.update(
-                        {"cached_num_results": 0, "cached_latest_result": None}
-                    )
-
-            obj.objects.filter(pk=c.pk).update(**kwargs)
+        Challenge.objects.filter(pk=c.pk).update(**kwargs)
 
 
 @shared_task

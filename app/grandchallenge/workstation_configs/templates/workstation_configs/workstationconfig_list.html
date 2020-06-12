@@ -1,18 +1,17 @@
 {% extends "base.html" %}
 {% load url %}
 
-{% block title %}Workstation Configs - {{ block.super }}{% endblock %}
+{% block title %}Workstation Configurations - {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item active" aria-current="page">Workstation Configs
+        <li class="breadcrumb-item active" aria-current="page">Workstation Configurations
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Workstation Configs</h2>
+    <h2>Workstation Configurations</h2>
 
     <div class="card-columns">
         {% for config in object_list %}

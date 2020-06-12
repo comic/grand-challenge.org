@@ -2,21 +2,11 @@
 {% load crispy from crispy_forms_tags %}
 {% load url %}
 {% load guardian_tags %}
+{% load meta_attr %}
 
 {% block title %}Workstations - {{ block.super }}{% endblock %}
 
-{% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'home' %}"><i
-                class="fas fa-home"></i></a></li>
-        <li class="breadcrumb-item active" aria-current="page">Workstations
-        </li>
-    </ol>
-{% endblock %}
-
 {% block content %}
-    <h2>Workstations</h2>
-
     {% if perms.workstations.add_workstation %}
         <p>
             <a class="btn btn-primary"
@@ -27,33 +17,28 @@
     {% endif %}
 
     <div class="row equal-height mx-n2">
-        {% for workstation in workstation_list %}
-            <div class="col-12 col-md-6 col-lg-4 mb-3 px-2">
+        {% for object in workstation_list %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">
                 <div class="card">
+                    <a class="stretched-link" href="{{ object.get_absolute_url }}"
+                       title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
                     <div class="embed-responsive embed-responsive-1by1">
-                        <a href="{{ workstation.get_absolute_url }}">
-                            <img class="card-img-top embed-responsive-item"
-                                 src="{{ workstation.logo.url }}"
-                                 alt="{{ workstation }} Logo">
-                        </a>
+                        <img class="card-img-top embed-responsive-item"
+                             src="{{ object.logo.url }}"
+                             alt="{{ object }} Logo">
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">
-                            {{ workstation.title }}
-                            {% if not workstation.public %}
-                                <i class="fas fa-lock" title="Workstation is private"></i>
+                            {{ object.title }}
+                            {% if not object.public %}
+                                <i class="fas fa-lock above-stretched-link" title="Workstation is private"></i>
                             {% endif %}
                         </h5>
-                        <p class="card-text">{{ workstation.description }}</p>
-                        <div class="mt-auto mr-auto">
-                            <a href="{{ workstation.get_absolute_url }}"
-                               class="btn btn-primary"
-                               title="View Workstation">
-                                <i class="fa fa-eye"></i>
-                            </a>
-                            {% get_obj_perms request.user for workstation as "workstation_perms" %}
+                        <p class="card-text">{{ object.description }}</p>
+                        <div class="mt-auto mr-auto above-stretched-link">
+                            {% get_obj_perms request.user for object as "workstation_perms" %}
                             {% if "change_workstation" in workstation_perms %}
-                                <a href="{% url 'workstations:update' slug=workstation.slug %}"
+                                <a href="{% url 'workstations:update' slug=object.slug %}"
                                    class="btn btn-primary"
                                    title="Edit Workstation">
                                     <i class="fa fa-edit"></i>
@@ -67,7 +52,9 @@
     </div>
 
     {% if not object_list %}
-        <p>You do not have permission to view any of the workstations.</p>
+        <h3>
+            You do not have permission to view any of the workstations
+        </h3>
     {% endif %}
 
 {% endblock %}

@@ -1,6 +1,18 @@
 {% extends "challenge.html" %}
 {% load url %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Submissions</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
 
     <h2>Submissions</h2>
@@ -12,12 +24,14 @@
         </a>
     </p>
 
+    {% if "change_challenge" in challenge_perms %}
     <p>
         <a class="btn btn-primary"
            href="{% url 'evaluation:submission-create-legacy' challenge_short_name=challenge.short_name %}">
             <i class="fas fa-plus"></i> Add a legacy submission
         </a>
     </p>
+    {% endif %}
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="submissionsTable">
@@ -33,14 +47,17 @@
             {% for submission in object_list %}
                 <tr>
                     <td>
-                        <a href="{{ submission.get_absolute_url }}">{{ submission.id }}</a>
+                        {% if "change_challenge" in challenge_perms %}
+                            <a href="{{ submission.get_absolute_url }}">{{ submission.pk }}</a>
+                        {% else %}
+                            {{ submission.pk }}
+                        {% endif %}
                     </td>
                     <td data-order="{{ submission.created|date:"U" }}">{{ submission.created }}</td>
                     <td><a
                             href="{% url 'userena_profile_detail' submission.creator.username %}">{{ submission.creator }}</a>
                     </td>
                     <td>{{ submission.comment }}</td>
-
                 </tr>
             {% endfor %}
             </tbody>

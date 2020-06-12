@@ -3,12 +3,14 @@ import re
 from datetime import datetime, timedelta
 from distutils.util import strtobool as strtobool_i
 from itertools import product
+from urllib.parse import quote
 
 import sentry_sdk
 from corsheaders.defaults import default_headers
 from django.contrib.messages import constants as messages
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import ignore_logger
 from sentry_sdk.integrations.redis import RedisIntegration
 
 from config.denylist import USERNAME_DENYLIST
@@ -39,6 +41,8 @@ IGNORABLE_404_URLS = [
     re.compile(r"^/gen204.*"),
     re.compile(r"^/wp-content.*"),
     re.compile(r"^/wp.*"),
+    re.compile(r"^/wordpress/.*"),
+    re.compile(r"^/old/.*", flags=re.IGNORECASE),
     re.compile(r".*/trackback.*"),
     re.compile(r"^/site/.*"),
     re.compile(r"^/media/cache/.*"),
@@ -57,6 +61,12 @@ DATABASES = {
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
         "PORT": os.environ.get("POSTGRES_PORT", ""),
+        "OPTIONS": {
+            "sslmode": os.environ.get("POSTGRES_SSL_MODE", "prefer"),
+            "sslrootcert": os.path.join(
+                SITE_ROOT, "config", "certs", "rds-ca-2019-root.pem"
+            ),
+        },
     }
 }
 
@@ -126,6 +136,12 @@ JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 
+AWS_S3_FILE_OVERWRITE = False
+# Note: deprecated in django storages 2.0
+AWS_BUCKET_ACL = "private"
+AWS_DEFAULT_ACL = "private"
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
+
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PRIVATE_S3_STORAGE_ACCESS_KEY", ""),
@@ -133,44 +149,48 @@ PRIVATE_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PRIVATE_S3_STORAGE_BUCKET_NAME", "grand-challenge-private"
     ),
-    "auto_create_bucket": True,
-    "endpoint_url": os.environ.get(
-        "PRIVATE_S3_STORAGE_ENDPOINT_URL", "http://minio-private:9000"
-    ),
-    # Do not overwrite files, we get problems with jqfileupload otherwise
-    "file_overwrite": False,
-    "default_acl": "private",
+    "endpoint_url": os.environ.get("PRIVATE_S3_STORAGE_ENDPOINT_URL", None),
 }
+
 PROTECTED_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PROTECTED_S3_STORAGE_ACCESS_KEY", ""),
     "secret_key": os.environ.get("PROTECTED_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PROTECTED_S3_STORAGE_BUCKET_NAME", "grand-challenge-protected"
     ),
-    "auto_create_bucket": True,
-    "endpoint_url": os.environ.get(
-        "PROTECTED_S3_STORAGE_ENDPOINT_URL", "http://minio-protected:9000"
-    ),
+    "endpoint_url": os.environ.get("PROTECTED_S3_STORAGE_ENDPOINT_URL", None),
     # This is the domain where people will be able to go to download data
     # from this bucket. Usually we would use reverse to find this out,
     # but this needs to be defined before the database is populated
     "custom_domain": os.environ.get(
         "PROTECTED_S3_CUSTOM_DOMAIN", "gc.localhost/media"
     ),
-    "file_overwrite": False,
-    "default_acl": "private",
 }
+PROTECTED_S3_STORAGE_USE_CLOUDFRONT = strtobool(
+    os.environ.get("PROTECTED_S3_STORAGE_USE_CLOUDFRONT", "False")
+)
+PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
+    "PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN_NAME", ""
+)
+
 PUBLIC_S3_STORAGE_KWARGS = {
     "access_key": os.environ.get("PUBLIC_S3_STORAGE_ACCESS_KEY", ""),
     "secret_key": os.environ.get("PUBLIC_S3_STORAGE_SECRET_KEY", ""),
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
-    "file_overwrite": False,
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
     "default_acl": "public-read",
 }
+
+# Key pair used for signing CloudFront URLS, only used if
+# PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
+CLOUDFRONT_KEY_PAIR_ID = os.environ.get("CLOUDFRONT_KEY_PAIR_ID", "")
+CLOUDFRONT_PRIVATE_KEY_PATH = os.environ.get("CLOUDFRONT_PRIVATE_KEY_PATH", "")
+CLOUDFRONT_URL_EXPIRY_SECONDS = int(
+    os.environ.get("CLOUDFRONT_URL_EXPIRY_SECONDS", "300")  # 5 mins
+)
 
 ##############################################################################
 #
@@ -312,6 +332,7 @@ DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.postgres",
     "django.contrib.flatpages",
+    "django.contrib.sitemaps",
 ]
 
 THIRD_PARTY_APPS = [
@@ -372,6 +393,7 @@ LOCAL_APPS = [
     "grandchallenge.favicons",
     "grandchallenge.products",
     "grandchallenge.overview_pages",
+    "grandchallenge.serving",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -550,15 +572,17 @@ SENTRY_ENABLE_JS_REPORTING = strtobool(
 )
 WORKSTATION_SENTRY_DSN = os.environ.get("WORKSTATION_SENTRY_DSN", "")
 
-sentry_sdk.init(
-    dsn=SENTRY_DSN,
-    integrations=[
-        DjangoIntegration(),
-        CeleryIntegration(),
-        RedisIntegration(),
-    ],
-    release=COMMIT_ID,
-)
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            RedisIntegration(),
+        ],
+        release=COMMIT_ID,
+    )
+    ignore_logger("django.security.DisallowedHost")
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
@@ -592,7 +616,6 @@ CORS_ALLOW_HEADERS = [
 # across domains, but this will allow workstations to access the api
 CORS_ALLOW_CREDENTIALS = True
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_SOFT_TIME_LIMIT = int(
@@ -602,6 +625,28 @@ CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7260"))
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
+
+if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
+    celery_access_key = quote(os.environ.get("BROKER_AWS_ACCESS_KEY"), safe="")
+    celery_secret_key = quote(os.environ.get("BROKER_AWS_SECRET_KEY"), safe="")
+    CELERY_BROKER_URL = f"sqs://{celery_access_key}:{celery_secret_key}@"
+
+    CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
+    CELERY_BROKER_USE_SSL = True
+
+    CELERY_BROKER_TRANSPORT_OPTIONS.update(
+        {
+            "queue_name_prefix": os.environ.get(
+                "CELERY_BROKER_QUEUE_NAME_PREFIX", "gclocalhost-"
+            ),
+            "region": os.environ.get("CELERY_BROKER_REGION", "eu-central-1"),
+            "polling_interval": int(
+                os.environ.get("CELERY_BROKER_POLLING_INTERVAL", "1")
+            ),
+        }
+    )
+else:
+    CELERY_BROKER_URL = os.environ.get("BROKER_URL", "redis://redis:6379/0")
 
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
@@ -642,6 +687,7 @@ DEFAULT_WORKSTATION_SLUG = os.environ.get(
 WORKSTATIONS_BASE_IMAGE_QUERY_PARAM = "image"
 WORKSTATIONS_OVERLAY_QUERY_PARAM = "overlay"
 WORKSTATIONS_READY_STUDY_QUERY_PARAM = "readerStudy"
+WORKSTATIONS_ALGORITHM_RESULT_QUERY_PARAM = "algorithmResult"
 WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
 # The name of the network that the workstations will be attached to
 WORKSTATIONS_NETWORK_NAME = os.environ.get(
@@ -661,7 +707,7 @@ WORKSTATION_INTERNAL_NETWORK = strtobool(
 )
 # Which regions are available for workstations to run in
 WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
-    "WORKSTATIONS_ACTIVE_REGIONS", "eu-nl-1"
+    "WORKSTATIONS_ACTIVE_REGIONS", "eu-central-1"
 ).split(",")
 WORKSTATIONS_RENDERING_SUBDOMAINS = {
     # Possible AWS regions
@@ -689,6 +735,10 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
 }
 
 CELERY_BEAT_SCHEDULE = {
+    "ping_google": {
+        "task": "grandchallenge.core.tasks.ping_google",
+        "schedule": timedelta(days=1),
+    },
     "cleanup_stale_uploads": {
         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
         "schedule": timedelta(hours=1),
@@ -697,8 +747,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.core.tasks.clear_sessions",
         "schedule": timedelta(days=1),
     },
-    "update_filter_classes": {
-        "task": "grandchallenge.challenges.tasks.update_filter_classes",
+    "update_challenge_results_cache": {
+        "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": timedelta(minutes=5),
     },
     "validate_external_challenges": {
@@ -753,6 +803,7 @@ CELERY_BEAT_SCHEDULE = {
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.components.tasks.execute_job": "evaluation",
+    "grandchallenge.components.tasks.validate_docker_image": "images",
     "grandchallenge.cases.tasks.build_images": "images",
 }
 
@@ -809,6 +860,16 @@ RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 RETINA_IMPORT_USER_NAME = "retina_import_user"
 RETINA_EXCEPTION_ARCHIVE = "Australia"
+RETINA_ARCHIVE_NAMES = [
+    "AREDS - GA selection",
+    "kappadata",
+    "Rotterdam_Study_1",
+    "Rotterdam Study 1",
+    "Australia",
+    "RS1",
+    "RS2",
+    "RS3",
+]
 
 ENABLE_DEBUG_TOOLBAR = False
 
@@ -823,7 +884,6 @@ if DEBUG:
     PUBLIC_S3_STORAGE_KWARGS.update(
         {
             "custom_domain": f"localhost:9000/{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}",
-            "auto_create_bucket": True,
             "secure_urls": False,
             "endpoint_url": "http://minio-public:9000",
         }

@@ -88,7 +88,6 @@ class PageUpdate(
     form_class = PageUpdateForm
     slug_url_kwarg = "page_title"
     slug_field = "title__iexact"
-    template_name_suffix = "_form_update"
 
     def form_valid(self, form):
         response = super().form_valid(form)

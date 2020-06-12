@@ -1,6 +1,19 @@
 {% extends "challenge.html" %}
 {% load url %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Pages
+        </li>
+    </ol>
+{% endblock %}
+
 {% block content %}
 
     <h2>Pages for {{ challenge.short_name }}</h2>
@@ -33,7 +46,9 @@
                     </td>
                     <td>
                         <a href="{{ page.get_absolute_url }}">
-                            {% firstof page.display_title page.title %}
+                            {% filter title %}
+                                {% firstof page.display_title page.title %}
+                            {% endfilter %}
                         </a>
                     </td>
                     <td data-order="{{ page.hidden }}">

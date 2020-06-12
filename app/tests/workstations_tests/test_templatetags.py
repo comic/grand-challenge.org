@@ -3,6 +3,7 @@ import pytest
 from grandchallenge.workstations.templatetags.workstations import (
     workstation_query,
 )
+from tests.algorithms_tests.factories import AlgorithmResultFactory
 from tests.factories import ImageFactory, WorkstationConfigFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
@@ -13,6 +14,7 @@ def test_workstation_query(settings):
     reader_study = ReaderStudyFactory(
         workstation_config=WorkstationConfigFactory()
     )
+    algorithm_result = AlgorithmResultFactory()
     config = WorkstationConfigFactory()
 
     qs = workstation_query(image=image)
@@ -70,3 +72,18 @@ def test_workstation_query(settings):
         in qs
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}" not in qs
+
+    qs = workstation_query(algorithm_result=algorithm_result)
+    assert "&" not in qs
+    assert (
+        f"{settings.WORKSTATIONS_ALGORITHM_RESULT_QUERY_PARAM}={algorithm_result.pk}"
+        in qs
+    )
+
+    qs = workstation_query(algorithm_result=algorithm_result, config=config)
+    assert "&" in qs
+    assert (
+        f"{settings.WORKSTATIONS_ALGORITHM_RESULT_QUERY_PARAM}={algorithm_result.pk}"
+        in qs
+    )
+    assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs

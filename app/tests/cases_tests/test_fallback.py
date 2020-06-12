@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 
@@ -24,9 +25,9 @@ from tests.cases_tests import RESOURCE_PATH
 def test_image_builder_fallback(tmpdir, src, colorspace):
     dest = Path(tmpdir) / src.name
     shutil.copy(str(src), str(dest))
-
-    result = image_builder_fallback(Path(tmpdir))
-    assert result.consumed_files == [src.name]
+    files = [Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]]
+    result = image_builder_fallback(files)
+    assert result.consumed_files == [dest]
     image = result.new_images[0]
     assert image.color_space == colorspace
     assert image.voxel_width_mm is None
@@ -39,8 +40,9 @@ def test_image_builder_fallback_corrupt_file(tmpdir):
     dest = Path(tmpdir) / src.name
     shutil.copy(str(src), str(dest))
 
-    result = image_builder_fallback(Path(tmpdir))
+    files = [Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]]
+    result = image_builder_fallback(files)
     assert result.file_errors_map == {
-        src.name: format_error("Not a valid image file"),
+        dest: format_error("Not a valid image file"),
     }
     assert result.consumed_files == []

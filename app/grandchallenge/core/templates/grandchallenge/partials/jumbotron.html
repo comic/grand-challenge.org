@@ -1,0 +1,17 @@
+{% load static %}
+{% load image_filter %}
+
+{% if jumbotron_title or jumbotron_background_url %}
+<div class="jumbotron background-fill rounded-0 bg-primary mb-0"
+     style="background-image: {% image_filter %}, url('{{ jumbotron_background_url }}');"
+>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-10 col-md-8 col-lg-6 text-light">
+                <h1>{{ jumbotron_title|title }}</h1>
+                <p class="lead">{{ jumbotron_description }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

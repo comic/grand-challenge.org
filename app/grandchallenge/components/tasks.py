@@ -19,9 +19,7 @@ from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
 @shared_task()
-def validate_docker_image_async(
-    *, pk: uuid.UUID, app_label: str, model_name: str
-):
+def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     instance = model.objects.get(pk=pk)

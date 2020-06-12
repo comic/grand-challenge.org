@@ -1,5 +1,22 @@
 {% extends "challenge.html" %}
 {% load crispy_forms_tags %}
+{% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a>
+        </li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.name|title }}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Join
+        </li>
+    </ol>
+{% endblock %}
 
 {% block content %}
 

@@ -257,6 +257,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
+        ordering = ("created",)
 
     copy_fields = (
         "workstation",

@@ -2,7 +2,6 @@ from django.urls import path
 
 from grandchallenge.workstations.views import (
     SessionCreate,
-    SessionRedirectView,
     WorkstationCreate,
     WorkstationDetail,
     WorkstationEditorsUpdate,
@@ -25,18 +24,21 @@ urlpatterns = [
         name="users-autocomplete",
     ),
     path("create/", WorkstationCreate.as_view(), name="create"),
+    # TODO - add region
     path(
-        "load/", SessionRedirectView.as_view(), name="default-session-redirect"
+        "sessions/create/",
+        SessionCreate.as_view(),
+        name="default-session-create",
     ),
     path(
-        "<slug>/load/",
-        SessionRedirectView.as_view(),
-        name="workstation-session-redirect",
+        "<slug>/sessions/create/",
+        SessionCreate.as_view(),
+        name="workstation-session-create",
     ),
     path(
-        "<slug>/images/<uuid:pk>/load/",
-        SessionRedirectView.as_view(),
-        name="workstation-image-session-redirect",
+        "<slug>/<uuid:pk>/sessions/create/",
+        SessionCreate.as_view(),
+        name="workstation-image-session-create",
     ),
     path(
         "<slug>/editors/update/",
@@ -64,10 +66,5 @@ urlpatterns = [
         "<slug>/images/<uuid:pk>/update/",
         WorkstationImageUpdate.as_view(),
         name="image-update",
-    ),
-    path(
-        "<slug>/sessions/create/",
-        SessionCreate.as_view(),
-        name="session-create",
     ),
 ]

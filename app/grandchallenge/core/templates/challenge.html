@@ -3,26 +3,19 @@
 {% load guardian_tags %}
 {% load admin_urls %}
 
-{% block style %}
-    {{ block.super }}
-    {% if challenge.skin %}
-        <style>
-            {{ challenge.skin }}
-        </style>
-    {% endif %}
+{% block title %} {% firstof challenge.title challenge.short_name %} - {{ block.super }} {% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{% firstof challenge.title challenge.short_name %}</li>
+    </ol>
 {% endblock %}
 
-{% block title %} {{ challenge.short_name }} {% endblock %}
-
-{% block navbar %}
-    {% if challenge.hide_footer %}
-        <!--hidden -->
-    {% else %}
-        {{ block.super }}
-    {% endif %}
-{% endblock %}
-
-{% block jumbotron %}
+{% block messages %}
     {% if challenge.banner %}
         <div class="row mb-3">
             <div class="col-12">
@@ -36,21 +29,14 @@
             </div>
         </div>
     {% endif %}
+
+    {{ block.super }}
 {% endblock %}
 
 {% block sidebar %}
     {% if challenge %}
         <div class="col-12 col-md-3 col-lg-2 mb-3">
             <ul class="nav nav-pills flex-column">
-                {% if not challenge.banner %}
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           href="{{ challenge.get_absolute_url }}">
-                            {% firstof challenge.title challenge.short_name %}
-                        </a>
-                    </li>
-                {% endif %}
-
                 {% for page in pages %}
                     {% if not page.hidden %}
                         <li class="nav-item">
@@ -90,10 +76,6 @@
                         <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:result-list' %}active{% endif %}"
                            href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">Results</a>
                     </li>
-                {% endif %}
-
-                {% if challenge.hide_footer and not challenge.hide_signin %}
-                    {% include "grandchallenge/partials/userlinks.html" %}
                 {% endif %}
 
                 {% if "change_challenge" in challenge_perms %}
@@ -139,12 +121,5 @@
                 {% endif %}
             </ul>
         </div>
-    {% endif %}
-{% endblock %}
-
-{% block footer %}
-    {% if challenge.hide_footer %}
-    {% else %}
-        {{ block.super }}
     {% endif %}
 {% endblock %}

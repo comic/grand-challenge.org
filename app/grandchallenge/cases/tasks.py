@@ -1,6 +1,4 @@
-import fileinput
 import os
-import re
 import tarfile
 import zipfile
 from datetime import timedelta
@@ -12,6 +10,7 @@ from uuid import UUID
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -203,35 +202,24 @@ def remove_duplicate_files(
     )
 
 
-def fix_mhd_file(file, prefix):
+def _check_sanity(info, is_tar, path):
+    # Check tar files for symlinks and reject upload session if any.
+    if is_tar:
+        if info.issym() or info.islnk():
+            raise ValidationError("(Symbolic) links are not allowed.")
+    # Also check for max path length, drop folders when path is too long
+    filename_attr = "name" if is_tar else "filename"
+    while len(os.path.join(path, getattr(info, filename_attr))) > 4095:
+        filename = getattr(info, filename_attr)
+        filename = os.path.join(
+            *Path(filename).parts[1 : len(Path(filename).parts)]
+        )
+        setattr(info, filename_attr, filename)
+
+
+def extract(file, path, is_tar=False):
     """
-    Fixes the reference to the data file for extracted mhd files in place.
-
-    This is needed because we prepend folder names to extraced files to prevent
-    duplicate file names.
-
-    Parameters
-    ----------
-    file:
-        A .mhd file.
-    prefix:
-        The prefix that was added to the file and should be added to the
-        ElementDataFile entry.
-    """
-    try:
-        with fileinput.input(file, inplace=True) as f:
-            for line in f:
-                new_line = re.sub(
-                    r"(ElementDataFile)\s+=\s+(.*)", fr"\1 = {prefix}\2", line,
-                )
-                print(new_line, end="")
-    except Exception:
-        pass
-
-
-def extract_and_flatten(file, path, index, prefix="", is_tar=False):
-    """
-    Extracts a flattened list of all files in `file` to `path`.
+    Extracts all files in `file` to `path`.
 
     Parameters
     ----------
@@ -240,44 +228,23 @@ def extract_and_flatten(file, path, index, prefix="", is_tar=False):
     path:
         The path to which the contents of `file` are to be extracted.
 
-    Returns
-    -------
-    A list of extracted files.
     """
-    new_files = []
-    listfunc = file.getmembers if is_tar else file.infolist
+    list_func = file.getmembers if is_tar else file.infolist
     filename_attr = "name" if is_tar else "filename"
     is_dir_func = "isdir" if is_tar else "is_dir"
-    indices = {}
-    prefix = prefix or ""
-    for info in sorted(listfunc(), key=lambda k: getattr(k, filename_attr)):
-        filename = getattr(info, filename_attr)
+    extracted = False
+    for info in sorted(list_func(), key=lambda k: getattr(k, filename_attr)):
         # Skip directories
         if getattr(info, is_dir_func)():
             continue
-        # For any file that is inside a directory, prepend the directory
-        # name(s) to the filename
-        _filename = "-".join(Path(filename).parts[-2:])
-        base_name = os.path.basename(filename)
-        folder = filename.replace(base_name, "")
-        if folder:
-            indices[folder] = indices.get(folder, index + 1)
-            index = indices[folder]
-        _prefix = _filename.replace(base_name, "")
-        prefix = f"{prefix if not _prefix else ''}"
-        setattr(info, filename_attr, f"{index}-{prefix}{_filename}")
+
+        _check_sanity(info, is_tar, path)
         file.extract(info, path)
-        filename = getattr(info, filename_attr)
-        new_files.append(
-            {
-                "prefix": filename.replace(base_name, ""),
-                "path": path / filename,
-            }
-        )
-    return max(list(indices.values()) + [index]), new_files
+        extracted = True
+    return extracted
 
 
-def check_compressed_and_extract(file_path, target_path, index, prefix=None):
+def check_compressed_and_extract(file_path, target_path, checked_paths=None):
     """
     Checks if `file_path` is a zip or tar file and if so, extracts it.
 
@@ -287,44 +254,45 @@ def check_compressed_and_extract(file_path, target_path, index, prefix=None):
         The file path to be checked and possibly extracted.
     target_path:
         The path to which the contents of `file_path` are to be extracted.
-    prefix:
-        For compressed files containing a nested structure, the folder names of
-        all containing folders are prepended to the filename. This is done to
-        be able to flatten the contents of the compressed file, without
-        completely losing the information on the original compressed folder's
-        structure.
+    checked_paths:
+        Files that have already been extracted.
     """
-    new_files = []
-    if tarfile.is_tarfile(file_path):
-        with tarfile.TarFile(file_path) as tf:
-            index, new_files = extract_and_flatten(
-                tf, target_path, index, prefix=prefix, is_tar=True
-            )
-            # index += 1
-    elif zipfile.is_zipfile(file_path):
-        with zipfile.ZipFile(file_path) as zf:
-            index, new_files = extract_and_flatten(
-                zf, target_path, index, prefix=prefix
-            )
-            # index += 1
-    # is_tarfile seems to recognize non-tarfiles as tarfiles, so check
-    # if anything has been processed before removing the file.
 
-    if new_files:
-        file_path.unlink()
-    for file in new_files:
-        if file["path"].name.endswith(".mhd") and file["prefix"]:
-            fix_mhd_file(file["path"], file["prefix"])
-        index = check_compressed_and_extract(
-            file["path"], target_path, index, prefix=file["prefix"]
-        )
-    return index
+    def extract_file(file_path):
+        is_extracted = False
+        if tarfile.is_tarfile(file_path):
+            with tarfile.open(file_path) as tf:
+                is_extracted = extract(tf, target_path, is_tar=True)
+        elif zipfile.is_zipfile(file_path):
+            with zipfile.ZipFile(file_path) as zf:
+                is_extracted = extract(zf, target_path)
+
+        # Make sure files have actually been extracted, then delete the archive
+        if is_extracted:
+            file_path.unlink()
+        return is_extracted
+
+    if checked_paths is None:
+        checked_paths = []
+    if file_path in checked_paths:
+        return
+    checked_paths.append(file_path)
+
+    extracted = extract_file(file_path)
+
+    # check zips in zips
+    if extracted:
+        for root, _, files in os.walk(target_path):
+            for file in files:
+                check_compressed_and_extract(
+                    Path(os.path.join(root, file)), root, checked_paths
+                )
 
 
 def extract_files(source_path: Path):
-    index = 0
+    checked_paths = []
     for file_path in source_path.iterdir():
-        index = check_compressed_and_extract(file_path, source_path, index)
+        check_compressed_and_extract(file_path, source_path, checked_paths)
 
 
 @shared_task
@@ -398,19 +366,25 @@ def build_images(upload_session_uuid: UUID):
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):
+    unconsumed_files = [
+        Path(d[0]).joinpath(f) for d in os.walk(tmp_dir) for f in d[2]
+    ]
     session_files = [
         RawImageFile.objects.get_or_create(
-            filename=file.name, upload_session=upload_session,
+            filename=str(f.relative_to(tmp_dir)),
+            upload_session=upload_session,
         )[0]
-        for file in tmp_dir.iterdir()
+        for f in unconsumed_files
     ]
-    filename_lookup = {
+
+    filepath_lookup = {
         raw_image_file.staged_file_id
-        and StagedAjaxFile(raw_image_file.staged_file_id).name
-        or raw_image_file.filename: raw_image_file
+        and os.path.join(
+            tmp_dir, StagedAjaxFile(raw_image_file.staged_file_id).name
+        )
+        or os.path.join(tmp_dir, raw_image_file.filename): raw_image_file
         for raw_image_file in session_files
     }
-    unconsumed_filenames = set(filename_lookup.keys())
 
     collected_images = []
     collected_associated_files = []
@@ -418,7 +392,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
 
     for algorithm in IMAGE_BUILDER_ALGORITHMS:
         algorithm_result = algorithm(
-            tmp_dir, session_id=upload_session.pk
+            unconsumed_files, session_id=upload_session.pk
         )  # type: ImageBuilderResult
         collected_images += list(algorithm_result.new_images)
         collected_associated_files += list(algorithm_result.new_image_files)
@@ -427,17 +401,21 @@ def _handle_raw_image_files(tmp_dir, upload_session):
             algorithm_result.new_folder_upload
         )
 
-        for filename in algorithm_result.consumed_files:
-            if filename in unconsumed_filenames:
-                unconsumed_filenames.remove(filename)
-                raw_image = filename_lookup[filename]  # type: RawImageFile
+        for filepath in algorithm_result.consumed_files:
+            if filepath in unconsumed_files:
+                unconsumed_files.remove(filepath)
+                raw_image = filepath_lookup[
+                    str(filepath)
+                ]  # type: RawImageFile
                 raw_image.error = None
                 raw_image.consumed = True
                 raw_image.save()
 
-        for (filename, msg,) in algorithm_result.file_errors_map.items():
-            if filename in unconsumed_filenames:
-                raw_image = filename_lookup[filename]  # type: RawImageFile
+        for (filepath, msg,) in algorithm_result.file_errors_map.items():
+            if filepath in unconsumed_files:
+                raw_image = filepath_lookup[
+                    str(filepath)
+                ]  # type: RawImageFile
                 raw_image.error = raw_image.error or ""
                 raw_image.error += f"{msg}\n"
                 raw_image.consumed = False
@@ -453,8 +431,8 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     )
 
     _handle_unconsumed_files(
-        filename_lookup=filename_lookup,
-        unconsumed_filenames=unconsumed_filenames,
+        filepath_lookup=filepath_lookup,
+        unconsumed_files=unconsumed_files,
         upload_session=upload_session,
     )
 
@@ -489,24 +467,25 @@ def _handle_image_relations(*, collected_images, upload_session):
 
 
 def _handle_unconsumed_files(
-    *, filename_lookup, unconsumed_filenames, upload_session
+    *, filepath_lookup, unconsumed_files, upload_session
 ):
-    for unconsumed_filename in unconsumed_filenames:
-        raw_file = filename_lookup[unconsumed_filename]
+    errors = []
+    for unconsumed_filepath in unconsumed_files:
+        raw_file = filepath_lookup[str(unconsumed_filepath)]
         error = raw_file.error or ""
         raw_file.error = (
             f"File could not be processed by any image builder:\n\n{error}"
         )
+        errors.append(error)
+        raw_file.save()
 
-    if unconsumed_filenames:
+    if unconsumed_files:
         upload_session.error_message = (
-            f"{len(unconsumed_filenames)} file(s) could not be imported"
+            f"{len(unconsumed_files)} file(s) could not be imported"
         )
 
         if upload_session.creator and upload_session.creator.email:
-            send_failed_file_import(
-                filename_lookup, unconsumed_filenames, upload_session
-            )
+            send_failed_file_import(errors, upload_session)
 
 
 def _delete_session_files(*, session_files, upload_session):

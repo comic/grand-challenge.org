@@ -1,6 +1,6 @@
 {% load url %}
 
-<nav class="navbar navbar-dark navbar-top navbar-expand-sm bg-primary mb-3">
+<nav class="navbar navbar-light navbar-top navbar-expand-lg">
     <div class="container">
         <a class="navbar-brand mr-md-2 text-capitalize"
            href="{% url 'home' %}">
@@ -14,27 +14,33 @@
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.view_name == 'archives:list' %}active{% endif %}"
+                    <a class="nav-link {% if "archives:" in request.resolver_match.view_name %}active{% endif %}"
                        href="{% url 'archives:list' %}">
                         Archives
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.view_name == 'reader-studies:list' %}active{% endif %}"
+                    <a class="nav-link {% if "reader-studies:" in request.resolver_match.view_name %}active{% endif %}"
                        href="{% url 'reader-studies:list' %}">
                         Reader Studies
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.view_name == 'challenges:list' %}active{% endif %}"
+                    <a class="nav-link {% if "challenges:" in request.resolver_match.view_name %}active{% endif %}"
                        href="{% url 'challenges:list' %}">
                         Challenges
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.view_name == 'algorithms:list' %}active{% endif %}"
+                    <a class="nav-link {% if "algorithms:" in request.resolver_match.view_name %}active{% endif %}"
                        href="{% url 'algorithms:list' %}">
                         Algorithms
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if "products:" in request.resolver_match.view_name %}active{% endif %}"
+                       href="{% url 'products:product-list' %}">
+                        Products
                     </a>
                 </li>
                 {% for overview_page in overview_pages %}

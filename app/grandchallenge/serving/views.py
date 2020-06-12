@@ -1,8 +1,8 @@
 import posixpath
-import re
 
 from django.conf import settings
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.core.exceptions import PermissionDenied
+from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
@@ -14,9 +14,10 @@ from grandchallenge.serving.permissions import (
     user_can_download_image,
     user_can_download_submission,
 )
+from grandchallenge.serving.tasks import create_download
 
 
-def protected_storage_redirect(*, name, internal=False):
+def protected_storage_redirect(*, name):
     # Get the storage with the internal redirect and auth. This will prepend
     # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url'] to the url
     storage = ProtectedS3Storage(internal=True)
@@ -24,20 +25,13 @@ def protected_storage_redirect(*, name, internal=False):
     if not storage.exists(name=name):
         raise Http404("File not found.")
 
-    url = storage.url(name=name)
-
-    if internal:
-        # Just return the internal request if needed
-        response = HttpResponseRedirect(url)
+    if settings.PROTECTED_S3_STORAGE_USE_CLOUDFRONT:
+        response = HttpResponseRedirect(
+            storage.cloudfront_signed_url(name=name)
+        )
     else:
-        # Now strip the endpoint_url
-        external_url = re.match(
-            f"^{settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url']}(.*)$",
-            url,
-        ).group(1)
-
-        response = HttpResponse()
-        response["X-Accel-Redirect"] = external_url
+        url = storage.url(name=name)
+        response = HttpResponseRedirect(url)
 
     return response
 
@@ -52,7 +46,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
     try:
         image = Image.objects.get(pk=pk)
     except Image.DoesNotExist:
-        raise Http404("File not found.")
+        raise Http404("Image not found.")
 
     try:
         user, _ = TokenAuthentication().authenticate(request)
@@ -60,20 +54,27 @@ def serve_images(request, *, pk, path, pa="", pb=""):
         user = request.user
 
     if user_can_download_image(user=user, image=image):
-        return protected_storage_redirect(
-            name=name, internal="internal" in request.GET
+        create_download.apply_async(
+            kwargs={"creator_id": user.pk, "image_id": image.pk}
         )
+        return protected_storage_redirect(name=name)
 
-    raise Http404("File not found.")
+    raise PermissionDenied
 
 
 def serve_submissions(request, *, submission_pk, **_):
     try:
         submission = Submission.objects.get(pk=submission_pk)
     except Submission.DoesNotExist:
-        raise Http404("File not found.")
+        raise Http404("Submission not found.")
 
     if user_can_download_submission(user=request.user, submission=submission):
+        create_download.apply_async(
+            kwargs={
+                "creator_id": request.user.pk,
+                "submission_id": submission.pk,
+            }
+        )
         return protected_storage_redirect(name=submission.file.name)
 
-    raise Http404("File not found.")
+    raise PermissionDenied

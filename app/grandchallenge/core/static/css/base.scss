@@ -1,11 +1,16 @@
 // Defined in flatly/variables
 $gray-500: #b4bcc2 !default;
-$blue: #2C3E50 !default;
+$blue: #2c3e50 !default;
 $cyan: #3498DB !default;
 
 // Override flatly success colours
 $link-color: $cyan !default;
+
 $navbar-dark-hover-color: $gray-500 !default;
+$navbar-light-color: $blue !default;
+$navbar-light-brand-color: $blue !default;
+$navbar-light-brand-hover-color: $blue !default;
+
 $pagination-bg: $blue !default;
 $pagination-hover-bg: darken($blue, 15%) !default;
 $pagination-disabled-bg: lighten($blue, 15%) !default;
@@ -19,6 +24,7 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
   -webkit-appearance: none;
   -moz-appearance: none;
 }
+
 .custom-select-sm {
   padding-left: $custom-select-padding-x;
 }

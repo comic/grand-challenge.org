@@ -1,11 +1,31 @@
 {% extends "challenge.html" %}
 {% load guardian_tags %}
 {% load url %}
-{% load clean from bleach %}
+{% load bleach %}
 {% load static %}
 
-{% block title %} {{ currentpage.challenge.short_name }} -
-    {% firstof currentpage.display_title currentpage.title "page" %} {% endblock %}
+{% block title %}
+    {% filter title %}
+        {% firstof currentpage.display_title currentpage.title %}
+    {% endfilter %}
+    - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">
+            {% filter title %}
+                {% firstof currentpage.display_title currentpage.title %}
+            {% endfilter %}
+        </li>
+    </ol>
+{% endblock %}
 
 {% block content %}
     {% if challenge.disclaimer %}

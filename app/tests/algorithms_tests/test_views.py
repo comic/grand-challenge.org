@@ -1,5 +1,8 @@
+import datetime
+
 import pytest
 from django.contrib.auth.models import Group
+from django.utils import timezone
 from django.utils.text import slugify
 
 from grandchallenge.algorithms.models import (
@@ -10,7 +13,9 @@ from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmJobFactory,
     AlgorithmPermissionRequestFactory,
+    AlgorithmResultFactory,
 )
 from tests.factories import StagedFileFactory, UserFactory
 from tests.utils import get_view_for_user
@@ -331,3 +336,94 @@ def test_algorithm_permission_request_list(client):
     )
 
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_algorithm_results_list_view(client):
+    editor = UserFactory()
+
+    alg = AlgorithmFactory(public=True)
+    alg.add_editor(editor)
+    im = AlgorithmImageFactory(algorithm=alg)
+    for x in range(50):
+        created = timezone.now() - datetime.timedelta(days=x + 365)
+        job = AlgorithmJobFactory(algorithm_image=im)
+        job.created = created
+        job.save()
+        res = AlgorithmResultFactory(job=job)
+        res.created = created
+        res.save()
+
+    response = get_view_for_user(
+        viewname="algorithms:results-list",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname="algorithms:results-list",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+        data={"length": 10, "draw": 1, "order[0][dir]": "desc"},
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+    )
+
+    resp = response.json()
+    assert resp["recordsTotal"] == 50
+    assert len(resp["data"]) == 10
+
+    response = get_view_for_user(
+        viewname="algorithms:results-list",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+        data={"length": 50, "draw": 1, "order[0][dir]": "desc"},
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+    )
+
+    resp = response.json()
+    assert resp["recordsTotal"] == 50
+    assert len(resp["data"]) == 50
+
+    response = get_view_for_user(
+        viewname="algorithms:results-list",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+        data={"length": 50, "draw": 1, "order[0][dir]": "asc"},
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+    )
+
+    resp_new = response.json()
+    assert resp_new["recordsTotal"] == 50
+    assert resp_new["data"] == resp["data"][::-1]
+
+    resp_new["data"] == resp["data"][::-1]
+
+    response = get_view_for_user(
+        viewname="algorithms:results-list",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+        data={"length": 50, "draw": 1, "search[value]": job.creator.username},
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+    )
+
+    resp = response.json()
+    assert resp["recordsTotal"] == 50
+    assert resp["recordsFiltered"] == 1
+    assert len(resp["data"]) == 1
