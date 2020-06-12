@@ -5,6 +5,9 @@ from unittest import mock
 import numpy as np
 import pydicom
 import pytest
+from pydicom.pixel_data_handlers.gdcm_handler import (
+    is_available as gdcm_is_available,
+)
 
 from grandchallenge.cases.image_builders.dicom import (
     _get_headers_by_study,
@@ -16,6 +19,10 @@ from grandchallenge.cases.image_builders.metaio_utils import parse_mh_header
 from tests.cases_tests import RESOURCE_PATH
 
 DICOM_DIR = RESOURCE_PATH / "dicom"
+
+
+def test_gdcm_is_available():
+    assert gdcm_is_available() is True
 
 
 def test_get_headers_by_study():
