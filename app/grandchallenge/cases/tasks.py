@@ -334,12 +334,7 @@ def build_images(upload_session_uuid: UUID):
         upload_session.status != upload_session.REQUEUED
         or upload_session.rawimagefile_set.filter(consumed=True).exists()
     ):
-        upload_session.status = upload_session.FAILURE
-        upload_session.error_message = (
-            "Not starting job as some files were already consumed."
-        )
-        upload_session.save()
-        return
+        raise RuntimeError("Job is not set to be executed.")
 
     upload_session.status = upload_session.STARTED
     upload_session.save()
