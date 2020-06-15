@@ -3,6 +3,7 @@ from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
 
+@pytest.mark.skip(reason="Migration is scheduled for removal")
 @pytest.mark.django_db(transaction=True)
 def test_workstation_group_migration():
     executor = MigrationExecutor(connection)
