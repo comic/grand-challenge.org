@@ -318,6 +318,22 @@ class Config(UUIDModel):
         to=ComponentInterface, related_name="evaluation_outputs"
     )
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.set_default_interfaces()
+
+        super().save(*args, **kwargs)
+
+    def set_default_interfaces(self):
+        self.inputs.set(
+            [ComponentInterface.objects.get(title="Predictions CSV File")]
+        )
+        self.outputs.set(
+            [ComponentInterface.objects.get(title="Metrics JSON File")]
+        )
+
     def get_absolute_url(self):
         return reverse(
             "pages:home",

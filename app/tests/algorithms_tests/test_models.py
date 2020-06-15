@@ -4,6 +4,7 @@ from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.components.models import InterfaceKindChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -81,3 +82,14 @@ def test_algorithm_job_update_status():
             in email.body
         )
     assert remaining_recipients == set()
+
+
+@pytest.mark.django_db
+def test_default_interfaces_created():
+    a = AlgorithmFactory()
+
+    assert {i.kind for i in a.inputs.all()} == {InterfaceKindChoices.IMAGE}
+    assert {o.kind for o in a.outputs.all()} == {
+        InterfaceKindChoices.MULTIPLE_IMAGES,
+        InterfaceKindChoices.JSON,
+    }

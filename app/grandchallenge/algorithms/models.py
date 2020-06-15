@@ -109,6 +109,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
         if adding:
             self.create_groups()
+            self.set_default_interfaces()
             self.workstation_id = (
                 self.workstation_id or self.default_workstation.pk
             )
@@ -124,6 +125,18 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         )
         self.users_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
+        )
+
+    def set_default_interfaces(self):
+        self.inputs.set(
+            [ComponentInterface.objects.get(title="Medical Image")]
+        )
+        self.outputs.set(
+            [
+                *ComponentInterface.objects.filter(
+                    title__in=["Many Medical Images", "Results JSON File"]
+                )
+            ]
         )
 
     def assign_permissions(self):
