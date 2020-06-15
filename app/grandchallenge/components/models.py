@@ -62,13 +62,15 @@ class ComponentInterface(models.Model):
     title = models.CharField(
         max_length=255,
         help_text="Human readable name of this input/output field.",
+        unique=True,
     )
     slug = AutoSlugField(populate_from="title")
     description = models.TextField(
         blank=True, help_text="Description of this input/output field.",
     )
     default_value = JSONField(
-        help_text="Default value for this field, only valid for inputs."
+        null=True,
+        help_text="Default value for this field, only valid for inputs.",
     )
     kind = models.CharField(
         blank=False,
@@ -76,13 +78,13 @@ class ComponentInterface(models.Model):
         choices=Kind.choices,
         help_text="What kind of field is this interface?",
     )
-
     relative_path = models.CharField(
         max_length=255,
         help_text=(
             "The path to the entity that implements this interface relative "
             "to the input or output directory."
         ),
+        unique=True,
     )
 
     @property
@@ -94,12 +96,7 @@ class ComponentInterface(models.Model):
         return Path("/output") / str(self.relative_path)
 
     class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(kind__in=InterfaceKindChoices.values),
-                name="kind_valid",
-            )
-        ]
+        ordering = ("pk",)
 
 
 def component_interface_value_path(instance, filename):
