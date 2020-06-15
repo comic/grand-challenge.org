@@ -23,7 +23,11 @@ from grandchallenge.components.backends.docker import (
     cleanup,
     get_file,
 )
-from grandchallenge.components.models import ComponentImage, ComponentJob
+from grandchallenge.components.models import (
+    ComponentImage,
+    ComponentInterface,
+    ComponentJob,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.jqfileupload.models import StagedFile
@@ -77,6 +81,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "terms of service. If your algorithm has any additional "
             "terms of usage, define them here."
         ),
+    )
+
+    inputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="algorithm_inputs"
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="algorithm_outputs"
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):

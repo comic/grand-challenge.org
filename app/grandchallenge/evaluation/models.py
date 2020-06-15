@@ -10,7 +10,11 @@ from django.utils.text import get_valid_filename
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
-from grandchallenge.components.models import ComponentImage, ComponentJob
+from grandchallenge.components.models import (
+    ComponentImage,
+    ComponentInterface,
+    ComponentJob,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
 from grandchallenge.core.validators import (
@@ -305,6 +309,13 @@ class Config(UUIDModel):
             "If predictions are submitted as csv files, which column should "
             "be used to join the data? eg. case_id"
         ),
+    )
+
+    inputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="evaluation_inputs"
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="evaluation_outputs"
     )
 
     def get_absolute_url(self):
