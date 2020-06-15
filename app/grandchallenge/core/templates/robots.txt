@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /accounts/
 Disallow: /admins/
+Disallow: /api/
 Disallow: /cases/
 Disallow: /datasets/
 Disallow: /media/
