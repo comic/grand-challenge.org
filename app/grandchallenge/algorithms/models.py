@@ -486,12 +486,9 @@ class Job(UUIDModel, ComponentJob):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-        image_changed = False
 
-        if not adding:
-            orig = Job.objects.get(pk=self.pk)
-            if orig.image != self.image:
-                image_changed = True
+        if not adding and Job.objects.get(pk=self.pk).image != self.image:
+            raise RuntimeError("The input image cannot be changed")
 
         super().save(*args, **kwargs)
 
@@ -502,11 +499,6 @@ class Job(UUIDModel, ComponentJob):
             self.image.update_public_group_permissions()
 
             self.schedule_job()
-        elif image_changed:
-            self.update_default_input()
-
-            self.image.update_public_group_permissions()
-            orig.image.update_public_group_permissions()
 
     def create_default_input(self):
         self.inputs.set(

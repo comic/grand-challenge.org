@@ -115,8 +115,5 @@ def test_interface_changes_with_image():
     assert job.inputs.first().image.pk == job.image.pk
 
     job.image = ImageFactory()
-    job.save()
-    job.refresh_from_db()
-
-    assert job.image.pk != old_image_pk
-    assert job.inputs.first().image.pk == job.image.pk
+    with pytest.raises(RuntimeError):
+        job.save()

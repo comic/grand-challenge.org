@@ -172,9 +172,5 @@ def test_change_job_image():
 
     i_new = ImageFactory()
     r.job.image = i_new
-    r.job.save()
-
-    assert "view_image" not in get_perms(g_reg, i_orig)
-    assert "view_image" not in get_perms(g_reg_anon, i_orig)
-    assert "view_image" not in get_perms(g_reg, i_new)
-    assert "view_image" in get_perms(g_reg_anon, i_new)
+    with pytest.raises(RuntimeError):
+        r.job.save()
