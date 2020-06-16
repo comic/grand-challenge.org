@@ -10,7 +10,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
-from tests.factories import UserFactory
+from tests.factories import ImageFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -93,3 +93,30 @@ def test_default_interfaces_created():
         InterfaceKindChoices.MULTIPLE_IMAGES,
         InterfaceKindChoices.JSON,
     }
+
+
+@pytest.mark.django_db
+def test_interface_value_is_set():
+    job = AlgorithmJobFactory()
+
+    inputs = job.inputs.all()
+
+    assert len(inputs) == 1
+    assert inputs[0].image == job.image
+
+
+@pytest.mark.django_db
+def test_interface_changes_with_image():
+    job = AlgorithmJobFactory()
+
+    old_image_pk = job.image.pk
+
+    assert job.inputs.first().image.pk == old_image_pk
+    assert job.inputs.first().image.pk == job.image.pk
+
+    job.image = ImageFactory()
+    job.save()
+    job.refresh_from_db()
+
+    assert job.image.pk != old_image_pk
+    assert job.inputs.first().image.pk == job.image.pk

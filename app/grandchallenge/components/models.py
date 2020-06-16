@@ -120,7 +120,7 @@ class ComponentInterfaceValue(models.Model):
     interface = models.ForeignKey(
         to=ComponentInterface, on_delete=models.CASCADE
     )
-    value = JSONField()
+    value = JSONField(null=True, default=None)
     file = models.FileField(
         upload_to=component_interface_value_path, storage=protected_s3_storage
     )

@@ -26,6 +26,7 @@ from grandchallenge.components.backends.docker import (
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -36,6 +37,8 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_INPUT_INTERFACE_NAME = "Medical Image"
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):
@@ -131,7 +134,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
     def set_default_interfaces(self):
         self.inputs.set(
-            [ComponentInterface.objects.get(title="Medical Image")]
+            [
+                ComponentInterface.objects.get(
+                    title=DEFAULT_INPUT_INTERFACE_NAME
+                )
+            ]
         )
         self.outputs.set(
             [
@@ -489,11 +496,32 @@ class Job(UUIDModel, ComponentJob):
         super().save(*args, **kwargs)
 
         if adding:
+            self.create_default_input()
+
             self.assign_permissions()
             self.image.update_public_group_permissions()
         elif image_changed:
+            self.update_default_input()
+
             self.image.update_public_group_permissions()
             orig.image.update_public_group_permissions()
+
+    def create_default_input(self):
+        self.inputs.set(
+            [
+                ComponentInterfaceValue.objects.create(
+                    interface=self.algorithm_image.algorithm.inputs.get(
+                        title=DEFAULT_INPUT_INTERFACE_NAME
+                    ),
+                    image=self.image,
+                )
+            ]
+        )
+
+    def update_default_input(self):
+        civ = self.inputs.get(interface__title=DEFAULT_INPUT_INTERFACE_NAME)
+        civ.image = self.image
+        civ.save()
 
     def assign_permissions(self):
         # Editors and creators can view this job and the related image
