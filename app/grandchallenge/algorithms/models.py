@@ -26,7 +26,6 @@ from grandchallenge.components.backends.docker import (
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
-    ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -360,7 +359,7 @@ class Result(UUIDModel):
             image.update_public_group_permissions()
 
         if self.job:
-            self.job.image.update_public_group_permissions()
+            self.job.update_input_permissions()
 
 
 class AlgorithmExecutor(Executor):
@@ -455,7 +454,9 @@ class Job(UUIDModel, ComponentJob):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
-    image = models.ForeignKey("cases.Image", on_delete=models.CASCADE)
+    image = models.ForeignKey(
+        "cases.Image", null=True, on_delete=models.SET_NULL
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -466,7 +467,11 @@ class Job(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
-        return [c.file for c in self.image.files.all()]
+        return [
+            im.file
+            for inpt in self.inputs.all()
+            for im in inpt.image.files.all()
+        ]
 
     @property
     def executor_cls(self):
@@ -493,29 +498,7 @@ class Job(UUIDModel, ComponentJob):
         super().save(*args, **kwargs)
 
         if adding:
-            self.create_default_input()
-
             self.assign_permissions()
-            self.image.update_public_group_permissions()
-
-            self.schedule_job()
-
-    def create_default_input(self):
-        self.inputs.set(
-            [
-                ComponentInterfaceValue.objects.create(
-                    interface=self.algorithm_image.algorithm.inputs.get(
-                        title=DEFAULT_INPUT_INTERFACE_NAME
-                    ),
-                    image=self.image,
-                )
-            ]
-        )
-
-    def update_default_input(self):
-        civ = self.inputs.get(interface__title=DEFAULT_INPUT_INTERFACE_NAME)
-        civ.image = self.image
-        civ.save()
 
     def assign_permissions(self):
         # Editors and creators can view this job and the related image
@@ -524,16 +507,27 @@ class Job(UUIDModel, ComponentJob):
             self.algorithm_image.algorithm.editors_group,
             self,
         )
-        assign_perm(
-            f"view_{self.image._meta.model_name}",
-            self.algorithm_image.algorithm.editors_group,
-            self.image,
-        )
         if self.creator:
             assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-            assign_perm(
-                f"view_{self.image._meta.model_name}", self.creator, self.image
-            )
+
+    def update_input_permissions(self):
+        for inpt in self.inputs.all():
+            if inpt.image:
+                inpt.image.update_public_group_permissions()
+
+                # TODO: this needs to be done in an m2m changed
+                assign_perm(
+                    f"view_{inpt.image._meta.model_name}",
+                    self.algorithm_image.algorithm.editors_group,
+                    inpt.image,
+                )
+
+                if self.creator:
+                    assign_perm(
+                        f"view_{inpt.image._meta.model_name}",
+                        self.creator,
+                        inpt.image,
+                    )
 
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)

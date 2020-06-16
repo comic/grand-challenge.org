@@ -31,6 +31,10 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
     StagedAjaxFile,
@@ -444,12 +448,22 @@ def _handle_image_relations(*, collected_images, upload_session):
         upload_session.annotationset.images.add(*collected_images)
 
     if upload_session.algorithm_image:
+        default_interface = ComponentInterface.objects.get(
+            title="Medical Image"
+        )
         for image in collected_images:
-            Job.objects.create(
+            j = Job.objects.create(
                 creator=upload_session.creator,
                 algorithm_image=upload_session.algorithm_image,
-                image=image,
             )
+            j.inputs.set(
+                [
+                    ComponentInterfaceValue.objects.create(
+                        interface=default_interface, image=image
+                    )
+                ]
+            )
+            j.schedule_job()
 
     if upload_session.algorithm_result:
         upload_session.algorithm_result.images.add(*collected_images)

@@ -49,12 +49,32 @@ def test_user_can_download_images(client, reverse):
     tests = (
         (None, 401, []),
         (alg_set.creator, 200, []),
-        (alg_set.editor1, 200, [alg1_result.job.image.pk, im1.pk, im2.pk]),
+        (
+            alg_set.editor1,
+            200,
+            [
+                *[i.image.pk for i in alg1_result.job.inputs.all()],
+                im1.pk,
+                im2.pk,
+            ],
+        ),
         (alg_set.user1, 200, []),
-        (j1_creator, 200, [alg1_result.job.image.pk, im1.pk, im2.pk]),
-        (alg_set.editor2, 200, [alg2_result.job.image.pk]),
+        (
+            j1_creator,
+            200,
+            [
+                *[i.image.pk for i in alg1_result.job.inputs.all()],
+                im1.pk,
+                im2.pk,
+            ],
+        ),
+        (
+            alg_set.editor2,
+            200,
+            [i.image.pk for i in alg2_result.job.inputs.all()],
+        ),
         (alg_set.user2, 200, []),
-        (j2_creator, 200, [alg2_result.job.image.pk]),
+        (j2_creator, 200, [i.image.pk for i in alg2_result.job.inputs.all()]),
         (alg_set.u, 200, []),
     )
 

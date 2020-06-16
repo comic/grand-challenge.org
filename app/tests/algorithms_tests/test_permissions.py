@@ -517,7 +517,9 @@ def test_api_job_list_permissions(client):
             assert response.status_code == 200
 
             image_pks = {obj["pk"] for obj in response.json()["results"]}
-            assert image_pks == {str(j.image.pk) for j in test[2]}
+            assert image_pks == {
+                str(i.image.pk) for j in test[2] for i in j.inputs.all()
+            }
 
 
 @pytest.mark.django_db
