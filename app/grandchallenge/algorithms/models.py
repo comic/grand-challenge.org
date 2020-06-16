@@ -500,6 +500,8 @@ class Job(UUIDModel, ComponentJob):
 
             self.assign_permissions()
             self.image.update_public_group_permissions()
+
+            self.schedule_job()
         elif image_changed:
             self.update_default_input()
 

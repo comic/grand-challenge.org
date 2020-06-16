@@ -14,7 +14,7 @@ from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.backends.docker import Executor
-from grandchallenge.components.tasks import execute_job
+from grandchallenge.components.tasks import execute_job, validate_docker_image
 from grandchallenge.components.validators import validate_safe_path
 from grandchallenge.core.storage import (
     private_s3_storage,
@@ -297,6 +297,20 @@ class ComponentImage(models.Model):
     requires_cpu_cores = models.DecimalField(
         default=Decimal("1.0"), max_digits=4, decimal_places=2
     )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            validate_docker_image.apply_async(
+                kwargs={
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "pk": self.pk,
+                }
+            )
 
     class Meta:
         abstract = True

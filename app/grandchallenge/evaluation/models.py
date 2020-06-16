@@ -534,6 +534,14 @@ class Job(UUIDModel, ComponentJob):
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.schedule_job()
+
     @cached_property
     def challenge(self):
         return self.submission.challenge
