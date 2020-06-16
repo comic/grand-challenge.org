@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_NAME, Job
 from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.dicom import image_builder_dicom
@@ -449,7 +449,7 @@ def _handle_image_relations(*, collected_images, upload_session):
 
     if upload_session.algorithm_image:
         default_interface = ComponentInterface.objects.get(
-            title="Medical Image"
+            title=DEFAULT_INPUT_INTERFACE_NAME
         )
         for image in collected_images:
             j = Job.objects.create(

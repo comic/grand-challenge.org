@@ -515,20 +515,6 @@ class Job(UUIDModel, ComponentJob):
             if inpt.image:
                 inpt.image.update_public_group_permissions()
 
-                # TODO: this needs to be done in an m2m changed
-                assign_perm(
-                    f"view_{inpt.image._meta.model_name}",
-                    self.algorithm_image.algorithm.editors_group,
-                    inpt.image,
-                )
-
-                if self.creator:
-                    assign_perm(
-                        f"view_{inpt.image._meta.model_name}",
-                        self.creator,
-                        inpt.image,
-                    )
-
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
 

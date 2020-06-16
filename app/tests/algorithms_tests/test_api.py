@@ -66,4 +66,4 @@ def test_keys_used_in_algorithm_session_js(client):
         client=client, url=j.inputs.first().image.api_url, user=u
     )
     assert response.status_code == 200
-    assert response.json()["job_set"] == [j.api_url.replace("https:", "http:")]
+    assert response.json()["job_set"] == [j.api_url]

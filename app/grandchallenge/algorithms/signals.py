@@ -2,8 +2,9 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import Result
+from grandchallenge.algorithms.models import Job, Result
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterfaceValue
 
 
 @receiver(m2m_changed, sender=Result.images.through)
@@ -55,3 +56,54 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
             exclude_results = []
 
         image.update_public_group_permissions(exclude_results=exclude_results)
+
+
+@receiver(m2m_changed, sender=Job.inputs.through)
+def update_input_image_permissions(
+    instance, action, reverse, model, pk_set, **_
+):
+    """
+    Assign or remove view permissions to the algorithms editors when inputs
+    are added or remove to/from the algorithm jobs. Handles reverse
+    relations and clearing.
+    """
+    if action not in ["post_add", "post_remove", "pre_clear"]:
+        # nothing to do for the other actions
+        return
+
+    if reverse:
+        component_interface_values = ComponentInterfaceValue.objects.filter(
+            pk=instance.pk
+        )
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
+            jobs = instance.algorithms_job_inputs.all()
+        else:
+            jobs = model.objects.filter(pk__in=pk_set)
+
+        jobs = jobs.select_related(
+            "creator", "algorithm_image__algorithm__editors_group"
+        )
+    else:
+        jobs = [instance]
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
+            component_interface_values = instance.inputs.all()
+        else:
+            component_interface_values = model.objects.filter(pk__in=pk_set)
+
+    op = assign_perm if "add" in action else remove_perm
+
+    for civ in component_interface_values:
+        if civ.image:
+            for job in jobs:
+                op(
+                    "view_image",
+                    job.algorithm_image.algorithm.editors_group,
+                    civ.image,
+                )
+                op("view_image", job.creator, civ.image)
+
+            civ.image.update_public_group_permissions()

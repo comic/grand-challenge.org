@@ -363,7 +363,8 @@ def test_filter_images_api_view(client):
     )
     assert response.status_code == 200
     assert {r["pk"] for r in response.json()["results"]} == {
-        str(i.pk) for i in [alg_result.job.image, im]
+        str(i.pk)
+        for i in [*[inpt.image for inpt in alg_result.job.inputs.all()], im]
     }
 
     response = get_view_for_user(
