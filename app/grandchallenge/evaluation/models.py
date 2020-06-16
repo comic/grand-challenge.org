@@ -321,10 +321,10 @@ class Config(UUIDModel):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
+        super().save(*args, **kwargs)
+
         if adding:
             self.set_default_interfaces()
-
-        super().save(*args, **kwargs)
 
     def set_default_interfaces(self):
         self.inputs.set(

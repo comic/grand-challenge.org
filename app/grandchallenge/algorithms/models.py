@@ -109,12 +109,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
         if adding:
             self.create_groups()
-            self.set_default_interfaces()
             self.workstation_id = (
                 self.workstation_id or self.default_workstation.pk
             )
 
         super().save(*args, **kwargs)
+
+        if adding:
+            self.set_default_interfaces()
 
         self.assign_permissions()
         self.assign_workstation_permissions()
