@@ -21,12 +21,12 @@
     <i class="fa fa-file"></i> {{ result.job.image.name }}
 </a>
 <split/>
-{% if result.public %}
+{% if result.job.public %}
     <i class="fa fa-eye text-success"
-       title="Result is public"></i>
+       title="Job is public"></i>
 {% else %}
     <i class="fa fa-eye-slash text-danger"
-       title="Result is private"></i>
+       title="Job is private"></i>
 {% endif %}
 <split/>
 <ul class="list-unstyled">
@@ -73,21 +73,21 @@
     {% endfor %}
 </ul>
 <split/>
-{% if result.comment %}
+{% if result.job.comment %}
     <a href="#resultInfoModal"
        class="badge badge-primary"
        data-toggle="modal"
        data-target="#resultInfoModal"
        data-title="Result Comment"
-       data-output="{{ result.comment }}"
-       data-pk="{{ result.pk }}"
+       data-output="{{ result.job.comment }}"
+       data-pk="{{ result.job.pk }}"
        title="Result Comment">
         <i class="fa fa-file"></i>
     </a>
 {% endif %}
-{% if change_result %}
-    <a href="{% url 'algorithms:result-update' slug=algorithm.slug pk=result.pk %}">
-            <span class="badge badge-primary" title="Edit result">
+{% if change_job %}
+    <a href="{% url 'algorithms:job-update' slug=algorithm.slug pk=result.job.pk %}">
+            <span class="badge badge-primary" title="Edit job">
                 <i class="fa fa-edit"></i>
             </span>
     </a>

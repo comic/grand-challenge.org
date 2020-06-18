@@ -343,13 +343,6 @@ class Result(UUIDModel):
         )
         assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
 
-        # Algorithm editors can change this result
-        assign_perm(
-            f"change_{self._meta.model_name}",
-            self.job.algorithm_image.algorithm.editors_group,
-            self,
-        )
-
         g = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
@@ -513,14 +506,22 @@ class Job(UUIDModel, ComponentJob):
             self.assign_permissions()
 
     def assign_permissions(self):
-        # Editors and creators can view this job and the related image
+        # Editors and creators can view this job
         assign_perm(
             f"view_{self._meta.model_name}",
             self.algorithm_image.algorithm.editors_group,
             self,
         )
+
         if self.creator:
             assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+
+        # Algorithm editors can change this job
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.algorithm_image.algorithm.editors_group,
+            self,
+        )
 
     def set_output_json(self, output_json):
         """Legacy method to set the output."""
