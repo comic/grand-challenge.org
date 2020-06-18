@@ -1,5 +1,4 @@
 from decimal import Decimal
-from pathlib import Path
 from typing import Tuple, Type
 
 from django.conf import settings
@@ -7,6 +6,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.files import File
 from django.db import models
 from django.db.models import Avg, F
+from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -14,7 +14,8 @@ from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.backends.docker import Executor
-from grandchallenge.components.tasks import execute_job
+from grandchallenge.components.tasks import execute_job, validate_docker_image
+from grandchallenge.components.validators import validate_safe_path
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
@@ -62,13 +63,16 @@ class ComponentInterface(models.Model):
     title = models.CharField(
         max_length=255,
         help_text="Human readable name of this input/output field.",
+        unique=True,
     )
     slug = AutoSlugField(populate_from="title")
     description = models.TextField(
         blank=True, help_text="Description of this input/output field.",
     )
     default_value = JSONField(
-        help_text="Default value for this field, only valid for inputs."
+        null=True,
+        default=None,
+        help_text="Default value for this field, only valid for inputs.",
     )
     kind = models.CharField(
         blank=False,
@@ -76,30 +80,26 @@ class ComponentInterface(models.Model):
         choices=Kind.choices,
         help_text="What kind of field is this interface?",
     )
-
     relative_path = models.CharField(
         max_length=255,
         help_text=(
             "The path to the entity that implements this interface relative "
             "to the input or output directory."
         ),
+        unique=True,
+        validators=[validate_safe_path],
     )
 
     @property
     def input_path(self):
-        return Path("/input") / str(self.relative_path)
+        return safe_join("/input", self.relative_path)
 
     @property
     def output_path(self):
-        return Path("/output") / str(self.relative_path)
+        return safe_join("/output", self.relative_path)
 
     class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(kind__in=InterfaceKindChoices.values),
-                name="kind_valid",
-            )
-        ]
+        ordering = ("pk",)
 
 
 def component_interface_value_path(instance, filename):
@@ -120,7 +120,7 @@ class ComponentInterfaceValue(models.Model):
     interface = models.ForeignKey(
         to=ComponentInterface, on_delete=models.CASCADE
     )
-    value = JSONField()
+    value = JSONField(null=True, default=None)
     file = models.FileField(
         upload_to=component_interface_value_path, storage=protected_s3_storage
     )
@@ -297,6 +297,20 @@ class ComponentImage(models.Model):
     requires_cpu_cores = models.DecimalField(
         default=Decimal("1.0"), max_digits=4, decimal_places=2
     )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            validate_docker_image.apply_async(
+                kwargs={
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "pk": self.pk,
+                }
+            )
 
     class Meta:
         abstract = True

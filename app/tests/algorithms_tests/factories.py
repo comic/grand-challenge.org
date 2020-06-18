@@ -7,6 +7,7 @@ from grandchallenge.algorithms.models import (
     Job,
     Result,
 )
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 
 
@@ -32,8 +33,19 @@ class AlgorithmJobFactory(factory.DjangoModelFactory):
         model = Job
 
     algorithm_image = factory.SubFactory(AlgorithmImageFactory)
-    image = factory.SubFactory(ImageFactory)
     creator = factory.SubFactory(UserFactory)
+
+    @factory.post_generation
+    def files(self, create, extracted, **kwargs):
+        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
+        if not create:
+            return
+        if extracted:
+            self.inputs.set([*extracted])
+        if create and not extracted:
+            self.inputs.set(
+                [ComponentInterfaceValueFactory(image=ImageFactory())]
+            )
 
 
 class AlgorithmResultFactory(factory.DjangoModelFactory):

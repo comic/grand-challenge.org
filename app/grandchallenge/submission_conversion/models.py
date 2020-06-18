@@ -143,6 +143,14 @@ class SubmissionToAnnotationSetJob(UUIDModel, ComponentJob):
     base = models.ForeignKey(to=ImageSet, on_delete=models.CASCADE)
     submission = models.OneToOneField(to=Submission, on_delete=models.CASCADE)
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.schedule_job()
+
     @property
     def container(self):
         class FakeContainer:

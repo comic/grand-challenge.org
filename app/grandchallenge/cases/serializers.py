@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -23,12 +23,17 @@ class ImageFileSerializer(serializers.ModelSerializer):
 
 class ImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
-    job_set = HyperlinkedRelatedField(
-        read_only=True, many=True, view_name="api:algorithms-job-detail"
-    )
+    job_set = SerializerMethodField()
     archive_set = HyperlinkedRelatedField(
         read_only=True, many=True, view_name="api:archive-detail"
     )
+
+    def get_job_set(self, obj):
+        return [
+            job.api_url
+            for civ in obj.componentinterfacevalue_set.all()
+            for job in civ.algorithms_job_inputs.all()
+        ]
 
     class Meta:
         model = Image

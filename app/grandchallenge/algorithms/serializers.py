@@ -10,6 +10,9 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
+from grandchallenge.components.serializers import (
+    ComponentInterfaceValueSerializer,
+)
 
 
 class AlgorithmSerializer(serializers.ModelSerializer):
@@ -60,6 +63,7 @@ class JobSerializer(serializers.ModelSerializer):
     result = HyperlinkedRelatedField(
         read_only=True, view_name="api:algorithms-result-detail"
     )
+    inputs = ComponentInterfaceValueSerializer(many=True)
 
     class Meta:
         model = Job
@@ -68,6 +72,7 @@ class JobSerializer(serializers.ModelSerializer):
             "api_url",
             "algorithm_image",
             "image",
+            "inputs",
             "result",
             "status",
         ]

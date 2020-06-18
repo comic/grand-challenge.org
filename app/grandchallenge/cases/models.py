@@ -520,6 +520,9 @@ class Image(UUIDModel):
             .exclude(pk__in=[r.pk for r in exclude_results])
             .exists()
             or self.job_set.filter(result__public=True).exists()
+            or self.componentinterfacevalue_set.filter(
+                algorithms_job_inputs__result__public=True
+            ).exists()
         )
 
         g = Group.objects.get(

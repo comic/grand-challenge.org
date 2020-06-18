@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_NAME, Job
 from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.dicom import image_builder_dicom
@@ -30,6 +30,10 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageFile,
     RawImageUploadSession,
+)
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
@@ -444,12 +448,22 @@ def _handle_image_relations(*, collected_images, upload_session):
         upload_session.annotationset.images.add(*collected_images)
 
     if upload_session.algorithm_image:
+        default_interface = ComponentInterface.objects.get(
+            title=DEFAULT_INPUT_INTERFACE_NAME
+        )
         for image in collected_images:
-            Job.objects.create(
+            j = Job.objects.create(
                 creator=upload_session.creator,
                 algorithm_image=upload_session.algorithm_image,
-                image=image,
             )
+            j.inputs.set(
+                [
+                    ComponentInterfaceValue.objects.create(
+                        interface=default_interface, image=image
+                    )
+                ]
+            )
+            j.schedule_job()
 
     if upload_session.algorithm_result:
         upload_session.algorithm_result.images.add(*collected_images)

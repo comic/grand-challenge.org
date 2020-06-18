@@ -31,11 +31,15 @@
         <dt>Result ID</dt>
         <dd>{{ object.pk }}</dd>
 
-        <dt>Input Image ID</dt>
-        <dd>{{ object.job.image.pk }}</dd>
+        {% for input in object.job.inputs.all %}
 
-        <dt>Input Image Name</dt>
-        <dd>{{ object.job.image.name }}</dd>
+            <dt>Input Image {{ forloop.counter }} ID</dt>
+            <dd>{{ input.image.pk }}</dd>
+
+            <dt>Input Image {{ forloop.counter }} Name</dt>
+            <dd>{{ input.image.name }}</dd>
+
+        {% endfor %}
     </dl>
 
     {% crispy form %}

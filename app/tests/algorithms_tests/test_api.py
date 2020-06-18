@@ -7,7 +7,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmResultFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -36,8 +36,7 @@ def test_job_detail(client):
 def test_keys_used_in_algorithm_session_js(client):
     """All of these values are used in algorithms/js/session.js"""
     u = UserFactory()
-    i = ImageFactory()
-    j = AlgorithmJobFactory(creator=u, image=i)
+    j = AlgorithmJobFactory(creator=u)
     r = AlgorithmResultFactory(job=j)
     s = RawImageUploadSessionFactory(creator=u, algorithm_result=r)
 
@@ -63,6 +62,19 @@ def test_keys_used_in_algorithm_session_js(client):
     assert response.json()["api_url"] == j.api_url
 
     # Image API
-    response = get_view_for_user(client=client, url=i.api_url, user=u)
+    response = get_view_for_user(
+        client=client, url=j.inputs.first().image.api_url, user=u
+    )
     assert response.status_code == 200
-    assert response.json()["job_set"] == [j.api_url.replace("https:", "http:")]
+    assert response.json()["job_set"] == [j.api_url]
+
+
+@pytest.mark.django_db
+def test_inputs_are_serialized(client):
+    u = UserFactory()
+    j = AlgorithmJobFactory(creator=u)
+
+    response = get_view_for_user(client=client, url=j.api_url, user=u)
+    assert response.json()["inputs"][0]["image"]["pk"] == str(
+        j.inputs.first().image.pk
+    )

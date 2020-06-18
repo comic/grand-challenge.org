@@ -1,6 +1,7 @@
 import pytest
 
-from tests.factories import ResultFactory
+from grandchallenge.components.models import InterfaceKindChoices
+from tests.factories import ChallengeFactory, ResultFactory
 from tests.utils import get_view_for_user
 
 
@@ -74,3 +75,15 @@ def test_setting_display_all_metrics(client, challenge_set):
     assert str(metrics["public"]) in response.rendered_content
     assert str(metrics["extra"]) in response.rendered_content
     assert str(metrics["secret"]) not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_default_interfaces_created():
+    c = ChallengeFactory()
+
+    assert {i.kind for i in c.evaluation_config.inputs.all()} == {
+        InterfaceKindChoices.CSV
+    }
+    assert {o.kind for o in c.evaluation_config.outputs.all()} == {
+        InterfaceKindChoices.JSON,
+    }
