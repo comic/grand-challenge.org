@@ -140,11 +140,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             ]
         )
         self.outputs.set(
-            [
-                *ComponentInterface.objects.filter(
-                    title__in=["Many Medical Images", "Results JSON File"]
-                )
-            ]
+            [ComponentInterface.objects.get(title="Results JSON File")]
         )
 
     def assign_permissions(self):

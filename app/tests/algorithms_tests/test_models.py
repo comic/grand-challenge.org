@@ -89,7 +89,4 @@ def test_default_interfaces_created():
     a = AlgorithmFactory()
 
     assert {i.kind for i in a.inputs.all()} == {InterfaceKindChoices.IMAGE}
-    assert {o.kind for o in a.outputs.all()} == {
-        InterfaceKindChoices.MULTIPLE_IMAGES,
-        InterfaceKindChoices.JSON,
-    }
+    assert {o.kind for o in a.outputs.all()} == {InterfaceKindChoices.JSON}

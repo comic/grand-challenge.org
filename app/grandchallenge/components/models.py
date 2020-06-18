@@ -51,7 +51,6 @@ class InterfaceKindChoices(models.TextChoices):
     MASK = "MASK", _("Mask")
 
     # Legacy support
-    MULTIPLE_IMAGES = "MIMG", _("Multiple images")
     JSON = "JSON", _("JSON file")
     CSV = "CSV", _("CSV file")
     ZIP = "ZIP", _("ZIP file")
@@ -117,6 +116,7 @@ def component_interface_value_path(instance, filename):
 class ComponentInterfaceValue(models.Model):
     """Encapsulates the value of an interface at a certain point in the graph."""
 
+    id = models.BigAutoField(primary_key=True)
     interface = models.ForeignKey(
         to=ComponentInterface, on_delete=models.CASCADE
     )
