@@ -512,15 +512,15 @@ class Job(UUIDModel, ComponentJob):
         """Legacy method to set the output."""
         interface = ComponentInterface.objects.get(title="Results JSON File")
 
-        output_civ, created = ComponentInterfaceValue.objects.get_or_create(
-            interface=interface
-        )
-
-        if created:
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = output_json
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=output_json
+            )
             self.outputs.add(output_civ)
-
-        output_civ.value = output_json
-        output_civ.save()
 
     def update_input_permissions(self):
         for inpt in self.inputs.all():

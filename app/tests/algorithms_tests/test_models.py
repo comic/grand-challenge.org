@@ -95,6 +95,7 @@ def test_default_interfaces_created():
 
 @pytest.mark.django_db
 def test_outputs_are_set():
+    _ = AlgorithmResultFactory(output={"dsaf": 35421})
     res = AlgorithmResultFactory(output={"foo": 13.37})
 
     outputs = res.job.outputs.all()
