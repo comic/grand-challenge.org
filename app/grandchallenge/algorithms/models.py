@@ -327,6 +327,11 @@ class Result(UUIDModel):
         super().save(*args, **kwargs)
 
         self.job.set_output_json(self.output)
+
+        self.job.public = self.public
+        self.job.comment = self.comment
+        self.job.save()
+
         self.assign_permissions()
 
     def assign_permissions(self):
@@ -458,6 +463,15 @@ class Job(UUIDModel, ComponentJob):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "If True, allow anyone to view this result along "
+            "with the input image. Otherwise, only the job creator and "
+            "algorithm editor will have permission to view this result."
+        ),
+    )
+    comment = models.TextField(blank=True, default="")
 
     @property
     def container(self):
