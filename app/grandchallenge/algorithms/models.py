@@ -26,6 +26,7 @@ from grandchallenge.components.backends.docker import (
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -324,6 +325,8 @@ class Result(UUIDModel):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+
+        self.job.set_output_json(self.output)
         self.assign_permissions()
 
     def assign_permissions(self):
@@ -354,8 +357,7 @@ class Result(UUIDModel):
         for image in self.images.all():
             image.update_public_group_permissions()
 
-        if self.job:
-            self.job.update_input_permissions()
+        self.job.update_input_permissions()
 
 
 class AlgorithmExecutor(Executor):
@@ -505,6 +507,20 @@ class Job(UUIDModel, ComponentJob):
         )
         if self.creator:
             assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+
+    def set_output_json(self, output_json):
+        """Legacy method to set the output."""
+        interface = ComponentInterface.objects.get(title="Results JSON File")
+
+        output_civ, created = ComponentInterfaceValue.objects.get_or_create(
+            interface=interface
+        )
+
+        if created:
+            self.outputs.add(output_civ)
+
+        output_civ.value = output_json
+        output_civ.save()
 
     def update_input_permissions(self):
         for inpt in self.inputs.all():

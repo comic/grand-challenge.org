@@ -9,6 +9,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    AlgorithmResultFactory,
 )
 from tests.factories import UserFactory
 
@@ -90,3 +91,22 @@ def test_default_interfaces_created():
 
     assert {i.kind for i in a.inputs.all()} == {InterfaceKindChoices.IMAGE}
     assert {o.kind for o in a.outputs.all()} == {InterfaceKindChoices.JSON}
+
+
+@pytest.mark.django_db
+def test_outputs_are_set():
+    res = AlgorithmResultFactory(output={"foo": 13.37})
+
+    outputs = res.job.outputs.all()
+    assert len(outputs) == 1
+    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
+    assert outputs[0].value == {"foo": 13.37}
+
+    res.output = {"bar": 13.37}
+    res.save()
+    res.refresh_from_db()
+
+    outputs = res.job.outputs.all()
+    assert len(outputs) == 1
+    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
+    assert outputs[0].value == {"bar": 13.37}
