@@ -6,7 +6,6 @@ from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmPermissionRequestFactory,
-    AlgorithmResultFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -21,32 +20,32 @@ def test_user_can_download_images(client, reverse):
 
     j1_creator, j2_creator = UserFactory(), UserFactory()
 
-    alg1_result = AlgorithmResultFactory(
-        job__algorithm_image__algorithm=alg_set.alg1, job__creator=j1_creator
+    alg1_job = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg_set.alg1, creator=j1_creator
     )
-    alg2_result = AlgorithmResultFactory(
-        job__algorithm_image__algorithm=alg_set.alg2, job__creator=j2_creator
+    alg2_job = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
     )
 
-    im1, im2, im3, im4 = (
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
+    iv1, iv2, iv3, iv4 = (
+        ComponentInterfaceValueFactory(image=ImageFactory()),
+        ComponentInterfaceValueFactory(image=ImageFactory()),
+        ComponentInterfaceValueFactory(image=ImageFactory()),
+        ComponentInterfaceValueFactory(image=ImageFactory()),
     )
 
     if reverse:
-        for im in [im1, im2, im3, im4]:
-            im.algorithm_results.add(alg1_result, alg2_result)
-        for im in [im3, im4]:
-            im.algorithm_results.remove(alg1_result, alg2_result)
-        for im in [im1, im2]:
-            im.algorithm_results.remove(alg2_result)
+        for im in [iv1, iv2, iv3, iv4]:
+            im.algorithms_job_outputs.add(alg1_job, alg2_job)
+        for im in [iv3, iv4]:
+            im.algorithms_job_outputs.remove(alg1_job, alg2_job)
+        for im in [iv1, iv2]:
+            im.algorithms_job_outputs.remove(alg2_job)
     else:
         # Test that adding images works
-        alg1_result.images.add(im1, im2, im3, im4)
+        alg1_job.outputs.add(iv1, iv2, iv3, iv4)
         # Test that removing images works
-        alg1_result.images.remove(im3, im4)
+        alg1_job.outputs.remove(iv3, iv4)
 
     tests = (
         (None, 401, []),
@@ -55,9 +54,9 @@ def test_user_can_download_images(client, reverse):
             alg_set.editor1,
             200,
             [
-                *[i.image.pk for i in alg1_result.job.inputs.all()],
-                im1.pk,
-                im2.pk,
+                *[i.image.pk for i in alg1_job.inputs.all()],
+                iv1.image.pk,
+                iv2.image.pk,
             ],
         ),
         (alg_set.user1, 200, []),
@@ -65,18 +64,14 @@ def test_user_can_download_images(client, reverse):
             j1_creator,
             200,
             [
-                *[i.image.pk for i in alg1_result.job.inputs.all()],
-                im1.pk,
-                im2.pk,
+                *[i.image.pk for i in alg1_job.inputs.all()],
+                iv1.image.pk,
+                iv2.image.pk,
             ],
         ),
-        (
-            alg_set.editor2,
-            200,
-            [i.image.pk for i in alg2_result.job.inputs.all()],
-        ),
+        (alg_set.editor2, 200, [i.image.pk for i in alg2_job.inputs.all()],),
         (alg_set.user2, 200, []),
-        (j2_creator, 200, [i.image.pk for i in alg2_result.job.inputs.all()]),
+        (j2_creator, 200, [i.image.pk for i in alg2_job.inputs.all()]),
         (alg_set.u, 200, []),
     )
 
@@ -100,10 +95,10 @@ def test_user_can_download_images(client, reverse):
 
     # Test clearing
     if reverse:
-        im1.algorithm_results.clear()
-        im2.algorithm_results.clear()
+        iv1.algorithms_job_outputs.clear()
+        iv2.algorithms_job_outputs.clear()
     else:
-        alg1_result.images.clear()
+        alg1_job.outputs.clear()
 
     response = get_view_for_user(
         viewname="api:image-list",

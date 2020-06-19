@@ -2,65 +2,14 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import Job, Result
-from grandchallenge.cases.models import Image
+from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import ComponentInterfaceValue
 
 
-@receiver(m2m_changed, sender=Result.images.through)
-def update_image_permissions(instance, action, reverse, model, pk_set, **_):
-    """
-    Assign or remove view permissions to the algorithms editors when images
-    are added or remove to/from the algorithm results. Handles reverse
-    relations and clearing.
-    """
-    if action not in ["post_add", "post_remove", "pre_clear"]:
-        # nothing to do for the other actions
-        return
-
-    if reverse:
-        images = Image.objects.filter(pk=instance.pk)
-        if pk_set is None:
-            # When using a _clear action, pk_set is None
-            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            algorithm_results = instance.algorithm_results.all()
-        else:
-            algorithm_results = model.objects.filter(pk__in=pk_set)
-
-        algorithm_results = algorithm_results.select_related(
-            "job__creator", "job__algorithm_image__algorithm__editors_group"
-        )
-    else:
-        algorithm_results = [instance]
-        if pk_set is None:
-            # When using a _clear action, pk_set is None
-            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            images = instance.images.all()
-        else:
-            images = model.objects.filter(pk__in=pk_set)
-
-    op = assign_perm if "add" in action else remove_perm
-
-    for alg_result in algorithm_results:
-        op(
-            "view_image",
-            alg_result.job.algorithm_image.algorithm.editors_group,
-            images,
-        )
-        op("view_image", alg_result.job.creator, images)
-
-    for image in images:
-        if action == "pre_clear":
-            exclude_results = algorithm_results
-        else:
-            exclude_results = []
-
-        image.update_public_group_permissions(exclude_results=exclude_results)
-
-
 @receiver(m2m_changed, sender=Job.inputs.through)
+@receiver(m2m_changed, sender=Job.outputs.through)
 def update_input_image_permissions(
-    instance, action, reverse, model, pk_set, **_
+    sender, instance, action, reverse, model, pk_set, **_
 ):
     """
     Assign or remove view permissions to the algorithms editors when inputs
@@ -71,6 +20,15 @@ def update_input_image_permissions(
         # nothing to do for the other actions
         return
 
+    if sender._meta.label_lower == "algorithms.job_inputs":
+        forward_lookup = "inputs"
+        reverse_lookup = "algorithms_job_inputs"
+    elif sender._meta.label_lower == "algorithms.job_outputs":
+        forward_lookup = "outputs"
+        reverse_lookup = "algorithms_job_outputs"
+    else:
+        raise RuntimeError("m2m is only valid for Job inputs and outputs.")
+
     if reverse:
         component_interface_values = ComponentInterfaceValue.objects.filter(
             pk=instance.pk
@@ -78,7 +36,7 @@ def update_input_image_permissions(
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            jobs = instance.algorithms_job_inputs.all()
+            jobs = getattr(instance, reverse_lookup).all()
         else:
             jobs = model.objects.filter(pk__in=pk_set)
 
@@ -90,20 +48,33 @@ def update_input_image_permissions(
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            component_interface_values = instance.inputs.all()
+            component_interface_values = getattr(
+                instance, forward_lookup
+            ).all()
         else:
             component_interface_values = model.objects.filter(pk__in=pk_set)
 
-    op = assign_perm if "add" in action else remove_perm
+    _update_image_permissions(
+        jobs=jobs,
+        component_interface_values=component_interface_values,
+        operation=assign_perm if "add" in action else remove_perm,
+        exclude_jobs=action == "pre_clear",
+    )
 
+
+def _update_image_permissions(
+    *, jobs, component_interface_values, operation, exclude_jobs: bool,
+):
     for civ in component_interface_values:
         if civ.image:
             for job in jobs:
-                op(
+                operation(
                     "view_image",
                     job.algorithm_image.algorithm.editors_group,
                     civ.image,
                 )
-                op("view_image", job.creator, civ.image)
+                operation("view_image", job.creator, civ.image)
 
-            civ.image.update_public_group_permissions()
+            civ.image.update_public_group_permissions(
+                exclude_jobs=jobs if exclude_jobs else None,
+            )

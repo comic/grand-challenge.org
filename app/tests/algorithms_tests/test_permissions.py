@@ -636,8 +636,8 @@ def test_public_job_group_permissions():
     algorithm_job.public = True
     algorithm_job.save()
 
-    assert "view_job" in get_perms(g_reg, algorithm_job)
-    assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
+    assert "view_job" not in get_perms(g_reg, algorithm_job)
+    assert "view_job" in get_perms(g_reg_anon, algorithm_job)
 
     algorithm_job.public = False
     algorithm_job.save()

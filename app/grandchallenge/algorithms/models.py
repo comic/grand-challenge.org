@@ -343,11 +343,6 @@ class Result(UUIDModel):
         )
         assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
 
-        for image in self.images.all():
-            image.update_public_group_permissions()
-
-        self.job.update_input_permissions()
-
 
 class AlgorithmExecutor(Executor):
     def __init__(self, *args, **kwargs):
@@ -486,17 +481,17 @@ class Job(UUIDModel, ComponentJob):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        if not adding and Job.objects.get(pk=self.pk).image != self.image:
+        if (
+            not self._state.adding
+            and Job.objects.get(pk=self.pk).image != self.image
+        ):
             raise RuntimeError("The input image cannot be changed")
 
         super().save(*args, **kwargs)
 
+        self.assign_permissions()
         self.assign_public_permissions()
-
-        if adding:
-            self.assign_permissions()
+        self.update_interface_image_permissions()
 
     def assign_permissions(self):
         # Editors and creators can view this job
@@ -517,12 +512,19 @@ class Job(UUIDModel, ComponentJob):
         )
 
     def assign_public_permissions(self):
-        g = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
+        g = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
 
         if self.public:
             assign_perm(f"view_{self._meta.model_name}", g, self)
         else:
             remove_perm(f"view_{self._meta.model_name}", g, self)
+
+    def update_interface_image_permissions(self):
+        for interface_value in [*self.inputs.all(), *self.outputs.all()]:
+            if interface_value.image:
+                interface_value.image.update_public_group_permissions()
 
     def set_output_json(self, output_json):
         """Legacy method to set the output."""
@@ -537,11 +539,6 @@ class Job(UUIDModel, ComponentJob):
                 interface=interface, value=output_json
             )
             self.outputs.add(output_civ)
-
-    def update_input_permissions(self):
-        for inpt in self.inputs.all():
-            if inpt.image:
-                inpt.image.update_public_group_permissions()
 
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
