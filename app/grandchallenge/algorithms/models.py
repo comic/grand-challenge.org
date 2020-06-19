@@ -310,19 +310,6 @@ class Result(UUIDModel):
     output = JSONField(default=dict, editable=False)
     comment = models.TextField(blank=True, default="")
 
-    def get_absolute_url(self):
-        return reverse(
-            "algorithms:result-detail",
-            kwargs={
-                "pk": self.pk,
-                "slug": self.job.algorithm_image.algorithm.slug,
-            },
-        )
-
-    @property
-    def api_url(self):
-        return reverse("api:algorithms-result-detail", kwargs={"pk": self.pk})
-
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 

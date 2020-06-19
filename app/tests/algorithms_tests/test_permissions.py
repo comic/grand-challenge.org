@@ -7,7 +7,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
-    AlgorithmResultFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.cases_tests.factories import RawImageUploadSessionFactory
@@ -517,50 +516,6 @@ def test_api_job_list_permissions(client):
             assert image_pks == {
                 str(i.image.pk) for j in test[2] for i in j.inputs.all()
             }
-
-
-@pytest.mark.django_db
-def test_api_result_list_permissions(client):
-    alg_set = TwoAlgorithms()
-
-    j1_creator, j2_creator = UserFactory(), UserFactory()
-
-    alg1_result_pk = AlgorithmResultFactory(
-        job__algorithm_image__algorithm=alg_set.alg1, job__creator=j1_creator
-    ).pk
-    alg2_result_pk = AlgorithmResultFactory(
-        job__algorithm_image__algorithm=alg_set.alg2, job__creator=j2_creator
-    ).pk
-
-    tests = (
-        (None, 401, []),
-        (alg_set.creator, 200, []),
-        (alg_set.editor1, 200, [alg1_result_pk]),
-        (alg_set.user1, 200, []),
-        (j1_creator, 200, [alg1_result_pk]),
-        (alg_set.editor2, 200, [alg2_result_pk]),
-        (alg_set.user2, 200, []),
-        (j2_creator, 200, [alg2_result_pk]),
-        (alg_set.u, 200, []),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname="api:algorithms-result-list",
-            client=client,
-            user=test[0],
-            content_type="application/json",
-        )
-        assert response.status_code == test[1]
-
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
-
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
 
 
 @pytest.mark.django_db

@@ -50,13 +50,11 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmPermissionRequest,
     Job,
-    Result,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
     JobSerializer,
-    ResultSerializer,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -501,14 +499,6 @@ class JobViewSet(ReadOnlyModelViewSet):
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["algorithm_image__algorithm", "image"]
-
-
-class ResultViewSet(ReadOnlyModelViewSet):
-    queryset = Result.objects.all().prefetch_related("job")
-    serializer_class = ResultSerializer
-    permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
-    filterset_fields = ["job__algorithm_image__algorithm", "job__image"]
 
 
 class AlgorithmPermissionRequestCreate(
