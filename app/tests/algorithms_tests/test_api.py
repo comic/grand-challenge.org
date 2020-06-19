@@ -1,9 +1,6 @@
 import pytest
 
-from tests.algorithms_tests.factories import (
-    AlgorithmJobFactory,
-    AlgorithmResultFactory,
-)
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
@@ -12,13 +9,12 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 def test_job_detail(client):
     user = UserFactory()
-    result = AlgorithmResultFactory(job__creator=user)
-    job = result.job
+    job = AlgorithmJobFactory(creator=user)
     response = get_view_for_user(
         viewname="api:algorithms-job-detail",
         client=client,
         user=user,
-        reverse_kwargs={"pk": result.job.pk},
+        reverse_kwargs={"pk": job.pk},
         content_type="application/json",
     )
     assert response.status_code == 200

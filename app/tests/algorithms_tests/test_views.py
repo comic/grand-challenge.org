@@ -15,7 +15,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
     AlgorithmPermissionRequestFactory,
-    AlgorithmResultFactory,
 )
 from tests.factories import StagedFileFactory, UserFactory
 from tests.utils import get_view_for_user
@@ -350,9 +349,6 @@ def test_algorithm_jobs_list_view(client):
         job = AlgorithmJobFactory(algorithm_image=im)
         job.created = created
         job.save()
-        res = AlgorithmResultFactory(job=job)
-        res.created = created
-        res.save()
 
     response = get_view_for_user(
         viewname="algorithms:jobs-list",

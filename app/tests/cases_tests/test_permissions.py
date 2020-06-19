@@ -6,10 +6,7 @@ from django.contrib.auth.models import AnonymousUser, Group, User
 from guardian.shortcuts import get_perms
 
 from grandchallenge.cases.permissions import ImagePermission
-from tests.algorithms_tests.factories import (
-    AlgorithmJobFactory,
-    AlgorithmResultFactory,
-)
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 
@@ -176,12 +173,6 @@ def test_change_job_image():
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
     job = AlgorithmJobFactory(public=True)
-    r = AlgorithmResultFactory(job=job)
 
     assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
     assert "view_image" in get_perms(g_reg_anon, job.inputs.first().image)
-
-    i_new = ImageFactory()
-    r.job.image = i_new
-    with pytest.raises(RuntimeError):
-        r.job.save()

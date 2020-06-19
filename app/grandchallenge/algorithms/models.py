@@ -310,19 +310,6 @@ class Result(UUIDModel):
     output = JSONField(default=dict, editable=False)
     comment = models.TextField(blank=True, default="")
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.assign_permissions()
-
-    def assign_permissions(self):
-        # Algorithm editors and job creators can view this result
-        assign_perm(
-            f"view_{self._meta.model_name}",
-            self.job.algorithm_image.algorithm.editors_group,
-            self,
-        )
-        assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
-
 
 class AlgorithmExecutor(Executor):
     def __init__(self, *args, **kwargs):
