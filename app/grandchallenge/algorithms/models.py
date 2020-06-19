@@ -327,11 +327,6 @@ class Result(UUIDModel):
         super().save(*args, **kwargs)
 
         self.job.set_output_json(self.output)
-
-        self.job.public = self.public
-        self.job.comment = self.comment
-        self.job.save()
-
         self.assign_permissions()
 
     def assign_permissions(self):
