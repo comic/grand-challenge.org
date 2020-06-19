@@ -5,7 +5,6 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmPermissionRequest,
     Job,
-    Result,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
@@ -46,13 +45,6 @@ class AlgorithmJobFactory(factory.DjangoModelFactory):
             self.inputs.set(
                 [ComponentInterfaceValueFactory(image=ImageFactory())]
             )
-
-
-class AlgorithmResultFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Result
-
-    job = factory.SubFactory(AlgorithmJobFactory)
 
 
 class AlgorithmPermissionRequestFactory(factory.DjangoModelFactory):

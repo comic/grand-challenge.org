@@ -50,13 +50,11 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmPermissionRequest,
     Job,
-    Result,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
     JobSerializer,
-    ResultSerializer,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
@@ -381,7 +379,9 @@ class AlgorithmExecutionSessionList(
         qs = super().get_queryset(*args, **kwargs)
         return (
             qs.filter(algorithm_image__algorithm=self.algorithm)
-            .prefetch_related("image_set__job_set")
+            .prefetch_related(
+                "image_set__componentinterfacevalue_set__algorithms_job_inputs"
+            )
             .select_related("creator__user_profile")
         )
 
@@ -412,41 +412,37 @@ class AlgorithmExecutionSessionDetail(
         return context
 
 
-class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
-    model = Result
-    permission_required = (
-        f"{Result._meta.app_label}.view_{Result._meta.model_name}"
-    )
-    row_template = "algorithms/data_tables/result_list.html"
+class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
+    model = Job
+    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    row_template = "algorithms/data_tables/job_list.html"
     search_fields = [
-        "job__creator__username",
-        "job__image__name",
-        "images__files__file",
+        "creator__username",
+        "inputs__image__name",
+        "inputs__image__files__file",
         "comment",
     ]
     columns = [
-        "job__created",
-        "job__creator__username",
-        "job__image__name",
+        "created",
+        "creator__username",
+        "inputs__image__name",
         "public",
-        "images__files__file",
+        "inputs__image__files__file",
         "comment",
     ]
-    order_by = "job__created"
+    order_by = "created"
 
-    def get_row_context(self, result, *args, checker, **kwargs):
+    def get_row_context(self, job, *args, checker, **kwargs):
         return {
-            "result": result,
+            "job": job,
             "algorithm": self.algorithm,
-            "change_job": checker.has_perm("change_job", result.job),
+            "change_job": checker.has_perm("change_job", job),
         }
 
-    def get_data(self, results, *args, **kwargs):
+    def get_data(self, jobs, *args, **kwargs):
         checker = ObjectPermissionChecker(self.request.user)
-        checker.prefetch_perms(results.object_list)
-        return [
-            self.render_row_data(result, checker=checker) for result in results
-        ]
+        checker.prefetch_perms(jobs.object_list)
+        return [self.render_row_data(job, checker=checker) for job in jobs]
 
     @cached_property
     def algorithm(self):
@@ -455,9 +451,11 @@ class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
     def get_unfiltered_queryset(self):
         queryset = self.object_list
         return (
-            queryset.filter(job__algorithm_image__algorithm=self.algorithm)
-            .prefetch_related("images__files", "job__image__files")
-            .select_related("job__creator__user_profile")
+            queryset.filter(
+                algorithm_image__algorithm=self.algorithm, status=Job.SUCCESS
+            )
+            .prefetch_related("outputs__image__files", "inputs__image__files")
+            .select_related("creator__user_profile")
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -479,7 +477,7 @@ class AlgorithmJobUpdate(
 
     def get_success_url(self):
         return reverse(
-            "algorithms:results-list",
+            "algorithms:jobs-list",
             kwargs={"slug": self.object.algorithm_image.algorithm.slug},
         )
 
@@ -505,14 +503,6 @@ class JobViewSet(ReadOnlyModelViewSet):
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["algorithm_image__algorithm", "image"]
-
-
-class ResultViewSet(ReadOnlyModelViewSet):
-    queryset = Result.objects.all().prefetch_related("job")
-    serializer_class = ResultSerializer
-    permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
-    filterset_fields = ["job__algorithm_image__algorithm", "job__image"]
 
 
 class AlgorithmPermissionRequestCreate(

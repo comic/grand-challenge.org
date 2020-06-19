@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    Update Algorithm Job - {{ block.super }}
+    Update Algorithm Result - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -15,7 +15,7 @@
                 href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
         </a>
         <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:results-list' slug=object.algorithm_image.algorithm.slug %}">Jobs</a>
+                href="{% url 'algorithms:jobs-list' slug=object.algorithm_image.algorithm.slug %}">Results</a>
         <li class="breadcrumb-item"><a href="">{{ object.pk }}</a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Update
@@ -25,10 +25,10 @@
 
 {% block content %}
 
-    <h2>Update Job</h2>
+    <h2>Update Result</h2>
 
     <dl class="inline">
-        <dt>Job ID</dt>
+        <dt>ID</dt>
         <dd>{{ object.pk }}</dd>
 
         {% for input in object.inputs.all %}

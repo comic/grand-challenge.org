@@ -1,11 +1,6 @@
-from urllib.parse import urlparse
-
 import pytest
 
-from tests.algorithms_tests.factories import (
-    AlgorithmJobFactory,
-    AlgorithmResultFactory,
-)
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
@@ -14,22 +9,17 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 def test_job_detail(client):
     user = UserFactory()
-    result = AlgorithmResultFactory(job__creator=user)
-    job = result.job
+    job = AlgorithmJobFactory(creator=user)
     response = get_view_for_user(
         viewname="api:algorithms-job-detail",
         client=client,
         user=user,
-        reverse_kwargs={"pk": result.job.pk},
+        reverse_kwargs={"pk": job.pk},
         content_type="application/json",
     )
     assert response.status_code == 200
     assert job.status == job.PENDING
     assert response.json()["status"] == "Queued"
-    assert (
-        urlparse(response.json()["result"]).path
-        == urlparse(result.api_url).path
-    )
 
 
 @pytest.mark.django_db
@@ -37,16 +27,7 @@ def test_keys_used_in_algorithm_session_js(client):
     """All of these values are used in algorithms/js/session.js"""
     u = UserFactory()
     j = AlgorithmJobFactory(creator=u)
-    r = AlgorithmResultFactory(job=j)
-    s = RawImageUploadSessionFactory(creator=u, algorithm_result=r)
-
-    # Result API
-    response = get_view_for_user(client=client, url=r.api_url, user=u)
-    assert response.status_code == 200
-    # Unsecure urls are always returned in testing
-    assert response.json()["import_session"] == s.api_url.replace(
-        "https:", "http:"
-    )
+    s = RawImageUploadSessionFactory(creator=u)
 
     # Session API
     response = get_view_for_user(client=client, url=s.api_url, user=u)

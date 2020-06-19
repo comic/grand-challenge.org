@@ -8,6 +8,7 @@ from django.utils.text import slugify
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmPermissionRequest,
+    Job,
 )
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
@@ -15,7 +16,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
     AlgorithmPermissionRequestFactory,
-    AlgorithmResultFactory,
 )
 from tests.factories import StagedFileFactory, UserFactory
 from tests.utils import get_view_for_user
@@ -339,7 +339,7 @@ def test_algorithm_permission_request_list(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_results_list_view(client):
+def test_algorithm_jobs_list_view(client):
     editor = UserFactory()
 
     alg = AlgorithmFactory(public=True)
@@ -347,15 +347,12 @@ def test_algorithm_results_list_view(client):
     im = AlgorithmImageFactory(algorithm=alg)
     for x in range(50):
         created = timezone.now() - datetime.timedelta(days=x + 365)
-        job = AlgorithmJobFactory(algorithm_image=im)
+        job = AlgorithmJobFactory(algorithm_image=im, status=Job.SUCCESS)
         job.created = created
         job.save()
-        res = AlgorithmResultFactory(job=job)
-        res.created = created
-        res.save()
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -366,7 +363,7 @@ def test_algorithm_results_list_view(client):
     assert response.status_code == 200
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -381,7 +378,7 @@ def test_algorithm_results_list_view(client):
     assert len(resp["data"]) == 10
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -396,7 +393,7 @@ def test_algorithm_results_list_view(client):
     assert len(resp["data"]) == 50
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -413,7 +410,7 @@ def test_algorithm_results_list_view(client):
     resp_new["data"] == resp["data"][::-1]
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,

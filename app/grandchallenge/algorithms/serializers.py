@@ -6,10 +6,8 @@ from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
     Job,
-    Result,
 )
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
-from grandchallenge.cases.models import Image
 from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
@@ -56,13 +54,7 @@ class JobSerializer(serializers.ModelSerializer):
         queryset=AlgorithmImage.objects.all(),
         view_name="api:algorithms-image-detail",
     )
-    image = HyperlinkedRelatedField(
-        queryset=Image.objects.all(), view_name="api:image-detail"
-    )
     status = CharField(source="get_status_display", read_only=True)
-    result = HyperlinkedRelatedField(
-        read_only=True, view_name="api:algorithms-result-detail"
-    )
     inputs = ComponentInterfaceValueSerializer(many=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
 
@@ -72,35 +64,10 @@ class JobSerializer(serializers.ModelSerializer):
             "pk",
             "api_url",
             "algorithm_image",
-            "image",
             "inputs",
             "outputs",
-            "result",
             "status",
         ]
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             status=model._meta.get_field("status")
         )
-
-
-class ResultSerializer(serializers.ModelSerializer):
-    job = JobSerializer()
-    images = HyperlinkedRelatedField(
-        many=True, read_only=True, view_name="api:image-detail"
-    )
-    import_session = HyperlinkedRelatedField(
-        source="rawimageuploadsession",
-        read_only=True,
-        view_name="api:upload-session-detail",
-    )
-
-    class Meta:
-        model = Result
-        fields = [
-            "pk",
-            "api_url",
-            "job",
-            "images",
-            "output",
-            "import_session",
-        ]
