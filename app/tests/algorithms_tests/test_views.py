@@ -339,7 +339,7 @@ def test_algorithm_permission_request_list(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_results_list_view(client):
+def test_algorithm_jobs_list_view(client):
     editor = UserFactory()
 
     alg = AlgorithmFactory(public=True)
@@ -355,7 +355,7 @@ def test_algorithm_results_list_view(client):
         res.save()
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -366,7 +366,7 @@ def test_algorithm_results_list_view(client):
     assert response.status_code == 200
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -381,7 +381,7 @@ def test_algorithm_results_list_view(client):
     assert len(resp["data"]) == 10
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -396,7 +396,7 @@ def test_algorithm_results_list_view(client):
     assert len(resp["data"]) == 50
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -413,7 +413,7 @@ def test_algorithm_results_list_view(client):
     resp_new["data"] == resp["data"][::-1]
 
     response = get_view_for_user(
-        viewname="algorithms:results-list",
+        viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
