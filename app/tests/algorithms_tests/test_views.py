@@ -8,6 +8,7 @@ from django.utils.text import slugify
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmPermissionRequest,
+    Job,
 )
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
@@ -346,7 +347,7 @@ def test_algorithm_jobs_list_view(client):
     im = AlgorithmImageFactory(algorithm=alg)
     for x in range(50):
         created = timezone.now() - datetime.timedelta(days=x + 365)
-        job = AlgorithmJobFactory(algorithm_image=im)
+        job = AlgorithmJobFactory(algorithm_image=im, status=Job.SUCCESS)
         job.created = created
         job.save()
 

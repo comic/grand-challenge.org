@@ -27,7 +27,7 @@
 
     <div class="row equal-height">
 
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 mb-3">
             <div class="card text-center border-success">
                 <div class="card-body">
                     <h5 class="card-title">Upload Images</h5>
@@ -39,7 +39,7 @@
                    class="stretched-link"></a>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 mb-3">
             <div id="imageImportCard" class="card text-center border-primary">
                 <div class="card-body">
                     <h5 class="card-title">Importing Images</h5>
@@ -54,24 +54,10 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 mb-3">
             <div id="jobCard" class="card text-center border-light text-muted">
                 <div class="card-body">
                     <h5 class="card-title">Running Algorithm</h5>
-                    <div class="text-center p-3 statusSymbol">
-                    </div>
-                    <p class="card-text">
-                        <a href="{% url 'algorithms:execution-session-list' slug=algorithm.slug %}"
-                           class="stretched-link statusMessage"></a>
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div id="resultImportCard"
-                 class="card text-center border-light text-muted">
-                <div class="card-body">
-                    <h5 class="card-title">Importing Results</h5>
                     <div class="text-center p-3 statusSymbol">
                     </div>
                     <p class="card-text">
@@ -81,7 +67,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
 {% endblock %}

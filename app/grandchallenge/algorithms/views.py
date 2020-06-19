@@ -379,7 +379,9 @@ class AlgorithmExecutionSessionList(
         qs = super().get_queryset(*args, **kwargs)
         return (
             qs.filter(algorithm_image__algorithm=self.algorithm)
-            .prefetch_related("image_set__job_set")
+            .prefetch_related(
+                "image_set__componentinterfacevalue_set__algorithms_job_inputs"
+            )
             .select_related("creator__user_profile")
         )
 
@@ -416,7 +418,7 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
     row_template = "algorithms/data_tables/job_list.html"
     search_fields = [
         "creator__username",
-        "image__name",
+        "inputs__image__name",
         "inputs__image__files__file",
         "comment",
     ]
@@ -449,7 +451,9 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
     def get_unfiltered_queryset(self):
         queryset = self.object_list
         return (
-            queryset.filter(algorithm_image__algorithm=self.algorithm)
+            queryset.filter(
+                algorithm_image__algorithm=self.algorithm, status=Job.SUCCESS
+            )
             .prefetch_related("outputs__image__files", "inputs__image__files")
             .select_related("creator__user_profile")
         )

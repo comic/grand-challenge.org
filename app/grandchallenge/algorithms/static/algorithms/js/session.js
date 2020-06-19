@@ -83,8 +83,7 @@ function handleJobStatus(jobs) {
     }
 
     if (jobStatuses.every(s => s === "succeeded")) {
-        setCardCompleteMessage(cards.job, "");
-        getResults(jobs.map(j => j.result));
+        setCardCompleteMessage(cards.job, "View Results");
     } else if (jobStatuses.some(s => s === "started")) {
         setCardActiveMessage(cards.job, `Started, ${moment.duration(estimatedRemainingTime).humanize()} remaining`);
         setTimeout(function () {
@@ -97,48 +96,6 @@ function handleJobStatus(jobs) {
         }, Math.floor(Math.random() * timeout) + 100);
     } else {
         setCardErrorMessage(cards.job, "Errored");
-    }
-}
-
-function getResults(resultUrls) {
-    setCardAwaitingMessage(cards.resultImport, "Fetching Status");
-
-    Promise.all(resultUrls.map(url => fetch(url).then(response => response.json()))
-    ).then(results => {
-        let resultImportSessionUrls = results.map(r => r.import_session).filter(s => s !== null);
-        if (resultImportSessionUrls.length > 0) {
-            getResultImportStatus(resultImportSessionUrls);
-        } else {
-            setCardCompleteMessage(cards.resultImport, "");
-        }
-    });
-}
-
-function getResultImportStatus(resultImportSessionUrls) {
-    Promise.all(resultImportSessionUrls.map(url => fetch(url).then(response => response.json()))
-    ).then(importSessions => {
-        handleImportSessionsStatus(importSessions);
-    });
-}
-
-function handleImportSessionsStatus(resultImportSessions) {
-    let importSessionStatuses = resultImportSessions.map(s => s.status.toLowerCase());
-    let importSessionUrls = resultImportSessions.map(s => s.api_url);
-
-    if (importSessionStatuses.every(s => s === "succeeded")) {
-        setCardCompleteMessage(cards.resultImport, "View Results");
-    } else if (importSessionStatuses.some(s => s === "started")) {
-        setCardActiveMessage(cards.resultImport, "Started");
-        setTimeout(function () {
-            getResultImportStatus(importSessionUrls)
-        }, Math.floor(Math.random() * timeout) + 100);
-    } else if (importSessionStatuses.some(s => s === "queued") || importSessionStatuses.some(s => s === "re-queued")) {
-        setCardAwaitingMessage(cards.resultImport, "Queued");
-        setTimeout(function () {
-            getResultImportStatus(importSessionUrls)
-        }, Math.floor(Math.random() * timeout) + 100);
-    } else {
-        setCardErrorMessage(cards.resultImport, "Errored");
     }
 }
 

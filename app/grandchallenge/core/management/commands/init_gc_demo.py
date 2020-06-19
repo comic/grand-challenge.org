@@ -303,6 +303,7 @@ class Command(BaseCommand):
             creator=self.users["algorithm"],
             algorithm_image=algorithm_image,
             image=cases_image,
+            status=Job.SUCCESS,
         )
         algorithms_job.save()
         algorithms_job.create_result(result={"cancer_score": 0.5})

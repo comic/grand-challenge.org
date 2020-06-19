@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_group_perms, get_perms
 
+from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -144,10 +145,14 @@ def test_algorithm_jobs_list_view(client):
 
     j1, j2 = (
         AlgorithmJobFactory(
-            algorithm_image__algorithm=alg_set.alg1, creator=extra_user1
+            algorithm_image__algorithm=alg_set.alg1,
+            creator=extra_user1,
+            status=Job.SUCCESS,
         ),
         AlgorithmJobFactory(
-            algorithm_image__algorithm=alg_set.alg2, creator=extra_user2
+            algorithm_image__algorithm=alg_set.alg2,
+            creator=extra_user2,
+            status=Job.SUCCESS,
         ),
     )
 
