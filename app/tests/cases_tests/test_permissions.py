@@ -175,8 +175,8 @@ def test_change_job_image():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    job = AlgorithmJobFactory()
-    r = AlgorithmResultFactory(public=True, job=job)
+    job = AlgorithmJobFactory(public=True)
+    r = AlgorithmResultFactory(job=job)
 
     assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
     assert "view_image" in get_perms(g_reg_anon, job.inputs.first().image)
