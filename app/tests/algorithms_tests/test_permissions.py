@@ -623,24 +623,24 @@ def test_visible_to_public_group_permissions():
 
 
 @pytest.mark.django_db
-def test_public_result_group_permissions():
+def test_public_job_group_permissions():
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
-    algorithm_result = AlgorithmResultFactory()
+    algorithm_job = AlgorithmJobFactory()
 
-    assert "view_result" not in get_perms(g_reg, algorithm_result)
-    assert "view_result" not in get_perms(g_reg_anon, algorithm_result)
+    assert "view_job" not in get_perms(g_reg, algorithm_job)
+    assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
 
-    algorithm_result.public = True
-    algorithm_result.save()
+    algorithm_job.public = True
+    algorithm_job.save()
 
-    assert "view_result" not in get_perms(g_reg, algorithm_result)
-    assert "view_result" in get_perms(g_reg_anon, algorithm_result)
+    assert "view_job" in get_perms(g_reg, algorithm_job)
+    assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
 
-    algorithm_result.public = False
-    algorithm_result.save()
+    algorithm_job.public = False
+    algorithm_job.save()
 
-    assert "view_result" not in get_perms(g_reg, algorithm_result)
-    assert "view_result" not in get_perms(g_reg_anon, algorithm_result)
+    assert "view_job" not in get_perms(g_reg, algorithm_job)
+    assert "view_job" not in get_perms(g_reg_anon, algorithm_job)

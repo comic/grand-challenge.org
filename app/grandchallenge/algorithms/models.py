@@ -343,15 +343,6 @@ class Result(UUIDModel):
         )
         assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
 
-        g = Group.objects.get(
-            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-        )
-
-        if self.public:
-            assign_perm(f"view_{self._meta.model_name}", g, self)
-        else:
-            remove_perm(f"view_{self._meta.model_name}", g, self)
-
         for image in self.images.all():
             image.update_public_group_permissions()
 
@@ -502,6 +493,8 @@ class Job(UUIDModel, ComponentJob):
 
         super().save(*args, **kwargs)
 
+        self.assign_public_permissions()
+
         if adding:
             self.assign_permissions()
 
@@ -522,6 +515,14 @@ class Job(UUIDModel, ComponentJob):
             self.algorithm_image.algorithm.editors_group,
             self,
         )
+
+    def assign_public_permissions(self):
+        g = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
+
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", g, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", g, self)
 
     def set_output_json(self, output_json):
         """Legacy method to set the output."""
