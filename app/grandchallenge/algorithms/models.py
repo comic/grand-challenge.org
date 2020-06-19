@@ -312,8 +312,6 @@ class Result(UUIDModel):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-
-        self.job.set_output_json(self.output)
         self.assign_permissions()
 
     def assign_permissions(self):
@@ -451,9 +449,17 @@ class Job(UUIDModel, ComponentJob):
         return AlgorithmExecutor
 
     def create_result(self, *, result: dict):
-        instance, _ = Result.objects.get_or_create(job_id=self.pk)
-        instance.output = result
-        instance.save()
+        interface = ComponentInterface.objects.get(title="Results JSON File")
+
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = result
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=result
+            )
+            self.outputs.add(output_civ)
 
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
@@ -507,20 +513,6 @@ class Job(UUIDModel, ComponentJob):
         for interface_value in [*self.inputs.all(), *self.outputs.all()]:
             if interface_value.image:
                 interface_value.image.update_public_group_permissions()
-
-    def set_output_json(self, output_json):
-        """Legacy method to set the output."""
-        interface = ComponentInterface.objects.get(title="Results JSON File")
-
-        try:
-            output_civ = self.outputs.get(interface=interface)
-            output_civ.value = output_json
-            output_civ.save()
-        except ObjectDoesNotExist:
-            output_civ = ComponentInterfaceValue.objects.create(
-                interface=interface, value=output_json
-            )
-            self.outputs.add(output_civ)
 
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)
