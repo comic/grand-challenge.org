@@ -73,17 +73,17 @@ def test_workstation_query(settings):
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}" not in qs
 
-    qs = workstation_query(algorithm_result=algorithm_job)
+    qs = workstation_query(algorithm_job=algorithm_job)
     assert "&" not in qs
     assert (
-        f"{settings.WORKSTATIONS_ALGORITHM_RESULT_QUERY_PARAM}={algorithm_job.pk}"
+        f"{settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM}={algorithm_job.pk}"
         in qs
     )
 
-    qs = workstation_query(algorithm_result=algorithm_job, config=config)
+    qs = workstation_query(algorithm_job=algorithm_job, config=config)
     assert "&" in qs
     assert (
-        f"{settings.WORKSTATIONS_ALGORITHM_RESULT_QUERY_PARAM}={algorithm_job.pk}"
+        f"{settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM}={algorithm_job.pk}"
         in qs
     )
     assert f"{settings.WORKSTATIONS_CONFIG_QUERY_PARAM}={config.pk}" in qs
