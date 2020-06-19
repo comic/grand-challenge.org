@@ -26,6 +26,7 @@ from grandchallenge.components.backends.docker import (
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -140,11 +141,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             ]
         )
         self.outputs.set(
-            [
-                *ComponentInterface.objects.filter(
-                    title__in=["Many Medical Images", "Results JSON File"]
-                )
-            ]
+            [ComponentInterface.objects.get(title="Results JSON File")]
         )
 
     def assign_permissions(self):
@@ -328,6 +325,8 @@ class Result(UUIDModel):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+
+        self.job.set_output_json(self.output)
         self.assign_permissions()
 
     def assign_permissions(self):
@@ -338,28 +337,6 @@ class Result(UUIDModel):
             self,
         )
         assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
-
-        # Algorithm editors can change this result
-        assign_perm(
-            f"change_{self._meta.model_name}",
-            self.job.algorithm_image.algorithm.editors_group,
-            self,
-        )
-
-        g = Group.objects.get(
-            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-        )
-
-        if self.public:
-            assign_perm(f"view_{self._meta.model_name}", g, self)
-        else:
-            remove_perm(f"view_{self._meta.model_name}", g, self)
-
-        for image in self.images.all():
-            image.update_public_group_permissions()
-
-        if self.job:
-            self.job.update_input_permissions()
 
 
 class AlgorithmExecutor(Executor):
@@ -460,6 +437,15 @@ class Job(UUIDModel, ComponentJob):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "If True, allow anyone to view this result along "
+            "with the input image. Otherwise, only the job creator and "
+            "algorithm editor will have permission to view this result."
+        ),
+    )
+    comment = models.TextField(blank=True, default="")
 
     @property
     def container(self):
@@ -490,30 +476,64 @@ class Job(UUIDModel, ComponentJob):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        if not adding and Job.objects.get(pk=self.pk).image != self.image:
+        if (
+            not self._state.adding
+            and Job.objects.get(pk=self.pk).image != self.image
+        ):
             raise RuntimeError("The input image cannot be changed")
 
         super().save(*args, **kwargs)
 
-        if adding:
-            self.assign_permissions()
+        self.assign_permissions()
+        self.assign_public_permissions()
+        self.update_interface_image_permissions()
 
     def assign_permissions(self):
-        # Editors and creators can view this job and the related image
+        # Editors and creators can view this job
         assign_perm(
             f"view_{self._meta.model_name}",
             self.algorithm_image.algorithm.editors_group,
             self,
         )
+
         if self.creator:
             assign_perm(f"view_{self._meta.model_name}", self.creator, self)
 
-    def update_input_permissions(self):
-        for inpt in self.inputs.all():
-            if inpt.image:
-                inpt.image.update_public_group_permissions()
+        # Algorithm editors can change this job
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.algorithm_image.algorithm.editors_group,
+            self,
+        )
+
+    def assign_public_permissions(self):
+        g = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", g, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", g, self)
+
+    def update_interface_image_permissions(self):
+        for interface_value in [*self.inputs.all(), *self.outputs.all()]:
+            if interface_value.image:
+                interface_value.image.update_public_group_permissions()
+
+    def set_output_json(self, output_json):
+        """Legacy method to set the output."""
+        interface = ComponentInterface.objects.get(title="Results JSON File")
+
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = output_json
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=output_json
+            )
+            self.outputs.add(output_civ)
 
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)

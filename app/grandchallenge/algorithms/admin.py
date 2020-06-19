@@ -10,6 +10,17 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.evaluation.templatetags.evaluation_extras import user_error
 
 
+class ResultAdmin(admin.ModelAdmin):
+    list_display = (
+        "pk",
+        "created",
+        "job",
+        "public",
+        "comment",
+    )
+    list_filter = ("public",)
+
+
 class JobAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = (
@@ -18,10 +29,15 @@ class JobAdmin(admin.ModelAdmin):
         "algorithm",
         "creator",
         "status",
+        "public",
+        "comment",
         "error_message",
     )
     list_select_related = ("algorithm_image__algorithm",)
-    list_filter = ("status",)
+    list_filter = (
+        "status",
+        "public",
+    )
     readonly_fields = (
         "image",
         "creator",
@@ -44,5 +60,5 @@ class JobAdmin(admin.ModelAdmin):
 admin.site.register(Algorithm)
 admin.site.register(AlgorithmImage)
 admin.site.register(Job, JobAdmin)
-admin.site.register(Result)
+admin.site.register(Result, ResultAdmin)
 admin.site.register(AlgorithmPermissionRequest)

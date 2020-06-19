@@ -42,7 +42,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageUpdateForm,
     AlgorithmPermissionRequestUpdateForm,
     EditorsForm,
-    ResultForm,
+    JobForm,
     UsersForm,
 )
 from grandchallenge.algorithms.models import (
@@ -438,7 +438,7 @@ class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
         return {
             "result": result,
             "algorithm": self.algorithm,
-            "change_result": checker.has_perm("change_result", result),
+            "change_job": checker.has_perm("change_job", result.job),
         }
 
     def get_data(self, results, *args, **kwargs):
@@ -467,20 +467,20 @@ class AlgorithmResultsList(PermissionListMixin, PaginatedTableListView):
         return context
 
 
-class AlgorithmResultUpdate(
+class AlgorithmJobUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):
-    model = Result
-    form_class = ResultForm
+    model = Job
+    form_class = JobForm
     permission_required = (
-        f"{Result._meta.app_label}.change_{Result._meta.model_name}"
+        f"{Job._meta.app_label}.change_{Job._meta.model_name}"
     )
     raise_exception = True
 
     def get_success_url(self):
         return reverse(
             "algorithms:results-list",
-            kwargs={"slug": self.object.job.algorithm_image.algorithm.slug},
+            kwargs={"slug": self.object.algorithm_image.algorithm.slug},
         )
 
 

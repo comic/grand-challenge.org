@@ -499,30 +499,33 @@ class Image(UUIDModel):
             group = Group.objects.get(name=group_name)
             assign_perm("view_image", group, self)
 
-    def update_public_group_permissions(self, *, exclude_results=None):
+    def update_public_group_permissions(self, *, exclude_jobs=None):
         """
         Update the permissions for the REGISTERED_AND_ANON_USERS_GROUP to
         view this image.
 
         Parameters
         ----------
-        exclude_results
+        exclude_jobs
             Exclude these results from being considered. This is useful
             when a many to many relationship is being cleared to remove this
             image from the results image set, and is used when the pre_clear
             signal is sent.
         """
-        if exclude_results is None:
-            exclude_results = []
+        if exclude_jobs is None:
+            exclude_jobs = []
 
         should_be_public = (
-            self.algorithm_results.filter(public=True)
-            .exclude(pk__in=[r.pk for r in exclude_results])
+            self.componentinterfacevalue_set.filter(
+                algorithms_job_inputs__public=True
+            )
+            .exclude(algorithms_job_inputs__in=exclude_jobs)
             .exists()
-            or self.job_set.filter(result__public=True).exists()
             or self.componentinterfacevalue_set.filter(
-                algorithms_job_inputs__result__public=True
-            ).exists()
+                algorithms_job_outputs__public=True
+            )
+            .exclude(algorithms_job_outputs__in=exclude_jobs)
+            .exists()
         )
 
         g = Group.objects.get(

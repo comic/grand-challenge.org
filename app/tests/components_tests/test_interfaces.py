@@ -9,7 +9,6 @@ from tests.components_tests.factories import ComponentInterfaceFactory
     "title",
     [
         "Medical Image",
-        "Many Medical Images",
         "Metrics JSON File",
         "Results JSON File",
         "Predictions CSV File",

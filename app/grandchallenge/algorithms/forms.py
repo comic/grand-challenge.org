@@ -18,7 +18,7 @@ from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
     AlgorithmPermissionRequest,
-    Result,
+    Job,
 )
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -157,9 +157,9 @@ class UsersForm(UserGroupForm):
         permission_request.save()
 
 
-class ResultForm(SaveFormInitMixin, ModelForm):
+class JobForm(SaveFormInitMixin, ModelForm):
     class Meta:
-        model = Result
+        model = Job
         fields = ("comment", "public")
 
 

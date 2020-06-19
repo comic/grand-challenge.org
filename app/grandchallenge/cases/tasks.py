@@ -466,7 +466,15 @@ def _handle_image_relations(*, collected_images, upload_session):
             j.schedule_job()
 
     if upload_session.algorithm_result:
-        upload_session.algorithm_result.images.add(*collected_images)
+        default_interface = ComponentInterface.objects.get(
+            title=DEFAULT_INPUT_INTERFACE_NAME
+        )
+        job = upload_session.algorithm_result.job
+        for image in collected_images:
+            civ = ComponentInterfaceValue.objects.create(
+                interface=default_interface, image=image
+            )
+            job.outputs.add(civ)
 
     if upload_session.reader_study:
         upload_session.reader_study.images.add(*collected_images)

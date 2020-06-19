@@ -64,6 +64,7 @@ class JobSerializer(serializers.ModelSerializer):
         read_only=True, view_name="api:algorithms-result-detail"
     )
     inputs = ComponentInterfaceValueSerializer(many=True)
+    outputs = ComponentInterfaceValueSerializer(many=True)
 
     class Meta:
         model = Job
@@ -73,6 +74,7 @@ class JobSerializer(serializers.ModelSerializer):
             "algorithm_image",
             "image",
             "inputs",
+            "outputs",
             "result",
             "status",
         ]
