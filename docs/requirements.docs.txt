@@ -2,7 +2,8 @@
 sphinx
 sphinx-autobuild
 sphinx-rtd-theme
-sphinx_autodoc_typehints!=1.11.0
+# 1.11.0 dropped support for Sphinx 2, which is still used by read the docs
+sphinx_autodoc_typehints<1.11.0
 sphinxcontrib-plantuml
 
 # Direct dependencies of the app
