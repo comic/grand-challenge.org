@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import Q
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -517,14 +518,13 @@ class Image(UUIDModel):
 
         should_be_public = (
             self.componentinterfacevalue_set.filter(
-                algorithms_job_inputs__public=True
+                Q(algorithms_job_inputs__public=True)
+                | Q(algorithms_job_outputs__public=True)
             )
-            .exclude(algorithms_job_inputs__in=exclude_jobs)
-            .exists()
-            or self.componentinterfacevalue_set.filter(
-                algorithms_job_outputs__public=True
+            .exclude(
+                Q(algorithms_job_inputs__in=exclude_jobs)
+                | Q(algorithms_job_outputs__in=exclude_jobs)
             )
-            .exclude(algorithms_job_outputs__in=exclude_jobs)
             .exists()
         )
 
