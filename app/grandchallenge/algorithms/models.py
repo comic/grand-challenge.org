@@ -307,6 +307,9 @@ class Result(UUIDModel):
     output = JSONField(default=dict, editable=False)
     comment = models.TextField(blank=True, default="")
 
+    class Meta:
+        ordering = ("created",)
+
 
 class AlgorithmExecutor(Executor):
     def __init__(self, *args, **kwargs):
@@ -415,6 +418,9 @@ class Job(UUIDModel, ComponentJob):
         ),
     )
     comment = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ("created",)
 
     @property
     def container(self):

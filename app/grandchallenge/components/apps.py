@@ -17,11 +17,6 @@ def init_default_interfaces(*_, **__):
             "relative_path": "images",
         },
         {
-            "title": "Metrics JSON File",
-            "kind": ComponentInterface.Kind.JSON,
-            "relative_path": "metrics.json",
-        },
-        {
             "title": "Results JSON File",
             "kind": ComponentInterface.Kind.JSON,
             "relative_path": "results.json",
@@ -35,6 +30,11 @@ def init_default_interfaces(*_, **__):
             "title": "Predictions ZIP File",
             "kind": ComponentInterface.Kind.ZIP,
             "relative_path": "predictions.zip",
+        },
+        {
+            "title": "Metrics JSON File",
+            "kind": ComponentInterface.Kind.JSON,
+            "relative_path": "metrics.json",
         },
     ]
 

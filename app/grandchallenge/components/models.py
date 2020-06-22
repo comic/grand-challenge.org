@@ -90,6 +90,9 @@ class ComponentInterface(models.Model):
         validators=[validate_safe_path],
     )
 
+    def __str__(self):
+        return f"Component Interface {self.title} ({self.get_kind_display()})"
+
     @property
     def input_path(self):
         return safe_join("/input", self.relative_path)
@@ -126,6 +129,12 @@ class ComponentInterfaceValue(models.Model):
         upload_to=component_interface_value_path, storage=protected_s3_storage
     )
     image = models.ForeignKey(to=Image, null=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Component Interface Value {self.pk} for {self.interface}"
+
+    class Meta:
+        ordering = ("pk",)
 
 
 class DurationQuerySet(models.QuerySet):
