@@ -38,7 +38,8 @@ from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_INPUT_INTERFACE_NAME = "Generic Medical Image"
+DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
+DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):
@@ -134,11 +135,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
     def set_default_interfaces(self):
         self.inputs.set(
-            [
-                ComponentInterface.objects.get(
-                    title=DEFAULT_INPUT_INTERFACE_NAME
-                )
-            ]
+            [ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)]
         )
         self.outputs.set(
             [ComponentInterface.objects.get(title="Results JSON File")]

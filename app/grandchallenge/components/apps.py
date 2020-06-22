@@ -12,6 +12,11 @@ def init_default_interfaces(*_, **__):
             "relative_path": "",
         },
         {
+            "title": "Generic Overlay",
+            "kind": ComponentInterface.Kind.HEAT_MAP,
+            "relative_path": "images",
+        },
+        {
             "title": "Metrics JSON File",
             "kind": ComponentInterface.Kind.JSON,
             "relative_path": "metrics.json",

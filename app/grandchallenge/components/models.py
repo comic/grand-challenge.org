@@ -48,7 +48,8 @@ class InterfaceKindChoices(models.TextChoices):
 
     # Image types
     IMAGE = "IMG", _("Image")
-    MASK = "MASK", _("Mask")
+    SEGMENTATION = "SEG", _("Segmentation")
+    HEAT_MAP = "HMAP", _("Heat Map")
 
     # Legacy support
     JSON = "JSON", _("JSON file")
