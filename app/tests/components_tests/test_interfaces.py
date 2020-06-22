@@ -8,7 +8,7 @@ from tests.components_tests.factories import ComponentInterfaceFactory
 @pytest.mark.parametrize(
     "title",
     [
-        "Medical Image",
+        "Generic Medical Image",
         "Metrics JSON File",
         "Results JSON File",
         "Predictions CSV File",

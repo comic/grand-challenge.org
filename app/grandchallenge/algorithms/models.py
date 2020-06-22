@@ -38,7 +38,7 @@ from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_INPUT_INTERFACE_NAME = "Medical Image"
+DEFAULT_INPUT_INTERFACE_NAME = "Generic Medical Image"
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):

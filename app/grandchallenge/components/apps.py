@@ -7,7 +7,7 @@ def init_default_interfaces(*_, **__):
 
     default_interfaces = [
         {
-            "title": "Medical Image",
+            "title": "Generic Medical Image",
             "kind": ComponentInterface.Kind.IMAGE,
             "relative_path": "",
         },
