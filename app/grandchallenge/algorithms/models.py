@@ -138,7 +138,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             [ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)]
         )
         self.outputs.set(
-            [ComponentInterface.objects.get(title="Results JSON File")]
+            [ComponentInterface.objects.get(slug="results-json-file")]
         )
 
     def assign_permissions(self):
@@ -439,7 +439,7 @@ class Job(UUIDModel, ComponentJob):
         return AlgorithmExecutor
 
     def create_result(self, *, result: dict):
-        interface = ComponentInterface.objects.get(title="Results JSON File")
+        interface = ComponentInterface.objects.get(slug="results-json-file")
 
         try:
             output_civ = self.outputs.get(interface=interface)
@@ -459,12 +459,6 @@ class Job(UUIDModel, ComponentJob):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
-        if (
-            not self._state.adding
-            and Job.objects.get(pk=self.pk).image != self.image
-        ):
-            raise RuntimeError("The input image cannot be changed")
-
         super().save(*args, **kwargs)
 
         self.assign_permissions()

@@ -452,7 +452,7 @@ def _handle_image_relations(*, collected_images, upload_session):
         upload_session.annotationset.images.add(*collected_images)
 
     if upload_session.algorithm_image:
-        default_interface = ComponentInterface.objects.get(
+        default_input_interface = ComponentInterface.objects.get(
             slug=DEFAULT_INPUT_INTERFACE_SLUG
         )
         for image in collected_images:
@@ -463,20 +463,20 @@ def _handle_image_relations(*, collected_images, upload_session):
             j.inputs.set(
                 [
                     ComponentInterfaceValue.objects.create(
-                        interface=default_interface, image=image
+                        interface=default_input_interface, image=image
                     )
                 ]
             )
             j.schedule_job()
 
     if upload_session.algorithm_result:
-        default_interface = ComponentInterface.objects.get(
+        default_output_interface = ComponentInterface.objects.get(
             slug=DEFAULT_OUTPUT_INTERFACE_SLUG
         )
         job = upload_session.algorithm_result.job
         for image in collected_images:
             civ = ComponentInterfaceValue.objects.create(
-                interface=default_interface, image=image
+                interface=default_output_interface, image=image
             )
             job.outputs.add(civ)
 
