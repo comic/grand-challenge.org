@@ -24,6 +24,7 @@ t1 = 1.2e-6
 PatientBirthDate = 20200101
 PatientAge = 001Y
 PatientSex = M
+Laterality = L
 StudyDescription = super awesome study
 Bogus = nonsense 1234
 WindowCenter = 20

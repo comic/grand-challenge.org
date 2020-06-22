@@ -27,6 +27,7 @@ NUMPY_IMAGE_TYPES = {
 
 OPTIONAL_METADATA_FIELDS = (
     # These fields will be included in the output mha file
+    "Laterality",
     "PatientID",
     "PatientName",
     "PatientBirthDate",

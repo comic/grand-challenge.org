@@ -13,6 +13,7 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
     list_display = [
         "pk",
         "created",
+        "maximum_duration",
         "status",
         "creator",
         "region",

@@ -25,6 +25,7 @@ SeriesInstanceUID = 1.2.3.4
 PatientBirthDate = 20200101
 PatientAge = 001Y
 PatientSex = M
+Laterality = R
 StudyDescription = super awesome study
 SliceThickness = 2
 WindowCenter = 20.5

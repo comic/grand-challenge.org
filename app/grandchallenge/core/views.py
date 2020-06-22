@@ -105,7 +105,7 @@ class HomeTemplate(TemplateView):
                 bullet_points=[
                     "Upload algorithm container images",
                     "Manage access for clinical and non-clinical researchers",
-                    "Upload data for execution by your algorithm on our infractructure",
+                    "Upload data for execution by your algorithm on our infrastructure",
                 ],
                 url=reverse("algorithms:list"),
                 url_title="Algorithms",
