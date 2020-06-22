@@ -7,14 +7,14 @@ def init_default_interfaces(*_, **__):
 
     default_interfaces = [
         {
-            "title": "Medical Image",
+            "title": "Generic Medical Image",
             "kind": ComponentInterface.Kind.IMAGE,
             "relative_path": "",
         },
         {
-            "title": "Metrics JSON File",
-            "kind": ComponentInterface.Kind.JSON,
-            "relative_path": "metrics.json",
+            "title": "Generic Overlay",
+            "kind": ComponentInterface.Kind.HEAT_MAP,
+            "relative_path": "images",
         },
         {
             "title": "Results JSON File",
@@ -30,6 +30,11 @@ def init_default_interfaces(*_, **__):
             "title": "Predictions ZIP File",
             "kind": ComponentInterface.Kind.ZIP,
             "relative_path": "predictions.zip",
+        },
+        {
+            "title": "Metrics JSON File",
+            "kind": ComponentInterface.Kind.JSON,
+            "relative_path": "metrics.json",
         },
     ]
 

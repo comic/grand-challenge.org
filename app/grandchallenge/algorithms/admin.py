@@ -42,6 +42,8 @@ class JobAdmin(admin.ModelAdmin):
         "image",
         "creator",
         "algorithm_image",
+        "inputs",
+        "outputs",
     )
     search_fields = (
         "creator__username",

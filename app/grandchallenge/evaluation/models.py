@@ -328,10 +328,10 @@ class Config(UUIDModel):
 
     def set_default_interfaces(self):
         self.inputs.set(
-            [ComponentInterface.objects.get(title="Predictions CSV File")]
+            [ComponentInterface.objects.get(slug="predictions-csv-file")]
         )
         self.outputs.set(
-            [ComponentInterface.objects.get(title="Metrics JSON File")]
+            [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
 
     def get_absolute_url(self):
