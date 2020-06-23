@@ -23,6 +23,12 @@ Installation
     $ git clone https://github.com/comic/grand-challenge.org
     $ cd grand-challenge.org
 
+3. Add the following to your ``/etc/hosts`` file:
+
+.. code-block:: console
+
+    127.0.0.1 minio-protected
+
 3. You can then start the site by invoking
 
 .. code-block:: console
@@ -54,9 +60,11 @@ Running Grand-Challenge within a Windows environment requires additional steps b
 
     # Using Docker for Windows:
     127.0.0.1 gc.localhost
+    127.0.0.1 minio-protected
 
     # Using Docker Toolbox:
     192.168.99.100 gc.localhost
+    192.168.99.100 minio-protected
 
 
 4. Share the drive where this repository is located with Docker

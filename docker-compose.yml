@@ -33,8 +33,6 @@ services:
     environment:
       MINIO_ACCESS_KEY: minioprivate
       MINIO_SECRET_KEY: minioprivate12345
-    expose:
-      - 9000
     entrypoint: "/bin/sh"
     command: >-
       -c "
@@ -50,13 +48,13 @@ services:
     environment:
       MINIO_ACCESS_KEY: minioprotected
       MINIO_SECRET_KEY: minioprotected12345
-    expose:
-      - 9000
+    ports:
+      - "9001:9001"
     entrypoint: "/bin/sh"
     command: >-
       -c "
       mkdir -p /data/grand-challenge-protected/
-      && minio --compat server /data
+      && minio --compat server --address :9001 /data
       "
     restart: always
 
@@ -87,7 +85,7 @@ services:
       <<: &protected_storage_credentials
         PROTECTED_S3_STORAGE_ACCESS_KEY: minioprotected
         PROTECTED_S3_STORAGE_SECRET_KEY: minioprotected12345
-        PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected:9000
+        PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected:9001
       PUBLIC_S3_STORAGE_ACCESS_KEY: miniopublic
       PUBLIC_S3_STORAGE_SECRET_KEY: miniopublic12345
       PYTHONDONTWRITEBYTECODE: 1
