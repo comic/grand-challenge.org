@@ -12,9 +12,9 @@ def update_input_image_permissions(
     sender, instance, action, reverse, model, pk_set, **_
 ):
     """
-    Assign or remove view permissions to the algorithms editors when inputs
-    are added or remove to/from the algorithm jobs. Handles reverse
-    relations and clearing.
+    Assign or remove view_image permissions for the algorithms editors and
+    creators when inputs/outputs are added/removed to/from the algorithm jobs.
+    Handles reverse relations and clearing.
     """
     if action not in ["post_add", "post_remove", "pre_clear"]:
         # nothing to do for the other actions
@@ -31,7 +31,7 @@ def update_input_image_permissions(
 
     if reverse:
         component_interface_values = ComponentInterfaceValue.objects.filter(
-            pk=instance.pk
+            pk=instance.pk, image__isnull=False
         )
         if pk_set is None:
             # When using a _clear action, pk_set is None
@@ -50,9 +50,11 @@ def update_input_image_permissions(
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
             component_interface_values = getattr(
                 instance, forward_lookup
-            ).all()
+            ).filter(image__isnull=False)
         else:
-            component_interface_values = model.objects.filter(pk__in=pk_set)
+            component_interface_values = model.objects.filter(
+                pk__in=pk_set, image__isnull=False
+            )
 
     _update_image_permissions(
         jobs=jobs,
@@ -66,15 +68,15 @@ def _update_image_permissions(
     *, jobs, component_interface_values, operation, exclude_jobs: bool,
 ):
     for civ in component_interface_values:
-        if civ.image:
-            for job in jobs:
-                operation(
-                    "view_image",
-                    job.algorithm_image.algorithm.editors_group,
-                    civ.image,
-                )
-                operation("view_image", job.creator, civ.image)
-
-            civ.image.update_public_group_permissions(
-                exclude_jobs=jobs if exclude_jobs else None,
+        # image__isnull=False is used above so we know that civ.image exists
+        for job in jobs:
+            operation(
+                "view_image",
+                job.algorithm_image.algorithm.editors_group,
+                civ.image,
             )
+            operation("view_image", job.creator, civ.image)
+
+        civ.image.update_public_group_permissions(
+            exclude_jobs=jobs if exclude_jobs else None,
+        )
