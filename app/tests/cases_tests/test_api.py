@@ -6,13 +6,14 @@ from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
-    AlgorithmResultFactory,
+    AlgorithmJobFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import (
     RawImageFileFactory,
     RawImageUploadSessionFactory,
 )
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, StagedFileFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
@@ -348,12 +349,11 @@ def test_filter_images_api_view(client):
     user = UserFactory()
     alg.add_editor(user=user)
 
-    alg_result = AlgorithmResultFactory(
-        job__algorithm_image__algorithm=alg, job__creator=user
-    )
+    alg_job = AlgorithmJobFactory(algorithm_image__algorithm=alg, creator=user)
 
     im = ImageFactory()
-    alg_result.images.add(im)
+    civ = ComponentInterfaceValueFactory(image=im)
+    alg_job.outputs.add(civ)
 
     response = get_view_for_user(
         viewname="api:image-list",
@@ -363,7 +363,7 @@ def test_filter_images_api_view(client):
     )
     assert response.status_code == 200
     assert {r["pk"] for r in response.json()["results"]} == {
-        str(i.pk) for i in [alg_result.job.image, im]
+        str(i.pk) for i in [*[inpt.image for inpt in alg_job.inputs.all()], im]
     }
 
     response = get_view_for_user(

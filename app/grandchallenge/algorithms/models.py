@@ -23,7 +23,12 @@ from grandchallenge.components.backends.docker import (
     cleanup,
     get_file,
 )
-from grandchallenge.components.models import ComponentImage, ComponentJob
+from grandchallenge.components.models import (
+    ComponentImage,
+    ComponentInterface,
+    ComponentInterfaceValue,
+    ComponentJob,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.jqfileupload.models import StagedFile
@@ -32,6 +37,9 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
+DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):
@@ -79,6 +87,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         ),
     )
 
+    inputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="algorithm_inputs"
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="algorithm_outputs"
+    )
+
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
         permissions = [("execute_algorithm", "Can execute algorithm")]
@@ -104,6 +119,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
         super().save(*args, **kwargs)
 
+        if adding:
+            self.set_default_interfaces()
+
         self.assign_permissions()
         self.assign_workstation_permissions()
 
@@ -113,6 +131,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         )
         self.users_group = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
+        )
+
+    def set_default_interfaces(self):
+        self.inputs.set(
+            [ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)]
+        )
+        self.outputs.set(
+            [ComponentInterface.objects.get(slug="results-json-file")]
         )
 
     def assign_permissions(self):
@@ -281,53 +307,8 @@ class Result(UUIDModel):
     output = JSONField(default=dict, editable=False)
     comment = models.TextField(blank=True, default="")
 
-    def get_absolute_url(self):
-        return reverse(
-            "algorithms:result-detail",
-            kwargs={
-                "pk": self.pk,
-                "slug": self.job.algorithm_image.algorithm.slug,
-            },
-        )
-
-    @property
-    def api_url(self):
-        return reverse("api:algorithms-result-detail", kwargs={"pk": self.pk})
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.assign_permissions()
-
-    def assign_permissions(self):
-        # Algorithm editors and job creators can view this result
-        assign_perm(
-            f"view_{self._meta.model_name}",
-            self.job.algorithm_image.algorithm.editors_group,
-            self,
-        )
-        assign_perm(f"view_{self._meta.model_name}", self.job.creator, self)
-
-        # Algorithm editors can change this result
-        assign_perm(
-            f"change_{self._meta.model_name}",
-            self.job.algorithm_image.algorithm.editors_group,
-            self,
-        )
-
-        g = Group.objects.get(
-            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-        )
-
-        if self.public:
-            assign_perm(f"view_{self._meta.model_name}", g, self)
-        else:
-            remove_perm(f"view_{self._meta.model_name}", g, self)
-
-        for image in self.images.all():
-            image.update_public_group_permissions()
-
-        if self.job:
-            self.job.image.update_public_group_permissions()
+    class Meta:
+        ordering = ("created",)
 
 
 class AlgorithmExecutor(Executor):
@@ -422,10 +403,24 @@ class Job(UUIDModel, ComponentJob):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
-    image = models.ForeignKey("cases.Image", on_delete=models.CASCADE)
+    image = models.ForeignKey(
+        "cases.Image", null=True, on_delete=models.SET_NULL
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    public = models.BooleanField(
+        default=False,
+        help_text=(
+            "If True, allow anyone to view this result along "
+            "with the input image. Otherwise, only the job creator and "
+            "algorithm editor will have permission to view this result."
+        ),
+    )
+    comment = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ("created",)
 
     @property
     def container(self):
@@ -433,16 +428,28 @@ class Job(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
-        return [c.file for c in self.image.files.all()]
+        return [
+            im.file
+            for inpt in self.inputs.all()
+            for im in inpt.image.files.all()
+        ]
 
     @property
     def executor_cls(self):
         return AlgorithmExecutor
 
     def create_result(self, *, result: dict):
-        instance, _ = Result.objects.get_or_create(job_id=self.pk)
-        instance.output = result
-        instance.save()
+        interface = ComponentInterface.objects.get(slug="results-json-file")
+
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = result
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=result
+            )
+            self.outputs.add(output_civ)
 
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
@@ -452,40 +459,44 @@ class Job(UUIDModel, ComponentJob):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
-        adding = self._state.adding
-        image_changed = False
-
-        if not adding:
-            orig = Job.objects.get(pk=self.pk)
-            if orig.image != self.image:
-                image_changed = True
-
         super().save(*args, **kwargs)
 
-        if adding:
-            self.assign_permissions()
-            self.image.update_public_group_permissions()
-        elif image_changed:
-            self.image.update_public_group_permissions()
-            orig.image.update_public_group_permissions()
+        self.assign_permissions()
+        self.assign_public_permissions()
+        self.update_interface_image_permissions()
 
     def assign_permissions(self):
-        # Editors and creators can view this job and the related image
+        # Editors and creators can view this job
         assign_perm(
             f"view_{self._meta.model_name}",
             self.algorithm_image.algorithm.editors_group,
             self,
         )
-        assign_perm(
-            f"view_{self.image._meta.model_name}",
-            self.algorithm_image.algorithm.editors_group,
-            self.image,
-        )
+
         if self.creator:
             assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-            assign_perm(
-                f"view_{self.image._meta.model_name}", self.creator, self.image
-            )
+
+        # Algorithm editors can change this job
+        assign_perm(
+            f"change_{self._meta.model_name}",
+            self.algorithm_image.algorithm.editors_group,
+            self,
+        )
+
+    def assign_public_permissions(self):
+        g = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", g, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", g, self)
+
+    def update_interface_image_permissions(self):
+        for interface_value in [*self.inputs.all(), *self.outputs.all()]:
+            if interface_value.image:
+                interface_value.image.update_public_group_permissions()
 
     def update_status(self, *args, **kwargs):
         res = super().update_status(*args, **kwargs)

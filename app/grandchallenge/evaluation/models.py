@@ -10,7 +10,11 @@ from django.utils.text import get_valid_filename
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
-from grandchallenge.components.models import ComponentImage, ComponentJob
+from grandchallenge.components.models import (
+    ComponentImage,
+    ComponentInterface,
+    ComponentJob,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
 from grandchallenge.core.validators import (
@@ -307,6 +311,29 @@ class Config(UUIDModel):
         ),
     )
 
+    inputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="evaluation_inputs"
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterface, related_name="evaluation_outputs"
+    )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.set_default_interfaces()
+
+    def set_default_interfaces(self):
+        self.inputs.set(
+            [ComponentInterface.objects.get(slug="predictions-csv-file")]
+        )
+        self.outputs.set(
+            [ComponentInterface.objects.get(slug="metrics-json-file")]
+        )
+
     def get_absolute_url(self):
         return reverse(
             "pages:home",
@@ -506,6 +533,14 @@ class Job(UUIDModel, ComponentJob):
 
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.schedule_job()
 
     @cached_property
     def challenge(self):

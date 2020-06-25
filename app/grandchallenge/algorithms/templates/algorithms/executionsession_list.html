@@ -59,10 +59,11 @@
                     <td>
                         <ul class="list-unstyled">
                             {% for image in object.image_set.all %}
-                                {% for job in image.job_set.all %}
-                                    <li>
-                                        <a href="#jobInfoModal"
-                                           class="badge
+                                {% for civ in image.componentinterfacevalue_set.all %}
+                                    {% for job in civ.algorithms_jobs_as_input.all %}
+                                        <li>
+                                            <a href="#jobInfoModal"
+                                               class="badge
                                             {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
                                                 badge-danger
                                             {% elif job.status == job.RETRY %}
@@ -72,20 +73,26 @@
                                             {% else %}
                                                 badge-info
                                             {% endif %}"
-                                           data-toggle="modal"
-                                           data-target="#jobInfoModal"
-                                           data-title="Job Info"
-                                           data-output="{% firstof job.output|user_error job.get_status_display %}"
-                                           data-pk="{{ job.pk }}"
-                                           title="Result Info">
-                                            <i class="fa fa-flask"></i> {{ job.image.name }} ({{ job.get_status_display }})
-                                        </a>
-                                    </li>
+                                               data-toggle="modal"
+                                               data-target="#jobInfoModal"
+                                               data-title="Job Info"
+                                               data-output="{% firstof job.output|user_error job.get_status_display %}"
+                                               data-pk="{{ job.pk }}"
+                                               title="Result Info">
+                                                <i class="fa fa-flask"></i>
+                                                {% for input in job.inputs.all %}
+                                                    {{ input.image.name }}
+                                                {% endfor %}
+                                                ({{ job.get_status_display }})
+                                            </a>
+                                        </li>
+                                    {% endfor %}
                                 {% endfor %}
                             {% endfor %}
                         </ul>
                     </td>
-                <td><a class="badge badge-primary" href="{% url 'algorithms:results-list' slug=algorithm.slug %}"><i class="fas fa-eye"></i> View Results</a></td>
+                    <td><a class="badge badge-primary" href="{% url 'algorithms:jobs-list' slug=algorithm.slug %}"><i
+                            class="fas fa-eye"></i> View Results</a></td>
                 </tr>
             {% endfor %}
             </tbody>

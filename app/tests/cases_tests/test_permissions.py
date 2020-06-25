@@ -6,7 +6,8 @@ from django.contrib.auth.models import AnonymousUser, Group, User
 from guardian.shortcuts import get_perms
 
 from grandchallenge.cases.permissions import ImagePermission
-from tests.algorithms_tests.factories import AlgorithmResultFactory
+from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory
 
 
@@ -54,36 +55,38 @@ class TestImagePermission:
 
 
 @pytest.mark.django_db
-def test_image_permission_with_algorithm_result():
+def test_image_permission_with_public_job():
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    result = AlgorithmResultFactory()
-    result_image = ImageFactory()
-    result.images.add(result_image)
+    job = AlgorithmJobFactory()
 
-    assert "view_image" not in get_perms(g_reg, result_image)
-    assert "view_image" not in get_perms(g_reg_anon, result_image)
-    assert "view_image" not in get_perms(g_reg, result.job.image)
-    assert "view_image" not in get_perms(g_reg_anon, result.job.image)
+    output_image = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=output_image)
+    job.outputs.add(civ)
 
-    result.public = True
-    result.save()
+    assert "view_image" not in get_perms(g_reg, output_image)
+    assert "view_image" not in get_perms(g_reg_anon, output_image)
+    assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
+    assert "view_image" not in get_perms(g_reg_anon, job.inputs.first().image)
 
-    assert "view_image" not in get_perms(g_reg, result_image)
-    assert "view_image" in get_perms(g_reg_anon, result_image)
-    assert "view_image" not in get_perms(g_reg, result.job.image)
-    assert "view_image" in get_perms(g_reg_anon, result.job.image)
+    job.public = True
+    job.save()
 
-    result.public = False
-    result.save()
+    assert "view_image" not in get_perms(g_reg, output_image)
+    assert "view_image" in get_perms(g_reg_anon, output_image)
+    assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
+    assert "view_image" in get_perms(g_reg_anon, job.inputs.first().image)
 
-    assert "view_image" not in get_perms(g_reg, result_image)
-    assert "view_image" not in get_perms(g_reg_anon, result_image)
-    assert "view_image" not in get_perms(g_reg, result.job.image)
-    assert "view_image" not in get_perms(g_reg_anon, result.job.image)
+    job.public = False
+    job.save()
+
+    assert "view_image" not in get_perms(g_reg, output_image)
+    assert "view_image" not in get_perms(g_reg_anon, output_image)
+    assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
+    assert "view_image" not in get_perms(g_reg_anon, job.inputs.first().image)
 
 
 @pytest.mark.django_db
@@ -93,31 +96,34 @@ def test_add_image_to_public_result():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    result = AlgorithmResultFactory(public=True)
-    result_images = ImageFactory(), ImageFactory()
+    job = AlgorithmJobFactory(public=True)
+    civ_images = (
+        ComponentInterfaceValueFactory(image=ImageFactory()),
+        ComponentInterfaceValueFactory(image=ImageFactory()),
+    )
 
-    for im in result_images:
-        assert "view_image" not in get_perms(g_reg, im)
-        assert "view_image" not in get_perms(g_reg_anon, im)
+    for im in civ_images:
+        assert "view_image" not in get_perms(g_reg, im.image)
+        assert "view_image" not in get_perms(g_reg_anon, im.image)
 
-    result.images.add(*result_images)
+    job.outputs.add(*civ_images)
 
-    for im in result_images:
-        assert "view_image" not in get_perms(g_reg, im)
-        assert "view_image" in get_perms(g_reg_anon, im)
+    for im in civ_images:
+        assert "view_image" not in get_perms(g_reg, im.image)
+        assert "view_image" in get_perms(g_reg_anon, im.image)
 
-    result.images.remove(result_images[0].pk)
+    job.outputs.remove(civ_images[0].pk)
 
-    assert "view_image" not in get_perms(g_reg, result_images[0])
-    assert "view_image" not in get_perms(g_reg_anon, result_images[0])
-    assert "view_image" not in get_perms(g_reg, result_images[1])
-    assert "view_image" in get_perms(g_reg_anon, result_images[1])
+    assert "view_image" not in get_perms(g_reg, civ_images[0].image)
+    assert "view_image" not in get_perms(g_reg_anon, civ_images[0].image)
+    assert "view_image" not in get_perms(g_reg, civ_images[1].image)
+    assert "view_image" in get_perms(g_reg_anon, civ_images[1].image)
 
-    result.images.clear()
+    job.outputs.clear()
 
-    for im in result_images:
-        assert "view_image" not in get_perms(g_reg, im)
-        assert "view_image" not in get_perms(g_reg_anon, im)
+    for im in civ_images:
+        assert "view_image" not in get_perms(g_reg, im.image)
+        assert "view_image" not in get_perms(g_reg_anon, im.image)
 
 
 @pytest.mark.django_db
@@ -127,31 +133,33 @@ def test_used_by_other_public_result_permissions():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    r_a = AlgorithmResultFactory(public=True)
-    r_b = AlgorithmResultFactory(public=True)
+    j1 = AlgorithmJobFactory(public=True)
+    j2 = AlgorithmJobFactory(public=True)
 
     shared_image = ImageFactory()
 
-    r_a.images.add(shared_image)
-    r_b.images.add(shared_image)
+    civ1 = ComponentInterfaceValueFactory(image=shared_image)
+    j1.outputs.add(civ1)
+    civ2 = ComponentInterfaceValueFactory(image=shared_image)
+    j2.outputs.add(civ2)
 
     assert "view_image" not in get_perms(g_reg, shared_image)
     assert "view_image" in get_perms(g_reg_anon, shared_image)
 
-    r_b.images.clear()
+    j2.outputs.clear()
 
     assert "view_image" not in get_perms(g_reg, shared_image)
     assert "view_image" in get_perms(g_reg_anon, shared_image)
 
-    r_b.images.add(shared_image)
-    r_b.public = False
-    r_b.save()
+    j2.outputs.add(civ2)
+    j2.public = False
+    j2.save()
 
     assert "view_image" not in get_perms(g_reg, shared_image)
     assert "view_image" in get_perms(g_reg_anon, shared_image)
 
-    r_a.public = False
-    r_a.save()
+    j1.public = False
+    j1.save()
 
     assert "view_image" not in get_perms(g_reg, shared_image)
     assert "view_image" not in get_perms(g_reg_anon, shared_image)
@@ -164,17 +172,7 @@ def test_change_job_image():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    i_orig = ImageFactory()
-    r = AlgorithmResultFactory(public=True, job__image=i_orig)
+    job = AlgorithmJobFactory(public=True)
 
-    assert "view_image" not in get_perms(g_reg, i_orig)
-    assert "view_image" in get_perms(g_reg_anon, i_orig)
-
-    i_new = ImageFactory()
-    r.job.image = i_new
-    r.job.save()
-
-    assert "view_image" not in get_perms(g_reg, i_orig)
-    assert "view_image" not in get_perms(g_reg_anon, i_orig)
-    assert "view_image" not in get_perms(g_reg, i_new)
-    assert "view_image" in get_perms(g_reg_anon, i_new)
+    assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
+    assert "view_image" in get_perms(g_reg_anon, job.inputs.first().image)

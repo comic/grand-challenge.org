@@ -10,7 +10,7 @@ def workstation_query(
     image=None,
     overlay=None,
     reader_study=None,
-    algorithm_result=None,
+    algorithm_job=None,
     config=None,
 ):
     """
@@ -36,9 +36,9 @@ def workstation_query(
         query = {
             settings.WORKSTATIONS_READY_STUDY_QUERY_PARAM: reader_study.pk
         }
-    elif algorithm_result:
+    elif algorithm_job:
         query = {
-            settings.WORKSTATIONS_ALGORITHM_RESULT_QUERY_PARAM: algorithm_result.pk
+            settings.WORKSTATIONS_ALGORITHM_JOB_QUERY_PARAM: algorithm_job.pk
         }
     else:
         query = {}

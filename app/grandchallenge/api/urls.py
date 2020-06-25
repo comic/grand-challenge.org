@@ -9,7 +9,6 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
     AlgorithmViewSet,
     JobViewSet,
-    ResultViewSet,
 )
 from grandchallenge.archives.views import ArchiveViewSet
 from grandchallenge.cases.views import (
@@ -47,9 +46,6 @@ router.register(
     r"algorithms/images", AlgorithmImageViewSet, basename="algorithms-image"
 )
 router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")
-router.register(
-    r"algorithms/results", ResultViewSet, basename="algorithms-result"
-)
 router.register(r"algorithms", AlgorithmViewSet, basename="algorithm")
 
 # Archives

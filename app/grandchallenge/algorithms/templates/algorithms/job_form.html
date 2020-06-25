@@ -12,10 +12,10 @@
                 href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ object.job.algorithm_image.algorithm.get_absolute_url }}">{{ object.job.algorithm_image.algorithm.title }}
+                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
         </a>
         <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:results-list' slug=object.job.algorithm_image.algorithm.slug %}">Results</a>
+                href="{% url 'algorithms:jobs-list' slug=object.algorithm_image.algorithm.slug %}">Results</a>
         <li class="breadcrumb-item"><a href="">{{ object.pk }}</a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Update
@@ -28,14 +28,18 @@
     <h2>Update Result</h2>
 
     <dl class="inline">
-        <dt>Result ID</dt>
+        <dt>ID</dt>
         <dd>{{ object.pk }}</dd>
 
-        <dt>Input Image ID</dt>
-        <dd>{{ object.job.image.pk }}</dd>
+        {% for input in object.inputs.all %}
 
-        <dt>Input Image Name</dt>
-        <dd>{{ object.job.image.name }}</dd>
+            <dt>Input Image {{ forloop.counter }} ID</dt>
+            <dd>{{ input.image.pk }}</dd>
+
+            <dt>Input Image {{ forloop.counter }} Name</dt>
+            <dd>{{ input.image.name }}</dd>
+
+        {% endfor %}
     </dl>
 
     {% crispy form %}

@@ -215,19 +215,17 @@ class PaginatedTableListView(ListView):
     def get_paginator(self, *, data, page_size):
         return Paginator(data, page_size)
 
-    def get_row_context(self, result, *args, **kwargs):
+    def get_row_context(self, job, *args, **kwargs):
         pass
 
-    def render_row_data(self, result, *args, **kwargs):
+    def render_row_data(self, job, *args, **kwargs):
         return render_to_string(
             self.row_template,
-            context=self.get_row_context(result, *args, **kwargs),
+            context=self.get_row_context(job, *args, **kwargs),
         ).split("<split/>")
 
-    def get_data(self, results, *args, **kwargs):
-        return [
-            self.render_row_data(result, *args, **kwargs) for result in results
-        ]
+    def get_data(self, jobs, *args, **kwargs):
+        return [self.render_row_data(job, *args, **kwargs) for job in jobs]
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -245,13 +243,13 @@ class PaginatedTableListView(ListView):
             qs = self.get_unfiltered_queryset()
             data = self.get_filtered_queryset(qs, search, order_by)
             paginator = self.get_paginator(data=data, page_size=page_size)
-            results = paginator.page(page)
+            jobs = paginator.page(page)
             return JsonResponse(
                 {
                     "draw": int(request.GET.get("draw")),
                     "recordsTotal": qs.count(),
                     "recordsFiltered": paginator.count,
-                    "data": self.get_data(results),
+                    "data": self.get_data(jobs),
                 }
             )
         return response

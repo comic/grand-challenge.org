@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import Q
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -499,27 +500,32 @@ class Image(UUIDModel):
             group = Group.objects.get(name=group_name)
             assign_perm("view_image", group, self)
 
-    def update_public_group_permissions(self, *, exclude_results=None):
+    def update_public_group_permissions(self, *, exclude_jobs=None):
         """
         Update the permissions for the REGISTERED_AND_ANON_USERS_GROUP to
         view this image.
 
         Parameters
         ----------
-        exclude_results
+        exclude_jobs
             Exclude these results from being considered. This is useful
             when a many to many relationship is being cleared to remove this
             image from the results image set, and is used when the pre_clear
             signal is sent.
         """
-        if exclude_results is None:
-            exclude_results = []
+        if exclude_jobs is None:
+            exclude_jobs = []
 
         should_be_public = (
-            self.algorithm_results.filter(public=True)
-            .exclude(pk__in=[r.pk for r in exclude_results])
+            self.componentinterfacevalue_set.filter(
+                Q(algorithms_jobs_as_input__public=True)
+                | Q(algorithms_jobs_as_output__public=True)
+            )
+            .exclude(
+                Q(algorithms_jobs_as_input__in=exclude_jobs)
+                | Q(algorithms_jobs_as_output__in=exclude_jobs)
+            )
             .exists()
-            or self.job_set.filter(result__public=True).exists()
         )
 
         g = Group.objects.get(

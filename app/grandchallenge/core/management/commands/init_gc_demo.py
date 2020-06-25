@@ -303,14 +303,10 @@ class Command(BaseCommand):
             creator=self.users["algorithm"],
             algorithm_image=algorithm_image,
             image=cases_image,
+            status=Job.SUCCESS,
         )
         algorithms_job.save()
-
-        algorithms_result = grandchallenge.algorithms.models.Result(
-            output={"cancer_score": 0.5}, job=algorithms_job
-        )
-        algorithms_result.save()
-        algorithms_result.images.add(cases_image)
+        algorithms_job.create_result(result={"cancer_score": 0.5})
 
     def _create_workstation(self):
         w = Workstation.objects.create(

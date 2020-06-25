@@ -235,7 +235,7 @@ class Executor(DockerConnection):
             logs = self._client.containers.run(
                 image=self._exec_image_sha256,
                 volumes={
-                    self._input_volume: {"bind": "/input/", "mode": "rw"},
+                    self._input_volume: {"bind": "/input/", "mode": "ro"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
                 name=f"{self._job_label}-executor",

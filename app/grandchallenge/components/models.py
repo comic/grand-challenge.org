@@ -2,19 +2,145 @@ from decimal import Decimal
 from typing import Tuple, Type
 
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.core.files import File
 from django.db import models
 from django.db.models import Avg, F
+from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
+from django_extensions.db.fields import AutoSlugField
 
+from grandchallenge.cases.models import Image
 from grandchallenge.components.backends.docker import Executor
-from grandchallenge.components.tasks import execute_job
-from grandchallenge.core.storage import private_s3_storage
+from grandchallenge.components.tasks import execute_job, validate_docker_image
+from grandchallenge.components.validators import validate_safe_path
+from grandchallenge.core.storage import (
+    private_s3_storage,
+    protected_s3_storage,
+)
 from grandchallenge.core.validators import ExtensionValidator
 
 
-class ComponentQuerySet(models.QuerySet):
+class InterfaceKindChoices(models.TextChoices):
+    STRING = "STR", _("String")
+    INTEGER = "INT", _("Integer")
+    FLOAT = "FLT", _("Float")
+    BOOL = "BOOL", _("Bool")
+
+    # Annotation Types
+    TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
+    MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
+    DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
+    MULTIPLE_DISTANCE_MEASUREMENTS = (
+        "MDIS",
+        _("Multiple distance measurements"),
+    )
+    POINT = "POIN", _("Point")
+    MULTIPLE_POINTS = "MPOI", _("Multiple points")
+    POLYGON = "POLY", _("Polygon")
+    MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
+
+    # Choice Types
+    CHOICE = "CHOI", _("Choice")
+    MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
+
+    # Image types
+    IMAGE = "IMG", _("Image")
+    SEGMENTATION = "SEG", _("Segmentation")
+    HEAT_MAP = "HMAP", _("Heat Map")
+
+    # Legacy support
+    JSON = "JSON", _("JSON file")
+    CSV = "CSV", _("CSV file")
+    ZIP = "ZIP", _("ZIP file")
+
+
+class ComponentInterface(models.Model):
+    Kind = InterfaceKindChoices
+
+    title = models.CharField(
+        max_length=255,
+        help_text="Human readable name of this input/output field.",
+        unique=True,
+    )
+    slug = AutoSlugField(populate_from="title")
+    description = models.TextField(
+        blank=True, help_text="Description of this input/output field.",
+    )
+    default_value = JSONField(
+        null=True,
+        default=None,
+        help_text="Default value for this field, only valid for inputs.",
+    )
+    kind = models.CharField(
+        blank=False,
+        max_length=4,
+        choices=Kind.choices,
+        help_text=(
+            "What is the type of this interface? Used to validate interface "
+            "values and connections between components."
+        ),
+    )
+    relative_path = models.CharField(
+        max_length=255,
+        help_text=(
+            "The path to the entity that implements this interface relative "
+            "to the input or output directory."
+        ),
+        unique=True,
+        validators=[validate_safe_path],
+    )
+
+    def __str__(self):
+        return f"Component Interface {self.title} ({self.get_kind_display()})"
+
+    @property
+    def input_path(self):
+        return safe_join("/input", self.relative_path)
+
+    @property
+    def output_path(self):
+        return safe_join("/output", self.relative_path)
+
+    class Meta:
+        ordering = ("pk",)
+
+
+def component_interface_value_path(instance, filename):
+    # Convert the pk to a hex, padded to 4 chars with zeros
+    pk_as_padded_hex = f"{instance.pk:04x}"
+
+    return (
+        f"{instance._meta.app_label.lower()}/"
+        f"{instance._meta.model_name.lower()}/"
+        f"{pk_as_padded_hex[-4:-2]}/{pk_as_padded_hex[-2:]}/{instance.pk}/"
+        f"{get_valid_filename(filename)}"
+    )
+
+
+class ComponentInterfaceValue(models.Model):
+    """Encapsulates the value of an interface at a certain point in the graph."""
+
+    id = models.BigAutoField(primary_key=True)
+    interface = models.ForeignKey(
+        to=ComponentInterface, on_delete=models.CASCADE
+    )
+    value = JSONField(null=True, default=None)
+    file = models.FileField(
+        upload_to=component_interface_value_path, storage=protected_s3_storage
+    )
+    image = models.ForeignKey(to=Image, null=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Component Interface Value {self.pk} for {self.interface}"
+
+    class Meta:
+        ordering = ("pk",)
+
+
+class DurationQuerySet(models.QuerySet):
     def with_duration(self):
         """Annotate the queryset with the duration of completed jobs"""
         return self.annotate(duration=F("completed_at") - F("started_at"))
@@ -54,7 +180,16 @@ class ComponentJob(models.Model):
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
 
-    objects = ComponentQuerySet.as_manager()
+    inputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_input",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_output",
+    )
+
+    objects = DurationQuerySet.as_manager()
 
     def update_status(self, *, status: STATUS_CHOICES, output: str = ""):
         self.status = status
@@ -175,6 +310,20 @@ class ComponentImage(models.Model):
     requires_cpu_cores = models.DecimalField(
         default=Decimal("1.0"), max_digits=4, decimal_places=2
     )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            validate_docker_image.apply_async(
+                kwargs={
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "pk": self.pk,
+                }
+            )
 
     class Meta:
         abstract = True

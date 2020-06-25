@@ -3,11 +3,11 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_group_perms, get_perms
 
+from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmJobFactory,
-    AlgorithmResultFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.cases_tests.factories import RawImageUploadSessionFactory
@@ -132,7 +132,7 @@ def test_algorithm_detail_view_permissions(client, view_name, index):
 
 
 @pytest.mark.django_db
-def test_algorithm_results_list_view(client):
+def test_algorithm_jobs_list_view(client):
     # This view is a bit special, everyone should be able to
     # view it, but the results should be filtered
 
@@ -145,42 +145,43 @@ def test_algorithm_results_list_view(client):
 
     j1, j2 = (
         AlgorithmJobFactory(
-            algorithm_image__algorithm=alg_set.alg1, creator=extra_user1
+            algorithm_image__algorithm=alg_set.alg1,
+            creator=extra_user1,
+            status=Job.SUCCESS,
         ),
         AlgorithmJobFactory(
-            algorithm_image__algorithm=alg_set.alg2, creator=extra_user2
+            algorithm_image__algorithm=alg_set.alg2,
+            creator=extra_user2,
+            status=Job.SUCCESS,
         ),
     )
 
-    # Create the results
-    r1, r2 = AlgorithmResultFactory(job=j1), AlgorithmResultFactory(job=j2)
-
-    all_results = {r1, r2}
+    all_jobs = {j1, j2}
 
     tests = (
         (None, alg_set.alg1, 200, set()),
         (None, alg_set.alg2, 200, set()),
         (alg_set.creator, alg_set.alg1, 200, set()),
         (alg_set.creator, alg_set.alg2, 200, set()),
-        (alg_set.editor1, alg_set.alg1, 200, {r1}),
+        (alg_set.editor1, alg_set.alg1, 200, {j1}),
         (alg_set.editor1, alg_set.alg2, 200, set()),
         (alg_set.user1, alg_set.alg1, 200, set()),
         (alg_set.user1, alg_set.alg2, 200, set()),
         (alg_set.editor2, alg_set.alg1, 200, set()),
-        (alg_set.editor2, alg_set.alg2, 200, {r2}),
+        (alg_set.editor2, alg_set.alg2, 200, {j2}),
         (alg_set.user2, alg_set.alg1, 200, set()),
         (alg_set.user2, alg_set.alg2, 200, set()),
         (alg_set.u, alg_set.alg1, 200, set()),
         (alg_set.u, alg_set.alg2, 200, set()),
-        (extra_user1, alg_set.alg1, 200, {r1}),
+        (extra_user1, alg_set.alg1, 200, {j1}),
         (extra_user1, alg_set.alg2, 200, set()),
         (extra_user2, alg_set.alg1, 200, set()),
-        (extra_user2, alg_set.alg2, 200, {r2}),
+        (extra_user2, alg_set.alg2, 200, {j2}),
     )
 
     for test in tests:
         response = get_view_for_user(
-            viewname="algorithms:results-list",
+            viewname="algorithms:jobs-list",
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],
@@ -191,11 +192,11 @@ def test_algorithm_results_list_view(client):
 
         # Check that the results are filtered
         if response.status_code == 200:
-            expected_results = test[3]
-            excluded_results = all_results - expected_results
+            expected_jobs = test[3]
+            excluded_jobs = all_jobs - expected_jobs
             data = response.json()["data"]
-            assert all(str(j.pk) in str(data) for j in expected_results)
-            assert all(str(j.pk) not in str(data) for j in excluded_results)
+            assert all(str(j.pk) in str(data) for j in expected_jobs)
+            assert all(str(j.pk) not in str(data) for j in excluded_jobs)
 
 
 @pytest.mark.django_db
@@ -358,30 +359,30 @@ def test_algorithm_image_edit_view_permissions(client, view_name):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view_name", ["result-update"])
-def test_result_update_permissions(client, view_name):
+@pytest.mark.parametrize("view_name", ["job-update"])
+def test_job_update_permissions(client, view_name):
     alg_set = TwoAlgorithms()
 
-    r1, r2 = (
-        AlgorithmResultFactory(job__algorithm_image__algorithm=alg_set.alg1),
-        AlgorithmResultFactory(job__algorithm_image__algorithm=alg_set.alg2),
+    j1, j2 = (
+        AlgorithmJobFactory(algorithm_image__algorithm=alg_set.alg1),
+        AlgorithmJobFactory(algorithm_image__algorithm=alg_set.alg2),
     )
 
     tests = (
-        (None, r1, 302),
-        (None, r2, 302),
-        (alg_set.creator, r1, 403),
-        (alg_set.creator, r2, 403),
-        (alg_set.editor1, r1, 200),
-        (alg_set.editor1, r2, 403),
-        (alg_set.user1, r1, 403),
-        (alg_set.user1, r2, 403),
-        (alg_set.editor2, r1, 403),
-        (alg_set.editor2, r2, 200),
-        (alg_set.user2, r1, 403),
-        (alg_set.user2, r2, 403),
-        (alg_set.u, r1, 403),
-        (alg_set.u, r2, 403),
+        (None, j1, 302),
+        (None, j2, 302),
+        (alg_set.creator, j1, 403),
+        (alg_set.creator, j2, 403),
+        (alg_set.editor1, j1, 200),
+        (alg_set.editor1, j2, 403),
+        (alg_set.user1, j1, 403),
+        (alg_set.user1, j2, 403),
+        (alg_set.editor2, j1, 403),
+        (alg_set.editor2, j2, 200),
+        (alg_set.user2, j1, 403),
+        (alg_set.user2, j2, 403),
+        (alg_set.u, j1, 403),
+        (alg_set.u, j2, 403),
     )
 
     for test in tests:
@@ -390,7 +391,7 @@ def test_result_update_permissions(client, view_name):
             client=client,
             user=test[0],
             reverse_kwargs={
-                "slug": test[1].job.algorithm_image.algorithm.slug,
+                "slug": test[1].algorithm_image.algorithm.slug,
                 "pk": test[1].pk,
             },
         )
@@ -517,51 +518,9 @@ def test_api_job_list_permissions(client):
             assert response.status_code == 200
 
             image_pks = {obj["pk"] for obj in response.json()["results"]}
-            assert image_pks == {str(j.image.pk) for j in test[2]}
-
-
-@pytest.mark.django_db
-def test_api_result_list_permissions(client):
-    alg_set = TwoAlgorithms()
-
-    j1_creator, j2_creator = UserFactory(), UserFactory()
-
-    alg1_result_pk = AlgorithmResultFactory(
-        job__algorithm_image__algorithm=alg_set.alg1, job__creator=j1_creator
-    ).pk
-    alg2_result_pk = AlgorithmResultFactory(
-        job__algorithm_image__algorithm=alg_set.alg2, job__creator=j2_creator
-    ).pk
-
-    tests = (
-        (None, 401, []),
-        (alg_set.creator, 200, []),
-        (alg_set.editor1, 200, [alg1_result_pk]),
-        (alg_set.user1, 200, []),
-        (j1_creator, 200, [alg1_result_pk]),
-        (alg_set.editor2, 200, [alg2_result_pk]),
-        (alg_set.user2, 200, []),
-        (j2_creator, 200, [alg2_result_pk]),
-        (alg_set.u, 200, []),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname="api:algorithms-result-list",
-            client=client,
-            user=test[0],
-            content_type="application/json",
-        )
-        assert response.status_code == test[1]
-
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
-
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+            assert image_pks == {
+                str(i.image.pk) for j in test[2] for i in j.inputs.all()
+            }
 
 
 @pytest.mark.django_db
@@ -621,24 +580,24 @@ def test_visible_to_public_group_permissions():
 
 
 @pytest.mark.django_db
-def test_public_result_group_permissions():
+def test_public_job_group_permissions():
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
-    algorithm_result = AlgorithmResultFactory()
+    algorithm_job = AlgorithmJobFactory()
 
-    assert "view_result" not in get_perms(g_reg, algorithm_result)
-    assert "view_result" not in get_perms(g_reg_anon, algorithm_result)
+    assert "view_job" not in get_perms(g_reg, algorithm_job)
+    assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
 
-    algorithm_result.public = True
-    algorithm_result.save()
+    algorithm_job.public = True
+    algorithm_job.save()
 
-    assert "view_result" not in get_perms(g_reg, algorithm_result)
-    assert "view_result" in get_perms(g_reg_anon, algorithm_result)
+    assert "view_job" not in get_perms(g_reg, algorithm_job)
+    assert "view_job" in get_perms(g_reg_anon, algorithm_job)
 
-    algorithm_result.public = False
-    algorithm_result.save()
+    algorithm_job.public = False
+    algorithm_job.save()
 
-    assert "view_result" not in get_perms(g_reg, algorithm_result)
-    assert "view_result" not in get_perms(g_reg_anon, algorithm_result)
+    assert "view_job" not in get_perms(g_reg, algorithm_job)
+    assert "view_job" not in get_perms(g_reg_anon, algorithm_job)

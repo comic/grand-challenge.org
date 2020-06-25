@@ -4,6 +4,7 @@ from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.components.models import InterfaceKindChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -81,3 +82,45 @@ def test_algorithm_job_update_status():
             in email.body
         )
     assert remaining_recipients == set()
+
+
+@pytest.mark.django_db
+def test_default_interfaces_created():
+    a = AlgorithmFactory()
+
+    assert {i.kind for i in a.inputs.all()} == {InterfaceKindChoices.IMAGE}
+    assert {o.kind for o in a.outputs.all()} == {InterfaceKindChoices.JSON}
+
+
+@pytest.mark.django_db
+def test_outputs_are_set():
+    j = AlgorithmJobFactory()
+    j.create_result(result={"dsaf": 35421})
+
+    outputs = j.outputs.all()
+    assert len(outputs) == 1
+    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
+    assert outputs[0].value == {"dsaf": 35421}
+
+    job = AlgorithmJobFactory()
+    job.create_result(result={"foo": 13.37})
+
+    outputs = job.outputs.all()
+    assert len(outputs) == 1
+    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
+    assert outputs[0].value == {"foo": 13.37}
+
+    job.create_result(result={"bar": 13.37})
+    job.refresh_from_db()
+
+    outputs = job.outputs.all()
+    assert len(outputs) == 1
+    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
+    assert outputs[0].value == {"bar": 13.37}
+
+    # the original job should not be modified
+    j.refresh_from_db()
+    outputs = j.outputs.all()
+    assert len(outputs) == 1
+    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
+    assert outputs[0].value == {"dsaf": 35421}
