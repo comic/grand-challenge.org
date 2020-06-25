@@ -1,6 +1,7 @@
 import os
 import tarfile
 import zipfile
+from collections import defaultdict
 from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -394,6 +395,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     collected_associated_files = []
     collected_associated_folders = []
     consumed_files = []
+    file_errors = defaultdict(list)
 
     for algorithm in IMAGE_BUILDER_ALGORITHMS:
         algorithm_result = algorithm(
@@ -410,20 +412,19 @@ def _handle_raw_image_files(tmp_dir, upload_session):
             if filepath in unconsumed_files:
                 unconsumed_files.remove(filepath)
 
-        for (filepath, msg,) in algorithm_result.file_errors_map.items():
-            if filepath in unconsumed_files:
-                raw_image = filepath_lookup[
-                    str(filepath)
-                ]  # type: RawImageFile
-                raw_image.error = raw_image.error or ""
-                raw_image.error += f"{msg}\n"
-                raw_image.consumed = False
-                raw_image.save()
+        for filepath, msg in algorithm_result.file_errors_map.items():
+            file_errors[str(filepath)].append(msg)
 
     for filepath in consumed_files:
         raw_image = filepath_lookup[str(filepath)]
         raw_image.error = None
         raw_image.consumed = True
+        raw_image.save()
+
+    for filepath in unconsumed_files:
+        raw_image = filepath_lookup[str(filepath)]
+        raw_image.error = "\n".join(file_errors[str(filepath)])
+        raw_image.consumed = False
         raw_image.save()
 
     for image in collected_images:
