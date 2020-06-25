@@ -32,7 +32,7 @@ class ImageSerializer(serializers.ModelSerializer):
         return [
             job.api_url
             for civ in obj.componentinterfacevalue_set.all()
-            for job in civ.algorithms_job_inputs.all()
+            for job in civ.algorithms_jobs_as_input.all()
         ]
 
     class Meta:

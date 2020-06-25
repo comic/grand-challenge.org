@@ -380,7 +380,7 @@ class AlgorithmExecutionSessionList(
         return (
             qs.filter(algorithm_image__algorithm=self.algorithm)
             .prefetch_related(
-                "image_set__componentinterfacevalue_set__algorithms_job_inputs"
+                "image_set__componentinterfacevalue_set__algorithms_jobs_as_input"
             )
             .select_related("creator__user_profile")
         )

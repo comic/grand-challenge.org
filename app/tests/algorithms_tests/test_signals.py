@@ -36,11 +36,11 @@ def test_user_can_download_images(client, reverse):
 
     if reverse:
         for im in [iv1, iv2, iv3, iv4]:
-            im.algorithms_job_outputs.add(alg1_job, alg2_job)
+            im.algorithms_jobs_as_output.add(alg1_job, alg2_job)
         for im in [iv3, iv4]:
-            im.algorithms_job_outputs.remove(alg1_job, alg2_job)
+            im.algorithms_jobs_as_output.remove(alg1_job, alg2_job)
         for im in [iv1, iv2]:
-            im.algorithms_job_outputs.remove(alg2_job)
+            im.algorithms_jobs_as_output.remove(alg2_job)
     else:
         # Test that adding images works
         alg1_job.outputs.add(iv1, iv2, iv3, iv4)
@@ -95,8 +95,8 @@ def test_user_can_download_images(client, reverse):
 
     # Test clearing
     if reverse:
-        iv1.algorithms_job_outputs.clear()
-        iv2.algorithms_job_outputs.clear()
+        iv1.algorithms_jobs_as_output.clear()
+        iv2.algorithms_jobs_as_output.clear()
     else:
         alg1_job.outputs.clear()
 
@@ -136,11 +136,11 @@ def test_user_can_download_input_images(client, reverse):
 
     if reverse:
         for iv in [iv1, iv2, iv3, iv4]:
-            iv.algorithms_job_inputs.add(alg1_job, alg2_job)
+            iv.algorithms_jobs_as_input.add(alg1_job, alg2_job)
         for iv in [iv3, iv4]:
-            iv.algorithms_job_inputs.remove(alg1_job, alg2_job)
+            iv.algorithms_jobs_as_input.remove(alg1_job, alg2_job)
         for iv in [iv1, iv2]:
-            iv.algorithms_job_inputs.remove(alg2_job)
+            iv.algorithms_jobs_as_input.remove(alg2_job)
     else:
         # Test that adding images works
         alg1_job.inputs.add(iv1, iv2, iv3, iv4)
@@ -183,8 +183,8 @@ def test_user_can_download_input_images(client, reverse):
 
     # Test clearing
     if reverse:
-        iv1.algorithms_job_inputs.clear()
-        iv2.algorithms_job_inputs.clear()
+        iv1.algorithms_jobs_as_input.clear()
+        iv2.algorithms_jobs_as_input.clear()
     else:
         alg1_job.inputs.clear()
 

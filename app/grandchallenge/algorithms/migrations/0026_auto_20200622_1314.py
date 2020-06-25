@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
             model_name="job",
             name="inputs",
             field=models.ManyToManyField(
-                related_name="algorithms_job_inputs",
+                related_name="algorithms_jobs_as_input",
                 to="components.ComponentInterfaceValue",
             ),
         ),
@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
             model_name="job",
             name="outputs",
             field=models.ManyToManyField(
-                related_name="algorithms_job_outputs",
+                related_name="algorithms_jobs_as_output",
                 to="components.ComponentInterfaceValue",
             ),
         ),

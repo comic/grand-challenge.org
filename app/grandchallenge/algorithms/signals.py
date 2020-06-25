@@ -22,10 +22,10 @@ def update_input_image_permissions(
 
     if sender._meta.label_lower == "algorithms.job_inputs":
         forward_lookup = "inputs"
-        reverse_lookup = "algorithms_job_inputs"
+        reverse_lookup = "algorithms_jobs_as_input"
     elif sender._meta.label_lower == "algorithms.job_outputs":
         forward_lookup = "outputs"
-        reverse_lookup = "algorithms_job_outputs"
+        reverse_lookup = "algorithms_jobs_as_output"
     else:
         raise RuntimeError("m2m is only valid for Job inputs and outputs.")
 

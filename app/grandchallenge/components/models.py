@@ -179,11 +179,11 @@ class ComponentJob(models.Model):
 
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
-        related_name="%(app_label)s_%(class)s_inputs",
+        related_name="%(app_label)s_%(class)ss_as_input",
     )
     outputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
-        related_name="%(app_label)s_%(class)s_outputs",
+        related_name="%(app_label)s_%(class)ss_as_output",
     )
 
     objects = DurationQuerySet.as_manager()

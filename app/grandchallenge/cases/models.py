@@ -518,12 +518,12 @@ class Image(UUIDModel):
 
         should_be_public = (
             self.componentinterfacevalue_set.filter(
-                Q(algorithms_job_inputs__public=True)
-                | Q(algorithms_job_outputs__public=True)
+                Q(algorithms_jobs_as_input__public=True)
+                | Q(algorithms_jobs_as_output__public=True)
             )
             .exclude(
-                Q(algorithms_job_inputs__in=exclude_jobs)
-                | Q(algorithms_job_outputs__in=exclude_jobs)
+                Q(algorithms_jobs_as_input__in=exclude_jobs)
+                | Q(algorithms_jobs_as_output__in=exclude_jobs)
             )
             .exists()
         )

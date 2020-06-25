@@ -60,7 +60,7 @@
                         <ul class="list-unstyled">
                             {% for image in object.image_set.all %}
                                 {% for civ in image.componentinterfacevalue_set.all %}
-                                    {% for job in civ.algorithms_job_inputs.all %}
+                                    {% for job in civ.algorithms_jobs_as_input.all %}
                                         <li>
                                             <a href="#jobInfoModal"
                                                class="badge
