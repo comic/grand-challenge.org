@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             model_name="job",
             name="inputs",
             field=models.ManyToManyField(
-                related_name="evaluation_job_inputs",
+                related_name="evaluation_jobs_as_input",
                 to="components.ComponentInterfaceValue",
             ),
         ),
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
             model_name="job",
             name="outputs",
             field=models.ManyToManyField(
-                related_name="evaluation_job_outputs",
+                related_name="evaluation_jobs_as_output",
                 to="components.ComponentInterfaceValue",
             ),
         ),

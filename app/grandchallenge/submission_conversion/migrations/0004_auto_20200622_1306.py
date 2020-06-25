@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             model_name="submissiontoannotationsetjob",
             name="inputs",
             field=models.ManyToManyField(
-                related_name="submission_conversion_submissiontoannotationsetjob_inputs",
+                related_name="submission_conversion_submissiontoannotationsetjobs_as_input",
                 to="components.ComponentInterfaceValue",
             ),
         ),
@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
             model_name="submissiontoannotationsetjob",
             name="outputs",
             field=models.ManyToManyField(
-                related_name="submission_conversion_submissiontoannotationsetjob_outputs",
+                related_name="submission_conversion_submissiontoannotationsetjobs_as_output",
                 to="components.ComponentInterfaceValue",
             ),
         ),
