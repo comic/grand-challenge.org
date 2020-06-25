@@ -97,6 +97,11 @@ def test_outputs_are_set():
     j = AlgorithmJobFactory()
     j.create_result(result={"dsaf": 35421})
 
+    outputs = j.outputs.all()
+    assert len(outputs) == 1
+    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
+    assert outputs[0].value == {"dsaf": 35421}
+
     job = AlgorithmJobFactory()
     job.create_result(result={"foo": 13.37})
 
@@ -112,3 +117,10 @@ def test_outputs_are_set():
     assert len(outputs) == 1
     assert outputs[0].interface.kind == InterfaceKindChoices.JSON
     assert outputs[0].value == {"bar": 13.37}
+
+    # the original job should not be modified
+    j.refresh_from_db()
+    outputs = j.outputs.all()
+    assert len(outputs) == 1
+    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
+    assert outputs[0].value == {"dsaf": 35421}
