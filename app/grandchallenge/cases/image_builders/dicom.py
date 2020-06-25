@@ -8,7 +8,7 @@ import SimpleITK
 import numpy as np
 import pydicom
 
-from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 
 NUMPY_IMAGE_TYPES = {
@@ -176,7 +176,7 @@ def _extract_direction(dicom_ds, direction):
     return direction
 
 
-def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
+def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
     ref_origin = tuple(
         float(i) for i in getattr(ref_file, "ImagePositionPatient", (0, 0, 0))
@@ -255,7 +255,7 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     # Convert the SimpleITK image to our internal representation
     return convert_itk_to_internal(
         img,
-        name=f"{str(session_id)[:8]}-{dicom_ds.headers[0]['data'].StudyInstanceUID}-{dicom_ds.index}",
+        name=f"{created_image_prefix}-{dicom_ds.headers[0]['data'].StudyInstanceUID}-{dicom_ds.index}",
     )
 
 
@@ -326,7 +326,7 @@ def _create_itk_from_dcm(
 
 
 def image_builder_dicom(
-    files: List[Path], session_id=None
+    *, files: List[Path], created_image_prefix: str = ""
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -351,7 +351,9 @@ def image_builder_dicom(
     consumed_files = []
     for dicom_ds in studies:
         try:
-            n_image, n_image_files = _process_dicom_file(dicom_ds, session_id)
+            n_image, n_image_files = _process_dicom_file(
+                dicom_ds=dicom_ds, created_image_prefix=created_image_prefix
+            )
             new_images.append(n_image)
             new_image_files += n_image_files
             consumed_files += [d["file"] for d in dicom_ds.headers]

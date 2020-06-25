@@ -4,7 +4,7 @@ import zipfile
 from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Sequence, Tuple
+from typing import Dict, Sequence, Tuple
 from uuid import UUID
 
 from celery import shared_task
@@ -20,7 +20,6 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.cases.emails import send_failed_file_import
-from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.dicom import image_builder_dicom
 from grandchallenge.cases.image_builders.fallback import image_builder_fallback
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
@@ -380,7 +379,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         for f in unconsumed_files
     ]
 
-    filepath_lookup = {
+    filepath_lookup: Dict[str, RawImageFile] = {
         raw_image_file.staged_file_id
         and os.path.join(
             tmp_dir, StagedAjaxFile(raw_image_file.staged_file_id).name
@@ -389,30 +388,27 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         for raw_image_file in session_files
     }
 
+    created_image_prefix = str(upload_session.pk)[:8]
+
     collected_images = []
     collected_associated_files = []
     collected_associated_folders = []
+    consumed_files = []
 
     for algorithm in IMAGE_BUILDER_ALGORITHMS:
         algorithm_result = algorithm(
-            unconsumed_files, session_id=upload_session.pk
-        )  # type: ImageBuilderResult
+            files=unconsumed_files, created_image_prefix=created_image_prefix
+        )
         collected_images += list(algorithm_result.new_images)
         collected_associated_files += list(algorithm_result.new_image_files)
-
         collected_associated_folders += list(
             algorithm_result.new_folder_upload
         )
+        consumed_files += list(algorithm_result.consumed_files)
 
         for filepath in algorithm_result.consumed_files:
             if filepath in unconsumed_files:
                 unconsumed_files.remove(filepath)
-                raw_image = filepath_lookup[
-                    str(filepath)
-                ]  # type: RawImageFile
-                raw_image.error = None
-                raw_image.consumed = True
-                raw_image.save()
 
         for (filepath, msg,) in algorithm_result.file_errors_map.items():
             if filepath in unconsumed_files:
@@ -424,11 +420,18 @@ def _handle_raw_image_files(tmp_dir, upload_session):
                 raw_image.consumed = False
                 raw_image.save()
 
+    for filepath in consumed_files:
+        raw_image = filepath_lookup[str(filepath)]
+        raw_image.error = None
+        raw_image.consumed = True
+        raw_image.save()
+
     for image in collected_images:
         image.origin = upload_session
         store_image(
             image, collected_associated_files, collected_associated_folders,
         )
+
     _handle_image_relations(
         collected_images=collected_images, upload_session=upload_session
     )

@@ -13,7 +13,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 
-from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.models import FolderUpload, Image, ImageFile
 
 
@@ -370,7 +370,7 @@ def _load_gc_files(
 
 
 def image_builder_tiff(  # noqa: C901
-    files: List[Path], session_id=None
+    *, files: List[Path], **_
 ) -> ImageBuilderResult:
     new_images = []
     new_image_files = []

@@ -7,7 +7,7 @@ from PIL import Image
 from PIL.Image import DecompressionBombError
 from django.core.exceptions import ValidationError
 
-from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 
 
@@ -15,9 +15,7 @@ def format_error(message):
     return f"Fallback image builder: {message}"
 
 
-def image_builder_fallback(
-    files: List[Path], session_id=None
-) -> ImageBuilderResult:
+def image_builder_fallback(*, files: List[Path], **_) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 

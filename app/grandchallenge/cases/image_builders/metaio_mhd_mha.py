@@ -9,17 +9,17 @@ from typing import List, Mapping, Sequence, Tuple, Union
 
 import SimpleITK
 
-from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 from grandchallenge.cases.models import Image, ImageFile
 
 
 def image_builder_mhd(  # noqa: C901
-    files: List[Path], session_id=None
+    *, files: List[Path], **_
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -75,7 +75,7 @@ def image_builder_mhd(  # noqa: C901
 
     new_images = []
     new_image_files = []
-    consumed_files = set()
+    consumed_files = []
     invalid_file_errors = {}
     for file in files:
         try:
@@ -108,9 +108,9 @@ def image_builder_mhd(  # noqa: C901
             new_images.append(n_image)
             new_image_files += list(n_image_files)
 
-            consumed_files.add(file)
+            consumed_files.append(file)
             if file_dependency is not None:
-                consumed_files.add(file_dependency)
+                consumed_files.append(file_dependency)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,

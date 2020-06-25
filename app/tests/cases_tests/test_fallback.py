@@ -26,7 +26,7 @@ def test_image_builder_fallback(tmpdir, src, colorspace):
     dest = Path(tmpdir) / src.name
     shutil.copy(str(src), str(dest))
     files = [Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]]
-    result = image_builder_fallback(files)
+    result = image_builder_fallback(files=files)
     assert result.consumed_files == [dest]
     image = result.new_images[0]
     assert image.color_space == colorspace
@@ -41,7 +41,7 @@ def test_image_builder_fallback_corrupt_file(tmpdir):
     shutil.copy(str(src), str(dest))
 
     files = [Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]]
-    result = image_builder_fallback(files)
+    result = image_builder_fallback(files=files)
     assert result.file_errors_map == {
         dest: format_error("Not a valid image file"),
     }
