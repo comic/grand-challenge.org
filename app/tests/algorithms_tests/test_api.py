@@ -56,6 +56,6 @@ def test_inputs_are_serialized(client):
     j = AlgorithmJobFactory(creator=u)
 
     response = get_view_for_user(client=client, url=j.api_url, user=u)
-    assert response.json()["inputs"][0]["image"]["pk"] == str(
-        j.inputs.first().image.pk
+    assert response.json()["inputs"][0]["image"] == str(
+        j.inputs.first().image.api_url.replace("https://", "http://")
     )
