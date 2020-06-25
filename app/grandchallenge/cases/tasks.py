@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, Iterable, List, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Sequence, Set, Tuple
 from uuid import UUID
 
 from celery import shared_task
@@ -28,6 +28,7 @@ from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -127,8 +128,8 @@ def populate_provisioning_directory(
 @transaction.atomic
 def store_image(
     image: Image,
-    all_image_files: Sequence[ImageFile],
-    all_folder_uploads: Sequence[FolderUpload],
+    all_image_files: Iterable[ImageFile],
+    all_folder_uploads: Iterable[FolderUpload],
 ):
     """
     Stores an image in the database in a single transaction (or fails
@@ -167,7 +168,7 @@ def store_image(
         af.save()
 
 
-IMAGE_BUILDER_ALGORITHMS = [
+DEFAULT_IMAGE_BUILDERS = [
     image_builder_mhd,
     image_builder_dicom,
     image_builder_tiff,
@@ -267,18 +268,18 @@ def check_compressed_and_extract(file_path, target_path, checked_paths=None):
         Files that have already been extracted.
     """
 
-    def extract_file(file_path):
+    def extract_file(fp):
         is_extracted = False
-        if tarfile.is_tarfile(file_path):
-            with tarfile.open(file_path) as tf:
+        if tarfile.is_tarfile(fp):
+            with tarfile.open(fp) as tf:
                 is_extracted = extract(tf, target_path, is_tar=True)
-        elif zipfile.is_zipfile(file_path):
-            with zipfile.ZipFile(file_path) as zf:
+        elif zipfile.is_zipfile(fp):
+            with zipfile.ZipFile(fp) as zf:
                 is_extracted = extract(zf, target_path)
 
         # Make sure files have actually been extracted, then delete the archive
         if is_extracted:
-            file_path.unlink()
+            fp.unlink()
         return is_extracted
 
     if checked_paths is None:
@@ -370,15 +371,16 @@ def build_images(upload_session_uuid: UUID):
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):
-    unconsumed_files = [
+    input_files = {
         Path(d[0]).joinpath(f) for d in os.walk(tmp_dir) for f in d[2]
-    ]
+    }
+
     session_files = [
         RawImageFile.objects.get_or_create(
             filename=str(f.relative_to(tmp_dir)),
             upload_session=upload_session,
         )[0]
-        for f in unconsumed_files
+        for f in input_files
     ]
 
     filepath_lookup: Dict[str, RawImageFile] = {
@@ -391,8 +393,10 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     }
 
     importer_result = import_images(
-        files=unconsumed_files, created_image_prefix=str(upload_session.pk)[:8]
+        files=input_files, created_image_prefix=str(upload_session.pk)[:8]
     )
+
+    unconsumed_files = input_files - importer_result.consumed_files
 
     for filepath in importer_result.consumed_files:
         raw_image = filepath_lookup[str(filepath)]
@@ -432,42 +436,40 @@ def _handle_raw_image_files(tmp_dir, upload_session):
 
 @dataclass
 class ImporterResult:
-    new_images: List[Image]
-    new_image_files: List[ImageFile]
-    new_folders: List[FolderUpload]
-    consumed_files: List[Path]
+    new_images: Set[Image]
+    new_image_files: Set[ImageFile]
+    new_folders: Set[FolderUpload]
+    consumed_files: Set[Path]
     file_errors: Dict[str, List[str]]
 
 
 def import_images(
     *,
-    files: List[Path],
+    files: Set[Path],
     created_image_prefix: str = "",
-    importers: Iterable[Callable] = None,
+    builders: Iterable[Callable] = None,
 ) -> ImporterResult:
-    new_images = []
-    new_image_files = []
-    new_folders = []
-    consumed_files = []
+    new_images = set()
+    new_image_files = set()
+    new_folders = set()
+    consumed_files = set()
     file_errors = defaultdict(list)
 
-    if importers is None:
-        importers = IMAGE_BUILDER_ALGORITHMS
+    if builders is None:
+        builders = DEFAULT_IMAGE_BUILDERS
 
-    for importer in importers:
-        importer_result = importer(
-            files=files, created_image_prefix=created_image_prefix
+    for builder in builders:
+        builder_result: ImageBuilderResult = builder(
+            files=list(files), created_image_prefix=created_image_prefix
         )
-        new_images += list(importer_result.new_images)
-        new_image_files += list(importer_result.new_image_files)
-        new_folders += list(importer_result.new_folder_upload)
-        consumed_files += list(importer_result.consumed_files)
+        new_images |= set(builder_result.new_images)
+        new_image_files |= set(builder_result.new_image_files)
+        new_folders |= set(builder_result.new_folder_upload)
+        consumed_files |= set(builder_result.consumed_files)
 
-        for filepath in importer_result.consumed_files:
-            if filepath in files:
-                files.remove(filepath)
+        files -= set(builder_result.consumed_files)
 
-        for filepath, msg in importer_result.file_errors_map.items():
+        for filepath, msg in builder_result.file_errors_map.items():
             file_errors[str(filepath)].append(msg)
 
     return ImporterResult(
