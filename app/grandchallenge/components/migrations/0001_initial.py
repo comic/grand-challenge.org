@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
                             ("CSV", "CSV file"),
                             ("ZIP", "ZIP file"),
                         ],
-                        help_text="What kind of field is this interface?",
+                        help_text="What is the type of this interface? Used to validate interface values and connections between components.",
                         max_length=4,
                     ),
                 ),

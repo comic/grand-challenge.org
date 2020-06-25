@@ -78,7 +78,10 @@ class ComponentInterface(models.Model):
         blank=False,
         max_length=4,
         choices=Kind.choices,
-        help_text="What kind of field is this interface?",
+        help_text=(
+            "What is the type of this interface? Used to validate interface "
+            "values and connections between components."
+        ),
     )
     relative_path = models.CharField(
         max_length=255,
