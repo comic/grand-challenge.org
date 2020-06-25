@@ -2,10 +2,11 @@ import os
 import tarfile
 import zipfile
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Dict, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Sequence, Tuple
 from uuid import UUID
 
 from celery import shared_task
@@ -389,33 +390,11 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         for raw_image_file in session_files
     }
 
-    created_image_prefix = str(upload_session.pk)[:8]
+    importer_result = import_images(
+        files=unconsumed_files, created_image_prefix=str(upload_session.pk)[:8]
+    )
 
-    collected_images = []
-    collected_associated_files = []
-    collected_associated_folders = []
-    consumed_files = []
-    file_errors = defaultdict(list)
-
-    for algorithm in IMAGE_BUILDER_ALGORITHMS:
-        algorithm_result = algorithm(
-            files=unconsumed_files, created_image_prefix=created_image_prefix
-        )
-        collected_images += list(algorithm_result.new_images)
-        collected_associated_files += list(algorithm_result.new_image_files)
-        collected_associated_folders += list(
-            algorithm_result.new_folder_upload
-        )
-        consumed_files += list(algorithm_result.consumed_files)
-
-        for filepath in algorithm_result.consumed_files:
-            if filepath in unconsumed_files:
-                unconsumed_files.remove(filepath)
-
-        for filepath, msg in algorithm_result.file_errors_map.items():
-            file_errors[str(filepath)].append(msg)
-
-    for filepath in consumed_files:
+    for filepath in importer_result.consumed_files:
         raw_image = filepath_lookup[str(filepath)]
         raw_image.error = None
         raw_image.consumed = True
@@ -423,18 +402,21 @@ def _handle_raw_image_files(tmp_dir, upload_session):
 
     for filepath in unconsumed_files:
         raw_image = filepath_lookup[str(filepath)]
-        raw_image.error = "\n".join(file_errors[str(filepath)])
+        raw_image.error = "\n".join(importer_result.file_errors[str(filepath)])
         raw_image.consumed = False
         raw_image.save()
 
-    for image in collected_images:
+    for image in importer_result.new_images:
         image.origin = upload_session
         store_image(
-            image, collected_associated_files, collected_associated_folders,
+            image,
+            importer_result.new_image_files,
+            importer_result.new_folders,
         )
 
     _handle_image_relations(
-        collected_images=collected_images, upload_session=upload_session
+        collected_images=importer_result.new_images,
+        upload_session=upload_session,
     )
 
     _handle_unconsumed_files(
@@ -445,6 +427,55 @@ def _handle_raw_image_files(tmp_dir, upload_session):
 
     _delete_session_files(
         session_files=session_files, upload_session=upload_session
+    )
+
+
+@dataclass
+class ImporterResult:
+    new_images: List[Image]
+    new_image_files: List[ImageFile]
+    new_folders: List[FolderUpload]
+    consumed_files: List[Path]
+    file_errors: Dict[str, List[str]]
+
+
+def import_images(
+    *,
+    files: List[Path],
+    created_image_prefix: str = "",
+    importers: Iterable[Callable] = None,
+) -> ImporterResult:
+    new_images = []
+    new_image_files = []
+    new_folders = []
+    consumed_files = []
+    file_errors = defaultdict(list)
+
+    if importers is None:
+        importers = IMAGE_BUILDER_ALGORITHMS
+
+    for importer in importers:
+        importer_result = importer(
+            files=files, created_image_prefix=created_image_prefix
+        )
+        new_images += list(importer_result.new_images)
+        new_image_files += list(importer_result.new_image_files)
+        new_folders += list(importer_result.new_folder_upload)
+        consumed_files += list(importer_result.consumed_files)
+
+        for filepath in importer_result.consumed_files:
+            if filepath in files:
+                files.remove(filepath)
+
+        for filepath, msg in importer_result.file_errors_map.items():
+            file_errors[str(filepath)].append(msg)
+
+    return ImporterResult(
+        new_images=new_images,
+        new_image_files=new_image_files,
+        new_folders=new_folders,
+        consumed_files=consumed_files,
+        file_errors=file_errors,
     )
 
 
