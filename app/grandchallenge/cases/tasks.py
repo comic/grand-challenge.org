@@ -2,11 +2,11 @@ import os
 import tarfile
 import zipfile
 from collections import defaultdict
-from dataclasses import dataclass
 from datetime import timedelta
+from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, Iterable, List, Sequence, Set, Tuple
+from typing import Callable, Dict, Iterable, Sequence, Set, Tuple
 from uuid import UUID
 
 from celery import shared_task
@@ -28,7 +28,10 @@ from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
-from grandchallenge.cases.image_builders.types import ImageBuilderResult
+from grandchallenge.cases.image_builders.types import (
+    ImageBuilderResult,
+    ImporterResult,
+)
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -125,49 +128,6 @@ def populate_provisioning_directory(
         )
 
 
-@transaction.atomic
-def store_image(
-    image: Image,
-    all_image_files: Iterable[ImageFile],
-    all_folder_uploads: Iterable[FolderUpload],
-):
-    """
-    Stores an image in the database in a single transaction (or fails
-    accordingly). Associated image files are extracted from the
-    all_image_files argument and stored together with the image itself
-    in a single transaction.
-
-    Parameters
-    ----------
-    image: :class:`Image`
-        The image to store. The actual image files that are stored are extracted
-        from the second argument.
-
-    all_image_files: list of :class:`ImageFile`
-        An unordered list of ImageFile objects that might or might not belong
-        to the image provided as the first argument. The function automatically
-        extracts related images from the all_image_files argument to store
-        alongside the given image.
-
-    all_folder_uploads: list of :class:`FolderUpload`
-        An unordered list of FolderUpload objects that might or might not belong
-        to the image provided as the first argument. The function automatically
-        extracts related folders from the all_folder_uploads argument to store
-        alongside the given image. The files in this folder will be saved to
-        the storage but not added to the database.
-    """
-    associated_files = [_if for _if in all_image_files if _if.image == image]
-    image.save()
-    for af in associated_files:
-        af.save()
-
-    associated_folders = [
-        _if for _if in all_folder_uploads if _if.image == image
-    ]
-    for af in associated_folders:
-        af.save()
-
-
 DEFAULT_IMAGE_BUILDERS = [
     image_builder_mhd,
     image_builder_dicom,
@@ -181,7 +141,7 @@ def remove_duplicate_files(
 ) -> Tuple[Sequence[RawImageFile], Sequence[RawImageFile]]:
     """
     Filters the given sequence of RawImageFile objects and removes all files
-    that have a nun-unqie filename.
+    that have a nun-unique filename.
 
     Parameters
     ----------
@@ -392,9 +352,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         for raw_image_file in session_files
     }
 
-    importer_result = import_images(
-        files=input_files, created_image_prefix=str(upload_session.pk)[:8]
-    )
+    importer_result = import_images(files=input_files, origin=upload_session,)
 
     unconsumed_files = input_files - importer_result.consumed_files
 
@@ -409,14 +367,6 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         raw_image.error = "\n".join(importer_result.file_errors[str(filepath)])
         raw_image.consumed = False
         raw_image.save()
-
-    for image in importer_result.new_images:
-        image.origin = upload_session
-        store_image(
-            image,
-            importer_result.new_image_files,
-            importer_result.new_folders,
-        )
 
     _handle_image_relations(
         collected_images=importer_result.new_images,
@@ -434,19 +384,10 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     )
 
 
-@dataclass
-class ImporterResult:
-    new_images: Set[Image]
-    new_image_files: Set[ImageFile]
-    new_folders: Set[FolderUpload]
-    consumed_files: Set[Path]
-    file_errors: Dict[str, List[str]]
-
-
 def import_images(
     *,
     files: Set[Path],
-    created_image_prefix: str = "",
+    origin: RawImageUploadSession = None,
     builders: Iterable[Callable] = None,
 ) -> ImporterResult:
     new_images = set()
@@ -455,30 +396,50 @@ def import_images(
     consumed_files = set()
     file_errors = defaultdict(list)
 
-    if builders is None:
-        builders = DEFAULT_IMAGE_BUILDERS
+    created_image_prefix = str(origin.pk)[:8] if origin is not None else ""
+    builders = builders if builders is not None else DEFAULT_IMAGE_BUILDERS
 
     for builder in builders:
         builder_result: ImageBuilderResult = builder(
-            files=list(files), created_image_prefix=created_image_prefix
+            files=list(files - consumed_files),
+            created_image_prefix=created_image_prefix,
         )
+
         new_images |= set(builder_result.new_images)
         new_image_files |= set(builder_result.new_image_files)
         new_folders |= set(builder_result.new_folder_upload)
         consumed_files |= set(builder_result.consumed_files)
-
-        files -= set(builder_result.consumed_files)
-
         for filepath, msg in builder_result.file_errors_map.items():
             file_errors[str(filepath)].append(msg)
 
+    _store_images(
+        origin=origin,
+        images=new_images,
+        image_files=new_image_files,
+        folders=new_folders,
+    )
+
     return ImporterResult(
         new_images=new_images,
-        new_image_files=new_image_files,
-        new_folders=new_folders,
         consumed_files=consumed_files,
         file_errors=file_errors,
     )
+
+
+def _store_images(
+    *,
+    origin: RawImageUploadSession,
+    images: Set[Image],
+    image_files: Set[ImageFile],
+    folders: Set[FolderUpload],
+):
+    with transaction.atomic():
+        for image in images:
+            image.origin = origin
+            image.save()
+
+        for object in chain(image_files, folders):
+            object.save()
 
 
 def _handle_image_relations(*, collected_images, upload_session):
