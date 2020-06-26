@@ -241,14 +241,17 @@ def _new_image_files(
     return new_image_files
 
 
-def _add_folder_uploads(
-    *, dzi_output: str, image: Image, new_folder_upload: List
-):
+def _new_folder_uploads(
+    *, dzi_output: str, image: Image,
+) -> Set[FolderUpload]:
+    new_folder_upload = set()
+
     if dzi_output:
         dzi_folder_upload = FolderUpload(
             folder=dzi_output + "_files", image=image
         )
-        new_folder_upload.append(dzi_folder_upload)
+        new_folder_upload.add(dzi_folder_upload)
+
     return new_folder_upload
 
 
@@ -378,7 +381,7 @@ def image_builder_tiff(  # noqa: C901
     new_image_files = set()
     consumed_files = []
     invalid_file_errors = {}
-    new_folder_upload = []
+    new_folder_upload = set()
 
     def format_error(message):
         return f"Tiff image builder: {message}"
@@ -412,11 +415,8 @@ def image_builder_tiff(  # noqa: C901
 
         image = _create_tiff_image_entry(tiff_file=gc_file)
         new_image_files |= _new_image_files(gc_file=gc_file, image=image,)
-
-        new_folder_upload = _add_folder_uploads(
-            dzi_output=dzi_output,
-            image=image,
-            new_folder_upload=new_folder_upload,
+        new_folder_upload |= _new_folder_uploads(
+            dzi_output=dzi_output, image=image,
         )
 
         new_images.add(image)

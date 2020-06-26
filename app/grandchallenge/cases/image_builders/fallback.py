@@ -63,5 +63,5 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
         file_errors_map=errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=[],
+        new_folder_upload=set(),
     )

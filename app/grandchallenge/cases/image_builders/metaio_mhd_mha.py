@@ -117,5 +117,5 @@ def image_builder_mhd(  # noqa: C901
         file_errors_map=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=[],
+        new_folder_upload=set(),
     )

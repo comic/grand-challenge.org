@@ -366,5 +366,5 @@ def image_builder_dicom(
         file_errors_map=file_errors_map,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=[],
+        new_folder_upload=set(),
     )
