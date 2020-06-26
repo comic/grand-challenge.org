@@ -6,7 +6,7 @@ from datetime import timedelta
 from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, Iterable, Sequence, Set, Tuple
+from typing import Callable, Dict, Iterable, List, Sequence, Set, Tuple
 from uuid import UUID
 
 from celery import shared_task
@@ -354,28 +354,16 @@ def _handle_raw_image_files(tmp_dir, upload_session):
 
     importer_result = import_images(files=input_files, origin=upload_session,)
 
-    unconsumed_files = input_files - importer_result.consumed_files
-
-    for filepath in importer_result.consumed_files:
-        raw_image = filepath_lookup[str(filepath)]
-        raw_image.error = None
-        raw_image.consumed = True
-        raw_image.save()
-
-    for filepath in unconsumed_files:
-        raw_image = filepath_lookup[str(filepath)]
-        raw_image.error = "\n".join(importer_result.file_errors[str(filepath)])
-        raw_image.consumed = False
-        raw_image.save()
-
     _handle_image_relations(
         collected_images=importer_result.new_images,
         upload_session=upload_session,
     )
 
-    _handle_unconsumed_files(
+    _handle_raw_files(
+        input_files=input_files,
+        consumed_files=importer_result.consumed_files,
+        file_errors=importer_result.file_errors,
         filepath_lookup=filepath_lookup,
-        unconsumed_files=unconsumed_files,
         upload_session=upload_session,
     )
 
@@ -390,6 +378,25 @@ def import_images(
     origin: RawImageUploadSession = None,
     builders: Iterable[Callable] = None,
 ) -> ImporterResult:
+    """
+    Creates Image objects from a set of files on disk.
+
+    Parameters
+    ----------
+    files
+        A Set of files that can form one or many Images
+    origin
+        The RawImageUploadSession (if any) that was the source of these files
+    builders
+        The Image Builders to use to try and convert these files into Images
+
+    Returns
+    -------
+        An ImporterResult listing the new images, the consumed files and
+        any file errors
+
+    """
+
     new_images = set()
     new_image_files = set()
     new_folders = set()
@@ -409,6 +416,7 @@ def import_images(
         new_image_files |= set(builder_result.new_image_files)
         new_folders |= set(builder_result.new_folder_upload)
         consumed_files |= set(builder_result.consumed_files)
+
         for filepath, msg in builder_result.file_errors_map.items():
             file_errors[str(filepath)].append(msg)
 
@@ -438,8 +446,8 @@ def _store_images(
             image.origin = origin
             image.save()
 
-        for object in chain(image_files, folders):
-            object.save()
+        for obj in chain(image_files, folders):
+            obj.save()
 
 
 def _handle_image_relations(*, collected_images, upload_session):
@@ -485,17 +493,31 @@ def _handle_image_relations(*, collected_images, upload_session):
         upload_session.archive.images.add(*collected_images)
 
 
-def _handle_unconsumed_files(
-    *, filepath_lookup, unconsumed_files, upload_session
+def _handle_raw_files(
+    *,
+    input_files: Set[Path],
+    consumed_files: Set[Path],
+    filepath_lookup: Dict[str, RawImageFile],
+    file_errors: Dict[str, List[str]],
+    upload_session: RawImageUploadSession,
 ):
+    unconsumed_files = input_files - consumed_files
+
     errors = []
-    for unconsumed_filepath in unconsumed_files:
-        raw_file = filepath_lookup[str(unconsumed_filepath)]
-        error = raw_file.error or ""
+
+    for filepath in consumed_files:
+        raw_image = filepath_lookup[str(filepath)]
+        raw_image.error = None
+        raw_image.consumed = True
+        raw_image.save()
+
+    for filepath in unconsumed_files:
+        raw_file = filepath_lookup[str(filepath)]
+        error = "\n".join(file_errors[str(filepath)])
         raw_file.error = (
             f"File could not be processed by any image builder:\n\n{error}"
         )
-        errors.append(error)
+        errors.append(f"{raw_file.filename}:\n{error}\n\n")
         raw_file.save()
 
     if unconsumed_files:
