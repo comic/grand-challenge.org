@@ -75,7 +75,7 @@ def image_builder_mhd(  # noqa: C901
 
     new_images = set()
     new_image_files = set()
-    consumed_files = []
+    consumed_files = set()
     invalid_file_errors = {}
     for file in files:
         try:
@@ -108,9 +108,9 @@ def image_builder_mhd(  # noqa: C901
             new_images.add(n_image)
             new_image_files |= set(n_image_files)
 
-            consumed_files.append(file)
+            consumed_files.add(file)
             if file_dependency is not None:
-                consumed_files.append(file_dependency)
+                consumed_files.add(file_dependency)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,

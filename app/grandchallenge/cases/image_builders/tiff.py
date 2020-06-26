@@ -379,7 +379,7 @@ def image_builder_tiff(  # noqa: C901
 ) -> ImageBuilderResult:
     new_images = set()
     new_image_files = set()
-    consumed_files = []
+    consumed_files = set()
     invalid_file_errors = {}
     new_folder_upload = set()
 
@@ -420,7 +420,7 @@ def image_builder_tiff(  # noqa: C901
         )
 
         new_images.add(image)
-        consumed_files.append(gc_file.path)
+        consumed_files.add(gc_file.path)
 
         if gc_file.associated_files:
             consumed_files += list(f for f in gc_file.associated_files)

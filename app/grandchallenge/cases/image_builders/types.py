@@ -10,7 +10,7 @@ class ImageBuilderResult:
     new_images: Set[Image]
     new_image_files: Set[ImageFile]
     new_folder_upload: Set[FolderUpload]
-    consumed_files: List[Path]
+    consumed_files: Set[Path]
     file_errors_map: Dict[Path, str]
 
 

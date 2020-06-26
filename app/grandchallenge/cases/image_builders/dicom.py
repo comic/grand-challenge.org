@@ -348,7 +348,7 @@ def image_builder_dicom(
     studies, file_errors_map = _validate_dicom_files(files)
     new_images = set()
     new_image_files = set()
-    consumed_files = []
+    consumed_files = set()
     for dicom_ds in studies:
         try:
             n_image, n_image_files = _process_dicom_file(
@@ -356,7 +356,7 @@ def image_builder_dicom(
             )
             new_images.add(n_image)
             new_image_files |= set(n_image_files)
-            consumed_files += [d["file"] for d in dicom_ds.headers]
+            consumed_files |= {d["file"] for d in dicom_ds.headers}
         except Exception as e:
             for d in dicom_ds.headers:
                 file_errors_map[d["file"]] = format_error(e)

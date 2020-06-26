@@ -415,7 +415,7 @@ def import_images(
         new_images |= builder_result.new_images
         new_image_files |= builder_result.new_image_files
         new_folders |= builder_result.new_folder_upload
-        consumed_files |= set(builder_result.consumed_files)
+        consumed_files |= builder_result.consumed_files
 
         for filepath, msg in builder_result.file_errors_map.items():
             file_errors[str(filepath)].append(msg)

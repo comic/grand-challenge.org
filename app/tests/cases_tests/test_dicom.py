@@ -68,9 +68,9 @@ def test_validate_dicom_files():
 def test_image_builder_dicom_4dct():
     files = {Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]}
     result = image_builder_dicom(files=files)
-    assert result.consumed_files == [
+    assert result.consumed_files == {
         Path(DICOM_DIR).joinpath(f"{x}.dcm") for x in range(1, 77)
-    ]
+    }
 
     assert len(result.new_images) == 1
     image = result.new_images.pop()
