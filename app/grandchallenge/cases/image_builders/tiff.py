@@ -372,7 +372,7 @@ def _load_gc_files(
 def image_builder_tiff(  # noqa: C901
     *, files: Set[Path], **_
 ) -> ImageBuilderResult:
-    new_images = []
+    new_images = set()
     new_image_files = []
     consumed_files = []
     invalid_file_errors = {}
@@ -418,7 +418,7 @@ def image_builder_tiff(  # noqa: C901
             image=image,
             new_folder_upload=new_folder_upload,
         )
-        new_images.append(image)
+        new_images.add(image)
         consumed_files.append(gc_file.path)
         if gc_file.associated_files:
             consumed_files += list(f for f in gc_file.associated_files)

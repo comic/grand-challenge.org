@@ -34,7 +34,7 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
      - path->error message map describing what is wrong with a given file
     """
     errors = {}
-    new_images = []
+    new_images = set()
     new_image_files = []
     consumed_files = []
     for file in files:
@@ -52,7 +52,7 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
             n_image, n_image_files = convert_itk_to_internal(
                 img, name=file.name, use_spacing=False
             )
-            new_images.append(n_image)
+            new_images.add(n_image)
             new_image_files += n_image_files
             consumed_files.append(file)
         except (IOError, ValidationError, DecompressionBombError):

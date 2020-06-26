@@ -73,7 +73,7 @@ def image_builder_mhd(  # noqa: C901
     def format_error(message):
         return f"Mhd image builder: {message}"
 
-    new_images = []
+    new_images = set()
     new_image_files = []
     consumed_files = []
     invalid_file_errors = {}
@@ -105,7 +105,7 @@ def image_builder_mhd(  # noqa: C901
                     continue
 
             n_image, n_image_files = convert_itk_file(parsed_headers, file)
-            new_images.append(n_image)
+            new_images.add(n_image)
             new_image_files += list(n_image_files)
 
             consumed_files.append(file)
