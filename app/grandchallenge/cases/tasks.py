@@ -413,7 +413,7 @@ def import_images(
         )
 
         new_images |= builder_result.new_images
-        new_image_files |= set(builder_result.new_image_files)
+        new_image_files |= builder_result.new_image_files
         new_folders |= set(builder_result.new_folder_upload)
         consumed_files |= set(builder_result.consumed_files)
 

@@ -74,7 +74,7 @@ def image_builder_mhd(  # noqa: C901
         return f"Mhd image builder: {message}"
 
     new_images = set()
-    new_image_files = []
+    new_image_files = set()
     consumed_files = []
     invalid_file_errors = {}
     for file in files:
@@ -106,7 +106,7 @@ def image_builder_mhd(  # noqa: C901
 
             n_image, n_image_files = convert_itk_file(parsed_headers, file)
             new_images.add(n_image)
-            new_image_files += list(n_image_files)
+            new_image_files |= set(n_image_files)
 
             consumed_files.append(file)
             if file_dependency is not None:

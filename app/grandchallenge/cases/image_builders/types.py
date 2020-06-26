@@ -8,7 +8,7 @@ from grandchallenge.cases.models import FolderUpload, Image, ImageFile
 @dataclass
 class ImageBuilderResult:
     new_images: Set[Image]
-    new_image_files: List[ImageFile]
+    new_image_files: Set[ImageFile]
     new_folder_upload: List[FolderUpload]
     consumed_files: List[Path]
     file_errors_map: Dict[Path, str]

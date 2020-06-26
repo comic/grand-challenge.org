@@ -347,7 +347,7 @@ def image_builder_dicom(
     """
     studies, file_errors_map = _validate_dicom_files(files)
     new_images = set()
-    new_image_files = []
+    new_image_files = set()
     consumed_files = []
     for dicom_ds in studies:
         try:
@@ -355,7 +355,7 @@ def image_builder_dicom(
                 dicom_ds=dicom_ds, created_image_prefix=created_image_prefix
             )
             new_images.add(n_image)
-            new_image_files += n_image_files
+            new_image_files |= set(n_image_files)
             consumed_files += [d["file"] for d in dicom_ds.headers]
         except Exception as e:
             for d in dicom_ds.headers:

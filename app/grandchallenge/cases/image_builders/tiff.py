@@ -227,15 +227,17 @@ def _load_and_create_dzi(
     return _create_dzi_images(gc_file=gc_file)
 
 
-def _add_image_files(
-    *, gc_file: GrandChallengeTiffFile, image: Image, new_image_files: List
-):
-    new_image_files.append(
+def _new_image_files(
+    *, gc_file: GrandChallengeTiffFile, image: Image,
+) -> Set[ImageFile]:
+    new_image_files = {
         _create_image_file(path=str(gc_file.path.absolute()), image=image)
-    )
+    }
+
     if gc_file.source_files:
         for s in gc_file.source_files:
-            new_image_files.append(_create_image_file(path=s, image=image))
+            new_image_files.add(_create_image_file(path=s, image=image))
+
     return new_image_files
 
 
@@ -373,7 +375,7 @@ def image_builder_tiff(  # noqa: C901
     *, files: Set[Path], **_
 ) -> ImageBuilderResult:
     new_images = set()
-    new_image_files = []
+    new_image_files = set()
     consumed_files = []
     invalid_file_errors = {}
     new_folder_upload = []
@@ -409,17 +411,17 @@ def image_builder_tiff(  # noqa: C901
             continue
 
         image = _create_tiff_image_entry(tiff_file=gc_file)
-        new_image_files = _add_image_files(
-            gc_file=gc_file, image=image, new_image_files=new_image_files,
-        )
+        new_image_files |= _new_image_files(gc_file=gc_file, image=image,)
 
         new_folder_upload = _add_folder_uploads(
             dzi_output=dzi_output,
             image=image,
             new_folder_upload=new_folder_upload,
         )
+
         new_images.add(image)
         consumed_files.append(gc_file.path)
+
         if gc_file.associated_files:
             consumed_files += list(f for f in gc_file.associated_files)
 

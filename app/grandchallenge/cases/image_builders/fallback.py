@@ -35,7 +35,7 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
     """
     errors = {}
     new_images = set()
-    new_image_files = []
+    new_image_files = set()
     consumed_files = []
     for file in files:
         try:
@@ -53,7 +53,7 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
                 img, name=file.name, use_spacing=False
             )
             new_images.add(n_image)
-            new_image_files += n_image_files
+            new_image_files |= set(n_image_files)
             consumed_files.append(file)
         except (IOError, ValidationError, DecompressionBombError):
             errors[file] = format_error("Not a valid image file")
