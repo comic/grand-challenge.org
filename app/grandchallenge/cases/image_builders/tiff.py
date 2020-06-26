@@ -421,7 +421,7 @@ def image_builder_tiff(  # noqa: C901
         consumed_files.add(gc_file.path)
 
         if gc_file.associated_files:
-            consumed_files += list(f for f in gc_file.associated_files)
+            consumed_files |= {f for f in gc_file.associated_files}
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
