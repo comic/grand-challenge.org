@@ -2,7 +2,7 @@ import tempfile
 from collections import namedtuple
 from math import isclose
 from pathlib import Path
-from typing import List
+from typing import Set
 
 import SimpleITK
 import numpy as np
@@ -47,7 +47,7 @@ def pixel_data_reached(tag, vr, length):
     return pydicom.datadict.keyword_for_tag(tag) == "PixelData"
 
 
-def _get_headers_by_study(files: List[Path]):
+def _get_headers_by_study(files: Set[Path]):
     """
     Gets all headers from dicom files found in path.
 
@@ -105,7 +105,7 @@ def format_error(message):
     return f"Dicom image builder: {message}"
 
 
-def _validate_dicom_files(files: List[Path]):
+def _validate_dicom_files(files: Set[Path]):
     """
     Gets the headers for all dicom files on path and validates them.
 
@@ -326,7 +326,7 @@ def _create_itk_from_dcm(
 
 
 def image_builder_dicom(
-    *, files: List[Path], created_image_prefix: str = ""
+    *, files: Set[Path], created_image_prefix: str = ""
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.

@@ -5,7 +5,7 @@ See: https://itk.org/Wiki/MetaIO/Documentation
 """
 
 from pathlib import Path
-from typing import List, Mapping, Sequence, Tuple, Union
+from typing import Mapping, Sequence, Set, Tuple, Union
 
 import SimpleITK
 
@@ -19,7 +19,7 @@ from grandchallenge.cases.models import Image, ImageFile
 
 
 def image_builder_mhd(  # noqa: C901
-    *, files: List[Path], **_
+    *, files: Set[Path], **_
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.

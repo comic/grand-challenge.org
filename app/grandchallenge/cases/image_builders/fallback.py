@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import Set
 
 import SimpleITK
 import numpy as np
@@ -15,7 +15,7 @@ def format_error(message):
     return f"Fallback image builder: {message}"
 
 
-def image_builder_fallback(*, files: List[Path], **_) -> ImageBuilderResult:
+def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 

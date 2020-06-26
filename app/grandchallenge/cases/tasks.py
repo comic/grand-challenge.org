@@ -408,7 +408,7 @@ def import_images(
 
     for builder in builders:
         builder_result: ImageBuilderResult = builder(
-            files=list(files - consumed_files),
+            files=files - consumed_files,
             created_image_prefix=created_image_prefix,
         )
 

@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
 import openslide
@@ -335,7 +335,7 @@ def _convert_to_tiff(*, path: Path, pk: UUID, converter) -> Path:
 
 
 def _load_gc_files(
-    *, files: List[Path], converter
+    *, files: Set[Path], converter
 ) -> (List[GrandChallengeTiffFile], Dict):
     loaded_files = []
     errors = {}
@@ -370,7 +370,7 @@ def _load_gc_files(
 
 
 def image_builder_tiff(  # noqa: C901
-    *, files: List[Path], **_
+    *, files: Set[Path], **_
 ) -> ImageBuilderResult:
     new_images = []
     new_image_files = []
