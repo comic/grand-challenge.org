@@ -16,11 +16,6 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from grandchallenge.algorithms.models import (
-    DEFAULT_INPUT_INTERFACE_SLUG,
-    DEFAULT_OUTPUT_INTERFACE_SLUG,
-    Job,
-)
 from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.image_builders.dicom import image_builder_dicom
 from grandchallenge.cases.image_builders.fallback import image_builder_fallback
@@ -39,10 +34,6 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageFile,
     RawImageUploadSession,
-)
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
@@ -456,35 +447,6 @@ def _handle_image_relations(*, collected_images, upload_session):
 
     if upload_session.annotationset:
         upload_session.annotationset.images.add(*collected_images)
-
-    if upload_session.algorithm_image:
-        default_input_interface = ComponentInterface.objects.get(
-            slug=DEFAULT_INPUT_INTERFACE_SLUG
-        )
-        for image in collected_images:
-            j = Job.objects.create(
-                creator=upload_session.creator,
-                algorithm_image=upload_session.algorithm_image,
-            )
-            j.inputs.set(
-                [
-                    ComponentInterfaceValue.objects.create(
-                        interface=default_input_interface, image=image
-                    )
-                ]
-            )
-            j.schedule_job()
-
-    if upload_session.algorithm_result:
-        default_output_interface = ComponentInterface.objects.get(
-            slug=DEFAULT_OUTPUT_INTERFACE_SLUG
-        )
-        job = upload_session.algorithm_result.job
-        for image in collected_images:
-            civ = ComponentInterfaceValue.objects.create(
-                interface=default_output_interface, image=image
-            )
-            job.outputs.add(civ)
 
     if upload_session.reader_study:
         upload_session.reader_study.images.add(*collected_images)

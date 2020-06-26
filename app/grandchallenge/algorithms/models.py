@@ -1,22 +1,24 @@
 import logging
-import uuid
-from datetime import timedelta
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-from django.utils import timezone
+from django.utils._os import safe_join
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
 from grandchallenge.algorithms.emails import send_failed_job_email
-from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.cases.image_builders.metaio_mhd_mha import (
+    image_builder_mhd,
+)
+from grandchallenge.cases.image_builders.tiff import image_builder_tiff
+from grandchallenge.cases.tasks import import_images
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.components.backends.docker import (
     Executor,
@@ -31,8 +33,6 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
-from grandchallenge.jqfileupload.models import StagedFile
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -355,48 +355,36 @@ class AlgorithmExecutor(Executor):
             logger.warning("Output directory is empty")
             return
 
-        # TODO: This thing should not interact with the database
-        result = Result.objects.create(job_id=self._job_id)
+        with TemporaryDirectory() as tmpdir:
+            input_files = set()
 
-        # Create the upload session but do not save it until we have the
-        # files
-        upload_session = RawImageUploadSession(
-            algorithm_result=result, creator=result.job.creator
+            for file in output_files:
+                tmpfile = safe_join(tmpdir, file.relative_to(base_dir))
+
+                with open(tmpfile, "wb") as outfile:
+                    infile = get_file(container=container, src=file)
+                    buffer = True
+                    while buffer:
+                        buffer = infile.read(1024)
+                        outfile.write(buffer)
+
+                input_files.add(Path(tmpfile))
+
+            importer_result = import_images(
+                files=input_files,
+                builders=[image_builder_mhd, image_builder_tiff],
+            )
+
+        default_output_interface = ComponentInterface.objects.get(
+            slug=DEFAULT_OUTPUT_INTERFACE_SLUG
         )
+        job = Job.objects.get(pk=self._job_id)
 
-        images = []
-
-        for file in output_files:
-            new_uuid = uuid.uuid4()
-
-            django_file = File(get_file(container=container, src=file))
-
-            staged_file = StagedFile(
-                user_pk_str="staging_conversion_user_pk",
-                client_id=self._job_id,
-                client_filename=file.name,
-                file_id=new_uuid,
-                timeout=timezone.now() + timedelta(hours=24),
-                start_byte=0,
-                end_byte=django_file.size - 1,
-                total_size=django_file.size,
+        for image in importer_result.new_images:
+            civ = ComponentInterfaceValue.objects.create(
+                interface=default_output_interface, image=image
             )
-            staged_file.file.save(f"{uuid.uuid4()}", django_file)
-            staged_file.save()
-
-            staged_ajax_file = StagedAjaxFile(new_uuid)
-
-            images.append(
-                RawImageFile(
-                    upload_session=upload_session,
-                    filename=staged_ajax_file.name,
-                    staged_file_id=staged_ajax_file.uuid,
-                )
-            )
-
-        upload_session.save()
-        RawImageFile.objects.bulk_create(images)
-        upload_session.process_images()
+            job.outputs.add(civ)
 
 
 class Job(UUIDModel, ComponentJob):
