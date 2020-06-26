@@ -381,7 +381,7 @@ def image_builder_tiff(  # noqa: C901
     new_image_files = set()
     consumed_files = set()
     invalid_file_errors = {}
-    new_folder_upload = set()
+    new_folders = set()
 
     def format_error(message):
         return f"Tiff image builder: {message}"
@@ -415,9 +415,7 @@ def image_builder_tiff(  # noqa: C901
 
         image = _create_tiff_image_entry(tiff_file=gc_file)
         new_image_files |= _new_image_files(gc_file=gc_file, image=image,)
-        new_folder_upload |= _new_folder_uploads(
-            dzi_output=dzi_output, image=image,
-        )
+        new_folders |= _new_folder_uploads(dzi_output=dzi_output, image=image,)
 
         new_images.add(image)
         consumed_files.add(gc_file.path)
@@ -427,10 +425,10 @@ def image_builder_tiff(  # noqa: C901
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map=invalid_file_errors,
+        file_errors=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=new_folder_upload,
+        new_folders=new_folders,
     )
 
 

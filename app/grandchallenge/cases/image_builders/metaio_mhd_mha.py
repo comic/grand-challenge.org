@@ -114,8 +114,8 @@ def image_builder_mhd(  # noqa: C901
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map=invalid_file_errors,
+        file_errors=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=set(),
+        new_folders=set(),
     )

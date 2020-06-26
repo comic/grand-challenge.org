@@ -60,8 +60,8 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map=errors,
+        file_errors=errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=set(),
+        new_folders=set(),
     )

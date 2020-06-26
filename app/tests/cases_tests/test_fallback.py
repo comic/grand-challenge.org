@@ -43,7 +43,7 @@ def test_image_builder_fallback_corrupt_file(tmpdir):
 
     files = {Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]}
     result = image_builder_fallback(files=files)
-    assert result.file_errors_map == {
+    assert result.file_errors == {
         dest: format_error("Not a valid image file"),
     }
     assert result.consumed_files == set()

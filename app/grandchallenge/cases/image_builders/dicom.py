@@ -345,7 +345,7 @@ def image_builder_dicom(
      - a list files associated with the detected images
      - path->error message map describing what is wrong with a given file
     """
-    studies, file_errors_map = _validate_dicom_files(files)
+    studies, file_errors = _validate_dicom_files(files)
     new_images = set()
     new_image_files = set()
     consumed_files = set()
@@ -359,12 +359,12 @@ def image_builder_dicom(
             consumed_files |= {d["file"] for d in dicom_ds.headers}
         except Exception as e:
             for d in dicom_ds.headers:
-                file_errors_map[d["file"]] = format_error(e)
+                file_errors[d["file"]] = format_error(e)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map=file_errors_map,
+        file_errors=file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=set(),
+        new_folders=set(),
     )

@@ -379,7 +379,7 @@ def import_images(
     builders: Iterable[Callable] = None,
 ) -> ImporterResult:
     """
-    Creates Image objects from a set of files on disk.
+    Creates Image objects from a set of files.
 
     Parameters
     ----------
@@ -414,11 +414,11 @@ def import_images(
 
         new_images |= builder_result.new_images
         new_image_files |= builder_result.new_image_files
-        new_folders |= builder_result.new_folder_upload
+        new_folders |= builder_result.new_folders
         consumed_files |= builder_result.consumed_files
 
-        for filepath, msg in builder_result.file_errors_map.items():
-            file_errors[str(filepath)].append(msg)
+        for filepath, msg in builder_result.file_errors.items():
+            file_errors[filepath].append(msg)
 
     _store_images(
         origin=origin,
@@ -498,7 +498,7 @@ def _handle_raw_files(
     input_files: Set[Path],
     consumed_files: Set[Path],
     filepath_lookup: Dict[str, RawImageFile],
-    file_errors: Dict[str, List[str]],
+    file_errors: Dict[Path, List[str]],
     upload_session: RawImageUploadSession,
 ):
     unconsumed_files = input_files - consumed_files
@@ -513,7 +513,7 @@ def _handle_raw_files(
 
     for filepath in unconsumed_files:
         raw_file = filepath_lookup[str(filepath)]
-        error = "\n".join(file_errors[str(filepath)])
+        error = "\n".join(file_errors[filepath])
         raw_file.error = (
             f"File could not be processed by any image builder:\n\n{error}"
         )

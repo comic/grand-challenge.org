@@ -389,7 +389,7 @@ def test_error_handling(tmpdir_factory):
     # related files are associated with the gc_file
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(RESOURCE_PATH / "complex_tiff", temp_dir)
-    files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
+    files = {Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]}
     image_builder_result = image_builder_tiff(files=files)
 
-    assert len(image_builder_result.file_errors_map) == 14
+    assert len(image_builder_result.file_errors) == 14
