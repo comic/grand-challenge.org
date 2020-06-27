@@ -91,7 +91,10 @@ class SubmissionToAnnotationSetExecutor(Executor):
                 input_files = set()
 
                 for file in output_files:
-                    tmpfile = safe_join(tmpdir, file.relative_to(base_dir))
+                    tmpfile = Path(
+                        safe_join(tmpdir, file.relative_to(base_dir))
+                    )
+                    tmpfile.parent.mkdir(parents=True, exist_ok=True)
 
                     with open(tmpfile, "wb") as outfile:
                         infile = get_file(container=container, src=file)
@@ -100,7 +103,7 @@ class SubmissionToAnnotationSetExecutor(Executor):
                             buffer = infile.read(1024)
                             outfile.write(buffer)
 
-                    input_files.add(Path(tmpfile))
+                    input_files.add(tmpfile)
 
                 importer_result = import_images(files=input_files,)
 
