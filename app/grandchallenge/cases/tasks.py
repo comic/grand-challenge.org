@@ -445,9 +445,6 @@ def _handle_image_relations(*, collected_images, upload_session):
     if upload_session.imageset:
         upload_session.imageset.images.add(*collected_images)
 
-    if upload_session.annotationset:
-        upload_session.annotationset.images.add(*collected_images)
-
     if upload_session.reader_study:
         upload_session.reader_study.images.add(*collected_images)
 

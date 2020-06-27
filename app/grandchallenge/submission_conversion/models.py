@@ -1,12 +1,10 @@
-import uuid
-from datetime import timedelta
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from django.core.files import File
 from django.db import models
-from django.utils import timezone
+from django.utils._os import safe_join
 
-from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.docker import (
     Executor,
     cleanup,
@@ -19,8 +17,6 @@ from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.datasets.utils import process_csv_file
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.jqfileupload.models import StagedFile
-from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
 class SubmissionToAnnotationSetExecutor(Executor):
@@ -72,17 +68,16 @@ class SubmissionToAnnotationSetExecutor(Executor):
         return {}
 
     def _copy_output_files(self, *, container, base_dir: Path):
-        output_files = [
+        output_files = {
             base_dir / Path(f)
             for f in container.exec_run(f"find {base_dir} -type f")
             .output.decode()
             .splitlines()
-        ]
+        }
 
         if not output_files:
             raise ValueError("Output directory is empty")
 
-        # TODO: This thing should not interact with the database
         job = SubmissionToAnnotationSetJob.objects.get(pk=self._job_id)
         annotationset = AnnotationSet.objects.create(
             creator=job.submission.creator,
@@ -92,49 +87,30 @@ class SubmissionToAnnotationSetExecutor(Executor):
         )
 
         if self.__was_unzipped:
+            with TemporaryDirectory() as tmpdir:
+                input_files = set()
 
-            # Create the upload session but do not save it until we have the
-            # files
-            upload_session = RawImageUploadSession(annotationset=annotationset)
+                for file in output_files:
+                    tmpfile = safe_join(tmpdir, file.relative_to(base_dir))
 
-            images = []
+                    with open(tmpfile, "wb") as outfile:
+                        infile = get_file(container=container, src=file)
+                        buffer = True
+                        while buffer:
+                            buffer = infile.read(1024)
+                            outfile.write(buffer)
 
-            for file in output_files:
-                new_uuid = uuid.uuid4()
+                    input_files.add(Path(tmpfile))
 
-                django_file = File(get_file(container=container, src=file))
+                importer_result = import_images(files=input_files,)
 
-                staged_file = StagedFile(
-                    user_pk_str="staging_conversion_user_pk",
-                    client_id=self._job_id,
-                    client_filename=file.name,
-                    file_id=new_uuid,
-                    timeout=timezone.now() + timedelta(hours=24),
-                    start_byte=0,
-                    end_byte=django_file.size - 1,
-                    total_size=django_file.size,
-                )
-                staged_file.file.save(f"{uuid.uuid4()}", django_file)
-                staged_file.save()
-
-                staged_ajax_file = StagedAjaxFile(new_uuid)
-
-                images.append(
-                    RawImageFile(
-                        upload_session=upload_session,
-                        filename=staged_ajax_file.name,
-                        staged_file_id=staged_ajax_file.uuid,
-                    )
-                )
-
-            upload_session.save()
-            RawImageFile.objects.bulk_create(images)
-            upload_session.process_images()
+            annotationset.images.add(*importer_result.new_images)
 
         else:
-            assert len(output_files) == 1
+            if not len(output_files) == 1:
+                raise RuntimeError("This submission has too many files.")
 
-            f = get_file(container=container, src=output_files[0])
+            f = get_file(container=container, src=output_files.pop())
             annotationset.labels = process_csv_file(f)
             annotationset.save()
 
