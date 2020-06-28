@@ -4,7 +4,6 @@ from tempfile import TemporaryDirectory
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.signals import post_delete
@@ -289,26 +288,6 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             self.algorithm.editors_group,
             self,
         )
-
-
-class Result(UUIDModel):
-    job = models.OneToOneField("Job", on_delete=models.CASCADE, editable=False)
-    images = models.ManyToManyField(
-        to="cases.Image", related_name="algorithm_results", editable=False
-    )
-    public = models.BooleanField(
-        default=False,
-        help_text=(
-            "If True, allow anyone to view this result along "
-            "with the input image. Otherwise, only the job creator and "
-            "algorithm editor will have permission to view this result."
-        ),
-    )
-    output = JSONField(default=dict, editable=False)
-    comment = models.TextField(blank=True, default="")
-
-    class Meta:
-        ordering = ("created",)
 
 
 class AlgorithmExecutor(Executor):

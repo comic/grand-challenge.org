@@ -82,13 +82,6 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.CASCADE,
     )
 
-    algorithm_result = models.OneToOneField(
-        to="algorithms.Result",
-        null=True,
-        default=None,
-        on_delete=models.CASCADE,
-    )
-
     reader_study = models.ForeignKey(
         to="reader_studies.ReaderStudy",
         null=True,
