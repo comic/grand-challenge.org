@@ -2,7 +2,10 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
-from grandchallenge.datasets.tasks import add_images_to_annotation_set
+from grandchallenge.datasets.tasks import (
+    add_images_to_annotation_set,
+    add_images_to_imageset,
+)
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.test_background_tasks import (
     create_raw_upload_image_session,
@@ -34,7 +37,7 @@ def test_imageset_add_images(client, settings):
 
     images = ["image10x10x10.zraw", "image10x10x10.mhd"]
     session, uploaded_images = create_raw_upload_image_session(
-        images, imageset=imageset
+        images, imageset=imageset, linked_task=add_images_to_imageset
     )
 
     url, kwargs = get_http_host(url=imageset.get_absolute_url(), kwargs={})
