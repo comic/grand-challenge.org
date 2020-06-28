@@ -336,7 +336,7 @@ class AlgorithmExecutionSessionCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(linked_task=create_algorithm_jobs)
+        kwargs.update({"linked_task": create_algorithm_jobs})
         return kwargs
 
     def get_permission_object(self):
