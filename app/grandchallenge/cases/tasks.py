@@ -345,11 +345,6 @@ def _handle_raw_image_files(tmp_dir, upload_session):
 
     importer_result = import_images(files=input_files, origin=upload_session,)
 
-    _handle_image_relations(
-        collected_images=importer_result.new_images,
-        upload_session=upload_session,
-    )
-
     _handle_raw_files(
         input_files=input_files,
         consumed_files=importer_result.consumed_files,
@@ -439,14 +434,6 @@ def _store_images(
 
         for obj in chain(image_files, folders):
             obj.save()
-
-
-def _handle_image_relations(*, collected_images, upload_session):
-    if upload_session.reader_study:
-        upload_session.reader_study.images.add(*collected_images)
-
-    if upload_session.archive:
-        upload_session.archive.images.add(*collected_images)
 
 
 def _handle_raw_files(

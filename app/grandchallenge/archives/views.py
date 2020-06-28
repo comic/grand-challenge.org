@@ -44,6 +44,7 @@ from grandchallenge.archives.forms import (
 )
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.archives.serializers import ArchiveSerializer
+from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.views import RawImageUploadSessionDetail
@@ -353,6 +354,11 @@ class ArchiveUploadSessionCreate(
         f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
     )
     raise_exception = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"linked_task": add_images_to_archive})
+        return kwargs
 
     @cached_property
     def archive(self):
