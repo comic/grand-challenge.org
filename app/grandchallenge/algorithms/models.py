@@ -13,6 +13,10 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
 from grandchallenge.algorithms.emails import send_failed_job_email
+from grandchallenge.cases.image_builders.metaio_mhd_mha import (
+    image_builder_mhd,
+)
+from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.components.backends.docker import (
@@ -346,7 +350,10 @@ class AlgorithmExecutor(Executor):
 
                 input_files.add(tmpfile)
 
-            importer_result = import_images(files=input_files)
+            importer_result = import_images(
+                files=input_files,
+                builders=[image_builder_mhd, image_builder_tiff],
+            )
 
         default_output_interface = ComponentInterface.objects.get(
             slug=DEFAULT_OUTPUT_INTERFACE_SLUG
