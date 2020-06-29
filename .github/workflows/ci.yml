@@ -78,7 +78,8 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install documentation dependencies
         run: |
-          sudo apt-get install graphviz libcurl4-openssl-dev libssl-dev
+          sudo apt-get update
+          sudo apt-get install graphviz libssl-dev
           pip install -U pip
           pip install poetry
           poetry config virtualenvs.create false
