@@ -7,9 +7,9 @@ grand-challenge.org
 .. image:: https://codecov.io/gh/comic/grand-challenge.org/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/comic/grand-challenge.org
    :alt: Code Coverage Status
-.. image:: https://readthedocs.org/projects/grand-challengeorg/badge/?version=latest
+.. image:: https://img.shields.io/badge/docs-published-success
    :target: http://grand-challengeorg.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
+   :alt: Documentation
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/ambv/black
    :alt: Black Code Style

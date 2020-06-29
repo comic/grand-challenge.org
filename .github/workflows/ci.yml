@@ -52,7 +52,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_build/html
+          publish_dir: ./docs/_build/html
       - name: Run the non-transaction tests
         run: |
           docker pull crccheck/hello-world
