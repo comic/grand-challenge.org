@@ -58,6 +58,9 @@ jobs:
           codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Build the docs
+        run: |
+          make docs
       - name: Push the containers if we're on master
         if: github.ref == 'refs/heads/master'
         run: |
@@ -66,26 +69,3 @@ jobs:
         env:
           DOCKER_USER: grandchallenge
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-  docs:
-    needs: [precommit]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v1.1.1
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - uses: actions/checkout@v1
-      - name: Install documentation dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install graphviz libssl-dev
-          pip install -U pip
-          pip install poetry
-          poetry config virtualenvs.create false
-          poetry install --no-root
-      - name: Build the html docs
-        shell: bash
-        run: |
-          cd docs
-          make html
