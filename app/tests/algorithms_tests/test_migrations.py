@@ -9,6 +9,7 @@ from grandchallenge.core.management.commands.init_gc_demo import (
 from tests.factories import UserFactory
 
 
+@pytest.mark.skip(reason="Migration is scheduled for removal")
 @pytest.mark.django_db(transaction=True)
 def test_algorithm_image_data_migration(admin_user):
     executor = MigrationExecutor(connection)

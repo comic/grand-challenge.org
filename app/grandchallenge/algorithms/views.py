@@ -56,6 +56,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
     JobSerializer,
 )
+from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -332,6 +333,11 @@ class AlgorithmExecutionSessionCreate(
     @property
     def algorithm(self) -> Algorithm:
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"linked_task": create_algorithm_jobs})
+        return kwargs
 
     def get_permission_object(self):
         return self.algorithm

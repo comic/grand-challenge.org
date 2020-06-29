@@ -11,6 +11,10 @@ from grandchallenge.datasets.forms import (
     ImageSetUpdateForm,
 )
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
+from grandchallenge.datasets.tasks import (
+    add_images_to_annotationset,
+    add_images_to_imageset,
+)
 from grandchallenge.datasets.utils import process_csv_file
 from grandchallenge.pages.views import ChallengeFilteredQuerysetMixin
 from grandchallenge.subdomains.utils import reverse
@@ -27,7 +31,9 @@ class AddImagesToImageSet(UserIsStaffMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
+        kwargs.update(
+            {"user": self.request.user, "linked_task": add_images_to_imageset}
+        )
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -108,7 +114,12 @@ class AddImagesToAnnotationSet(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "linked_task": add_images_to_annotationset,
+            }
+        )
         return kwargs
 
     def get_context_data(self, **kwargs):

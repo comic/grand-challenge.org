@@ -90,21 +90,18 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
         "algorithm_image",
         "imageset",
         "annotationset",
-        "algorithm_result",
         "reader_study",
         "archive",
         "status",
     )
     list_select_related = (
         "algorithm_image__algorithm",
-        "algorithm_result__job__algorithm_image__algorithm",
         "archive",
     )
     list_filter = ("status",)
     search_fields = (
         "creator__username",
         "algorithm_image__algorithm__slug",
-        "algorithm_result__job__algorithm_image__algorithm__slug",
         "reader_study__slug",
         "archive__slug",
         "pk",
@@ -114,8 +111,6 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
     def algorithm(self, obj):
         if obj.algorithm_image:
             return obj.algorithm_image.algorithm
-        elif obj.algorithm_result:
-            return obj.algorithm_result.job.algorithm_image.algorithm
 
 
 class DownloadableFilter(admin.SimpleListFilter):

@@ -1,6 +1,7 @@
 from celery import shared_task
 from django.db import transaction
 
+from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.reader_studies.models import Answer
 
 
@@ -28,3 +29,9 @@ def add_scores(*, instance_pk, pk_set):
         ).first()
         if ground_truth:
             add_score(instance, ground_truth.answer)
+
+
+@shared_task
+def add_images_to_reader_study(*_, upload_session_pk):
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    session.reader_study.images.add(*session.image_set.all())
