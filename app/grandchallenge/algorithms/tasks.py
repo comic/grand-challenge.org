@@ -16,15 +16,23 @@ def create_algorithm_jobs(*_, upload_session_pk):
         slug=DEFAULT_INPUT_INTERFACE_SLUG
     )
 
-    for image in session.image_set.all():
-        j = Job.objects.create(
-            creator=session.creator, algorithm_image=session.algorithm_image,
-        )
-        j.inputs.set(
-            [
-                ComponentInterfaceValue.objects.create(
-                    interface=default_input_interface, image=image
+    if session.creator and session.algorithm_image:
+        for image in session.image_set.all():
+            if not ComponentInterfaceValue.objects.filter(
+                interface=default_input_interface,
+                image=image,
+                algorithms_jobs_as_input__algorithm_image=session.algorithm_image,
+                algorithms_jobs_as_input__creator=session.creator,
+            ).exists():
+                j = Job.objects.create(
+                    creator=session.creator,
+                    algorithm_image=session.algorithm_image,
                 )
-            ]
-        )
-        j.schedule_job()
+                j.inputs.set(
+                    [
+                        ComponentInterfaceValue.objects.create(
+                            interface=default_input_interface, image=image
+                        )
+                    ]
+                )
+                j.schedule_job()
