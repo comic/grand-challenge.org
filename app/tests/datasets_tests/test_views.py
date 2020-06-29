@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.datasets.tasks import (
-    add_images_to_annotation_set,
+    add_images_to_annotationset,
     add_images_to_imageset,
 )
 from grandchallenge.subdomains.utils import reverse
@@ -99,7 +99,7 @@ def test_annotationset_creation(client, settings):
     session, uploaded_images = create_raw_upload_image_session(
         images,
         annotationset=annotationset,
-        linked_task=add_images_to_annotation_set,
+        linked_task=add_images_to_annotationset,
     )
 
     url, kwargs = get_http_host(

@@ -12,7 +12,7 @@ from grandchallenge.datasets.forms import (
 )
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.datasets.tasks import (
-    add_images_to_annotation_set,
+    add_images_to_annotationset,
     add_images_to_imageset,
 )
 from grandchallenge.datasets.utils import process_csv_file
@@ -117,7 +117,7 @@ class AddImagesToAnnotationSet(
         kwargs.update(
             {
                 "user": self.request.user,
-                "linked_task": add_images_to_annotation_set,
+                "linked_task": add_images_to_annotationset,
             }
         )
         return kwargs
