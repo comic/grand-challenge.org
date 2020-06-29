@@ -27,14 +27,6 @@ jobs:
     needs: [precommit]
     runs-on: ubuntu-latest
     steps:
-      - name: Build the docs
-        run: |
-          make docs
-      - name: Deploy the documentation
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/_build/html
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v1.1.1
         with:
@@ -53,6 +45,14 @@ jobs:
       - name: Build the containers
         run: |
           make -j2 build
+      - name: Build the docs
+        run: |
+          make docs
+      - name: Deploy the documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_build/html
       - name: Run the non-transaction tests
         run: |
           docker pull crccheck/hello-world
