@@ -1,0 +1,718 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>grandchallenge.workstations.models &mdash; grand-challenge.org  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> grand-challenge.org
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development.html">Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../processor.html">Processor specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../workstations.html">Workstations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reader-studies.html">Reader Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design.html">Design decisions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">grand-challenge.org</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>grandchallenge.workstations.models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for grandchallenge.workstations.models</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">urljoin</span>
+
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
+<span class="kn">from</span> <span class="nn">django.contrib.postgres.fields</span> <span class="kn">import</span> <span class="n">JSONField</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
+<span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">RegexValidator</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.db.models.signals</span> <span class="kn">import</span> <span class="n">post_delete</span>
+<span class="kn">from</span> <span class="nn">django.dispatch</span> <span class="kn">import</span> <span class="n">receiver</span>
+<span class="kn">from</span> <span class="nn">django_extensions.db.models</span> <span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
+<span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
+<span class="kn">from</span> <span class="nn">rest_framework.authtoken.models</span> <span class="kn">import</span> <span class="n">Token</span>
+<span class="kn">from</span> <span class="nn">simple_history.models</span> <span class="kn">import</span> <span class="n">HistoricalRecords</span>
+
+<span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">get_logo_path</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.backends.docker</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ComponentException</span><span class="p">,</span>
+    <span class="n">Service</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="n">ComponentImage</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">start_service</span><span class="p">,</span> <span class="n">stop_service</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">UUIDModel</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="n">public_s3_storage</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
+
+<span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">Workstations are used to view, annotate and upload images to grand challenge.</span>
+<span class="s2">A `workstation admin` is able to upload a ``WorkstationImage``, which is a docker container image.</span>
+<span class="s2">A ``WorkstationImage`` expose a http and, optionally, a websocket port.</span>
+<span class="s2">A `workstation user` can then launch a workstation ``Session`` for a particular ``WorkstationImage``.</span>
+
+<span class="s2">When a new session is started, a new container instance of the selected ``WorkstationImage`` is lauched on the docker host.</span>
+<span class="s2">The connection to the container will be proxied, and only accessible to the user that created the session.</span>
+<span class="s2">The proxy will map the http and websocket connections from the user to the running instance, which is mapped by the container hostname.</span>
+<span class="s2">The container instance will have the users API token set in the environment, so that it is able to interact with the grand challenge API as this user.</span>
+<span class="s2">The user is able to stop the container, otherwise it will be terminated after ``maxmium_duration`` is reached.</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Workstation"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Workstation">[docs]</a><span class="k">class</span> <span class="nc">Workstation</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Store the title and description of a workstation.&quot;&quot;&quot;</span>
+
+    <span class="n">logo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ImageField</span><span class="p">(</span>
+        <span class="n">upload_to</span><span class="o">=</span><span class="n">get_logo_path</span><span class="p">,</span> <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span>
+    <span class="p">)</span>
+    <span class="n">editors_group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">Group</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;editors_of_workstation&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">users_group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">Group</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;users_of_workstation&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;workstation_configs.WorkstationConfig&quot;</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">public</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If True, all logged in users can use this workstation, &quot;</span>
+            <span class="s2">&quot;otherwise, only the users group can use this workstation.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">latest_ready_image</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The most recent container image for this workstation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">workstationimage_set</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">ready</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-created&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">public</span> <span class="o">=</span> <span class="s2">&quot; (Public)&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Workstation </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}{</span><span class="n">public</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;workstations:detail&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">create_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">_editors&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">users_group</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">_users&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Workstation.save"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Workstation.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_groups</span><span class="p">()</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Allow the editors and users groups to view this workstation</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">users_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="c1"># Allow the editors to change this workstation</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span> <span class="bp">self</span>
+        <span class="p">)</span>
+
+        <span class="n">g_reg</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">REGISTERED_USERS_GROUP_NAME</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span><span class="p">:</span>
+            <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">g_reg</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">remove_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">g_reg</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">add_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">remove_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">users_group</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">add_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users_group</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">remove_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users_group</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="delete_workstation_groups_hook"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.delete_workstation_groups_hook">[docs]</a><span class="nd">@receiver</span><span class="p">(</span><span class="n">post_delete</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">Workstation</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">delete_workstation_groups_hook</span><span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Workstation</span><span class="p">,</span> <span class="n">using</span><span class="p">,</span> <span class="o">**</span><span class="n">__</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes the related groups.</span>
+
+<span class="sd">    We use a signal rather than overriding delete() to catch usages of</span>
+<span class="sd">    bulk_delete.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">editors_group</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">using</span><span class="o">=</span><span class="n">using</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">users_group</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">using</span><span class="o">=</span><span class="n">using</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="WorkstationImage"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationImage">[docs]</a><span class="k">class</span> <span class="nc">WorkstationImage</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A ``WorkstationImage`` is a docker container image of a workstation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    workstation</span>
+<span class="sd">        A ``Workstation`` can have multiple ``WorkstationImage``, that</span>
+<span class="sd">        represent different versions of a workstation</span>
+<span class="sd">    http_port</span>
+<span class="sd">        This container will expose a http server on this port</span>
+<span class="sd">    websocket_port</span>
+<span class="sd">        This container will expose a websocket on this port. Any relative url</span>
+<span class="sd">        that starts with ``/mlab4d4c4142`` will be proxied to this port.</span>
+<span class="sd">    initial_path</span>
+<span class="sd">        The initial path that users will navigate to in order to load the</span>
+<span class="sd">        workstation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">workstation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Workstation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">http_port</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">8080</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MaxValueValidator</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="p">)</span>
+    <span class="n">websocket_port</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">4114</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MaxValueValidator</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="p">)</span>
+    <span class="n">initial_path</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;cirrus&quot;</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">RegexValidator</span><span class="p">(</span>
+                <span class="n">regex</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^(?:[^/][^\s]*)\Z&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;This path is invalid, it must not start with a /&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;creator&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Workstation Image </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;workstations:image-detail&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span> <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Allow the editors group to view this workstation image</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Allow the editors to change this workstation image</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="WorkstationImage.save"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationImage.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="Session"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session">[docs]</a><span class="k">class</span> <span class="nc">Session</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Tracks who has launched workstation images. The ``WorkstationImage`` will</span>
+<span class="sd">    be launched as a ``Service``. The ``Session`` is responsible for starting</span>
+<span class="sd">    and stopping the ``Service``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    status</span>
+<span class="sd">        Stores what has happened with the service, is it running, errored, etc?</span>
+<span class="sd">    region</span>
+<span class="sd">        Stores which region this session runs in</span>
+<span class="sd">    creator</span>
+<span class="sd">        Who created the session? This is also the only user that should be able</span>
+<span class="sd">        to access the launched service.</span>
+<span class="sd">    workstation_image</span>
+<span class="sd">        The container image that will be launched by this ``Session``.</span>
+<span class="sd">    maximum_duration</span>
+<span class="sd">        The maximum time that the service can be active before it is terminated</span>
+<span class="sd">    user_finished</span>
+<span class="sd">        Indicates if the user has chosen to end the session early</span>
+<span class="sd">    history</span>
+<span class="sd">        The history of this Session</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">QUEUED</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">STARTED</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">RUNNING</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">FAILED</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">STOPPED</span> <span class="o">=</span> <span class="mi">4</span>
+
+    <span class="c1"># These should match the values in session.js</span>
+    <span class="n">STATUS_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">QUEUED</span><span class="p">,</span> <span class="s2">&quot;Queued&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">STARTED</span><span class="p">,</span> <span class="s2">&quot;Started&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">RUNNING</span><span class="p">,</span> <span class="s2">&quot;Running&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">FAILED</span><span class="p">,</span> <span class="s2">&quot;Failed&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">STOPPED</span><span class="p">,</span> <span class="s2">&quot;Stopped&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="Session.Region"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.Region">[docs]</a>    <span class="k">class</span> <span class="nc">Region</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+        <span class="c1"># AWS regions</span>
+        <span class="c1"># https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html</span>
+        <span class="n">AF_SOUTH_1</span> <span class="o">=</span> <span class="s2">&quot;af-south-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Africa (Cape Town)&quot;</span>
+        <span class="n">AP_EAST_1</span> <span class="o">=</span> <span class="s2">&quot;ap-east-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Asia Pacific (Hong Kong)&quot;</span>
+        <span class="n">AP_NORTHEAST_1</span> <span class="o">=</span> <span class="s2">&quot;ap-northeast-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Asia Pacific (Tokyo)&quot;</span>
+        <span class="n">AP_NORTHEAST_2</span> <span class="o">=</span> <span class="s2">&quot;ap-northeast-2&quot;</span><span class="p">,</span> <span class="s2">&quot;Asia Pacific (Seoul)&quot;</span>
+        <span class="n">AP_NORTHEAST_3</span> <span class="o">=</span> <span class="s2">&quot;ap-northeast-3&quot;</span><span class="p">,</span> <span class="s2">&quot;Asia Pacific (Osaka-Local)&quot;</span>
+        <span class="n">AP_SOUTH_1</span> <span class="o">=</span> <span class="s2">&quot;ap-south-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Asia Pacific (Mumbai)&quot;</span>
+        <span class="n">AP_SOUTHEAST_1</span> <span class="o">=</span> <span class="s2">&quot;ap-southeast-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Asia Pacific (Singapore)&quot;</span>
+        <span class="n">AP_SOUTHEAST_2</span> <span class="o">=</span> <span class="s2">&quot;ap-southeast-2&quot;</span><span class="p">,</span> <span class="s2">&quot;Asia Pacific (Sydney)&quot;</span>
+        <span class="n">CA_CENTRAL_1</span> <span class="o">=</span> <span class="s2">&quot;ca-central-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Canada (Central)&quot;</span>
+        <span class="n">EU_CENTRAL_1</span> <span class="o">=</span> <span class="s2">&quot;eu-central-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Europe (Frankfurt)&quot;</span>
+        <span class="n">EU_NORTH_1</span> <span class="o">=</span> <span class="s2">&quot;eu-north-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Europe (Stockholm)&quot;</span>
+        <span class="n">EU_SOUTH_1</span> <span class="o">=</span> <span class="s2">&quot;eu-south-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Europe (Milan)&quot;</span>
+        <span class="n">EU_WEST_1</span> <span class="o">=</span> <span class="s2">&quot;eu-west-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Europe (Ireland)&quot;</span>
+        <span class="n">EU_WEST_2</span> <span class="o">=</span> <span class="s2">&quot;eu-west-2&quot;</span><span class="p">,</span> <span class="s2">&quot;Europe (London)&quot;</span>
+        <span class="n">EU_WEST_3</span> <span class="o">=</span> <span class="s2">&quot;eu-west-3&quot;</span><span class="p">,</span> <span class="s2">&quot;Europe (Paris)&quot;</span>
+        <span class="n">ME_SOUTH_1</span> <span class="o">=</span> <span class="s2">&quot;me-south-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Middle East (Bahrain)&quot;</span>
+        <span class="n">SA_EAST_1</span> <span class="o">=</span> <span class="s2">&quot;sa-east-1&quot;</span><span class="p">,</span> <span class="s2">&quot;South America (São Paulo)&quot;</span>
+        <span class="n">US_EAST_1</span> <span class="o">=</span> <span class="s2">&quot;us-east-1&quot;</span><span class="p">,</span> <span class="s2">&quot;US East (N. Virginia)&quot;</span>
+        <span class="n">US_EAST_2</span> <span class="o">=</span> <span class="s2">&quot;us-east-2&quot;</span><span class="p">,</span> <span class="s2">&quot;US East (Ohio)&quot;</span>
+        <span class="n">US_WEST_1</span> <span class="o">=</span> <span class="s2">&quot;us-west-1&quot;</span><span class="p">,</span> <span class="s2">&quot;US West (N. California)&quot;</span>
+        <span class="n">US_WEST_2</span> <span class="o">=</span> <span class="s2">&quot;us-west-2&quot;</span><span class="p">,</span> <span class="s2">&quot;US West (Oregon)&quot;</span>
+
+        <span class="c1"># User defined regions</span>
+        <span class="n">EU_NL_1</span> <span class="o">=</span> <span class="s2">&quot;eu-nl-1&quot;</span><span class="p">,</span> <span class="s2">&quot;Netherlands (Nijmegen)&quot;</span>
+        <span class="n">EU_NL_2</span> <span class="o">=</span> <span class="s2">&quot;eu-nl-2&quot;</span><span class="p">,</span> <span class="s2">&quot;Netherlands (Amsterdam)&quot;</span></div>
+
+    <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">STATUS_CHOICES</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">QUEUED</span>
+    <span class="p">)</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">Region</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">Region</span><span class="o">.</span><span class="n">EU_NL_1</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Which region is this session available in?&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
+    <span class="p">)</span>
+    <span class="n">workstation_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">WorkstationImage</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
+    <span class="p">)</span>
+    <span class="n">maximum_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
+    <span class="n">user_finished</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">logs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ping_times</span> <span class="o">=</span> <span class="n">JSONField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="n">HistoricalRecords</span><span class="p">(</span><span class="n">excluded_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="s2">&quot;ping_times&quot;</span><span class="p">])</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;creator&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Session </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">task_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The kwargs that need to be passed to celery to get this object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
+            <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+            <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">hostname</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The unique hostname for this session</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">expires_at</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">datetime</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The time when this session expires.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">created</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximum_duration</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">environment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The environment variables that should be set on the container.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;GRAND_CHALLENGE_API_ROOT&quot;</span><span class="p">:</span> <span class="n">unquote</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;api:api-root&quot;</span><span class="p">)),</span>
+            <span class="s2">&quot;WORKSTATION_SENTRY_DSN&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATION_SENTRY_DSN</span><span class="p">,</span>
+            <span class="s2">&quot;WORKSTATION_SESSION_ID&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+            <span class="s2">&quot;GRAND_CHALLENGE_INTERNAL&quot;</span><span class="p">:</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATION_INTERNAL_NETWORK</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;GRAND_CHALLENGE_AUTHORIZATION&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;TOKEN </span><span class="si">{</span><span class="n">Token</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+            <span class="c1"># Allow the container to communicate with the dev environment</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;GRAND_CHALLENGE_UNSAFE&quot;</span><span class="p">:</span> <span class="s2">&quot;true&quot;</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">env</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">service</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Service</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The service for this session, could be active or inactive.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Service</span><span class="p">(</span>
+            <span class="n">job_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="n">job_model</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">exec_image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">image</span><span class="p">,</span>
+            <span class="n">exec_image_sha256</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">image_sha256</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">workstation_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The url that users will use to access the workstation instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">urljoin</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_absolute_url</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">initial_path</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Session.start"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Starts the service for this session, ensuring that the</span>
+<span class="sd">        ``workstation_image`` is ready to be used and that</span>
+<span class="sd">        ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached in this region.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ComponentException</span>
+<span class="sd">            If the service cannot be started.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">ready</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ComponentException</span><span class="p">(</span><span class="s2">&quot;Workstation image was not ready&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">Session</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">status__in</span><span class="o">=</span><span class="p">[</span><span class="n">Session</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span> <span class="n">Session</span><span class="o">.</span><span class="n">STARTED</span><span class="p">],</span>
+                    <span class="n">region</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">count</span><span class="p">()</span>
+                <span class="o">&gt;=</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATIONS_MAXIMUM_SESSIONS</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="n">ComponentException</span><span class="p">(</span><span class="s2">&quot;Too many sessions are running&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">start</span><span class="p">(</span>
+                <span class="n">http_port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">http_port</span><span class="p">,</span>
+                <span class="n">websocket_port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">websocket_port</span><span class="p">,</span>
+                <span class="n">hostname</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span>
+                <span class="n">environment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">FAILED</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Session.stop"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Stop the service for this session, cleaning up all of the containers.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">logs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">stop_and_cleanup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">STOPPED</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Session.update_status"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.update_status">[docs]</a>    <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n">STATUS_CHOICES</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the status of this session.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        status</span>
+<span class="sd">            The new status for this session.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;session-detail&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
+                <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="s2">&quot;rendering_subdomain&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Allow the editors group to view and change this session</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Allow the session creator to view or change this</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Session.save"><a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Save the session instance, starting or stopping the service if needed.&quot;&quot;&quot;</span>
+        <span class="n">created</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="k">if</span> <span class="n">created</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">:</span>
+            <span class="c1"># Launch in the first active region if no preference set</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATIONS_ACTIVE_REGIONS</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">created</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
+            <span class="n">start_service</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_kwargs</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;workstations-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_finished</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">STOPPED</span><span class="p">:</span>
+            <span class="n">stop_service</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_kwargs</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;workstations-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, James Meakin
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="973px" preserveAspectRatio="none" style="width:1425px;height:973px;" version="1.1" viewBox="0 0 1425 973" width="1425px" zoomAndPan="magnify"><defs/><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="444" x="489.5" y="16.708">Component diagram for grand-challenge.org - API</text><!--MD5=[c26638a81821cf585a88e29a60357529]
+cluster s1--><rect fill="#FFFFFF" height="407" style="stroke: #444444; stroke-width: 1.0; stroke-dasharray: 7.0,7.0;" width="492" x="579" y="168.9531"/><text fill="#444444" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="30" x="810" y="185.8047">API</text><text fill="#444444" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="80" x="785" y="200.7168">[Container]</text><!--MD5=[af746865a340b8aa99a3a8362ac495f5]
+entity gc_web_app--><rect fill="#85BBF0" height="117.7813" style="stroke: #78A8D8; stroke-width: 1.5;" width="199" x="587.5" y="449.9531"/><text fill="#000000" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="142" x="616" y="474.8047">Web Application</text><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="54" x="660" y="489.7168">[Django]</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="689" y="505.542"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="130" x="620" y="521.8389">Provides the grand</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="175" x="597.5" y="538.1357">challenge functionality via</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="150" x="612" y="554.4326">HTML and a REST API.</text><!--MD5=[8824c66cba45be527cf3dd56bcd70cd2]
+entity nginx--><rect fill="#85BBF0" height="85.1875" style="stroke: #78A8D8; stroke-width: 1.5;" width="210" x="587" y="211.9531"/><text fill="#000000" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="130" x="627" y="236.8047">Reverse Proxy</text><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="45" x="669.5" y="251.7168">[Nginx]</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="694" y="267.542"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="190" x="597" y="283.8389">SSL termination and routing</text><!--MD5=[3a30c7d6d1d1a086eb8963f63816809b]
+entity memcached--><rect fill="#85BBF0" height="101.4844" style="stroke: #78A8D8; stroke-width: 1.5;" width="199" x="863.5" y="458.4531"/><text fill="#000000" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="54" x="936" y="483.3047">Cache</text><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="85" x="920.5" y="498.2168">[Memcached]</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="965" y="514.042"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="175" x="873.5" y="530.3389">Local in-memory cache of</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="108" x="909" y="546.6357">expensive data.</text><!--MD5=[5f2f9dbbee692058d60489180693f774]
+entity users--><rect fill="#08427B" height="71.2188" style="stroke: #073B6F; stroke-width: 1.5;" width="71" x="656.5" y="28.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="51" x="666.5" y="53.8047">Users</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="694" y="70.5732"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="694" y="86.8701"/><!--MD5=[0e1fecc31e3549f2a1667c6349b56d9e]
+entity postgres--><path d="M6,698.9531 C6,688.9531 110,688.9531 110,688.9531 C110,688.9531 214,688.9531 214,698.9531 L214,805.7344 C214,815.7344 110,815.7344 110,815.7344 C110,815.7344 6,815.7344 6,805.7344 L6,698.9531 " fill="#438DD5" style="stroke: #3C7FC0; stroke-width: 1.5;"/><path d="M6,698.9531 C6,708.9531 110,708.9531 110,708.9531 C110,708.9531 214,708.9531 214,698.9531 " fill="none" style="stroke: #3C7FC0; stroke-width: 1.5;"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="83" x="68.5" y="727.8047">Database</text><text fill="#FFFFFF" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="109" x="55.5" y="742.7168">[RDS/PostgreSQL]</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="112" y="758.542"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="165" x="25.5" y="774.8389">Stores user information,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="184" x="16" y="791.1357">medical imaging metadata,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="102" x="59" y="807.4326">job results etc.</text><!--MD5=[28c910e737dccacd09c95ffccfd81d7d]
+entity message_queue--><rect fill="#438DD5" height="101.4844" style="stroke: #3C7FC0; stroke-width: 1.5;" width="180" x="249" y="701.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="143" x="267.5" y="726.8047">Message Queue</text><text fill="#FFFFFF" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="71" x="303.5" y="741.7168">[SQS/Redis]</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="341" y="757.542"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="156" x="259" y="773.8389">Queue of units of work</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="123" x="277.5" y="790.1357">Celery messages.</text><!--MD5=[a513f3882380e818dc123dc3fdc6a4a9]
+entity protected_s3--><rect fill="#438DD5" height="101.4844" style="stroke: #3C7FC0; stroke-width: 1.5;" width="212" x="464" y="701.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="192" x="474" y="726.8047">Protected Data Store</text><text fill="#FFFFFF" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="62" x="539" y="741.7168">[S3/Minio]</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="572" y="757.542"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="174" x="481" y="773.8389">Stores protected medical</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="113" x="513.5" y="790.1357">imaging objects.</text><!--MD5=[eafe8fea6c5d5a360f2eb7027e2ff3b9]
+entity private_s3--><rect fill="#438DD5" height="101.4844" style="stroke: #3C7FC0; stroke-width: 1.5;" width="185" x="711.5" y="701.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="165" x="721.5" y="726.8047">Private Data Store</text><text fill="#FFFFFF" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="62" x="773" y="741.7168">[S3/Minio]</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="806" y="757.542"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="154" x="725" y="773.8389">Stores private objects,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="149" x="729.5" y="790.1357">container images etc.</text><!--MD5=[734ea825ff1e68e5efe5e73f1ecb4f5b]
+entity oauth--><rect fill="#999999" height="103.8125" style="stroke: #8A8A8A; stroke-width: 1.5;" width="218" x="932" y="700.4531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="130" x="976" y="725.3047">Authentication</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1043" y="742.0732"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="198" x="942" y="758.3701">Authenticates users through</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="186" x="946" y="774.667">external providers (Google,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="56" x="1013" y="790.9639">GitHub).</text><!--MD5=[8fb4f905147ca31c25b1e567ee08a5b2]
+entity cdn--><rect fill="#999999" height="106.1406" style="stroke: #8A8A8A; stroke-width: 1.5;" width="220" x="1185" y="699.4531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="149" x="1217.5" y="724.3047">Content Delivery</text><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="77" x="1256.5" y="742.9297">Network</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1297" y="759.6982"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="200" x="1195" y="775.9951">Stores and serves static data</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="116" x="1237" y="792.292">(S3, CloudFront).</text><!--MD5=[8ea3e6473c694d28d6e9ea952caa4966]
+link users to nginx--><path d="M692,100.1906 C692,130.2919 692,173.6096 692,206.6836 " fill="none" id="users-&gt;nginx" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="692,211.9003,696,202.9003,692,206.9003,688,202.9003,692,211.9003" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="27" x="742.5" y="143.02">Use</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="126" x="693" y="157.2246">[HTTPS, HTML, JSON]</text><!--MD5=[918fea7b70f9b3ce8716ba0b20149204]
+link gc_web_app to oauth--><path d="M786.8516,552.9957 C806.3185,561.0222 826.6823,569.0351 846,575.9531 C878.3026,587.5213 891.6367,578.6448 920,597.9531 C956.9261,623.0905 987.7674,663.0059 1009.0706,695.968 " fill="none" id="gc_web_app-&gt;oauth" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="1011.882,700.3638,1010.4027,690.6267,1009.1881,696.1516,1003.6631,694.937,1011.882,700.3638" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="147" x="982" y="618.52">Authenticates users</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="55" x="1028" y="633.6528">against</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="101" x="1005" y="647.8574">[HTTPS, OAuth2]</text><!--MD5=[c7c9248ba8ec53d5b913244cfccd4df7]
+link gc_web_app to cdn--><path d="M786.6985,556.7137 C806.0018,564.3039 826.3457,571.2058 846,575.9531 C909.2538,591.2315 1078.7507,571.046 1138,597.9531 C1184.6753,619.15 1225.5175,660.511 1253.8372,695.1068 " fill="none" id="gc_web_app-&gt;cdn" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="1257.2283,699.2904,1254.6686,689.78,1254.0799,695.4062,1248.4537,694.8175,1257.2283,699.2904" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="150" x="1220" y="626.02">Sends static data to</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="48" x="1271" y="640.2246">[HTTPS]</text><!--MD5=[99df3702f6d7582c0a70cb0afe9a688a]
+link gc_web_app to postgres--><path d="M587.3637,519.4352 C469.6503,533.2916 282.2969,560.4116 223,597.9531 C189.9497,618.8776 163.4021,653.2245 144.3649,684.2265 " fill="none" id="gc_web_app-&gt;postgres" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="141.6107,688.7743,149.6944,683.1481,144.2008,684.4975,142.8515,679.0039,141.6107,688.7743" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="149" x="224" y="626.02">Reads and writes to</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="64" x="266.5" y="640.2246">[SSL, SQL]</text><!--MD5=[00b8331c3bf9bac86e8c5be920b33121]
+link gc_web_app to protected_s3--><path d="M631.1926,568.1892 C624.0318,577.6817 617.3475,587.7523 612,597.9531 C595.8962,628.6727 585.5127,666.152 579.099,696.5028 " fill="none" id="gc_web_app-&gt;protected_s3" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="578.0254,701.6961,583.7647,693.6923,579.0377,696.7997,575.9304,692.0727,578.0254,701.6961" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="129" x="619.5" y="611.02">Stores objects in,</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="142" x="613" y="626.1528">and proxies access</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="15" x="679" y="641.2856">to</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="72" x="650.5" y="655.4902">[HTTPS, S3]</text><!--MD5=[9e207a99ebf83abb9cb42c9592372679]
+link gc_web_app to private_s3--><path d="M745.4481,568.1356 C752.7906,577.5988 759.6041,587.6751 765,597.9531 C781.1067,628.6327 790.7884,666.2764 796.4765,696.7251 " fill="none" id="gc_web_app-&gt;private_s3" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="797.424,701.9346,799.7487,692.3641,796.5291,697.0154,791.8778,693.7958,797.424,701.9346" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="124" x="787" y="626.02">Stores objects in</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="72" x="813" y="640.2246">[HTTPS, S3]</text><!--MD5=[fc0473257f35cba48954095b3fb7866d]
+link gc_web_app to message_queue--><path d="M587.1978,526.5987 C536.2067,539.5789 475.6691,561.5233 431,597.9531 C399.1789,623.9048 375.7702,663.9744 360.5297,696.8037 " fill="none" id="gc_web_app-&gt;message_queue" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="358.3404,701.5923,365.7204,695.0704,360.4194,697.045,358.4448,691.744,358.3404,701.5923" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="136" x="438.5" y="626.02">Puts messages on</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="149" x="432" y="640.2246">[SSL, SQS/Redis, Celery]</text><!--MD5=[487a16f6cc1f8a22200d688cb736a58f]
+link gc_web_app to memcached--><path d="M786.6423,508.9531 C809.7541,508.9531 834.425,508.9531 857.7683,508.9531 " fill="none" id="gc_web_app-&gt;memcached" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="863.0406,508.9531,854.0406,504.9531,858.0406,508.9531,854.0406,512.9531,863.0406,508.9531" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="35" x="807.5" y="488.02">Uses</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="40" x="805" y="502.2246">[HTTP]</text><!--MD5=[d1f51f707560b4633a0c33352ca9af02]
+link nginx to gc_web_app--><path d="M691.1631,297.0507 C690.3734,337.2452 689.1786,398.0626 688.2712,444.2486 " fill="none" id="nginx-&gt;gc_web_app" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="688.1676,449.5213,692.3437,440.6017,688.2659,444.5223,684.3453,440.4444,688.1676,449.5213" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="54" x="723" y="371.02">Proxies</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="118" x="691" y="385.2246">[HTTP, HTML, JSON]</text><rect fill="#DDDDDD" height="128.0781" rx="5" ry="5" style="stroke: #000000; stroke-width: 1.0;" width="199" x="1215" y="833.9531"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="1291" y="853.9482"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="39" x="1296" y="853.9482">Type</text><rect fill="#08427B" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="1221" y="857.25"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1245" y="870.2451"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="49" x="1295" y="870.2451">person</text><rect fill="#686868" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="1221" y="873.5469"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1245" y="886.542"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="108" x="1295" y="886.542">external person</text><rect fill="#1168BD" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="1221" y="889.8438"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1233" y="902.8389"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="50" x="1295" y="902.8389">system</text><rect fill="#999999" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="1221" y="906.1406"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1245" y="919.1357"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="109" x="1295" y="919.1357">external system</text><rect fill="#438DD5" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="1221" y="922.4375"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1233" y="935.4326"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="65" x="1295" y="935.4326">container</text><rect fill="#85BBF0" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="1221" y="938.7344"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1233" y="951.7295"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="80" x="1295" y="951.7295">component</text><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1408" y1="840.9531" y2="840.9531"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1408" y1="857.25" y2="857.25"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1408" y1="873.5469" y2="873.5469"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1408" y1="889.8438" y2="889.8438"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1408" y1="906.1406" y2="906.1406"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1408" y1="922.4375" y2="922.4375"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1408" y1="938.7344" y2="938.7344"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1408" y1="955.0313" y2="955.0313"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1221" x2="1221" y1="840.9531" y2="955.0313"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1291" x2="1291" y1="840.9531" y2="955.0313"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1408" x2="1408" y1="840.9531" y2="955.0313"/><!--MD5=[b47e1b7a3d09c804104ec6f91519ede9]
+@startuml
+
+
+
+
+
+skinparam defaultTextAlignment center
+
+skinparam wrapWidth 200
+skinparam maxMessageSize 150
+
+skinparam rectangle {
+    StereotypeFontSize 12
+    shadowing false
+}
+
+skinparam database {
+    StereotypeFontSize 12
+    shadowing false
+}
+
+skinparam Arrow {
+    Color #666666
+    FontColor #666666
+    FontSize 12
+}
+
+skinparam rectangle<<boundary>> {
+    Shadowing false
+    StereotypeFontSize 0
+    FontColor #444444
+    BorderColor #444444
+    BorderStyle dashed
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+skinparam rectangle<<person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #08427B
+    BorderColor #073B6F
+}
+
+skinparam rectangle<<external_person>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #686868
+    BorderColor #8A8A8A
+}
+
+skinparam rectangle<<system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #1168BD
+    BorderColor #3C7FC0
+}
+
+skinparam rectangle<<external_system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #999999
+    BorderColor #8A8A8A
+}
+
+skinparam database<<system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #1168BD
+    BorderColor #3C7FC0
+}
+
+skinparam database<<external_system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #999999
+    BorderColor #8A8A8A
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+skinparam rectangle<<container>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #438DD5
+    BorderColor #3C7FC0
+}
+
+skinparam database<<container>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #438DD5
+    BorderColor #3C7FC0
+}
+
+
+
+
+
+
+
+
+
+
+
+
+skinparam rectangle<<component>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #000000
+    BackgroundColor #85BBF0
+    BorderColor #78A8D8
+}
+
+skinparam database<<component>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #000000
+    BackgroundColor #85BBF0
+    BorderColor #78A8D8
+}
+
+
+
+
+
+
+top to bottom direction
+hide stereotype
+legend right
+|=              |= Type |
+|<#08427B>      | person |
+|<#686868>      | external person |
+|<#1168BD>   | system |
+|<#999999>      | external system |
+|<#438DD5>   | container |
+|<#85BBF0>   | component |
+endlegend
+
+title Component diagram for grand-challenge.org - API
+
+rectangle "==Users\n\n " <<person>> as users
+
+rectangle "==API\n<size:12>[Container]</size>" <<boundary>> as s1 {
+    rectangle "==Web Application\n//<size:12>[Django]</size>//\n\n Provides the grand challenge functionality via HTML and a REST API." <<component>> as gc_web_app
+    rectangle "==Reverse Proxy\n//<size:12>[Nginx]</size>//\n\n SSL termination and routing" <<component>> as nginx
+    rectangle "==Cache\n//<size:12>[Memcached]</size>//\n\n Local in-memory cache of expensive data." <<component>> as memcached
+}
+
+database "==Database\n//<size:12>[RDS/PostgreSQL]</size>//\n\n Stores user information, medical imaging metadata, job results etc." <<container>> as postgres
+rectangle "==Message Queue\n//<size:12>[SQS/Redis]</size>//\n\n Queue of units of work Celery messages." <<container>> as message_queue
+rectangle "==Protected Data Store\n//<size:12>[S3/Minio]</size>//\n\n Stores protected medical imaging objects." <<container>> as protected_s3
+rectangle "==Private Data Store\n//<size:12>[S3/Minio]</size>//\n\n Stores private objects, container images etc." <<container>> as private_s3
+
+rectangle "==Authentication\n\n Authenticates users through external providers (Google, GitHub)." <<external_system>> as oauth
+rectangle "==Content Delivery Network\n\n Stores and serves static data (S3, CloudFront)." <<external_system>> as cdn
+
+users - -> nginx : "===Use\n//<size:12>[HTTPS, HTML, JSON]</size>//"
+
+gc_web_app - -> oauth : "===Authenticates users against\n//<size:12>[HTTPS, OAuth2]</size>//"
+gc_web_app - -> cdn : "===Sends static data to\n//<size:12>[HTTPS]</size>//"
+
+gc_web_app - -> postgres : "===Reads and writes to\n//<size:12>[SSL, SQL]</size>//"
+gc_web_app - -> protected_s3 : "===Stores objects in, and proxies access to\n//<size:12>[HTTPS, S3]</size>//"
+gc_web_app - -> private_s3 : "===Stores objects in\n//<size:12>[HTTPS, S3]</size>//"
+gc_web_app - -> message_queue : "===Puts messages on\n//<size:12>[SSL, SQS/Redis, Celery]</size>//"
+gc_web_app -> memcached : "===Uses\n//<size:12>[HTTP]</size>//"
+
+nginx - -> gc_web_app : "===Proxies\n//<size:12>[HTTP, HTML, JSON]</size>//"
+
+@enduml
+
+PlantUML version 1.2020.09(Sun May 10 10:51:06 UTC 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 11.0.7+10-post-Debian-3deb10u1
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>

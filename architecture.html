@@ -1,0 +1,479 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Architecture &mdash; grand-challenge.org  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Development" href="development.html" />
+    <link rel="prev" title="Welcome to grand-challenge.org’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> grand-challenge.org
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ubiquitous-language">Ubiquitous Language</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#users">Users</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#system-context">System Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#containers">Containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#components">Components</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#workstations">Workstations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#image-evaluation-and-algorithm-workers">Image, Evaluation and Algorithm Workers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processor.html">Processor specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grand-challenge.org</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Architecture</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/architecture.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="architecture">
+<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
+<p>This document uses the <a class="reference external" href="https://c4model.com/">C4 Model</a> for visualising the architecture of grand-challenge.org.
+This covers <a class="reference internal" href="#system-context">System Context</a>, <a class="reference internal" href="#containers">Containers</a> (Applications/Data Stores), and <a class="reference internal" href="#components">Components</a> (Modules/Libraries).</p>
+<div class="section" id="ubiquitous-language">
+<h2>Ubiquitous Language<a class="headerlink" href="#ubiquitous-language" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="users">
+<h3>Users<a class="headerlink" href="#users" title="Permalink to this headline">¶</a></h3>
+<p>Many different users and roles are supported on grand-challenge.org.</p>
+<dl class="simple">
+<dt>Researcher</dt><dd><p>A Researcher is a user who wants to manage medical imaging data and reports,
+collect annotations on medical imaging data,
+create a challenge for the data science community to generate solutions to clinical problems,
+and objectively evaluate the submitted algorithms to challenges.</p>
+</dd>
+<dt>Data Scientist</dt><dd><p>A Data Scientist is a user who participates in a challenge,
+downloads the training medical imaging data &amp; annotations for a challenge,
+uploads algorithms for a challenge,
+and makes those algorithms available for clinicians to execute.</p>
+</dd>
+<dt>Clinician</dt><dd><p>A Clinician is a user who uses a workstation to learn how to annotate or read medical imaging data,
+uses a workstation to make annotations to medical imaging data,
+and uploads new medical imaging data for execution by algorithms.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="system-context">
+<h2>System Context<a class="headerlink" href="#system-context" title="Permalink to this headline">¶</a></h2>
+<p>An overview of the grand-challenge.org system, its users, and its system dependencies.</p>
+<p class="plantuml">
+<img src="_images/plantuml-11561084767c276f43488f940b29c048a0dbedd7.svg" alt="&#64;startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Context.puml
+
+LAYOUT_TOP_DOWN
+LAYOUT_WITH_LEGEND()
+
+title System Context diagram for grand-challenge.org
+
+Person(clinicians, &quot;Clinician&quot;, &quot;User who annotates data, or has new clinical data for algorithm validation.&quot;)
+Person(challenge_orgs, &quot;Researcher&quot;, &quot;User who poses challenges and compares state of the art algorithms.&quot;)
+Person(data_scientists, &quot;Data Scientist&quot;, &quot;User who develops machine learning algorithms.&quot;)
+
+System(grand_challenge, &quot;grand-challenge.org&quot;, &quot;Allows users to gather data, run workstations, train clinicians, annotate data, pose a challenge, evaluate solutions and deploy algorithms.&quot;)
+
+System_Ext(grand_challenge_bridge, &quot;Grand Challenge Bridge&quot;, &quot;Connects to hospital systems, de-itentifies data, uploads data for algorithm execution and returns algorithm results.&quot;)
+System_Ext(oauth, &quot;Authentication&quot;, &quot;Authenticates users through external providers (Google, GitHub).&quot;)
+System_Ext(monitoring, &quot;Monitoring and Alerting&quot;, &quot;Monitors the system and sends alerts (Sentry, Prometheus).&quot;)
+System_Ext(cdn, &quot;Content Delivery Network&quot;, &quot;Stores and serves static data (S3, CloudFront).&quot;)
+System_Ext(mail, &quot;E-mail&quot;, &quot;Sends emails to users (SES).&quot;)
+
+Rel(challenge_orgs, grand_challenge, &quot;Uses&quot;)
+Rel(data_scientists, grand_challenge, &quot;Uses&quot;)
+
+Rel(clinicians, grand_challenge, &quot;Uses&quot;)
+Rel(clinicians, grand_challenge_bridge, &quot;Sends data from PACS to&quot;)
+Rel(grand_challenge_bridge, grand_challenge, &quot;Uploads data to&quot;)
+
+Rel(grand_challenge, oauth, &quot;Authenticates users against&quot;)
+Rel(grand_challenge, mail, &quot;Sends emails through&quot;)
+
+Rel_Neighbor(grand_challenge, cdn, &quot;Sends static data to&quot;)
+Rel_Neighbor(monitoring, grand_challenge, &quot;Scrapes monitoring endpoints of&quot;)
+&#64;enduml
+"/></p>
+</div>
+<div class="section" id="containers">
+<h2>Containers<a class="headerlink" href="#containers" title="Permalink to this headline">¶</a></h2>
+<p>The overall shape of the architecture and technology choices.
+<em>Note: a container is a separately deployable application or data store, not necessarily a Docker container.</em></p>
+<p class="plantuml">
+<img src="_images/plantuml-b3c9b95134d1f320dd66a90d6c0f8d57f73e5eb9.svg" alt="&#64;startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+LAYOUT_TOP_DOWN
+LAYOUT_WITH_LEGEND()
+
+title Container diagram for grand-challenge.org
+
+Person(clinicians, &quot;Clinician&quot;, &quot;User who annotates data, or has new clinical data for algorithm validation.&quot;)
+Person(challenge_orgs, &quot;Researcher&quot;, &quot;User who poses challenges and compares state of the art algorithms.&quot;)
+Person(data_scientists, &quot;Data Scientist&quot;, &quot;User who develops machine learning algorithms.&quot;)
+
+System_Boundary(s1, &quot;grand-challenge.org&quot;) {
+    Container(gc_web_app, &quot;API&quot;, &quot;Nginx, Django&quot;, &quot;Provides the grand challenge functionality via HTML and a REST API.&quot;)
+    Container(gc_algorithm_worker, &quot;Algorithm and Evaluation Worker&quot;, &quot;Django, Docker, Celery, Redis&quot;, &quot;Executes algorithm and evaluation container images on medical imaging data.&quot;)
+    Container(gc_workstation_worker, &quot;Workstation Worker&quot;, &quot;Nginx, Django, Docker, Traefik, Celery, Redis&quot;, &quot;Instantiates and proxies workstation container images for users.&quot;)
+
+    Container(workstation_instance, &quot;Web Workstation&quot;, &quot;SPA, MeVisLab, VueJS, Docker&quot;, &quot;Provides a web based workstation for server side rendering of medical imaging data. 1 container image per active user.&quot;)
+
+    ContainerDb(postgres, &quot;Database&quot;, &quot;RDS/PostgreSQL&quot;, &quot;Stores user information, medical imaging metadata, job results etc.&quot;)
+
+    Container(protected_s3, &quot;Protected Data Store&quot;, &quot;S3/Minio&quot;, &quot;Stores protected medical imaging objects.&quot;)
+    Container(private_s3, &quot;Private Data Store&quot;, &quot;S3/Minio&quot;, &quot;Stores private objects, container images etc.&quot;)
+}
+
+System_Ext(oauth, &quot;Authentication&quot;, &quot;Authenticates users through external providers (Google, GitHub).&quot;)
+System_Ext(monitoring, &quot;Monitoring and Alerting&quot;, &quot;Monitors the system and sends alerts (Sentry, Prometheus).&quot;)
+System_Ext(cdn, &quot;Content Delivery Network&quot;, &quot;Stores and serves static data (S3, CloudFront).&quot;)
+System_Ext(mail, &quot;E-mail&quot;, &quot;Sends emails to users (SES).&quot;)
+
+Rel(challenge_orgs, gc_web_app, &quot;Uses&quot;, &quot;HTTPS, HTML, JSON&quot;)
+Rel(data_scientists, gc_web_app, &quot;Uses&quot;, &quot;HTTPS, HTML, JSON&quot;)
+Rel(clinicians, gc_web_app, &quot;Uses&quot;, &quot;HTTPS, HTML&quot;)
+
+Rel(gc_web_app, oauth, &quot;Authenticates users against&quot;, &quot;HTTPS, OAuth2&quot;)
+Rel(s1, mail, &quot;Sends emails through&quot;, &quot;SMTP&quot;)
+Rel(gc_web_app, cdn, &quot;Sends static data to&quot;, &quot;HTTPS&quot;)
+Rel(monitoring, s1, &quot;Scrapes monitoring endpoints of&quot;, &quot;HTTPS&quot;)
+
+Rel(gc_web_app, postgres, &quot;Reads and writes to&quot;, &quot;SSL, SQL&quot;)
+Rel(gc_web_app, protected_s3, &quot;Stores objects in, and proxies access to&quot;, &quot;HTTPS, S3&quot;)
+Rel(gc_web_app, private_s3, &quot;Stores objects in&quot;, &quot;HTTPS, S3&quot;)
+
+Rel(gc_workstation_worker, postgres, &quot;Reads and writes to&quot;, &quot;SSL, SQL&quot;)
+Rel(gc_workstation_worker, private_s3, &quot;Fetches container images from&quot;, &quot;HTTPS, S3&quot;)
+Rel_Neighbor(gc_workstation_worker, workstation_instance, &quot;Instantiates and proxies&quot;, &quot;HTTPS, Docker&quot;)
+Rel_U(gc_workstation_worker, clinicians, &quot;Provides SPA workstation to&quot;, &quot;HTTPS, WSS, HTML, JSON&quot;)
+
+Rel_U(gc_algorithm_worker, postgres, &quot;Reads and writes to&quot;, &quot;SSL, SQL&quot;)
+Rel_U(gc_algorithm_worker, private_s3, &quot;Fetches container images from&quot;, &quot;HTTPS, S3&quot;)
+Rel_U(gc_algorithm_worker, protected_s3, &quot;Reads objects from&quot;, &quot;HTTPS, S3&quot;)
+&#64;enduml
+"/></p>
+</div>
+<div class="section" id="components">
+<h2>Components<a class="headerlink" href="#components" title="Permalink to this headline">¶</a></h2>
+<p>Logical modules and their interactions with containers.
+<em>Note: a component is a grouping of related functionality behind a well defined interface,
+not components in the sense of pipelines.</em>
+Grand-challenge.org is a Django monolith, but several components can be deployed and scaled independently.</p>
+<div class="section" id="api">
+<h3>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h3>
+<p>The API layer provides the HTML views and REST services to the user.</p>
+<p class="plantuml">
+<img src="_images/plantuml-a2a9003915480675b5c499361ccc7cc3fb863ea6.svg" alt="&#64;startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
+
+LAYOUT_TOP_DOWN
+LAYOUT_WITH_LEGEND()
+
+title Component diagram for grand-challenge.org - API
+
+Person(users, &quot;Users&quot;, &quot;&quot;)
+
+Container_Boundary(s1, &quot;API&quot;) {
+    Component(gc_web_app, &quot;Web Application&quot;, &quot;Django&quot;, &quot;Provides the grand challenge functionality via HTML and a REST API.&quot;)
+    Component(nginx, &quot;Reverse Proxy&quot;, &quot;Nginx&quot;, &quot;SSL termination and routing&quot;)
+    Component(memcached, &quot;Cache&quot;, &quot;Memcached&quot;, &quot;Local in-memory cache of expensive data.&quot;)
+}
+
+ContainerDb(postgres, &quot;Database&quot;, &quot;RDS/PostgreSQL&quot;, &quot;Stores user information, medical imaging metadata, job results etc.&quot;)
+Container(message_queue, &quot;Message Queue&quot;, &quot;SQS/Redis&quot;, &quot;Queue of units of work Celery messages.&quot;)
+Container(protected_s3, &quot;Protected Data Store&quot;, &quot;S3/Minio&quot;, &quot;Stores protected medical imaging objects.&quot;)
+Container(private_s3, &quot;Private Data Store&quot;, &quot;S3/Minio&quot;, &quot;Stores private objects, container images etc.&quot;)
+
+System_Ext(oauth, &quot;Authentication&quot;, &quot;Authenticates users through external providers (Google, GitHub).&quot;)
+System_Ext(cdn, &quot;Content Delivery Network&quot;, &quot;Stores and serves static data (S3, CloudFront).&quot;)
+
+Rel(users, nginx, &quot;Use&quot;, &quot;HTTPS, HTML, JSON&quot;)
+
+Rel(gc_web_app, oauth, &quot;Authenticates users against&quot;, &quot;HTTPS, OAuth2&quot;)
+Rel(gc_web_app, cdn, &quot;Sends static data to&quot;, &quot;HTTPS&quot;)
+
+Rel(gc_web_app, postgres, &quot;Reads and writes to&quot;, &quot;SSL, SQL&quot;)
+Rel(gc_web_app, protected_s3, &quot;Stores objects in, and proxies access to&quot;, &quot;HTTPS, S3&quot;)
+Rel(gc_web_app, private_s3, &quot;Stores objects in&quot;, &quot;HTTPS, S3&quot;)
+Rel(gc_web_app, message_queue, &quot;Puts messages on&quot;, &quot;SSL, SQS/Redis, Celery&quot;)
+Rel_Neighbor(gc_web_app, memcached, &quot;Uses&quot;, &quot;HTTP&quot;)
+
+Rel(nginx, gc_web_app, &quot;Proxies&quot;, &quot;HTTP, HTML, JSON&quot;)
+
+&#64;enduml
+"/></p>
+</div>
+<div class="section" id="workstations">
+<h3>Workstations<a class="headerlink" href="#workstations" title="Permalink to this headline">¶</a></h3>
+<p>Grand Challenge is able to launch <a class="reference internal" href="workstations.html#workstations"><span class="std std-ref">workstations</span></a> for users.
+Workstations are container images that allow for interaction with medical data in the browser.
+One workstation container image is instantiated per user, which provides a single page application.
+A secure web socket connection is then established between the user and their container instance.</p>
+<p class="plantuml">
+<img src="_images/plantuml-771b081c2e4af1d7f0d1fc5ae821b358d1c1950e.svg" alt="&#64;startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Component diagram for grand-challenge.org - Workstation Worker
+
+Person(workstation_user, &quot;Workstation User&quot;, &quot;User who wants to view a workstation.&quot;)
+
+ContainerDb(postgres, &quot;Database&quot;, &quot;RDS/PostgreSQL&quot;, &quot;Stores user information, medical imaging metadata, job results etc.&quot;)
+Container(private_s3, &quot;Private Data Store&quot;, &quot;S3/Minio&quot;, &quot;Stores private objects, container images etc.&quot;)
+Container(message_queue, &quot;Message Queue&quot;, &quot;SQS/Redis&quot;, &quot;Queue of units of work Celery messages.&quot;)
+Container(gc_web_app, &quot;API&quot;, &quot;Nginx, Django&quot;, &quot;Provides the grand challenge functionality via HTML and a REST API.&quot;)
+
+Container_Boundary(api, &quot;Workstation Worker&quot;) {
+    Component(nginx, &quot;Reverse Proxy&quot;, &quot;Nginx&quot;, &quot;SSL termination and routing&quot;)
+    Component(webapp, &quot;Web Application&quot;, &quot;Django, Celery&quot;, &quot;Authorization for workstation connections, manages workstation container lifecycles.&quot;)
+    Component(traefik, &quot;Workstation Reverse Proxy&quot;, &quot;Traefik&quot;, &quot;Routes users to their workstation service&quot;)
+    Component(docker, &quot;Compute Pool&quot;, &quot;Docker&quot;, &quot;Provides compute resources for workstation services, 1 workstation container instance per user.&quot;)
+
+    Rel(nginx, webapp, &quot;Fetches routing information from&quot;, &quot;HTTP&quot;)
+    Rel(nginx, traefik, &quot;Internally redirects to&quot;, &quot;HTTP, WS&quot;)
+
+    Rel(traefik, docker, &quot;Proxies&quot;, &quot;HTTP, WS&quot;)
+    Rel(webapp, docker, &quot;Schedules workstation services on&quot;, &quot;HTTPS, JSON&quot;)
+}
+
+Rel(workstation_user, nginx, &quot;Uses&quot;, &quot;HTTPS, WSS, JSON&quot;)
+
+Rel(webapp, message_queue, &quot;Fetches messages from&quot;, &quot;SSL, SQS/Redis, Celery&quot;)
+Rel(webapp, postgres, &quot;Reads and writes to&quot;, &quot;SSL, SQL&quot;)
+Rel(webapp, private_s3, &quot;Fetches container images from&quot;, &quot;HTTPS, S3&quot;)
+
+Rel(docker, gc_web_app, &quot;Fetches medical images, algorithm results, etc, from&quot;, &quot;HTTPS, JSON&quot;)
+
+&#64;enduml
+"/></p>
+</div>
+<div class="section" id="image-evaluation-and-algorithm-workers">
+<h3>Image, Evaluation and Algorithm Workers<a class="headerlink" href="#image-evaluation-and-algorithm-workers" title="Permalink to this headline">¶</a></h3>
+<p>There are several tasks that require asynchronous processing that require
+long compute times, high memory usage and potentially the docker api and/or a GPU.
+These tasks include medical image importing, challenge submission evaluation (requires docker), and
+algorithm execution (requires docker and a GPU).
+These tasks are scheduled using Celery, and then executed by worker nodes that can horizontally scale.</p>
+<p class="plantuml">
+<img src="_images/plantuml-cc00fb771bfb4b2a006d6c9cdd9a9891c178f9c2.svg" alt="&#64;startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
+
+LAYOUT_TOP_DOWN
+LAYOUT_WITH_LEGEND()
+
+title Component diagram for grand-challenge.org - Images, Evaluation and Algorithm Workers
+
+Container_Boundary(s1, &quot;Celery Worker&quot;) {
+    Component(gc_algorithm_worker, &quot;Web Application&quot;, &quot;Django, Celery&quot;, &quot;Manages container lifecycle and generates job results.&quot;)
+    Component(docker, &quot;Compute Pool&quot;, &quot;Docker&quot;, &quot;Provides compute resources for container images.&quot;)
+}
+
+ContainerDb(postgres, &quot;Database&quot;, &quot;RDS/PostgreSQL&quot;, &quot;Stores user information, medical imaging metadata, job results etc.&quot;)
+Container(protected_s3, &quot;Protected Data Store&quot;, &quot;S3/Minio&quot;, &quot;Stores protected medical imaging objects.&quot;)
+Container(private_s3, &quot;Private Data Store&quot;, &quot;S3/Minio&quot;, &quot;Stores private objects, container images etc.&quot;)
+Container(message_queue, &quot;Message Queue&quot;, &quot;SQS/Redis&quot;, &quot;Queue of units of work Celery messages.&quot;)
+
+Rel(gc_algorithm_worker, message_queue, &quot;Fetches messages from&quot;, &quot;SSL, SQS/Redis, Celery&quot;)
+
+Rel(gc_algorithm_worker, postgres, &quot;Reads and writes to&quot;, &quot;SSL, SQL&quot;)
+Rel(gc_algorithm_worker, private_s3, &quot;Fetches container images from&quot;, &quot;HTTPS, S3&quot;)
+Rel(gc_algorithm_worker, protected_s3, &quot;Reads objects from&quot;, &quot;HTTPS, S3&quot;)
+
+Rel(gc_algorithm_worker, docker, &quot;Provisions volumes, instantiates containers with GPU access on&quot;, &quot;HTTPS, JSON&quot;)
+
+&#64;enduml
+"/></p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="development.html" class="btn btn-neutral float-right" title="Development" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to grand-challenge.org’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, James Meakin
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

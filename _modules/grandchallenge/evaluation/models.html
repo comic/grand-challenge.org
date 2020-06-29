@@ -1,0 +1,800 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>grandchallenge.evaluation.models &mdash; grand-challenge.org  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> grand-challenge.org
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../development.html">Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../processor.html">Processor specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../workstations.html">Workstations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reader-studies.html">Reader Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design.html">Design decisions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">grand-challenge.org</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>grandchallenge.evaluation.models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for grandchallenge.evaluation.models</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.contrib.postgres.fields</span> <span class="kn">import</span> <span class="n">JSONField</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">BooleanField</span>
+<span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
+
+<span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.backends.docker</span> <span class="kn">import</span> <span class="n">Executor</span><span class="p">,</span> <span class="n">put_file</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ComponentImage</span><span class="p">,</span>
+    <span class="n">ComponentInterface</span><span class="p">,</span>
+    <span class="n">ComponentJob</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">UUIDModel</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="n">protected_s3_storage</span><span class="p">,</span> <span class="n">public_s3_storage</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.core.validators</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExtensionValidator</span><span class="p">,</span>
+    <span class="n">JSONSchemaValidator</span><span class="p">,</span>
+    <span class="n">MimeTypeValidator</span><span class="p">,</span>
+    <span class="n">get_file_mimetype</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.emails</span> <span class="kn">import</span> <span class="n">send_failed_job_email</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
+
+<span class="c1"># Example Schema</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">[</span>
+<span class="sd">  {</span>
+<span class="sd">    &quot;title&quot;: &quot;Mean dice ± std&quot;,</span>
+<span class="sd">    &quot;path&quot;: &quot;aggregates.dice.mean&quot;,</span>
+<span class="sd">    &quot;error_path&quot;: &quot;aggregates.dice.std&quot;</span>
+<span class="sd">  },</span>
+<span class="sd">  {</span>
+<span class="sd">    &quot;title&quot;: &quot;Mean Hausdorff&quot;,</span>
+<span class="sd">    &quot;path&quot;: &quot;aggregates.hausdorff.mean&quot;</span>
+<span class="sd">  }</span>
+<span class="sd">]</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">EXTRA_RESULT_COLUMNS_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;definitions&quot;</span><span class="p">:</span> <span class="p">{},</span>
+    <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json-schema.org/draft-06/schema#&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Extra Results Columns Schema&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Items Schema&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;additionalProperties&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/title&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Title Schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Mean Dice&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(.*)$&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/path&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Path Schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;aggregates.dice.mean&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(.*)$&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;error_path&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/error_path&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Error Path Schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;aggregates.dice.std&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(.*)$&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/order&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;asc&quot;</span><span class="p">,</span> <span class="s2">&quot;desc&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Order Schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;asc&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(asc|desc)$&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="c1"># This must match the syntax used in jquery datatables</span>
+    <span class="c1"># https://datatables.net/reference/option/order</span>
+    <span class="n">ASCENDING</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
+    <span class="n">DESCENDING</span> <span class="o">=</span> <span class="s2">&quot;desc&quot;</span>
+    <span class="n">EVALUATION_SCORE_SORT_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">ASCENDING</span><span class="p">,</span> <span class="s2">&quot;Ascending&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">DESCENDING</span><span class="p">,</span> <span class="s2">&quot;Descending&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">OFF</span> <span class="o">=</span> <span class="s2">&quot;off&quot;</span>
+    <span class="n">OPTIONAL</span> <span class="o">=</span> <span class="s2">&quot;opt&quot;</span>
+    <span class="n">REQUIRED</span> <span class="o">=</span> <span class="s2">&quot;req&quot;</span>
+    <span class="n">PUBLICATION_LINK_CHOICES</span> <span class="o">=</span> <span class="n">SUPPLEMENTARY_FILE_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">OFF</span><span class="p">,</span> <span class="s2">&quot;Off&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">OPTIONAL</span><span class="p">,</span> <span class="s2">&quot;Optional&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">REQUIRED</span><span class="p">,</span> <span class="s2">&quot;Required&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">ALL</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span>
+    <span class="n">MOST_RECENT</span> <span class="o">=</span> <span class="s2">&quot;rec&quot;</span>
+    <span class="n">BEST</span> <span class="o">=</span> <span class="s2">&quot;bst&quot;</span>
+    <span class="n">RESULT_DISPLAY_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">ALL</span><span class="p">,</span> <span class="s2">&quot;Display all results&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">MOST_RECENT</span><span class="p">,</span> <span class="s2">&quot;Only display each users most recent result&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">BEST</span><span class="p">,</span> <span class="s2">&quot;Only display each users best result&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">ABSOLUTE</span> <span class="o">=</span> <span class="s2">&quot;abs&quot;</span>
+    <span class="n">MEAN</span> <span class="o">=</span> <span class="s2">&quot;avg&quot;</span>
+    <span class="n">MEDIAN</span> <span class="o">=</span> <span class="s2">&quot;med&quot;</span>
+    <span class="n">SCORING_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">ABSOLUTE</span><span class="p">,</span> <span class="s2">&quot;Use the absolute value of the score column&quot;</span><span class="p">),</span>
+        <span class="p">(</span>
+            <span class="n">MEAN</span><span class="p">,</span>
+            <span class="s2">&quot;Use the mean of the relative ranks of the score and extra result columns&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="n">MEDIAN</span><span class="p">,</span>
+            <span class="s2">&quot;Use the median of the relative ranks of the score and extra result columns&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">Challenge</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_config&quot;</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">use_teams</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If true, users are able to form teams together to participate in &quot;</span>
+            <span class="s2">&quot;challenges.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">score_title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;Score&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The name that will be displayed for the scores column, for &quot;</span>
+            <span class="s2">&quot;instance: Score (log-loss)&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">score_jsonpath</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The jsonpath of the field in metrics.json that will be used &quot;</span>
+            <span class="s2">&quot;for the overall scores on the results page. See &quot;</span>
+            <span class="s2">&quot;http://goessner.net/articles/JsonPath/ for syntax. For example: &quot;</span>
+            <span class="s2">&quot;dice.mean&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">score_error_jsonpath</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The jsonpath for the field in metrics.json that contains the &quot;</span>
+            <span class="s2">&quot;error of the score, eg: dice.std&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">score_default_sort</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">EVALUATION_SCORE_SORT_CHOICES</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">DESCENDING</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The default sorting to use for the scores on the results page.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">score_decimal_places</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;The number of decimal places to display for the score&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">extra_results_columns</span> <span class="o">=</span> <span class="n">JSONField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;A JSON object that contains the extra columns from metrics.json &quot;</span>
+            <span class="s2">&quot;that will be displayed on the results page. &quot;</span>
+        <span class="p">),</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONSchemaValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">EXTRA_RESULT_COLUMNS_SCHEMA</span><span class="p">)],</span>
+    <span class="p">)</span>
+    <span class="n">scoring_method_choice</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">SCORING_CHOICES</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">ABSOLUTE</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;How should the rank of each result be calculated?&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">result_display_choice</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">RESULT_DISPLAY_CHOICES</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">ALL</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Which results should be displayed on the leaderboard?&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">allow_submission_comments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Allow users to submit comments as part of their submission.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">display_submission_comments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If true, submission comments are shown on the results page.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">supplementary_file_choice</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">SUPPLEMENTARY_FILE_CHOICES</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">OFF</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Show a supplementary file field on the submissions page so that &quot;</span>
+            <span class="s2">&quot;users can upload an additional file along with their predictions &quot;</span>
+            <span class="s2">&quot;file as part of their submission (eg, include a pdf description &quot;</span>
+            <span class="s2">&quot;of their method). Off turns this feature off, Optional means &quot;</span>
+            <span class="s2">&quot;that including the file is optional for the user, Required means &quot;</span>
+            <span class="s2">&quot;that the user must upload a supplementary file.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">supplementary_file_label</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;Supplementary File&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The label that will be used on the submission and results page &quot;</span>
+            <span class="s2">&quot;for the supplementary file. For example: Algorithm Description.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">supplementary_file_help_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The help text to include on the submissions page to describe the &quot;</span>
+            <span class="s1">&#39;submissions file. Eg: &quot;A PDF description of the method.&quot;.&#39;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">show_supplementary_file_link</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Show a link to download the supplementary file on the results &quot;</span>
+            <span class="s2">&quot;page.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">publication_url_choice</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">PUBLICATION_LINK_CHOICES</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">OFF</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Show a publication url field on the submission page so that &quot;</span>
+            <span class="s2">&quot;users can submit a link to a publication that corresponds to &quot;</span>
+            <span class="s2">&quot;their submission. Off turns this feature off, Optional means &quot;</span>
+            <span class="s2">&quot;that including the url is optional for the user, Required means &quot;</span>
+            <span class="s2">&quot;that the user must provide an url.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">show_publication_url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Show a link to the publication on the results page&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">daily_submission_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The limit on the number of times that a user can make a &quot;</span>
+            <span class="s2">&quot;submission in a 24 hour period.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">submission_page_html</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;HTML to include on the submission page for this challenge.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">auto_publish_new_results</span> <span class="o">=</span> <span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If true, new results are automatically made public. If false, &quot;</span>
+            <span class="s2">&quot;the challenge administrator must manually publish each new &quot;</span>
+            <span class="s2">&quot;result.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">display_all_metrics</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Should all of the metrics be displayed on the Result detail page?&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">submission_join_key</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If predictions are submitted as csv files, which column should &quot;</span>
+            <span class="s2">&quot;be used to join the data? eg. case_id&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_inputs&quot;</span>
+    <span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_outputs&quot;</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="Config.save"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Config.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_default_interfaces</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-csv-file&quot;</span><span class="p">)]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;metrics-json-file&quot;</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;pages:home&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">method_image_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated: only used in a migration.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">EVALUATION_FILES_SUBDIRECTORY</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;methods/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Method</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Store the methods for performing an evaluation.&quot;&quot;&quot;</span>
+
+    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;evaluation:method-detail&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">submission_file_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># Must match the protected serving url</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">EVALUATION_FILES_SUBDIRECTORY</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;submissions/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">creator</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_valid_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">submission_supplementary_file_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;evaluation-supplementary/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_valid_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Submission</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Store files for evaluation.&quot;&quot;&quot;</span>
+
+    <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
+    <span class="p">)</span>
+    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span>
+        <span class="n">upload_to</span><span class="o">=</span><span class="n">submission_file_path</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">MimeTypeValidator</span><span class="p">(</span><span class="n">allowed_types</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;application/zip&quot;</span><span class="p">,</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">)),</span>
+            <span class="n">ExtensionValidator</span><span class="p">(</span><span class="n">allowed_extensions</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;.zip&quot;</span><span class="p">,</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)),</span>
+        <span class="p">],</span>
+        <span class="n">storage</span><span class="o">=</span><span class="n">protected_s3_storage</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">supplementary_file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span>
+        <span class="n">upload_to</span><span class="o">=</span><span class="n">submission_supplementary_file_path</span><span class="p">,</span>
+        <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">MimeTypeValidator</span><span class="p">(</span><span class="n">allowed_types</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;text/plain&quot;</span><span class="p">,</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">))</span>
+        <span class="p">],</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">comment</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;You can add a comment here to help you keep track of your &quot;</span>
+            <span class="s2">&quot;submissions.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">publication_url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;A URL for the publication associated with this submission.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;evaluation:submission-detail&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">SubmissionEvaluator</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">results_file</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/output/metrics.json&quot;</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_copy_input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">writer</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_files</span><span class="p">:</span>
+            <span class="n">dest_file</span> <span class="o">=</span> <span class="s2">&quot;/tmp/submission-src&quot;</span>
+            <span class="n">put_file</span><span class="p">(</span><span class="n">container</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">file</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="n">dest_file</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">mimetype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;application/zip&quot;</span><span class="p">:</span>
+                <span class="c1"># Unzip the file in the container rather than in the python</span>
+                <span class="c1"># process. With resource limits this should provide some</span>
+                <span class="c1"># protection against zip bombs etc.</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;unzip </span><span class="si">{</span><span class="n">dest_file</span><span class="si">}</span><span class="s2"> -d /input/ -x &#39;__MACOSX/*&#39;&quot;</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Remove a duplicated directory</span>
+                <span class="n">input_files</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="s2">&quot;ls -1 /input/&quot;</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+                    <span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">input_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;ls -d /input/</span><span class="si">{</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">/&quot;</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">exit_code</span>
+                <span class="p">):</span>
+                    <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;/bin/sh -c &quot;mv /input/</span><span class="si">{</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">/* /input/ &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;&amp;&amp; rm -r /input/</span><span class="si">{</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">/&quot;&#39;</span>
+                    <span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Not a zip file, so must be a csv</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mv </span><span class="si">{</span><span class="n">dest_file</span><span class="si">}</span><span class="s2"> /input/submission.csv&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Result</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Store individual results for a challenge.&quot;&quot;&quot;</span>
+
+    <span class="n">job</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span><span class="s2">&quot;Job&quot;</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">JSONField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">published</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The position of this result on the leaderboard. If the value is &quot;</span>
+            <span class="s2">&quot;zero, then the result is unranked.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">rank_score</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">rank_per_metric</span> <span class="o">=</span> <span class="n">JSONField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Result </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">challenge</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">challenge</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">creator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">creator</span>
+
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Note: cannot use `self.pk is None` with a custom pk</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">published</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">evaluation_config</span><span class="o">.</span><span class="n">auto_publish_new_results</span>
+            <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;evaluation:result-detail&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Stores information about a job for a given submission.&quot;&quot;&quot;</span>
+
+    <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;Submission&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;Method&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">schedule_job</span><span class="p">()</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">challenge</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">challenge</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">creator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">creator</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">file</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">executor_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SubmissionEvaluator</span>
+
+    <span class="k">def</span> <span class="nf">create_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="n">Result</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">job</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">challenge</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">challenge</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;The submission and method challenges should&quot;</span>
+                <span class="s2">&quot;be the same. You are trying to evaluate a&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;submission for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">challenge</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;with a method for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">challenge</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">update_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">:</span>
+            <span class="n">send_failed_job_email</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
+            <span class="s2">&quot;evaluation:job-detail&quot;</span><span class="p">,</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">result_screenshot_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># Used in a migration so cannot delete</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;evaluation/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;screenshots/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, James Meakin
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

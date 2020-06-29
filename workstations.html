@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Workstations &mdash; grand-challenge.org  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reader Studies" href="reader-studies.html" />
+    <link rel="prev" title="Processor specification" href="processor.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> grand-challenge.org
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processor.html">Processor specification</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Workstations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grand-challenge.org</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Workstations</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/workstations.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="workstations">
+<span id="id1"></span><h1>Workstations<a class="headerlink" href="#workstations" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-grandchallenge.workstations.models"></span><p>Workstations are used to view, annotate and upload images to grand challenge.
+A <cite>workstation admin</cite> is able to upload a <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code>, which is a docker container image.
+A <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code> expose a http and, optionally, a websocket port.
+A <cite>workstation user</cite> can then launch a workstation <code class="docutils literal notranslate"><span class="pre">Session</span></code> for a particular <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code>.</p>
+<p>When a new session is started, a new container instance of the selected <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code> is lauched on the docker host.
+The connection to the container will be proxied, and only accessible to the user that created the session.
+The proxy will map the http and websocket connections from the user to the running instance, which is mapped by the container hostname.
+The container instance will have the users API token set in the environment, so that it is able to interact with the grand challenge API as this user.
+The user is able to stop the container, otherwise it will be terminated after <code class="docutils literal notranslate"><span class="pre">maxmium_duration</span></code> is reached.</p>
+<dl class="py class">
+<dt id="grandchallenge.workstations.models.Session">
+<em class="property">class </em><code class="sig-prename descclassname">grandchallenge.workstations.models.</code><code class="sig-name descname">Session</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.Session" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tracks who has launched workstation images. The <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code> will
+be launched as a <code class="docutils literal notranslate"><span class="pre">Service</span></code>. The <code class="docutils literal notranslate"><span class="pre">Session</span></code> is responsible for starting
+and stopping the <code class="docutils literal notranslate"><span class="pre">Service</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>status</strong> – Stores what has happened with the service, is it running, errored, etc?</p></li>
+<li><p><strong>region</strong> – Stores which region this session runs in</p></li>
+<li><p><strong>creator</strong> – Who created the session? This is also the only user that should be able
+to access the launched service.</p></li>
+<li><p><strong>workstation_image</strong> – The container image that will be launched by this <code class="docutils literal notranslate"><span class="pre">Session</span></code>.</p></li>
+<li><p><strong>maximum_duration</strong> – The maximum time that the service can be active before it is terminated</p></li>
+<li><p><strong>user_finished</strong> – Indicates if the user has chosen to end the session early</p></li>
+<li><p><strong>history</strong> – The history of this Session</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt id="grandchallenge.workstations.models.Session.DoesNotExist">
+<em class="property">exception </em><code class="sig-name descname">DoesNotExist</code><a class="headerlink" href="#grandchallenge.workstations.models.Session.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt id="grandchallenge.workstations.models.Session.MultipleObjectsReturned">
+<em class="property">exception </em><code class="sig-name descname">MultipleObjectsReturned</code><a class="headerlink" href="#grandchallenge.workstations.models.Session.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="grandchallenge.workstations.models.Session.Region">
+<em class="property">class </em><code class="sig-name descname">Region</code><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Session.Region"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.Session.Region" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.environment">
+<em class="property">property </em><code class="sig-name descname">environment</code><a class="headerlink" href="#grandchallenge.workstations.models.Session.environment" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>The environment variables that should be set on the container.</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.expires_at">
+<em class="property">property </em><code class="sig-name descname">expires_at</code><a class="headerlink" href="#grandchallenge.workstations.models.Session.expires_at" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>The time when this session expires.</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.hostname">
+<em class="property">property </em><code class="sig-name descname">hostname</code><a class="headerlink" href="#grandchallenge.workstations.models.Session.hostname" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>The unique hostname for this session</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Session.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.Session.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the session instance, starting or stopping the service if needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.save_without_historical_record">
+<code class="sig-name descname">save_without_historical_record</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#grandchallenge.workstations.models.Session.save_without_historical_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save model without saving a historical record</p>
+<p>Make sure you know what you’re doing before you use this method.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.service">
+<em class="property">property </em><code class="sig-name descname">service</code><a class="headerlink" href="#grandchallenge.workstations.models.Session.service" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Service</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>The service for this session, could be active or inactive.</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Session.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.Session.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts the service for this session, ensuring that the
+<code class="docutils literal notranslate"><span class="pre">workstation_image</span></code> is ready to be used and that
+<code class="docutils literal notranslate"><span class="pre">WORKSTATIONS_MAXIMUM_SESSIONS</span></code> has not been reached in this region.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>ComponentException</strong> – If the service cannot be started.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.stop">
+<code class="sig-name descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Session.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.Session.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the service for this session, cleaning up all of the containers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.task_kwargs">
+<em class="property">property </em><code class="sig-name descname">task_kwargs</code><a class="headerlink" href="#grandchallenge.workstations.models.Session.task_kwargs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>The kwargs that need to be passed to celery to get this object</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.update_status">
+<code class="sig-name descname">update_status</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">status</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Session.update_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.Session.update_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the status of this session.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>status</strong> (<em>(</em><em>(</em><em>0</em><em>, </em><em>'Queued'</em><em>)</em><em>, </em><em>(</em><em>1</em><em>, </em><em>'Started'</em><em>)</em><em>, </em><em>(</em><em>2</em><em>, </em><em>'Running'</em><em>)</em><em>, </em><em>(</em><em>3</em><em>, </em><em>'Failed'</em><em>)</em><em>, </em><em>(</em><em>4</em><em>, </em><em>'Stopped'</em><em>)</em><em>)</em>) – The new status for this session.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Session.workstation_url">
+<em class="property">property </em><code class="sig-name descname">workstation_url</code><a class="headerlink" href="#grandchallenge.workstations.models.Session.workstation_url" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>The url that users will use to access the workstation instance.</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="grandchallenge.workstations.models.Workstation">
+<em class="property">class </em><code class="sig-prename descclassname">grandchallenge.workstations.models.</code><code class="sig-name descname">Workstation</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Workstation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.Workstation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store the title and description of a workstation.</p>
+<dl class="py exception">
+<dt id="grandchallenge.workstations.models.Workstation.DoesNotExist">
+<em class="property">exception </em><code class="sig-name descname">DoesNotExist</code><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt id="grandchallenge.workstations.models.Workstation.MultipleObjectsReturned">
+<em class="property">exception </em><code class="sig-name descname">MultipleObjectsReturned</code><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Workstation.latest_ready_image">
+<em class="property">property </em><code class="sig-name descname">latest_ready_image</code><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.latest_ready_image" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>The most recent container image for this workstation</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.Workstation.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Workstation.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the current instance. Override this in a subclass if you want to
+control the saving process.</p>
+<p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
+that the “save” must be an SQL insert or update (or equivalent for
+non-SQL backends), respectively. Normally, they should not be set.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="grandchallenge.workstations.models.WorkstationImage">
+<em class="property">class </em><code class="sig-prename descclassname">grandchallenge.workstations.models.</code><code class="sig-name descname">WorkstationImage</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationImage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImage" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code> is a docker container image of a workstation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>workstation</strong> – A <code class="docutils literal notranslate"><span class="pre">Workstation</span></code> can have multiple <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code>, that
+represent different versions of a workstation</p></li>
+<li><p><strong>http_port</strong> – This container will expose a http server on this port</p></li>
+<li><p><strong>websocket_port</strong> – This container will expose a websocket on this port. Any relative url
+that starts with <code class="docutils literal notranslate"><span class="pre">/mlab4d4c4142</span></code> will be proxied to this port.</p></li>
+<li><p><strong>initial_path</strong> – The initial path that users will navigate to in order to load the
+workstation</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt id="grandchallenge.workstations.models.WorkstationImage.DoesNotExist">
+<em class="property">exception </em><code class="sig-name descname">DoesNotExist</code><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImage.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt id="grandchallenge.workstations.models.WorkstationImage.MultipleObjectsReturned">
+<em class="property">exception </em><code class="sig-name descname">MultipleObjectsReturned</code><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImage.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.workstations.models.WorkstationImage.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationImage.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImage.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the current instance. Override this in a subclass if you want to
+control the saving process.</p>
+<p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
+that the “save” must be an SQL insert or update (or equivalent for
+non-SQL backends), respectively. Normally, they should not be set.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="grandchallenge.workstations.models.delete_workstation_groups_hook">
+<code class="sig-prename descclassname">grandchallenge.workstations.models.</code><code class="sig-name descname">delete_workstation_groups_hook</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">_</span></em>, <em class="sig-param"><span class="n">instance</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">using</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">__</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#delete_workstation_groups_hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.workstations.models.delete_workstation_groups_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the related groups.</p>
+<p>We use a signal rather than overriding delete() to catch usages of
+bulk_delete.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="reader-studies.html" class="btn btn-neutral float-right" title="Reader Studies" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="processor.html" class="btn btn-neutral float-left" title="Processor specification" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, James Meakin
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,488 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Development &mdash; grand-challenge.org  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Evaluation" href="evaluation.html" />
+    <link rel="prev" title="Architecture" href="architecture.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> grand-challenge.org
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-the-tests">Running the Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">Development</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#running-through-docker-compose">Running through docker-compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pycharm-configuration">PyCharm Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-locally">Running locally</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-migrations">Creating Migrations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-the-documentation">Building the documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-docker">Using docker</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-new-dependencies">Adding new dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#going-to-production">Going to Production</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processor.html">Processor specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">grand-challenge.org</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Development</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/development.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="development">
+<h1>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h1>
+<p>Grand-challenge is distributed as a set of containers that are defined and linked together in <code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code>.
+To develop the platform you need to have docker and docker-compose running on your system.</p>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p>Download and install Docker</p>
+<blockquote>
+<div><p><em>Linux</em>: <a class="reference external" href="https://docs.docker.com/install/">Docker</a> and <a class="reference external" href="https://docs.docker.com/compose/install/">Docker Compose</a></p>
+<p><em>Windows 10 Pro (Build 15063 or later)</em>: <a class="reference external" href="https://docs.docker.com/docker-for-windows/install/">Docker for Windows</a></p>
+<p><em>Older Windows versions</em>: <a class="reference external" href="https://docs.docker.com/toolbox/toolbox_install_windows/">Docker Toolbox</a></p>
+</div></blockquote>
+</li>
+<li><p>Clone the repo</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> git clone https://github.com/comic/grand-challenge.org
+<span class="gp">$</span> <span class="nb">cd</span> grand-challenge.org
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Add the following to your <code class="docutils literal notranslate"><span class="pre">/etc/hosts</span></code> file:</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">127.0.0.1 minio-protected</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>You can then start the site by invoking</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ./cycle_docker_compose.sh
+</pre></div>
+</div>
+<p>You can then navigate to <a class="reference external" href="https://gc.localhost">https://gc.localhost</a> in your browser to see the development site,
+this is using a self-signed certificate so you will need to accept the security warning.
+The <code class="docutils literal notranslate"><span class="pre">app/</span></code> directory is mounted in the containers,
+<code class="docutils literal notranslate"><span class="pre">werkzeug</span></code> handles the file monitoring and will restart the process if any changes are detected.
+If you need to manually restart the process you can do this when running <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> by pressing  <code class="docutils literal notranslate"><span class="pre">CTRL+D</span></code> in the console window,
+you can also kill the server with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code>.</p>
+<div class="section" id="windows">
+<h3>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h3>
+<p>Running Grand-Challenge within a Windows environment requires additional steps before invoking the <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> script.</p>
+<ol class="arabic simple">
+<li><p>Install <code class="docutils literal notranslate"><span class="pre">Make</span></code> for an available <code class="docutils literal notranslate"><span class="pre">bash</span></code> console</p></li>
+<li><p>Set an environment variable to enable Windows path conversions for Docker</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nb">export</span> <span class="nv">COMPOSE_CONVERT_WINDOWS_PATHS</span><span class="o">=</span><span class="m">1</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Add the following line to your hosts file (<code class="docutils literal notranslate"><span class="pre">C:\Windows\System32\drivers\etc\hosts</span></code>)</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span> Using Docker <span class="k">for</span> Windows:
+<span class="go">127.0.0.1 gc.localhost</span>
+<span class="go">127.0.0.1 minio-protected</span>
+
+<span class="gp">#</span> Using Docker Toolbox:
+<span class="go">192.168.99.100 gc.localhost</span>
+<span class="go">192.168.99.100 minio-protected</span>
+</pre></div>
+</div>
+<ol class="arabic" start="4">
+<li><p>Share the drive where this repository is located with Docker</p>
+<blockquote>
+<div><p><em>Docker for Windows</em></p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Right-click Docker icon in taskbar and click “Settings”</p></li>
+<li><p>Go to “Shared drives” tab</p></li>
+<li><p>Mark the checkbox of the drive where this repository is located</p></li>
+</ol>
+</div></blockquote>
+<p><em>Docker Toolbox</em></p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Open VirtualBox</p></li>
+<li><p>Go to the virtual machine that belongs to docker</p></li>
+<li><p>Double click “Shared folders”</p></li>
+<li><p>Click on the “Add New Shared Folder” button on the right</p></li>
+<li><p>In the Folder Path box, type the drive letter where this repository is located (eg. <code class="docutils literal notranslate"><span class="pre">C:\</span></code>)</p></li>
+<li><p>In the Folder Name box, type the drive letter lowercased (eg. <code class="docutils literal notranslate"><span class="pre">c</span></code>)</p></li>
+<li><p>Restart the docker machine by typing <code class="docutils literal notranslate"><span class="pre">docker-machine</span> <span class="pre">restart</span></code> in your console</p></li>
+<li><p>SSH into the docker VM with <code class="docutils literal notranslate"><span class="pre">docker-machine</span> <span class="pre">ssh</span></code></p></li>
+<li><p>Append the following lines to the file <code class="docutils literal notranslate"><span class="pre">/mnt/sda1/var/lib/boot2docker/profile</span></code></p></li>
+</ol>
+</div></blockquote>
+</div></blockquote>
+</li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mkdir /home/docker/c # Change the &#39;c&#39; to your drive letter</span>
+<span class="go">sudo mount -t vboxsf -o uid=1000,gid=50 c /home/docker/c # Again, change both &#39;c&#39;s to your drive letter</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="running-the-tests">
+<h2>Running the Tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
+<p>GitHub actions is used to run the test suite on every new commit.
+You can also run the tests locally by</p>
+<ol class="arabic simple">
+<li><p>In a console window make sure the database is running</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ./cycle_docker_compose.sh
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Then in a second window run</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker-compose run --rm web pytest -n <span class="m">2</span>
+</pre></div>
+</div>
+<p>Replace 2 with the number of CPUs that you have on your system, this runs
+the tests in parallel.</p>
+<p>If you want to add a new test please add them to the <code class="docutils literal notranslate"><span class="pre">app/tests</span></code> folder.
+If you only want to run the tests for a particular app, eg. for <code class="docutils literal notranslate"><span class="pre">teams</span></code>, you can do</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker-compose run --rm web pytest -k teams_tests
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h2>Development<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>You will need to install pre-commit so that the code is correctly formatted</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> python3 -m pip install pre-commit
+</pre></div>
+</div>
+<p>Please do all development on a branch and make a pull request to master, this will need to be reviewed before it is integrated.</p>
+<p>We recommend using Pycharm for development.</p>
+<div class="section" id="running-through-docker-compose">
+<h3>Running through docker-compose<a class="headerlink" href="#running-through-docker-compose" title="Permalink to this headline">¶</a></h3>
+<p>You will need the Professional edition to use the docker-compose integration.
+To set up the environment in Pycharm Professional 2018.1:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">File</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project:</span> <span class="pre">grand-challenge.org</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">Interpreter</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Cog</span></code> wheel (top right) -&gt; <code class="docutils literal notranslate"><span class="pre">Add</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Docker</span> <span class="pre">Compose</span></code></p></li>
+<li><p>Then select the docker server (usually the unix socket)</p></li>
+<li><p>Set the service to <code class="docutils literal notranslate"><span class="pre">web</span></code></p></li>
+<li><p>Click <code class="docutils literal notranslate"><span class="pre">OK</span></code></p></li>
+<li><p>Set the path mappings from <code class="docutils literal notranslate"><span class="pre">&lt;Project</span> <span class="pre">root&gt;/app-&gt;/app</span></code></p></li>
+<li><p>Click <code class="docutils literal notranslate"><span class="pre">OK</span></code></p></li>
+</ol>
+<p>Pycharm will then spend some time indexing the packages within the container to help with code completion and inspections.
+If you edit any files these will be updated on the fly by werkzeug.</p>
+</div>
+<div class="section" id="pycharm-configuration">
+<h3>PyCharm Configuration<a class="headerlink" href="#pycharm-configuration" title="Permalink to this headline">¶</a></h3>
+<p>It is recommended to setup django integration to ensure that the code completion, tests and import optimisation works.</p>
+<ol class="arabic simple">
+<li><p>Open <code class="docutils literal notranslate"><span class="pre">File</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Languages</span> <span class="pre">and</span> <span class="pre">Frameworks</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Django</span></code></p></li>
+<li><p>Check the <code class="docutils literal notranslate"><span class="pre">Enable</span> <span class="pre">Django</span> <span class="pre">Support</span></code> checkbox</p></li>
+<li><p>Set the project root to <code class="docutils literal notranslate"><span class="pre">&lt;Project</span> <span class="pre">root&gt;/app</span></code></p></li>
+<li><p>Set the settings to <code class="docutils literal notranslate"><span class="pre">config/settings.py</span></code></p></li>
+<li><p>Check the <code class="docutils literal notranslate"><span class="pre">Do</span> <span class="pre">not</span> <span class="pre">use</span> <span class="pre">the</span> <span class="pre">django</span> <span class="pre">test</span> <span class="pre">runner</span></code> checkbox</p></li>
+<li><p>In the settings window navigate to <code class="docutils literal notranslate"><span class="pre">Tools</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Python</span> <span class="pre">integrated</span> <span class="pre">tools</span></code></p></li>
+<li><p>Under the testing section select <code class="docutils literal notranslate"><span class="pre">pytest</span></code> as the default test runner</p></li>
+<li><p>Under the Docstrings section set <code class="docutils literal notranslate"><span class="pre">NumPy</span></code> as the docstrings format</p></li>
+<li><p>In the settings window navigate to <code class="docutils literal notranslate"><span class="pre">Editor</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Code</span> <span class="pre">Style</span></code></p></li>
+<li><p>Click on the <code class="docutils literal notranslate"><span class="pre">Formatter</span> <span class="pre">Control</span></code> tab and enable <code class="docutils literal notranslate"><span class="pre">Enable</span> <span class="pre">formatter</span> <span class="pre">markers</span> <span class="pre">in</span> <span class="pre">comments</span></code></p></li>
+<li><p>In the settings window navigate to <code class="docutils literal notranslate"><span class="pre">Editor</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Code</span> <span class="pre">Style</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Python</span></code></p></li>
+<li><p>On the <code class="docutils literal notranslate"><span class="pre">Wrapping</span> <span class="pre">and</span> <span class="pre">Braces</span></code> tab set <code class="docutils literal notranslate"><span class="pre">Hard</span> <span class="pre">wrap</span> <span class="pre">at</span></code> to <code class="docutils literal notranslate"><span class="pre">86</span></code> and <code class="docutils literal notranslate"><span class="pre">Visual</span> <span class="pre">guide</span></code> to <code class="docutils literal notranslate"><span class="pre">79</span></code></p></li>
+<li><p>On the <code class="docutils literal notranslate"><span class="pre">Imports</span></code> tab enable <code class="docutils literal notranslate"><span class="pre">Sort</span> <span class="pre">Import</span> <span class="pre">Statements</span></code>, <code class="docutils literal notranslate"><span class="pre">Sort</span> <span class="pre">imported</span> <span class="pre">names</span> <span class="pre">in</span> <span class="pre">&quot;from&quot;</span> <span class="pre">imports</span></code>, and <code class="docutils literal notranslate"><span class="pre">Sort</span> <span class="pre">plain</span> <span class="pre">and</span> <span class="pre">&quot;from&quot;</span> <span class="pre">imports</span> <span class="pre">separately</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">same</span> <span class="pre">group</span></code></p></li>
+<li><p>Click <code class="docutils literal notranslate"><span class="pre">OK</span></code></p></li>
+<li><p>Install the <code class="docutils literal notranslate"><span class="pre">Flake8</span> <span class="pre">Support</span></code> plugin so that PyCharm will understand <code class="docutils literal notranslate"><span class="pre">noqa</span></code> comments</p></li>
+</ol>
+<p>It is also recommended to install the black extension (version <code class="docutils literal notranslate"><span class="pre">19.10b0</span></code>) for code formatting.</p>
+</div>
+<div class="section" id="running-locally">
+<h3>Running locally<a class="headerlink" href="#running-locally" title="Permalink to this headline">¶</a></h3>
+<p>Alternatively, it can be useful to run code from a local python environment - this allows for easier debugging and does
+not require e.g. the professional edition of PyCharm. The setup described here uses all services from the normal
+<code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> stack, except for the web service. Though this service is running, a separate Django dev server is
+started in PyCharm (or from the terminal). As the dev server is running on port <code class="docutils literal notranslate"><span class="pre">8000</span></code> by default, there is no port conflict
+with the service running in the docker container.</p>
+<ol class="arabic simple">
+<li><p>Run the <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> stack for the database and celery task handling</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ./cycle_docker_compose.sh
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Make sure you have <code class="docutils literal notranslate"><span class="pre">poetry</span></code> installed.</p></li>
+<li><p>In a new terminal, create a new virtual python environment using <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">install</span></code> in this repository’s root folder.</p></li>
+<li><p>Activate the virtual env: <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">shell</span></code>.</p></li>
+<li><p>Load the environmental variables contained in <code class="docutils literal notranslate"><span class="pre">.env.local</span></code></p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nb">export</span> <span class="k">$(</span>cat .env.local <span class="p">|</span> egrep -v <span class="s2">&quot;^#&quot;</span> <span class="p">|</span> xargs<span class="k">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="6">
+<li><p>Run migrations and check_permissions (optionally load demo data).</p></li>
+</ol>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nb">cd</span> app
+<span class="gp">$</span> python manage.py migrate
+<span class="gp">$</span> python manage.py check_permissions
+<span class="gp">$</span> python manage.py init_gc_demo
+</pre></div>
+</div>
+<ol class="arabic simple" start="7">
+<li><p>You can now start the server using <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">runserver_plus</span></code>.</p></li>
+<li><p>To setup PyCharm:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">File</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project:</span> <span class="pre">grand-challenge.org</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">Interpreter</span></code> -&gt; Select your created virtual environment</p></li>
+<li><p>For each run/debug configuration, make sure the environmental variables are loaded,
+the easiest is to use <a class="reference external" href="https://plugins.jetbrains.com/plugin/7861-envfile">this plugin</a>. Or they can be pasted after pressing
+the folder icon in the <code class="docutils literal notranslate"><span class="pre">Environmental</span> <span class="pre">variables</span></code> field.</p></li>
+<li><p>Useful to setup: the built-in python/django console in Pycharm:
+<code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Build</span></code>, <code class="docutils literal notranslate"><span class="pre">execution</span></code>, <code class="docutils literal notranslate"><span class="pre">deployment</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Console</span></code> -&gt; Python/Django console.
+Choose the same python interpreter here, and make sure to load the environmental variables
+(the .env plugin cannot be used here, the variables can only be pasted).</p></li>
+</ol>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="creating-migrations">
+<h2>Creating Migrations<a class="headerlink" href="#creating-migrations" title="Permalink to this headline">¶</a></h2>
+<p>If you change a <code class="docutils literal notranslate"><span class="pre">models.py</span></code> file then you will need to make the corresponding migration files.
+You can do this with</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> make migrations
+</pre></div>
+</div>
+<p>or, more explicitly</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker-compose run --rm --user <span class="sb">`</span>id -u<span class="sb">`</span> web python manage.py makemigrations
+</pre></div>
+</div>
+<p>add these to git and commit.</p>
+</div>
+<div class="section" id="building-the-documentation">
+<h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="using-docker">
+<h3>Using docker<a class="headerlink" href="#using-docker" title="Permalink to this headline">¶</a></h3>
+<p>Having built the web container with <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> you can use this to generate the docs with</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> make docs
+</pre></div>
+</div>
+<p>This will create the docs in the <code class="docutils literal notranslate"><span class="pre">docs/_build/html</span></code> directory.</p>
+</div>
+</div>
+<div class="section" id="adding-new-dependencies">
+<h2>Adding new dependencies<a class="headerlink" href="#adding-new-dependencies" title="Permalink to this headline">¶</a></h2>
+<p>Poetry is used to manage the dependencies of the platform.
+To add a new dependency use</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> poetry add &lt;whatever&gt;
+</pre></div>
+</div>
+<p>and then commit the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
+If this is a development dependency then use the <code class="docutils literal notranslate"><span class="pre">--dev</span></code> flag, see the <code class="docutils literal notranslate"><span class="pre">poetry</span></code> documentation for more details.</p>
+<p>Versions are unpinned in the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file, to update the resolved dependencies use</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> poetry lock
+</pre></div>
+</div>
+<p>and commit the update <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
+The containers will need to be rebuilt after running these steps, so stop the <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> process with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code> and restart.</p>
+</div>
+<div class="section" id="going-to-production">
+<h2>Going to Production<a class="headerlink" href="#going-to-production" title="Permalink to this headline">¶</a></h2>
+<p>The docker compose file included here is for development only.
+If you want to run this in a production environment you will need to make several changes, not limited to:</p>
+<ol class="arabic simple">
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">gunicorn</span></code> rather than run <code class="docutils literal notranslate"><span class="pre">runserver_plus</span></code> to run the web process</p></li>
+<li><p><a class="reference external" href="https://docs.docker.com/engine/security/https/">Disable mounting of the docker socket</a></p></li>
+<li><p>Removing the users that are created by <code class="docutils literal notranslate"><span class="pre">init_gc_demo</span></code></p></li>
+</ol>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="evaluation.html" class="btn btn-neutral float-right" title="Evaluation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="architecture.html" class="btn btn-neutral float-left" title="Architecture" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, James Meakin
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
