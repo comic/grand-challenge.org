@@ -8,7 +8,7 @@ grand-challenge.org
    :target: https://codecov.io/gh/comic/grand-challenge.org
    :alt: Code Coverage Status
 .. image:: https://img.shields.io/badge/docs-published-success
-   :target: http://grand-challengeorg.readthedocs.io/en/latest/?badge=latest
+   :target: https://comic.github.io/grand-challenge.org/
    :alt: Documentation
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/ambv/black
@@ -39,4 +39,4 @@ Medical Image Computing. It features:
 
 If you would like to start your own website, or contribute to the development
 of the framework, please see
-`the docs <http://grand-challengeorg.readthedocs.io>`_
+`the docs <https://comic.github.io/grand-challenge.org/>`_

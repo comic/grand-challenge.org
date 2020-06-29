@@ -48,11 +48,6 @@ jobs:
       - name: Build the docs
         run: |
           make docs
-      - name: Deploy the documentation
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/_build/html
       - name: Run the non-transaction tests
         run: |
           docker pull crccheck/hello-world
@@ -74,3 +69,9 @@ jobs:
         env:
           DOCKER_USER: grandchallenge
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Deploy the documentation on master
+        if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/_build/html
