@@ -1,6 +1,7 @@
 import userena.forms as userena_forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from disposable_email_domains import blocklist
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django_countries import countries
@@ -82,6 +83,16 @@ class SignupFormExtra(userena_forms.SignupForm):
             raise forms.ValidationError("Please choose a valid location.")
 
         return country
+
+    def clean_email(self):
+        email = super().clean_email()
+
+        if email.split("@")[1] in blocklist:
+            raise forms.ValidationError(
+                "Disposable email addresses cannot be used."
+            )
+
+        return email
 
     def save(self):
         user = super().save()
