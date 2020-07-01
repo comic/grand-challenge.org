@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,12 +11,18 @@
   
 
   
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,10 +34,6 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Design decisions" href="design.html" />
@@ -50,7 +51,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> grand-challenge.org
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> grand-challenge.org
           
 
           
@@ -73,6 +74,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -101,6 +103,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -139,7 +142,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Reader Studies</li>
     
@@ -297,7 +300,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py method">
 <dt id="grandchallenge.reader_studies.models.Answer.validate">
-<em class="property">static </em><code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">creator</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">question</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">answer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">images</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">is_ground_truth</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">instance</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.validate" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="sig-name descname">validate</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">creator</span></em>, <em class="sig-param"><span class="n">question</span></em>, <em class="sig-param"><span class="n">answer</span></em>, <em class="sig-param"><span class="n">images</span></em>, <em class="sig-param"><span class="n">is_ground_truth</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">instance</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.validate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Validates all fields provided for <code class="docutils literal notranslate"><span class="pre">answer</span></code>.</p>
 </dd></dl>
 
@@ -361,7 +364,7 @@ have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
 
 <dl class="py method">
 <dt id="grandchallenge.reader_studies.models.Question.is_answer_valid">
-<code class="sig-name descname">is_answer_valid</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">answer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.is_answer_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.is_answer_valid" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">is_answer_valid</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">answer</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.is_answer_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.is_answer_valid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Validates <code class="docutils literal notranslate"><span class="pre">answer</span></code> against <code class="docutils literal notranslate"><span class="pre">ANSWER_TYPE_SCHEMA</span></code>.</p>
 </dd></dl>
 
@@ -414,7 +417,7 @@ a set of questions on a set of images (cases).</p>
 
 <dl class="py method">
 <dt id="grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth">
-<code class="sig-name descname">add_ground_truth</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">user</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.add_ground_truth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_ground_truth</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">user</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.add_ground_truth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add ground truth answers provided by <code class="docutils literal notranslate"><span class="pre">data</span></code> for this <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
 </dd></dl>
 
@@ -447,7 +450,7 @@ own hanging.</p>
 
 <dl class="py method">
 <dt id="grandchallenge.reader_studies.models.ReaderStudy.get_hanging_list_images_for_user">
-<code class="sig-name descname">get_hanging_list_images_for_user</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">user</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.get_hanging_list_images_for_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.get_hanging_list_images_for_user" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_hanging_list_images_for_user</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">user</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudy.get_hanging_list_images_for_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.get_hanging_list_images_for_user" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a shuffled list of the hanging list images for a particular
 user.</p>
 <p>The shuffle is seeded with the users pk, and using <code class="docutils literal notranslate"><span class="pre">RandomState</span></code>
@@ -600,7 +603,7 @@ the needed info for that.</p>
 
 <dl class="py function">
 <dt id="grandchallenge.reader_studies.models.delete_reader_study_groups_hook">
-<code class="sig-prename descclassname">grandchallenge.reader_studies.models.</code><code class="sig-name descname">delete_reader_study_groups_hook</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">_</span></em>, <em class="sig-param"><span class="n">instance</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">using</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">__</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#delete_reader_study_groups_hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.delete_reader_study_groups_hook" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">grandchallenge.reader_studies.models.</code><code class="sig-name descname">delete_reader_study_groups_hook</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">_</span></em>, <em class="sig-param"><span class="n">instance</span></em>, <em class="sig-param"><span class="n">using</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">__</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#delete_reader_study_groups_hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.delete_reader_study_groups_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Deletes the related groups.</p>
 <p>We use a signal rather than overriding delete() to catch usages of
 bulk_delete.</p>
@@ -629,11 +632,19 @@ bulk_delete.</p>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2018, James Meakin
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -644,7 +655,6 @@ bulk_delete.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,12 +11,18 @@
   
 
   
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
   
   
   
 
   
-  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -29,10 +34,6 @@
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -48,7 +49,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> grand-challenge.org
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> grand-challenge.org
           
 
           
@@ -71,6 +72,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -92,6 +94,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -130,7 +133,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../index.html">Module code</a> &raquo;</li>
         
@@ -171,11 +174,12 @@
 <span class="kn">from</span> <span class="nn">django.forms.models</span> <span class="kn">import</span> <span class="n">model_to_dict</span>
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">format_lazy</span>
-<span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">now</span>
+<span class="kn">from</span> <span class="nn">django.utils</span> <span class="kn">import</span> <span class="n">timezone</span>
 <span class="kn">from</span> <span class="nn">simple_history</span> <span class="kn">import</span> <span class="n">utils</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">exceptions</span>
 <span class="kn">from</span> <span class="nn">.manager</span> <span class="kn">import</span> <span class="n">HistoryDescriptor</span>
 <span class="kn">from</span> <span class="nn">.signals</span> <span class="kn">import</span> <span class="n">post_create_historical_record</span><span class="p">,</span> <span class="n">pre_create_historical_record</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">get_change_reason_from_object</span>
 
 <span class="k">if</span> <span class="n">django</span><span class="o">.</span><span class="n">VERSION</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">2</span><span class="p">,):</span>
     <span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
@@ -233,9 +237,11 @@
         <span class="n">history_user_setter</span><span class="o">=</span><span class="n">_history_user_setter</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">use_base_model_db</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">user_db_constraint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">user_set_verbose_name</span> <span class="o">=</span> <span class="n">verbose_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">user_related_name</span> <span class="o">=</span> <span class="n">user_related_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_db_constraint</span> <span class="o">=</span> <span class="n">user_db_constraint</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">table_name</span> <span class="o">=</span> <span class="n">table_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inherit</span> <span class="o">=</span> <span class="n">inherit</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">history_id_field</span> <span class="o">=</span> <span class="n">history_id_field</span>
@@ -493,6 +499,7 @@
                     <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="n">related_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user_related_name</span><span class="p">,</span>
                     <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+                    <span class="n">db_constraint</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user_db_constraint</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">}</span>
 
@@ -570,6 +577,13 @@
                 <span class="o">.</span><span class="n">last</span><span class="p">()</span>
             <span class="p">)</span>
 
+        <span class="k">def</span> <span class="nf">get_default_history_user</span><span class="p">(</span><span class="n">instance</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Returns the user specified by `get_user` method for manually creating</span>
+<span class="sd">            historical objects</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_history_user</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
         <span class="n">extra_fields</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;history_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_history_id_field</span><span class="p">(),</span>
             <span class="s2">&quot;history_date&quot;</span><span class="p">:</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(),</span>
@@ -589,6 +603,7 @@
             <span class="s2">&quot;__str__&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> as of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">history_object</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">history_date</span>
             <span class="p">),</span>
+            <span class="s2">&quot;get_default_history_user&quot;</span><span class="p">:</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">get_default_history_user</span><span class="p">),</span>
         <span class="p">}</span>
 
         <span class="n">extra_fields</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_history_related_field</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
@@ -629,9 +644,9 @@
 
     <span class="k">def</span> <span class="nf">create_historical_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">history_type</span><span class="p">,</span> <span class="n">using</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">using</span> <span class="o">=</span> <span class="n">using</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_base_model_db</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">history_date</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;_history_date&quot;</span><span class="p">,</span> <span class="n">now</span><span class="p">())</span>
+        <span class="n">history_date</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;_history_date&quot;</span><span class="p">,</span> <span class="n">timezone</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
         <span class="n">history_user</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_history_user</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-        <span class="n">history_change_reason</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;changeReason&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">history_change_reason</span> <span class="o">=</span> <span class="n">get_change_reason_from_object</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
         <span class="n">manager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager_name</span><span class="p">)</span>
 
         <span class="n">attrs</span> <span class="o">=</span> <span class="p">{}</span>
@@ -697,7 +712,10 @@
 
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">):</span>
         <span class="c1"># Don&#39;t copy file, just path.</span>
-        <span class="n">field</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="s2">&quot;SIMPLE_HISTORY_FILEFIELD_TO_CHARFIELD&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">field</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">field</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span>
 
     <span class="c1"># Historical instance shouldn&#39;t change create/update timestamps</span>
     <span class="n">field</span><span class="o">.</span><span class="n">auto_now</span> <span class="o">=</span> <span class="kc">False</span>
@@ -771,11 +789,19 @@
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2018, James Meakin
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -786,7 +812,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
