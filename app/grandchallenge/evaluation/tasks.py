@@ -81,7 +81,8 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     valid_jobs = (
         Job.objects.filter(submission__challenge=challenge, published=True)
         .order_by("-created")
-        .select_related("submission")
+        .select_related("submission__creator")
+        .prefetch_related("outputs")
     )
 
     if display_choice == Config.MOST_RECENT:
