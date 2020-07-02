@@ -534,6 +534,17 @@ class Job(UUIDModel, ComponentJob):
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
 
+    published = models.BooleanField(default=True)
+    rank = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            "The position of this result on the leaderboard. If the value is "
+            "zero, then the result is unranked."
+        ),
+    )
+    rank_score = models.FloatField(default=0.0)
+    rank_per_metric = JSONField(default=dict)
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
