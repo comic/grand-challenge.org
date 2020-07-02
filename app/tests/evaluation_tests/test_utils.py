@@ -1,60 +1,44 @@
 import pytest
-from django.db.models.signals import post_save
-from factory.django import mute_signals
 
 from grandchallenge.evaluation.models import Config
-from tests.factories import ChallengeFactory, ResultFactory, UserFactory
+from grandchallenge.evaluation.tasks import calculate_ranks
+from tests.factories import (
+    ChallengeFactory,
+    JobFactory,
+    UserFactory,
+)
 
 
 @pytest.mark.django_db
-def test_calculate_ranks(settings):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_calculate_ranks():
     challenge = ChallengeFactory()
 
-    with mute_signals(post_save):
-        queryset = (
-            # Warning: Do not change this values without updating the
-            # expected_ranks below.
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.0, "b": 0.0},
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.5, "b": 0.2},
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 1.0, "b": 0.3},
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.7, "b": 0.4},
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.5, "b": 0.5},
-            ),
-            # Following two are invalid if relative ranking is used
-            ResultFactory(
-                job__submission__challenge=challenge, metrics={"a": 1.0}
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge, metrics={"b": 0.3}
-            ),
-            # Add a valid, but unpublished result
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.1, "b": 0.1},
-            ),
-        )
+    results = [
+        # Warning: Do not change this values without updating the
+        # expected_ranks below.
+        {"a": 0.0, "b": 0.0},
+        {"a": 0.5, "b": 0.2},
+        {"a": 1.0, "b": 0.3},
+        {"a": 0.7, "b": 0.4},
+        {"a": 0.5, "b": 0.5},
+        # Following two are invalid if relative ranking is used
+        {"a": 1.0},
+        {"b": 0.3},
+        # Add a valid, but unpublished result
+        {"a": 0.1, "b": 0.1},
+    ]
 
-        # Unpublish the result
-        queryset[-1].published = False
-        queryset[-1].save()
+    queryset = [
+        JobFactory(submission__challenge=challenge)
+        for _ in range(len(results))
+    ]
+
+    for j, r in zip(queryset, results):
+        j.create_result(result=r)
+
+    # Unpublish the result
+    queryset[-1].published = False
+    queryset[-1].save()
 
     expected = {
         Config.DESCENDING: {
@@ -136,6 +120,8 @@ def test_calculate_ranks(settings):
                 ]
                 challenge.evaluation_config.save()
 
+                calculate_ranks(challenge_pk=challenge.pk)
+
                 assert_ranks(
                     queryset,
                     expected[a_order][score_method][b_order]["ranks"],
@@ -144,57 +130,40 @@ def test_calculate_ranks(settings):
 
 
 @pytest.mark.django_db
-def test_results_display(settings):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_results_display():
     challenge = ChallengeFactory()
 
-    with mute_signals(post_save):
-        user1 = UserFactory()
-        user2 = UserFactory()
-        queryset = (
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"b": 0.3},  # Invalid result
-                job__submission__creator=user1,
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.6},
-                job__submission__creator=user1,
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.4},
-                job__submission__creator=user1,
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.2},
-                job__submission__creator=user1,
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.1},
-                job__submission__creator=user2,
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.5},
-                job__submission__creator=user2,
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.3},
-                job__submission__creator=user2,
-            ),
+    user1 = UserFactory()
+    user2 = UserFactory()
+
+    metrics = "metrics"
+    creator = "creator"
+
+    results = [
+        {metrics: {"b": 0.3}, creator: user1},  # Invalid result
+        {metrics: {"a": 0.6}, creator: user1},
+        {metrics: {"a": 0.4}, creator: user1},
+        {metrics: {"a": 0.2}, creator: user1},
+        {metrics: {"a": 0.1}, creator: user2},
+        {metrics: {"a": 0.5}, creator: user2},
+        {metrics: {"a": 0.3}, creator: user2},
+    ]
+
+    queryset = [
+        JobFactory(
+            submission__challenge=challenge, submission__creator=r[creator]
         )
+        for r in results
+    ]
+
+    for j, r in zip(queryset, results):
+        j.create_result(result=r[metrics])
 
     challenge.evaluation_config.score_jsonpath = "a"
     challenge.evaluation_config.result_display_choice = Config.ALL
     challenge.evaluation_config.save()
+
+    calculate_ranks(challenge_pk=challenge.pk)
 
     expected_ranks = [0, 1, 3, 5, 6, 2, 4]
     assert_ranks(queryset, expected_ranks)
@@ -202,11 +171,15 @@ def test_results_display(settings):
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
+    calculate_ranks(challenge_pk=challenge.pk)
+
     expected_ranks = [0, 0, 0, 2, 0, 0, 1]
     assert_ranks(queryset, expected_ranks)
 
     challenge.evaluation_config.result_display_choice = Config.BEST
     challenge.evaluation_config.save()
+
+    calculate_ranks(challenge_pk=challenge.pk)
 
     expected_ranks = [0, 1, 0, 0, 0, 2, 0]
     assert_ranks(queryset, expected_ranks)
@@ -217,42 +190,39 @@ def test_results_display(settings):
     )
     challenge.evaluation_config.save()
 
+    calculate_ranks(challenge_pk=challenge.pk)
+
     expected_ranks = [0, 0, 0, 2, 1, 0, 0]
     assert_ranks(queryset, expected_ranks)
 
     challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
     challenge.evaluation_config.save()
 
+    calculate_ranks(challenge_pk=challenge.pk)
+
     expected_ranks = [0, 0, 0, 1, 0, 0, 2]
     assert_ranks(queryset, expected_ranks)
 
 
 @pytest.mark.django_db
-def test_null_results(settings):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
+def test_null_results():
     challenge = ChallengeFactory()
 
-    with mute_signals(post_save):
-        user1 = UserFactory()
-        queryset = (
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": 0.6},
-                job__submission__creator=user1,
-            ),
-            ResultFactory(
-                job__submission__challenge=challenge,
-                metrics={"a": None},
-                job__submission__creator=user1,
-            ),
-        )
+    results = [{"a": 0.6}, {"a": None}]
+
+    queryset = [
+        JobFactory(submission__challenge=challenge)
+        for _ in range(len(results))
+    ]
+
+    for j, r in zip(queryset, results):
+        j.create_result(result=r)
 
     challenge.evaluation_config.score_jsonpath = "a"
     challenge.evaluation_config.result_display_choice = Config.ALL
     challenge.evaluation_config.save()
+
+    calculate_ranks(challenge_pk=challenge.pk)
 
     expected_ranks = [1, 0]
     assert_ranks(queryset, expected_ranks)

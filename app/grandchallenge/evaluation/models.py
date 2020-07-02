@@ -2,7 +2,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import BooleanField
 from django.utils.functional import cached_property
@@ -13,6 +13,7 @@ from grandchallenge.components.backends.docker import Executor, put_file
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.core.models import UUIDModel
@@ -598,8 +599,18 @@ class Job(UUIDModel, ComponentJob):
     def executor_cls(self):
         return SubmissionEvaluator
 
-    def create_result(self, *, result):
-        Result.objects.create(job=self, metrics=result)
+    def create_result(self, *, result: dict):
+        interface = ComponentInterface.objects.get(slug="metrics-json-file")
+
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = result
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=result
+            )
+            self.outputs.add(output_civ)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:

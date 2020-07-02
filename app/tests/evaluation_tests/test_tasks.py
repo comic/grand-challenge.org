@@ -46,7 +46,12 @@ def test_submission_evaluation(
 
     # The evaluation method should return the correct answer
     assert len(submission.job_set.all()) == 1
-    assert submission.job_set.all()[0].result.metrics["acc"] == 0.5
+    assert (
+        submission.job_set.first()
+        .outputs.get(interface__slug="metrics-json-file")
+        .value["acc"]
+        == 0.5
+    )
 
     # Try with a csv file
     submission = SubmissionFactory(
@@ -55,7 +60,12 @@ def test_submission_evaluation(
     )
 
     assert len(submission.job_set.all()) == 1
-    assert submission.job_set.all()[0].result.metrics["acc"] == 0.5
+    assert (
+        submission.job_set.first()
+        .outputs.get(interface__slug="metrics-json-file")
+        .value["acc"]
+        == 0.5
+    )
 
 
 @pytest.mark.django_db

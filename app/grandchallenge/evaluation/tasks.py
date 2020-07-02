@@ -2,37 +2,36 @@ import uuid
 from statistics import mean, median
 
 from celery import shared_task
-from django.db.models import Q
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Config, Result
+from grandchallenge.evaluation.models import Config, Job
 from grandchallenge.evaluation.utils import Metric, rank_results
 
 
-def filter_by_creators_most_recent(*, results):
-    # Go through the results and only pass through the most recent
+def filter_by_creators_most_recent(*, jobs):
+    # Go through the jobs and only pass through the most recent
     # submission for each user
     users_seen = set()
     filtered_qs = []
 
-    for r in results:
-        creator = r.job.submission.creator
+    for j in jobs:
+        creator = j.submission.creator
 
         if creator not in users_seen:
             users_seen.add(creator)
-            filtered_qs.append(r)
+            filtered_qs.append(j)
 
     return filtered_qs
 
 
-def filter_by_creators_best(*, results, ranks):
+def filter_by_creators_best(*, jobs, ranks):
     best_result_per_user = {}
 
-    for r in results:
-        creator = r.job.submission.creator
+    for j in jobs:
+        creator = j.submission.creator
 
         try:
-            this_rank = ranks[r.pk]
+            this_rank = ranks[j.pk]
         except KeyError:
             # This result was not ranked
             continue
@@ -40,7 +39,7 @@ def filter_by_creators_best(*, results, ranks):
         if creator not in best_result_per_user or (
             this_rank < ranks[best_result_per_user[creator].pk]
         ):
-            best_result_per_user[creator] = r
+            best_result_per_user[creator] = j
 
     return [r for r in best_result_per_user.values()]
 
@@ -79,39 +78,37 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     else:
         raise NotImplementedError
 
-    valid_results = (
-        Result.objects.filter(
-            Q(job__submission__challenge=challenge), Q(published=True)
-        )
+    valid_jobs = (
+        Job.objects.filter(submission__challenge=challenge, published=True)
         .order_by("-created")
-        .select_related("job__submission")
+        .select_related("submission")
     )
 
     if display_choice == Config.MOST_RECENT:
-        valid_results = filter_by_creators_most_recent(results=valid_results)
+        valid_jobs = filter_by_creators_most_recent(jobs=valid_jobs)
     elif display_choice == Config.BEST:
         all_positions = rank_results(
-            results=valid_results, metrics=metrics, score_method=score_method
+            jobs=valid_jobs, metrics=metrics, score_method=score_method
         )
-        valid_results = filter_by_creators_best(
-            results=valid_results, ranks=all_positions.ranks
+        valid_jobs = filter_by_creators_best(
+            jobs=valid_jobs, ranks=all_positions.ranks
         )
 
     final_positions = rank_results(
-        results=valid_results, metrics=metrics, score_method=score_method
+        jobs=valid_jobs, metrics=metrics, score_method=score_method
     )
 
-    for res in Result.objects.filter(Q(job__submission__challenge=challenge)):
+    for j in Job.objects.filter(submission__challenge=challenge):
         try:
-            rank = final_positions.ranks[res.pk]
-            rank_score = final_positions.rank_scores[res.pk]
-            rank_per_metric = final_positions.rank_per_metric[res.pk]
+            rank = final_positions.ranks[j.pk]
+            rank_score = final_positions.rank_scores[j.pk]
+            rank_per_metric = final_positions.rank_per_metric[j.pk]
         except KeyError:
             # This result will be excluded from the display
             rank = 0
             rank_score = 0.0
             rank_per_metric = {}
 
-        Result.objects.filter(pk=res.pk).update(
+        Job.objects.filter(pk=j.pk).update(
             rank=rank, rank_score=rank_score, rank_per_metric=rank_per_metric
         )
