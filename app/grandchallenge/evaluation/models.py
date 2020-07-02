@@ -23,23 +23,16 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
     get_file_mimetype,
 )
-from grandchallenge.evaluation.emails import send_failed_job_email
+from grandchallenge.datasets.models import ImageSet
+from grandchallenge.evaluation.emails import (
+    send_failed_job_email,
+    send_new_result_email,
+)
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.submission_conversion.models import (
+    SubmissionToAnnotationSetJob,
+)
 
-# Example Schema
-"""
-[
-  {
-    "title": "Mean dice ± std",
-    "path": "aggregates.dice.mean",
-    "error_path": "aggregates.dice.std"
-  },
-  {
-    "title": "Mean Hausdorff",
-    "path": "aggregates.hausdorff.mean"
-  }
-]
-"""
 EXTRA_RESULT_COLUMNS_SCHEMA = {
     "definitions": {},
     "$schema": "http://json-schema.org/draft-06/schema#",
@@ -427,6 +420,33 @@ class Submission(UUIDModel):
         ),
     )
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            method = (
+                Method.objects.filter(challenge=self.challenge)
+                .order_by("-created")
+                .first()
+            )
+
+            if method is None:
+                # TODO: Email here, do not raise
+                # raise NoMethodForChallengeError
+                pass
+            else:
+                Job.objects.create(submission=self, method=method)
+
+            # Convert this submission to an annotation set
+            base = ImageSet.objects.get(
+                challenge=self.challenge, phase=ImageSet.TESTING
+            )
+            SubmissionToAnnotationSetJob.objects.create(
+                base=base, submission=self
+            )
+
     def get_absolute_url(self):
         return reverse(
             "evaluation:submission-detail",
@@ -511,12 +531,17 @@ class Result(UUIDModel):
 
     def save(self, *args, **kwargs):
         # Note: cannot use `self.pk is None` with a custom pk
-        if self._state.adding:
+        adding = self._state.adding
+
+        if adding:
             self.published = (
                 self.challenge.evaluation_config.auto_publish_new_results
             )
 
         super().save(*args, **kwargs)
+
+        if adding:
+            send_new_result_email(self)
 
     def get_absolute_url(self):
         return reverse(

@@ -10,7 +10,6 @@ from django.db import models
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.evaluation.models import Submission
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -106,7 +105,10 @@ class AnnotationSet(UUIDModel, IndexMixin):
     images = models.ManyToManyField(to=Image, related_name="annotationsets")
     labels = JSONField(blank=True, default=dict, editable=False)
     submission = models.OneToOneField(
-        to=Submission, null=True, on_delete=models.SET_NULL, editable=False
+        to="evaluation.Submission",
+        null=True,
+        on_delete=models.SET_NULL,
+        editable=False,
     )
 
     def __str__(self):
