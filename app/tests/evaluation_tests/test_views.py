@@ -300,7 +300,7 @@ def test_job_list(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_job_detail(client, two_challenge_sets):
+def test_job_detail(client, two_challenge_sets, submission_file):
     method = MethodFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.challenge_set_1.admin,
@@ -309,6 +309,7 @@ def test_job_detail(client, two_challenge_sets):
     submission = SubmissionFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.challenge_set_1.participant,
+        file__from_path=submission_file,
     )
     job = JobFactory(method=method, submission=submission)
     validate_admin_only_view(

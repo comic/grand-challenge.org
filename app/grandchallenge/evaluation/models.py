@@ -427,18 +427,7 @@ class Submission(UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            method = (
-                Method.objects.filter(challenge=self.challenge)
-                .order_by("-created")
-                .first()
-            )
-
-            if method is None:
-                # TODO: Email here, do not raise
-                # raise NoMethodForChallengeError
-                pass
-            else:
-                Job.objects.create(submission=self, method=method)
+            self.create_job()
 
             # Convert this submission to an annotation set
             base = ImageSet.objects.get(
@@ -447,6 +436,50 @@ class Submission(UUIDModel):
             SubmissionToAnnotationSetJob.objects.create(
                 base=base, submission=self
             )
+
+    def create_job(self):
+        method = self.latest_ready_method
+
+        if not method:
+            # TODO Email admins
+            return
+
+        j = Job.objects.create(
+            submission=self, method=self.latest_ready_method
+        )
+
+        mimetype = get_file_mimetype(self.file)
+
+        if mimetype == "application/zip":
+            interface = ComponentInterface.objects.get(
+                slug="predictions-zip-file"
+            )
+        elif mimetype == "text/plain":
+            interface = ComponentInterface.objects.get(
+                slug="predictions-csv-file"
+            )
+        else:
+            raise NotImplementedError(
+                f"Interface is not defined for {mimetype} files"
+            )
+
+        j.inputs.set(
+            [
+                ComponentInterfaceValue.objects.create(
+                    interface=interface, file=self.file
+                )
+            ]
+        )
+
+        j.schedule_job()
+
+    @property
+    def latest_ready_method(self):
+        return (
+            Method.objects.filter(challenge=self.challenge, ready=True)
+            .order_by("-created")
+            .first()
+        )
 
     def get_absolute_url(self):
         return reverse(
@@ -571,14 +604,6 @@ class Job(UUIDModel, ComponentJob):
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = JSONField(default=dict)
 
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.schedule_job()
-
     @cached_property
     def challenge(self):
         return self.submission.challenge
@@ -593,7 +618,7 @@ class Job(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
-        return [self.submission.file]
+        return [inpt.file for inpt in self.inputs.all()]
 
     @property
     def executor_cls(self):
