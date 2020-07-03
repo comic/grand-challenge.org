@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from typing import Callable, Dict, Iterable, List, NamedTuple, Tuple
 
-from grandchallenge.evaluation.models import Job
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
 )
@@ -19,10 +18,7 @@ class Positions(NamedTuple):
 
 
 def rank_results(
-    *,
-    jobs: Tuple[Job, ...],
-    metrics: Tuple[Metric, ...],
-    score_method: Callable,
+    *, jobs: Tuple, metrics: Tuple[Metric, ...], score_method: Callable,
 ) -> Positions:
     """Determine the overall rank for each result."""
     jobs = _filter_valid_results(jobs=jobs, metrics=metrics)
@@ -42,8 +38,8 @@ def rank_results(
 
 
 def _filter_valid_results(
-    *, jobs: Iterable[Job], metrics: Tuple[Metric, ...]
-) -> List[Job]:
+    *, jobs: Iterable, metrics: Tuple[Metric, ...]
+) -> List:
     """Ensure that all of the metrics are in every result."""
     return [
         j
@@ -60,7 +56,7 @@ def _filter_valid_results(
 
 
 def _get_rank_per_metric(
-    *, jobs: Iterable[Job], metrics: Tuple[Metric, ...]
+    *, jobs: Iterable, metrics: Tuple[Metric, ...]
 ) -> Dict[str, Dict[str, float]]:
     """
     Takes results and calculates the rank for each of the individual metrics

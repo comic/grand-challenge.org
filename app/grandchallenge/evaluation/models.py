@@ -29,6 +29,7 @@ from grandchallenge.evaluation.emails import (
     send_failed_job_email,
     send_new_result_email,
 )
+from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.submission_conversion.models import (
     SubmissionToAnnotationSetJob,
@@ -320,6 +321,8 @@ class Config(UUIDModel):
         if adding:
             self.set_default_interfaces()
 
+        calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
+
     def set_default_interfaces(self):
         self.inputs.set(
             [ComponentInterface.objects.get(slug="predictions-csv-file")]
@@ -603,6 +606,10 @@ class Job(UUIDModel, ComponentJob):
     )
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = JSONField(default=dict)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
 
     @cached_property
     def challenge(self):

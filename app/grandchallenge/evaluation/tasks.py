@@ -2,9 +2,9 @@ import uuid
 from statistics import mean, median
 
 from celery import shared_task
+from django.apps import apps
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Config, Job
 from grandchallenge.evaluation.utils import Metric, rank_results
 
 
@@ -50,44 +50,56 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     display_choice = challenge.evaluation_config.result_display_choice
     score_method_choice = challenge.evaluation_config.scoring_method_choice
 
+    Job = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Job"
+    )
+
     metrics = (
         Metric(
             path=challenge.evaluation_config.score_jsonpath,
             reverse=(
                 challenge.evaluation_config.score_default_sort
-                == Config.DESCENDING
+                == challenge.evaluation_config.DESCENDING
             ),
         ),
     )
 
-    if score_method_choice != Config.ABSOLUTE:
+    if score_method_choice != challenge.evaluation_config.ABSOLUTE:
         metrics += tuple(
-            Metric(path=col["path"], reverse=col["order"] == Config.DESCENDING)
+            Metric(
+                path=col["path"],
+                reverse=col["order"] == challenge.evaluation_config.DESCENDING,
+            )
             for col in challenge.evaluation_config.extra_results_columns
         )
 
-    if score_method_choice == Config.ABSOLUTE and len(metrics) == 1:
+    if (
+        score_method_choice == challenge.evaluation_config.ABSOLUTE
+        and len(metrics) == 1
+    ):
 
         def score_method(x):
             return list(x)[0]
 
-    elif score_method_choice == Config.MEAN:
+    elif score_method_choice == challenge.evaluation_config.MEAN:
         score_method = mean
-    elif score_method_choice == Config.MEDIAN:
+    elif score_method_choice == challenge.evaluation_config.MEDIAN:
         score_method = median
     else:
         raise NotImplementedError
 
     valid_jobs = (
-        Job.objects.filter(submission__challenge=challenge, published=True)
+        Job.objects.filter(
+            submission__challenge=challenge, published=True, status=Job.SUCCESS
+        )
         .order_by("-created")
         .select_related("submission__creator")
         .prefetch_related("outputs")
     )
 
-    if display_choice == Config.MOST_RECENT:
+    if display_choice == challenge.evaluation_config.MOST_RECENT:
         valid_jobs = filter_by_creators_most_recent(jobs=valid_jobs)
-    elif display_choice == Config.BEST:
+    elif display_choice == challenge.evaluation_config.BEST:
         all_positions = rank_results(
             jobs=valid_jobs, metrics=metrics, score_method=score_method
         )
