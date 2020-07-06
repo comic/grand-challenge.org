@@ -82,13 +82,6 @@ class RawImageUploadSession(UUIDModel):
         on_delete=models.CASCADE,
     )
 
-    algorithm_result = models.OneToOneField(
-        to="algorithms.Result",
-        null=True,
-        default=None,
-        on_delete=models.CASCADE,
-    )
-
     reader_study = models.ForeignKey(
         to="reader_studies.ReaderStudy",
         null=True,
@@ -146,14 +139,30 @@ class RawImageUploadSession(UUIDModel):
                     self,
                 )
 
-    def process_images(self):
+    def process_images(self, linked_task=None):
+        """
+        Starts the Celery task to import this RawImageUploadSession.
+
+        Parameters
+        ----------
+        linked_task
+            A celery task that will be executed on success of the build_images
+            task, with 1 keyword argument: upload_session_pk=self.pk
+        """
+
         # Local import to avoid circular dependency
         from grandchallenge.cases.tasks import build_images
 
         RawImageUploadSession.objects.filter(pk=self.pk).update(
             status=RawImageUploadSession.REQUEUED
         )
-        build_images.apply_async(args=(self.pk,))
+
+        kwargs = {"args": (self.pk,)}
+
+        if linked_task is not None:
+            kwargs.update({"link": linked_task.s(upload_session_pk=self.pk)})
+
+        build_images.apply_async(**kwargs)
 
     def get_absolute_url(self):
         return reverse(

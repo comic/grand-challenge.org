@@ -5,21 +5,21 @@ See: https://itk.org/Wiki/MetaIO/Documentation
 """
 
 from pathlib import Path
-from typing import List, Mapping, Sequence, Tuple, Union
+from typing import Mapping, Sequence, Set, Tuple, Union
 
 import SimpleITK
 
-from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 from grandchallenge.cases.models import Image, ImageFile
 
 
 def image_builder_mhd(  # noqa: C901
-    files: List[Path], session_id=None
+    *, files: Set[Path], **_
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -73,8 +73,8 @@ def image_builder_mhd(  # noqa: C901
     def format_error(message):
         return f"Mhd image builder: {message}"
 
-    new_images = []
-    new_image_files = []
+    new_images = set()
+    new_image_files = set()
     consumed_files = set()
     invalid_file_errors = {}
     for file in files:
@@ -105,8 +105,8 @@ def image_builder_mhd(  # noqa: C901
                     continue
 
             n_image, n_image_files = convert_itk_file(parsed_headers, file)
-            new_images.append(n_image)
-            new_image_files += list(n_image_files)
+            new_images.add(n_image)
+            new_image_files |= set(n_image_files)
 
             consumed_files.add(file)
             if file_dependency is not None:
@@ -114,8 +114,8 @@ def image_builder_mhd(  # noqa: C901
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map=invalid_file_errors,
+        file_errors=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=[],
+        new_folders=set(),
     )

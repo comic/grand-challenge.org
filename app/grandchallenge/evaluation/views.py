@@ -21,7 +21,6 @@ from grandchallenge.evaluation.models import (
     Config,
     Job,
     Method,
-    Result,
     Submission,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
@@ -218,9 +217,11 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
         challenge = self.request.challenge
 
         queryset = super().get_queryset()
-        queryset = queryset.select_related(
-            "result", "submission__creator__user_profile"
-        ).filter(submission__challenge=challenge)
+        queryset = (
+            queryset.filter(submission__challenge=challenge)
+            .select_related("submission__creator__user_profile")
+            .prefetch_related("outputs")
+        )
 
         if challenge.is_admin(self.request.user):
             return queryset
@@ -230,13 +231,14 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
             )
 
 
-class JobDetail(UserIsChallengeAdminMixin, DetailView):
+class JobDetail(DetailView):
     # TODO - if participant: list only their jobs
     model = Job
 
 
-class ResultList(ListView):
-    model = Result
+class Leaderboard(ListView):
+    model = Job
+    template_name = "evaluation/leaderboard.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -254,20 +256,17 @@ class ResultList(ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.select_related(
-            "job__submission__creator__user_profile"
-        )
+            "submission__creator__user_profile"
+        ).prefetch_related("outputs")
         return queryset.filter(
-            Q(job__submission__challenge=self.request.challenge),
-            Q(published=True),
-            ~Q(rank=0),  # Exclude results without a rank
+            submission__challenge=self.request.challenge,
+            published=True,
+            status=Job.SUCCESS,
+            rank__gt=0,
         )
 
 
-class ResultDetail(DetailView):
-    model = Result
-
-
-class ResultUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
-    model = Result
+class JobUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+    model = Job
     fields = ("published",)
     success_message = "Result successfully updated."

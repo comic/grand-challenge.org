@@ -35,7 +35,7 @@ def send_failed_file_import(file_errors, upload_session):
     )
 
     send_mail(
-        subject=subject + "Unable to import images",
+        subject=subject + " Unable to import images",
         message=msg,
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[upload_session.creator.email],

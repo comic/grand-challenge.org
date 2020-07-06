@@ -11,13 +11,12 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import Algorithm, Job as AlgorithmJob
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import (
     Job as EvaluationJob,
-    Result,
     Submission,
 )
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -99,8 +98,11 @@ class StatisticsDetail(TemplateView):
                 .order_by("-num_submissions_period")[:max_num_results]
             ),
             "latest_result": (
-                Result.objects.filter(
-                    published=True, job__submission__challenge__hidden=False
+                EvaluationJob.objects.filter(
+                    published=True,
+                    submission__challenge__hidden=False,
+                    rank__gt=0,
+                    status=EvaluationJob.SUCCESS,
                 )
                 .order_by("-created")
                 .first()
@@ -114,8 +116,8 @@ class StatisticsDetail(TemplateView):
             "private_algorithms": (
                 Algorithm.objects.filter(public=False).count()
             ),
-            "algorithm_jobs": Job.objects.count(),
-            "algorithm_jobs_period": Job.objects.filter(
+            "algorithm_jobs": AlgorithmJob.objects.count(),
+            "algorithm_jobs_period": AlgorithmJob.objects.filter(
                 created__gt=time_period
             ).count(),
             "public_reader_studies": ReaderStudy.objects.filter(
@@ -165,16 +167,16 @@ class MetricsAPIView(APIView):
             Session.objects.filter(status=Session.STARTED).count()
         )
         metrics.ALGORITHM_JOBS_PENDING.set(
-            Job.objects.filter(status=Job.PENDING).count()
+            AlgorithmJob.objects.filter(status=AlgorithmJob.PENDING).count()
         )
         metrics.ALGORITHM_JOBS_ACTIVE.set(
-            Job.objects.filter(status=Job.STARTED).count()
+            AlgorithmJob.objects.filter(status=AlgorithmJob.STARTED).count()
         )
         metrics.EVALUATION_JOBS_PENDING.set(
-            EvaluationJob.objects.filter(status=Job.PENDING).count()
+            EvaluationJob.objects.filter(status=AlgorithmJob.PENDING).count()
         )
         metrics.EVALUATION_JOBS_ACTIVE.set(
-            EvaluationJob.objects.filter(status=Job.STARTED).count()
+            EvaluationJob.objects.filter(status=AlgorithmJob.STARTED).count()
         )
         metrics.UPLOAD_SESSIONS_PENDING.set(
             RawImageUploadSession.objects.filter(

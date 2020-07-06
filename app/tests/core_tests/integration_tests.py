@@ -530,7 +530,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
     def test_robots_txt_can_be_loaded(self):
         """Check there are no errors in finding robots.txt."""
         # main domain robots.txt
-        robots_url = "/robots.txt/"
+        robots_url = "/robots.txt"
         robots_url_project = reverse(
             "subdomain_robots_txt",
             kwargs={"challenge_short_name": self.testproject.short_name},

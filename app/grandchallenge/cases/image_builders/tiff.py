@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
 import openslide
@@ -13,7 +13,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 
-from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.models import FolderUpload, Image, ImageFile
 
 
@@ -227,26 +227,31 @@ def _load_and_create_dzi(
     return _create_dzi_images(gc_file=gc_file)
 
 
-def _add_image_files(
-    *, gc_file: GrandChallengeTiffFile, image: Image, new_image_files: List
-):
-    new_image_files.append(
+def _new_image_files(
+    *, gc_file: GrandChallengeTiffFile, image: Image,
+) -> Set[ImageFile]:
+    new_image_files = {
         _create_image_file(path=str(gc_file.path.absolute()), image=image)
-    )
+    }
+
     if gc_file.source_files:
         for s in gc_file.source_files:
-            new_image_files.append(_create_image_file(path=s, image=image))
+            new_image_files.add(_create_image_file(path=s, image=image))
+
     return new_image_files
 
 
-def _add_folder_uploads(
-    *, dzi_output: str, image: Image, new_folder_upload: List
-):
+def _new_folder_uploads(
+    *, dzi_output: str, image: Image,
+) -> Set[FolderUpload]:
+    new_folder_upload = set()
+
     if dzi_output:
         dzi_folder_upload = FolderUpload(
             folder=dzi_output + "_files", image=image
         )
-        new_folder_upload.append(dzi_folder_upload)
+        new_folder_upload.add(dzi_folder_upload)
+
     return new_folder_upload
 
 
@@ -335,7 +340,7 @@ def _convert_to_tiff(*, path: Path, pk: UUID, converter) -> Path:
 
 
 def _load_gc_files(
-    *, files: List[Path], converter
+    *, files: Set[Path], converter
 ) -> (List[GrandChallengeTiffFile], Dict):
     loaded_files = []
     errors = {}
@@ -370,13 +375,13 @@ def _load_gc_files(
 
 
 def image_builder_tiff(  # noqa: C901
-    files: List[Path], session_id=None
+    *, files: Set[Path], **_
 ) -> ImageBuilderResult:
-    new_images = []
-    new_image_files = []
-    consumed_files = []
+    new_images = set()
+    new_image_files = set()
+    consumed_files = set()
     invalid_file_errors = {}
-    new_folder_upload = []
+    new_folders = set()
 
     def format_error(message):
         return f"Tiff image builder: {message}"
@@ -409,26 +414,22 @@ def image_builder_tiff(  # noqa: C901
             continue
 
         image = _create_tiff_image_entry(tiff_file=gc_file)
-        new_image_files = _add_image_files(
-            gc_file=gc_file, image=image, new_image_files=new_image_files,
-        )
 
-        new_folder_upload = _add_folder_uploads(
-            dzi_output=dzi_output,
-            image=image,
-            new_folder_upload=new_folder_upload,
-        )
-        new_images.append(image)
-        consumed_files.append(gc_file.path)
+        new_images.add(image)
+        new_image_files |= _new_image_files(gc_file=gc_file, image=image,)
+        new_folders |= _new_folder_uploads(dzi_output=dzi_output, image=image,)
+
         if gc_file.associated_files:
-            consumed_files += list(f for f in gc_file.associated_files)
+            consumed_files |= {f for f in gc_file.associated_files}
+        else:
+            consumed_files.add(gc_file.path)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map=invalid_file_errors,
+        file_errors=invalid_file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=new_folder_upload,
+        new_folders=new_folders,
     )
 
 

@@ -85,6 +85,7 @@ from grandchallenge.reader_studies.serializers import (
     QuestionSerializer,
     ReaderStudySerializer,
 )
+from grandchallenge.reader_studies.tasks import add_images_to_reader_study
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -554,7 +555,12 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "linked_task": add_images_to_reader_study,
+            }
+        )
         return kwargs
 
 
@@ -659,7 +665,6 @@ class AnswersRemove(
     SuccessMessageMixin,
     FormView,
 ):
-
     template_name = "reader_studies/readerstudy_user_groups_form.html"
     form_class = AnswersRemoveForm
     success_message = "Answers removed"

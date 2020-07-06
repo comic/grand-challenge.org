@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import Set
 
 import SimpleITK
 import numpy as np
@@ -7,7 +7,7 @@ from PIL import Image
 from PIL.Image import DecompressionBombError
 from django.core.exceptions import ValidationError
 
-from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 
 
@@ -15,9 +15,7 @@ def format_error(message):
     return f"Fallback image builder: {message}"
 
 
-def image_builder_fallback(
-    files: List[Path], session_id=None
-) -> ImageBuilderResult:
+def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -36,9 +34,9 @@ def image_builder_fallback(
      - path->error message map describing what is wrong with a given file
     """
     errors = {}
-    new_images = []
-    new_image_files = []
-    consumed_files = []
+    new_images = set()
+    new_image_files = set()
+    consumed_files = set()
     for file in files:
         try:
             img = Image.open(file)
@@ -54,16 +52,16 @@ def image_builder_fallback(
             n_image, n_image_files = convert_itk_to_internal(
                 img, name=file.name, use_spacing=False
             )
-            new_images.append(n_image)
-            new_image_files += n_image_files
-            consumed_files.append(file)
+            new_images.add(n_image)
+            new_image_files |= set(n_image_files)
+            consumed_files.add(file)
         except (IOError, ValidationError, DecompressionBombError):
             errors[file] = format_error("Not a valid image file")
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map=errors,
+        file_errors=errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=[],
+        new_folders=set(),
     )

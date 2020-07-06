@@ -1,10 +1,12 @@
 import os
 import tarfile
 import zipfile
+from collections import defaultdict
 from datetime import timedelta
+from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Sequence, Set, Tuple
 from uuid import UUID
 
 from celery import shared_task
@@ -14,19 +16,17 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from grandchallenge.algorithms.models import (
-    DEFAULT_INPUT_INTERFACE_SLUG,
-    DEFAULT_OUTPUT_INTERFACE_SLUG,
-    Job,
-)
 from grandchallenge.cases.emails import send_failed_file_import
-from grandchallenge.cases.image_builders import ImageBuilderResult
 from grandchallenge.cases.image_builders.dicom import image_builder_dicom
 from grandchallenge.cases.image_builders.fallback import image_builder_fallback
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
+from grandchallenge.cases.image_builders.types import (
+    ImageBuilderResult,
+    ImporterResult,
+)
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -34,10 +34,6 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageFile,
     RawImageUploadSession,
-)
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
 )
 from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
@@ -123,50 +119,7 @@ def populate_provisioning_directory(
         )
 
 
-@transaction.atomic
-def store_image(
-    image: Image,
-    all_image_files: Sequence[ImageFile],
-    all_folder_uploads: Sequence[FolderUpload],
-):
-    """
-    Stores an image in the database in a single transaction (or fails
-    accordingly). Associated image files are extracted from the
-    all_image_files argument and stored together with the image itself
-    in a single transaction.
-
-    Parameters
-    ----------
-    image: :class:`Image`
-        The image to store. The actual image files that are stored are extracted
-        from the second argument.
-
-    all_image_files: list of :class:`ImageFile`
-        An unordered list of ImageFile objects that might or might not belong
-        to the image provided as the first argument. The function automatically
-        extracts related images from the all_image_files argument to store
-        alongside the given image.
-
-    all_folder_uploads: list of :class:`FolderUpload`
-        An unordered list of FolderUpload objects that might or might not belong
-        to the image provided as the first argument. The function automatically
-        extracts related folders from the all_folder_uploads argument to store
-        alongside the given image. The files in this folder will be saved to
-        the storage but not added to the database.
-    """
-    associated_files = [_if for _if in all_image_files if _if.image == image]
-    image.save()
-    for af in associated_files:
-        af.save()
-
-    associated_folders = [
-        _if for _if in all_folder_uploads if _if.image == image
-    ]
-    for af in associated_folders:
-        af.save()
-
-
-IMAGE_BUILDER_ALGORITHMS = [
+DEFAULT_IMAGE_BUILDERS = [
     image_builder_mhd,
     image_builder_dicom,
     image_builder_tiff,
@@ -179,7 +132,7 @@ def remove_duplicate_files(
 ) -> Tuple[Sequence[RawImageFile], Sequence[RawImageFile]]:
     """
     Filters the given sequence of RawImageFile objects and removes all files
-    that have a nun-unqie filename.
+    that have a nun-unique filename.
 
     Parameters
     ----------
@@ -266,18 +219,18 @@ def check_compressed_and_extract(file_path, target_path, checked_paths=None):
         Files that have already been extracted.
     """
 
-    def extract_file(file_path):
+    def extract_file(fp):
         is_extracted = False
-        if tarfile.is_tarfile(file_path):
-            with tarfile.open(file_path) as tf:
+        if tarfile.is_tarfile(fp):
+            with tarfile.open(fp) as tf:
                 is_extracted = extract(tf, target_path, is_tar=True)
-        elif zipfile.is_zipfile(file_path):
-            with zipfile.ZipFile(file_path) as zf:
+        elif zipfile.is_zipfile(fp):
+            with zipfile.ZipFile(fp) as zf:
                 is_extracted = extract(zf, target_path)
 
         # Make sure files have actually been extracted, then delete the archive
         if is_extracted:
-            file_path.unlink()
+            fp.unlink()
         return is_extracted
 
     if checked_paths is None:
@@ -369,18 +322,19 @@ def build_images(upload_session_uuid: UUID):
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):
-    unconsumed_files = [
+    input_files = {
         Path(d[0]).joinpath(f) for d in os.walk(tmp_dir) for f in d[2]
-    ]
+    }
+
     session_files = [
         RawImageFile.objects.get_or_create(
             filename=str(f.relative_to(tmp_dir)),
             upload_session=upload_session,
         )[0]
-        for f in unconsumed_files
+        for f in input_files
     ]
 
-    filepath_lookup = {
+    filepath_lookup: Dict[str, RawImageFile] = {
         raw_image_file.staged_file_id
         and os.path.join(
             tmp_dir, StagedAjaxFile(raw_image_file.staged_file_id).name
@@ -389,53 +343,13 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         for raw_image_file in session_files
     }
 
-    collected_images = []
-    collected_associated_files = []
-    collected_associated_folders = []
+    importer_result = import_images(files=input_files, origin=upload_session,)
 
-    for algorithm in IMAGE_BUILDER_ALGORITHMS:
-        algorithm_result = algorithm(
-            unconsumed_files, session_id=upload_session.pk
-        )  # type: ImageBuilderResult
-        collected_images += list(algorithm_result.new_images)
-        collected_associated_files += list(algorithm_result.new_image_files)
-
-        collected_associated_folders += list(
-            algorithm_result.new_folder_upload
-        )
-
-        for filepath in algorithm_result.consumed_files:
-            if filepath in unconsumed_files:
-                unconsumed_files.remove(filepath)
-                raw_image = filepath_lookup[
-                    str(filepath)
-                ]  # type: RawImageFile
-                raw_image.error = None
-                raw_image.consumed = True
-                raw_image.save()
-
-        for (filepath, msg,) in algorithm_result.file_errors_map.items():
-            if filepath in unconsumed_files:
-                raw_image = filepath_lookup[
-                    str(filepath)
-                ]  # type: RawImageFile
-                raw_image.error = raw_image.error or ""
-                raw_image.error += f"{msg}\n"
-                raw_image.consumed = False
-                raw_image.save()
-
-    for image in collected_images:
-        image.origin = upload_session
-        store_image(
-            image, collected_associated_files, collected_associated_folders,
-        )
-    _handle_image_relations(
-        collected_images=collected_images, upload_session=upload_session
-    )
-
-    _handle_unconsumed_files(
+    _handle_raw_files(
+        input_files=input_files,
+        consumed_files=importer_result.consumed_files,
+        file_errors=importer_result.file_errors,
         filepath_lookup=filepath_lookup,
-        unconsumed_files=unconsumed_files,
         upload_session=upload_session,
     )
 
@@ -444,60 +358,109 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     )
 
 
-def _handle_image_relations(*, collected_images, upload_session):
-    if upload_session.imageset:
-        upload_session.imageset.images.add(*collected_images)
+def import_images(
+    *,
+    files: Set[Path],
+    origin: RawImageUploadSession = None,
+    builders: Iterable[Callable] = None,
+) -> ImporterResult:
+    """
+    Creates Image objects from a set of files.
 
-    if upload_session.annotationset:
-        upload_session.annotationset.images.add(*collected_images)
+    Parameters
+    ----------
+    files
+        A Set of files that can form one or many Images
+    origin
+        The RawImageUploadSession (if any) that was the source of these files
+    builders
+        The Image Builders to use to try and convert these files into Images
 
-    if upload_session.algorithm_image:
-        default_input_interface = ComponentInterface.objects.get(
-            slug=DEFAULT_INPUT_INTERFACE_SLUG
+    Returns
+    -------
+        An ImporterResult listing the new images, the consumed files and
+        any file errors
+
+    """
+
+    new_images = set()
+    new_image_files = set()
+    new_folders = set()
+    consumed_files = set()
+    file_errors = defaultdict(list)
+
+    created_image_prefix = str(origin.pk)[:8] if origin is not None else ""
+    builders = builders if builders is not None else DEFAULT_IMAGE_BUILDERS
+
+    for builder in builders:
+        builder_result: ImageBuilderResult = builder(
+            files=files - consumed_files,
+            created_image_prefix=created_image_prefix,
         )
-        for image in collected_images:
-            j = Job.objects.create(
-                creator=upload_session.creator,
-                algorithm_image=upload_session.algorithm_image,
-            )
-            j.inputs.set(
-                [
-                    ComponentInterfaceValue.objects.create(
-                        interface=default_input_interface, image=image
-                    )
-                ]
-            )
-            j.schedule_job()
 
-    if upload_session.algorithm_result:
-        default_output_interface = ComponentInterface.objects.get(
-            slug=DEFAULT_OUTPUT_INTERFACE_SLUG
-        )
-        job = upload_session.algorithm_result.job
-        for image in collected_images:
-            civ = ComponentInterfaceValue.objects.create(
-                interface=default_output_interface, image=image
-            )
-            job.outputs.add(civ)
+        new_images |= builder_result.new_images
+        new_image_files |= builder_result.new_image_files
+        new_folders |= builder_result.new_folders
+        consumed_files |= builder_result.consumed_files
 
-    if upload_session.reader_study:
-        upload_session.reader_study.images.add(*collected_images)
+        for filepath, msg in builder_result.file_errors.items():
+            file_errors[filepath].append(msg)
 
-    if upload_session.archive:
-        upload_session.archive.images.add(*collected_images)
+    _store_images(
+        origin=origin,
+        images=new_images,
+        image_files=new_image_files,
+        folders=new_folders,
+    )
+
+    return ImporterResult(
+        new_images=new_images,
+        consumed_files=consumed_files,
+        file_errors=file_errors,
+    )
 
 
-def _handle_unconsumed_files(
-    *, filepath_lookup, unconsumed_files, upload_session
+def _store_images(
+    *,
+    origin: RawImageUploadSession,
+    images: Set[Image],
+    image_files: Set[ImageFile],
+    folders: Set[FolderUpload],
 ):
+    with transaction.atomic():
+        for image in images:
+            image.origin = origin
+            image.save()
+
+        for obj in chain(image_files, folders):
+            obj.save()
+
+
+def _handle_raw_files(
+    *,
+    input_files: Set[Path],
+    consumed_files: Set[Path],
+    filepath_lookup: Dict[str, RawImageFile],
+    file_errors: Dict[Path, List[str]],
+    upload_session: RawImageUploadSession,
+):
+    unconsumed_files = input_files - consumed_files
+
     errors = []
-    for unconsumed_filepath in unconsumed_files:
-        raw_file = filepath_lookup[str(unconsumed_filepath)]
-        error = raw_file.error or ""
+
+    for filepath in consumed_files:
+        raw_image = filepath_lookup[str(filepath)]
+        raw_image.error = None
+        raw_image.consumed = True
+        raw_image.save()
+
+    for filepath in unconsumed_files:
+        raw_file = filepath_lookup[str(filepath)]
+        error = "\n".join(file_errors[filepath])
         raw_file.error = (
             f"File could not be processed by any image builder:\n\n{error}"
         )
-        errors.append(error)
+        errors.append(f"{raw_file.filename}:\n{error}\n\n")
         raw_file.save()
 
     if unconsumed_files:

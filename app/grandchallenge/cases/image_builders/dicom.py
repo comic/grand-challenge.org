@@ -2,13 +2,13 @@ import tempfile
 from collections import namedtuple
 from math import isclose
 from pathlib import Path
-from typing import List
+from typing import Set
 
 import SimpleITK
 import numpy as np
 import pydicom
 
-from grandchallenge.cases.image_builders import ImageBuilderResult
+from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 
 NUMPY_IMAGE_TYPES = {
@@ -47,7 +47,7 @@ def pixel_data_reached(tag, vr, length):
     return pydicom.datadict.keyword_for_tag(tag) == "PixelData"
 
 
-def _get_headers_by_study(files: List[Path]):
+def _get_headers_by_study(files: Set[Path]):
     """
     Gets all headers from dicom files found in path.
 
@@ -105,7 +105,7 @@ def format_error(message):
     return f"Dicom image builder: {message}"
 
 
-def _validate_dicom_files(files: List[Path]):
+def _validate_dicom_files(files: Set[Path]):
     """
     Gets the headers for all dicom files on path and validates them.
 
@@ -176,7 +176,7 @@ def _extract_direction(dicom_ds, direction):
     return direction
 
 
-def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
+def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
     ref_origin = tuple(
         float(i) for i in getattr(ref_file, "ImagePositionPatient", (0, 0, 0))
@@ -255,7 +255,7 @@ def _process_dicom_file(dicom_ds, session_id):  # noqa: C901
     # Convert the SimpleITK image to our internal representation
     return convert_itk_to_internal(
         img,
-        name=f"{str(session_id)[:8]}-{dicom_ds.headers[0]['data'].StudyInstanceUID}-{dicom_ds.index}",
+        name=f"{created_image_prefix}-{dicom_ds.headers[0]['data'].StudyInstanceUID}-{dicom_ds.index}",
     )
 
 
@@ -326,7 +326,7 @@ def _create_itk_from_dcm(
 
 
 def image_builder_dicom(
-    files: List[Path], session_id=None
+    *, files: Set[Path], created_image_prefix: str = ""
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -345,24 +345,26 @@ def image_builder_dicom(
      - a list files associated with the detected images
      - path->error message map describing what is wrong with a given file
     """
-    studies, file_errors_map = _validate_dicom_files(files)
-    new_images = []
-    new_image_files = []
-    consumed_files = []
+    studies, file_errors = _validate_dicom_files(files)
+    new_images = set()
+    new_image_files = set()
+    consumed_files = set()
     for dicom_ds in studies:
         try:
-            n_image, n_image_files = _process_dicom_file(dicom_ds, session_id)
-            new_images.append(n_image)
-            new_image_files += n_image_files
-            consumed_files += [d["file"] for d in dicom_ds.headers]
+            n_image, n_image_files = _process_dicom_file(
+                dicom_ds=dicom_ds, created_image_prefix=created_image_prefix
+            )
+            new_images.add(n_image)
+            new_image_files |= set(n_image_files)
+            consumed_files |= {d["file"] for d in dicom_ds.headers}
         except Exception as e:
             for d in dicom_ds.headers:
-                file_errors_map[d["file"]] = format_error(e)
+                file_errors[d["file"]] = format_error(e)
 
     return ImageBuilderResult(
         consumed_files=consumed_files,
-        file_errors_map=file_errors_map,
+        file_errors=file_errors,
         new_images=new_images,
         new_image_files=new_image_files,
-        new_folder_upload=[],
+        new_folders=set(),
     )

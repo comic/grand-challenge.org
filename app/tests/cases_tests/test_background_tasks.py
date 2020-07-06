@@ -34,6 +34,7 @@ def create_raw_upload_image_session(
     imageset=None,
     annotationset=None,
     user=None,
+    linked_task=None,
 ) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
     creator = user or UserFactory(email="test@example.com")
     upload_session = RawImageUploadSession(
@@ -56,7 +57,7 @@ def create_raw_upload_image_session(
         ).delete()
 
     upload_session.save()
-    upload_session.process_images()
+    upload_session.process_images(linked_task=linked_task)
 
     return upload_session, uploaded_images
 

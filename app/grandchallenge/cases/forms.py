@@ -26,11 +26,12 @@ class UploadRawImagesForm(forms.ModelForm):
         ),
     )
 
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args, user, linked_task=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit("save", "Submit"))
         self.fields["files"].widget.user = user
+        self._linked_task = linked_task
 
     def clean_files(self):
         files = self.cleaned_data["files"]
@@ -65,7 +66,7 @@ class UploadRawImagesForm(forms.ModelForm):
         if commit:
             instance.save()
             RawImageFile.objects.bulk_create(raw_files)
-            instance.process_images()
+            instance.process_images(linked_task=self._linked_task)
 
         return instance
 

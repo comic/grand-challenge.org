@@ -3,7 +3,7 @@ import json
 from django.core.management import BaseCommand
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Result
+from grandchallenge.evaluation.models import Job
 
 
 class Command(BaseCommand):
@@ -15,33 +15,36 @@ class Command(BaseCommand):
             short_name__iexact=options["challenge_short_name"][0]
         )
 
-        results = Result.objects.filter(
-            job__method__challenge=challenge,
-        ).select_related("job__submission", "job__method")
+        jobs = (
+            Job.objects.filter(method__challenge=challenge,)
+            .select_related("submission", "method")
+            .prefetch_related("outputs")
+        )
 
         print("[")
 
-        for r in results:
+        for j in jobs:
             out = {
-                "pk": str(r.pk),
-                "created": r.created.isoformat(),
-                "job": str(r.job.pk),
-                "submission": str(r.job.submission.pk),
-                "submission_comment": r.job.submission.comment,
-                "submission_file": r.job.submission.file.url
-                if r.job.submission.file
+                "pk": str(j.pk),
+                "created": j.created.isoformat(),
+                "submission": str(j.submission.pk),
+                "submission_comment": j.submission.comment,
+                "submission_file": j.submission.file.url
+                if j.submission.file
                 else None,
-                "supplementary_file": r.job.submission.supplementary_file.url
-                if r.job.submission.supplementary_file
+                "supplementary_file": j.submission.supplementary_file.url
+                if j.submission.supplementary_file
                 else None,
-                "publication": r.job.submission.publication_url,
-                "method": str(r.job.method.pk),
-                "creator": str(r.job.submission.creator),
-                "published": r.published,
-                "metrics": r.metrics,
-                "rank": r.rank,
-                "rank_score": r.rank_score,
-                "rank_per_metric": r.rank_per_metric,
+                "publication": j.submission.publication_url,
+                "method": str(j.method.pk),
+                "creator": str(j.submission.creator),
+                "published": j.published,
+                "metrics": j.outputs.get(
+                    interface__slug="metrics-json-file"
+                ).value,
+                "rank": j.rank,
+                "rank_score": j.rank_score,
+                "rank_per_metric": j.rank_per_metric,
             }
             print(json.dumps(out, indent=2) + ",")
 

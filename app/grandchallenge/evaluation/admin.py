@@ -43,8 +43,6 @@ class ResultAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
         "created",
-        "challenge",
-        "creator",
         "published",
         "rank",
     )

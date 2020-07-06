@@ -18,7 +18,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.8"
 "beautifulsoup4" = "*"
-celery = {extras = ["sqs", "redis"], version = "^4.4.2"}
+celery = {extras = ["redis", "sqs"], version = "^4.4.6"}
 django = "<3.1"
 django-countries = "*"
 django-crispy-forms = "*"
@@ -66,11 +66,10 @@ django-markdownx = "*"
 django-filter = "*"
 ua-parser = "*"
 djangorestframework-csv = "*"
-docutils = "0.15.2" # We do not depend on this directly, but required for Boto resolution
-prometheus_client = "^0.7.1"
+prometheus_client = "*"
 openslide-python = "*"
-humanize = "^2.4.0"
-future = "^0.18.2" # This is not a direct dependency but missing from Celery 4.4.4
+humanize = "*"
+disposable-email-domains = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
@@ -85,4 +84,4 @@ pytest-xdist = "*"
 sphinx-autodoc-typehints = "*"
 werkzeug = "*"
 sphinx-rtd-theme = "*"
-sphinxcontrib-plantuml = "^0.18"
+sphinxcontrib-plantuml = "*"
