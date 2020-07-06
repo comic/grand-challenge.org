@@ -4,7 +4,6 @@ from grandchallenge.evaluation.models import (
     Config,
     Job,
     Method,
-    Result,
     Submission,
 )
 
@@ -38,31 +37,6 @@ class SubmissionAdmin(admin.ModelAdmin):
     )
 
 
-class ResultAdmin(admin.ModelAdmin):
-    ordering = ("-created",)
-    list_display = (
-        "pk",
-        "created",
-        "published",
-        "rank",
-    )
-    list_select_related = (
-        "job__submission__challenge",
-        "job__submission__creator",
-    )
-    list_filter = (
-        "job__submission__challenge__short_name",
-        "published",
-    )
-    search_fields = (
-        "pk",
-        "job__pk",
-        "job__submission__challenge__short_name",
-        "job__submission__creator__username",
-    )
-    readonly_fields = ("job",)
-
-
 class JobAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "challenge", "creator", "status")
@@ -80,5 +54,4 @@ class JobAdmin(admin.ModelAdmin):
 admin.site.register(Config, ConfigAdmin)
 admin.site.register(Method, MethodAdmin)
 admin.site.register(Submission, SubmissionAdmin)
-admin.site.register(Result, ResultAdmin)
 admin.site.register(Job, JobAdmin)

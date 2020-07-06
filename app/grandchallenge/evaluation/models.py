@@ -25,7 +25,10 @@ from grandchallenge.core.validators import (
     get_file_mimetype,
 )
 from grandchallenge.datasets.models import ImageSet
-from grandchallenge.evaluation.emails import send_failed_job_email
+from grandchallenge.evaluation.emails import (
+    send_failed_job_email,
+    send_new_result_email,
+)
 from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.submission_conversion.models import (
@@ -536,23 +539,6 @@ class SubmissionEvaluator(Executor):
                 writer.exec_run(f"mv {dest_file} /input/submission.csv")
 
 
-class Result(UUIDModel):
-    """Store individual results for a challenge."""
-
-    job = models.OneToOneField("Job", null=True, on_delete=models.CASCADE)
-    metrics = JSONField(default=dict)
-    published = models.BooleanField(default=True)
-    rank = models.PositiveIntegerField(
-        default=0,
-        help_text=(
-            "The position of this result on the leaderboard. If the value is "
-            "zero, then the result is unranked."
-        ),
-    )
-    rank_score = models.FloatField(default=0.0)
-    rank_per_metric = JSONField(default=dict)
-
-
 class Job(UUIDModel, ComponentJob):
     """Stores information about a job for a given submission."""
 
@@ -619,6 +605,7 @@ class Job(UUIDModel, ComponentJob):
                 interface=interface, value=result
             )
             self.outputs.add(output_civ)
+            send_new_result_email(self)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:
