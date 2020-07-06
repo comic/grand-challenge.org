@@ -180,7 +180,10 @@
     <span class="n">get_file_mimetype</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.datasets.models</span> <span class="kn">import</span> <span class="n">ImageSet</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.emails</span> <span class="kn">import</span> <span class="n">send_failed_job_email</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.emails</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">send_failed_job_email</span><span class="p">,</span>
+    <span class="n">send_new_result_email</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="n">calculate_ranks</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.submission_conversion.models</span> <span class="kn">import</span> <span class="p">(</span>
@@ -691,23 +694,6 @@
                 <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mv </span><span class="si">{</span><span class="n">dest_file</span><span class="si">}</span><span class="s2"> /input/submission.csv&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">Result</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Store individual results for a challenge.&quot;&quot;&quot;</span>
-
-    <span class="n">job</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span><span class="s2">&quot;Job&quot;</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
-    <span class="n">metrics</span> <span class="o">=</span> <span class="n">JSONField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
-    <span class="n">published</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">rank</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;The position of this result on the leaderboard. If the value is &quot;</span>
-            <span class="s2">&quot;zero, then the result is unranked.&quot;</span>
-        <span class="p">),</span>
-    <span class="p">)</span>
-    <span class="n">rank_score</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
-    <span class="n">rank_per_metric</span> <span class="o">=</span> <span class="n">JSONField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
-
-
 <span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Stores information about a job for a given submission.&quot;&quot;&quot;</span>
 
@@ -774,6 +760,7 @@
                 <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">result</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">output_civ</span><span class="p">)</span>
+            <span class="n">send_new_result_email</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">challenge</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">challenge</span><span class="p">:</span>
