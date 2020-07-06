@@ -8,7 +8,6 @@ from grandchallenge.evaluation.views import (
     MethodCreate,
     MethodDetail,
     MethodList,
-    ResultDetail,
     ResultList,
     ResultUpdate,
     SubmissionCreate,
@@ -42,7 +41,6 @@ urlpatterns = [
     path("jobs/", JobList.as_view(), name="job-list"),
     path("jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path("results/", ResultList.as_view(), name="result-list"),
-    path("results/<uuid:pk>/", ResultDetail.as_view(), name="result-detail"),
     path(
         "results/<uuid:pk>/update/",
         ResultUpdate.as_view(),

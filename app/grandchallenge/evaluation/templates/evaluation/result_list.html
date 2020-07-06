@@ -13,7 +13,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Results</li>
+            aria-current="page">Results
+        </li>
     </ol>
 {% endblock %}
 
@@ -94,66 +95,66 @@
 
                     </td>
 
-                        <td data-order="{{ job.created|date:"U" }}"
-                            style="white-space: nowrap;">
-                            {{ job.created|date:"j N Y" }}
+                    <td data-order="{{ job.created|date:"U" }}"
+                        style="white-space: nowrap;">
+                        {{ job.created|date:"j N Y" }}
+                    </td>
+
+                    {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                        <td>
+                            <a href="{{ job.get_absolute_url }}">
+                                <b>{{ job.rank_score|floatformat }}</b>
+                            </a>
                         </td>
+                    {% endif %}
 
-                        {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                            <td>
-                                <a href="{{ job.get_absolute_url }}">
-                                    <b>{{ job.rank_score|floatformat }}</b>
-                                </a>
-                            </td>
-                        {% endif %}
-
-                        {% with job.metrics|get_jsonpath:evaluation_config.score_jsonpath as metric %}
-                            <td data-order="{{ metric }}"
-                                    {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                                class="toggable"
+                    {% with job.metrics|get_jsonpath:evaluation_config.score_jsonpath as metric %}
+                        <td data-order="{{ metric }}"
+                                {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                            class="toggable"
+                                {% endif %}
+                        >
+                            <a href="{{ job.get_absolute_url }}">
+                                {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
+                                    <b>{% endif %}
+                                {% filter remove_whitespace %}
+                                    {{ metric|floatformat:evaluation_config.score_decimal_places }}
+                                    {% if evaluation_config.score_error_jsonpath %}
+                                        &nbsp;±&nbsp;
+                                        {{ job.metrics|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
                                     {% endif %}
-                            >
+                                    {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                                        &nbsp;(
+                                        {{ job.rank_per_metric|get_key:evaluation_config.score_jsonpath }}
+                                        )
+                                    {% endif %}
+                                {% endfilter %}
+                                {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
+                                    </b>{% endif %}
+                            </a>
+                        </td>
+                    {% endwith %}
+
+                    {% for col in evaluation_config.extra_results_columns %}
+                        {% with job.metrics|get_jsonpath:col.path as metric %}
+                            <td data-order="{{ metric }}" class="toggable">
                                 <a href="{{ job.get_absolute_url }}">
-                                    {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
-                                        <b>{% endif %}
                                     {% filter remove_whitespace %}
                                         {{ metric|floatformat:evaluation_config.score_decimal_places }}
-                                        {% if evaluation_config.score_error_jsonpath %}
+                                        {% if col.error_path %}
                                             &nbsp;±&nbsp;
-                                            {{ job.metrics|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
+                                            {{ job.metrics|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
                                         {% endif %}
                                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                                             &nbsp;(
-                                            {{ job.rank_per_metric|get_key:evaluation_config.score_jsonpath }}
+                                            {{ job.rank_per_metric|get_key:col.path }}
                                             )
                                         {% endif %}
                                     {% endfilter %}
-                                    {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
-                                        </b>{% endif %}
                                 </a>
                             </td>
                         {% endwith %}
-
-                        {% for col in evaluation_config.extra_results_columns %}
-                            {% with job.metrics|get_jsonpath:col.path as metric %}
-                                <td data-order="{{ metric }}" class="toggable">
-                                    <a href="{{ job.get_absolute_url }}">
-                                        {% filter remove_whitespace %}
-                                            {{ metric|floatformat:evaluation_config.score_decimal_places }}
-                                            {% if col.error_path %}
-                                                &nbsp;±&nbsp;
-                                                {{ job.metrics|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
-                                            {% endif %}
-                                            {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                                                &nbsp;(
-                                                {{ job.rank_per_metric|get_key:col.path }}
-                                                )
-                                            {% endif %}
-                                        {% endfilter %}
-                                    </a>
-                                </td>
-                            {% endwith %}
-                        {% endfor %}
+                    {% endfor %}
 
                     {% if evaluation_config.display_submission_comments %}
                         <td>{{ job.submission.comment }}</td>

@@ -566,20 +566,6 @@ class Result(UUIDModel):
     def creator(self):
         return self.job.creator
 
-    def save(self, *args, **kwargs):
-        # Note: cannot use `self.pk is None` with a custom pk
-        adding = self._state.adding
-
-        if adding:
-            self.published = (
-                self.challenge.evaluation_config.auto_publish_new_results
-            )
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            send_new_result_email(self)
-
     def get_absolute_url(self):
         return reverse(
             "evaluation:result-detail",
@@ -608,7 +594,15 @@ class Job(UUIDModel, ComponentJob):
     rank_per_metric = JSONField(default=dict)
 
     def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.published = (
+                self.challenge.evaluation_config.auto_publish_new_results
+            )
+
         super().save(*args, **kwargs)
+
         calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
 
     @cached_property
@@ -648,6 +642,7 @@ class Job(UUIDModel, ComponentJob):
                 interface=interface, value=result
             )
             self.outputs.add(output_civ)
+            send_new_result_email(self)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:

@@ -230,7 +230,7 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
             )
 
 
-class JobDetail(UserIsChallengeAdminMixin, DetailView):
+class JobDetail(DetailView):
     # TODO - if participant: list only their jobs
     model = Job
 
@@ -263,10 +263,6 @@ class ResultList(ListView):
             status=Job.SUCCESS,
             rank__gt=0,
         )
-
-
-class ResultDetail(DetailView):
-    model = Result
 
 
 class ResultUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):

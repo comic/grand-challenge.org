@@ -9,7 +9,6 @@ from django.utils import timezone
 from tests.factories import (
     JobFactory,
     MethodFactory,
-    ResultFactory,
     SubmissionFactory,
 )
 from tests.utils import (
@@ -300,27 +299,6 @@ def test_job_list(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_job_detail(client, two_challenge_sets, submission_file):
-    method = MethodFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        creator=two_challenge_sets.challenge_set_1.admin,
-        ready=True,
-    )
-    submission = SubmissionFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        creator=two_challenge_sets.challenge_set_1.participant,
-        file__from_path=submission_file,
-    )
-    job = JobFactory(method=method, submission=submission)
-    validate_admin_only_view(
-        viewname="evaluation:job-detail",
-        two_challenge_set=two_challenge_sets,
-        reverse_kwargs={"pk": job.pk},
-        client=client,
-    )
-
-
-@pytest.mark.django_db
 def test_result_list(client, eval_challenge_set):
     validate_open_view(
         viewname="evaluation:result-list",
@@ -337,10 +315,9 @@ def test_result_detail(client, eval_challenge_set):
         creator=eval_challenge_set.challenge_set.participant,
     )
     job = JobFactory(submission=submission)
-    result = ResultFactory(job=job)
     validate_open_view(
-        viewname="evaluation:result-detail",
+        viewname="evaluation:job-detail",
         challenge_set=eval_challenge_set.challenge_set,
-        reverse_kwargs={"pk": result.pk},
+        reverse_kwargs={"pk": job.pk},
         client=client,
     )

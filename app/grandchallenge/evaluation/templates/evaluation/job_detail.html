@@ -1,5 +1,7 @@
 {% extends "challenge.html" %}
 {% load url %}
+{% load profiles %}
+{% load evaluation_extras %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -18,36 +20,152 @@
 
 {% block content %}
 
-    <h2>Job {{ object.id }}</h2>
+    <h2>Job</h2>
 
-    <div class="alert
-    {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
-        alert-danger
-    {% elif object.status == object.RETRY %}
-        alert-warning
-    {% elif object.status == object.SUCCESS %}
-        alert-success
-    {% else %}
-        alert-info
-    {% endif %}">
-        {{ object.get_status_display }}
-    </div>
+    <dl>
+        <dt>ID</dt>
+        <dd>{{ object.pk }}</dd>
 
-    <p><b>Challenge:</b> <a
-            href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
-    </p>
-    <p><b>Submission:</b> <a
-            href="{{ object.submission.get_absolute_url }}">{{ object.submission.pk }}</a>
-    </p>
-    <p><b>Method:</b> <a
-            href="{{ object.method.get_absolute_url }}">{{ object.method.pk }}</a>
-    </p>
-    <p><b>Result:</b> <a
-            href="{{ object.result.get_absolute_url }}">{{ object.result.pk }}</a>
-    </p>
-    <p><b>Output:</b>
-        {{ object.output }}
-    </p>
+        <dt>Status</dt>
+        <dd>{{ object.get_status_display }}</dd>
 
+        <dt>User</dt>
+        <dd>
+            {{ object.submission.creator|user_profile_link }}
+        </dd>
+
+        <dt>Challenge</dt>
+        <dd><a href="{{ object.challenge.get_absolute_url }}">
+            {{ object.challenge.short_name }}</a></dd>
+
+        <dt>Submission created</dt>
+        <dd>{{ object.submission.created }}</dd>
+
+        <dt>Result created</dt>
+        <dd>{{ object.created }}</dd>
+
+        {% if object.published and object.rank > 0 %}
+            <dt>Position on leaderboard</dt>
+            <dd>
+                {{ object.rank }}
+            </dd>
+        {% endif %}
+
+        <dt>Visibility</dt>
+        <dd>
+            {% if object.published %}
+                <i class="fas fa-eye"></i> This result is published on the
+                leaderboard
+                {% if "change_challenge" in challenge_perms %}
+                    <form method="post"
+                          action="{% url 'evaluation:result-update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="published"
+                               value="false">
+                        <button type="submit" class="btn btn-danger">
+                            Exclude this result from the leaderboard
+                        </button>
+                    </form>
+                {% endif %}
+            {% else %}
+                <i class="fas fa-eye-slash text-danger"></i> This result is not
+                published on the leaderboard
+                {% if "change_challenge" in challenge_perms %}
+                    <br>
+                    <form method="post"
+                          action="{% url 'evaluation:result-update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="published"
+                               value="true">
+                        <button type="submit" class="btn btn-primary">
+                            Publish this result on the leaderboard
+                        </button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        </dd>
+
+        {% if "change_challenge" in challenge_perms %}
+            <dt>Submission File</dt>
+            <dd>
+                <a href="{{ object.submission.file.url }}">
+                    <i class="fa fa-file"></i>
+                    Download the submission file for this result
+                </a>
+            </dd>
+        {% endif %}
+
+        {% if challenge.evaluation_config.show_supplementary_file_link %}
+            <dt>{{ challenge.evaluation_config.supplementary_file_label }}:</dt>
+            <dd>
+                {% if object.submission.supplementary_file %}
+                    <a href="{{ object.submission.supplementary_file.url }}">
+                        <i class="fa fa-file-pdf"></i>
+                    </a>
+                {% endif %}
+            </dd>
+        {% endif %}
+
+        {% if challenge.evaluation_config.show_publication_url %}
+            <dt>Publication:</dt>
+            <dd>
+                {% if object.submission.publication_url %}
+                    <a href="{{ object.submission.publication_url }}">
+                        <i class="fa fa-file"></i>
+                    </a>
+                {% endif %}
+            </dd>
+        {% endif %}
+
+        {% if challenge.evaluation_config.display_submission_comments %}
+            <dt>Comment:</dt>
+            <dd>{{ object.submission.comment }}</dd>
+        {% endif %}
+
+        {% if request.user.is_staff and object.submission.annotationset %}
+            <dt>Predictions</dt>
+            <dd>
+                <a class="btn btn-primary"
+                   href="{{ object.submission.annotationset.get_absolute_url }}">
+                    <i class="fa fa-eye"></i> View Predictions</a>
+            </dd>
+        {% endif %}
+
+    </dl>
+
+    {% if object.status == object.SUCCESS %}
+
+        <h3>Metrics</h3>
+        {% if challenge.evaluation_config.display_all_metrics %}
+            <pre>{{ object.metrics|json_dumps }}</pre>
+        {% else %}
+            <dl>
+                <dt>
+                    {{ challenge.evaluation_config.score_title }}
+                </dt>
+                <dd>
+                    {{ object.metrics|get_jsonpath:challenge.evaluation_config.score_jsonpath|floatformat:challenge.evaluation_config.score_decimal_places }}
+                    {% if challenge.evaluation_config.score_error_jsonpath %}
+                        &nbsp;±&nbsp;
+                        {{ object.metrics|get_jsonpath:challenge.evaluation_config.score_error_jsonpath|floatformat:challenge.evaluation_config.score_decimal_places }}
+                    {% endif %}
+                </dd>
+
+                {% for col in challenge.evaluation_config.extra_results_columns %}
+                    <dt>
+                        {{ col.title }}
+                    </dt>
+                    <dd>
+                        {{ object.metrics|get_jsonpath:col.path|floatformat:challenge.evaluation_config.score_decimal_places }}
+                        {% if col.error_path %}
+                            &nbsp;±&nbsp;
+                            {{ object.metrics|get_jsonpath:col.error_path|floatformat:challenge.evaluation_config.score_decimal_places }}
+                        {% endif %}
+                    </dd>
+                {% endfor %}
+            </dl>
+        {% endif %}
+
+    {% endif %}
 
 {% endblock %}
