@@ -3,10 +3,11 @@ from django.core.paginator import Paginator
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import Job, Result
+from grandchallenge.evaluation.tasks import calculate_ranks
 
 
 class Command(BaseCommand):
-    def handle(self, calculate_ranks=None, *args, **options):
+    def handle(self, *args, **options):
         results = (
             Result.objects.all().order_by("created").prefetch_related("job")
         )
