@@ -25,10 +25,7 @@ from grandchallenge.core.validators import (
     get_file_mimetype,
 )
 from grandchallenge.datasets.models import ImageSet
-from grandchallenge.evaluation.emails import (
-    send_failed_job_email,
-    send_new_result_email,
-)
+from grandchallenge.evaluation.emails import send_failed_job_email
 from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.submission_conversion.models import (
@@ -555,26 +552,6 @@ class Result(UUIDModel):
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = JSONField(default=dict)
 
-    def __str__(self):
-        return f"Result {self.pk} for {self.job}"
-
-    @cached_property
-    def challenge(self):
-        return self.job.challenge
-
-    @cached_property
-    def creator(self):
-        return self.job.creator
-
-    def get_absolute_url(self):
-        return reverse(
-            "evaluation:result-detail",
-            kwargs={
-                "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
-            },
-        )
-
 
 class Job(UUIDModel, ComponentJob):
     """Stores information about a job for a given submission."""
@@ -642,7 +619,6 @@ class Job(UUIDModel, ComponentJob):
                 interface=interface, value=result
             )
             self.outputs.add(output_civ)
-            send_new_result_email(self)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:
