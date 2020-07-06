@@ -197,7 +197,9 @@ class Command(BaseCommand):
         submission.file.save("test.csv", content)
         submission.save()
 
-        job = Job.objects.create(submission=submission, method=method)
+        job = Job.objects.create(
+            submission=submission, method=method, status=Job.SUCCESS
+        )
         job.create_result(
             result={
                 "acc": {"mean": 0.5, "std": 0.1},

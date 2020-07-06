@@ -236,7 +236,8 @@ class JobDetail(UserIsChallengeAdminMixin, DetailView):
 
 
 class ResultList(ListView):
-    model = Result
+    model = Job
+    template_name = "evaluation/result_list.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -254,12 +255,13 @@ class ResultList(ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.select_related(
-            "job__submission__creator__user_profile"
-        )
+            "submission__creator__user_profile"
+        ).prefetch_related("outputs")
         return queryset.filter(
-            Q(job__submission__challenge=self.request.challenge),
-            Q(published=True),
-            ~Q(rank=0),  # Exclude results without a rank
+            submission__challenge=self.request.challenge,
+            published=True,
+            status=Job.SUCCESS,
+            rank__gt=0,
         )
 
 
