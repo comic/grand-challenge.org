@@ -96,7 +96,7 @@
 
                             {% if challenge.use_evaluation and challenge.cached_num_results %}
                                 <a class="badge badge-info above-stretched-link"
-                                   href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}"
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name %}"
                                    title="{{ challenge.cached_num_results }} result{{ challenge.cached_num_results|pluralize }}, latest {{ challenge.cached_latest_result|naturaltime }}">
                                     <i class="fas fa-trophy fa-fw"></i>
                                     {{ challenge.cached_num_results|intcomma }}

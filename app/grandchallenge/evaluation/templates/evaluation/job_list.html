@@ -52,7 +52,7 @@
                             {{ job.submission.creator|user_profile_link }}
 
                             {% if challenge.evaluation_config.use_teams %}
-                                {% with job.result|get_team_html as team_html %}
+                                {% with job|get_team_html as team_html %}
                                     {% if team_html %}
                                         ({{ team_html }})
                                     {% endif %}
@@ -76,9 +76,9 @@
                     </td>
 
                     <td>
-                        {% if job.result.metrics %}
-                            {% if job.result.published %}
-                                <a href="{{ job.result.get_absolute_url }}">Result</a>
+                        {% if job.metrics %}
+                            {% if job.published %}
+                                <a href="{{ job.get_absolute_url }}">Result</a>
                             {% else %}
                                 Submission is under review by the challenge admins.
                             {% endif %}
@@ -87,9 +87,9 @@
                         {% endif %}
                     </td>
 
-                    <td data-order="{{ job.result.rank }}">
-                        {% if job.result and job.result.rank > 0 %}
-                            {{ job.result.rank }}
+                    <td data-order="{{ job.rank }}">
+                        {% if job.rank > 0 %}
+                            {{ job.rank }}
                         {% endif %}
                         {% if job.submission.supplementary_file %}
                             <a href="{{ job.submission.supplementary_file.url }}">
@@ -104,11 +104,11 @@
 
                     {% if "change_challenge" in challenge_perms %}
                         <td>
-                            {% if job.result %}
+                            {% if job.metrics %}
                                 <form method="post"
-                                      action="{% url 'evaluation:result-update' challenge_short_name=challenge.short_name pk=job.result.pk %}">
+                                      action="{% url 'evaluation:job-update' challenge_short_name=challenge.short_name pk=job.pk %}">
                                     {% csrf_token %}
-                                    {% if job.result.published %}
+                                    {% if job.published %}
                                         <input type="hidden" name="published"
                                                value="false">
                                         <button type="submit"

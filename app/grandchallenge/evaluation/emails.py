@@ -50,7 +50,7 @@ def send_new_result_email(result):
     )
     if result.published:
         leaderboard_url = reverse(
-            "evaluation:result-list",
+            "evaluation:leaderboard",
             kwargs={"challenge_short_name": challenge.short_name},
         )
         message += (

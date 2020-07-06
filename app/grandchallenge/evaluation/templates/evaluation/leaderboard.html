@@ -13,14 +13,14 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Results
+            aria-current="page">Leaderboard
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Results</h2>
+    <h2>Leaderboard</h2>
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm"

@@ -21,7 +21,6 @@ from grandchallenge.evaluation.models import (
     Config,
     Job,
     Method,
-    Result,
     Submission,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
@@ -218,9 +217,11 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
         challenge = self.request.challenge
 
         queryset = super().get_queryset()
-        queryset = queryset.select_related(
-            "result", "submission__creator__user_profile"
-        ).filter(submission__challenge=challenge)
+        queryset = (
+            queryset.filter(submission__challenge=challenge)
+            .select_related("submission__creator__user_profile")
+            .prefetch_related("outputs")
+        )
 
         if challenge.is_admin(self.request.user):
             return queryset
@@ -235,9 +236,9 @@ class JobDetail(DetailView):
     model = Job
 
 
-class ResultList(ListView):
+class Leaderboard(ListView):
     model = Job
-    template_name = "evaluation/result_list.html"
+    template_name = "evaluation/leaderboard.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -265,7 +266,7 @@ class ResultList(ListView):
         )
 
 
-class ResultUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
-    model = Result
+class JobUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+    model = Job
     fields = ("published",)
     success_message = "Result successfully updated."

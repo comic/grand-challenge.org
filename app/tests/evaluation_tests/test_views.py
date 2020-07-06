@@ -299,9 +299,9 @@ def test_job_list(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_result_list(client, eval_challenge_set):
+def test_leaderboard(client, eval_challenge_set):
     validate_open_view(
-        viewname="evaluation:result-list",
+        viewname="evaluation:leaderboard",
         challenge_set=eval_challenge_set.challenge_set,
         client=client,
     )
@@ -309,7 +309,7 @@ def test_result_list(client, eval_challenge_set):
 
 # TODO: test that private results cannot be seen
 @pytest.mark.django_db
-def test_result_detail(client, eval_challenge_set):
+def test_job_detail(client, eval_challenge_set):
     submission = SubmissionFactory(
         challenge=eval_challenge_set.challenge_set.challenge,
         creator=eval_challenge_set.challenge_set.participant,
