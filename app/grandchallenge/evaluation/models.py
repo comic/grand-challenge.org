@@ -2,7 +2,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import BooleanField
 from django.utils.functional import cached_property
@@ -13,6 +13,7 @@ from grandchallenge.components.backends.docker import Executor, put_file
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.core.models import UUIDModel
@@ -23,23 +24,14 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
     get_file_mimetype,
 )
+from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import send_failed_job_email
+from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.submission_conversion.models import (
+    SubmissionToAnnotationSetJob,
+)
 
-# Example Schema
-"""
-[
-  {
-    "title": "Mean dice ± std",
-    "path": "aggregates.dice.mean",
-    "error_path": "aggregates.dice.std"
-  },
-  {
-    "title": "Mean Hausdorff",
-    "path": "aggregates.hausdorff.mean"
-  }
-]
-"""
 EXTRA_RESULT_COLUMNS_SCHEMA = {
     "definitions": {},
     "$schema": "http://json-schema.org/draft-06/schema#",
@@ -326,6 +318,8 @@ class Config(UUIDModel):
         if adding:
             self.set_default_interfaces()
 
+        calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
+
     def set_default_interfaces(self):
         self.inputs.set(
             [ComponentInterface.objects.get(slug="predictions-csv-file")]
@@ -427,6 +421,66 @@ class Submission(UUIDModel):
         ),
     )
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.create_job()
+
+            # Convert this submission to an annotation set
+            base = ImageSet.objects.get(
+                challenge=self.challenge, phase=ImageSet.TESTING
+            )
+            SubmissionToAnnotationSetJob.objects.create(
+                base=base, submission=self
+            )
+
+    def create_job(self):
+        method = self.latest_ready_method
+
+        if not method:
+            # TODO Email admins
+            return
+
+        j = Job.objects.create(
+            submission=self, method=self.latest_ready_method
+        )
+
+        mimetype = get_file_mimetype(self.file)
+
+        if mimetype == "application/zip":
+            interface = ComponentInterface.objects.get(
+                slug="predictions-zip-file"
+            )
+        elif mimetype == "text/plain":
+            interface = ComponentInterface.objects.get(
+                slug="predictions-csv-file"
+            )
+        else:
+            raise NotImplementedError(
+                f"Interface is not defined for {mimetype} files"
+            )
+
+        j.inputs.set(
+            [
+                ComponentInterfaceValue.objects.create(
+                    interface=interface, file=self.file
+                )
+            ]
+        )
+
+        j.schedule_job()
+
+    @property
+    def latest_ready_method(self):
+        return (
+            Method.objects.filter(challenge=self.challenge, ready=True)
+            .order_by("-created")
+            .first()
+        )
+
     def get_absolute_url(self):
         return reverse(
             "evaluation:submission-detail",
@@ -498,35 +552,6 @@ class Result(UUIDModel):
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = JSONField(default=dict)
 
-    def __str__(self):
-        return f"Result {self.pk} for {self.job}"
-
-    @cached_property
-    def challenge(self):
-        return self.job.challenge
-
-    @cached_property
-    def creator(self):
-        return self.job.creator
-
-    def save(self, *args, **kwargs):
-        # Note: cannot use `self.pk is None` with a custom pk
-        if self._state.adding:
-            self.published = (
-                self.challenge.evaluation_config.auto_publish_new_results
-            )
-
-        super().save(*args, **kwargs)
-
-    def get_absolute_url(self):
-        return reverse(
-            "evaluation:result-detail",
-            kwargs={
-                "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
-            },
-        )
-
 
 class Job(UUIDModel, ComponentJob):
     """Stores information about a job for a given submission."""
@@ -534,13 +559,28 @@ class Job(UUIDModel, ComponentJob):
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
 
+    published = models.BooleanField(default=True)
+    rank = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            "The position of this result on the leaderboard. If the value is "
+            "zero, then the result is unranked."
+        ),
+    )
+    rank_score = models.FloatField(default=0.0)
+    rank_per_metric = JSONField(default=dict)
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
+        if adding:
+            self.published = (
+                self.challenge.evaluation_config.auto_publish_new_results
+            )
+
         super().save(*args, **kwargs)
 
-        if adding:
-            self.schedule_job()
+        calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
 
     @cached_property
     def challenge(self):
@@ -556,14 +596,29 @@ class Job(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
-        return [self.submission.file]
+        return [inpt.file for inpt in self.inputs.all()]
 
     @property
     def executor_cls(self):
         return SubmissionEvaluator
 
-    def create_result(self, *, result):
-        Result.objects.create(job=self, metrics=result)
+    @property
+    def metrics(self):
+        """Legacy property"""
+        return self.outputs.get(interface__slug="metrics-json-file").value
+
+    def create_result(self, *, result: dict):
+        interface = ComponentInterface.objects.get(slug="metrics-json-file")
+
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = result
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=result
+            )
+            self.outputs.add(output_civ)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:

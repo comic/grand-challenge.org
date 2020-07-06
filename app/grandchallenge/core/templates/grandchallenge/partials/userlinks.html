@@ -29,10 +29,10 @@
         </div>
     </li>
 {% else %}
-    <li class="pr-2"><a
+    <li class="pr-2 my-1"><a
             class="btn btn-outline-primary"
             href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}#signin">Sign In</a></li>
-    <li><a
+    <li class="my-1"><a
             class="btn btn-outline-primary"
             href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}#register">Register</a></li>
 {% endif %}

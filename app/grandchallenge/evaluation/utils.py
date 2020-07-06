@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from typing import Callable, Dict, Iterable, List, NamedTuple, Tuple
 
-from grandchallenge.evaluation.models import Result
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
 )
@@ -19,15 +18,12 @@ class Positions(NamedTuple):
 
 
 def rank_results(
-    *,
-    results: Tuple[Result, ...],
-    metrics: Tuple[Metric, ...],
-    score_method: Callable,
+    *, jobs: Tuple, metrics: Tuple[Metric, ...], score_method: Callable,
 ) -> Positions:
     """Determine the overall rank for each result."""
-    results = _filter_valid_results(results=results, metrics=metrics)
+    jobs = _filter_valid_results(jobs=jobs, metrics=metrics)
 
-    rank_per_metric = _get_rank_per_metric(results=results, metrics=metrics)
+    rank_per_metric = _get_rank_per_metric(jobs=jobs, metrics=metrics)
 
     rank_scores = {
         pk: score_method([m for m in metrics.values()])
@@ -42,21 +38,25 @@ def rank_results(
 
 
 def _filter_valid_results(
-    *, results: Iterable[Result], metrics: Tuple[Metric, ...]
-) -> List[Result]:
+    *, jobs: Iterable, metrics: Tuple[Metric, ...]
+) -> List:
     """Ensure that all of the metrics are in every result."""
     return [
-        res
-        for res in results
+        j
+        for j in jobs
         if all(
-            get_jsonpath(res.metrics, m.path) not in ["", None]
+            get_jsonpath(
+                j.outputs.get(interface__slug="metrics-json-file").value,
+                m.path,
+            )
+            not in ["", None]
             for m in metrics
         )
     ]
 
 
 def _get_rank_per_metric(
-    *, results: Iterable[Result], metrics: Tuple[Metric, ...]
+    *, jobs: Iterable, metrics: Tuple[Metric, ...]
 ) -> Dict[str, Dict[str, float]]:
     """
     Takes results and calculates the rank for each of the individual metrics
@@ -70,18 +70,22 @@ def _get_rank_per_metric(
         # Extract the value of the metric for this primary key and sort on the
         # value of the metric
         metric_scores = {
-            res.pk: get_jsonpath(res.metrics, metric.path) for res in results
+            j.pk: get_jsonpath(
+                j.outputs.get(interface__slug="metrics-json-file").value,
+                metric.path,
+            )
+            for j in jobs
         }
         metric_rank[metric.path] = _scores_to_ranks(
             scores=metric_scores, reverse=metric.reverse
         )
 
     return {
-        res.pk: {
-            metric_path: ranks[res.pk]
+        j.pk: {
+            metric_path: ranks[j.pk]
             for metric_path, ranks in metric_rank.items()
         }
-        for res in results
+        for j in jobs
     }
 
 

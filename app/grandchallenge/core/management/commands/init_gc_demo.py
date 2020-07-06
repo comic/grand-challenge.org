@@ -27,7 +27,7 @@ from grandchallenge.challenges.models import (
     TaskType,
 )
 from grandchallenge.core.storage import public_s3_storage
-from grandchallenge.evaluation.models import Job, Method, Result, Submission
+from grandchallenge.evaluation.models import Job, Method, Submission
 from grandchallenge.overview_pages.models import OverviewPage
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -197,14 +197,14 @@ class Command(BaseCommand):
         submission.file.save("test.csv", content)
         submission.save()
 
-        job = Job.objects.create(submission=submission, method=method)
-
-        Result.objects.create(
-            metrics={
+        job = Job.objects.create(
+            submission=submission, method=method, status=Job.SUCCESS
+        )
+        job.create_result(
+            result={
                 "acc": {"mean": 0.5, "std": 0.1},
                 "dice": {"mean": 0.71, "std": 0.05},
-            },
-            job=job,
+            }
         )
 
         demo.evaluation_config.score_title = "Accuracy ± std"

@@ -46,18 +46,18 @@ def send_new_result_email(result):
     message = (
         f"Dear {{}},\n\n"
         f"There is a new result for {challenge.short_name} from "
-        f"{result.job.submission.creator.username}. "
+        f"{result.submission.creator.username}. "
     )
     if result.published:
         leaderboard_url = reverse(
-            "evaluation:result-list",
+            "evaluation:leaderboard",
             kwargs={"challenge_short_name": challenge.short_name},
         )
         message += (
             f"You can view the result on the leaderboard here: "
             f"{leaderboard_url}"
         )
-        recipients.append(result.job.submission.creator)
+        recipients.append(result.submission.creator)
     else:
         message += (
             f"You can publish the result on the leaderboard here: "

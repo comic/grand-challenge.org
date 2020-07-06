@@ -16,7 +16,6 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.datasets.utils import process_csv_file
-from grandchallenge.evaluation.models import Submission
 
 
 class SubmissionToAnnotationSetExecutor(Executor):
@@ -120,7 +119,9 @@ class SubmissionToAnnotationSetExecutor(Executor):
 
 class SubmissionToAnnotationSetJob(UUIDModel, ComponentJob):
     base = models.ForeignKey(to=ImageSet, on_delete=models.CASCADE)
-    submission = models.OneToOneField(to=Submission, on_delete=models.CASCADE)
+    submission = models.OneToOneField(
+        to="evaluation.Submission", on_delete=models.CASCADE
+    )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

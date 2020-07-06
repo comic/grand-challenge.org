@@ -73,8 +73,8 @@
                         </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:result-list' %}active{% endif %}"
-                           href="{% url 'evaluation:result-list' challenge_short_name=challenge.short_name %}">Results</a>
+                        <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
+                           href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name %}">Leaderboard</a>
                     </li>
                 {% endif %}
 
@@ -105,15 +105,15 @@
                                 </a>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
-                                    Evaluation Methods
+                                    Methods
                                 </a>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
-                                    Evaluation Submissions
+                                    Submissions
                                 </a>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:job-list' challenge_short_name=challenge.short_name %}">
-                                    Evaluation Jobs
+                                    Evaluations
                                 </a>
                             {% endif %}
                         </div>

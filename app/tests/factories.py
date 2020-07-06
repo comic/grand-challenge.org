@@ -14,7 +14,7 @@ from grandchallenge.challenges.models import (
     ImagingModality,
 )
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
-from grandchallenge.evaluation.models import Job, Method, Result, Submission
+from grandchallenge.evaluation.models import Job, Method, Submission
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -107,13 +107,6 @@ class JobFactory(factory.DjangoModelFactory):
 
     method = factory.SubFactory(MethodFactory)
     submission = factory.SubFactory(SubmissionFactory)
-
-
-class ResultFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Result
-
-    job = factory.SubFactory(JobFactory)
 
 
 class TeamFactory(factory.DjangoModelFactory):
