@@ -38,8 +38,8 @@ urlpatterns = [
         SubmissionDetail.as_view(),
         name="submission-detail",
     ),
-    path("jobs/", JobList.as_view(), name="job-list"),
-    path("jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
-    path("jobs/<uuid:pk>/update/", JobUpdate.as_view(), name="job-update",),
-    path("results/", Leaderboard.as_view(), name="leaderboard"),
+    path("leaderboard/", Leaderboard.as_view(), name="leaderboard"),
+    path("", JobList.as_view(), name="job-list"),
+    path("<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
+    path("<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"),
 ]

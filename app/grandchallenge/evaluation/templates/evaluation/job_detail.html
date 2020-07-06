@@ -11,7 +11,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
-            <a href="{% url 'evaluation:job-list' challenge_short_name=challenge.short_name %}">Evaluation Jobs</a>
+            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name %}">Leaderboard</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.pk }}</li>
@@ -20,7 +20,7 @@
 
 {% block content %}
 
-    <h2>Job</h2>
+    <h2>Evaluation</h2>
 
     <dl>
         <dt>ID</dt>
