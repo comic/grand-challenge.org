@@ -63,7 +63,7 @@
             </tr>
             </thead>
             <tbody>
-            {% for job in object.job_set.all %}
+            {% for job in object.evaluation_set.all %}
                 <tr>
                     <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
                     <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>

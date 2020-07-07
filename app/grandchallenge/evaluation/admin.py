@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from grandchallenge.evaluation.models import (
     Config,
-    Job,
+    Evaluation,
     Method,
     Submission,
 )
@@ -54,4 +54,4 @@ class JobAdmin(admin.ModelAdmin):
 admin.site.register(Config, ConfigAdmin)
 admin.site.register(Method, MethodAdmin)
 admin.site.register(Submission, SubmissionAdmin)
-admin.site.register(Job, JobAdmin)
+admin.site.register(Evaluation, JobAdmin)

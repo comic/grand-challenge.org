@@ -447,7 +447,7 @@ class Submission(UUIDModel):
             # TODO Email admins
             return
 
-        j = Job.objects.create(
+        j = Evaluation.objects.create(
             submission=self, method=self.latest_ready_method
         )
 
@@ -539,7 +539,7 @@ class SubmissionEvaluator(Executor):
                 writer.exec_run(f"mv {dest_file} /input/submission.csv")
 
 
-class Job(UUIDModel, ComponentJob):
+class Evaluation(UUIDModel, ComponentJob):
     """Stores information about a job for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)

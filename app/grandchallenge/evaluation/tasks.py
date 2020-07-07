@@ -51,7 +51,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     score_method_choice = challenge.evaluation_config.scoring_method_choice
 
     Job = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Job"
+        app_label="evaluation", model_name="Evaluation"
     )
 
     metrics = (

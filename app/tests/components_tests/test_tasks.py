@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job as AlgorithmJob
 from grandchallenge.components.tasks import mark_long_running_jobs_failed
-from grandchallenge.evaluation.models import Job as EvaluationJob
+from grandchallenge.evaluation.models import Evaluation as EvaluationJob
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.factories import JobFactory as EvaluationJobFactory
 

@@ -1,7 +1,7 @@
 import pytest
 
 from grandchallenge.components.models import InterfaceKindChoices
-from grandchallenge.evaluation.models import Job
+from grandchallenge.evaluation.models import Evaluation
 from tests.factories import ChallengeFactory, JobFactory
 from tests.utils import get_view_for_user
 
@@ -40,7 +40,8 @@ def test_setting_submission_page_html(client, challenge_set):
 def test_setting_display_all_metrics(client, challenge_set):
     metrics = {"public": 3245.235, "secret": 4328.432, "extra": 2144.312}
     j = JobFactory(
-        submission__challenge=challenge_set.challenge, status=Job.SUCCESS
+        submission__challenge=challenge_set.challenge,
+        status=Evaluation.SUCCESS,
     )
     j.create_result(result=metrics)
 

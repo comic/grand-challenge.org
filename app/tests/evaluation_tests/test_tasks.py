@@ -45,9 +45,9 @@ def test_submission_evaluation(
     assert len(dockerclient.containers.list()) == num_containers_before
 
     # The evaluation method should return the correct answer
-    assert len(submission.job_set.all()) == 1
+    assert len(submission.evaluation_set.all()) == 1
     assert (
-        submission.job_set.first()
+        submission.evaluation_set.first()
         .outputs.get(interface__slug="metrics-json-file")
         .value["acc"]
         == 0.5
@@ -59,9 +59,9 @@ def test_submission_evaluation(
         challenge=method.challenge,
     )
 
-    assert len(submission.job_set.all()) == 1
+    assert len(submission.evaluation_set.all()) == 1
     assert (
-        submission.job_set.first()
+        submission.evaluation_set.first()
         .outputs.get(interface__slug="metrics-json-file")
         .value["acc"]
         == 0.5

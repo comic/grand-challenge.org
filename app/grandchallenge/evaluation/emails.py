@@ -17,7 +17,7 @@ def send_failed_job_email(job):
         f"You may wish to try and correct this, or contact the challenge "
         f"organizers. The following information may help them:\n"
         f"User: {job.creator.username}\n"
-        f"Job ID: {job.pk}\n"
+        f"Evaluation ID: {job.pk}\n"
         f"Submission ID: {job.submission.pk}\n\n"
         f"Regards,\n"
         f"{site.name}\n\n"

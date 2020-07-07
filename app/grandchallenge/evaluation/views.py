@@ -19,7 +19,7 @@ from grandchallenge.evaluation.forms import (
 )
 from grandchallenge.evaluation.models import (
     Config,
-    Job,
+    Evaluation,
     Method,
     Submission,
 )
@@ -109,10 +109,10 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             self.get_next_submission(max_subs=config.daily_submission_limit)
         )
 
-        pending_jobs = Job.objects.filter(
+        pending_jobs = Evaluation.objects.filter(
             submission__challenge=self.request.challenge,
             submission__creator=self.request.user,
-            status__in=(Job.PENDING, Job.STARTED),
+            status__in=(Evaluation.PENDING, Evaluation.STARTED),
         ).count()
 
         context.update({"pending_jobs": pending_jobs})
@@ -141,7 +141,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
                 creator=self.request.user,
                 created__gte=now - period,
             )
-            .exclude(job__status=Job.FAILURE)
+            .exclude(evaluation__status=Evaluation.FAILURE)
             .order_by("-created")
             .distinct()
         )
@@ -210,7 +210,7 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
 
 
 class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
-    model = Job
+    model = Evaluation
 
     def get_queryset(self):
         """Admins see everything, participants just their jobs."""
@@ -233,11 +233,11 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
 
 class JobDetail(DetailView):
     # TODO - if participant: list only their jobs
-    model = Job
+    model = Evaluation
 
 
 class Leaderboard(ListView):
-    model = Job
+    model = Evaluation
     template_name = "evaluation/leaderboard.html"
 
     def get_context_data(self, *args, **kwargs):
@@ -261,12 +261,12 @@ class Leaderboard(ListView):
         return queryset.filter(
             submission__challenge=self.request.challenge,
             published=True,
-            status=Job.SUCCESS,
+            status=Evaluation.SUCCESS,
             rank__gt=0,
         )
 
 
 class JobUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
-    model = Job
+    model = Evaluation
     fields = ("published",)
     success_message = "Result successfully updated."

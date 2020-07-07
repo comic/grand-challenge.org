@@ -36,7 +36,7 @@ def test_keys_used_in_algorithm_session_js(client):
     assert response.json()["api_url"] == s.api_url
     assert response.json()["image_set"] == []
 
-    # Job API
+    # Evaluation API
     response = get_view_for_user(client=client, url=j.api_url, user=u)
     assert response.status_code == 200
     assert response.json()["status"] == "Queued"

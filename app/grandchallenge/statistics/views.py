@@ -16,7 +16,7 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import (
-    Job as EvaluationJob,
+    Evaluation as EvaluationJob,
     Submission,
 )
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy

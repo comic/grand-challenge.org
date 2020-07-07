@@ -75,7 +75,7 @@ def test_algorithm_job_update_status():
         remaining_recipients -= set(email.to)
         assert (
             email.subject
-            == f"[{Site.objects.get_current().domain.lower()}] [{alg.title.lower()}] Job Failed"
+            == f"[{Site.objects.get_current().domain.lower()}] [{alg.title.lower()}] Evaluation Failed"
         )
         assert (
             f"Unfortunately your job for algorithm '{alg.title}' failed with an error"
