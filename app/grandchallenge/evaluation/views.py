@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import Q
 from django.utils import timezone
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
@@ -280,11 +280,9 @@ class Leaderboard(ListView):
                 rank__gt=0,
             )
             .annotate(
-                metrics=Subquery(
-                    ComponentInterfaceValue.objects.filter(
-                        interface__slug="metrics-json-file",
-                        evaluation_jobs_as_output__pk=OuterRef("pk"),
-                    ).values("value")
+                metrics=ArrayAgg(
+                    "outputs__value",
+                    filter=Q(outputs__interface__slug="metrics-json-file"),
                 )
             )
         )
