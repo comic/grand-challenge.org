@@ -26,7 +26,7 @@ from grandchallenge.core.validators import (
 )
 from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import (
-    send_failed_job_email,
+    send_failed_evaluation_email,
     send_new_result_email,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
@@ -617,7 +617,7 @@ class Evaluation(UUIDModel, ComponentJob):
         res = super().update_status(*args, **kwargs)
 
         if self.status == self.FAILURE:
-            send_failed_job_email(self)
+            send_failed_evaluation_email(self)
 
         return res
 
