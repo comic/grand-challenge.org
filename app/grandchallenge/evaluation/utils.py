@@ -18,12 +18,16 @@ class Positions(NamedTuple):
 
 
 def rank_results(
-    *, jobs: Tuple, metrics: Tuple[Metric, ...], score_method: Callable,
+    *, evaluations: Tuple, metrics: Tuple[Metric, ...], score_method: Callable,
 ) -> Positions:
     """Determine the overall rank for each result."""
-    jobs = _filter_valid_results(jobs=jobs, metrics=metrics)
+    evaluations = _filter_valid_results(
+        evaluations=evaluations, metrics=metrics
+    )
 
-    rank_per_metric = _get_rank_per_metric(jobs=jobs, metrics=metrics)
+    rank_per_metric = _get_rank_per_metric(
+        evaluations=evaluations, metrics=metrics
+    )
 
     rank_scores = {
         pk: score_method([m for m in metrics.values()])
@@ -38,15 +42,15 @@ def rank_results(
 
 
 def _filter_valid_results(
-    *, jobs: Iterable, metrics: Tuple[Metric, ...]
+    *, evaluations: Iterable, metrics: Tuple[Metric, ...]
 ) -> List:
     """Ensure that all of the metrics are in every result."""
     return [
-        j
-        for j in jobs
+        e
+        for e in evaluations
         if all(
             get_jsonpath(
-                j.outputs.get(interface__slug="metrics-json-file").value,
+                e.outputs.get(interface__slug="metrics-json-file").value,
                 m.path,
             )
             not in ["", None]
@@ -56,7 +60,7 @@ def _filter_valid_results(
 
 
 def _get_rank_per_metric(
-    *, jobs: Iterable, metrics: Tuple[Metric, ...]
+    *, evaluations: Iterable, metrics: Tuple[Metric, ...]
 ) -> Dict[str, Dict[str, float]]:
     """
     Takes results and calculates the rank for each of the individual metrics
@@ -70,22 +74,22 @@ def _get_rank_per_metric(
         # Extract the value of the metric for this primary key and sort on the
         # value of the metric
         metric_scores = {
-            j.pk: get_jsonpath(
-                j.outputs.get(interface__slug="metrics-json-file").value,
+            e.pk: get_jsonpath(
+                e.outputs.get(interface__slug="metrics-json-file").value,
                 metric.path,
             )
-            for j in jobs
+            for e in evaluations
         }
         metric_rank[metric.path] = _scores_to_ranks(
             scores=metric_scores, reverse=metric.reverse
         )
 
     return {
-        j.pk: {
-            metric_path: ranks[j.pk]
+        e.pk: {
+            metric_path: ranks[e.pk]
             for metric_path, ranks in metric_rank.items()
         }
-        for j in jobs
+        for e in evaluations
     }
 
 
