@@ -771,7 +771,7 @@ CELERY_BEAT_SCHEDULE = {
     # Cleanup evaluation jobs on the evaluation queue
     "mark_long_running_evaluation_jobs_failed": {
         "task": "grandchallenge.components.tasks.mark_long_running_jobs_failed",
-        "kwargs": {"app_label": "evaluation", "model_name": "job"},
+        "kwargs": {"app_label": "evaluation", "model_name": "evaluation"},
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
     },

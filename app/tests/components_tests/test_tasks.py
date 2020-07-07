@@ -45,7 +45,9 @@ def test_mark_long_running_jobs_failed():
     assert j3.status == EvaluationJob.PENDING
     assert a.status == AlgorithmJob.STARTED
 
-    mark_long_running_jobs_failed(app_label="evaluation", model_name="job")
+    mark_long_running_jobs_failed(
+        app_label="evaluation", model_name="evaluation"
+    )
 
     j1.refresh_from_db()
     j2.refresh_from_db()
