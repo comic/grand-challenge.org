@@ -4,22 +4,14 @@ services:
 
   postgres:
     image: postgres:11
-    command: "postgres -c 'config_file=/etc/postgresql/postgresql.conf'"
     environment: &postgresenv
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_USER: grandchallenge
       POSTGRES_DB: grandchallenge
     ports:
       - "5432:5432" # Only required for running django locally
-    volumes:
-      # Use a non-durable postgres configuration
-      # https://www.postgresql.org/docs/current/non-durability.html
-      # USE ONLY FOR DEVELOPMENT!
-      - type: bind
-        source: ./dockerfiles/db/postgres.test.conf
-        target: /etc/postgresql/postgresql.conf
     tmpfs:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql/data/
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "grandchallenge"]
       interval: 10s
