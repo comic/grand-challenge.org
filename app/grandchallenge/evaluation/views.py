@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models import Q
 from django.utils import timezone
@@ -217,11 +219,9 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
         challenge = self.request.challenge
 
         queryset = super().get_queryset()
-        queryset = (
-            queryset.filter(submission__challenge=challenge)
-            .select_related("submission__creator__user_profile")
-            .prefetch_related("outputs")
-        )
+        queryset = queryset.select_related(
+            "submission__creator__user_profile", "submission__challenge"
+        ).filter(submission__challenge=challenge)
 
         if challenge.is_admin(self.request.user):
             return queryset
@@ -234,6 +234,20 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
 class JobDetail(DetailView):
     # TODO - if participant: list only their jobs
     model = Job
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        try:
+            metrics = self.object.outputs.get(
+                interface__slug="metrics-json-file"
+            ).value
+        except ObjectDoesNotExist:
+            metrics = None
+
+        context.update({"metrics": metrics})
+
+        return context
 
 
 class Leaderboard(ListView):
@@ -255,15 +269,24 @@ class Leaderboard(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.select_related(
-            "submission__creator__user_profile"
-        ).prefetch_related("outputs")
-        return queryset.filter(
-            submission__challenge=self.request.challenge,
-            published=True,
-            status=Job.SUCCESS,
-            rank__gt=0,
+        queryset = (
+            queryset.select_related(
+                "submission__creator__user_profile", "submission__challenge"
+            )
+            .filter(
+                submission__challenge=self.request.challenge,
+                published=True,
+                status=Job.SUCCESS,
+                rank__gt=0,
+            )
+            .annotate(
+                metrics=ArrayAgg(
+                    "outputs__value",
+                    filter=Q(outputs__interface__slug="metrics-json-file"),
+                )
+            )
         )
+        return queryset
 
 
 class JobUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):

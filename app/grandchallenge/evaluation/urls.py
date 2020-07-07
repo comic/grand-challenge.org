@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from grandchallenge.evaluation.views import (
     ConfigUpdate,
@@ -42,4 +43,7 @@ urlpatterns = [
     path("", JobList.as_view(), name="job-list"),
     path("<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path("<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"),
+    path(
+        "results/", RedirectView.as_view(url="../leaderboard/", permanent=True)
+    ),
 ]
