@@ -174,7 +174,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
     def get_success_url(self):
         return reverse(
-            "evaluation:job-list",
+            "evaluation:list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
 
@@ -211,7 +211,7 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
     model = Submission
 
 
-class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
+class EvaluationList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Evaluation
 
     def get_queryset(self):

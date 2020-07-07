@@ -246,9 +246,9 @@ def test_submission_detail(client, two_challenge_sets):
 
 @pytest.mark.django_db
 @factory.django.mute_signals(signals.post_save)
-def test_job_list(client, two_challenge_sets):
+def test_evaluation_list(client, two_challenge_sets):
     validate_admin_or_participant_view(
-        viewname="evaluation:job-list",
+        viewname="evaluation:list",
         two_challenge_set=two_challenge_sets,
         client=client,
     )
@@ -262,7 +262,7 @@ def test_job_list(client, two_challenge_sets):
     ) = submissions_and_jobs(two_challenge_sets)
     # Participants should only be able to see their own jobs
     response = get_view_for_user(
-        viewname="evaluation:job-list",
+        viewname="evaluation:list",
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.challenge_set_1.participant,
@@ -274,7 +274,7 @@ def test_job_list(client, two_challenge_sets):
     assert str(j_p12_s1_c2.pk) not in response.rendered_content
     # Admins should be able to see all jobs
     response = get_view_for_user(
-        viewname="evaluation:job-list",
+        viewname="evaluation:list",
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.challenge_set_1.admin,
@@ -286,7 +286,7 @@ def test_job_list(client, two_challenge_sets):
     assert str(j_p12_s1_c2.pk) not in response.rendered_content
     # Only jobs relevant to this challenge should be listed
     response = get_view_for_user(
-        viewname="evaluation:job-list",
+        viewname="evaluation:list",
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.participant12,

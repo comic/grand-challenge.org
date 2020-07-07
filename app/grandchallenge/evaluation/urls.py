@@ -3,8 +3,8 @@ from django.views.generic import RedirectView
 
 from grandchallenge.evaluation.views import (
     ConfigUpdate,
+    EvaluationList,
     JobDetail,
-    JobList,
     JobUpdate,
     Leaderboard,
     LegacySubmissionCreate,
@@ -40,7 +40,7 @@ urlpatterns = [
         name="submission-detail",
     ),
     path("leaderboard/", Leaderboard.as_view(), name="leaderboard"),
-    path("", JobList.as_view(), name="job-list"),
+    path("", EvaluationList.as_view(), name="list"),
     path("<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path("<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"),
     path(
