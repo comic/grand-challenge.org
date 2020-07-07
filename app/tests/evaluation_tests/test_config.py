@@ -39,11 +39,11 @@ def test_setting_submission_page_html(client, challenge_set):
 @pytest.mark.django_db
 def test_setting_display_all_metrics(client, challenge_set):
     metrics = {"public": 3245.235, "secret": 4328.432, "extra": 2144.312}
-    j = EvaluationFactory(
+    e = EvaluationFactory(
         submission__challenge=challenge_set.challenge,
         status=Evaluation.SUCCESS,
     )
-    j.create_result(result=metrics)
+    e.create_result(result=metrics)
 
     challenge_set.challenge.evaluation_config.score_jsonpath = "public"
     challenge_set.challenge.evaluation_config.extra_results_columns = [
@@ -56,7 +56,7 @@ def test_setting_display_all_metrics(client, challenge_set):
         client=client,
         viewname="evaluation:detail",
         challenge=challenge_set.challenge,
-        reverse_kwargs={"pk": j.pk},
+        reverse_kwargs={"pk": e.pk},
     )
 
     assert response.status_code == 200
@@ -71,7 +71,7 @@ def test_setting_display_all_metrics(client, challenge_set):
         client=client,
         viewname="evaluation:detail",
         challenge=challenge_set.challenge,
-        reverse_kwargs={"pk": j.pk},
+        reverse_kwargs={"pk": e.pk},
     )
 
     assert response.status_code == 200

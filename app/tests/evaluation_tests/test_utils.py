@@ -35,8 +35,8 @@ def test_calculate_ranks():
         for _ in range(len(results))
     ]
 
-    for j, r in zip(queryset, results):
-        j.create_result(result=r)
+    for e, r in zip(queryset, results):
+        e.create_result(result=r)
 
     # Unpublish the result
     queryset[-1].published = False
@@ -160,8 +160,8 @@ def test_results_display():
         for r in results
     ]
 
-    for j, r in zip(queryset, results):
-        j.create_result(result=r[metrics])
+    for e, r in zip(queryset, results):
+        e.create_result(result=r[metrics])
 
     challenge.evaluation_config.score_jsonpath = "a"
     challenge.evaluation_config.result_display_choice = Config.ALL
@@ -221,8 +221,8 @@ def test_null_results():
         for _ in range(len(results))
     ]
 
-    for j, r in zip(queryset, results):
-        j.create_result(result=r)
+    for e, r in zip(queryset, results):
+        e.create_result(result=r)
 
     challenge.evaluation_config.score_jsonpath = "a"
     challenge.evaluation_config.result_display_choice = Config.ALL

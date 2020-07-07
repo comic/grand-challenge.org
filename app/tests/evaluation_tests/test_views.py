@@ -27,7 +27,10 @@ def submission_and_evaluation(*, challenge, creator):
 
 
 def submissions_and_evaluations(two_challenge_sets):
-    """Create (j)obs and (s)ubmissions for each (p)articipant and (c)hallenge."""
+    """
+    Create (e)valuations and (s)ubmissions for each (p)articipant and
+    (c)hallenge.
+    """
     SubmissionsAndEvaluations = namedtuple(
         "SubmissionsAndEvaluations",
         [
