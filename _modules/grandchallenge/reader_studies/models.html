@@ -656,13 +656,13 @@
         <span class="sd">&quot;&quot;&quot;The number of answerable questions for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">answerable_questions</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 
-<div class="viewcode-block" id="ReaderStudy.add_ground_truth"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth">[docs]</a>    <span class="k">def</span> <span class="nf">add_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+<div class="viewcode-block" id="ReaderStudy.add_ground_truth"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.add_ground_truth">[docs]</a>    <span class="k">def</span> <span class="nf">add_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>  <span class="c1"># noqa: C901</span>
         <span class="sd">&quot;&quot;&quot;Add ground truth answers provided by ``data`` for this ``ReaderStudy``.&quot;&quot;&quot;</span>
         <span class="n">answers</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">gt</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
             <span class="n">images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__in</span><span class="o">=</span><span class="n">gt</span><span class="p">[</span><span class="s2">&quot;images&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">gt</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;images&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;images&quot;</span> <span class="ow">or</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;__explanation&quot;</span><span class="p">):</span>
                     <span class="k">continue</span>
                 <span class="n">question</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">question_text</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
                 <span class="n">_answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
@@ -690,6 +690,10 @@
                     <span class="n">answer</span><span class="o">=</span><span class="n">_answer</span><span class="p">,</span>
                     <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">explanation</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;__explanation&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+                <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                    <span class="n">explanation</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
                 <span class="n">answers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
                         <span class="s2">&quot;answer_obj&quot;</span><span class="p">:</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
@@ -701,14 +705,17 @@
                             <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
                             <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
                             <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                            <span class="n">explanation</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
                         <span class="p">),</span>
                         <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">_answer</span><span class="p">,</span>
+                        <span class="s2">&quot;explanation&quot;</span><span class="p">:</span> <span class="n">explanation</span><span class="p">,</span>
                         <span class="s2">&quot;images&quot;</span><span class="p">:</span> <span class="n">images</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
 
         <span class="k">for</span> <span class="n">answer</span> <span class="ow">in</span> <span class="n">answers</span><span class="p">:</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">answer</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">]</span>
+            <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">explanation</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;explanation&quot;</span><span class="p">]</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">answer</span><span class="p">[</span><span class="s2">&quot;images&quot;</span><span class="p">])</span>
             <span class="n">answer</span><span class="p">[</span><span class="s2">&quot;answer_obj&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
@@ -1404,6 +1411,7 @@
     <span class="p">)</span>
     <span class="n">is_ground_truth</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">score</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">explanation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">history</span> <span class="o">=</span> <span class="n">HistoricalRecords</span><span class="p">(</span>
         <span class="n">excluded_fields</span><span class="o">=</span><span class="p">[</span>
             <span class="s2">&quot;created&quot;</span><span class="p">,</span>
