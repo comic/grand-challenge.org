@@ -197,10 +197,10 @@ class Command(BaseCommand):
         submission.file.save("test.csv", content)
         submission.save()
 
-        job = Evaluation.objects.create(
+        e = Evaluation.objects.create(
             submission=submission, method=method, status=Evaluation.SUCCESS
         )
-        job.create_result(
+        e.create_result(
             result={
                 "acc": {"mean": 0.5, "std": 0.1},
                 "dice": {"mean": 0.71, "std": 0.05},
