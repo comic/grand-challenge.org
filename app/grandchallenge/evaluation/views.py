@@ -218,20 +218,9 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
         challenge = self.request.challenge
 
         queryset = super().get_queryset()
-        queryset = (
-            queryset.select_related(
-                "submission__creator__user_profile", "submission__challenge"
-            )
-            .filter(submission__challenge=challenge)
-            .annotate(
-                metrics=Subquery(
-                    ComponentInterfaceValue.objects.filter(
-                        interface__slug="metrics-json-file",
-                        evaluation_jobs_as_output__pk=OuterRef("pk"),
-                    ).values("value")
-                )
-            )
-        )
+        queryset = queryset.select_related(
+            "submission__creator__user_profile", "submission__challenge"
+        ).filter(submission__challenge=challenge)
 
         if challenge.is_admin(self.request.user):
             return queryset
