@@ -2,7 +2,7 @@ import pytest
 
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.evaluation.models import Evaluation
-from tests.factories import ChallengeFactory, JobFactory
+from tests.factories import ChallengeFactory, EvaluationFactory
 from tests.utils import get_view_for_user
 
 
@@ -39,7 +39,7 @@ def test_setting_submission_page_html(client, challenge_set):
 @pytest.mark.django_db
 def test_setting_display_all_metrics(client, challenge_set):
     metrics = {"public": 3245.235, "secret": 4328.432, "extra": 2144.312}
-    j = JobFactory(
+    j = EvaluationFactory(
         submission__challenge=challenge_set.challenge,
         status=Evaluation.SUCCESS,
     )

@@ -7,7 +7,7 @@ from django.db.models import signals
 from django.utils import timezone
 
 from tests.factories import (
-    JobFactory,
+    EvaluationFactory,
     MethodFactory,
     SubmissionFactory,
 )
@@ -19,63 +19,63 @@ from tests.utils import (
 )
 
 
-def submission_and_job(*, challenge, creator):
-    """Creates a submission and a job for that submission."""
+def submission_and_evaluation(*, challenge, creator):
+    """Creates a submission and an evaluation for that submission."""
     s = SubmissionFactory(challenge=challenge, creator=creator)
-    j = JobFactory(submission=s)
-    return s, j
+    e = EvaluationFactory(submission=s)
+    return s, e
 
 
-def submissions_and_jobs(two_challenge_sets):
+def submissions_and_evaluations(two_challenge_sets):
     """Create (j)obs and (s)ubmissions for each (p)articipant and (c)hallenge."""
-    SubmissionsAndJobs = namedtuple(
-        "SubmissionsAndJobs",
+    SubmissionsAndEvaluations = namedtuple(
+        "SubmissionsAndEvaluations",
         [
             "p_s1",
             "p_s2",
             "p1_s1",
             "p12_s1_c1",
             "p12_s1_c2",
-            "j_p_s1",
-            "j_p_s2",
-            "j_p1_s1",
-            "j_p12_s1_c1",
-            "j_p12_s1_c2",
+            "e_p_s1",
+            "e_p_s2",
+            "e_p1_s1",
+            "e_p12_s1_c1",
+            "e_p12_s1_c2",
         ],
     )
     # participant 0, submission 1, challenge 1, etc
-    p_s1, j_p_s1 = submission_and_job(
+    p_s1, e_p_s1 = submission_and_evaluation(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.challenge_set_1.participant,
     )
-    p_s2, j_p_s2 = submission_and_job(
+    p_s2, e_p_s2 = submission_and_evaluation(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.challenge_set_1.participant,
     )
-    p1_s1, j_p1_s1 = submission_and_job(
+    p1_s1, e_p1_s1 = submission_and_evaluation(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.challenge_set_1.participant1,
     )
     # participant12, submission 1 to each challenge
-    p12_s1_c1, j_p12_s1_c1 = submission_and_job(
+    p12_s1_c1, e_p12_s1_c1 = submission_and_evaluation(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.participant12,
     )
-    p12_s1_c2, j_p12_s1_c2 = submission_and_job(
+    p12_s1_c2, e_p12_s1_c2 = submission_and_evaluation(
         challenge=two_challenge_sets.challenge_set_2.challenge,
         creator=two_challenge_sets.participant12,
     )
-    return SubmissionsAndJobs(
+    return SubmissionsAndEvaluations(
         p_s1,
         p_s2,
         p1_s1,
         p12_s1_c1,
         p12_s1_c2,
-        j_p_s1,
-        j_p_s2,
-        j_p1_s1,
-        j_p12_s1_c1,
-        j_p12_s1_c2,
+        e_p_s1,
+        e_p_s2,
+        e_p1_s1,
+        e_p12_s1_c1,
+        e_p12_s1_c2,
     )
 
 
@@ -119,7 +119,7 @@ def test_submission_list(client, two_challenge_sets):
         two_challenge_set=two_challenge_sets,
         client=client,
     )
-    p_s1, p_s2, p1_s1, p12_s1_c1, p12_s1_c2, *_ = submissions_and_jobs(
+    p_s1, p_s2, p1_s1, p12_s1_c1, p12_s1_c2, *_ = submissions_and_evaluations(
         two_challenge_sets
     )
     # Participants should only be able to see their own submissions
@@ -254,48 +254,48 @@ def test_evaluation_list(client, two_challenge_sets):
     )
     (
         *_,
-        j_p_s1,
-        j_p_s2,
-        j_p1_s1,
-        j_p12_s1_c1,
-        j_p12_s1_c2,
-    ) = submissions_and_jobs(two_challenge_sets)
-    # Participants should only be able to see their own jobs
+        e_p_s1,
+        e_p_s2,
+        e_p1_s1,
+        e_p12_s1_c1,
+        e_p12_s1_c2,
+    ) = submissions_and_evaluations(two_challenge_sets)
+    # Participants should only be able to see their own evaluations
     response = get_view_for_user(
         viewname="evaluation:list",
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.challenge_set_1.participant,
     )
-    assert str(j_p_s1.pk) in response.rendered_content
-    assert str(j_p_s2.pk) in response.rendered_content
-    assert str(j_p1_s1.pk) not in response.rendered_content
-    assert str(j_p12_s1_c1.pk) not in response.rendered_content
-    assert str(j_p12_s1_c2.pk) not in response.rendered_content
-    # Admins should be able to see all jobs
+    assert str(e_p_s1.pk) in response.rendered_content
+    assert str(e_p_s2.pk) in response.rendered_content
+    assert str(e_p1_s1.pk) not in response.rendered_content
+    assert str(e_p12_s1_c1.pk) not in response.rendered_content
+    assert str(e_p12_s1_c2.pk) not in response.rendered_content
+    # Admins should be able to see all evaluations
     response = get_view_for_user(
         viewname="evaluation:list",
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.challenge_set_1.admin,
     )
-    assert str(j_p_s1.pk) in response.rendered_content
-    assert str(j_p_s2.pk) in response.rendered_content
-    assert str(j_p1_s1.pk) in response.rendered_content
-    assert str(j_p12_s1_c1.pk) in response.rendered_content
-    assert str(j_p12_s1_c2.pk) not in response.rendered_content
-    # Only jobs relevant to this challenge should be listed
+    assert str(e_p_s1.pk) in response.rendered_content
+    assert str(e_p_s2.pk) in response.rendered_content
+    assert str(e_p1_s1.pk) in response.rendered_content
+    assert str(e_p12_s1_c1.pk) in response.rendered_content
+    assert str(e_p12_s1_c2.pk) not in response.rendered_content
+    # Only evaluations relevant to this challenge should be listed
     response = get_view_for_user(
         viewname="evaluation:list",
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.participant12,
     )
-    assert str(j_p12_s1_c1.pk) in response.rendered_content
-    assert str(j_p12_s1_c2.pk) not in response.rendered_content
-    assert str(j_p_s1.pk) not in response.rendered_content
-    assert str(j_p_s2.pk) not in response.rendered_content
-    assert str(j_p1_s1.pk) not in response.rendered_content
+    assert str(e_p12_s1_c1.pk) in response.rendered_content
+    assert str(e_p12_s1_c2.pk) not in response.rendered_content
+    assert str(e_p_s1.pk) not in response.rendered_content
+    assert str(e_p_s2.pk) not in response.rendered_content
+    assert str(e_p1_s1.pk) not in response.rendered_content
 
 
 @pytest.mark.django_db
@@ -309,15 +309,15 @@ def test_leaderboard(client, eval_challenge_set):
 
 # TODO: test that private results cannot be seen
 @pytest.mark.django_db
-def test_job_detail(client, eval_challenge_set):
+def test_evaluation_detail(client, eval_challenge_set):
     submission = SubmissionFactory(
         challenge=eval_challenge_set.challenge_set.challenge,
         creator=eval_challenge_set.challenge_set.participant,
     )
-    job = JobFactory(submission=submission)
+    e = EvaluationFactory(submission=submission)
     validate_open_view(
         viewname="evaluation:detail",
         challenge_set=eval_challenge_set.challenge_set,
-        reverse_kwargs={"pk": job.pk},
+        reverse_kwargs={"pk": e.pk},
         client=client,
     )

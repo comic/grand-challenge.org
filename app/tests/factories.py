@@ -101,7 +101,7 @@ class SubmissionFactory(factory.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
 
 
-class JobFactory(factory.DjangoModelFactory):
+class EvaluationFactory(factory.DjangoModelFactory):
     class Meta:
         model = Evaluation
 

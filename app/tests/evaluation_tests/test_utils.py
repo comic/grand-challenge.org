@@ -4,7 +4,7 @@ from grandchallenge.evaluation.models import Config, Evaluation
 from grandchallenge.evaluation.tasks import calculate_ranks
 from tests.factories import (
     ChallengeFactory,
-    JobFactory,
+    EvaluationFactory,
     UserFactory,
 )
 
@@ -29,7 +29,9 @@ def test_calculate_ranks():
     ]
 
     queryset = [
-        JobFactory(submission__challenge=challenge, status=Evaluation.SUCCESS)
+        EvaluationFactory(
+            submission__challenge=challenge, status=Evaluation.SUCCESS
+        )
         for _ in range(len(results))
     ]
 
@@ -150,7 +152,7 @@ def test_results_display():
     ]
 
     queryset = [
-        JobFactory(
+        EvaluationFactory(
             submission__challenge=challenge,
             submission__creator=r[creator],
             status=Evaluation.SUCCESS,
@@ -213,7 +215,9 @@ def test_null_results():
     results = [{"a": 0.6}, {"a": None}]
 
     queryset = [
-        JobFactory(submission__challenge=challenge, status=Evaluation.SUCCESS)
+        EvaluationFactory(
+            submission__challenge=challenge, status=Evaluation.SUCCESS
+        )
         for _ in range(len(results))
     ]
 

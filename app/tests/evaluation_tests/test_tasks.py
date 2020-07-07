@@ -17,7 +17,7 @@ def test_submission_evaluation(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    # Upload a submission and create a job
+    # Upload a submission and create an evaluation
     dockerclient = docker.DockerClient(
         base_url=settings.COMPONENTS_DOCKER_BASE_URL
     )
@@ -35,7 +35,7 @@ def test_submission_evaluation(
     num_containers_before = len(dockerclient.containers.list())
     num_volumes_before = len(dockerclient.volumes.list())
 
-    # This will create a job, and we'll wait for it to be executed
+    # This will create an evaluation, and we'll wait for it to be executed
     submission = SubmissionFactory(
         file__from_path=submission_file, challenge=method.challenge
     )
