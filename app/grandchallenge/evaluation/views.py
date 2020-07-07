@@ -231,8 +231,8 @@ class EvaluationList(UserIsChallengeParticipantOrAdminMixin, ListView):
             )
 
 
-class JobDetail(DetailView):
-    # TODO - if participant: list only their jobs
+class EvaluationDetail(DetailView):
+    # TODO - if participant: list only their evaluations
     model = Evaluation
 
     def get_context_data(self, **kwargs):

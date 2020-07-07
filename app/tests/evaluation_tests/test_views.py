@@ -316,7 +316,7 @@ def test_job_detail(client, eval_challenge_set):
     )
     job = JobFactory(submission=submission)
     validate_open_view(
-        viewname="evaluation:job-detail",
+        viewname="evaluation:detail",
         challenge_set=eval_challenge_set.challenge_set,
         reverse_kwargs={"pk": job.pk},
         client=client,

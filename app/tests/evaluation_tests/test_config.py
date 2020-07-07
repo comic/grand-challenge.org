@@ -54,7 +54,7 @@ def test_setting_display_all_metrics(client, challenge_set):
 
     response = get_view_for_user(
         client=client,
-        viewname="evaluation:job-detail",
+        viewname="evaluation:detail",
         challenge=challenge_set.challenge,
         reverse_kwargs={"pk": j.pk},
     )
@@ -69,7 +69,7 @@ def test_setting_display_all_metrics(client, challenge_set):
 
     response = get_view_for_user(
         client=client,
-        viewname="evaluation:job-detail",
+        viewname="evaluation:detail",
         challenge=challenge_set.challenge,
         reverse_kwargs={"pk": j.pk},
     )

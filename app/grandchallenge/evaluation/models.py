@@ -623,7 +623,7 @@ class Evaluation(UUIDModel, ComponentJob):
 
     def get_absolute_url(self):
         return reverse(
-            "evaluation:job-detail",
+            "evaluation:detail",
             kwargs={
                 "pk": self.pk,
                 "challenge_short_name": self.challenge.short_name,
