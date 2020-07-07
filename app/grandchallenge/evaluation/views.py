@@ -111,13 +111,13 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             self.get_next_submission(max_subs=config.daily_submission_limit)
         )
 
-        pending_jobs = Evaluation.objects.filter(
+        pending_evaluations = Evaluation.objects.filter(
             submission__challenge=self.request.challenge,
             submission__creator=self.request.user,
             status__in=(Evaluation.PENDING, Evaluation.STARTED),
         ).count()
 
-        context.update({"pending_jobs": pending_jobs})
+        context.update({"pending_evaluations": pending_evaluations})
 
         return context
 
@@ -215,7 +215,7 @@ class EvaluationList(UserIsChallengeParticipantOrAdminMixin, ListView):
     model = Evaluation
 
     def get_queryset(self):
-        """Admins see everything, participants just their jobs."""
+        """Admins see everything, participants just their evaluations."""
         challenge = self.request.challenge
 
         queryset = super().get_queryset()

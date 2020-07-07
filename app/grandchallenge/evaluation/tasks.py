@@ -9,7 +9,7 @@ from grandchallenge.evaluation.utils import Metric, rank_results
 
 
 def filter_by_creators_most_recent(*, evaluations):
-    # Go through the jobs and only pass through the most recent
+    # Go through the evaluations and only pass through the most recent
     # submission for each user
     users_seen = set()
     filtered_qs = []
