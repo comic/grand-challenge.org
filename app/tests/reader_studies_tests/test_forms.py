@@ -802,6 +802,13 @@ def test_reader_study_add_ground_truth(client, settings):
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
     assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "yes"
+    assert (
+        Answer.objects.get(images__in=[im1.pk], question=q).explanation
+        == "explanation, with a comma"
+    )
+    assert (
+        Answer.objects.get(images__in=[im2.pk], question=q).explanation == ""
+    )
     assert Answer.objects.get(images__in=[im1.pk], question=q0).answer is True
     assert (
         Answer.objects.get(images__in=[im1.pk], question=q1).answer
@@ -826,6 +833,14 @@ def test_reader_study_add_ground_truth(client, settings):
     assert Answer.objects.all().count() == answer_count
     assert Answer.objects.filter(is_ground_truth=True).count() == answer_count
     assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "no"
+    assert (
+        Answer.objects.get(images__in=[im1.pk], question=q).explanation
+        == "new explanation"
+    )
+    assert (
+        Answer.objects.get(images__in=[im2.pk], question=q).explanation
+        == "explanation"
+    )
     assert Answer.objects.get(images__in=[im1.pk], question=q0).answer is False
     assert (
         Answer.objects.get(images__in=[im1.pk], question=q1).answer
