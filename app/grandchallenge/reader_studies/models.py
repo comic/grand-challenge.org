@@ -501,7 +501,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         """The number of answerable questions for this ``ReaderStudy``."""
         return self.answerable_questions.count()
 
-    def add_ground_truth(self, *, data, user):
+    def add_ground_truth(self, *, data, user):  # noqa: C901
         """Add ground truth answers provided by ``data`` for this ``ReaderStudy``."""
         answers = []
         for gt in data:
