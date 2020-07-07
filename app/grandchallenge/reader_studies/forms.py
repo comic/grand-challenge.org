@@ -395,7 +395,7 @@ class GroundTruthForm(SaveFormInitMixin, Form):
         )
         headers = rdr.fieldnames
         if sorted(
-            filter(lambda x: not x.endswith("_explanation"), headers)
+            filter(lambda x: not x.endswith("__explanation"), headers)
         ) != sorted(
             ["images"]
             + list(

@@ -507,7 +507,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         for gt in data:
             images = self.images.filter(name__in=gt["images"].split(";"))
             for key in gt.keys():
-                if key == "images" or key.endswith("_explanation"):
+                if key == "images" or key.endswith("__explanation"):
                     continue
                 question = self.questions.get(question_text=key)
                 _answer = json.loads(gt[key])
@@ -549,7 +549,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                             explanation="",
                         ),
                         "answer": _answer,
-                        "explanation": gt.get(key + "_explanation") or "",
+                        "explanation": gt.get(key + "__explanation") or "",
                         "images": images,
                     }
                 )
