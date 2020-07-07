@@ -181,8 +181,8 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.datasets.models</span> <span class="kn">import</span> <span class="n">ImageSet</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.emails</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">send_failed_job_email</span><span class="p">,</span>
-    <span class="n">send_new_result_email</span><span class="p">,</span>
+    <span class="n">send_failed_evaluation_email</span><span class="p">,</span>
+    <span class="n">send_successful_evaluation_email</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="n">calculate_ranks</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
@@ -585,7 +585,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">create_job</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_evaluation</span><span class="p">()</span>
 
             <span class="c1"># Convert this submission to an annotation set</span>
             <span class="n">base</span> <span class="o">=</span> <span class="n">ImageSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -595,14 +595,14 @@
                 <span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">submission</span><span class="o">=</span><span class="bp">self</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">create_job</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_ready_method</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">:</span>
             <span class="c1"># TODO Email admins</span>
             <span class="k">return</span>
 
-        <span class="n">j</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
             <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">latest_ready_method</span>
         <span class="p">)</span>
 
@@ -621,7 +621,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Interface is not defined for </span><span class="si">{</span><span class="n">mimetype</span><span class="si">}</span><span class="s2"> files&quot;</span>
             <span class="p">)</span>
 
-        <span class="n">j</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
             <span class="p">[</span>
                 <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
                     <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span>
@@ -629,7 +629,7 @@
             <span class="p">]</span>
         <span class="p">)</span>
 
-        <span class="n">j</span><span class="o">.</span><span class="n">schedule_job</span><span class="p">()</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">schedule_job</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">latest_ready_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -694,8 +694,8 @@
                 <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mv </span><span class="si">{</span><span class="n">dest_file</span><span class="si">}</span><span class="s2"> /input/submission.csv&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Stores information about a job for a given submission.&quot;&quot;&quot;</span>
+<span class="k">class</span> <span class="nc">Evaluation</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Stores information about a evaluation for a given submission.&quot;&quot;&quot;</span>
 
     <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;Submission&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
     <span class="n">method</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;Method&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
@@ -755,7 +755,7 @@
                 <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">result</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">output_civ</span><span class="p">)</span>
-            <span class="n">send_new_result_email</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">send_successful_evaluation_email</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">challenge</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">challenge</span><span class="p">:</span>
@@ -772,13 +772,13 @@
         <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">:</span>
-            <span class="n">send_failed_job_email</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">send_failed_evaluation_email</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">res</span>
 
     <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
-            <span class="s2">&quot;evaluation:job-detail&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;evaluation:detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
                 <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
