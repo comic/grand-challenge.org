@@ -535,6 +535,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     answer=_answer,
                     is_ground_truth=True,
                 )
+                try:
+                    explanation = json.loads(gt.get(key + "__explanation", ""))
+                except (json.JSONDecodeError, TypeError):
+                    explanation = ""
                 answers.append(
                     {
                         "answer_obj": Answer.objects.filter(
@@ -549,7 +553,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                             explanation="",
                         ),
                         "answer": _answer,
-                        "explanation": gt.get(key + "__explanation") or "",
+                        "explanation": explanation,
                         "images": images,
                     }
                 )

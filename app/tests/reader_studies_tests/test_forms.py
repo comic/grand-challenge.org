@@ -804,7 +804,7 @@ def test_reader_study_add_ground_truth(client, settings):
     assert Answer.objects.get(images__in=[im1.pk], question=q).answer == "yes"
     assert (
         Answer.objects.get(images__in=[im1.pk], question=q).explanation
-        == "explanation"
+        == "explanation, with a comma"
     )
     assert (
         Answer.objects.get(images__in=[im2.pk], question=q).explanation == ""
