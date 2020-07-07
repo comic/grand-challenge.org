@@ -12,7 +12,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Evaluations</li>
+            aria-current="page">Evaluations
+        </li>
     </ol>
 {% endblock %}
 
@@ -21,7 +22,7 @@
     <h2>Evaluations</h2>
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm" id="jobsTable">
+        <table class="table table-hover table-borderless table-sm" id="evaluationsTable">
             <thead class="thead-light">
             <tr>
                 <th>ID</th>
@@ -42,17 +43,17 @@
             </tr>
             </thead>
             <tbody>
-            {% for job in object_list %}
+            {% for evaluation in object_list %}
                 <tr>
-                    <td>{{ job.id }}</td>
-                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                    <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
+                    <td>{{ evaluation.id }}</td>
+                    <td data-order="{{ evaluation.created|date:"U" }}">{{ evaluation.created }}</td>
+                    <td data-order="{{ evaluation.modified|date:"U" }}">{{ evaluation.modified }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
-                            {{ job.submission.creator|user_profile_link }}
+                            {{ evaluation.submission.creator|user_profile_link }}
 
                             {% if challenge.evaluation_config.use_teams %}
-                                {% with job|get_team_html as team_html %}
+                                {% with evaluation|get_team_html as team_html %}
                                     {% if team_html %}
                                         ({{ team_html }})
                                     {% endif %}
@@ -62,53 +63,53 @@
                     {% endif %}
                     <td>
                     <span class="badge
-                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                    {% if evaluation.status == evaluation.FAILURE or evaluation.status == evaluation.CANCELLED %}
                         badge-danger
-                    {% elif job.status == job.RETRY %}
+                    {% elif evaluation.status == evaluation.RETRY %}
                         badge-warning
-                    {% elif job.status == job.SUCCESS %}
+                    {% elif evaluation.status == evaluation.SUCCESS %}
                         badge-success
                     {% else %}
                         badge-info
                     {% endif %}">
-                        {{ job.get_status_display }}
+                        {{ evaluation.get_status_display }}
                     </span>
                     </td>
 
                     <td>
-                        {% if job.status == job.SUCCESS %}
-                            {% if job.published %}
-                                <a href="{{ job.get_absolute_url }}">Result</a>
+                        {% if evaluation.status == evaluation.SUCCESS %}
+                            {% if evaluation.published %}
+                                <a href="{{ evaluation.get_absolute_url }}">Result</a>
                             {% else %}
                                 Submission is under review by the challenge admins.
                             {% endif %}
-                        {% elif job.FAILURE and job.output %}
-                            {{ job.output|user_error }}
+                        {% elif evaluation.FAILURE and evaluation.output %}
+                            {{ evaluation.output|user_error }}
                         {% endif %}
                     </td>
 
-                    <td data-order="{{ job.rank }}">
-                        {% if job.rank > 0 %}
-                            {{ job.rank }}
+                    <td data-order="{{ evaluation.rank }}">
+                        {% if evaluation.rank > 0 %}
+                            {{ evaluation.rank }}
                         {% endif %}
-                        {% if job.submission.supplementary_file %}
-                            <a href="{{ job.submission.supplementary_file.url }}">
+                        {% if evaluation.submission.supplementary_file %}
+                            <a href="{{ evaluation.submission.supplementary_file.url }}">
                                 <i class="fa fa-file"></i>
                             </a>
                         {% endif %}
                     </td>
 
                     {% if challenge.evaluation_config.allow_submission_comments %}
-                        <td>{{ job.submission.comment }}</td>
+                        <td>{{ evaluation.submission.comment }}</td>
                     {% endif %}
 
                     {% if "change_challenge" in challenge_perms %}
                         <td>
-                            {% if job.status == job.SUCCESS %}
+                            {% if evaluation.status == evaluation.SUCCESS %}
                                 <form method="post"
-                                      action="{% url 'evaluation:job-update' challenge_short_name=challenge.short_name pk=job.pk %}">
+                                      action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=evaluation.pk %}">
                                     {% csrf_token %}
-                                    {% if job.published %}
+                                    {% if evaluation.published %}
                                         <input type="hidden" name="published"
                                                value="false">
                                         <button type="submit"
@@ -140,7 +141,7 @@
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#jobsTable').DataTable({
+            $('#evaluationsTable').DataTable({
                     order: [[1, "desc"]]
                 }
             );

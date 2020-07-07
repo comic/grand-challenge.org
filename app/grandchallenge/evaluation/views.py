@@ -21,7 +21,7 @@ from grandchallenge.evaluation.forms import (
 )
 from grandchallenge.evaluation.models import (
     Config,
-    Job,
+    Evaluation,
     Method,
     Submission,
 )
@@ -111,13 +111,13 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             self.get_next_submission(max_subs=config.daily_submission_limit)
         )
 
-        pending_jobs = Job.objects.filter(
+        pending_evaluations = Evaluation.objects.filter(
             submission__challenge=self.request.challenge,
             submission__creator=self.request.user,
-            status__in=(Job.PENDING, Job.STARTED),
+            status__in=(Evaluation.PENDING, Evaluation.STARTED),
         ).count()
 
-        context.update({"pending_jobs": pending_jobs})
+        context.update({"pending_evaluations": pending_evaluations})
 
         return context
 
@@ -143,7 +143,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
                 creator=self.request.user,
                 created__gte=now - period,
             )
-            .exclude(job__status=Job.FAILURE)
+            .exclude(evaluation__status=Evaluation.FAILURE)
             .order_by("-created")
             .distinct()
         )
@@ -174,7 +174,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
     def get_success_url(self):
         return reverse(
-            "evaluation:job-list",
+            "evaluation:list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
 
@@ -211,11 +211,11 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
     model = Submission
 
 
-class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
-    model = Job
+class EvaluationList(UserIsChallengeParticipantOrAdminMixin, ListView):
+    model = Evaluation
 
     def get_queryset(self):
-        """Admins see everything, participants just their jobs."""
+        """Admins see everything, participants just their evaluations."""
         challenge = self.request.challenge
 
         queryset = super().get_queryset()
@@ -231,9 +231,9 @@ class JobList(UserIsChallengeParticipantOrAdminMixin, ListView):
             )
 
 
-class JobDetail(DetailView):
-    # TODO - if participant: list only their jobs
-    model = Job
+class EvaluationDetail(DetailView):
+    # TODO - if participant: list only their evaluations
+    model = Evaluation
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -251,7 +251,7 @@ class JobDetail(DetailView):
 
 
 class Leaderboard(ListView):
-    model = Job
+    model = Evaluation
     template_name = "evaluation/leaderboard.html"
 
     def get_context_data(self, *args, **kwargs):
@@ -276,7 +276,7 @@ class Leaderboard(ListView):
             .filter(
                 submission__challenge=self.request.challenge,
                 published=True,
-                status=Job.SUCCESS,
+                status=Evaluation.SUCCESS,
                 rank__gt=0,
             )
             .annotate(
@@ -289,7 +289,9 @@ class Leaderboard(ListView):
         return queryset
 
 
-class JobUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
-    model = Job
+class EvaluationUpdate(
+    UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
+):
+    model = Evaluation
     fields = ("published",)
     success_message = "Result successfully updated."

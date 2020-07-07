@@ -3,7 +3,7 @@ from django.core.mail import mail_managers
 from requests import exceptions, get
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
-from grandchallenge.evaluation.models import Job
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -14,7 +14,7 @@ def update_challenge_results_cache():
             "cached_num_participants": c.participants_group.user_set.all().count()
         }
 
-        challenge_results = Job.objects.filter(
+        challenge_results = Evaluation.objects.filter(
             submission__challenge=c, published=True
         ).order_by("-created")
 

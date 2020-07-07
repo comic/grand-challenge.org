@@ -76,17 +76,17 @@
             </tr>
             </thead>
             <tbody>
-            {% for job in object_list %}
+            {% for evaluation in object_list %}
                 <tr>
 
-                    <td data-order="{{ job.rank }}">{{ job.rank|ordinal }}</td>
+                    <td data-order="{{ evaluation.rank }}">{{ evaluation.rank|ordinal }}</td>
 
                     <td>
 
-                        {{ job.submission.creator|user_profile_link }}
+                        {{ evaluation.submission.creator|user_profile_link }}
 
                         {% if evaluation_config.use_teams %}
-                            {% with job|get_team_html as team_html %}
+                            {% with evaluation|get_team_html as team_html %}
                                 {% if team_html %}
                                     ({{ team_html }})
                                 {% endif %}
@@ -95,37 +95,37 @@
 
                     </td>
 
-                    <td data-order="{{ job.created|date:"U" }}"
+                    <td data-order="{{ evaluation.created|date:"U" }}"
                         style="white-space: nowrap;">
-                        {{ job.created|date:"j N Y" }}
+                        {{ evaluation.created|date:"j N Y" }}
                     </td>
 
                     {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                         <td>
-                            <a href="{{ job.get_absolute_url }}">
-                                <b>{{ job.rank_score|floatformat }}</b>
+                            <a href="{{ evaluation.get_absolute_url }}">
+                                <b>{{ evaluation.rank_score|floatformat }}</b>
                             </a>
                         </td>
                     {% endif %}
 
-                    {% with job.metrics.0|get_jsonpath:evaluation_config.score_jsonpath as metric %}
+                    {% with evaluation.metrics.0|get_jsonpath:evaluation_config.score_jsonpath as metric %}
                         <td data-order="{{ metric }}"
                                 {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                             class="toggable"
                                 {% endif %}
                         >
-                            <a href="{{ job.get_absolute_url }}">
+                            <a href="{{ evaluation.get_absolute_url }}">
                                 {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
                                     <b>{% endif %}
                                 {% filter remove_whitespace %}
                                     {{ metric|floatformat:evaluation_config.score_decimal_places }}
                                     {% if evaluation_config.score_error_jsonpath %}
                                         &nbsp;±&nbsp;
-                                        {{ job.metrics.0|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
+                                        {{ evaluation.metrics.0|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
                                     {% endif %}
                                     {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                                         &nbsp;(
-                                        {{ job.rank_per_metric|get_key:evaluation_config.score_jsonpath }}
+                                        {{ evaluation.rank_per_metric|get_key:evaluation_config.score_jsonpath }}
                                         )
                                     {% endif %}
                                 {% endfilter %}
@@ -136,18 +136,18 @@
                     {% endwith %}
 
                     {% for col in evaluation_config.extra_results_columns %}
-                        {% with job.metrics.0|get_jsonpath:col.path as metric %}
+                        {% with evaluation.metrics.0|get_jsonpath:col.path as metric %}
                             <td data-order="{{ metric }}" class="toggable">
-                                <a href="{{ job.get_absolute_url }}">
+                                <a href="{{ evaluation.get_absolute_url }}">
                                     {% filter remove_whitespace %}
                                         {{ metric|floatformat:evaluation_config.score_decimal_places }}
                                         {% if col.error_path %}
                                             &nbsp;±&nbsp;
-                                            {{ job.metrics.0|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
+                                            {{ evaluation.metrics.0|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
                                         {% endif %}
                                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                                             &nbsp;(
-                                            {{ job.rank_per_metric|get_key:col.path }}
+                                            {{ evaluation.rank_per_metric|get_key:col.path }}
                                             )
                                         {% endif %}
                                     {% endfilter %}
@@ -157,13 +157,13 @@
                     {% endfor %}
 
                     {% if evaluation_config.display_submission_comments %}
-                        <td>{{ job.submission.comment }}</td>
+                        <td>{{ evaluation.submission.comment }}</td>
                     {% endif %}
 
                     {% if evaluation_config.show_publication_url %}
                         <td>
-                            {% if job.submission.publication_url %}
-                                <a href="{{ job.submission.publication_url }}">
+                            {% if evaluation.submission.publication_url %}
+                                <a href="{{ evaluation.submission.publication_url }}">
                                     <i class="fa fa-file"></i>
                                 </a>
                             {% endif %}
@@ -172,8 +172,8 @@
 
                     {% if evaluation_config.show_supplementary_file_link %}
                         <th>
-                            {% if job.submission.supplementary_file %}
-                                <a href="{{ job.submission.supplementary_file.url }}">
+                            {% if evaluation.submission.supplementary_file %}
+                                <a href="{{ evaluation.submission.supplementary_file.url }}">
                                     <i class="fa fa-file"></i>
                                 </a>
                             {% endif %}

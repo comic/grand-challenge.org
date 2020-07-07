@@ -1,10 +1,10 @@
 import pytest
 
-from grandchallenge.evaluation.models import Config, Job
+from grandchallenge.evaluation.models import Config, Evaluation
 from grandchallenge.evaluation.tasks import calculate_ranks
 from tests.factories import (
     ChallengeFactory,
-    JobFactory,
+    EvaluationFactory,
     UserFactory,
 )
 
@@ -29,12 +29,14 @@ def test_calculate_ranks():
     ]
 
     queryset = [
-        JobFactory(submission__challenge=challenge, status=Job.SUCCESS)
+        EvaluationFactory(
+            submission__challenge=challenge, status=Evaluation.SUCCESS
+        )
         for _ in range(len(results))
     ]
 
-    for j, r in zip(queryset, results):
-        j.create_result(result=r)
+    for e, r in zip(queryset, results):
+        e.create_result(result=r)
 
     # Unpublish the result
     queryset[-1].published = False
@@ -150,16 +152,16 @@ def test_results_display():
     ]
 
     queryset = [
-        JobFactory(
+        EvaluationFactory(
             submission__challenge=challenge,
             submission__creator=r[creator],
-            status=Job.SUCCESS,
+            status=Evaluation.SUCCESS,
         )
         for r in results
     ]
 
-    for j, r in zip(queryset, results):
-        j.create_result(result=r[metrics])
+    for e, r in zip(queryset, results):
+        e.create_result(result=r[metrics])
 
     challenge.evaluation_config.score_jsonpath = "a"
     challenge.evaluation_config.result_display_choice = Config.ALL
@@ -213,12 +215,14 @@ def test_null_results():
     results = [{"a": 0.6}, {"a": None}]
 
     queryset = [
-        JobFactory(submission__challenge=challenge, status=Job.SUCCESS)
+        EvaluationFactory(
+            submission__challenge=challenge, status=Evaluation.SUCCESS
+        )
         for _ in range(len(results))
     ]
 
-    for j, r in zip(queryset, results):
-        j.create_result(result=r)
+    for e, r in zip(queryset, results):
+        e.create_result(result=r)
 
     challenge.evaluation_config.score_jsonpath = "a"
     challenge.evaluation_config.result_display_choice = Config.ALL

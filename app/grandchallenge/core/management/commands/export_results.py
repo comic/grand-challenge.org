@@ -3,7 +3,7 @@ import json
 from django.core.management import BaseCommand
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.evaluation.models import Job
+from grandchallenge.evaluation.models import Evaluation
 
 
 class Command(BaseCommand):
@@ -16,7 +16,7 @@ class Command(BaseCommand):
         )
 
         jobs = (
-            Job.objects.filter(method__challenge=challenge,)
+            Evaluation.objects.filter(method__challenge=challenge,)
             .select_related("submission", "method")
             .prefetch_related("outputs")
         )

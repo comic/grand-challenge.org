@@ -26,8 +26,8 @@ from grandchallenge.core.validators import (
 )
 from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import (
-    send_failed_job_email,
-    send_new_result_email,
+    send_failed_evaluation_email,
+    send_successful_evaluation_email,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
@@ -430,7 +430,7 @@ class Submission(UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            self.create_job()
+            self.create_evaluation()
 
             # Convert this submission to an annotation set
             base = ImageSet.objects.get(
@@ -440,14 +440,14 @@ class Submission(UUIDModel):
                 base=base, submission=self
             )
 
-    def create_job(self):
+    def create_evaluation(self):
         method = self.latest_ready_method
 
         if not method:
             # TODO Email admins
             return
 
-        j = Job.objects.create(
+        e = Evaluation.objects.create(
             submission=self, method=self.latest_ready_method
         )
 
@@ -466,7 +466,7 @@ class Submission(UUIDModel):
                 f"Interface is not defined for {mimetype} files"
             )
 
-        j.inputs.set(
+        e.inputs.set(
             [
                 ComponentInterfaceValue.objects.create(
                     interface=interface, file=self.file
@@ -474,7 +474,7 @@ class Submission(UUIDModel):
             ]
         )
 
-        j.schedule_job()
+        e.schedule_job()
 
     @property
     def latest_ready_method(self):
@@ -539,8 +539,8 @@ class SubmissionEvaluator(Executor):
                 writer.exec_run(f"mv {dest_file} /input/submission.csv")
 
 
-class Job(UUIDModel, ComponentJob):
-    """Stores information about a job for a given submission."""
+class Evaluation(UUIDModel, ComponentJob):
+    """Stores information about a evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
@@ -600,7 +600,7 @@ class Job(UUIDModel, ComponentJob):
                 interface=interface, value=result
             )
             self.outputs.add(output_civ)
-            send_new_result_email(self)
+            send_successful_evaluation_email(self)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:
@@ -617,13 +617,13 @@ class Job(UUIDModel, ComponentJob):
         res = super().update_status(*args, **kwargs)
 
         if self.status == self.FAILURE:
-            send_failed_job_email(self)
+            send_failed_evaluation_email(self)
 
         return res
 
     def get_absolute_url(self):
         return reverse(
-            "evaluation:job-detail",
+            "evaluation:detail",
             kwargs={
                 "pk": self.pk,
                 "challenge_short_name": self.challenge.short_name,

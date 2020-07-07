@@ -27,7 +27,7 @@ from grandchallenge.challenges.models import (
     TaskType,
 )
 from grandchallenge.core.storage import public_s3_storage
-from grandchallenge.evaluation.models import Job, Method, Submission
+from grandchallenge.evaluation.models import Evaluation, Method, Submission
 from grandchallenge.overview_pages.models import OverviewPage
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -197,10 +197,10 @@ class Command(BaseCommand):
         submission.file.save("test.csv", content)
         submission.save()
 
-        job = Job.objects.create(
-            submission=submission, method=method, status=Job.SUCCESS
+        e = Evaluation.objects.create(
+            submission=submission, method=method, status=Evaluation.SUCCESS
         )
-        job.create_result(
+        e.create_result(
             result={
                 "acc": {"mean": 0.5, "std": 0.1},
                 "dice": {"mean": 0.71, "std": 0.05},
@@ -303,7 +303,7 @@ class Command(BaseCommand):
             creator=self.users["algorithm"],
             algorithm_image=algorithm_image,
             image=cases_image,
-            status=Job.SUCCESS,
+            status=Evaluation.SUCCESS,
         )
         algorithms_job.save()
         algorithms_job.create_result(result={"cancer_score": 0.5})

@@ -57,39 +57,39 @@
             <tr>
                 <th>Created</th>
                 <th>Updated</th>
-                <th>Job</th>
+                <th>Evaluation</th>
                 <th>Submission</th>
                 <th>Status</th>
                 <th>Result</th>
             </tr>
             </thead>
             <tbody>
-            {% for job in object.job_set.all %}
+            {% for evaluation in object.evaluation_set.all %}
                 <tr>
-                    <td data-order="{{ job.created|date:"U" }}">{{ job.created }}</td>
-                    <td data-order="{{ job.modified|date:"U" }}">{{ job.modified }}</td>
-                    <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a>
+                    <td data-order="{{ evaluation.created|date:"U" }}">{{ evaluation.created }}</td>
+                    <td data-order="{{ evaluation.modified|date:"U" }}">{{ evaluation.modified }}</td>
+                    <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id }}</a>
                     </td>
                     <td>
-                        <a href="{{ job.submission.get_absolute_url }}">{{ job.submission.id }}</a>
+                        <a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id }}</a>
                     </td>
                     <td>
                     <span class="badge
-                    {% if job.status == job.FAILURE or job.status == job.CANCELLED %}
+                    {% if evaluation.status == evaluation.FAILURE or evaluation.status == evaluation.CANCELLED %}
                         badge-danger
-                    {% elif job.status == job.RETRY %}
+                    {% elif evaluation.status == evaluation.RETRY %}
                         badge-warning
-                    {% elif job.status == job.SUCCESS %}
+                    {% elif evaluation.status == evaluation.SUCCESS %}
                         badge-success
                     {% else %}
                         badge-info
                     {% endif %}">
-                        {{ job.get_status_display }}
+                        {{ evaluation.get_status_display }}
                     </span>
                     </td>
                     <td>
-                        {% if job.status == job.SUCCESS %}
-                            <a href="{{ job.get_absolute_url }}">Result</a>
+                        {% if evaluation.status == evaluation.SUCCESS %}
+                            <a href="{{ evaluation.get_absolute_url }}">Result</a>
                         {% endif %}
                     </td>
                 </tr>

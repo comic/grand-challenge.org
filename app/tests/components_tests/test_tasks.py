@@ -5,26 +5,26 @@ from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job as AlgorithmJob
 from grandchallenge.components.tasks import mark_long_running_jobs_failed
-from grandchallenge.evaluation.models import Job as EvaluationJob
+from grandchallenge.evaluation.models import Evaluation as EvaluationJob
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.factories import JobFactory as EvaluationJobFactory
+from tests.factories import EvaluationFactory
 
 
 @pytest.mark.django_db
 def test_mark_long_running_jobs_failed():
     # Started jobs should be unaffected
-    j1 = EvaluationJobFactory()
+    j1 = EvaluationFactory()
     j1.update_status(status=EvaluationJob.STARTED)
 
     # Long running jobs should be marked as failed
-    j2 = EvaluationJobFactory()
+    j2 = EvaluationFactory()
     j2.update_status(status=EvaluationJob.STARTED)
     j2.started_at = timezone.now() - timedelta(days=1)
     j2.save()
 
     # A job that has not been started should not be marked as failed, even if
     # if it is outside the celery task limit
-    j3 = EvaluationJobFactory()
+    j3 = EvaluationFactory()
     j3.created -= timedelta(days=1)
     j3.save()
 
@@ -45,7 +45,9 @@ def test_mark_long_running_jobs_failed():
     assert j3.status == EvaluationJob.PENDING
     assert a.status == AlgorithmJob.STARTED
 
-    mark_long_running_jobs_failed(app_label="evaluation", model_name="job")
+    mark_long_running_jobs_failed(
+        app_label="evaluation", model_name="evaluation"
+    )
 
     j1.refresh_from_db()
     j2.refresh_from_db()

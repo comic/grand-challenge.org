@@ -8,30 +8,30 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.utils import Metric, rank_results
 
 
-def filter_by_creators_most_recent(*, jobs):
-    # Go through the jobs and only pass through the most recent
+def filter_by_creators_most_recent(*, evaluations):
+    # Go through the evaluations and only pass through the most recent
     # submission for each user
     users_seen = set()
     filtered_qs = []
 
-    for j in jobs:
-        creator = j.submission.creator
+    for e in evaluations:
+        creator = e.submission.creator
 
         if creator not in users_seen:
             users_seen.add(creator)
-            filtered_qs.append(j)
+            filtered_qs.append(e)
 
     return filtered_qs
 
 
-def filter_by_creators_best(*, jobs, ranks):
+def filter_by_creators_best(*, evaluations, ranks):
     best_result_per_user = {}
 
-    for j in jobs:
-        creator = j.submission.creator
+    for e in evaluations:
+        creator = e.submission.creator
 
         try:
-            this_rank = ranks[j.pk]
+            this_rank = ranks[e.pk]
         except KeyError:
             # This result was not ranked
             continue
@@ -39,7 +39,7 @@ def filter_by_creators_best(*, jobs, ranks):
         if creator not in best_result_per_user or (
             this_rank < ranks[best_result_per_user[creator].pk]
         ):
-            best_result_per_user[creator] = j
+            best_result_per_user[creator] = e
 
     return [r for r in best_result_per_user.values()]
 
@@ -50,8 +50,8 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     display_choice = challenge.evaluation_config.result_display_choice
     score_method_choice = challenge.evaluation_config.scoring_method_choice
 
-    Job = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Job"
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
     )
 
     metrics = (
@@ -88,9 +88,11 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     else:
         raise NotImplementedError
 
-    valid_jobs = (
-        Job.objects.filter(
-            submission__challenge=challenge, published=True, status=Job.SUCCESS
+    valid_evaluations = (
+        Evaluation.objects.filter(
+            submission__challenge=challenge,
+            published=True,
+            status=Evaluation.SUCCESS,
         )
         .order_by("-created")
         .select_related("submission__creator")
@@ -98,30 +100,36 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     )
 
     if display_choice == challenge.evaluation_config.MOST_RECENT:
-        valid_jobs = filter_by_creators_most_recent(jobs=valid_jobs)
+        valid_evaluations = filter_by_creators_most_recent(
+            evaluations=valid_evaluations
+        )
     elif display_choice == challenge.evaluation_config.BEST:
         all_positions = rank_results(
-            jobs=valid_jobs, metrics=metrics, score_method=score_method
+            evaluations=valid_evaluations,
+            metrics=metrics,
+            score_method=score_method,
         )
-        valid_jobs = filter_by_creators_best(
-            jobs=valid_jobs, ranks=all_positions.ranks
+        valid_evaluations = filter_by_creators_best(
+            evaluations=valid_evaluations, ranks=all_positions.ranks
         )
 
     final_positions = rank_results(
-        jobs=valid_jobs, metrics=metrics, score_method=score_method
+        evaluations=valid_evaluations,
+        metrics=metrics,
+        score_method=score_method,
     )
 
-    for j in Job.objects.filter(submission__challenge=challenge):
+    for e in Evaluation.objects.filter(submission__challenge=challenge):
         try:
-            rank = final_positions.ranks[j.pk]
-            rank_score = final_positions.rank_scores[j.pk]
-            rank_per_metric = final_positions.rank_per_metric[j.pk]
+            rank = final_positions.ranks[e.pk]
+            rank_score = final_positions.rank_scores[e.pk]
+            rank_per_metric = final_positions.rank_per_metric[e.pk]
         except KeyError:
             # This result will be excluded from the display
             rank = 0
             rank_score = 0.0
             rank_per_metric = {}
 
-        Job.objects.filter(pk=j.pk).update(
+        Evaluation.objects.filter(pk=e.pk).update(
             rank=rank, rank_score=rank_score, rank_per_metric=rank_per_metric
         )

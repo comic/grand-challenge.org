@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from grandchallenge.evaluation.models import (
     Config,
-    Job,
+    Evaluation,
     Method,
     Submission,
 )
@@ -37,7 +37,7 @@ class SubmissionAdmin(admin.ModelAdmin):
     )
 
 
-class JobAdmin(admin.ModelAdmin):
+class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "challenge", "creator", "status")
     list_filter = ("submission__challenge__short_name", "status")
@@ -54,4 +54,4 @@ class JobAdmin(admin.ModelAdmin):
 admin.site.register(Config, ConfigAdmin)
 admin.site.register(Method, MethodAdmin)
 admin.site.register(Submission, SubmissionAdmin)
-admin.site.register(Job, JobAdmin)
+admin.site.register(Evaluation, EvaluationAdmin)

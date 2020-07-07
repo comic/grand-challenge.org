@@ -6,30 +6,30 @@ from grandchallenge.evaluation.templatetags.evaluation_extras import user_error
 from grandchallenge.subdomains.utils import reverse
 
 
-def send_failed_job_email(job):
+def send_failed_evaluation_email(evaluation):
     site = Site.objects.get_current()
     message = (
         f"Dear {{}},\n\n"
         f"Unfortunately the evaluation for the submission to "
-        f"{job.challenge.short_name} failed with an error. "
+        f"{evaluation.challenge.short_name} failed with an error. "
         f"The error message is:\n\n"
-        f"{user_error(job.output)}\n\n"
+        f"{user_error(evaluation.output)}\n\n"
         f"You may wish to try and correct this, or contact the challenge "
         f"organizers. The following information may help them:\n"
-        f"User: {job.creator.username}\n"
-        f"Job ID: {job.pk}\n"
-        f"Submission ID: {job.submission.pk}\n\n"
+        f"User: {evaluation.creator.username}\n"
+        f"Evaluation ID: {evaluation.pk}\n"
+        f"Submission ID: {evaluation.submission.pk}\n\n"
         f"Regards,\n"
         f"{site.name}\n\n"
         f"This is an automated service email from {site.domain}."
     )
-    recipients = list(job.challenge.get_admins())
-    recipients.append(job.creator)
+    recipients = list(evaluation.challenge.get_admins())
+    recipients.append(evaluation.creator)
     for recipient in recipients:
         send_mail(
             subject=(
                 f"[{site.domain.lower()}] "
-                f"[{job.challenge.short_name.lower()}] "
+                f"[{evaluation.challenge.short_name.lower()}] "
                 f"Evaluation Failed"
             ),
             message=message.format(recipient.username),
@@ -38,17 +38,17 @@ def send_failed_job_email(job):
         )
 
 
-def send_new_result_email(result):
+def send_successful_evaluation_email(evaluation):
     site = Site.objects.get_current()
-    challenge = result.challenge
+    challenge = evaluation.challenge
 
     recipients = list(challenge.get_admins())
     message = (
         f"Dear {{}},\n\n"
         f"There is a new result for {challenge.short_name} from "
-        f"{result.submission.creator.username}. "
+        f"{evaluation.submission.creator.username}. "
     )
-    if result.published:
+    if evaluation.published:
         leaderboard_url = reverse(
             "evaluation:leaderboard",
             kwargs={"challenge_short_name": challenge.short_name},
@@ -57,11 +57,11 @@ def send_new_result_email(result):
             f"You can view the result on the leaderboard here: "
             f"{leaderboard_url}"
         )
-        recipients.append(result.submission.creator)
+        recipients.append(evaluation.submission.creator)
     else:
         message += (
             f"You can publish the result on the leaderboard here: "
-            f"{result.get_absolute_url()}"
+            f"{evaluation.get_absolute_url()}"
         )
     message += (
         f"\n\n"

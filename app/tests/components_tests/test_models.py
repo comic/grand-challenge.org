@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.factories import JobFactory
+from tests.factories import EvaluationFactory
 
 
 @pytest.mark.django_db
@@ -30,7 +30,7 @@ def test_update_started_adds_time():
 @pytest.mark.django_db
 def test_duration():
     j = AlgorithmJobFactory()
-    _ = JobFactory()
+    _ = EvaluationFactory()
 
     jbs = Job.objects.with_duration()
     assert jbs[0].duration is None
