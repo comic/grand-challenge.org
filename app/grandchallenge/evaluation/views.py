@@ -3,10 +3,11 @@ from typing import Dict
 
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files import File
-from django.db.models import Q
+from django.db.models import OuterRef, Q, Subquery
 from django.utils import timezone
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
@@ -235,6 +236,17 @@ class JobDetail(DetailView):
     # TODO - if participant: list only their jobs
     model = Job
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "metrics": self.object.outputs.get(
+                    interface__slug="metrics-json-file"
+                ).value
+            }
+        )
+        return context
+
 
 class Leaderboard(ListView):
     model = Job
@@ -255,15 +267,26 @@ class Leaderboard(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.select_related(
-            "submission__creator__user_profile"
-        ).prefetch_related("outputs")
-        return queryset.filter(
-            submission__challenge=self.request.challenge,
-            published=True,
-            status=Job.SUCCESS,
-            rank__gt=0,
+        queryset = (
+            queryset.select_related(
+                "submission__creator__user_profile", "submission__challenge"
+            )
+            .filter(
+                submission__challenge=self.request.challenge,
+                published=True,
+                status=Job.SUCCESS,
+                rank__gt=0,
+            )
+            .annotate(
+                metrics=Subquery(
+                    ComponentInterfaceValue.objects.filter(
+                        interface__slug="metrics-json-file",
+                        evaluation_jobs_as_output__pk=OuterRef("pk"),
+                    ).values("value")
+                )
+            )
         )
+        return queryset
 
 
 class JobUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
