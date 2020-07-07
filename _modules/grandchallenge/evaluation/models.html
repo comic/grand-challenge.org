@@ -743,11 +743,6 @@
     <span class="k">def</span> <span class="nf">executor_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">SubmissionEvaluator</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Legacy property&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">interface__slug</span><span class="o">=</span><span class="s2">&quot;metrics-json-file&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
-
     <span class="k">def</span> <span class="nf">create_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;metrics-json-file&quot;</span><span class="p">)</span>
 
