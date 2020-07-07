@@ -588,11 +588,6 @@ class Evaluation(UUIDModel, ComponentJob):
     def executor_cls(self):
         return SubmissionEvaluator
 
-    @property
-    def metrics(self):
-        """Legacy property"""
-        return self.outputs.get(interface__slug="metrics-json-file").value
-
     def create_result(self, *, result: dict):
         interface = ComponentInterface.objects.get(slug="metrics-json-file")
 

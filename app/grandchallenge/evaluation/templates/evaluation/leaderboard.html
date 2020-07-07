@@ -108,7 +108,7 @@
                         </td>
                     {% endif %}
 
-                    {% with job.metrics|get_jsonpath:evaluation_config.score_jsonpath as metric %}
+                    {% with job.metrics.0|get_jsonpath:evaluation_config.score_jsonpath as metric %}
                         <td data-order="{{ metric }}"
                                 {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                             class="toggable"
@@ -121,7 +121,7 @@
                                     {{ metric|floatformat:evaluation_config.score_decimal_places }}
                                     {% if evaluation_config.score_error_jsonpath %}
                                         &nbsp;±&nbsp;
-                                        {{ job.metrics|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
+                                        {{ job.metrics.0|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
                                     {% endif %}
                                     {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                                         &nbsp;(
@@ -136,14 +136,14 @@
                     {% endwith %}
 
                     {% for col in evaluation_config.extra_results_columns %}
-                        {% with job.metrics|get_jsonpath:col.path as metric %}
+                        {% with job.metrics.0|get_jsonpath:col.path as metric %}
                             <td data-order="{{ metric }}" class="toggable">
                                 <a href="{{ job.get_absolute_url }}">
                                     {% filter remove_whitespace %}
                                         {{ metric|floatformat:evaluation_config.score_decimal_places }}
                                         {% if col.error_path %}
                                             &nbsp;±&nbsp;
-                                            {{ job.metrics|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
+                                            {{ job.metrics.0|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
                                         {% endif %}
                                         {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                                             &nbsp;(

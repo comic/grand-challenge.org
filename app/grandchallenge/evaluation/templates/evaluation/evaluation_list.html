@@ -76,7 +76,7 @@
                     </td>
 
                     <td>
-                        {% if job.metrics %}
+                        {% if job.status == job.SUCCESS %}
                             {% if job.published %}
                                 <a href="{{ job.get_absolute_url }}">Result</a>
                             {% else %}
@@ -104,7 +104,7 @@
 
                     {% if "change_challenge" in challenge_perms %}
                         <td>
-                            {% if job.metrics %}
+                            {% if job.status == job.SUCCESS %}
                                 <form method="post"
                                       action="{% url 'evaluation:job-update' challenge_short_name=challenge.short_name pk=job.pk %}">
                                     {% csrf_token %}
