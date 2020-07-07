@@ -1,4 +1,5 @@
 USER_ID = $(shell id -u)
+export DOCKER_BUILDKIT = 1
 
 build_web:
 	docker build \
