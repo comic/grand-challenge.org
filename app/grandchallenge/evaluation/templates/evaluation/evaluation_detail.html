@@ -58,7 +58,7 @@
                 leaderboard
                 {% if "change_challenge" in challenge_perms %}
                     <form method="post"
-                          action="{% url 'evaluation:job-update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
                         {% csrf_token %}
                         <input type="hidden" name="published"
                                value="false">
@@ -73,7 +73,7 @@
                 {% if "change_challenge" in challenge_perms %}
                     <br>
                     <form method="post"
-                          action="{% url 'evaluation:job-update' challenge_short_name=challenge.short_name pk=object.pk %}">
+                          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}">
                         {% csrf_token %}
                         <input type="hidden" name="published"
                                value="true">

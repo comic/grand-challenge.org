@@ -106,7 +106,7 @@
                         <td>
                             {% if job.status == job.SUCCESS %}
                                 <form method="post"
-                                      action="{% url 'evaluation:job-update' challenge_short_name=challenge.short_name pk=job.pk %}">
+                                      action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=job.pk %}">
                                     {% csrf_token %}
                                     {% if job.published %}
                                         <input type="hidden" name="published"

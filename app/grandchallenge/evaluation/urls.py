@@ -5,7 +5,7 @@ from grandchallenge.evaluation.views import (
     ConfigUpdate,
     EvaluationDetail,
     EvaluationList,
-    JobUpdate,
+    EvaluationUpdate,
     Leaderboard,
     LegacySubmissionCreate,
     MethodCreate,
@@ -42,7 +42,7 @@ urlpatterns = [
     path("leaderboard/", Leaderboard.as_view(), name="leaderboard"),
     path("", EvaluationList.as_view(), name="list"),
     path("<uuid:pk>/", EvaluationDetail.as_view(), name="detail"),
-    path("<uuid:pk>/update/", JobUpdate.as_view(), name="job-update"),
+    path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
     path(
         "results/", RedirectView.as_view(url="../leaderboard/", permanent=True)
     ),

@@ -289,7 +289,9 @@ class Leaderboard(ListView):
         return queryset
 
 
-class JobUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+class EvaluationUpdate(
+    UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
+):
     model = Evaluation
     fields = ("published",)
     success_message = "Result successfully updated."
