@@ -27,7 +27,7 @@ from grandchallenge.core.validators import (
 from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
-    send_new_result_email,
+    send_successful_evaluation_email,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
@@ -600,7 +600,7 @@ class Evaluation(UUIDModel, ComponentJob):
                 interface=interface, value=result
             )
             self.outputs.add(output_civ)
-            send_new_result_email(self)
+            send_successful_evaluation_email(self)
 
     def clean(self):
         if self.submission.challenge != self.method.challenge:

@@ -38,17 +38,17 @@ def send_failed_evaluation_email(evaluation):
         )
 
 
-def send_new_result_email(result):
+def send_successful_evaluation_email(evaluation):
     site = Site.objects.get_current()
-    challenge = result.challenge
+    challenge = evaluation.challenge
 
     recipients = list(challenge.get_admins())
     message = (
         f"Dear {{}},\n\n"
         f"There is a new result for {challenge.short_name} from "
-        f"{result.submission.creator.username}. "
+        f"{evaluation.submission.creator.username}. "
     )
-    if result.published:
+    if evaluation.published:
         leaderboard_url = reverse(
             "evaluation:leaderboard",
             kwargs={"challenge_short_name": challenge.short_name},
@@ -57,11 +57,11 @@ def send_new_result_email(result):
             f"You can view the result on the leaderboard here: "
             f"{leaderboard_url}"
         )
-        recipients.append(result.submission.creator)
+        recipients.append(evaluation.submission.creator)
     else:
         message += (
             f"You can publish the result on the leaderboard here: "
-            f"{result.get_absolute_url()}"
+            f"{evaluation.get_absolute_url()}"
         )
     message += (
         f"\n\n"
