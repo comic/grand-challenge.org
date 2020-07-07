@@ -62,7 +62,6 @@
                 <th>Method</th>
                 <th>Status</th>
                 <th>Result</th>
-                <th>Comment</th>
             </tr>
             </thead>
             <tbody>
@@ -90,7 +89,9 @@
                     </span>
                     </td>
                     <td>
-                        <a href="{{ job.get_absolute_url }}">{{ job.metrics }}</a>
+                        {% if job.status == job.SUCCESS %}
+                            <a href="{{ job.get_absolute_url }}">Result</a>
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}

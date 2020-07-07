@@ -9,7 +9,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
-            <a href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">Evaluation Methods</a>
+            <a href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">Evaluation
+                Methods</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.pk }}</li>
@@ -87,7 +88,9 @@
                     </span>
                     </td>
                     <td>
-                        <a href="{{ job.get_absolute_url }}">{{ job.metrics }}</a>
+                        {% if job.status == job.SUCCESS %}
+                            <a href="{{ job.get_absolute_url }}">Result</a>
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}
