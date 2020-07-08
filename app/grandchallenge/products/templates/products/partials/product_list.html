@@ -34,10 +34,14 @@
       <div class="col-sm-3 bg-light pt-2">
         <div class="d-flex justify-content-between flex-column h-100">
           <div>
-            <div class="h6 text-muted d-flex justify-content-between">CE:
+            <div class="d-flex justify-content-between">
+              <div class="h6 text-muted mr-auto pb-1">CE: </div>
+              <div class="h6 pr-2">{% if product.ce_class %}{{product.ce_class}}{% endif %}</div>
               <img src="{% icon product 'ce_status' %}" alt="Logo" style="width:10%; height:10%">
             </div>
-            <div class="h6 text-muted d-flex justify-content-between">FDA:
+            <div class="d-flex justify-content-between">
+              <div class="h6 text-muted mr-auto">FDA: </div>
+              <div class="h6 pr-2">{% if product.fda_class %}{{product.fda_class}}{% endif %}</div>
               <img src="{% icon product 'fda_status' %}" alt="Logo" style="width:10%; height:10%">
             </div>
           </div>
