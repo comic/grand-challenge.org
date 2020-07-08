@@ -115,11 +115,6 @@ services:
         target: /var/run/docker.sock
     group_add:
       - ${DOCKER_GID-999} # The docker group is only needed for testing
-    healthcheck:
-      test: ["CMD-SHELL", "curl http://web:8000/ || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   http:
     image: grandchallenge/http:latest
@@ -139,7 +134,7 @@ services:
       - "443:443"
     depends_on:
       web:
-        condition: service_healthy
+        condition: service_started
       workstation-proxy:
         condition: service_started
 
@@ -167,7 +162,7 @@ services:
     hostname: "celery-worker"
     depends_on:
       web:
-        condition: service_healthy
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:
@@ -191,7 +186,7 @@ services:
     hostname: "celery-worker-evaluation"
     depends_on:
       web:
-        condition: service_healthy
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:
@@ -221,7 +216,7 @@ services:
     hostname: "celery-worker-gpu"
     depends_on:
       web:
-        condition: service_healthy
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:
@@ -248,7 +243,7 @@ services:
         "
     depends_on:
       web:
-        condition: service_healthy
+        condition: service_started
       postgres:
         condition: service_healthy
       redis:
