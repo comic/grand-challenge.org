@@ -49,30 +49,6 @@ from tests.workstations_tests.fixtures import (
 )
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--transactions",
-        action="store_true",
-        help="Only run transaction tests.",
-    )
-
-
-def pytest_runtest_setup(item):
-    only_transaction_tests = item.config.getoption("--transactions")
-    django_marker = item.get_closest_marker("django_db")
-
-    if django_marker is None:
-        transaction_required = False
-    else:
-        transaction_required = django_marker.kwargs.get("transaction", False)
-
-    if not (transaction_required == only_transaction_tests):
-        # Only run this test if
-        #  - it (does not) require transactions
-        #  - and we're (not) running transaction tests
-        pytest.skip("Skipping (non) transaction tests.")
-
-
 @pytest.fixture
 def two_workstation_sets() -> TwoWorkstationSets:
     return TwoWorkstationSets(ws1=workstation_set(), ws2=workstation_set())
