@@ -1,6 +1,4 @@
-from django.conf import settings
 from django.urls import include, path
-from django.views.decorators.cache import cache_page
 from rest_framework.routers import SimpleRouter
 
 from grandchallenge.retina_api import views
@@ -47,23 +45,17 @@ urlpatterns = [
     path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
         "archive_data/",
-        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
-            views.ArchiveAPIView.as_view()
-        ),
+        views.ArchiveAPIView.as_view(),
         name="archive-data-api-view",
     ),
     path(
         "archive_data/<uuid:pk>/",
-        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
-            views.ArchiveAPIView.as_view()
-        ),
+        views.ArchiveAPIView.as_view(),
         name="archive-data-api-view",
     ),
     path(
         "image/<str:image_type>/<str:patient_identifier>/<str:study_identifier>/<str:image_identifier>/<str:image_modality>/",
-        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
-            views.ImageView.as_view()
-        ),
+        views.ImageView.as_view(),
         name="image-api-view",
     ),
     path(
@@ -99,16 +91,12 @@ urlpatterns = [
     path("annotation/<int:user_id>/", include(annotation_router.urls)),
     path(
         "image/thumbnail/<uuid:pk>/",
-        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
-            views.B64ThumbnailAPIView.as_view()
-        ),
+        views.B64ThumbnailAPIView.as_view(),
         name="image-thumbnail",
     ),
     path(
         "image/thumbnail/<uuid:pk>/<int:width>/<int:height>/",
-        cache_page(settings.RETINA_IMAGE_CACHE_TIME)(
-            views.B64ThumbnailAPIView.as_view()
-        ),
+        views.B64ThumbnailAPIView.as_view(),
         name="image-thumbnail",
     ),
 ]
