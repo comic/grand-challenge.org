@@ -22,6 +22,14 @@ class Company(models.Model):
         blank=True,
         help_text="Short summary of this project, max 250 characters.",
     )
+    short_name = models.CharField(
+        max_length=500,
+        blank=False,
+        help_text=(
+            "short name used in url, specific css, files etc. No spaces allowed"
+        ),
+        unique=True,
+    )
 
     def __str__(self):
         return self.company_name
@@ -31,7 +39,9 @@ class Company(models.Model):
         ordering = ("pk",)
 
     def get_absolute_url(self):
-        return reverse("products:company-detail", kwargs={"pk": self.pk})
+        return reverse(
+            "products:company-detail", kwargs={"slug": self.short_name}
+        )
 
 
 class ProductImage(models.Model):
@@ -157,4 +167,7 @@ class Product(models.Model):
         ordering = ("pk",)
 
     def get_absolute_url(self):
-        return reverse("products:product-detail", kwargs={"pk": self.pk})
+        return reverse(
+            "products:product-detail", kwargs={"slug": self.short_name}
+        )
+        # return reverse("products:product-detail", kwargs={"pk": self.pk})

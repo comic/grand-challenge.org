@@ -84,6 +84,7 @@ class DataImporter(object):
         img_file = self.images_path.glob(f"**/logo/{image_name.lower()}.*")
         for file in img_file:
             c.logo = ImageFile(open(file, "rb"))
+        c.short_name = image_name.lower()
         c.save()
         return c
 
