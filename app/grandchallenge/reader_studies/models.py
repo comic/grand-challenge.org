@@ -1256,7 +1256,7 @@ class Answer(UUIDModel):
     )
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
-    explanation = models.TextField(blank=True)
+    explanation = models.TextField(blank=True, default="")
     history = HistoricalRecords(
         excluded_fields=[
             "created",
