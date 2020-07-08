@@ -1,5 +1,6 @@
 import pytest
 
+from grandchallenge.reader_studies.models import Question
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -87,7 +88,10 @@ def test_assign_score(settings):
 
     rs = ReaderStudyFactory()
     im = ImageFactory()
-    q = QuestionFactory(reader_study=rs)
+    q1 = QuestionFactory(reader_study=rs)
+    q2 = QuestionFactory(
+        reader_study=rs, answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE
+    )
     e, r1, r2 = UserFactory(), UserFactory(), UserFactory()
 
     rs.images.add(im)
@@ -95,18 +99,32 @@ def test_assign_score(settings):
     rs.add_reader(r1)
     rs.add_reader(r2)
 
-    a1 = AnswerFactory(question=q, creator=r1, answer="foo")
+    a1 = AnswerFactory(question=q1, creator=r1, answer="foo")
     a1.images.add(im)
     assert a1.score is None
 
     gt = AnswerFactory(
-        question=q, creator=e, answer="foo", is_ground_truth=True
+        question=q1, creator=e, answer="foo", is_ground_truth=True
     )
     gt.images.add(im)
     a1.refresh_from_db()
     assert a1.score == 1.0
 
-    a2 = AnswerFactory(question=q, creator=r2, answer="foo")
+    a2 = AnswerFactory(question=q1, creator=r2, answer="foo")
+    a2.images.add(im)
+    a2.refresh_from_db()
+    assert a2.score == 1.0
+
+    a1 = AnswerFactory(question=q2, creator=r1, answer=[])
+    a1.images.add(im)
+    assert a1.score is None
+
+    gt = AnswerFactory(question=q2, creator=e, answer=[], is_ground_truth=True)
+    gt.images.add(im)
+    a1.refresh_from_db()
+    assert a1.score == 1.0
+
+    a2 = AnswerFactory(question=q2, creator=r2, answer=[])
     a2.images.add(im)
     a2.refresh_from_db()
     assert a2.score == 1.0

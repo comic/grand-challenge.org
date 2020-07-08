@@ -1141,6 +1141,8 @@ class Question(UUIDModel):
             self.ANSWER_TYPE_MULTIPLE_CHOICE,
             self.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
         ):
+            if len(answer) == 0 and len(ground_truth) == 0:
+                return 1.0
             ans = np.zeros(max(len(answer), len(ground_truth)), dtype=int)
             gt = ans.copy()
             ans[: len(answer)] = answer
@@ -1256,7 +1258,7 @@ class Answer(UUIDModel):
     )
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
-    explanation = models.TextField(blank=True)
+    explanation = models.TextField(blank=True, default="")
     history = HistoricalRecords(
         excluded_fields=[
             "created",
