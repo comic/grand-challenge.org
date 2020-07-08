@@ -1141,6 +1141,8 @@ class Question(UUIDModel):
             self.ANSWER_TYPE_MULTIPLE_CHOICE,
             self.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
         ):
+            if len(answer) == 0 and len(ground_truth) == 0:
+                return 1.0
             ans = np.zeros(max(len(answer), len(ground_truth)), dtype=int)
             gt = ans.copy()
             ans[: len(answer)] = answer
