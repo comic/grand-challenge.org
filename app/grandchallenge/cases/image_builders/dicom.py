@@ -313,7 +313,7 @@ def _create_itk_from_dcm(
     # anymore. Then create a SimpleITK image from it.
     with tempfile.NamedTemporaryFile() as temp:
         temp.seek(0)
-        temp.write(dcm_array.tostring())
+        temp.write(dcm_array.tobytes())
         temp.flush()
         temp.seek(0)
 
