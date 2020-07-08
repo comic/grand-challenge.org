@@ -1296,6 +1296,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
         <span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mf">1.0</span>
             <span class="n">ans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
             <span class="n">gt</span> <span class="o">=</span> <span class="n">ans</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
             <span class="n">ans</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">)]</span> <span class="o">=</span> <span class="n">answer</span>
@@ -1411,7 +1413,7 @@
     <span class="p">)</span>
     <span class="n">is_ground_truth</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">score</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">explanation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">explanation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">history</span> <span class="o">=</span> <span class="n">HistoricalRecords</span><span class="p">(</span>
         <span class="n">excluded_fields</span><span class="o">=</span><span class="p">[</span>
             <span class="s2">&quot;created&quot;</span><span class="p">,</span>
