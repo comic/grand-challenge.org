@@ -4,8 +4,9 @@
 
 ARG PYTHON_VERSION
 ARG GDCM_VERSION_TAG
+ARG POETRY_HASH
 
-FROM grandchallenge/web-base:py${PYTHON_VERSION}-gdcm${GDCM_VERSION_TAG} as base
+FROM grandchallenge/web-base:py${PYTHON_VERSION}-gdcm${GDCM_VERSION_TAG}-${POETRY_HASH} as base
 
 ###################
 #  Webpack        #
