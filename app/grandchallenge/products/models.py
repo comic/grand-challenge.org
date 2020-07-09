@@ -22,14 +22,7 @@ class Company(models.Model):
         blank=True,
         help_text="Short summary of this project, max 250 characters.",
     )
-    slug = models.CharField(
-        max_length=500,
-        blank=False,
-        help_text=(
-            "short name used in url, specific css, files etc. No spaces allowed"
-        ),
-        unique=False,
-    )
+    slug = models.SlugField()
 
     def __str__(self):
         return self.company_name
@@ -91,14 +84,7 @@ class Product(models.Model):
     modified = models.DateField(default=timezone.now)
     product_name = models.CharField(max_length=200)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    slug = models.CharField(
-        max_length=500,
-        blank=False,
-        help_text=(
-            "short name used in url, specific css, files etc. No spaces allowed"
-        ),
-        unique=True,
-    )
+    slug = models.SlugField()
     description = models.TextField(
         blank=True, help_text="Short summary of this project.",
     )

@@ -1,4 +1,3 @@
-import re
 import shutil
 import tempfile
 import zipfile
@@ -6,6 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 from django.core.files.images import ImageFile
+from django.utils.text import slugify
+
 
 from grandchallenge.products.models import (
     Company,
@@ -79,7 +80,7 @@ class DataImporter(object):
         c.email = row["Email address (public)"]
         c.description = row["Company description"]
         c.description_short = self._split(row["Company description"], 200)
-        slug = re.sub(r"[\W_]+", "", row["Company name"]).lower()
+        slug = slugify(row["Company name"])
         c.slug = slug
         img_file = self.images_path.glob(f"**/logo/{slug}.*")
         for file in img_file:
@@ -92,7 +93,7 @@ class DataImporter(object):
         p.product_name = row["Product name"]
         p.company = c
         p.modified = row["Timestamp"]
-        p.slug = row["Short name"][:50]
+        p.slug = slugify(row["Short name"])
         p.description = row["Product description"]
         p.description_short = self._split(row["Product description"], 200)
         p.modality = row["Modality"]
@@ -102,7 +103,6 @@ class DataImporter(object):
         p.output_data = row["Output data"]
         p.file_format_output = row["File format of output data"]
         p.key_features = row["Key-feature(s)"]
-        # key_features_short=_split(row["Key-feature(s)"], 100)
         p.ce_status = STATUS_MAPPING.get(row["CE-certified"], Status.UNKNOWN)
         p.ce_class = row["If CE-certified, what class"]
         p.fda_status = STATUS_MAPPING.get(
