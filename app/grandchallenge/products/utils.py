@@ -1,3 +1,4 @@
+import re
 import shutil
 import tempfile
 import zipfile
@@ -78,13 +79,11 @@ class DataImporter(object):
         c.email = row["Email address (public)"]
         c.description = row["Company description"]
         c.description_short = self._split(row["Company description"], 200)
-        image_name = row["Company name"]
-        for ch in [" ", ".", "-", ","]:
-            image_name = image_name.replace(ch, "")
-        img_file = self.images_path.glob(f"**/logo/{image_name.lower()}.*")
+        slug = re.sub(r"[\W_]+", "", row["Company name"]).lower()
+        c.slug = slug
+        img_file = self.images_path.glob(f"**/logo/{slug}.*")
         for file in img_file:
             c.logo = ImageFile(open(file, "rb"))
-        c.short_name = image_name.lower()
         c.save()
         return c
 
