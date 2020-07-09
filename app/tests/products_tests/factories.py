@@ -12,6 +12,7 @@ class CompanyFactory(factory.DjangoModelFactory):
         model = Company
 
     company_name = factory.Sequence(lambda n: f"Company {n}")
+    slug = factory.Sequence(lambda n: f"product-{n}")
     founded = 2010
 
 
