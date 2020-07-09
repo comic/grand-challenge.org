@@ -43,7 +43,7 @@ build_http:
 build: build_web build_http
 
 push_web_base:
-	docker push grandchallenge/web-base:py$(PYTHON_VERSION)-gdcm$(GDCM_VERSION_TAG)-$(POETRY_HASH)
+	docker push grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
 
 push_web:
 	docker push grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
