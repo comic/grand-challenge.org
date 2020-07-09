@@ -4,15 +4,15 @@ PYTHON_VERSION = 3.8
 GDCM_VERSION_TAG = 3.0.6
 POETRY_HASH = $(shell shasum -a 512 poetry.lock | cut -c 1-8)
 
-build_web_base:
-	docker build \
+build_web:
+	@docker pull grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
+  		docker build \
         --build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
         --build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
-        -t grandchallenge/web-base:py$(PYTHON_VERSION)-gdcm$(GDCM_VERSION_TAG)-$(POETRY_HASH) \
+        -t grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) \
         -f dockerfiles/web-base/Dockerfile \
-        .
-
-build_web:
+        .; \
+  	}
 	docker build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
         --build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
@@ -53,7 +53,7 @@ push_http:
 	docker push grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
 	docker push grandchallenge/http:latest
 
-push: push_web push_http
+push: push_web_base push_web push_http
 
 migrations:
 	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations
