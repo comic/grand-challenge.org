@@ -28,7 +28,7 @@ class Company(models.Model):
         help_text=(
             "short name used in url, specific css, files etc. No spaces allowed"
         ),
-        unique=True,
+        unique=False,
     )
 
     def __str__(self):

@@ -20,7 +20,7 @@ STATUS_MAPPING = {
     "No or not yet": Status.NO,
     "Not applicable": Status.NA,
     "510(k) cleared": Status.CLEARED,
-    "de novo 510(k) cleared": Status.DE_NOVO_CLEARED,
+    "De novo 510(k) cleared": Status.DE_NOVO_CLEARED,
     "PMA approved": Status.PMA_APPROVED,
     "Yes": Status.YES,
     "No": Status.NO,
@@ -92,7 +92,7 @@ class DataImporter(object):
         p.product_name = row["Product name"]
         p.company = c
         p.modified = row["Timestamp"]
-        p.short_name = row["Short name"][:50]
+        p.slug = row["Short name"][:50]
         p.description = row["Product description"]
         p.description_short = self._split(row["Product description"], 200)
         p.modality = row["Modality"]
