@@ -30,7 +30,7 @@ def test_product_detail(client):
 
     response = get_view_for_user(
         viewname="products:product-detail",
-        reverse_kwargs={"pk": product.pk},
+        reverse_kwargs={"slug": product.slug},
         client=client,
         follow=True,
         user=get_anonymous_user(),
@@ -61,7 +61,7 @@ def test_company_detail(client):
 
     response = get_view_for_user(
         viewname="products:company-detail",
-        reverse_kwargs={"pk": company.pk},
+        reverse_kwargs={"slug": company.slug},
         client=client,
         follow=True,
         user=get_anonymous_user(),

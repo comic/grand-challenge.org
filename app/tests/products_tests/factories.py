@@ -20,7 +20,7 @@ class ProductFactory(factory.DjangoModelFactory):
         model = Product
 
     product_name = factory.Sequence(lambda n: f"Product {n}")
-    short_name = factory.Sequence(lambda n: f"product-{n}")
+    slug = factory.Sequence(lambda n: f"product-{n}")
     company = factory.SubFactory(CompanyFactory)
 
 
