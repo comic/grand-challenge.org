@@ -94,7 +94,6 @@ jobs:
         run: |
           make build
       - name: Push the containers
-        if: github.ref == 'refs/heads/master'
         run: |
           echo $DOCKER_PASSWORD | docker login --username $DOCKER_USER --password-stdin
           make push
