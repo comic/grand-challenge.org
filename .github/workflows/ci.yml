@@ -24,7 +24,6 @@ jobs:
         run: pre-commit run --all-files
 
   django-tests:
-    needs: [precommit]
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python ${{ env.PYTHON_VERSION }}
@@ -57,7 +56,6 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   docs:
-    needs: [precommit]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
