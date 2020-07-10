@@ -22,6 +22,7 @@ class Company(models.Model):
         blank=True,
         help_text="Short summary of this project, max 250 characters.",
     )
+    slug = models.SlugField()
 
     def __str__(self):
         return self.company_name
@@ -31,7 +32,7 @@ class Company(models.Model):
         ordering = ("pk",)
 
     def get_absolute_url(self):
-        return reverse("products:company-detail", kwargs={"pk": self.pk})
+        return reverse("products:company-detail", kwargs={"slug": self.slug})
 
 
 class ProductImage(models.Model):
@@ -83,14 +84,7 @@ class Product(models.Model):
     modified = models.DateField(default=timezone.now)
     product_name = models.CharField(max_length=200)
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    short_name = models.CharField(
-        max_length=500,
-        blank=False,
-        help_text=(
-            "short name used in url, specific css, files etc. No spaces allowed"
-        ),
-        unique=True,
-    )
+    slug = models.SlugField()
     description = models.TextField(
         blank=True, help_text="Short summary of this project.",
     )
@@ -151,10 +145,10 @@ class Product(models.Model):
     images = models.ManyToManyField(ProductImage)
 
     def __str__(self):
-        return self.short_name
+        return self.slug
 
     class Meta:
         ordering = ("pk",)
 
     def get_absolute_url(self):
-        return reverse("products:product-detail", kwargs={"pk": self.pk})
+        return reverse("products:product-detail", kwargs={"slug": self.slug})
