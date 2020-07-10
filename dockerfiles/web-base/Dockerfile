@@ -3,7 +3,7 @@
 ###################
 ARG PYTHON_VERSION
 
-FROM python:${PYTHON_VERSION}
+FROM python:${PYTHON_VERSION} as base
 
 ARG GDCM_VERSION_TAG
 
@@ -70,3 +70,12 @@ COPY poetry.lock /opt/poetry
 WORKDIR /opt/poetry
 RUN poetry config virtualenvs.create false \
     && poetry install --no-dev --no-root
+
+##################
+# TEST CONTAINER #
+##################
+FROM base as test-base
+
+# Add java and graphviz for plantuml documentation
+RUN apt-get update && apt-get install -y default-jre graphviz
+RUN poetry install --no-root

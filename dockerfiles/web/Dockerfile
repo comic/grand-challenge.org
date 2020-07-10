@@ -1,16 +1,11 @@
-###################
-#  Base Container #
-###################
-
+# Build args used in FROM
 ARG PYTHON_VERSION
 ARG GDCM_VERSION_TAG
 ARG POETRY_HASH
 
-FROM grandchallenge/web-base:${PYTHON_VERSION}-${GDCM_VERSION_TAG}-${POETRY_HASH} as base
-
-###################
-#  Webpack        #
-###################
+#############
+# Vendor JS #
+#############
 FROM node:11-alpine as npm
 RUN mkdir /src
 COPY package.json /src/
@@ -19,14 +14,10 @@ WORKDIR /src
 
 RUN npm install && npm run build
 
-###################
-#  Test Container #
-###################
-FROM base as test
-
-# Add java and graphviz for plantuml documentation
-RUN apt-get update && apt-get install -y default-jre graphviz
-RUN poetry install --no-root
+##################
+# Test Container #
+##################
+FROM grandchallenge/web-test-base:${PYTHON_VERSION}-${GDCM_VERSION_TAG}-${POETRY_HASH} as test
 
 COPY --chown=django:django setup.cfg /home/django
 
@@ -38,7 +29,7 @@ COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 ##################
 # Dist Container #
 ##################
-FROM base as dist
+FROM grandchallenge/web-base:${PYTHON_VERSION}-${GDCM_VERSION_TAG}-${POETRY_HASH} as dist
 
 USER django:django
 WORKDIR /app

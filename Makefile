@@ -9,7 +9,17 @@ build_web:
 		docker build \
 			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 			--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
+			--target base \
 			-t grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) \
+			-f dockerfiles/web-base/Dockerfile \
+			.; \
+	}
+	@docker pull grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
+		docker build \
+			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+			--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
+			--target test-base \
+			-t grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) \
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
@@ -45,6 +55,9 @@ build: build_web build_http
 push_web_base:
 	docker push grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
 
+push_web_test_base:
+	docker push grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
+
 push_web:
 	docker push grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
 	docker push grandchallenge/web:latest
@@ -53,7 +66,7 @@ push_http:
 	docker push grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
 	docker push grandchallenge/http:latest
 
-push: push_web_base push_web push_http
+push: push_web_base push_web_test_base push_web push_http
 
 migrations:
 	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations
