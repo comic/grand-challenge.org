@@ -45,9 +45,6 @@ jobs:
       - name: Build the containers
         run: |
           make -j2 build
-      - name: Build the docs
-        run: |
-          make docs
       - name: Run the django tests
         run: |
           docker pull crccheck/hello-world
@@ -66,6 +63,23 @@ jobs:
         env:
           DOCKER_USER: grandchallenge
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  docs:
+    needs: [precommit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set the environment
+        run: |
+          echo ::set-env name=GIT_COMMIT_ID::$(git describe --always --dirty)
+          echo ::set-env name=GIT_BRANCH_NAME::$(echo ${{ github.ref }} | cut -d/ -f3- | sed "s/[^[:alnum:]]//g")
+          echo ::set-env name=DOCKER_GID::$(getent group docker | cut -d: -f3)
+      - name: Build the containers
+        run: |
+          make -j2 build
+      - name: Build the docs
+        run: |
+          make docs
       - name: Deploy the documentation on master
         if: github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v3
