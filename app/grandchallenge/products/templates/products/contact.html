@@ -1,5 +1,6 @@
 {% extends 'products/base.html' %}
 {% load random_encode %}
+{% load static %}
 
 {% block title %}
   Contact
@@ -11,10 +12,25 @@
 
 {% block content %}
   <div>
-    <h1>Contact us</h1>
-    <p>Contact us if you have questions, ideas, would like to update information, or if you believe your product is missing from this overview. <br>
-    Please send an e-mail to:
-      <div class='text-black'> Kicky van Leeuwen <br>
-      <a href="{{ 'mailto:kicky.vanleeuwen@radboudumc.nl'|random_encode }}" class="text-radboud">kicky.vanleeuwen@radboudumc.com</a> </div>
+      <h1>Contact us</h1>
+      <p>Contact us if you have questions, ideas, would like to update information, or if you believe your product is missing from this overview. <br>
+        Please send an e-mail to:
+      <div class='text-black pb-5'>
+        Kicky van Leeuwen <br>
+        <a href="{{ 'mailto:kicky.vanleeuwen@radboudumc.nl'|random_encode }}" class="text-radboud">kicky.vanleeuwen@radboudumc.com</a>
+      </div>
+
+      <div class="text-black h6 small pb-5">
+        <img src="{% static 'products/images/radboudumc.jpg' %}" alt="Logo" style="width:20%"><br>
+        Diagnostic Image Analysis Group<br>
+        Department of Medical Imaging/Radiology<br><br>
+
+        Radboud university medical center<br>
+        Geert Grooteplein 10<br>
+        6525 GA Nijmegen<br>
+        The Netherlands<br>
+        <a href="https://www.radboudumc.nl" class="text-radboud">www.radboudumc.nl</a> <br>
+        <a href="https://www.diagnijmegen.nl" class="text-radboud">www.diagnijmegen.nl</a><br>
+      </div>
   </div>
 {% endblock %}
