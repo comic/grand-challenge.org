@@ -12,6 +12,7 @@ from config.settings import *  # noqa: F401, F403, E402
 ALLOWED_HOSTS = [".testserver"]
 
 WHITENOISE_AUTOREFRESH = True
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
