@@ -70,7 +70,7 @@ class MeasurementAnnotationSerializer(AbstractAnnotationSerializer):
 class BooleanClassificationAnnotationSerializer(AbstractAnnotationSerializer):
     class Meta:
         model = BooleanClassificationAnnotation
-        fields = ("image", "grader", "created", "name", "value")
+        fields = ("id", "image", "grader", "created", "name", "value")
 
 
 class SinglePolygonAnnotationSerializer(AbstractSingleAnnotationSerializer):
