@@ -1021,4 +1021,5 @@ class BooleanClassificationAnnotationViewSet(viewsets.ModelViewSet):
         drf_filters.DjangoFilterBackend,
     )
     pagination_class = None
+    filterset_fields = ("image",)
     queryset = BooleanClassificationAnnotation.objects.all()
