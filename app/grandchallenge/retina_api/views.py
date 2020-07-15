@@ -24,6 +24,7 @@ from rest_framework.views import APIView
 from rest_framework_guardian import filters
 
 from grandchallenge.annotations.models import (
+    BooleanClassificationAnnotation,
     ETDRSGridAnnotation,
     ImagePathologyAnnotation,
     ImageQualityAnnotation,
@@ -34,6 +35,7 @@ from grandchallenge.annotations.models import (
     SinglePolygonAnnotation,
 )
 from grandchallenge.annotations.serializers import (
+    BooleanClassificationAnnotationSerializer,
     ETDRSGridAnnotationSerializer,
     ImagePathologyAnnotationSerializer,
     ImageQualityAnnotationSerializer,
@@ -1007,3 +1009,17 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
     )
     pagination_class = None
     queryset = SinglePolygonAnnotation.objects.all()
+
+
+class BooleanClassificationAnnotationViewSet(viewsets.ModelViewSet):
+    permission_classes = (RetinaAPIPermission,)
+    authentication_classes = (authentication.TokenAuthentication,)
+    serializer_class = BooleanClassificationAnnotationSerializer
+    filter_backends = (
+        filters.ObjectPermissionsFilter,
+        RetinaAnnotationFilter,
+        drf_filters.DjangoFilterBackend,
+    )
+    pagination_class = None
+    filterset_fields = ("image",)
+    queryset = BooleanClassificationAnnotation.objects.all()
