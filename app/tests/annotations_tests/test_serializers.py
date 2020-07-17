@@ -69,7 +69,14 @@ from tests.serializer_helpers import (
                 "unique": True,
                 "factory": BooleanClassificationAnnotationFactory,
                 "serializer": BooleanClassificationAnnotationSerializer,
-                "fields": ("image", "grader", "created", "name", "value"),
+                "fields": (
+                    "id",
+                    "image",
+                    "grader",
+                    "created",
+                    "name",
+                    "value",
+                ),
             },
             {
                 "unique": True,

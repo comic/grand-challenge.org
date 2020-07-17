@@ -14,6 +14,7 @@ from grandchallenge.annotations.models import (
     PolygonAnnotationSet,
 )
 from grandchallenge.annotations.serializers import (
+    BooleanClassificationAnnotationSerializer,
     ETDRSGridAnnotationSerializer,
     ImagePathologyAnnotationSerializer,
     ImageQualityAnnotationSerializer,
@@ -29,6 +30,7 @@ from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
 from grandchallenge.retina_api.views import (
+    BooleanClassificationAnnotationViewSet,
     ETDRSGridAnnotationViewSet,
     GradersWithPolygonAnnotationsListView,
     ImageLevelAnnotationsForImageViewSet,
@@ -51,6 +53,7 @@ from grandchallenge.retina_api.views import (
 )
 from grandchallenge.subdomains.utils import reverse
 from tests.annotations_tests.factories import (
+    BooleanClassificationAnnotationFactory,
     ETDRSGridAnnotationFactory,
     ImagePathologyAnnotationFactory,
     ImageQualityAnnotationFactory,
@@ -1570,6 +1573,13 @@ class TestETDRSAnnotationViewSet:
             PolygonAnnotationSetFactory,
             NestedPolygonAnnotationSetSerializer,
             "retina-polygon-annotation-set",
+            False,
+        ),
+        (
+            BooleanClassificationAnnotationViewSet,
+            BooleanClassificationAnnotationFactory,
+            BooleanClassificationAnnotationSerializer,
+            "retina-boolean-classification-annotation",
             False,
         ),
     ),

@@ -23,6 +23,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyViewSet,
 )
 from grandchallenge.retina_api.views import (
+    BooleanClassificationAnnotationViewSet,
     ImageLevelAnnotationsForImageViewSet,
     LandmarkAnnotationSetViewSet,
     PathologyAnnotationViewSet,
@@ -118,6 +119,11 @@ router.register(
     r"retina/single-polygon-annotation",
     SinglePolygonViewSet,
     basename="retina-single-polygon-annotation",
+)
+router.register(
+    r"retina/boolean-classification-annotation",
+    BooleanClassificationAnnotationViewSet,
+    basename="retina-boolean-classification-annotation",
 )
 
 # Workstations
