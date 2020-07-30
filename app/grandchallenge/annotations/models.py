@@ -294,11 +294,20 @@ class ImagePathologyAnnotation(AbstractImageAnnotationModel):
 class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
     """Model to annotate presence of specific pathologies."""
 
+    rf_present = models.BooleanField(
+        help_text="Are retinal pathologies present in this image?",
+        null=True,
+        blank=True,
+    )
     amd_present = models.BooleanField(
-        help_text="Is Age-related Macular Degeneration present in this image?"
+        help_text="Is Age-related Macular Degeneration present in this image?",
+        null=True,
+        blank=True,
     )
     dr_present = models.BooleanField(
-        help_text="Is Diabetic Retinopathy present in this image?"
+        help_text="Is Diabetic Retinopathy present in this image?",
+        null=True,
+        blank=True,
     )
     oda_present = models.BooleanField(
         help_text="Are optic disc abnormalitites present in this image?"
@@ -307,7 +316,7 @@ class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
         help_text="Is myopia present in this image?"
     )
     cysts_present = models.BooleanField(
-        help_text="Are cysts present in this image?"
+        help_text="Are cysts present in this image?", null=True, blank=True
     )
     other_present = models.BooleanField(
         help_text="Are other findings present in this image?"
