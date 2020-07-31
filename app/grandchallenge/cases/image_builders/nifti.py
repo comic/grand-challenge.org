@@ -33,7 +33,7 @@ def image_builder_nifti(*, files: Set[Path], **_) -> ImageBuilderResult:
     new_image_files = set()
     consumed_files = set()
     for file in files:
-        if not (file.name.endswith('.nii') or file.name.endswith('.nii.gz')):
+        if not (file.name.endswith(".nii") or file.name.endswith(".nii.gz")):
             continue
 
         try:
