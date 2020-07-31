@@ -4,10 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from grandchallenge.cases.image_builders.nifti import (
-    format_error,
-    image_builder_nifti,
-)
+from grandchallenge.cases.image_builders.nifti import image_builder_nifti
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
 
@@ -23,7 +20,7 @@ def float_close(f1: float, f2: float) -> bool:
         RESOURCE_PATH / "image10x11x12.nii.gz",
     ),
 )
-def test_image_builder_fallback(tmpdir, src: Path):
+def test_image_builder_nifti(tmpdir, src: Path):
     dest = Path(tmpdir) / src.name
     shutil.copy(src, dest)
     files = {Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]}
@@ -39,3 +36,12 @@ def test_image_builder_fallback(tmpdir, src: Path):
     assert float_close(image.voxel_width_mm, 1.0)
     assert float_close(image.voxel_height_mm, 2.0)
     assert float_close(image.voxel_depth_mm, 3.0)
+
+
+def test_image_builder_with_other_file_extension(tmpdir):
+    dest = Path(tmpdir) / "image10x10x10.mha"
+    shutil.copy(RESOURCE_PATH / dest.name, dest)
+    files = {Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]}
+    result = image_builder_nifti(files=files)
+    assert result.consumed_files == set()
+    assert len(result.new_images) == 0
