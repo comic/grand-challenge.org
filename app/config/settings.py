@@ -581,6 +581,7 @@ if SENTRY_DSN:
             RedisIntegration(),
         ],
         release=COMMIT_ID,
+        traces_sample_rate=0.1,
     )
     ignore_logger("django.security.DisallowedHost")
 
