@@ -70,6 +70,7 @@ prometheus_client = "*"
 openslide-python = "*"
 humanize = "*"
 disposable-email-domains = "*"
+docutils = "<0.16" # Required for boto3 depedency resolution
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
