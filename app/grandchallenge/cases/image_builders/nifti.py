@@ -37,7 +37,10 @@ def image_builder_nifti(*, files: Set[Path], **_) -> ImageBuilderResult:
             continue
 
         try:
-            img: SimpleITK.Image = SimpleITK.ReadImage(str(file.absolute()))
+            reader = SimpleITK.ImageFileReader()
+            reader.SetImageIO("NiftiImageIO")
+            reader.SetFileName(str(file.absolute()))
+            img: SimpleITK.Image = reader.Execute()
         except RuntimeError:
             errors[file] = format_error("SimpleITK cannot open file")
             continue
