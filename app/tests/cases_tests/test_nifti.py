@@ -9,10 +9,6 @@ from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
 
 
-def float_close(f1: float, f2: float) -> bool:
-    return abs(f1 - f2) < 0.0001
-
-
 @pytest.mark.parametrize(
     "src",
     (
@@ -33,9 +29,9 @@ def test_image_builder_nifti(tmpdir, src: Path):
     assert image.width == 10
     assert image.height == 11
     assert image.depth == 12
-    assert float_close(image.voxel_width_mm, 1.0)
-    assert float_close(image.voxel_height_mm, 2.0)
-    assert float_close(image.voxel_depth_mm, 3.0)
+    assert image.voxel_width_mm == pytest.approx(1.0)
+    assert image.voxel_height_mm == pytest.approx(2.0)
+    assert image.voxel_depth_mm == pytest.approx(3.0)
 
 
 def test_image_builder_with_other_file_extension(tmpdir):
