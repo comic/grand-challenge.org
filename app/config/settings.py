@@ -88,10 +88,10 @@ REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
 USERENA_DEFAULT_PRIVACY = "open"
-LOGIN_URL = "/accounts/signin/"
-LOGOUT_URL = "/accounts/signout/"
+LOGIN_URL = "/users/signin/"
+LOGOUT_URL = "/users/signout/"
 
-LOGIN_REDIRECT_URL = "/accounts/login-redirect/"
+LOGIN_REDIRECT_URL = "/users/login-redirect/"
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
 
 # Do not give message popups saying "you have been logged out". Users are expected

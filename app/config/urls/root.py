@@ -66,7 +66,7 @@ urlpatterns = [
     # Used for logging in and managing grandchallenge.profiles. This is done on
     # the framework level because it is too hard to get this all under each
     # project
-    path("accounts/", include("grandchallenge.profiles.urls")),
+    path("users/", include("grandchallenge.profiles.urls")),
     path("socialauth/", include("social_django.urls", namespace="social")),
     path(
         "challenges/",
