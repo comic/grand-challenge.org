@@ -200,12 +200,10 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 
 CACHES = {
     "default": {
-        "BACKEND": "speedinfo.backends.proxy_cache",
-        "CACHE_BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
         "LOCATION": "memcached:11211",
     }
 }
-SPEEDINFO_STORAGE = "speedinfo.storage.cache.storage.CacheStorage"
 
 ROOT_URLCONF = "config.urls.root"
 CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
@@ -313,8 +311,6 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
-    # speedinfo at the end but before FetchFromCacheMiddleware
-    "speedinfo.middleware.ProfilerMiddleware",
 )
 
 # Python dotted path to the WSGI application used by Django's runserver.
@@ -354,7 +350,6 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # custom extensions
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
-    "speedinfo",  # for profiling views
     "drf_yasg",
     "markdownx",  # for editing markdown
 ]

@@ -557,14 +557,6 @@ six = "*"
 
 [[package]]
 category = "main"
-description = "Live profiling tool for Django framework to measure views performance"
-name = "django-speedinfo"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "2.0.1"
-
-[[package]]
-category = "main"
 description = "Support for many storage backends in Django"
 name = "django-storages"
 optional = false
@@ -2052,7 +2044,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "c94bdb59778c1599d14914cddf5fa7579a38eba56fb2ddb5a13fdeb3d7834f5d"
+content-hash = "b5b1e935280f24a2d272b739d307ac9cc2b4eb2caade221706b638fc29054c2e"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -2335,10 +2327,6 @@ django-select2 = [
 django-simple-history = [
     {file = "django-simple-history-2.11.0.tar.gz", hash = "sha256:d147d441165b802082647c86ca14776fe3574986053bbba90a9eaee1b315b826"},
     {file = "django_simple_history-2.11.0-py2.py3-none-any.whl", hash = "sha256:b46191e97bb59b82e0ef20ae316021f7337fec50e5acbbd5a757b37910759af0"},
-]
-django-speedinfo = [
-    {file = "django-speedinfo-2.0.1.tar.gz", hash = "sha256:5e2825dd11c8baebac772264ecf44347e08722597ea2e6019eb2bb8f8d595e34"},
-    {file = "django_speedinfo-2.0.1-py2.py3-none-any.whl", hash = "sha256:41e03702e6d7f1d64cb268c69fd5673c2902e210df5b9a125a7949c687adaee7"},
 ]
 django-storages = [
     {file = "django-storages-1.9.1.tar.gz", hash = "sha256:a59e9923cbce7068792f75344ed7727021ee4ac20f227cf17297d0d03d141e91"},
