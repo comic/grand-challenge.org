@@ -54,7 +54,6 @@ django-simple-history = "*"
 sentry-sdk = "*"
 django-cors-headers = "*"
 pyvips = "*"
-django-speedinfo = "*"
 drf-yasg = {version = "*", extras = ["validation"]}
 pydicom = "*"
 scikit-learn = "*"
