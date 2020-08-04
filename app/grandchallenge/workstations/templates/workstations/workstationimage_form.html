@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}New Workstation Image - {{ block.super }}{% endblock %}
+{% block title %}New Viewer Image - {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Viewer</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ workstation.get_absolute_url }}">{{ workstation.title }}</a>
@@ -16,6 +16,6 @@
 {% endblock %}
 
 {% block content %}
-    <h2>New Workstation Image</h2>
+    <h2>New Viewer Image</h2>
     {% crispy form %}
 {% endblock %}

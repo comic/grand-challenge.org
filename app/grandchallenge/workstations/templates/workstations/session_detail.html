@@ -7,7 +7,7 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Viewers</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ object.workstation_image.workstation.get_absolute_url }}">{{ object.workstation_image.workstation.title }}</a>
@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Workstation Session</h2>
+    <h2>Viewer Session</h2>
 
     {% if unsupported_browser_message %}
         <div class="alert alert-danger">{{ unsupported_browser_message }}</div>

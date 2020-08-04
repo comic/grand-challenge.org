@@ -72,10 +72,7 @@ logger = logging.getLogger(__name__)
 
 
 class AlgorithmCreate(
-    UserFormKwargsMixin,
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-    CreateView,
+    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
 ):
     model = Algorithm
     form_class = AlgorithmForm
