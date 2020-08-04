@@ -98,9 +98,7 @@ class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):
         return context
 
 
-class WorkstationCreate(
-    LoginRequiredMixin, PermissionRequiredMixin, CreateView
-):
+class WorkstationCreate(PermissionRequiredMixin, CreateView):
     model = Workstation
     form_class = WorkstationForm
     permission_required = (
