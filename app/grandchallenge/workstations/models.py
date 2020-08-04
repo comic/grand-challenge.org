@@ -92,7 +92,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
     def __str__(self):
         public = " (Public)" if self.public else ""
-        return f"Workstation {self.title}{public}"
+        return f"Viewer {self.title}{public}"
 
     def get_absolute_url(self):
         return reverse("workstations:detail", kwargs={"slug": self.slug})

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Workstation {{ object|yesno:"Update,Create" }} -
+{% block title %}Viewer {{ object|yesno:"Update,Create" }} -
     {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Viewers</a>
         </li>
         {% if object %}
             <li class="breadcrumb-item"><a
@@ -18,6 +18,6 @@
 {% endblock %}
 
 {% block content %}
-    <h2>{{ object|yesno:"Update,Create" }} a Workstation</h2>
+    <h2>{{ object|yesno:"Update,Create" }} a Viewer</h2>
     {% crispy form %}
 {% endblock %}

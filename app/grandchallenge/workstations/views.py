@@ -93,7 +93,7 @@ class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        context.update({"jumbotron_title": "Workstations"})
+        context.update({"jumbotron_title": "Viewers"})
 
         return context
 

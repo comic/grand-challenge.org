@@ -82,7 +82,7 @@ urlpatterns = [
         include("grandchallenge.archives.urls", namespace="archives"),
     ),
     path(
-        "workstations/",
+        "viewers/",
         include("grandchallenge.workstations.urls", namespace="workstations"),
     ),
     path(
@@ -92,7 +92,7 @@ urlpatterns = [
         ),
     ),
     path(
-        "workstation-configurations/",
+        "viewer-configurations/",
         include(
             "grandchallenge.workstation_configs.urls",
             namespace="workstation-configs",

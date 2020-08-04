@@ -7,7 +7,7 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Viewers</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.title }}</li>
@@ -26,61 +26,61 @@
         <p>
             <a class="btn btn-primary"
                href="{% url 'workstations:update' slug=object.slug %}">
-                <i class="fa fa-edit"></i> Edit this workstation
+                <i class="fa fa-edit"></i> Edit this viewer
             </a>
         </p>
 
         <h3>Users</h3>
 
         <h4>Editors</h4>
-        <p>The following users are able to edit and use this workstation:</p>
+        <p>The following users are able to edit and use this viewer:</p>
 
         <ul>
             {% for user in object.editors_group.user_set.all %}
                 <li>{{ user|user_profile_link }}</li>
             {% empty %}
-                <li>There are no editors for this workstation</li>
+                <li>There are no editors for this viewer</li>
             {% endfor %}
         </ul>
 
         <p>
             <a class="btn btn-primary"
                href="{% url 'workstations:editors-update' slug=object.slug %}">
-                <i class="fa fa-plus"></i> Add an editor for this workstation
+                <i class="fa fa-plus"></i> Add an editor for this viewer
             </a>
         </p>
 
         {% if object.public %}
 
             <div class="alert alert-danger">
-                This is a public workstation, all logged-in users are able
+                This is a public viewer, all logged-in users are able
                 to use it!
             </div>
 
         {% else %}
-            <h4>Workstation Users Group</h4>
-            <p>The following users are able to use this workstation:</p>
+            <h4>Viewer Users Group</h4>
+            <p>The following users are able to use this viewer:</p>
 
             <ul>
                 {% for user in object.users_group.user_set.all %}
                     <li>{{ user|user_profile_link }}</li>
                 {% empty %}
-                    <li>There are no users in this workstations user group.</li>
+                    <li>There are no users in this viewers user group.</li>
                 {% endfor %}
             </ul>
 
             <p>
                 <a class="btn btn-primary"
                    href="{% url 'workstations:users-update' slug=object.slug %}">
-                    <i class="fa fa-plus"></i> Add a user for this workstation
+                    <i class="fa fa-plus"></i> Add a user for this viewer
                 </a>
             </p>
 
             <h4>Reader Study Groups</h4>
 
             <p>
-                The following reader studies are using this workstation,
-                which allows their readers to use this workstation.
+                The following reader studies are using this viewer,
+                which allows their readers to use this viewer.
             </p>
 
             {% for rs in object.readerstudy_set.all %}
@@ -96,15 +96,15 @@
                 </ul>
             {% empty %}
                 <ul>
-                    <li>No reader studies are using this workstation.</li>
+                    <li>No reader studies are using this viewer.</li>
                 </ul>
             {% endfor %}
 
             <h4>Algorithm Groups</h4>
 
             <p>
-                The following algorithms are using this workstation,
-                which allows their users to use this workstation.
+                The following algorithms are using this viewer,
+                which allows their users to use this viewer.
             </p>
 
             {% for alg in object.algorithm_set.all %}
@@ -131,7 +131,7 @@
                 </ul>
             {% empty %}
                 <ul>
-                    <li>No algorithms are using this workstation.</li>
+                    <li>No algorithms are using this viewer.</li>
                 </ul>
             {% endfor %}
 
@@ -150,7 +150,7 @@
             <a class="btn btn-primary"
                href="{% url 'workstations:image-create' slug=object.slug %}">
                 <i class="fa fa-plus"></i> Upload a new container image for
-                this workstation
+                this viewer
             </a>
         </p>
 
