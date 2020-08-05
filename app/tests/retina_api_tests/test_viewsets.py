@@ -2321,6 +2321,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": None,
                 "pathology": None,
                 "retina_pathology": None,
+                "oct_retina_pathology": None,
                 "text": None,
             }
 
@@ -2336,6 +2337,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": None,
                 "pathology": None,
                 "retina_pathology": None,
+                "oct_retina_pathology": None,
                 "text": None,
             }
 
@@ -2352,6 +2354,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": None,
                 "pathology": None,
                 "retina_pathology": None,
+                "oct_retina_pathology": None,
                 "text": None,
             }
 
@@ -2369,6 +2372,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": None,
                 "pathology": None,
                 "retina_pathology": None,
+                "oct_retina_pathology": None,
                 "text": None,
             }
         elif user_type == "retina_grader":
@@ -2377,6 +2381,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": annotations["quality"].id,
                 "pathology": annotations["pathology"].id,
                 "retina_pathology": annotations["retina_pathology"].id,
+                "oct_retina_pathology": annotations["oct_retina_pathology"].id,
                 "text": annotations["text"].id,
             }
         else:

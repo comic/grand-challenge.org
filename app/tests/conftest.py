@@ -23,6 +23,7 @@ from tests.annotations_tests.factories import (
     IntegerClassificationAnnotationFactory,
     LandmarkAnnotationSetFactory,
     MeasurementAnnotationFactory,
+    OctRetinaImagePathologyAnnotationFactory,
     PolygonAnnotationSetFactory,
     RetinaImagePathologyAnnotationFactory,
     SingleLandmarkAnnotationFactory,
@@ -659,6 +660,9 @@ def image_with_image_level_annotations():
         "quality": ImageQualityAnnotationFactory(**factory_kwargs),
         "pathology": ImagePathologyAnnotationFactory(**factory_kwargs),
         "retina_pathology": RetinaImagePathologyAnnotationFactory(
+            **factory_kwargs
+        ),
+        "oct_retina_pathology": OctRetinaImagePathologyAnnotationFactory(
             **factory_kwargs
         ),
         "text": ImageTextAnnotationFactory(**factory_kwargs),

@@ -155,6 +155,7 @@ class RetinaImagePathologyAnnotationFactory(
     myopia_present = factory.fuzzy.FuzzyChoice([True, False])
     cysts_present = factory.fuzzy.FuzzyChoice([True, False])
     other_present = factory.fuzzy.FuzzyChoice([True, False])
+    rf_present = factory.fuzzy.FuzzyChoice([True, False])
 
 
 class OctRetinaImagePathologyAnnotationFactory(

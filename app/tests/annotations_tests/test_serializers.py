@@ -163,6 +163,7 @@ from tests.serializer_helpers import (
                     "myopia_present",
                     "cysts_present",
                     "other_present",
+                    "rf_present",
                 ),
             },
             {
