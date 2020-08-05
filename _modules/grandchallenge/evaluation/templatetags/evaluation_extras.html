@@ -156,9 +156,6 @@
 <span></span><span class="kn">import</span> <span class="nn">json</span>
 
 <span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">template</span>
-<span class="kn">from</span> <span class="nn">django.utils.html</span> <span class="kn">import</span> <span class="n">format_html</span>
-
-<span class="kn">from</span> <span class="nn">grandchallenge.teams.models</span> <span class="kn">import</span> <span class="n">Team</span>
 
 <span class="n">register</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">Library</span><span class="p">()</span>
 
@@ -230,20 +227,6 @@
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
         <span class="c1"># Not json encodable</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-
-
-<span class="nd">@register</span><span class="o">.</span><span class="n">filter</span>
-<span class="k">def</span> <span class="nf">get_team_html</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">team</span> <span class="o">=</span> <span class="n">Team</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">challenge</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">teammember__user</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">format_html</span><span class="p">(</span>
-            <span class="s1">&#39;&lt;a href=&quot;</span><span class="si">{}</span><span class="s1">&quot;&gt;</span><span class="si">{}</span><span class="s1">&lt;/a&gt;&#39;</span><span class="p">,</span> <span class="n">team</span><span class="o">.</span><span class="n">get_absolute_url</span><span class="p">(),</span> <span class="n">team</span><span class="o">.</span><span class="n">name</span>
-        <span class="p">)</span>
-
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 </pre></div>
 
            </div>
