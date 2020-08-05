@@ -934,6 +934,7 @@ class ImageLevelAnnotationsForImageViewSet(
             "quality": ImageQualityAnnotation,
             "pathology": ImagePathologyAnnotation,
             "retina_pathology": RetinaImagePathologyAnnotation,
+            "oct_retina_pathology": OctRetinaImagePathologyAnnotation,
             "text": ImageTextAnnotation,
         }
         image_id = self.kwargs.get("pk")

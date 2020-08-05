@@ -95,6 +95,7 @@ class ImageLevelAnnotationsForImageSerializer(serializers.BaseSerializer):
     quality = serializers.UUIDField(allow_null=True)
     pathology = serializers.UUIDField(allow_null=True)
     retina_pathology = serializers.UUIDField(allow_null=True)
+    oct_retina_pathology = serializers.UUIDField(allow_null=True)
     text = serializers.UUIDField(allow_null=True)
 
     def to_representation(self, instance):
@@ -102,5 +103,6 @@ class ImageLevelAnnotationsForImageSerializer(serializers.BaseSerializer):
             "quality": instance.get("quality"),
             "pathology": instance.get("pathology"),
             "retina_pathology": instance.get("retina_pathology"),
+            "oct_retina_pathology": instance.get("oct_retina_pathology"),
             "text": instance.get("text"),
         }
