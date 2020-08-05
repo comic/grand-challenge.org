@@ -5,6 +5,7 @@ from grandchallenge.annotations.models import (
     ETDRSGridAnnotation,
     LandmarkAnnotationSet,
     MeasurementAnnotation,
+    OctRetinaImagePathologyAnnotation,
     PolygonAnnotationSet,
     RetinaImagePathologyAnnotation,
     SingleLandmarkAnnotation,
@@ -48,6 +49,11 @@ class RetinaImagePathologyAnnotationAdmin(admin.ModelAdmin):
     readonly_fields = ("grader", "image")
 
 
+class OctRetinaImagePathologyAnnotationAdmin(admin.ModelAdmin):
+    search_fields = ("grader__username", "image__name")
+    readonly_fields = ("grader", "image")
+
+
 admin.site.register(ETDRSGridAnnotation)
 admin.site.register(MeasurementAnnotation)
 admin.site.register(
@@ -59,4 +65,7 @@ admin.site.register(LandmarkAnnotationSet, LandmarkAnnotationSetAdmin)
 admin.site.register(SingleLandmarkAnnotation)
 admin.site.register(
     RetinaImagePathologyAnnotation, RetinaImagePathologyAnnotationAdmin
+)
+admin.site.register(
+    OctRetinaImagePathologyAnnotation, OctRetinaImagePathologyAnnotationAdmin
 )
