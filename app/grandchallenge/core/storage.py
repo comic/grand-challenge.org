@@ -116,6 +116,7 @@ class PublicS3Storage(S3Storage):
 
 private_s3_storage = PrivateS3Storage()
 protected_s3_storage = ProtectedS3Storage()
+internal_protected_s3_storage = ProtectedS3Storage(internal=True)
 public_s3_storage = PublicS3Storage()
 
 storages = [private_s3_storage, protected_s3_storage, public_s3_storage]
