@@ -9,6 +9,7 @@ from grandchallenge.annotations.models import (
     ImageTextAnnotation,
     LandmarkAnnotationSet,
     MeasurementAnnotation,
+    OctRetinaImagePathologyAnnotation,
     PolygonAnnotationSet,
     RetinaImagePathologyAnnotation,
     SingleLandmarkAnnotation,
@@ -198,6 +199,24 @@ class RetinaImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):
             "cysts_present",
             "other_present",
             "rf_present",
+        )
+
+
+class OctRetinaImagePathologyAnnotationSerializer(
+    AbstractAnnotationSerializer
+):
+    class Meta:
+        model = OctRetinaImagePathologyAnnotation
+        fields = (
+            "id",
+            "created",
+            "grader",
+            "image",
+            "macular",
+            "myopia",
+            "optic_disc",
+            "other",
+            "layers",
         )
 
 

@@ -322,6 +322,26 @@ class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
     )
 
 
+class OctRetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
+    """Model to annotate presence of specific pathologies on OCT."""
+
+    macular = models.BooleanField(
+        help_text="Are pathologies present in macular OCT?", default=False
+    )
+    myopia = models.BooleanField(
+        help_text="Are myopia related pathologies present?", default=False
+    )
+    optic_disc = models.BooleanField(
+        help_text="Are pathologies present in optic disc OCT?", default=False
+    )
+    other = models.BooleanField(
+        help_text="Are other pathologies present in this image?", default=False
+    )
+    layers = models.BooleanField(
+        help_text="Are retinal layers annotated?", default=False
+    )
+
+
 class ImageTextAnnotation(AbstractImageAnnotationModel):
     """Model to annotate a textual comment for an image."""
 
