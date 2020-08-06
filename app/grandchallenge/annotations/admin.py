@@ -28,7 +28,7 @@ class PolygonAnnotationSetAdmin(admin.ModelAdmin):
     search_fields = ("grader__username", "created", "name", "image__name")
     list_filter = ("created", "name")
     inlines = [SinglePolygonAnnotationInline]
-    readonly_fields = ("grader", "image", "name", "created")
+    readonly_fields = ("grader", "image", "created")
 
 
 class SingleLandmarkAnnotationInline(admin.StackedInline):
