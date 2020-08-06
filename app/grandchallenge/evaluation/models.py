@@ -8,6 +8,7 @@ from django.db.models import BooleanField
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
 from grandchallenge.components.models import (
@@ -392,6 +393,9 @@ class Submission(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
+    algorithm = models.ForeignKey(
+        Algorithm, null=True, on_delete=models.SET_NULL
+    )
     file = models.FileField(
         upload_to=submission_file_path,
         validators=[
