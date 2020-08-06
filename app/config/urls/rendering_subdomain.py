@@ -1,4 +1,3 @@
-from django.conf.urls import include
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import path
@@ -27,7 +26,6 @@ urlpatterns = [
             template_name="robots.txt", content_type="text/plain"
         ),
     ),
-    path("", include("grandchallenge.favicons.urls", namespace="favicons")),
     path(
         "workstations/<slug>/sessions/<uuid:pk>/",
         SessionDetail.as_view(),
