@@ -88,10 +88,10 @@ REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
 USERENA_DEFAULT_PRIVACY = "open"
-LOGIN_URL = "/accounts/signin/"
-LOGOUT_URL = "/accounts/signout/"
+LOGIN_URL = "/users/signin/"
+LOGOUT_URL = "/users/signout/"
 
-LOGIN_REDIRECT_URL = "/accounts/login-redirect/"
+LOGIN_REDIRECT_URL = "/users/login-redirect/"
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
 
 # Do not give message popups saying "you have been logged out". Users are expected
@@ -200,12 +200,10 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 
 CACHES = {
     "default": {
-        "BACKEND": "speedinfo.backends.proxy_cache",
-        "CACHE_BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
         "LOCATION": "memcached:11211",
     }
 }
-SPEEDINFO_STORAGE = "speedinfo.storage.cache.storage.CacheStorage"
 
 ROOT_URLCONF = "config.urls.root"
 CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
@@ -313,8 +311,6 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
-    # speedinfo at the end but before FetchFromCacheMiddleware
-    "speedinfo.middleware.ProfilerMiddleware",
 )
 
 # Python dotted path to the WSGI application used by Django's runserver.
@@ -346,7 +342,6 @@ THIRD_PARTY_APPS = [
     "rest_framework",  # provides REST API
     "rest_framework.authtoken",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
-    "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
     "dal",  # for autocompletion of selection fields
@@ -354,7 +349,6 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # custom extensions
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
-    "speedinfo",  # for profiling views
     "drf_yasg",
     "markdownx",  # for editing markdown
 ]
@@ -390,7 +384,6 @@ LOCAL_APPS = [
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
-    "grandchallenge.favicons",
     "grandchallenge.products",
     "grandchallenge.overview_pages",
     "grandchallenge.serving",
@@ -581,6 +574,9 @@ if SENTRY_DSN:
             RedisIntegration(),
         ],
         release=COMMIT_ID,
+        traces_sample_rate=float(
+            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")
+        ),
     )
     ignore_logger("django.security.DisallowedHost")
 
@@ -625,6 +621,7 @@ CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7260"))
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
 }
+CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
 
 if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
     celery_access_key = quote(os.environ.get("BROKER_AWS_ACCESS_KEY"), safe="")

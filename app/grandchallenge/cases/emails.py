@@ -31,7 +31,7 @@ def send_failed_file_import(file_errors, upload_session):
         f"{object_msg}:"
         f"\n\n{''.join(file_errors)}"
         "The following file formats are supported: "
-        ".mha, .mhd, .raw, .zraw, .dcm, .tiff, .png, .jpeg and .jpg."
+        ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, .tiff, .png, .jpeg and .jpg."
     )
 
     send_mail(

@@ -1,9 +1,6 @@
 import json
 
 from django import template
-from django.utils.html import format_html
-
-from grandchallenge.teams.models import Team
 
 register = template.Library()
 
@@ -75,17 +72,3 @@ def json_dumps(obj: dict):
     except TypeError:
         # Not json encodable
         return str(obj)
-
-
-@register.filter
-def get_team_html(obj):
-    try:
-        team = Team.objects.get(
-            challenge=obj.challenge, teammember__user=obj.creator,
-        )
-        return format_html(
-            '<a href="{}">{}</a>', team.get_absolute_url(), team.name
-        )
-
-    except Exception:
-        return ""

@@ -83,12 +83,12 @@
 
                     <td>
 
-                        {{ evaluation.submission.creator|user_profile_link }}
+                        {{ evaluation.creator|user_profile_link }}
 
                         {% if evaluation_config.use_teams %}
-                            {% with evaluation|get_team_html as team_html %}
-                                {% if team_html %}
-                                    ({{ team_html }})
+                            {% with user_teams|get_key:evaluation.creator.username as team %}
+                                {% if team %}
+                                    (<a href="{{ team.1 }}">{{ team.0 }}</a>)
                                 {% endif %}
                             {% endwith %}
                         {% endif %}

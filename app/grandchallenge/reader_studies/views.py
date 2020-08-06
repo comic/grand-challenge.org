@@ -125,10 +125,7 @@ class ReaderStudyList(PermissionListMixin, ListView):
 
 
 class ReaderStudyCreate(
-    UserFormKwargsMixin,
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-    CreateView,
+    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
 ):
     model = ReaderStudy
     form_class = ReaderStudyCreateForm

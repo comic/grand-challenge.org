@@ -308,7 +308,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
                 response.status_code
             ),
         )
-        resp = self.client.get("/accounts/" + username + "/")
+        resp = self.client.get("/users/" + username + "/")
         self.assertEqual(
             resp.status_code,
             200,

@@ -94,10 +94,7 @@ class ArchiveList(PermissionListMixin, ListView):
 
 
 class ArchiveCreate(
-    UserFormKwargsMixin,
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-    CreateView,
+    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
 ):
     model = Archive
     form_class = ArchiveForm

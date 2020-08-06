@@ -27,6 +27,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.teams.models import Team
 
 
 class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
@@ -211,7 +212,35 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
     model = Submission
 
 
-class EvaluationList(UserIsChallengeParticipantOrAdminMixin, ListView):
+class TeamContextMixin:
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        evaluation_config = self.request.challenge.evaluation_config
+
+        if evaluation_config.use_teams:
+            user_teams = {
+                teammember.user.username: (team.name, team.get_absolute_url())
+                for team in Team.objects.filter(
+                    challenge=self.request.challenge
+                )
+                .select_related("challenge")
+                .prefetch_related("teammember_set__user")
+                for teammember in team.teammember_set.all()
+            }
+        else:
+            user_teams = {}
+
+        context.update(
+            {"evaluation_config": evaluation_config, "user_teams": user_teams}
+        )
+
+        return context
+
+
+class EvaluationList(
+    UserIsChallengeParticipantOrAdminMixin, TeamContextMixin, ListView
+):
     model = Evaluation
 
     def get_queryset(self):
@@ -250,22 +279,9 @@ class EvaluationDetail(DetailView):
         return context
 
 
-class Leaderboard(ListView):
+class Leaderboard(TeamContextMixin, ListView):
     model = Evaluation
     template_name = "evaluation/leaderboard.html"
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
-        context.update(
-            {
-                "evaluation_config": Config.objects.get(
-                    challenge=self.request.challenge
-                )
-            }
-        )
-
-        return context
 
     def get_queryset(self):
         queryset = super().get_queryset()

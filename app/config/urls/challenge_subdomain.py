@@ -13,12 +13,6 @@ urlpatterns = [
         name="subdomain_robots_txt",
     ),
     path(
-        "",
-        include(
-            "grandchallenge.favicons.urls", namespace="subdomain-favicons"
-        ),
-    ),
-    path(
         "evaluation/",
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
     ),

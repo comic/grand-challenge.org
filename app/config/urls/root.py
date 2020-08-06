@@ -54,7 +54,6 @@ urlpatterns = [
         {"sitemaps": sitemaps},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path("", include("grandchallenge.favicons.urls", namespace="favicons")),
     path(settings.ADMIN_URL, admin.site.urls),
     path(
         "stats/",
@@ -66,7 +65,7 @@ urlpatterns = [
     # Used for logging in and managing grandchallenge.profiles. This is done on
     # the framework level because it is too hard to get this all under each
     # project
-    path("accounts/", include("grandchallenge.profiles.urls")),
+    path("users/", include("grandchallenge.profiles.urls")),
     path("socialauth/", include("social_django.urls", namespace="social")),
     path(
         "challenges/",
@@ -82,7 +81,7 @@ urlpatterns = [
         include("grandchallenge.archives.urls", namespace="archives"),
     ),
     path(
-        "workstations/",
+        "viewers/",
         include("grandchallenge.workstations.urls", namespace="workstations"),
     ),
     path(
@@ -92,7 +91,7 @@ urlpatterns = [
         ),
     ),
     path(
-        "workstation-configurations/",
+        "viewer-configurations/",
         include(
             "grandchallenge.workstation_configs.urls",
             namespace="workstation-configs",
