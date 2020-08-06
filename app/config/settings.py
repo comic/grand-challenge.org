@@ -342,7 +342,6 @@ THIRD_PARTY_APPS = [
     "rest_framework",  # provides REST API
     "rest_framework.authtoken",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
-    "favicon",  # favicon management
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
     "dal",  # for autocompletion of selection fields
@@ -385,7 +384,6 @@ LOCAL_APPS = [
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
-    "grandchallenge.favicons",
     "grandchallenge.products",
     "grandchallenge.overview_pages",
     "grandchallenge.serving",

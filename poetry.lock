@@ -417,17 +417,6 @@ celery = ">=4.4,<5.0"
 
 [[package]]
 category = "main"
-description = "For- and backwards compatibility layer for Django 1.4, 1.7, 1.8, 1.9, 1.10, and 1.11"
-name = "django-compat"
-optional = false
-python-versions = "*"
-version = "1.0.15"
-
-[package.dependencies]
-six = ">=1.10.0"
-
-[[package]]
-category = "main"
 description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
 name = "django-cors-headers"
 optional = false
@@ -480,19 +469,6 @@ version = "3.0.3"
 
 [package.dependencies]
 six = ">=1.2"
-
-[[package]]
-category = "main"
-description = "Favicon app for django"
-name = "django-favicon-plus"
-optional = false
-python-versions = "*"
-version = "0.0.8"
-
-[package.dependencies]
-django = "*"
-django-compat = "*"
-pillow = "*"
 
 [[package]]
 category = "main"
@@ -2044,7 +2020,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "b5b1e935280f24a2d272b739d307ac9cc2b4eb2caade221706b638fc29054c2e"
+content-hash = "399ce9c75c18e1427daa3140c90d9eaa9fe588729dd995d069899f93beeeb9eb"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -2282,9 +2258,6 @@ django-celery-results = [
     {file = "django_celery_results-1.2.1-py2.py3-none-any.whl", hash = "sha256:a29ab580f0e38c66c39f51cc426bbdbb2a391b8cc0867df9dea748db2c961db2"},
     {file = "django_celery_results-1.2.1.tar.gz", hash = "sha256:e390f70cc43bbc2cd7c8e4607dc29ab6211a2ab968f93677583f0160921f670c"},
 ]
-django-compat = [
-    {file = "django-compat-1.0.15.tar.gz", hash = "sha256:3ac9a3bedc56b9365d9eb241bc5157d0c193769bf995f9a78dc1bc24e7c2331b"},
-]
 django-cors-headers = [
     {file = "django-cors-headers-3.4.0.tar.gz", hash = "sha256:f5218f2f0bb1210563ff87687afbf10786e080d8494a248e705507ebd92d7153"},
     {file = "django_cors_headers-3.4.0-py3-none-any.whl", hash = "sha256:5240062ef0b16668ce8a5f43324c388d65f5439e1a30e22c38684d5ddaff0d15"},
@@ -2304,9 +2277,6 @@ django-debug-toolbar = [
 django-extensions = [
     {file = "django-extensions-3.0.3.tar.gz", hash = "sha256:6230898b1e1d5deb3ddab8335b2d270edb7afa4ef916a95e479a19fdfb0464cb"},
     {file = "django_extensions-3.0.3-py2.py3-none-any.whl", hash = "sha256:d5fcf8f3bab019487e07473c24453bccd5acfb4440f3ef36788294c307b09d4c"},
-]
-django-favicon-plus = [
-    {file = "django-favicon-plus-0.0.8.tar.gz", hash = "sha256:3394a951d8dc611eb1ea027ad1181d7f650ca234506585b27e93d7ed06b981bf"},
 ]
 django-filter = [
     {file = "django-filter-2.3.0.tar.gz", hash = "sha256:11e63dd759835d9ba7a763926ffb2662cf8a6dcb4c7971a95064de34dbc7e5af"},

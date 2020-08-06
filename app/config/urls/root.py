@@ -54,7 +54,6 @@ urlpatterns = [
         {"sitemaps": sitemaps},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path("", include("grandchallenge.favicons.urls", namespace="favicons")),
     path(settings.ADMIN_URL, admin.site.urls),
     path(
         "stats/",
