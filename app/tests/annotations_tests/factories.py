@@ -15,6 +15,7 @@ from grandchallenge.annotations.models import (
     IntegerClassificationAnnotation,
     LandmarkAnnotationSet,
     MeasurementAnnotation,
+    OctRetinaImagePathologyAnnotation,
     PolygonAnnotationSet,
     RetinaImagePathologyAnnotation,
     SingleLandmarkAnnotation,
@@ -154,6 +155,20 @@ class RetinaImagePathologyAnnotationFactory(
     myopia_present = factory.fuzzy.FuzzyChoice([True, False])
     cysts_present = factory.fuzzy.FuzzyChoice([True, False])
     other_present = factory.fuzzy.FuzzyChoice([True, False])
+    rf_present = factory.fuzzy.FuzzyChoice([True, False])
+
+
+class OctRetinaImagePathologyAnnotationFactory(
+    DefaultImageAnnotationModelFactory
+):
+    class Meta:
+        model = OctRetinaImagePathologyAnnotation
+
+    macular = factory.fuzzy.FuzzyChoice([True, False])
+    myopia = factory.fuzzy.FuzzyChoice([True, False])
+    optic_disc = factory.fuzzy.FuzzyChoice([True, False])
+    other = factory.fuzzy.FuzzyChoice([True, False])
+    layers = factory.fuzzy.FuzzyChoice([True, False])
 
 
 class ImageTextAnnotationFactory(DefaultImageAnnotationModelFactory):

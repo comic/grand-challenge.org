@@ -12,6 +12,7 @@ from tests.annotations_tests.factories import (
     IntegerClassificationAnnotationFactory,
     LandmarkAnnotationSetFactory,
     MeasurementAnnotationFactory,
+    OctRetinaImagePathologyAnnotationFactory,
     PolygonAnnotationSetFactory,
     RetinaImagePathologyAnnotationFactory,
     SingleLandmarkAnnotationFactory,
@@ -115,6 +116,7 @@ class TestPermissions:
         ImageQualityAnnotationFactory,
         ImagePathologyAnnotationFactory,
         RetinaImagePathologyAnnotationFactory,
+        OctRetinaImagePathologyAnnotationFactory,
         ImageTextAnnotationFactory,
     ),
 )
