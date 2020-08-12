@@ -448,7 +448,7 @@ def _handle_raw_files(
 ):
     unconsumed_files = input_files - consumed_files
 
-    errors = []
+    n_errors = 0
 
     for filepath in consumed_files:
         raw_image = filepath_lookup[str(filepath)]
@@ -462,7 +462,7 @@ def _handle_raw_files(
         raw_file.error = (
             f"File could not be processed by any image builder:\n\n{error}"
         )
-        errors.append(f"{raw_file.filename}:\n{error}\n\n")
+        n_errors += 1
         raw_file.save()
 
     if unconsumed_files:
@@ -471,7 +471,7 @@ def _handle_raw_files(
         )
 
         if upload_session.creator and upload_session.creator.email:
-            send_failed_file_import(errors, upload_session)
+            send_failed_file_import(n_errors, upload_session)
 
 
 def _delete_session_files(*, session_files, upload_session):

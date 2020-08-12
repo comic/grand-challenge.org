@@ -3,7 +3,7 @@ from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
 
-def send_failed_file_import(file_errors, upload_session):
+def send_failed_file_import(n_errors, upload_session):
     subject = f"[{Site.objects.get_current().domain.lower()}] "
     object_msg = ""
 
@@ -27,11 +27,11 @@ def send_failed_file_import(file_errors, upload_session):
         )
 
     msg = (
-        "The following image files could not be processed "
-        f"{object_msg}:"
-        f"\n\n{''.join(file_errors)}"
+        f"{n_errors} image files could not be processed "
+        f"{object_msg}."
         "The following file formats are supported: "
-        ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, .tiff, .png, .jpeg and .jpg."
+        ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, .tiff, .png, .jpeg and .jpg. "
+        f"Please see {upload_session.get_absolute_url()} for more information."
     )
 
     send_mail(
