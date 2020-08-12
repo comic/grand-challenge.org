@@ -21,10 +21,6 @@ def migrate_annotations(annotations):  # noqa: C901
     oct_no_match = []
     no_match = []
 
-    old_to_boolean_lesion_map_lower = map(
-        lambda s: s.lower(), old_to_boolean_lesion_map
-    )
-
     paginator = Paginator(annotations, 100)
 
     print(f"Found {paginator.count} annotations")
@@ -42,7 +38,7 @@ def migrate_annotations(annotations):  # noqa: C901
             ):
                 modality = "oct"
 
-            if annotation.name.lower() in old_to_boolean_lesion_map_lower:
+            if annotation.name.lower() in old_to_boolean_lesion_map:
                 if modality == "oct":
                     boolean_oct_no_match.append(annotation.id)
                     continue
@@ -497,9 +493,9 @@ old_to_new_lesion_map = [
 ]
 
 old_to_boolean_lesion_map = [
-    "other_present::Vascular::Branch retinal artery occlusion",
-    "other_present::Vascular::Branch retinal vein occlusion",
-    "other_present::Vascular::Central retinal artery occlusion",
-    "other_present::Vascular::Central retinal vein occlusion",
-    "other_present::Vitreous::Asteroid hyalosis/synch scintillans",
+    "other_present::vascular::branch retinal artery occlusion",
+    "other_present::vascular::branch retinal vein occlusion",
+    "other_present::vascular::central retinal artery occlusion",
+    "other_present::vascular::central retinal vein occlusion",
+    "other_present::vitreous::asteroid hyalosis/synch scintillans",
 ]
