@@ -38,26 +38,26 @@ def migrate_annotations(annotations):  # noqa: C901
             ):
                 modality = "oct"
 
-            if annotation.name in old_to_boolean_lesion_map:
+            if annotation.name.lower() in old_to_boolean_lesion_map:
                 if modality == "oct":
                     boolean_oct_no_match.append(annotation.id)
                     continue
                 new_name = f"retina::enface::{annotation.name.split('::')[-1]}"
-                BooleanClassificationAnnotation.object.create(
-                    {
-                        "grader": annotation.grader,
-                        "created": annotation.created,
-                        "image": annotation.image,
-                        "name": new_name,
-                        "value": True,
-                    }
+                BooleanClassificationAnnotation.objects.create(
+                    grader=annotation.grader,
+                    created=annotation.created,
+                    image=annotation.image,
+                    name=new_name,
+                    value=True,
                 )
                 annotation.delete()
                 translated += 1
                 continue
 
             for lesions in old_to_new_lesion_map:
-                if annotation.name in lesions[0]:
+                if annotation.name.lower() in map(
+                    lambda s: s.lower(), lesions[0]
+                ):
                     new_name = (
                         lesions[1] if modality == "enface" else lesions[2]
                     )
@@ -480,27 +480,22 @@ old_to_new_lesion_map = [
         "enface::rf_present::Macular (pseudo) hole",
         "oct::macular::Lamellar hole",
     ),
-    # ===================================================
-    (("myopia_present::Retinoschisis",), "", ""),  # ?
-    (
-        ("oda_present::Vertical cup to disc ratio (CDR)",),
-        "enface::_present",
-        "oct::optic_disc::",
-    ),  # remove?
+    (("myopia_present::Retinoschisis",), "", ""),
+    (("oda_present::Vertical cup to disc ratio (CDR)",), "", "",),
     (
         (
             "dr_present::retinal neovascularization",
             "vascular changes::neo vascularization",
         ),
-        "enface::rf_present::",
-        "oct::",
-    ),  # in db so needed...
+        "",
+        "",
+    ),
 ]
 
 old_to_boolean_lesion_map = [
-    "other_present::Vascular::Branch retinal artery occlusion",
-    "other_present::Vascular::Branch retinal vein occlusion",
-    "other_present::Vascular::Central retinal artery occlusion",
-    "other_present::Vascular::Central retinal vein occlusion",
-    "other_present::Vitreous::Asteroid hyalosis/synch scintillans",
+    "other_present::vascular::branch retinal artery occlusion",
+    "other_present::vascular::branch retinal vein occlusion",
+    "other_present::vascular::central retinal artery occlusion",
+    "other_present::vascular::central retinal vein occlusion",
+    "other_present::vitreous::asteroid hyalosis/synch scintillans",
 ]
