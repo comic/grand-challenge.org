@@ -43,3 +43,9 @@ def test_group_deletion_reverse(group):
 
     with pytest.raises(ObjectDoesNotExist):
         challenge.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_default_pages_are_created():
+    c = ChallengeFactory()
+    assert c.page_set.count() == 2
