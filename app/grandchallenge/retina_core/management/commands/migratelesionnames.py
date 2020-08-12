@@ -21,6 +21,10 @@ def migrate_annotations(annotations):  # noqa: C901
     oct_no_match = []
     no_match = []
 
+    old_to_boolean_lesion_map_lower = map(
+        lambda s: s.lower(), old_to_boolean_lesion_map
+    )
+
     paginator = Paginator(annotations, 100)
 
     print(f"Found {paginator.count} annotations")
@@ -38,7 +42,7 @@ def migrate_annotations(annotations):  # noqa: C901
             ):
                 modality = "oct"
 
-            if annotation.name in old_to_boolean_lesion_map:
+            if annotation.name.lower() in old_to_boolean_lesion_map_lower:
                 if modality == "oct":
                     boolean_oct_no_match.append(annotation.id)
                     continue
@@ -55,7 +59,9 @@ def migrate_annotations(annotations):  # noqa: C901
                 continue
 
             for lesions in old_to_new_lesion_map:
-                if annotation.name in lesions[0]:
+                if annotation.name.lower() in map(
+                    lambda s: s.lower(), lesions[0]
+                ):
                     new_name = (
                         lesions[1] if modality == "enface" else lesions[2]
                     )

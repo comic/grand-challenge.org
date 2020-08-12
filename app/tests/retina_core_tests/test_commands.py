@@ -96,6 +96,24 @@ class TestMigratelesionnamesCommand:
         annotation_oct.refresh_from_db()
         assert annotation_oct.name == "retina::oct::macular::Drusen"
 
+    def test_testmigratelesionnames_correctly_migrated_case_insensitive(self):
+        image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))
+        annotation_oct = PolygonAnnotationSetFactory(
+            name="amd_present::DrUsEn AnD DrUsEn lIkE sTruCtUrEs::HARD dRuSeN",
+            image=image,
+        )
+        annotation_enface = PolygonAnnotationSetFactory(
+            name="DrUsEn AnD DrUsEn lIkE sTruCtUrEs::HARD dRuSeN"
+        )
+        result = migrate_annotations(PolygonAnnotationSet.objects.all())
+        assert result["translated"] == 2
+        annotation_enface.refresh_from_db()
+        assert (
+            annotation_enface.name == "retina::enface::rf_present::Hard drusen"
+        )
+        annotation_oct.refresh_from_db()
+        assert annotation_oct.name == "retina::oct::macular::Drusen"
+
     def test_testmigratelesionnames_combined(self):
         image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))
         annotation_oct = PolygonAnnotationSetFactory(
