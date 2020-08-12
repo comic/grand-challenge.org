@@ -129,6 +129,9 @@ class TestMigratelesionnamesCommand:
         PolygonAnnotationSetFactory(
             name="retina::enface::rf_present::Hard drusen"
         )
+        PolygonAnnotationSetFactory(
+            name="other_present::Vascular::Branch retinal artery occlusion",
+        )
         annotation_oct_no_match_boolean = PolygonAnnotationSetFactory(
             name="other_present::Vascular::Branch retinal artery occlusion",
             image=image,
@@ -142,8 +145,10 @@ class TestMigratelesionnamesCommand:
         )
         annotation_no_match = PolygonAnnotationSetFactory(name="No match")
 
+        assert BooleanClassificationAnnotation.objects.count() == 0
         result = migrate_annotations(PolygonAnnotationSet.objects.all())
-        assert result["translated"] == 2
+        assert result["translated"] == 3
+        assert BooleanClassificationAnnotation.objects.count() == 1
         assert result["already_translated"] == 2
         assert result["boolean_oct_no_match"] == [
             annotation_oct_no_match_boolean.id
