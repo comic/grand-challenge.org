@@ -480,21 +480,16 @@ old_to_new_lesion_map = [
         "enface::rf_present::Macular (pseudo) hole",
         "oct::macular::Lamellar hole",
     ),
-    # ===================================================
-    (("myopia_present::Retinoschisis",), "", ""),  # ?
-    (
-        ("oda_present::Vertical cup to disc ratio (CDR)",),
-        "enface::_present",
-        "oct::optic_disc::",
-    ),  # remove?
+    (("myopia_present::Retinoschisis",), "", ""),
+    (("oda_present::Vertical cup to disc ratio (CDR)",), "", "",),
     (
         (
             "dr_present::retinal neovascularization",
             "vascular changes::neo vascularization",
         ),
-        "enface::rf_present::",
-        "oct::",
-    ),  # in db so needed...
+        "",
+        "",
+    ),
 ]
 
 old_to_boolean_lesion_map = [
