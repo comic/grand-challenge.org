@@ -1,6 +1,9 @@
 import pytest
 
-from grandchallenge.annotations.models import PolygonAnnotationSet
+from grandchallenge.annotations.models import (
+    BooleanClassificationAnnotation,
+    PolygonAnnotationSet,
+)
 from grandchallenge.retina_core.management.commands.migratelesionnames import (
     migrate_annotations,
 )
@@ -43,6 +46,25 @@ class TestMigratelesionnamesCommand:
         result = migrate_annotations(PolygonAnnotationSet.objects.all())
         assert result["translated"] == 0
         assert result["boolean_oct_no_match"] == [annotation.id]
+
+    def test_testmigratelesionnames_correctly_migrated_boolean(self):
+        annotation_enface = PolygonAnnotationSetFactory(
+            name="other_present::Vascular::Branch retinal artery occlusion"
+        )
+        assert BooleanClassificationAnnotation.objects.count() == 0
+        result = migrate_annotations(PolygonAnnotationSet.objects.all())
+        assert result["translated"] == 1
+        assert PolygonAnnotationSet.objects.count() == 0
+        assert BooleanClassificationAnnotation.objects.count() == 1
+        annotation = BooleanClassificationAnnotation.objects.first()
+        assert (
+            annotation.name
+            == "retina::enface::Branch retinal artery occlusion"
+        )
+        assert annotation.value
+        assert annotation.grader == annotation_enface.grader
+        assert annotation.image == annotation_enface.image
+        assert annotation.created == annotation_enface.created
 
     def test_testmigratelesionnames_already_migrated(self):
         image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))

@@ -43,14 +43,12 @@ def migrate_annotations(annotations):  # noqa: C901
                     boolean_oct_no_match.append(annotation.id)
                     continue
                 new_name = f"retina::enface::{annotation.name.split('::')[-1]}"
-                BooleanClassificationAnnotation.object.create(
-                    {
-                        "grader": annotation.grader,
-                        "created": annotation.created,
-                        "image": annotation.image,
-                        "name": new_name,
-                        "value": True,
-                    }
+                BooleanClassificationAnnotation.objects.create(
+                    grader=annotation.grader,
+                    created=annotation.created,
+                    image=annotation.image,
+                    name=new_name,
+                    value=True,
                 )
                 annotation.delete()
                 translated += 1
