@@ -7,7 +7,10 @@ from grandchallenge.annotations.models import (
 from grandchallenge.retina_core.management.commands.migratelesionnames import (
     migrate_annotations,
 )
-from tests.annotations_tests.factories import PolygonAnnotationSetFactory
+from tests.annotations_tests.factories import (
+    PolygonAnnotationSetFactory,
+    SinglePolygonAnnotationFactory,
+)
 from tests.factories import ImageFactory, ImagingModalityFactory
 
 
@@ -162,3 +165,25 @@ class TestMigratelesionnamesCommand:
         )
         annotation_oct.refresh_from_db()
         assert annotation_oct.name == "retina::oct::macular::Drusen"
+
+    def test_testmigratelesionnames_unique_violation_appends(self):
+        annotation = PolygonAnnotationSetFactory(
+            name="drusen and drusen like structures::hard drusen"
+        )
+        SinglePolygonAnnotationFactory(annotation_set=annotation),
+        SinglePolygonAnnotationFactory(annotation_set=annotation),
+        annotation_dup = PolygonAnnotationSetFactory(
+            name="retina::enface::rf_present::Hard drusen",
+            grader=annotation.grader,
+            image=annotation.image,
+            created=annotation.created,
+        )
+        SinglePolygonAnnotationFactory(annotation_set=annotation_dup),
+        SinglePolygonAnnotationFactory(annotation_set=annotation_dup),
+        assert annotation_dup.singlepolygonannotation_set.count() == 2
+        result = migrate_annotations(PolygonAnnotationSet.objects.all())
+        assert result["translated"] == 1
+        assert result["already_translated"] == 1
+        assert PolygonAnnotationSet.objects.count() == 1
+        annotation_dup.refresh_from_db()
+        assert annotation_dup.singlepolygonannotation_set.count() == 4
