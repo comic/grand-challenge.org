@@ -433,14 +433,6 @@ class Challenge(ChallengeBase):
         editable=False, blank=True, null=True
     )
 
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.create_default_pages()
-
     def create_default_pages(self):
         Page.objects.create(
             title=self.short_name,
