@@ -11,12 +11,14 @@ from django.core.validators import validate_slug
 from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from guardian.utils import get_anonymous_user
 from tldextract import extract
 
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -430,6 +432,24 @@ class Challenge(ChallengeBase):
     cached_latest_result = models.DateTimeField(
         editable=False, blank=True, null=True
     )
+
+    def create_default_pages(self):
+        Page.objects.create(
+            title=self.short_name,
+            html=render_to_string(
+                "pages/defaults/home.html", {"challenge": self}
+            ),
+            challenge=self,
+            permission_level=Page.ALL,
+        )
+        Page.objects.create(
+            title="Contact",
+            html=render_to_string(
+                "pages/defaults/contact.html", {"challenge": self}
+            ),
+            challenge=self,
+            permission_level=Page.REGISTERED_ONLY,
+        )
 
     def admin_group_name(self):
         """Return the name of this challenges admin group."""

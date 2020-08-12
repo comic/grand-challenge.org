@@ -129,6 +129,10 @@ class Command(BaseCommand):
         old = src_challenge.short_name
         new = dest_challenge.short_name
 
+        for auto_page in dest_challenge.page_set.all():
+            # Remove any existing pages
+            auto_page.delete()
+
         for src_page in src_pages:
             Page.objects.create(
                 challenge=dest_challenge,

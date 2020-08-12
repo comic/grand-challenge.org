@@ -31,6 +31,8 @@ def setup_challenge_groups(
         instance.participants_group = participants_group
         instance.save()
 
+        instance.create_default_pages()
+
         assign_perm("change_challenge", admins_group, instance)
 
         # Create the datasets

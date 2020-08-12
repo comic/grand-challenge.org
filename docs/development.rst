@@ -171,6 +171,8 @@ It is recommended to setup django integration to ensure that the code completion
 13. On the ``Imports`` tab enable ``Sort Import Statements``, ``Sort imported names in "from" imports``, and ``Sort plain and "from" imports separately in the same group``
 14. Click ``OK``
 15. Install the ``Flake8 Support`` plugin so that PyCharm will understand ``noqa`` comments
+16. In the main window at the top right click the drop down box and then click ``Edit Configurations...``
+17. Click on ``templates`` -> ``Python Tests`` -> ``pytest``, and enter ``--reuse-db`` in the ``Additional Arguments`` box and ``run --rm`` in the ``Command and options`` box under ``Docker Compose``
 
 It is also recommended to install the black extension (version ``19.10b0``) for code formatting.
 
