@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.core.paginator import Paginator
+from django.db import IntegrityError, transaction
 
 from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
@@ -68,7 +69,24 @@ def migrate_annotations(annotations):  # noqa: C901
                             oct_no_match.append(annotation.id)
                     else:
                         annotation.name = f"retina::{new_name}"
-                        annotation.save()
+                        try:
+                            with transaction.atomic():
+                                annotation.save()
+                        except IntegrityError:
+                            # annotation with unique combination of (image_id, grader_id, created, name) already exists
+                            # append the polygons from this annotation to the existing one
+                            existing_annotation = PolygonAnnotationSet.objects.get(
+                                image=annotation.image,
+                                grader=annotation.grader,
+                                created=annotation.created,
+                                name=annotation.name,
+                            )
+                            for (
+                                spa
+                            ) in annotation.singlepolygonannotation_set.all():
+                                spa.annotation_set = existing_annotation
+                                spa.save()
+                            annotation.delete()
                         translated += 1
                     break
             else:
