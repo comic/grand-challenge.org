@@ -8,7 +8,11 @@ from django.db.models import BooleanField
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 
-from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmExecutor,
+    AlgorithmImage,
+)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
 from grandchallenge.components.models import (
@@ -496,6 +500,50 @@ class Submission(UUIDModel):
                 "challenge_short_name": self.challenge.short_name,
             },
         )
+
+
+class AlgorithmEvaluation(ComponentJob):
+    id = models.BigAutoField(primary_key=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    algorithm_image = models.ForeignKey(
+        AlgorithmImage, on_delete=models.CASCADE
+    )
+    image = models.ForeignKey(
+        "cases.Image", null=True, on_delete=models.SET_NULL
+    )
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+
+    @property
+    def container(self):
+        return self.algorithm_image
+
+    @property
+    def input_files(self):
+        return [
+            im.file
+            for inpt in self.inputs.all()
+            for im in inpt.image.files.all()
+        ]
+
+    @property
+    def executor_cls(self):
+        return AlgorithmExecutor
+
+    def create_result(self, *, result: dict):
+        interface = ComponentInterface.objects.get(slug="results-json-file")
+
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = result
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=result
+            )
+            self.outputs.add(output_civ)
 
 
 class SubmissionEvaluator(Executor):
