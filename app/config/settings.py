@@ -7,11 +7,11 @@ from urllib.parse import quote
 
 import sentry_sdk
 from corsheaders.defaults import default_headers
+from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
-from sentry_sdk.integrations.redis import RedisIntegration
 
 from config.denylist import USERNAME_DENYLIST
 from grandchallenge.core.utils.markdown import BS4Extension
@@ -568,14 +568,10 @@ WORKSTATION_SENTRY_DSN = os.environ.get("WORKSTATION_SENTRY_DSN", "")
 if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        integrations=[
-            DjangoIntegration(),
-            CeleryIntegration(),
-            RedisIntegration(),
-        ],
+        integrations=[DjangoIntegration(), CeleryIntegration()],
         release=COMMIT_ID,
         traces_sample_rate=float(
-            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")
+            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.01")
         ),
     )
     ignore_logger("django.security.DisallowedHost")
@@ -826,6 +822,12 @@ DISALLOWED_CHALLENGE_NAMES = {
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
     *WORKSTATIONS_RENDERING_SUBDOMAINS,
+}
+
+# Disallow registration from certain domains
+DISALLOWED_EMAIL_DOMAINS = {
+    "qq.com",
+    *blocklist,
 }
 
 # Modality name constants
