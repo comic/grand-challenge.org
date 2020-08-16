@@ -31,6 +31,9 @@ StudyDate = 20020304
 StudyInstanceUID = 1.2.3.4
 SeriesInstanceUID = 1.2.3.4
 Laterality = L
+PhotometricInterpretation = MONOCHROME2
+ImagerPixelSpacing = 0.144\0.144
+PixelSpacing = 0.144\0.144
 
 
 
