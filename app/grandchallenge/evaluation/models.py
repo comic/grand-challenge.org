@@ -9,7 +9,6 @@ from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 
 from grandchallenge.algorithms.models import (
-    Algorithm,
     AlgorithmExecutor,
     AlgorithmImage,
 )
@@ -397,8 +396,8 @@ class Submission(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
-    algorithm = models.ForeignKey(
-        Algorithm, null=True, on_delete=models.SET_NULL
+    algorithm_image = models.ForeignKey(
+        AlgorithmImage, null=True, on_delete=models.SET_NULL
     )
     file = models.FileField(
         upload_to=submission_file_path,
@@ -506,9 +505,7 @@ class AlgorithmEvaluation(ComponentJob):
     id = models.BigAutoField(primary_key=True)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    algorithm_image = models.ForeignKey(
-        AlgorithmImage, on_delete=models.CASCADE
-    )
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
     image = models.ForeignKey(
         "cases.Image", null=True, on_delete=models.SET_NULL
     )
@@ -518,7 +515,7 @@ class AlgorithmEvaluation(ComponentJob):
 
     @property
     def container(self):
-        return self.algorithm_image
+        return self.submission.algorithm_image
 
     @property
     def input_files(self):
