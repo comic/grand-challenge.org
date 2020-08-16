@@ -132,6 +132,11 @@ class Config(UUIDModel):
         ),
     )
 
+    class SubmissionKind(models.IntegerChoices):
+        CSV = 1, "CSV"
+        ZIP = 2, "ZIP"
+        ALGORITHM = 3, "Algorithm"
+
     challenge = models.OneToOneField(
         Challenge,
         on_delete=models.CASCADE,
@@ -205,6 +210,14 @@ class Config(UUIDModel):
         choices=RESULT_DISPLAY_CHOICES,
         default=ALL,
         help_text=("Which results should be displayed on the leaderboard?"),
+    )
+    submission_kind = models.PositiveSmallIntegerField(
+        default=SubmissionKind.CSV,
+        choices=SubmissionKind.choices,
+        help_text=(
+            "Should participants submit a .csv/.zip file of predictions, "
+            "or an algorithm?"
+        ),
     )
     allow_submission_comments = models.BooleanField(
         default=False,
