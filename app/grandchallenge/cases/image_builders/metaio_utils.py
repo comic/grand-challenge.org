@@ -55,7 +55,7 @@ LENGTH_LIMIT_MATCH_REGEXP: Pattern = re.compile(r"^.{0,128}$")
 
 STUDYDATE_MATCH_REGEXP: Pattern = re.compile(r"^\d{4}\d{1,2}\d{1,2}$")
 
-PIXELSPACING_MATCH_REGEXP: Pattern = re.compile(r"^(\d*\.\d+|\d+)\\(\d*\.\d+|\d+)$")
+PIXELSPACING_MATCH_REGEXP: Pattern = re.compile(r"^[\[]+(\d*\.\d+|\d+)[,\/] *(\d*\.\d+|\d+)[\]]$")
 
 ADDITIONAL_HEADERS: Dict[str, Pattern] = {
     "PhotometricInterpretation": LENGTH_LIMIT_MATCH_REGEXP,
