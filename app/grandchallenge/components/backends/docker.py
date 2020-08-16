@@ -20,6 +20,8 @@ from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
 
+MAX_SPOOL_SIZE = 1024 * 1024 * 1024  # 1g
+
 
 class ComponentException(Exception):
     """These exceptions will be sent to the user."""
@@ -146,10 +148,9 @@ class DockerConnection:
             # This can take a long time so increase the default timeout #1330
             old_timeout = self._client.api.timeout
             self._client.api.timeout = 600  # 10 minutes
-            max_size = 10 * 1024 * 1024 * 1024
 
             with SpooledTemporaryFile(
-                max_size=max_size
+                max_size=MAX_SPOOL_SIZE
             ) as fdst, self._exec_image.open("rb") as fsrc:
                 copyfileobj(fsrc=fsrc, fdst=fdst)
                 fdst.seek(0)
@@ -410,16 +411,15 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     :param dest: The path to the target file in the container
     :return:
     """
-    tar_b = io.BytesIO()
+    with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as tar_b:
+        tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
+        tarinfo.size = src.size
 
-    tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
-    tarinfo.size = src.size
+        with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
+            tar.addfile(tarinfo, fileobj=f)
 
-    with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
-        tar.addfile(tarinfo, fileobj=f)
-
-    tar_b.seek(0)
-    container.put_archive(os.path.dirname(dest), tar_b)
+        tar_b.seek(0)
+        container.put_archive(os.path.dirname(dest), tar_b)
 
 
 def get_file(*, container: ContainerApiMixin, src: Path):
