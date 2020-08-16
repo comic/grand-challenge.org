@@ -399,7 +399,7 @@ class Submission(UUIDModel):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.SET_NULL
     )
-    file = models.FileField(
+    predictions_file = models.FileField(
         upload_to=submission_file_path,
         validators=[
             MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
@@ -458,7 +458,7 @@ class Submission(UUIDModel):
             submission=self, method=self.latest_ready_method
         )
 
-        mimetype = get_file_mimetype(self.file)
+        mimetype = get_file_mimetype(self.predictions_file)
 
         if mimetype == "application/zip":
             interface = ComponentInterface.objects.get(
@@ -476,7 +476,7 @@ class Submission(UUIDModel):
         e.inputs.set(
             [
                 ComponentInterfaceValue.objects.create(
-                    interface=interface, file=self.file
+                    interface=interface, file=self.predictions_file
                 )
             ]
         )

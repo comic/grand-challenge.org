@@ -33,7 +33,7 @@ class SubmissionAdmin(admin.ModelAdmin):
     readonly_fields = (
         "creator",
         "challenge",
-        "file",
+        "predictions_file",
     )
 
 

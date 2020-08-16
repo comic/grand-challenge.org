@@ -169,7 +169,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         uploaded_file = form.cleaned_data["chunked_upload"][0]
 
         with uploaded_file.open() as f:
-            form.instance.file.save(uploaded_file.name, File(f))
+            form.instance.predictions_file.save(uploaded_file.name, File(f))
 
         return super().form_valid(form)
 

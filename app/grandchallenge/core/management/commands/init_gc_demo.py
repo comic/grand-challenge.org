@@ -194,7 +194,7 @@ class Command(BaseCommand):
 
         submission = Submission(challenge=demo, creator=self.users["demop"])
         content = ContentFile(base64.b64decode(b""))
-        submission.file.save("test.csv", content)
+        submission.predictions_file.save("test.csv", content)
         submission.save()
 
         e = Evaluation.objects.create(

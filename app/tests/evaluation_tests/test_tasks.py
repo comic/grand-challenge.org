@@ -37,7 +37,7 @@ def test_submission_evaluation(
 
     # This will create an evaluation, and we'll wait for it to be executed
     submission = SubmissionFactory(
-        file__from_path=submission_file, challenge=method.challenge
+        predictions_file__from_path=submission_file, challenge=method.challenge
     )
 
     # The evaluation method should clean up after itself
@@ -55,7 +55,9 @@ def test_submission_evaluation(
 
     # Try with a csv file
     submission = SubmissionFactory(
-        file__from_path=Path(__file__).parent / "resources" / "submission.csv",
+        predictions_file__from_path=Path(__file__).parent
+        / "resources"
+        / "submission.csv",
         challenge=method.challenge,
     )
 

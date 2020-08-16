@@ -143,7 +143,7 @@ class SubmissionToAnnotationSetJob(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
-        return [self.submission.file]
+        return [self.submission.predictions_file]
 
     @property
     def executor_cls(self):
