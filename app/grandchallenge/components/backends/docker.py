@@ -20,7 +20,7 @@ from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
 
-MAX_SPOOL_SIZE = 1024 * 1024 * 1024  # 1g
+MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
 
 
 class ComponentException(Exception):
