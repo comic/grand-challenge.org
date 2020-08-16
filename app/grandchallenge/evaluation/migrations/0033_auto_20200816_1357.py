@@ -4,6 +4,10 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
+import grandchallenge.core.storage
+import grandchallenge.core.validators
+import grandchallenge.evaluation.models
+
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -19,6 +23,23 @@ class Migration(migrations.Migration):
             model_name="submission",
             old_name="file",
             new_name="predictions_file",
+        ),
+        migrations.AlterField(
+            model_name="submission",
+            name="predictions_file",
+            field=models.FileField(
+                storage=grandchallenge.core.storage.ProtectedS3Storage(),
+                upload_to=grandchallenge.evaluation.models.submission_file_path,
+                validators=[
+                    grandchallenge.core.validators.MimeTypeValidator(
+                        allowed_types=("application/zip", "text/plain")
+                    ),
+                    grandchallenge.core.validators.ExtensionValidator(
+                        allowed_extensions=(".zip", ".csv")
+                    ),
+                ],
+                blank=True,
+            ),
         ),
         migrations.AddField(
             model_name="config",

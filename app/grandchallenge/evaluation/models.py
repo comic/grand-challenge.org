@@ -419,6 +419,7 @@ class Submission(UUIDModel):
             ExtensionValidator(allowed_extensions=(".zip", ".csv")),
         ],
         storage=protected_s3_storage,
+        blank=True,
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
