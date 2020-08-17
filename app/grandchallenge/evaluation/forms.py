@@ -2,8 +2,12 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
+from django.forms import ModelChoiceField
+from django.utils.html import format_html
 from django_summernote.widgets import SummernoteInplaceWidget
+from guardian.shortcuts import get_objects_for_user
 
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
@@ -14,6 +18,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
+from grandchallenge.subdomains.utils import reverse
 
 submission_options = (
     "submission_page_html",
@@ -115,11 +120,21 @@ class SubmissionForm(forms.ModelForm):
         label="Predictions File",
         validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
     )
+    algorithm = ModelChoiceField(
+        queryset=Algorithm.objects.all(),
+        help_text=format_html(
+            "Select one of your algorithms to submit as a solution to this "
+            "challenge. If you have not created your algorithm yet you can "
+            "do so <a href={}>on this page</a>.",
+            reverse("algorithms:create"),
+        ),
+    )
 
     def __init__(
         self,
         *args,
         user,
+        algorithm_submission=False,
         display_comment_field=False,
         supplementary_file_choice=Config.OFF,
         supplementary_file_label="",
@@ -132,6 +147,8 @@ class SubmissionForm(forms.ModelForm):
         display_comment_field kwarg
         """
         super().__init__(*args, **kwargs)
+
+        self.helper = FormHelper(self)
 
         if not display_comment_field:
             del self.fields["comment"]
@@ -154,9 +171,20 @@ class SubmissionForm(forms.ModelForm):
         elif publication_url_choice == Config.OFF:
             del self.fields["publication_url"]
 
-        self.helper = FormHelper(self)
+        if algorithm_submission:
+            del self.fields["chunked_upload"]
 
-        self.fields["chunked_upload"].widget.user = user
+            self.fields["algorithm"].queryset = get_objects_for_user(
+                user,
+                f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}",
+                Algorithm,
+            ).order_by("title")
+
+            self.helper.layout.append(Submit("save", "Save"))
+        else:
+            del self.fields["algorithm"]
+
+            self.fields["chunked_upload"].widget.user = user
 
     class Meta:
         model = Submission

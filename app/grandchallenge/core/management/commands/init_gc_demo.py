@@ -218,6 +218,9 @@ class Command(BaseCommand):
                 "order": "desc",
             }
         ]
+        demo.evaluation_config.submission_kind = (
+            demo.evaluation_config.SubmissionKind.ALGORITHM
+        )
         demo.evaluation_config.save()
 
     def _create_external_challenge(self):
@@ -289,7 +292,9 @@ class Command(BaseCommand):
         algorithm = Algorithm.objects.create(
             title="Test Algorithm", logo=get_temporary_image()
         )
-        algorithm.editors_group.user_set.add(self.users["algorithm"])
+        algorithm.editors_group.user_set.add(
+            self.users["algorithm"], self.users["demo"]
+        )
         algorithm.users_group.user_set.add(self.users["algorithmuser"])
 
         algorithm_image = AlgorithmImage(

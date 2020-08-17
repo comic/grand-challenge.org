@@ -86,9 +86,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
 
-        config = Config.objects.get(
-            challenge=self.request.challenge
-        )  # type: Config
+        config: Config = Config.objects.get(challenge=self.request.challenge)
 
         kwargs.update(
             {
@@ -98,6 +96,8 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
                 "supplementary_file_label": config.supplementary_file_label,
                 "supplementary_file_help_text": config.supplementary_file_help_text,
                 "publication_url_choice": config.publication_url_choice,
+                "algorithm_submission": config.submission_kind
+                == config.SubmissionKind.ALGORITHM,
             }
         )
 
@@ -160,16 +160,23 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         }
 
     def form_valid(self, form):
-
         if form.instance.creator is None:
             form.instance.creator = self.request.user
 
         form.instance.challenge = self.request.challenge
 
-        uploaded_file = form.cleaned_data["chunked_upload"][0]
-
-        with uploaded_file.open() as f:
-            form.instance.predictions_file.save(uploaded_file.name, File(f))
+        if "algorithm" in form.cleaned_data:
+            # Algorithm submission
+            form.instance.algorithm_image = form.cleaned_data[
+                "algorithm"
+            ].latest_ready_image
+        else:
+            # Predictions file submission
+            uploaded_file = form.cleaned_data["chunked_upload"][0]
+            with uploaded_file.open() as f:
+                form.instance.predictions_file.save(
+                    uploaded_file.name, File(f)
+                )
 
         return super().form_valid(form)
 
