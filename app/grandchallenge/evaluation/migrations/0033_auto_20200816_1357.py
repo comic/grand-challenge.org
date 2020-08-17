@@ -122,4 +122,10 @@ class Migration(migrations.Migration):
             ],
             options={"abstract": False},
         ),
+        migrations.AlterUniqueTogether(
+            name="submission",
+            unique_together={
+                ("challenge", "predictions_file", "algorithm_image")
+            },
+        ),
     ]

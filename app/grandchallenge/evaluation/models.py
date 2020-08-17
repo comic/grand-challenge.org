@@ -445,6 +445,11 @@ class Submission(UUIDModel):
         ),
     )
 
+    class Meta:
+        unique_together = (
+            ("challenge", "predictions_file", "algorithm_image"),
+        )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
