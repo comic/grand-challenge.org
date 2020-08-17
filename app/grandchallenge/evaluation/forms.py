@@ -2,6 +2,7 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms import ModelChoiceField
 from django.utils.html import format_html
 from django_summernote.widgets import SummernoteInplaceWidget
@@ -185,6 +186,19 @@ class SubmissionForm(forms.ModelForm):
             del self.fields["algorithm"]
 
             self.fields["chunked_upload"].widget.user = user
+
+    def clean_algorithm(self):
+        algorithm = self.cleaned_data["algorithm"]
+
+        if algorithm is None:
+            raise ValidationError("You must select an algorithm.")
+        elif algorithm.latest_ready_image is None:
+            raise ValidationError(
+                "This algorithm does not have a usable container image. "
+                "Please add one and try again."
+            )
+
+        return algorithm
 
     class Meta:
         model = Submission
