@@ -45,7 +45,7 @@ def create_algorithm_jobs(*_, upload_session_pk):
 
     if jobs:
         workflow = group(*jobs) | send_failed_jobs_email.signature(
-            upload_session_pk=upload_session_pk
+            kwargs={"upload_session_pk": upload_session_pk}
         )
         workflow.apply_async()
 
