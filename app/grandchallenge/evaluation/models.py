@@ -35,7 +35,10 @@ from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
     send_successful_evaluation_email,
 )
-from grandchallenge.evaluation.tasks import calculate_ranks
+from grandchallenge.evaluation.tasks import (
+    calculate_ranks,
+    set_evaluation_inputs,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.submission_conversion.models import (
     SubmissionToAnnotationSetJob,
@@ -460,14 +463,6 @@ class Submission(UUIDModel):
         if adding:
             self.create_evaluation()
 
-            # Convert this submission to an annotation set
-            base = ImageSet.objects.get(
-                challenge=self.challenge, phase=ImageSet.TESTING
-            )
-            SubmissionToAnnotationSetJob.objects.create(
-                base=base, submission=self
-            )
-
     def create_evaluation(self):
         method = self.latest_ready_method
 
@@ -475,8 +470,9 @@ class Submission(UUIDModel):
             # TODO Email admins
             return
 
+        evaluation = Evaluation.objects.create(submission=self, method=method)
+
         if self.algorithm_image:
-            # TODO Do this in an async task?
             test_set = ImageSet.objects.get(
                 challenge=self.challenge, phase=ImageSet.TESTING
             )
@@ -488,7 +484,6 @@ class Submission(UUIDModel):
             jobs = []
 
             for image in test_set.images.all():
-                # TODO check images exist?
                 if not ComponentInterfaceValue.objects.filter(
                     interface=default_input_interface,
                     image=image,
@@ -505,7 +500,12 @@ class Submission(UUIDModel):
                     jobs.append(j.signature)
 
             if jobs:
-                group(*jobs).apply_async()
+                (
+                    group(*jobs)
+                    | set_evaluation_inputs.signature(
+                        kwargs={"evaluation_pk": evaluation.pk}
+                    )
+                ).apply_async()
 
         else:
             mimetype = get_file_mimetype(self.predictions_file)
@@ -523,15 +523,22 @@ class Submission(UUIDModel):
                     f"Interface is not defined for {mimetype} files"
                 )
 
-            e = Evaluation.objects.create(submission=self, method=method)
-            e.inputs.set(
+            evaluation.inputs.set(
                 [
                     ComponentInterfaceValue.objects.create(
                         interface=interface, file=self.predictions_file
                     )
                 ]
             )
-            e.signature.apply_async()
+            evaluation.signature.apply_async()
+
+            # Convert this submission to an annotation set
+            base = ImageSet.objects.get(
+                challenge=self.challenge, phase=ImageSet.TESTING
+            )
+            SubmissionToAnnotationSetJob.objects.create(
+                base=base, submission=self
+            )
 
     @property
     def latest_ready_method(self):
