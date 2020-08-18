@@ -40,7 +40,7 @@ def set_retina_pathologies(annotations):
 
         for annotation in page.object_list:
             name_parts = annotation.name.split("::")
-            if name_parts[0] != "retina":
+            if len(name_parts) < 3 or name_parts[0] != "retina":
                 old_annotation += 1
                 continue
 
