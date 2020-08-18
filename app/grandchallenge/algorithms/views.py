@@ -375,7 +375,14 @@ class AlgorithmExecutionSessionList(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "user_is_editor": self.algorithm.is_editor(
+                    user=self.request.user
+                ),
+            }
+        )
         return context
 
     def get_queryset(self, *args, **kwargs):

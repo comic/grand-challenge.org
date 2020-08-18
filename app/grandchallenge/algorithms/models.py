@@ -12,7 +12,6 @@ from django.utils._os import safe_join
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
-from grandchallenge.algorithms.emails import send_failed_job_email
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
@@ -465,14 +464,6 @@ class Job(UUIDModel, ComponentJob):
         for interface_value in [*self.inputs.all(), *self.outputs.all()]:
             if interface_value.image:
                 interface_value.image.update_public_group_permissions()
-
-    def update_status(self, *args, **kwargs):
-        res = super().update_status(*args, **kwargs)
-
-        if self.status == self.FAILURE:
-            send_failed_job_email(self)
-
-        return res
 
 
 class AlgorithmPermissionRequest(RequestBase):
