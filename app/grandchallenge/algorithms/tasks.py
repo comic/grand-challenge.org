@@ -43,23 +43,24 @@ def create_algorithm_jobs(*_, upload_session_pk):
                 )
                 jobs.append(j.signature)
 
-    workflow = group(*jobs) | send_experiment_complete_email.signature(
-        upload_session_pk=upload_session_pk
-    )
-    workflow.apply_async()
+    if jobs:
+        workflow = group(*jobs) | send_failed_jobs_email.signature(
+            upload_session_pk=upload_session_pk
+        )
+        workflow.apply_async()
 
 
 @shared_task
-def send_experiment_complete_email(*_, upload_session_pk):
-    jobs = Job.objects.filter(
-        inputs__image__origin_id=upload_session_pk
+def send_failed_jobs_email(*_, upload_session_pk):
+    failed_jobs = Job.objects.filter(
+        inputs__image__origin_id=upload_session_pk, status=Job.FAILURE
     ).distinct()
 
-    failed_jobs = jobs.filter(status=Job.FAILURE).count()
-
-    if failed_jobs:
-        algorithm = jobs[0].algorithm_image.algorithm
-        creator = jobs[0].creator
+    if failed_jobs.exists():
+        # Note: this would not work if you could route jobs to different
+        # algorithms from 1 upload session, but that is not supported right now
+        algorithm = failed_jobs.first().algorithm_image.algorithm
+        creator = failed_jobs.first().creator
 
         experiments_url = reverse(
             "algorithms:execution-session-list",
@@ -67,7 +68,7 @@ def send_experiment_complete_email(*_, upload_session_pk):
         )
 
         message = (
-            f"Unfortunately {failed_jobs} of your jobs for algorithm "
+            f"Unfortunately {failed_jobs.count()} of your jobs for algorithm "
             f"'{algorithm.title}' failed with an error. "
             f"You can inspect the output and error messages at "
             f"{experiments_url}.\n\n"
@@ -86,7 +87,7 @@ def send_experiment_complete_email(*_, upload_session_pk):
                 subject=(
                     f"[{Site.objects.get_current().domain.lower()}] "
                     f"[{algorithm.title.lower()}] "
-                    f"Jobs failed"
+                    f"Jobs Failed"
                 ),
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
