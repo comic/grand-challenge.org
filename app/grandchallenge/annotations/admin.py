@@ -32,7 +32,7 @@ class PolygonAnnotationSetAdmin(admin.ModelAdmin):
         "image__name",
         "id",
     )
-    list_filter = ("created", "name", "grader__username")
+    list_filter = ("created", "name")
     inlines = [SinglePolygonAnnotationInline]
     readonly_fields = ("grader", "image", "created")
 
