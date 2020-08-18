@@ -50,13 +50,16 @@ def set_retina_pathologies(annotations):
                 )
                 continue
 
-            pathology_annotation = RetinaImagePathologyAnnotation.objects.get_or_create(
+            (
+                pathology_annotation,
+                _,
+            ) = RetinaImagePathologyAnnotation.objects.get_or_create(
                 grader=annotation.grader,
                 image=annotation.image,
                 defaults={v: False for v in pathology_options},
             )
 
-            pathology_annotation[name_parts[2]] = True
+            setattr(pathology_annotation, name_parts[2], True)
             pathology_annotation.save()
             pathology_set += 1
 
