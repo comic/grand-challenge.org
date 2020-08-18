@@ -129,7 +129,7 @@ class SubmissionToAnnotationSetJob(UUIDModel, ComponentJob):
         super().save(*args, **kwargs)
 
         if adding:
-            self.schedule_job()
+            self.signature.apply_async()
 
     @property
     def container(self):

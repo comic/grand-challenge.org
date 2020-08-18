@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from celery import group
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -11,6 +12,7 @@ from django.utils.text import get_valid_filename
 from grandchallenge.algorithms.models import (
     AlgorithmExecutor,
     AlgorithmImage,
+    DEFAULT_INPUT_INTERFACE_SLUG,
 )
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
@@ -473,34 +475,63 @@ class Submission(UUIDModel):
             # TODO Email admins
             return
 
-        e = Evaluation.objects.create(
-            submission=self, method=self.latest_ready_method
-        )
-
-        mimetype = get_file_mimetype(self.predictions_file)
-
-        if mimetype == "application/zip":
-            interface = ComponentInterface.objects.get(
-                slug="predictions-zip-file"
+        if self.algorithm_image:
+            # TODO Do this in an async task?
+            test_set = ImageSet.objects.get(
+                challenge=self.challenge, phase=ImageSet.TESTING
             )
-        elif mimetype == "text/plain":
-            interface = ComponentInterface.objects.get(
-                slug="predictions-csv-file"
+
+            default_input_interface = ComponentInterface.objects.get(
+                slug=DEFAULT_INPUT_INTERFACE_SLUG
             )
+
+            jobs = []
+
+            for image in test_set.images.all():
+                # TODO check images exist?
+                if not ComponentInterfaceValue.objects.filter(
+                    interface=default_input_interface,
+                    image=image,
+                    evaluation_algorithmevaluations_as_input__submission=self,
+                ).exists():
+                    j = AlgorithmEvaluation.objects.create(submission=self)
+                    j.inputs.set(
+                        [
+                            ComponentInterfaceValue.objects.create(
+                                interface=default_input_interface, image=image
+                            )
+                        ]
+                    )
+                    jobs.append(j.signature)
+
+            if jobs:
+                group(*jobs).apply_async()
+
         else:
-            raise NotImplementedError(
-                f"Interface is not defined for {mimetype} files"
-            )
+            mimetype = get_file_mimetype(self.predictions_file)
 
-        e.inputs.set(
-            [
-                ComponentInterfaceValue.objects.create(
-                    interface=interface, file=self.predictions_file
+            if mimetype == "application/zip":
+                interface = ComponentInterface.objects.get(
+                    slug="predictions-zip-file"
                 )
-            ]
-        )
+            elif mimetype == "text/plain":
+                interface = ComponentInterface.objects.get(
+                    slug="predictions-csv-file"
+                )
+            else:
+                raise NotImplementedError(
+                    f"Interface is not defined for {mimetype} files"
+                )
 
-        e.schedule_job()
+            e = Evaluation.objects.create(submission=self, method=method)
+            e.inputs.set(
+                [
+                    ComponentInterfaceValue.objects.create(
+                        interface=interface, file=self.predictions_file
+                    )
+                ]
+            )
+            e.signature.apply_async()
 
     @property
     def latest_ready_method(self):
@@ -525,12 +556,6 @@ class AlgorithmEvaluation(ComponentJob):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
-    image = models.ForeignKey(
-        "cases.Image", null=True, on_delete=models.SET_NULL
-    )
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
 
     @property
     def container(self):

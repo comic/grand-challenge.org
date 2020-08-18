@@ -117,7 +117,7 @@ submission_fields = (
 
 class SubmissionForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False),
+        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
         label="Predictions File",
         validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
     )
@@ -149,8 +149,6 @@ class SubmissionForm(forms.ModelForm):
         """
         super().__init__(*args, **kwargs)
 
-        self.helper = FormHelper(self)
-
         if not display_comment_field:
             del self.fields["comment"]
 
@@ -180,12 +178,13 @@ class SubmissionForm(forms.ModelForm):
                 f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}",
                 Algorithm,
             ).order_by("title")
-
-            self.helper.layout.append(Submit("save", "Save"))
         else:
             del self.fields["algorithm"]
 
             self.fields["chunked_upload"].widget.user = user
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
 
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]
