@@ -43,7 +43,7 @@ def create_algorithm_jobs(*_, upload_session_pk):
                 )
                 jobs.append(j.signature)
 
-    workflow = group(*jobs) | send_experiment_complete_email.s(
+    workflow = group(*jobs) | send_experiment_complete_email.signature(
         upload_session_pk=upload_session_pk
     )
     workflow.apply_async()

@@ -160,7 +160,9 @@ class RawImageUploadSession(UUIDModel):
         kwargs = {"args": (self.pk,)}
 
         if linked_task is not None:
-            kwargs.update({"link": linked_task.s(upload_session_pk=self.pk)})
+            kwargs.update(
+                {"link": linked_task.signature(upload_session_pk=self.pk)}
+            )
 
         build_images.apply_async(**kwargs)
 
