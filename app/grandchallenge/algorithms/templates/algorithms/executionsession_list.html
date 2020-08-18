@@ -76,7 +76,11 @@
                                                data-toggle="modal"
                                                data-target="#jobInfoModal"
                                                data-title="Job Info"
+                                                    {% if user_is_editor %}
+                                               data-output="{% firstof job.output job.get_status_display %}"
+                                                    {% else %}
                                                data-output="{% firstof job.output|user_error job.get_status_display %}"
+                                                    {% endif %}
                                                data-pk="{{ job.pk }}"
                                                title="Result Info">
                                                 <i class="fa fa-flask"></i>
