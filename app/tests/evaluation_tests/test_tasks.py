@@ -3,10 +3,14 @@ from pathlib import Path
 import docker
 import pytest
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 
 from grandchallenge.components.tasks import validate_docker_image
-from grandchallenge.evaluation.models import Method
-from tests.factories import MethodFactory, SubmissionFactory
+from grandchallenge.evaluation.models import AlgorithmEvaluation, Method
+from grandchallenge.evaluation.tasks import set_evaluation_inputs
+from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.evaluation_tests.factories import AlgorithmEvaluationFactory
+from tests.factories import EvaluationFactory, MethodFactory, SubmissionFactory
 
 
 @pytest.mark.django_db
@@ -143,3 +147,41 @@ def test_method_validation_not_a_docker_tar(submission_file):
     method = Method.objects.get(pk=method.pk)
     assert method.ready is False
     assert "manifest.json not found" in method.status
+
+
+class TestSetEvaluationInputs(TestCase):
+    def test_unsuccessful_jobs_fail_evaluation(self):
+        submission = SubmissionFactory()
+        evaluation = EvaluationFactory(submission=submission)
+        AlgorithmEvaluationFactory(
+            status=AlgorithmEvaluation.SUCCESS, submission=submission
+        )
+        AlgorithmEvaluationFactory(
+            status=AlgorithmEvaluation.FAILURE, submission=submission
+        )
+
+        set_evaluation_inputs(evaluation_pk=evaluation.pk)
+
+        evaluation.refresh_from_db()
+        assert evaluation.status == evaluation.FAILURE
+        assert (
+            evaluation.output == "The algorithm failed to execute on 1 images."
+        )
+
+    def test_set_evaluation_inputs(self):
+        submission = SubmissionFactory()
+        evaluation = EvaluationFactory(submission=submission)
+        algorithms = AlgorithmEvaluationFactory.create_batch(
+            2, status=AlgorithmEvaluation.SUCCESS, submission=submission
+        )
+        civs = ComponentInterfaceValueFactory.create_batch(2)
+
+        for alg, civ in zip(algorithms, civs):
+            alg.outputs.set([civ])
+
+        set_evaluation_inputs(evaluation_pk=evaluation.pk)
+
+        evaluation.refresh_from_db()
+        assert evaluation.status == evaluation.PENDING
+        assert evaluation.output == ""
+        assert list(evaluation.inputs.all()) == civs
