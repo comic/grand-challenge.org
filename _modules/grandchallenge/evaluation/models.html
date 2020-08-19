@@ -155,6 +155,7 @@
   <h1>Source code for grandchallenge.evaluation.models</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
+<span class="kn">from</span> <span class="nn">celery</span> <span class="kn">import</span> <span class="n">group</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.postgres.fields</span> <span class="kn">import</span> <span class="n">JSONField</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
@@ -163,6 +164,11 @@
 <span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 
+<span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AlgorithmExecutor</span><span class="p">,</span>
+    <span class="n">AlgorithmImage</span><span class="p">,</span>
+    <span class="n">DEFAULT_INPUT_INTERFACE_SLUG</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.backends.docker</span> <span class="kn">import</span> <span class="n">Executor</span><span class="p">,</span> <span class="n">put_file</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
@@ -184,7 +190,10 @@
     <span class="n">send_failed_evaluation_email</span><span class="p">,</span>
     <span class="n">send_successful_evaluation_email</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="n">calculate_ranks</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">calculate_ranks</span><span class="p">,</span>
+    <span class="n">set_evaluation_inputs</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.submission_conversion.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">SubmissionToAnnotationSetJob</span><span class="p">,</span>
@@ -283,6 +292,11 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
+<div class="viewcode-block" id="Config.SubmissionKind"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Config.SubmissionKind">[docs]</a>    <span class="k">class</span> <span class="nc">SubmissionKind</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
+        <span class="n">CSV</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;CSV&quot;</span>
+        <span class="n">ZIP</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;ZIP&quot;</span>
+        <span class="n">ALGORITHM</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Algorithm&quot;</span></div>
+
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
         <span class="n">Challenge</span><span class="p">,</span>
         <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
@@ -356,6 +370,14 @@
         <span class="n">choices</span><span class="o">=</span><span class="n">RESULT_DISPLAY_CHOICES</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="n">ALL</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Which results should be displayed on the leaderboard?&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">submission_kind</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">SubmissionKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">SubmissionKind</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Should participants submit a .csv/.zip file of predictions, &quot;</span>
+            <span class="s2">&quot;or an algorithm?&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">allow_submission_comments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -547,13 +569,17 @@
         <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
     <span class="p">)</span>
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
-    <span class="n">file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span>
+    <span class="n">algorithm_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">AlgorithmImage</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
+    <span class="p">)</span>
+    <span class="n">predictions_file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">submission_file_path</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
             <span class="n">MimeTypeValidator</span><span class="p">(</span><span class="n">allowed_types</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;application/zip&quot;</span><span class="p">,</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">)),</span>
             <span class="n">ExtensionValidator</span><span class="p">(</span><span class="n">allowed_extensions</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;.zip&quot;</span><span class="p">,</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)),</span>
         <span class="p">],</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">protected_s3_storage</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">supplementary_file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">submission_supplementary_file_path</span><span class="p">,</span>
@@ -579,6 +605,11 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;predictions_file&quot;</span><span class="p">,</span> <span class="s2">&quot;algorithm_image&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
@@ -587,14 +618,6 @@
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">create_evaluation</span><span class="p">()</span>
 
-            <span class="c1"># Convert this submission to an annotation set</span>
-            <span class="n">base</span> <span class="o">=</span> <span class="n">ImageSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
-            <span class="p">)</span>
-            <span class="n">SubmissionToAnnotationSetJob</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">submission</span><span class="o">=</span><span class="bp">self</span>
-            <span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_ready_method</span>
 
@@ -602,34 +625,75 @@
             <span class="c1"># TODO Email admins</span>
             <span class="k">return</span>
 
-        <span class="n">e</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-            <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">latest_ready_method</span>
-        <span class="p">)</span>
+        <span class="n">evaluation</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
 
-        <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
+            <span class="n">test_set</span> <span class="o">=</span> <span class="n">ImageSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
+            <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;application/zip&quot;</span><span class="p">:</span>
-            <span class="n">interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-zip-file&quot;</span>
+            <span class="n">default_input_interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">slug</span><span class="o">=</span><span class="n">DEFAULT_INPUT_INTERFACE_SLUG</span>
             <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">:</span>
-            <span class="n">interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-csv-file&quot;</span>
-            <span class="p">)</span>
+
+            <span class="n">jobs</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">test_set</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">interface</span><span class="o">=</span><span class="n">default_input_interface</span><span class="p">,</span>
+                    <span class="n">image</span><span class="o">=</span><span class="n">image</span><span class="p">,</span>
+                    <span class="n">evaluation_algorithmevaluations_as_input__submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="n">j</span> <span class="o">=</span> <span class="n">AlgorithmEvaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+                    <span class="n">j</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                                <span class="n">interface</span><span class="o">=</span><span class="n">default_input_interface</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="n">image</span>
+                            <span class="p">)</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">signature</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">jobs</span><span class="p">:</span>
+                <span class="p">(</span>
+                    <span class="n">group</span><span class="p">(</span><span class="o">*</span><span class="n">jobs</span><span class="p">)</span>
+                    <span class="o">|</span> <span class="n">set_evaluation_inputs</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                        <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+                    <span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
+
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Interface is not defined for </span><span class="si">{</span><span class="n">mimetype</span><span class="si">}</span><span class="s2"> files&quot;</span>
-            <span class="p">)</span>
+            <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions_file</span><span class="p">)</span>
 
-        <span class="n">e</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                    <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span>
+            <span class="k">if</span> <span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;application/zip&quot;</span><span class="p">:</span>
+                <span class="n">interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-zip-file&quot;</span>
                 <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
+            <span class="k">elif</span> <span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">:</span>
+                <span class="n">interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-csv-file&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Interface is not defined for </span><span class="si">{</span><span class="n">mimetype</span><span class="si">}</span><span class="s2"> files&quot;</span>
+                <span class="p">)</span>
 
-        <span class="n">e</span><span class="o">.</span><span class="n">schedule_job</span><span class="p">()</span>
+            <span class="n">evaluation</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                        <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions_file</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">evaluation</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
+
+            <span class="c1"># Convert this submission to an annotation set</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">ImageSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
+            <span class="p">)</span>
+            <span class="n">SubmissionToAnnotationSetJob</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">submission</span><span class="o">=</span><span class="bp">self</span>
+            <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">latest_ready_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -647,6 +711,42 @@
                 <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">AlgorithmEvaluation</span><span class="p">(</span><span class="n">ComponentJob</span><span class="p">):</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BigAutoField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">created</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">modified</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">im</span><span class="o">.</span><span class="n">file</span>
+            <span class="k">for</span> <span class="n">inpt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="n">inpt</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">executor_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">AlgorithmExecutor</span>
+
+    <span class="k">def</span> <span class="nf">create_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;results-json-file&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">output_civ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">)</span>
+            <span class="n">output_civ</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">result</span>
+            <span class="n">output_civ</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+            <span class="n">output_civ</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">result</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">output_civ</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">SubmissionEvaluator</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
