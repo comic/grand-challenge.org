@@ -11,6 +11,19 @@ from grandchallenge.evaluation.utils import Metric, rank_results
 
 @shared_task
 def set_evaluation_inputs(*_, evaluation_pk):
+    """
+    Sets the inputs to the Evaluation for a algorithm submission.
+
+    If all of the `AlgorithmEvaluation`s for this algorithm `Submission` are
+    successful this will set the inputs to the `Evaluation` job and schedule
+    it. If any of the `AlgorithmEvaluation`s are unsuccessful then the
+    `Evaluation` will be marked as Failed.
+
+    Parameters
+    ----------
+    evaluation_pk
+        The primary key of the evaluation.Evaluation object
+    """
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )

@@ -4,7 +4,7 @@ from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelChoiceField
-from django.utils.html import format_html
+from django.utils.text import format_lazy
 from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
@@ -19,7 +19,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse_lazy
 
 submission_options = (
     "submission_page_html",
@@ -122,12 +122,12 @@ class SubmissionForm(forms.ModelForm):
         validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
     )
     algorithm = ModelChoiceField(
-        queryset=Algorithm.objects.all(),
-        help_text=format_html(
+        queryset=None,
+        help_text=format_lazy(
             "Select one of your algorithms to submit as a solution to this "
             "challenge. If you have not created your algorithm yet you can "
             "do so <a href={}>on this page</a>.",
-            reverse("algorithms:create"),
+            reverse_lazy("algorithms:create"),
         ),
     )
 
@@ -189,9 +189,7 @@ class SubmissionForm(forms.ModelForm):
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]
 
-        if algorithm is None:
-            raise ValidationError("You must select an algorithm.")
-        elif algorithm.latest_ready_image is None:
+        if algorithm.latest_ready_image is None:
             raise ValidationError(
                 "This algorithm does not have a usable container image. "
                 "Please add one and try again."
