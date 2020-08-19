@@ -3,12 +3,18 @@ import pytest
 from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
     PolygonAnnotationSet,
+    RetinaImagePathologyAnnotation,
 )
 from grandchallenge.retina_core.management.commands.migratelesionnames import (
     migrate_annotations,
 )
+from grandchallenge.retina_core.management.commands.setretinapathologies import (
+    pathology_options,
+    set_retina_pathologies,
+)
 from tests.annotations_tests.factories import (
     PolygonAnnotationSetFactory,
+    RetinaImagePathologyAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
 from tests.factories import ImageFactory, ImagingModalityFactory
@@ -187,3 +193,66 @@ class TestMigratelesionnamesCommand:
         assert PolygonAnnotationSet.objects.count() == 1
         annotation_dup.refresh_from_db()
         assert annotation_dup.singlepolygonannotation_set.count() == 4
+
+
+@pytest.mark.django_db
+class TestSetRetinaPathologiesCommand:
+    def test_testsetretinapathologies_old(self):
+        PolygonAnnotationSetFactory(name="No match")
+        PolygonAnnotationSetFactory(name="retina::too_small")
+        result = set_retina_pathologies(PolygonAnnotationSet.objects.all())
+        assert result["pathology_set"] == 0
+        assert result["old_annotation"] == 2
+        assert len(result["non_matching_pathology"]) == 0
+
+    def test_testsetretinapathologies_no_match(self):
+        annotation = PolygonAnnotationSetFactory(
+            name="retina::enface::non_matching_pathology::bla"
+        )
+        result = set_retina_pathologies(PolygonAnnotationSet.objects.all())
+        assert result["pathology_set"] == 0
+        assert result["old_annotation"] == 0
+        assert len(result["non_matching_pathology"]) == 1
+        assert result["non_matching_pathology"] == [
+            {"id": annotation.id, "name": annotation.name}
+        ]
+
+    def test_testsetretinapathologies_created(self):
+        annotation = PolygonAnnotationSetFactory(
+            name=f"retina::enface::{pathology_options[0]}::bla"
+        )
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 0
+        result = set_retina_pathologies(PolygonAnnotationSet.objects.all())
+        assert result["pathology_set"] == 1
+        assert result["old_annotation"] == 0
+        assert len(result["non_matching_pathology"]) == 0
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 1
+        pathology_annotation = RetinaImagePathologyAnnotation.objects.first()
+        assert pathology_annotation.image == annotation.image
+        assert pathology_annotation.grader == annotation.grader
+        for v in pathology_options:
+            assert getattr(pathology_annotation, v) == (
+                v == pathology_options[0]
+            )
+
+    def test_testsetretinapathologies_updated(self):
+        annotation = PolygonAnnotationSetFactory(
+            name=f"retina::enface::{pathology_options[0]}::bla"
+        )
+        pathology_annotation = RetinaImagePathologyAnnotationFactory(
+            **{
+                "image": annotation.image,
+                "grader": annotation.grader,
+                pathology_options[0]: False,
+            }
+        )
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 1
+        result = set_retina_pathologies(PolygonAnnotationSet.objects.all())
+        assert result["pathology_set"] == 1
+        assert result["old_annotation"] == 0
+        assert len(result["non_matching_pathology"]) == 0
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 1
+        pathology_annotation.refresh_from_db()
+        assert pathology_annotation.image == annotation.image
+        assert pathology_annotation.grader == annotation.grader
+        assert getattr(pathology_annotation, pathology_options[0]) is True
