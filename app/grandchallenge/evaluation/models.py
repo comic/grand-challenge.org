@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from celery import group
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -8,6 +9,11 @@ from django.db.models import BooleanField
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 
+from grandchallenge.algorithms.models import (
+    AlgorithmExecutor,
+    AlgorithmImage,
+    DEFAULT_INPUT_INTERFACE_SLUG,
+)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
 from grandchallenge.components.models import (
@@ -29,7 +35,10 @@ from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
     send_successful_evaluation_email,
 )
-from grandchallenge.evaluation.tasks import calculate_ranks
+from grandchallenge.evaluation.tasks import (
+    calculate_ranks,
+    set_evaluation_inputs,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.submission_conversion.models import (
     SubmissionToAnnotationSetJob,
@@ -128,6 +137,11 @@ class Config(UUIDModel):
         ),
     )
 
+    class SubmissionKind(models.IntegerChoices):
+        CSV = 1, "CSV"
+        ZIP = 2, "ZIP"
+        ALGORITHM = 3, "Algorithm"
+
     challenge = models.OneToOneField(
         Challenge,
         on_delete=models.CASCADE,
@@ -201,6 +215,14 @@ class Config(UUIDModel):
         choices=RESULT_DISPLAY_CHOICES,
         default=ALL,
         help_text=("Which results should be displayed on the leaderboard?"),
+    )
+    submission_kind = models.PositiveSmallIntegerField(
+        default=SubmissionKind.CSV,
+        choices=SubmissionKind.choices,
+        help_text=(
+            "Should participants submit a .csv/.zip file of predictions, "
+            "or an algorithm?"
+        ),
     )
     allow_submission_comments = models.BooleanField(
         default=False,
@@ -392,13 +414,17 @@ class Submission(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
-    file = models.FileField(
+    algorithm_image = models.ForeignKey(
+        AlgorithmImage, null=True, on_delete=models.SET_NULL
+    )
+    predictions_file = models.FileField(
         upload_to=submission_file_path,
         validators=[
             MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
             ExtensionValidator(allowed_extensions=(".zip", ".csv")),
         ],
         storage=protected_s3_storage,
+        blank=True,
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
@@ -424,6 +450,11 @@ class Submission(UUIDModel):
         ),
     )
 
+    class Meta:
+        unique_together = (
+            ("challenge", "predictions_file", "algorithm_image"),
+        )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -432,14 +463,6 @@ class Submission(UUIDModel):
         if adding:
             self.create_evaluation()
 
-            # Convert this submission to an annotation set
-            base = ImageSet.objects.get(
-                challenge=self.challenge, phase=ImageSet.TESTING
-            )
-            SubmissionToAnnotationSetJob.objects.create(
-                base=base, submission=self
-            )
-
     def create_evaluation(self):
         method = self.latest_ready_method
 
@@ -447,34 +470,75 @@ class Submission(UUIDModel):
             # TODO Email admins
             return
 
-        e = Evaluation.objects.create(
-            submission=self, method=self.latest_ready_method
-        )
+        evaluation = Evaluation.objects.create(submission=self, method=method)
 
-        mimetype = get_file_mimetype(self.file)
+        if self.algorithm_image:
+            test_set = ImageSet.objects.get(
+                challenge=self.challenge, phase=ImageSet.TESTING
+            )
 
-        if mimetype == "application/zip":
-            interface = ComponentInterface.objects.get(
-                slug="predictions-zip-file"
+            default_input_interface = ComponentInterface.objects.get(
+                slug=DEFAULT_INPUT_INTERFACE_SLUG
             )
-        elif mimetype == "text/plain":
-            interface = ComponentInterface.objects.get(
-                slug="predictions-csv-file"
-            )
+
+            jobs = []
+
+            for image in test_set.images.all():
+                if not ComponentInterfaceValue.objects.filter(
+                    interface=default_input_interface,
+                    image=image,
+                    evaluation_algorithmevaluations_as_input__submission=self,
+                ).exists():
+                    j = AlgorithmEvaluation.objects.create(submission=self)
+                    j.inputs.set(
+                        [
+                            ComponentInterfaceValue.objects.create(
+                                interface=default_input_interface, image=image
+                            )
+                        ]
+                    )
+                    jobs.append(j.signature)
+
+            if jobs:
+                (
+                    group(*jobs)
+                    | set_evaluation_inputs.signature(
+                        kwargs={"evaluation_pk": evaluation.pk}
+                    )
+                ).apply_async()
+
         else:
-            raise NotImplementedError(
-                f"Interface is not defined for {mimetype} files"
-            )
+            mimetype = get_file_mimetype(self.predictions_file)
 
-        e.inputs.set(
-            [
-                ComponentInterfaceValue.objects.create(
-                    interface=interface, file=self.file
+            if mimetype == "application/zip":
+                interface = ComponentInterface.objects.get(
+                    slug="predictions-zip-file"
                 )
-            ]
-        )
+            elif mimetype == "text/plain":
+                interface = ComponentInterface.objects.get(
+                    slug="predictions-csv-file"
+                )
+            else:
+                raise NotImplementedError(
+                    f"Interface is not defined for {mimetype} files"
+                )
 
-        e.schedule_job()
+            evaluation.inputs.set(
+                [
+                    ComponentInterfaceValue.objects.create(
+                        interface=interface, file=self.predictions_file
+                    )
+                ]
+            )
+            evaluation.signature.apply_async()
+
+            # Convert this submission to an annotation set
+            base = ImageSet.objects.get(
+                challenge=self.challenge, phase=ImageSet.TESTING
+            )
+            SubmissionToAnnotationSetJob.objects.create(
+                base=base, submission=self
+            )
 
     @property
     def latest_ready_method(self):
@@ -492,6 +556,42 @@ class Submission(UUIDModel):
                 "challenge_short_name": self.challenge.short_name,
             },
         )
+
+
+class AlgorithmEvaluation(ComponentJob):
+    id = models.BigAutoField(primary_key=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
+
+    @property
+    def container(self):
+        return self.submission.algorithm_image
+
+    @property
+    def input_files(self):
+        return [
+            im.file
+            for inpt in self.inputs.all()
+            for im in inpt.image.files.all()
+        ]
+
+    @property
+    def executor_cls(self):
+        return AlgorithmExecutor
+
+    def create_result(self, *, result: dict):
+        interface = ComponentInterface.objects.get(slug="results-json-file")
+
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = result
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=result
+            )
+            self.outputs.add(output_civ)
 
 
 class SubmissionEvaluator(Executor):

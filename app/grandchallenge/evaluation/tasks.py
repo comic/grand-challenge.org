@@ -5,7 +5,50 @@ from celery import shared_task
 from django.apps import apps
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.evaluation.utils import Metric, rank_results
+
+
+@shared_task
+def set_evaluation_inputs(*_, evaluation_pk):
+    """
+    Sets the inputs to the Evaluation for a algorithm submission.
+
+    If all of the `AlgorithmEvaluation`s for this algorithm `Submission` are
+    successful this will set the inputs to the `Evaluation` job and schedule
+    it. If any of the `AlgorithmEvaluation`s are unsuccessful then the
+    `Evaluation` will be marked as Failed.
+
+    Parameters
+    ----------
+    evaluation_pk
+        The primary key of the evaluation.Evaluation object
+    """
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    unsuccessful_jobs = evaluation.submission.algorithmevaluation_set.exclude(
+        status=Evaluation.SUCCESS
+    ).count()
+
+    if unsuccessful_jobs:
+        evaluation.update_status(
+            status=evaluation.FAILURE,
+            output=(
+                f"The algorithm failed to execute on {unsuccessful_jobs} "
+                f"images."
+            ),
+        )
+    else:
+        evaluation.inputs.set(
+            ComponentInterfaceValue.objects.filter(
+                evaluation_algorithmevaluations_as_output__submission=evaluation.submission
+            )
+        )
+        evaluation.signature.apply_async()
 
 
 def filter_by_creators_most_recent(*, evaluations):

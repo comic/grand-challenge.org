@@ -241,9 +241,6 @@ class ComponentJob(models.Model):
         """
         raise NotImplementedError
 
-    def schedule_job(self):
-        self.signature.apply_async()
-
     @property
     def signature(self):
         options = {}

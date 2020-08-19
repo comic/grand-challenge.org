@@ -178,6 +178,6 @@ def test_submission_download(client, two_challenge_sets):
 
     for test in tests:
         response = get_view_for_user(
-            url=submission.file.url, client=client, user=test[1]
+            url=submission.predictions_file.url, client=client, user=test[1]
         )
         assert response.status_code == test[0]
