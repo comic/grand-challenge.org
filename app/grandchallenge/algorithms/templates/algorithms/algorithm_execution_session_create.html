@@ -15,11 +15,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a>
-        <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:execution-session-list' slug=algorithm.slug %}">Experiments</a>
-        </li>
         <li class="breadcrumb-item active"
-            aria-current="page">Create
+            aria-current="page">Create Experiment
         </li>
     </ol>
 {% endblock %}
