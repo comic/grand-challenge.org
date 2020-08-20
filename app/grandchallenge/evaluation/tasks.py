@@ -139,7 +139,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
         )
         .order_by("-created")
         .select_related("submission__creator")
-        .prefetch_related("outputs")
+        .prefetch_related("outputs__interface")
     )
 
     if display_choice == challenge.evaluation_config.MOST_RECENT:
@@ -162,7 +162,9 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
         score_method=score_method,
     )
 
-    for e in Evaluation.objects.filter(submission__challenge=challenge):
+    evaluations = Evaluation.objects.filter(submission__challenge=challenge)
+
+    for e in evaluations:
         try:
             rank = final_positions.ranks[e.pk]
             rank_score = final_positions.rank_scores[e.pk]
@@ -173,6 +175,10 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
             rank_score = 0.0
             rank_per_metric = {}
 
-        Evaluation.objects.filter(pk=e.pk).update(
-            rank=rank, rank_score=rank_score, rank_per_metric=rank_per_metric
-        )
+        e.rank = rank
+        e.rank_score = rank_score
+        e.rank_per_metric = rank_per_metric
+
+    Evaluation.objects.bulk_update(
+        evaluations, ["rank", "rank_score", "rank_per_metric"]
+    )

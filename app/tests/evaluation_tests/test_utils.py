@@ -10,7 +10,7 @@ from tests.factories import (
 
 
 @pytest.mark.django_db
-def test_calculate_ranks():
+def test_calculate_ranks(django_assert_max_num_queries):
     challenge = ChallengeFactory()
 
     results = [
@@ -122,7 +122,8 @@ def test_calculate_ranks():
                 ]
                 challenge.evaluation_config.save()
 
-                calculate_ranks(challenge_pk=challenge.pk)
+                with django_assert_max_num_queries(7):
+                    calculate_ranks(challenge_pk=challenge.pk)
 
                 assert_ranks(
                     queryset,
