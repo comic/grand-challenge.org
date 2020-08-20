@@ -406,7 +406,7 @@ class Session(UUIDModel):
         """
         return Service(
             job_id=self.pk,
-            job_model=f"{self._meta.app_label}-{self._meta.model_name}",
+            job_class=Session,
             exec_image=self.workstation_image.image,
             exec_image_sha256=self.workstation_image.image_sha256,
         )
