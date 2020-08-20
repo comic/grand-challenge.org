@@ -97,7 +97,7 @@ class SubmissionFactory(factory.DjangoModelFactory):
         model = Submission
 
     challenge = factory.SubFactory(ChallengeFactory)
-    file = factory.django.FileField()
+    predictions_file = factory.django.FileField()
     creator = factory.SubFactory(UserFactory)
 
 

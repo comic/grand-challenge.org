@@ -13,11 +13,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a>
-        <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:execution-session-list' slug=algorithm.slug %}">Experiments
-        </a>
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object.pk }}
+            aria-current="page">Experiment {{ object.pk }}
         </li>
     </ol>
 {% endblock %}

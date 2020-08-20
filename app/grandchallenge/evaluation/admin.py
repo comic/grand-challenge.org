@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from grandchallenge.evaluation.models import (
+    AlgorithmEvaluation,
     Config,
     Evaluation,
     Method,
@@ -33,8 +34,20 @@ class SubmissionAdmin(admin.ModelAdmin):
     readonly_fields = (
         "creator",
         "challenge",
-        "file",
+        "predictions_file",
     )
+
+
+class AlgorithmEvaluationAdmin(admin.ModelAdmin):
+    list_display = ("pk", "created", "submission", "status")
+    list_filter = ("submission__challenge__short_name",)
+    search_fields = (
+        "pk",
+        "submission__pk",
+        "submission__challenge__short_name",
+        "submission__creator__username",
+    )
+    readonly_fields = ("inputs", "outputs", "submission")
 
 
 class EvaluationAdmin(admin.ModelAdmin):
@@ -55,3 +68,4 @@ admin.site.register(Config, ConfigAdmin)
 admin.site.register(Method, MethodAdmin)
 admin.site.register(Submission, SubmissionAdmin)
 admin.site.register(Evaluation, EvaluationAdmin)
+admin.site.register(AlgorithmEvaluation, AlgorithmEvaluationAdmin)

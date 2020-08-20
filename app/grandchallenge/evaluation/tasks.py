@@ -5,7 +5,50 @@ from celery import shared_task
 from django.apps import apps
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.evaluation.utils import Metric, rank_results
+
+
+@shared_task
+def set_evaluation_inputs(*_, evaluation_pk):
+    """
+    Sets the inputs to the Evaluation for a algorithm submission.
+
+    If all of the `AlgorithmEvaluation`s for this algorithm `Submission` are
+    successful this will set the inputs to the `Evaluation` job and schedule
+    it. If any of the `AlgorithmEvaluation`s are unsuccessful then the
+    `Evaluation` will be marked as Failed.
+
+    Parameters
+    ----------
+    evaluation_pk
+        The primary key of the evaluation.Evaluation object
+    """
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    unsuccessful_jobs = evaluation.submission.algorithmevaluation_set.exclude(
+        status=Evaluation.SUCCESS
+    ).count()
+
+    if unsuccessful_jobs:
+        evaluation.update_status(
+            status=evaluation.FAILURE,
+            output=(
+                f"The algorithm failed to execute on {unsuccessful_jobs} "
+                f"images."
+            ),
+        )
+    else:
+        evaluation.inputs.set(
+            ComponentInterfaceValue.objects.filter(
+                evaluation_algorithmevaluations_as_output__submission=evaluation.submission
+            )
+        )
+        evaluation.signature.apply_async()
 
 
 def filter_by_creators_most_recent(*, evaluations):
@@ -96,7 +139,7 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
         )
         .order_by("-created")
         .select_related("submission__creator")
-        .prefetch_related("outputs")
+        .prefetch_related("outputs__interface")
     )
 
     if display_choice == challenge.evaluation_config.MOST_RECENT:
@@ -119,7 +162,9 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
         score_method=score_method,
     )
 
-    for e in Evaluation.objects.filter(submission__challenge=challenge):
+    evaluations = Evaluation.objects.filter(submission__challenge=challenge)
+
+    for e in evaluations:
         try:
             rank = final_positions.ranks[e.pk]
             rank_score = final_positions.rank_scores[e.pk]
@@ -130,6 +175,10 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
             rank_score = 0.0
             rank_per_metric = {}
 
-        Evaluation.objects.filter(pk=e.pk).update(
-            rank=rank, rank_score=rank_score, rank_per_metric=rank_per_metric
-        )
+        e.rank = rank
+        e.rank_score = rank_score
+        e.rank_per_metric = rank_per_metric
+
+    Evaluation.objects.bulk_update(
+        evaluations, ["rank", "rank_score", "rank_per_metric"]
+    )

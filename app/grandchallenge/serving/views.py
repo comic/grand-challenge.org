@@ -73,6 +73,8 @@ def serve_submissions(request, *, submission_pk, **_):
                 "submission_id": submission.pk,
             }
         )
-        return protected_storage_redirect(name=submission.file.name)
+        return protected_storage_redirect(
+            name=submission.predictions_file.name
+        )
 
     raise PermissionDenied
