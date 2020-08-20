@@ -379,9 +379,10 @@ class Job(UUIDModel, ComponentJob):
     public = models.BooleanField(
         default=False,
         help_text=(
-            "If True, allow anyone to view this result along "
+            "If True, allow anyone to download this result along "
             "with the input image. Otherwise, only the job creator and "
-            "algorithm editor will have permission to view this result."
+            "algorithm editor(s) will have permission to download and view "
+            "this result."
         ),
     )
     comment = models.TextField(blank=True, default="")
