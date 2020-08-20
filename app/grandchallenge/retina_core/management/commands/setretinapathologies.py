@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.core.paginator import Paginator
 
 from grandchallenge.annotations.models import (
+    OctRetinaImagePathologyAnnotation,
     PolygonAnnotationSet,
     RetinaImagePathologyAnnotation,
 )
@@ -13,7 +14,7 @@ def array_to_string(a):
     return '[\n\t"' + '",\n\t"'.join(map(lambda v: str(v), a)) + '"\n]'
 
 
-pathology_options = [
+pathology_options_enface = [
     "rf_present",
     "oda_present",
     "myopia_present",
@@ -21,6 +22,14 @@ pathology_options = [
     "amd_present",
     "dr_present",
     "cysts_present",
+]
+
+pathology_options_oct = [
+    "macular",
+    "myopia",
+    "optic_disc",
+    "other",
+    "layers",
 ]
 
 
@@ -44,24 +53,37 @@ def set_retina_pathologies(annotations):
                 old_annotation += 1
                 continue
 
-            if name_parts[2] not in pathology_options:
+            if name_parts[2] not in (
+                *pathology_options_enface,
+                *pathology_options_oct,
+            ):
                 non_matching_pathology.append(
                     {"id": annotation.id, "name": annotation.name}
                 )
                 continue
 
-            (
-                pathology_annotation,
-                _,
-            ) = RetinaImagePathologyAnnotation.objects.get_or_create(
-                grader=annotation.grader,
-                image=annotation.image,
-                defaults={v: False for v in pathology_options},
-            )
+            for modality in ("oct", "enface"):
+                if name_parts[1] != modality:
+                    continue
+                pathology_options = pathology_options_enface
+                model = RetinaImagePathologyAnnotation
+                if modality == "oct":
+                    pathology_options = pathology_options_oct
+                    model = OctRetinaImagePathologyAnnotation
+                (pathology_annotation, _,) = model.objects.get_or_create(
+                    grader=annotation.grader,
+                    image=annotation.image,
+                    defaults={v: False for v in pathology_options},
+                )
 
-            setattr(pathology_annotation, name_parts[2], True)
-            pathology_annotation.save()
-            pathology_set += 1
+                setattr(pathology_annotation, name_parts[2], True)
+                pathology_annotation.save()
+                pathology_set += 1
+
+                if modality == "oct":
+                    RetinaImagePathologyAnnotation.objects.filter(
+                        grader=annotation.grader, image=annotation.image
+                    ).delete()
 
     return {
         "pathology_set": pathology_set,
