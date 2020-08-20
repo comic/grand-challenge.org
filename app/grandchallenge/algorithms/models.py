@@ -357,7 +357,7 @@ class AlgorithmExecutor(Executor):
         default_output_interface = ComponentInterface.objects.get(
             slug=DEFAULT_OUTPUT_INTERFACE_SLUG
         )
-        job = Job.objects.get(pk=self._job_id)
+        job = self._job_class.objects.get(pk=self._job_id)
 
         for image in importer_result.new_images:
             civ = ComponentInterfaceValue.objects.create(
