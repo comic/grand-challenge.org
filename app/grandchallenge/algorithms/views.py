@@ -461,9 +461,7 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
     def get_unfiltered_queryset(self):
         queryset = self.object_list
         return (
-            queryset.filter(
-                algorithm_image__algorithm=self.algorithm, status=Job.SUCCESS
-            )
+            queryset.filter(algorithm_image__algorithm=self.algorithm,)
             .prefetch_related("outputs__image__files", "inputs__image__files")
             .select_related("creator__user_profile")
         )

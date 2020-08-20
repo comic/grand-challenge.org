@@ -11,17 +11,34 @@
 {{ job.creator|user_profile_link }}
 <split/>
 <a href="#resultInfoModal"
-   class="badge badge-primary"
+   class="badge
+{% if job.status == job.FAILURE or job.status == object.CANCELLED %}
+    badge-danger
+{% elif job.status == job.RETRY %}
+    badge-warning
+{% elif job.status == job.SUCCESS %}
+    badge-success
+{% else %}
+    badge-info
+{% endif %}"
    data-toggle="modal"
    data-target="#resultInfoModal"
    data-title="Result Info"
-   data-output="{% for output in job.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}"
+   data-output="
+   {% if job.status == job.SUCCESS %}
+        {% for output in job.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
+   {% elif change_job %}
+        {% firstof job.output job.get_status_display %}
+   {% else %}
+        {% firstof job.output|user_error job.get_status_display %}
+   {% endif %}"
    data-pk="{{ job.pk }}"
    title="Result Info">
     <i class="fa fa-file"></i>
     {% for input in job.inputs.all %}
         {{ input.image.name }}
     {% endfor %}
+    ({{ job.get_status_display }})
 </a>
 <split/>
 {% if job.public %}
@@ -32,47 +49,49 @@
        title="Job and images are private"></i>
 {% endif %}
 <split/>
-<ul class="list-unstyled">
-    <li>
-        <a href="{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_job=job config=algorithm.workstation_config %}">
+{% if job.status == job.SUCCESS %}
+    <ul class="list-unstyled">
+        <li>
+            <a href="{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_job=job config=algorithm.workstation_config %}">
             <span class="badge badge-primary"
                   title="View algorithm result">
                 <i class="fa fa-eye"></i> View Result
             </span>
-        </a>
-    </li>
-    {% for output in job.outputs.all %}
-        {% for file in output.image.files.all %}
-            <li>
-                <a href="{{ file.file.url }}">
+            </a>
+        </li>
+        {% for output in job.outputs.all %}
+            {% for file in output.image.files.all %}
+                <li>
+                    <a href="{{ file.file.url }}">
                     <span class="badge badge-primary"
                           title="Download Output {{ forloop.parentloop.counter }} ({{ file.image.name }})">
                         <i class="fa fa-download"></i> Output {{ forloop.parentloop.counter }} ({{ file.file|suffix }})
                     </span>
-                </a>
-            </li>
-        {% endfor %}
-    {% empty %}
-        <li>
+                    </a>
+                </li>
+            {% endfor %}
+        {% empty %}
+            <li>
             <span class="badge badge-warning"
                   title="No output images were found">
                 <i class="fa fa-eye-slash"></i>
             </span>
-        </li>
-    {% endfor %}
-    {% for input in job.inputs.all %}
-        {% for file in input.image.files.all %}
-            <li>
-                <a href="{{ file.file.url }}">
+            </li>
+        {% endfor %}
+        {% for input in job.inputs.all %}
+            {% for file in input.image.files.all %}
+                <li>
+                    <a href="{{ file.file.url }}">
                     <span class="badge badge-primary"
                           title="Download Input {{ input.image.name|stem }} ({{ file.file|suffix }})">
                         <i class="fa fa-download"></i> Input ({{ file.file|suffix }})
                     </span>
-                </a>
-            </li>
+                    </a>
+                </li>
+            {% endfor %}
         {% endfor %}
-    {% endfor %}
-</ul>
+    </ul>
+{% endif %}
 <split/>
 {% if job.comment %}
     <a href="#resultInfoModal"
