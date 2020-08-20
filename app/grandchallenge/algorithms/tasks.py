@@ -62,16 +62,16 @@ def send_failed_jobs_email(*_, upload_session_pk):
         algorithm = failed_jobs.first().algorithm_image.algorithm
         creator = failed_jobs.first().creator
 
-        experiments_url = reverse(
-            "algorithms:execution-session-list",
-            kwargs={"slug": algorithm.slug},
+        experiment_url = reverse(
+            "algorithms:execution-session-detail",
+            kwargs={"slug": algorithm.slug, "pk": upload_session_pk},
         )
 
         message = (
             f"Unfortunately {failed_jobs.count()} of your jobs for algorithm "
             f"'{algorithm.title}' failed with an error. "
             f"You can inspect the output and error messages at "
-            f"{experiments_url}.\n\n"
+            f"{experiment_url}.\n\n"
             f"You may wish to try and correct these errors and try again, "
             f"or contact the algorithm editors. "
             f"The following information may help them:\n"
