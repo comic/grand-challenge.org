@@ -2,6 +2,7 @@ import pytest
 
 from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
+    OctRetinaImagePathologyAnnotation,
     PolygonAnnotationSet,
     RetinaImagePathologyAnnotation,
 )
@@ -9,7 +10,8 @@ from grandchallenge.retina_core.management.commands.migratelesionnames import (
     migrate_annotations,
 )
 from grandchallenge.retina_core.management.commands.setretinapathologies import (
-    pathology_options,
+    pathology_options_enface,
+    pathology_options_oct,
     set_retina_pathologies,
 )
 from tests.annotations_tests.factories import (
@@ -219,7 +221,7 @@ class TestSetRetinaPathologiesCommand:
 
     def test_testsetretinapathologies_created(self):
         annotation = PolygonAnnotationSetFactory(
-            name=f"retina::enface::{pathology_options[0]}::bla"
+            name=f"retina::enface::{pathology_options_enface[0]}::bla"
         )
         assert RetinaImagePathologyAnnotation.objects.all().count() == 0
         result = set_retina_pathologies(PolygonAnnotationSet.objects.all())
@@ -230,20 +232,20 @@ class TestSetRetinaPathologiesCommand:
         pathology_annotation = RetinaImagePathologyAnnotation.objects.first()
         assert pathology_annotation.image == annotation.image
         assert pathology_annotation.grader == annotation.grader
-        for v in pathology_options:
+        for v in pathology_options_enface:
             assert getattr(pathology_annotation, v) == (
-                v == pathology_options[0]
+                v == pathology_options_enface[0]
             )
 
     def test_testsetretinapathologies_updated(self):
         annotation = PolygonAnnotationSetFactory(
-            name=f"retina::enface::{pathology_options[0]}::bla"
+            name=f"retina::enface::{pathology_options_enface[0]}::bla"
         )
         pathology_annotation = RetinaImagePathologyAnnotationFactory(
             **{
                 "image": annotation.image,
                 "grader": annotation.grader,
-                pathology_options[0]: False,
+                pathology_options_enface[0]: False,
             }
         )
         assert RetinaImagePathologyAnnotation.objects.all().count() == 1
@@ -255,4 +257,50 @@ class TestSetRetinaPathologiesCommand:
         pathology_annotation.refresh_from_db()
         assert pathology_annotation.image == annotation.image
         assert pathology_annotation.grader == annotation.grader
-        assert getattr(pathology_annotation, pathology_options[0]) is True
+        assert (
+            getattr(pathology_annotation, pathology_options_enface[0]) is True
+        )
+
+    def test_testsetretinapathologies_oct_legacy_removed(self):
+        annotation = PolygonAnnotationSetFactory(
+            name=f"retina::oct::{pathology_options_oct[0]}::bla"
+        )
+        RetinaImagePathologyAnnotationFactory(
+            **{"image": annotation.image, "grader": annotation.grader}
+        )
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 1
+        assert OctRetinaImagePathologyAnnotation.objects.all().count() == 0
+        result = set_retina_pathologies(PolygonAnnotationSet.objects.all())
+        assert result["pathology_set"] == 1
+        assert result["old_annotation"] == 0
+        assert len(result["non_matching_pathology"]) == 0
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 0
+        assert OctRetinaImagePathologyAnnotation.objects.all().count() == 1
+        oct_pathology_annotation = (
+            OctRetinaImagePathologyAnnotation.objects.first()
+        )
+        assert oct_pathology_annotation.image == annotation.image
+        assert oct_pathology_annotation.grader == annotation.grader
+        assert (
+            getattr(oct_pathology_annotation, pathology_options_oct[0]) is True
+        )
+
+    def test_testsetretinapathologies_oct(self):
+        annotation = PolygonAnnotationSetFactory(
+            name=f"retina::oct::{pathology_options_oct[0]}::bla"
+        )
+        assert OctRetinaImagePathologyAnnotation.objects.all().count() == 0
+        result = set_retina_pathologies(PolygonAnnotationSet.objects.all())
+        assert result["pathology_set"] == 1
+        assert result["old_annotation"] == 0
+        assert len(result["non_matching_pathology"]) == 0
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 0
+        assert OctRetinaImagePathologyAnnotation.objects.all().count() == 1
+        oct_pathology_annotation = (
+            OctRetinaImagePathologyAnnotation.objects.first()
+        )
+        assert oct_pathology_annotation.image == annotation.image
+        assert oct_pathology_annotation.grader == annotation.grader
+        assert (
+            getattr(oct_pathology_annotation, pathology_options_oct[0]) is True
+        )
