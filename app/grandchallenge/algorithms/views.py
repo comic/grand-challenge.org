@@ -63,6 +63,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import (
+    Column,
     PaginatedTableListView,
     PermissionRequestUpdate,
 )
@@ -398,12 +399,12 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
         "comment",
     ]
     columns = [
-        "created",
-        "creator__username",
-        "inputs__image__name",
-        "public",
-        "inputs__image__files__file",
-        "comment",
+        Column(title="Created", sort_field="created"),
+        Column(title="Creator", sort_field="creator__username"),
+        Column(title="Result", sort_field="inputs__image__name"),
+        Column(title="Visibility", sort_field="public"),
+        Column(title="Output", sort_field="inputs__image__files__file"),
+        Column(title="Edit", sort_field="comment"),
     ]
     order_by = "created"
 

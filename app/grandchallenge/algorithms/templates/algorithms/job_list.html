@@ -43,12 +43,9 @@
         <table class="table table-hover table-borderless table-sm">
             <thead class="thead-light">
             <tr>
-                <th>Created</th>
-                <th>Creator</th>
-                <th>Result</th>
-                <th>Visibility</th>
-                <th>Output</th>
-                <th>Edit</th>
+                {% for column in columns %}
+                    <th {% if column.toggleable %}class="toggleable"{% endif %}>{{ column.title }}</th>
+                {% endfor %}
             </tr>
             </thead>
             <tbody>

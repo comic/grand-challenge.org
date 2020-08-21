@@ -7,12 +7,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
 )
+from grandchallenge.core.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     ConfigForm,
     LegacySubmissionForm,
@@ -22,6 +24,7 @@ from grandchallenge.evaluation.forms import (
 from grandchallenge.evaluation.models import (
     Config,
     Evaluation,
+    Leaderboard,
     Method,
     Submission,
 )
@@ -286,7 +289,7 @@ class EvaluationDetail(DetailView):
         return context
 
 
-class Leaderboard(TeamContextMixin, ListView):
+class LeaderboardList(TeamContextMixin, ListView):
     model = Evaluation
     template_name = "evaluation/leaderboard.html"
 
@@ -310,6 +313,107 @@ class Leaderboard(TeamContextMixin, ListView):
             )
         )
         return queryset
+
+
+class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
+    model = Evaluation
+    template_name = "evaluation/leaderboard_detail.html"
+    row_template = "evaluation/leaderboard_row.html"
+    search_fields = ["pk", "submission__creator__username"]
+
+    @property
+    def columns(self):
+        columns = [
+            Column(title="#", sort_field="rank"),
+            Column(
+                title="User (Team)" if self.config.use_teams else "User",
+                sort_field="creator__username",
+            ),
+            Column(title="Created", sort_field="created"),
+        ]
+
+        if self.config.scoring_method_choice == self.config.MEAN:
+            columns.append(Column(title="Mean Position", sort_field="rank"))
+        elif self.config.scoring_method_choice == self.config.MEDIAN:
+            columns.append(Column(title="Median Position", sort_field="rank"))
+
+        if self.config.scoring_method_choice == self.config.ABSOLUTE:
+            columns.append(
+                Column(title=self.config.score_title, sort_field="rank")
+            )
+        else:
+            columns.append(
+                Column(
+                    title=f"{self.config.score_title} (Position)",
+                    sort_field="rank",
+                    toggleable=True,
+                )
+            )
+
+        for c in self.config.extra_results_columns:
+            columns.append(
+                Column(
+                    title=c["title"]
+                    if self.config.scoring_method_choice
+                    == self.config.ABSOLUTE
+                    else f"{c['title']} (Position)",
+                    sort_field="rank",
+                    toggleable=True,
+                )
+            )
+
+        if self.config.display_submission_comments:
+            columns.append(Column(title="Comment", sort_field="comment"))
+
+        if self.config.show_publication_url:
+            columns.append(
+                Column(title="Publication", sort_field="publication_url")
+            )
+
+        if self.config.show_supplementary_file_link:
+            columns.append(
+                Column(
+                    title=self.config.supplementary_file_label,
+                    sort_field="supplementary_file",
+                )
+            )
+
+        return columns
+
+    @cached_property
+    def config(self):
+        return self.request.challenge.evaluation_config
+
+    def get_row_context(self, job, *args, **kwargs):
+        return {"evaluation": job, "evaluation_config": self.config}
+
+    def get_unfiltered_queryset(self):
+        queryset = super().get_queryset()
+        queryset = (
+            queryset.select_related(
+                "submission__creator__user_profile", "submission__challenge"
+            )
+            .filter(
+                submission__challenge=self.request.challenge,
+                published=True,
+                status=Evaluation.SUCCESS,
+                rank__gt=0,
+            )
+            .annotate(
+                metrics=ArrayAgg(
+                    "outputs__value",
+                    filter=Q(outputs__interface__slug="metrics-json-file"),
+                )
+            )
+        )
+        return queryset
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {"leaderboard": Leaderboard.objects.get(config=self.config)}
+        )
+        return context
 
 
 class EvaluationUpdate(

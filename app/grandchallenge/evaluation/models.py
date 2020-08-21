@@ -8,6 +8,7 @@ from django.db import models
 from django.db.models import BooleanField
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
+from simple_history.models import HistoricalRecords
 
 from grandchallenge.algorithms.models import (
     AlgorithmExecutor,
@@ -741,3 +742,18 @@ def result_screenshot_path(instance, filename):
         f"{instance.pk}/"
         f"{filename}"
     )
+
+
+class Leaderboard(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    config = models.ForeignKey(Config, on_delete=models.CASCADE)
+    ranks = JSONField(default=list)
+    history = HistoricalRecords()
+
+    # TODO also need to save some config options
+
+    class Meta:
+        unique_together = (
+            ("config",),  # Only one leaderboard per config for now
+        )
