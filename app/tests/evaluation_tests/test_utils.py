@@ -21,7 +21,7 @@ def test_calculate_ranks(django_assert_max_num_queries):
         {"a": 1.0, "b": 0.3},
         {"a": 0.7, "b": 0.4},
         {"a": 0.5, "b": 0.5},
-        # Following two are invalid if relative ranking is used
+        # Following two are invalid as they are incomplete
         {"a": 1.0},
         {"b": 0.3},
         # Add a valid, but unpublished result
@@ -46,12 +46,12 @@ def test_calculate_ranks(django_assert_max_num_queries):
         Config.DESCENDING: {
             Config.ABSOLUTE: {
                 Config.DESCENDING: {
-                    "ranks": [6, 4, 1, 3, 4, 1, 0, 0],
-                    "rank_scores": [6, 4, 1, 3, 4, 1, 0, 0],
+                    "ranks": [5, 3, 1, 2, 3, 0, 0, 0],
+                    "rank_scores": [5, 3, 1, 2, 3, 0, 0, 0],
                 },
                 Config.ASCENDING: {
-                    "ranks": [6, 4, 1, 3, 4, 1, 0, 0],
-                    "rank_scores": [6, 4, 1, 3, 4, 1, 0, 0],
+                    "ranks": [5, 3, 1, 2, 3, 0, 0, 0],
+                    "rank_scores": [5, 3, 1, 2, 3, 0, 0, 0],
                 },
             },
             Config.MEDIAN: {
@@ -78,12 +78,12 @@ def test_calculate_ranks(django_assert_max_num_queries):
         Config.ASCENDING: {
             Config.ABSOLUTE: {
                 Config.DESCENDING: {
-                    "ranks": [1, 2, 5, 4, 2, 5, 0, 0],
-                    "rank_scores": [1, 2, 5, 4, 2, 5, 0, 0],
+                    "ranks": [1, 2, 5, 4, 2, 0, 0, 0],
+                    "rank_scores": [1, 2, 5, 4, 2, 0, 0, 0],
                 },
                 Config.ASCENDING: {
-                    "ranks": [1, 2, 5, 4, 2, 5, 0, 0],
-                    "rank_scores": [1, 2, 5, 4, 2, 5, 0, 0],
+                    "ranks": [1, 2, 5, 4, 2, 0, 0, 0],
+                    "rank_scores": [1, 2, 5, 4, 2, 0, 0, 0],
                 },
             },
             Config.MEDIAN: {

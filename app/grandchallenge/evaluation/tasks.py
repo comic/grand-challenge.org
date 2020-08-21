@@ -105,21 +105,16 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
                 == challenge.evaluation_config.DESCENDING
             ),
         ),
-    )
-
-    if score_method_choice != challenge.evaluation_config.ABSOLUTE:
-        metrics += tuple(
+        *[
             Metric(
                 path=col["path"],
                 reverse=col["order"] == challenge.evaluation_config.DESCENDING,
             )
             for col in challenge.evaluation_config.extra_results_columns
-        )
+        ],
+    )
 
-    if (
-        score_method_choice == challenge.evaluation_config.ABSOLUTE
-        and len(metrics) == 1
-    ):
+    if score_method_choice == challenge.evaluation_config.ABSOLUTE:
 
         def score_method(x):
             return list(x)[0]
@@ -163,6 +158,16 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     )
 
     evaluations = Evaluation.objects.filter(submission__challenge=challenge)
+
+    _update_evaluations(
+        evaluations=evaluations, final_positions=final_positions
+    )
+
+
+def _update_evaluations(*, evaluations, final_positions):
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
 
     for e in evaluations:
         try:
