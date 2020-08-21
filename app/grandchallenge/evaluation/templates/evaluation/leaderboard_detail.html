@@ -3,9 +3,9 @@
 {% block title %}Leaderboard - {{ block.super }}{% endblock %}
 
 {% block content %}
-    <h2>Leaderboard</h2>
+    <h2>Leaderboard {{ request.GET.leaderboardDate }}</h2>
 
-    <div class="table-responsive">
+    <div class="table-responsive mb-3">
         <table class="table table-hover table-borderless table-sm"
                id="resultsTable">
             <thead class="thead-light">
@@ -27,6 +27,15 @@
         <p class="small ml-3"> Only the most recent published result for each
             participant is
             listed.</p>
+    {% else %}
+        <h3>Historical Leaderboard</h3>
+
+        <form class="form-inline" action="">
+            <label class="mr-sm-2" for="leaderboardDate">View the leaderboard from this date:</label>
+            <input class="mr-sm-2" type="date" id="leaderboardDate" name="leaderboardDate" required
+                   value="{{ request.GET.leaderboardDate }}">
+            <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+        </form>
     {% endif %}
 
 {% endblock %}
