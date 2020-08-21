@@ -394,7 +394,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
             before = datetime(
                 year=int(year), month=int(month), day=int(day),
             ) + relativedelta(days=1)
-            return queryset.filter(created__lt=before)
+            return queryset.filter(submission__created__lt=before)
         else:
             return queryset
 
