@@ -223,10 +223,13 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
 
 
 class TeamContextMixin:
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    @cached_property
+    def evaluation_config(self):
+        return self.request.challenge.evaluation_config
 
-        evaluation_config = self.request.challenge.evaluation_config
+    @cached_property
+    def user_teams(self):
+        evaluation_config = self.evaluation_config
 
         if evaluation_config.use_teams:
             user_teams = {
@@ -241,10 +244,16 @@ class TeamContextMixin:
         else:
             user_teams = {}
 
-        context.update(
-            {"evaluation_config": evaluation_config, "user_teams": user_teams}
-        )
+        return user_teams
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "evaluation_config": self.evaluation_config,
+                "user_teams": self.user_teams,
+            }
+        )
         return context
 
 
@@ -305,48 +314,61 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
                 sort_field="rank",
             ),
             Column(
-                title="User (Team)" if self.config.use_teams else "User",
+                title="User (Team)"
+                if self.evaluation_config.use_teams
+                else "User",
                 sort_field="submission__creator__username",
             ),
             Column(title="Created", sort_field="created"),
         ]
 
-        if self.config.scoring_method_choice == self.config.MEAN:
+        if (
+            self.evaluation_config.scoring_method_choice
+            == self.evaluation_config.MEAN
+        ):
             columns.append(Column(title="Mean Position", sort_field="rank"))
-        elif self.config.scoring_method_choice == self.config.MEDIAN:
+        elif (
+            self.evaluation_config.scoring_method_choice
+            == self.evaluation_config.MEDIAN
+        ):
             columns.append(Column(title="Median Position", sort_field="rank"))
 
-        if self.config.scoring_method_choice == self.config.ABSOLUTE:
+        if (
+            self.evaluation_config.scoring_method_choice
+            == self.evaluation_config.ABSOLUTE
+        ):
             columns.append(
-                Column(title=self.config.score_title, sort_field="rank")
+                Column(
+                    title=self.evaluation_config.score_title, sort_field="rank"
+                )
             )
         else:
             columns.append(
                 Column(
-                    title=f"{self.config.score_title} (Position)",
+                    title=f"{self.evaluation_config.score_title} (Position)",
                     sort_field="rank",
                     toggleable=True,
                 )
             )
 
-        for c in self.config.extra_results_columns:
+        for c in self.evaluation_config.extra_results_columns:
             columns.append(
                 Column(
                     title=c["title"]
-                    if self.config.scoring_method_choice
-                    == self.config.ABSOLUTE
+                    if self.evaluation_config.scoring_method_choice
+                    == self.evaluation_config.ABSOLUTE
                     else f"{c['title']} (Position)",
                     sort_field="rank",
                     toggleable=True,
                 )
             )
 
-        if self.config.display_submission_comments:
+        if self.evaluation_config.display_submission_comments:
             columns.append(
                 Column(title="Comment", sort_field="submission__comment")
             )
 
-        if self.config.show_publication_url:
+        if self.evaluation_config.show_publication_url:
             columns.append(
                 Column(
                     title="Publication",
@@ -354,22 +376,22 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
                 )
             )
 
-        if self.config.show_supplementary_file_link:
+        if self.evaluation_config.show_supplementary_file_link:
             columns.append(
                 Column(
-                    title=self.config.supplementary_file_label,
+                    title=self.evaluation_config.supplementary_file_label,
                     sort_field="submission__supplementary_file",
                 )
             )
 
         return columns
 
-    @cached_property
-    def config(self):
-        return self.request.challenge.evaluation_config
-
     def get_row_context(self, job, *args, **kwargs):
-        return {"evaluation": job, "evaluation_config": self.config}
+        return {
+            "evaluation": job,
+            "evaluation_config": self.evaluation_config,
+            "user_teams": self.user_teams,
+        }
 
     def get_unfiltered_queryset(self):
         queryset = super().get_queryset()
