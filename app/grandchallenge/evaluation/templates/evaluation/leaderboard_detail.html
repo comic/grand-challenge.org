@@ -19,6 +19,16 @@
         </table>
     </div>
 
+    {% if evaluation_config.result_display_choice == evaluation_config.BEST %}
+        <p class="small ml-3">Only the best published result for each
+            participant is
+            listed.</p>
+    {% elif evaluation_config.result_display_choice == evaluation_config.MOST_RECENT %}
+        <p class="small ml-3"> Only the most recent published result for each
+            participant is
+            listed.</p>
+    {% endif %}
+
 {% endblock %}
 
 {% block script %}

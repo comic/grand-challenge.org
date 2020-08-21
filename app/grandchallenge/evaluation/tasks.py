@@ -105,21 +105,16 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
                 == challenge.evaluation_config.DESCENDING
             ),
         ),
-    )
-
-    if score_method_choice != challenge.evaluation_config.ABSOLUTE:
-        metrics += tuple(
+        *[
             Metric(
                 path=col["path"],
                 reverse=col["order"] == challenge.evaluation_config.DESCENDING,
             )
             for col in challenge.evaluation_config.extra_results_columns
-        )
+        ],
+    )
 
-    if (
-        score_method_choice == challenge.evaluation_config.ABSOLUTE
-        and len(metrics) == 1
-    ):
+    if score_method_choice == challenge.evaluation_config.ABSOLUTE:
 
         def score_method(x):
             return list(x)[0]
@@ -167,9 +162,6 @@ def calculate_ranks(*, challenge_pk: uuid.UUID):  # noqa: C901
     _update_evaluations(
         evaluations=evaluations, final_positions=final_positions
     )
-    _update_leaderboard(
-        evaluations=evaluations, config=challenge.evaluation_config
-    )
 
 
 def _update_evaluations(*, evaluations, final_positions):
@@ -195,21 +187,3 @@ def _update_evaluations(*, evaluations, final_positions):
     Evaluation.objects.bulk_update(
         evaluations, ["rank", "rank_score", "rank_per_metric"]
     )
-
-
-def _update_leaderboard(*, evaluations, config):
-    Leaderboard = apps.get_model(  # noqa:N806
-        app_label="evaluation", model_name="Leaderboard"
-    )
-    leaderboard, _ = Leaderboard.objects.get_or_create(config=config)
-
-    leaderboard.ranks = [
-        {
-            "pk": str(e.pk),
-            "rank": e.rank,
-            "rank_score": e.rank_score,
-            "rank_per_metric": e.rank_per_metric,
-        }
-        for e in evaluations
-    ]
-    leaderboard.save()
