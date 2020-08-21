@@ -18,7 +18,7 @@
 {% endif %}
 <split/>
 
-{{ evaluation.created|date:"j N Y" }}
+{{ evaluation.submission.created|date:"j N Y" }}
 <split/>
 
 {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}

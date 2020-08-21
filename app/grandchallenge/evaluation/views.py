@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Dict
 
+from dateutil.relativedelta import relativedelta
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
@@ -367,6 +368,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
 
     def get_unfiltered_queryset(self):
         queryset = super().get_queryset()
+        queryset = self.filter_by_date(queryset=queryset)
         queryset = (
             queryset.select_related(
                 "submission__creator__user_profile", "submission__challenge"
@@ -385,6 +387,16 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
             )
         )
         return queryset
+
+    def filter_by_date(self, queryset):
+        if "leaderboardDate" in self.request.GET:
+            year, month, day = self.request.GET["leaderboardDate"].split("-")
+            before = datetime(
+                year=int(year), month=int(month), day=int(day),
+            ) + relativedelta(days=1)
+            return queryset.filter(created__lt=before)
+        else:
+            return queryset
 
 
 class EvaluationUpdate(
