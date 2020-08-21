@@ -2,6 +2,19 @@
 
 {% block title %}Leaderboard - {{ block.super }}{% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active">
+            Leaderboard
+        </li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <h2>Leaderboard {{ request.GET.leaderboardDate }}</h2>
 

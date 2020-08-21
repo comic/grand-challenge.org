@@ -298,7 +298,12 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
     @property
     def columns(self):
         columns = [
-            Column(title="#", sort_field="rank"),
+            Column(
+                title="Current #"
+                if "leaderboardDate" in self.request.GET
+                else "#",
+                sort_field="rank",
+            ),
             Column(
                 title="User (Team)" if self.config.use_teams else "User",
                 sort_field="submission__creator__username",
