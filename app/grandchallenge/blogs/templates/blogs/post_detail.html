@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load url %}
+{% load profiles %}
+{% load bleach %}
+
+{% block title %}{{ object.title }} - Blogs - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="{% url 'blogs:list' %}">Blogs</a></li>
+        <li class="breadcrumb-item active">{{ object.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-3">
+        <div class="col-lg-8">
+            <h2>{{ object.title }}</h2>
+            <p>Published {{ object.created|date:"j N Y" }}</p>
+            {{ object.content|md2html }}
+        </div>
+        <div class="col-lg-4">
+            <h3>Authors</h3>
+            <ul class="list-group list-group-flush">
+                {% for author in object.authors.all %}
+                    <li class="list-group-item border-0">
+                        {{ author|user_profile_link }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endblock %}

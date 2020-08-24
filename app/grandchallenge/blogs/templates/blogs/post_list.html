@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Blogs - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Blogs</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% for object in object_list %}
+        <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
+            <div class="col-lg-6 py-5">
+                <img class="w-100 rounded shadow" src="{{ object.logo.url }}"
+                     alt="Logo for blog post {{ object.title }}"/>
+            </div>
+            <div class="col-lg-6 align-self-center">
+                <h3><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></h3>
+                <p>
+                    {{ object.created|date:"j N Y" }}
+                    by
+                    {# @formatter:off #}
+            {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<a href="{% url 'userena_profile_detail' username=author.username %}">{% firstof author.get_full_name author.username %}</a>{% endfor %}
+            {# @formatter:on #}
+                </p>
+
+                <p>{{ object.description }}</p>
+                <p><a class="btn btn-info" href="{{ object.get_absolute_url }}">Read More</a></p>
+            </div>
+        </div>
+    {% empty %}
+        <p>No blogs available.</p>
+    {% endfor %}
+
+{% endblock %}
