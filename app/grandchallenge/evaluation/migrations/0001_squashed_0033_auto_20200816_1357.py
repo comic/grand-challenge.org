@@ -16,42 +16,6 @@ import grandchallenge.evaluation.models
 
 
 class Migration(migrations.Migration):
-    replaces = [
-        ("evaluation", "0001_initial"),
-        ("evaluation", "0002_config_submission_page_html"),
-        ("evaluation", "0003_config_new_results_are_public"),
-        ("evaluation", "0004_config_display_submission_comments"),
-        ("evaluation", "0005_auto_20180606_1337"),
-        ("evaluation", "0006_auto_20180814_1358"),
-        ("evaluation", "0007_auto_20180815_1321"),
-        ("evaluation", "0008_config_submission_join_key"),
-        ("evaluation", "0009_auto_20181004_0954"),
-        ("evaluation", "0010_supplementary_file_convert"),
-        ("evaluation", "0011_auto_20181004_1008"),
-        ("evaluation", "0012_auto_20181005_1159"),
-        ("evaluation", "0013_config_result_display_choice"),
-        ("evaluation", "0014_auto_20181031_1043"),
-        ("evaluation", "0015_auto_20181108_1224"),
-        ("evaluation", "0016_auto_20181109_1535"),
-        ("evaluation", "0017_extra_result_cols"),
-        ("evaluation", "0018_auto_20181112_1456"),
-        ("evaluation", "0019_auto_20181115_1211"),
-        ("evaluation", "0020_auto_20181123_1523"),
-        ("evaluation", "0021_auto_20181205_2226"),
-        ("evaluation", "0022_auto_20190214_1515"),
-        ("evaluation", "0023_auto_20190215_1328"),
-        ("evaluation", "0024_auto_20190220_1642"),
-        ("evaluation", "0025_auto_20190314_1316"),
-        ("evaluation", "0026_config_display_all_metrics"),
-        ("evaluation", "0027_auto_20200121_1634"),
-        ("evaluation", "0028_auto_20200227_1744"),
-        ("evaluation", "0029_auto_20200622_1306"),
-        ("evaluation", "0030_auto_20200702_0845"),
-        ("evaluation", "0031_delete_result"),
-        ("evaluation", "0032_auto_20200707_1106"),
-        ("evaluation", "0033_auto_20200816_1357"),
-    ]
-
     initial = True
 
     dependencies = [
