@@ -8,6 +8,7 @@ from django.views.generic import TemplateView
 
 from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
 from grandchallenge.archives.sitemaps import ArchivesSitemap
+from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
 from grandchallenge.core.views import HomeTemplate
@@ -29,6 +30,7 @@ def handler500(request):
 sitemaps = {
     "algorithms": AlgorithmsSitemap,
     "archives": ArchivesSitemap,
+    "blogs": PostsSitemap,
     "challenges": ChallengesSitemap,
     "companies": CompaniesSitemap,
     "core": CoreSitemap,
@@ -120,6 +122,7 @@ urlpatterns = [
     path(
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
+    path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs"),),
     path(
         "",
         include(
