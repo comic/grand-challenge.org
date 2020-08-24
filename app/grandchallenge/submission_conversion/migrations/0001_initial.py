@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("datasets", "0002_annotationset_submission"),
-        ("evaluation", "0007_auto_20180815_1321"),
+        ("evaluation", "0001_squashed_0033_auto_20200816_1357"),
     ]
 
     operations = [
