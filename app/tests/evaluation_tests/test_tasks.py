@@ -41,7 +41,7 @@ def test_submission_evaluation(
 
     # This will create an evaluation, and we'll wait for it to be executed
     submission = SubmissionFactory(
-        predictions_file__from_path=submission_file, challenge=method.challenge
+        predictions_file__from_path=submission_file, phase=method.phase
     )
 
     # The evaluation method should clean up after itself
@@ -62,7 +62,7 @@ def test_submission_evaluation(
         predictions_file__from_path=Path(__file__).parent
         / "resources"
         / "submission.csv",
-        challenge=method.challenge,
+        phase=method.phase,
     )
 
     assert len(submission.evaluation_set.all()) == 1

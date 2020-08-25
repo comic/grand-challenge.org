@@ -100,7 +100,7 @@ class StatisticsDetail(TemplateView):
             "latest_result": (
                 EvaluationJob.objects.filter(
                     published=True,
-                    submission__challenge__hidden=False,
+                    submission__phase__challenge__hidden=False,
                     rank__gt=0,
                     status=EvaluationJob.SUCCESS,
                 )

@@ -1,20 +1,20 @@
 import pytest
 
-from tests.factories import ChallengeFactory, EvaluationFactory
+from tests.factories import EvaluationFactory, PhaseFactory
 
 
 @pytest.mark.django_db
 def test_public_private_default():
-    c = ChallengeFactory()
+    p = PhaseFactory()
 
-    r1 = EvaluationFactory(submission__challenge=c)
+    r1 = EvaluationFactory(submission__phase=p)
 
     assert r1.published is True
 
-    c.evaluation_config.auto_publish_new_results = False
-    c.evaluation_config.save()
+    p.auto_publish_new_results = False
+    p.save()
 
-    r2 = EvaluationFactory(submission__challenge=c)
+    r2 = EvaluationFactory(submission__phase=p)
 
     assert r2.published is False
 

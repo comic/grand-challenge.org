@@ -12,15 +12,15 @@ class TestSubmission(TestCase):
         self.algorithm_image = AlgorithmImageFactory()
 
         self.images = ImageFactory.create_batch(3)
-        imageset = self.method.challenge.imageset_set.get(
+        # TODO Fix image set dependency
+        imageset = self.method.phase.challenge.imageset_set.get(
             phase=ImageSet.TESTING
         )
         imageset.images.set(self.images[:2])
 
     def test_algorithm_submission_creates_one_job_per_test_set_image(self):
         SubmissionFactory(
-            challenge=self.method.challenge,
-            algorithm_image=self.algorithm_image,
+            phase=self.method.phase, algorithm_image=self.algorithm_image,
         )
 
         assert AlgorithmEvaluation.objects.count() == 2
@@ -32,8 +32,7 @@ class TestSubmission(TestCase):
 
     def test_create_evaluation_is_idempotent(self):
         s = SubmissionFactory(
-            challenge=self.method.challenge,
-            algorithm_image=self.algorithm_image,
+            phase=self.method.phase, algorithm_image=self.algorithm_image,
         )
         s.create_evaluation()
 

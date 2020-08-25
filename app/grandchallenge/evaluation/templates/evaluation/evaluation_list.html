@@ -34,7 +34,7 @@
                 <th>Status</th>
                 <th>Output</th>
                 <th>Position</th>
-                {% if challenge.evaluation_config.allow_submission_comments %}
+                {% if evaluation_config.allow_submission_comments %}
                     <th>Comment</th>
                 {% endif %}
                 {% if "change_challenge" in challenge_perms %}
@@ -100,7 +100,7 @@
                         {% endif %}
                     </td>
 
-                    {% if challenge.evaluation_config.allow_submission_comments %}
+                    {% if evaluation_config.allow_submission_comments %}
                         <td>{{ evaluation.submission.comment }}</td>
                     {% endif %}
 

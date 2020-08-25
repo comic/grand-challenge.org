@@ -107,8 +107,8 @@ class Command(BaseCommand):
             dest_m2m.set(src_m2m.all())
 
     def _copy_evaluation_config(self, *, src_challenge, dest_challenge):
-        src_config = src_challenge.evaluation_config
-        dest_config = dest_challenge.evaluation_config
+        src_config = src_challenge.phase_set.first()
+        dest_config = dest_challenge.phase_set.first()
 
         for attr in self.config_fields:
             setattr(dest_config, attr, getattr(src_config, attr))

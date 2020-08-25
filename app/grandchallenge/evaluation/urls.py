@@ -2,7 +2,6 @@ from django.urls import path
 from django.views.generic import RedirectView
 
 from grandchallenge.evaluation.views import (
-    ConfigUpdate,
     EvaluationDetail,
     EvaluationList,
     EvaluationUpdate,
@@ -11,6 +10,7 @@ from grandchallenge.evaluation.views import (
     MethodCreate,
     MethodDetail,
     MethodList,
+    PhaseUpdate,
     SubmissionCreate,
     SubmissionDetail,
     SubmissionList,
@@ -19,7 +19,7 @@ from grandchallenge.evaluation.views import (
 app_name = "evaluation"
 
 urlpatterns = [
-    path("config/", ConfigUpdate.as_view(), name="config-update"),
+    path("config/", PhaseUpdate.as_view(), name="config-update"),
     path("methods/", MethodList.as_view(), name="method-list"),
     path("methods/create/", MethodCreate.as_view(), name="method-create"),
     path("methods/<uuid:pk>/", MethodDetail.as_view(), name="method-detail"),

@@ -12,9 +12,9 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
-    Config,
     EXTRA_RESULT_COLUMNS_SCHEMA,
     Method,
+    Phase,
     Submission,
 )
 from grandchallenge.jqfileupload.widgets import uploader
@@ -53,7 +53,7 @@ leaderboard_options = (
 result_detail_options = ("display_all_metrics", "submission_join_key")
 
 
-class ConfigForm(forms.ModelForm):
+class PhaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -68,7 +68,7 @@ class ConfigForm(forms.ModelForm):
         )
 
     class Meta:
-        model = Config
+        model = Phase
         fields = (
             *submission_options,
             *scoring_options,
@@ -137,10 +137,10 @@ class SubmissionForm(forms.ModelForm):
         user,
         algorithm_submission=False,
         display_comment_field=False,
-        supplementary_file_choice=Config.OFF,
+        supplementary_file_choice=Phase.OFF,
         supplementary_file_label="",
         supplementary_file_help_text="",
-        publication_url_choice=Config.OFF,
+        publication_url_choice=Phase.OFF,
         **kwargs,
     ):
         """
@@ -160,14 +160,14 @@ class SubmissionForm(forms.ModelForm):
                 "supplementary_file"
             ].help_text = supplementary_file_help_text
 
-        if supplementary_file_choice == Config.REQUIRED:
+        if supplementary_file_choice == Phase.REQUIRED:
             self.fields["supplementary_file"].required = True
-        elif supplementary_file_choice == Config.OFF:
+        elif supplementary_file_choice == Phase.OFF:
             del self.fields["supplementary_file"]
 
-        if publication_url_choice == Config.REQUIRED:
+        if publication_url_choice == Phase.REQUIRED:
             self.fields["publication_url"].required = True
-        elif publication_url_choice == Config.OFF:
+        elif publication_url_choice == Phase.OFF:
             del self.fields["publication_url"]
 
         if algorithm_submission:

@@ -2,7 +2,7 @@ import pytest
 
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.evaluation.models import Evaluation
-from tests.factories import ChallengeFactory, EvaluationFactory
+from tests.factories import EvaluationFactory, PhaseFactory
 from tests.utils import get_view_for_user
 
 
@@ -20,10 +20,9 @@ def test_setting_submission_page_html(client, challenge_set):
     assert response.status_code == 200
     assert custom_html not in response.rendered_content
 
-    challenge_set.challenge.evaluation_config.submission_page_html = (
-        custom_html
-    )
-    challenge_set.challenge.evaluation_config.save()
+    phase = challenge_set.challenge.phase_set.first()
+    phase.submission_page_html = custom_html
+    phase.save()
 
     response = get_view_for_user(
         client=client,
@@ -39,18 +38,17 @@ def test_setting_submission_page_html(client, challenge_set):
 @pytest.mark.django_db
 def test_setting_display_all_metrics(client, challenge_set):
     metrics = {"public": 3245.235, "secret": 4328.432, "extra": 2144.312}
-    e = EvaluationFactory(
-        submission__challenge=challenge_set.challenge,
-        status=Evaluation.SUCCESS,
-    )
+    phase = challenge_set.challenge.phase_set.first()
+
+    e = EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS,)
     e.create_result(result=metrics)
 
-    challenge_set.challenge.evaluation_config.score_jsonpath = "public"
-    challenge_set.challenge.evaluation_config.extra_results_columns = [
+    phase.score_jsonpath = "public"
+    phase.extra_results_columns = [
         {"title": "extra", "path": "extra", "order": "asc"}
     ]
-    challenge_set.challenge.evaluation_config.display_all_metrics = True
-    challenge_set.challenge.evaluation_config.save()
+    phase.display_all_metrics = True
+    phase.save()
 
     response = get_view_for_user(
         client=client,
@@ -64,8 +62,8 @@ def test_setting_display_all_metrics(client, challenge_set):
     assert str(metrics["extra"]) in response.rendered_content
     assert str(metrics["secret"]) in response.rendered_content
 
-    challenge_set.challenge.evaluation_config.display_all_metrics = False
-    challenge_set.challenge.evaluation_config.save()
+    phase.display_all_metrics = False
+    phase.save()
 
     response = get_view_for_user(
         client=client,
@@ -82,11 +80,9 @@ def test_setting_display_all_metrics(client, challenge_set):
 
 @pytest.mark.django_db
 def test_default_interfaces_created():
-    c = ChallengeFactory()
+    p = PhaseFactory()
 
-    assert {i.kind for i in c.evaluation_config.inputs.all()} == {
-        InterfaceKindChoices.CSV
-    }
-    assert {o.kind for o in c.evaluation_config.outputs.all()} == {
+    assert {i.kind for i in p.inputs.all()} == {InterfaceKindChoices.CSV}
+    assert {o.kind for o in p.outputs.all()} == {
         InterfaceKindChoices.JSON,
     }

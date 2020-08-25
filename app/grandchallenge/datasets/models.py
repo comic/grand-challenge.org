@@ -122,7 +122,7 @@ class AnnotationSet(UUIDModel, IndexMixin):
     @property
     def label_index(self) -> dict:
         join_key = (
-            self.base.challenge.evaluation_config.submission_join_key.lower()
+            self.base.challenge.phase_set.first().submission_join_key.lower()
         )
 
         try:
