@@ -39,7 +39,7 @@ class PhaseUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
 
     def get_object(self, queryset=None):
         challenge = self.request.challenge
-        return challenge.phase_set.first()
+        return challenge.phase_set.get()
 
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):
@@ -53,7 +53,7 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.phase = self.request.challenge.phase_set.first()
+        form.instance.phase = self.request.challenge.phase_set.get()
 
         uploaded_file: StagedAjaxFile = form.cleaned_data["chunked_upload"][0]
         form.instance.staged_image_uuid = uploaded_file.uuid
@@ -148,7 +148,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
         subs = (
             Submission.objects.filter(
-                challenge=self.request.challenge,
+                phase__challenge=self.request.challenge,
                 creator=self.request.user,
                 created__gte=now - period,
             )
@@ -171,7 +171,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         if form.instance.creator is None:
             form.instance.creator = self.request.user
 
-        form.instance.phase = self.request.challenge.phase_set.first()
+        form.instance.phase = self.request.challenge.phase_set.get()
 
         if "algorithm" in form.cleaned_data:
             # Algorithm submission
@@ -230,7 +230,7 @@ class TeamContextMixin:
     @cached_property
     def evaluation_config(self):
         # TODO Fix for multiple phases
-        return self.request.challenge.phase_set.first()
+        return self.request.challenge.phase_set.get()
 
     @cached_property
     def user_teams(self):

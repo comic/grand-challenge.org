@@ -48,24 +48,24 @@ def submissions_and_evaluations(two_challenge_sets):
     )
     # participant 0, submission 1, challenge 1, etc
     p_s1, e_p_s1 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.first(),
+        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         creator=two_challenge_sets.challenge_set_1.participant,
     )
     p_s2, e_p_s2 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.first(),
+        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         creator=two_challenge_sets.challenge_set_1.participant,
     )
     p1_s1, e_p1_s1 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.first(),
+        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         creator=two_challenge_sets.challenge_set_1.participant1,
     )
     # participant12, submission 1 to each challenge
     p12_s1_c1, e_p12_s1_c1 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.first(),
+        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         creator=two_challenge_sets.participant12,
     )
     p12_s1_c2, e_p12_s1_c2 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_2.challenge.phase_set.first(),
+        phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
         creator=two_challenge_sets.participant12,
     )
     return SubmissionsAndEvaluations(
@@ -103,7 +103,7 @@ def test_method_create(client, two_challenge_sets):
 @pytest.mark.django_db
 def test_method_detail(client, two_challenge_sets):
     method = MethodFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
+        phase__challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.challenge_set_1.admin,
     )
     validate_admin_only_view(
@@ -203,9 +203,10 @@ def test_legacy_submission_create(client, two_challenge_sets):
 
 @pytest.mark.django_db
 def test_submission_time_limit(client, two_challenge_sets):
+    phase = two_challenge_sets.challenge_set_1.challenge.phase_set.get()
+
     SubmissionFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        creator=two_challenge_sets.challenge_set_1.participant,
+        phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
     )
 
     def get_submission_view():
@@ -217,16 +218,16 @@ def test_submission_time_limit(client, two_challenge_sets):
         )
 
     assert "make 9 more" in get_submission_view().rendered_content
+
     s = SubmissionFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        creator=two_challenge_sets.challenge_set_1.participant,
+        phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
     )
     s.created = timezone.now() - timedelta(hours=23)
     s.save()
     assert "make 8 more" in get_submission_view().rendered_content
+
     s = SubmissionFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        creator=two_challenge_sets.challenge_set_1.participant,
+        phase=phase, creator=two_challenge_sets.challenge_set_1.participant,
     )
     s.created = timezone.now() - timedelta(hours=25)
     s.save()
@@ -236,7 +237,7 @@ def test_submission_time_limit(client, two_challenge_sets):
 @pytest.mark.django_db
 def test_submission_detail(client, two_challenge_sets):
     submission = SubmissionFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
+        phase__challenge=two_challenge_sets.challenge_set_1.challenge,
         creator=two_challenge_sets.challenge_set_1.participant,
     )
     validate_admin_only_view(
@@ -314,7 +315,7 @@ def test_leaderboard(client, eval_challenge_set):
 @pytest.mark.django_db
 def test_evaluation_detail(client, eval_challenge_set):
     submission = SubmissionFactory(
-        phase=eval_challenge_set.challenge_set.challenge.phase_set.first(),
+        phase=eval_challenge_set.challenge_set.challenge.phase_set.get(),
         creator=eval_challenge_set.challenge_set.participant,
     )
     e = EvaluationFactory(submission=submission)

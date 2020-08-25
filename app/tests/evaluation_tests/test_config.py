@@ -20,7 +20,7 @@ def test_setting_submission_page_html(client, challenge_set):
     assert response.status_code == 200
     assert custom_html not in response.rendered_content
 
-    phase = challenge_set.challenge.phase_set.first()
+    phase = challenge_set.challenge.phase_set.get()
     phase.submission_page_html = custom_html
     phase.save()
 
@@ -38,7 +38,7 @@ def test_setting_submission_page_html(client, challenge_set):
 @pytest.mark.django_db
 def test_setting_display_all_metrics(client, challenge_set):
     metrics = {"public": 3245.235, "secret": 4328.432, "extra": 2144.312}
-    phase = challenge_set.challenge.phase_set.first()
+    phase = challenge_set.challenge.phase_set.get()
 
     e = EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS,)
     e.create_result(result=metrics)

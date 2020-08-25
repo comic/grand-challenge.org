@@ -187,7 +187,7 @@ class Command(BaseCommand):
             challenge=demo, title="adm", permission_level="ADM"
         )
 
-        phase = demo.phase_set.first()
+        phase = demo.phase_set.get()
 
         method = Method(phase=phase, creator=self.users["demo"])
         container = ContentFile(base64.b64decode(b""))
