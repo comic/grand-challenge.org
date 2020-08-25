@@ -9,8 +9,12 @@ from grandchallenge.components.tasks import validate_docker_image
 from grandchallenge.evaluation.models import AlgorithmEvaluation, Method
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.evaluation_tests.factories import AlgorithmEvaluationFactory
-from tests.factories import EvaluationFactory, MethodFactory, SubmissionFactory
+from tests.evaluation_tests.factories import (
+    AlgorithmEvaluationFactory,
+    EvaluationFactory,
+    MethodFactory,
+    SubmissionFactory,
+)
 
 
 @pytest.mark.django_db

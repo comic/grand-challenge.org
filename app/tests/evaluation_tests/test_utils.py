@@ -2,11 +2,8 @@ import pytest
 
 from grandchallenge.evaluation.models import Evaluation, Phase
 from grandchallenge.evaluation.tasks import calculate_ranks
-from tests.factories import (
-    EvaluationFactory,
-    PhaseFactory,
-    UserFactory,
-)
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
+from tests.factories import UserFactory
 
 
 @pytest.mark.django_db

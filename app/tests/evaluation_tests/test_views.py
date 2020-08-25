@@ -6,7 +6,7 @@ import pytest
 from django.db.models import signals
 from django.utils import timezone
 
-from tests.factories import (
+from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
     SubmissionFactory,

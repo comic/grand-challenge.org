@@ -1,6 +1,6 @@
 import pytest
 
-from tests.factories import EvaluationFactory, PhaseFactory
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 
 
 @pytest.mark.django_db

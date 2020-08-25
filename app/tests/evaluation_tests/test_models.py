@@ -3,7 +3,8 @@ from django.test import TestCase
 from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.models import AlgorithmEvaluation
 from tests.algorithms_tests.factories import AlgorithmImageFactory
-from tests.factories import ImageFactory, MethodFactory, SubmissionFactory
+from tests.evaluation_tests.factories import MethodFactory, SubmissionFactory
+from tests.factories import ImageFactory
 
 
 class TestSubmission(TestCase):

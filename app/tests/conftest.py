@@ -31,10 +31,10 @@ from tests.annotations_tests.factories import (
 )
 from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import ImageFactoryWithoutImageFile
+from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import (
     ChallengeFactory,
     ImageFactory,
-    MethodFactory,
     UserFactory,
 )
 from tests.patients_tests.factories import PatientFactory
