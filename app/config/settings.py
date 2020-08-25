@@ -285,8 +285,7 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.deployment_info",
                 "grandchallenge.core.context_processors.debug",
                 "grandchallenge.core.context_processors.sentry_dsn",
-                "grandchallenge.core.context_processors.policy_pages",
-                "grandchallenge.core.context_processors.overview_pages",
+                "grandchallenge.core.context_processors.footer_links",
             ]
         },
     }

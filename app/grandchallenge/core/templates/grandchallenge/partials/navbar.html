@@ -43,12 +43,6 @@
                         Products
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if "blogs:" in request.resolver_match.view_name %}active{% endif %}"
-                       href="{% url 'blogs:list' %}">
-                        Blogs
-                    </a>
-                </li>
                 {% for overview_page in overview_pages %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.view_name == 'overview-pages:detail' and request.resolver_match.kwargs.slug == overview_page.slug %}active{% endif %}"
