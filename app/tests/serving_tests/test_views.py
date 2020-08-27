@@ -151,7 +151,7 @@ def test_image_response(client, settings, cloudfront, tmpdir):
 def test_submission_download(client, two_challenge_sets):
     """Only the challenge admin should be able to download submissions."""
     submission = SubmissionFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
+        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         creator=two_challenge_sets.challenge_set_1.participant,
     )
 

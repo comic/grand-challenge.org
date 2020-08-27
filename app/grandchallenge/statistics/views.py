@@ -88,13 +88,17 @@ class StatisticsDetail(TemplateView):
                 .order_by("-num_registrations_period")[:max_num_results]
             ),
             "mp_challenge_submissions": (
-                public_challenges.annotate(num_submissions=Count("submission"))
+                public_challenges.annotate(
+                    num_submissions=Count("phase__submission")
+                )
                 .order_by("-num_submissions")
                 .first()
             ),
             "challenge_submissions_period": (
-                public_challenges.filter(submission__created__gt=time_period)
-                .annotate(num_submissions_period=Count("submission"))
+                public_challenges.filter(
+                    phase__submission__created__gt=time_period
+                )
+                .annotate(num_submissions_period=Count("phase__submission"))
                 .order_by("-num_submissions_period")[:max_num_results]
             ),
             "latest_result": (

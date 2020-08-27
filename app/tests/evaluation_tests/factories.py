@@ -16,6 +16,7 @@ class PhaseFactory(factory.DjangoModelFactory):
         model = Phase
 
     challenge = factory.SubFactory(ChallengeFactory)
+    title = factory.sequence(lambda n: f"Phase {n}")
 
 
 class MethodFactory(factory.DjangoModelFactory):

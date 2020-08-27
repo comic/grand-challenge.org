@@ -25,7 +25,8 @@ def test_submission_conversion(capsys, submission_file, settings):
 
     with mute_signals(post_save):
         submission = SubmissionFactory(
-            predictions_file__from_path=submission_file, challenge=challenge
+            predictions_file__from_path=submission_file,
+            phase=challenge.phase_set.get(),
         )
 
     call_command("convertsubmissions", challenge.short_name)
@@ -52,7 +53,7 @@ def test_submission_conversion(capsys, submission_file, settings):
             / "evaluation_tests"
             / "resources"
             / "submission.csv",
-            challenge=challenge,
+            phase=challenge.phase_set.get(),
         )
 
     call_command("convertsubmissions", challenge.short_name)
