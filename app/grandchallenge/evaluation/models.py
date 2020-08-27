@@ -41,9 +41,6 @@ from grandchallenge.evaluation.tasks import (
     set_evaluation_inputs,
 )
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.submission_conversion.models import (
-    SubmissionToAnnotationSetJob,
-)
 
 EXTRA_RESULT_COLUMNS_SCHEMA = {
     "definitions": {},
@@ -546,14 +543,6 @@ class Submission(UUIDModel):
                 ]
             )
             evaluation.signature.apply_async()
-
-            # Convert this submission to an annotation set
-            base = ImageSet.objects.get(
-                challenge=self.phase.challenge, phase=ImageSet.TESTING
-            )
-            SubmissionToAnnotationSetJob.objects.create(
-                base=base, submission=self
-            )
 
     @property
     def latest_ready_method(self):
