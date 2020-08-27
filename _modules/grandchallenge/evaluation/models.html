@@ -196,9 +196,6 @@
     <span class="n">set_evaluation_inputs</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.submission_conversion.models</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">SubmissionToAnnotationSetJob</span><span class="p">,</span>
-<span class="p">)</span>
 
 <span class="n">EXTRA_RESULT_COLUMNS_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;definitions&quot;</span><span class="p">:</span> <span class="p">{},</span>
@@ -701,14 +698,6 @@
                 <span class="p">]</span>
             <span class="p">)</span>
             <span class="n">evaluation</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
-
-            <span class="c1"># Convert this submission to an annotation set</span>
-            <span class="n">base</span> <span class="o">=</span> <span class="n">ImageSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
-            <span class="p">)</span>
-            <span class="n">SubmissionToAnnotationSetJob</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">submission</span><span class="o">=</span><span class="bp">self</span>
-            <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">latest_ready_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
