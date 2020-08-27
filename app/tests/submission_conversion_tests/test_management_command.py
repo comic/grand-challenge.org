@@ -9,7 +9,8 @@ from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from grandchallenge.submission_conversion.models import (
     SubmissionToAnnotationSetJob,
 )
-from tests.factories import ChallengeFactory, SubmissionFactory
+from tests.evaluation_tests.factories import SubmissionFactory
+from tests.factories import ChallengeFactory
 
 
 @pytest.mark.django_db

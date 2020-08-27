@@ -31,10 +31,10 @@ from tests.annotations_tests.factories import (
 )
 from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import ImageFactoryWithoutImageFile
+from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import (
     ChallengeFactory,
     ImageFactory,
-    MethodFactory,
     UserFactory,
 )
 from tests.patients_tests.factories import PatientFactory
@@ -160,9 +160,11 @@ def challenge_set_with_evaluation(challenge_set):
     )
     challenge_set.challenge.use_evaluation = True
     challenge_set.challenge.save()
-    method = MethodFactory(
-        challenge=challenge_set.challenge, creator=challenge_set.creator
-    )
+
+    phase = challenge_set.challenge.phase_set.get()
+
+    method = MethodFactory(phase=phase, creator=challenge_set.creator)
+
     return eval_challenge_set(challenge_set, method)
 
 

@@ -1,17 +1,14 @@
 import pytest
 
-from grandchallenge.evaluation.models import Config, Evaluation
+from grandchallenge.evaluation.models import Evaluation, Phase
 from grandchallenge.evaluation.tasks import calculate_ranks
-from tests.factories import (
-    ChallengeFactory,
-    EvaluationFactory,
-    UserFactory,
-)
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
+from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
 def test_calculate_ranks(django_assert_max_num_queries):
-    challenge = ChallengeFactory()
+    phase = PhaseFactory()
 
     results = [
         # Warning: Do not change this values without updating the
@@ -29,9 +26,7 @@ def test_calculate_ranks(django_assert_max_num_queries):
     ]
 
     queryset = [
-        EvaluationFactory(
-            submission__challenge=challenge, status=Evaluation.SUCCESS
-        )
+        EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS)
         for _ in range(len(results))
     ]
 
@@ -43,65 +38,65 @@ def test_calculate_ranks(django_assert_max_num_queries):
     queryset[-1].save()
 
     expected = {
-        Config.DESCENDING: {
-            Config.ABSOLUTE: {
-                Config.DESCENDING: {
+        Phase.DESCENDING: {
+            Phase.ABSOLUTE: {
+                Phase.DESCENDING: {
                     "ranks": [5, 3, 1, 2, 3, 0, 0, 0],
                     "rank_scores": [5, 3, 1, 2, 3, 0, 0, 0],
                 },
-                Config.ASCENDING: {
+                Phase.ASCENDING: {
                     "ranks": [5, 3, 1, 2, 3, 0, 0, 0],
                     "rank_scores": [5, 3, 1, 2, 3, 0, 0, 0],
                 },
             },
-            Config.MEDIAN: {
-                Config.DESCENDING: {
+            Phase.MEDIAN: {
+                Phase.DESCENDING: {
                     "ranks": [5, 4, 1, 1, 1, 0, 0, 0],
                     "rank_scores": [5, 3.5, 2, 2, 2, 0, 0, 0],
                 },
-                Config.ASCENDING: {
+                Phase.ASCENDING: {
                     "ranks": [3, 2, 1, 3, 5, 0, 0, 0],
                     "rank_scores": [3, 2.5, 2, 3, 4, 0, 0, 0],
                 },
             },
-            Config.MEAN: {
-                Config.DESCENDING: {
+            Phase.MEAN: {
+                Phase.DESCENDING: {
                     "ranks": [5, 4, 1, 1, 1, 0, 0, 0],
                     "rank_scores": [5, 3.5, 2, 2, 2, 0, 0, 0],
                 },
-                Config.ASCENDING: {
+                Phase.ASCENDING: {
                     "ranks": [3, 2, 1, 3, 5, 0, 0, 0],
                     "rank_scores": [3, 2.5, 2, 3, 4, 0, 0, 0],
                 },
             },
         },
-        Config.ASCENDING: {
-            Config.ABSOLUTE: {
-                Config.DESCENDING: {
+        Phase.ASCENDING: {
+            Phase.ABSOLUTE: {
+                Phase.DESCENDING: {
                     "ranks": [1, 2, 5, 4, 2, 0, 0, 0],
                     "rank_scores": [1, 2, 5, 4, 2, 0, 0, 0],
                 },
-                Config.ASCENDING: {
+                Phase.ASCENDING: {
                     "ranks": [1, 2, 5, 4, 2, 0, 0, 0],
                     "rank_scores": [1, 2, 5, 4, 2, 0, 0, 0],
                 },
             },
-            Config.MEDIAN: {
-                Config.DESCENDING: {
+            Phase.MEDIAN: {
+                Phase.DESCENDING: {
                     "ranks": [2, 2, 5, 2, 1, 0, 0, 0],
                     "rank_scores": [3, 3, 4, 3, 1.5, 0, 0, 0],
                 },
-                Config.ASCENDING: {
+                Phase.ASCENDING: {
                     "ranks": [1, 2, 4, 4, 3, 0, 0, 0],
                     "rank_scores": [1, 2, 4, 4, 3.5, 0, 0, 0],
                 },
             },
-            Config.MEAN: {
-                Config.DESCENDING: {
+            Phase.MEAN: {
+                Phase.DESCENDING: {
                     "ranks": [2, 2, 5, 2, 1, 0, 0, 0],
                     "rank_scores": [3, 3, 4, 3, 1.5, 0, 0, 0],
                 },
-                Config.ASCENDING: {
+                Phase.ASCENDING: {
                     "ranks": [1, 2, 4, 4, 3, 0, 0, 0],
                     "rank_scores": [1, 2, 4, 4, 3.5, 0, 0, 0],
                 },
@@ -109,21 +104,19 @@ def test_calculate_ranks(django_assert_max_num_queries):
         },
     }
 
-    for score_method in (Config.ABSOLUTE, Config.MEDIAN, Config.MEAN):
-        for a_order in (Config.DESCENDING, Config.ASCENDING):
-            for b_order in (Config.DESCENDING, Config.ASCENDING):
-                challenge.evaluation_config.score_jsonpath = "a"
-                challenge.evaluation_config.scoring_method_choice = (
-                    score_method
-                )
-                challenge.evaluation_config.score_default_sort = a_order
-                challenge.evaluation_config.extra_results_columns = [
+    for score_method in (Phase.ABSOLUTE, Phase.MEDIAN, Phase.MEAN):
+        for a_order in (Phase.DESCENDING, Phase.ASCENDING):
+            for b_order in (Phase.DESCENDING, Phase.ASCENDING):
+                phase.score_jsonpath = "a"
+                phase.scoring_method_choice = score_method
+                phase.score_default_sort = a_order
+                phase.extra_results_columns = [
                     {"path": "b", "title": "b", "order": b_order}
                 ]
-                challenge.evaluation_config.save()
+                phase.save()
 
                 with django_assert_max_num_queries(7):
-                    calculate_ranks(challenge_pk=challenge.pk)
+                    calculate_ranks(phase_pk=phase.pk)
 
                 assert_ranks(
                     queryset,
@@ -134,7 +127,7 @@ def test_calculate_ranks(django_assert_max_num_queries):
 
 @pytest.mark.django_db
 def test_results_display():
-    challenge = ChallengeFactory()
+    phase = PhaseFactory()
 
     user1 = UserFactory()
     user2 = UserFactory()
@@ -154,7 +147,7 @@ def test_results_display():
 
     queryset = [
         EvaluationFactory(
-            submission__challenge=challenge,
+            submission__phase=phase,
             submission__creator=r[creator],
             status=Evaluation.SUCCESS,
         )
@@ -164,46 +157,44 @@ def test_results_display():
     for e, r in zip(queryset, results):
         e.create_result(result=r[metrics])
 
-    challenge.evaluation_config.score_jsonpath = "a"
-    challenge.evaluation_config.result_display_choice = Config.ALL
-    challenge.evaluation_config.save()
+    phase.score_jsonpath = "a"
+    phase.result_display_choice = Phase.ALL
+    phase.save()
 
-    calculate_ranks(challenge_pk=challenge.pk)
+    calculate_ranks(phase_pk=phase.pk)
 
     expected_ranks = [0, 1, 3, 5, 6, 2, 4]
     assert_ranks(queryset, expected_ranks)
 
-    challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
-    challenge.evaluation_config.save()
+    phase.result_display_choice = Phase.MOST_RECENT
+    phase.save()
 
-    calculate_ranks(challenge_pk=challenge.pk)
+    calculate_ranks(phase_pk=phase.pk)
 
     expected_ranks = [0, 0, 0, 2, 0, 0, 1]
     assert_ranks(queryset, expected_ranks)
 
-    challenge.evaluation_config.result_display_choice = Config.BEST
-    challenge.evaluation_config.save()
+    phase.result_display_choice = Phase.BEST
+    phase.save()
 
-    calculate_ranks(challenge_pk=challenge.pk)
+    calculate_ranks(phase_pk=phase.pk)
 
     expected_ranks = [0, 1, 0, 0, 0, 2, 0]
     assert_ranks(queryset, expected_ranks)
 
     # now test reverse order
-    challenge.evaluation_config.score_default_sort = (
-        challenge.evaluation_config.ASCENDING
-    )
-    challenge.evaluation_config.save()
+    phase.score_default_sort = phase.ASCENDING
+    phase.save()
 
-    calculate_ranks(challenge_pk=challenge.pk)
+    calculate_ranks(phase_pk=phase.pk)
 
     expected_ranks = [0, 0, 0, 2, 1, 0, 0]
     assert_ranks(queryset, expected_ranks)
 
-    challenge.evaluation_config.result_display_choice = Config.MOST_RECENT
-    challenge.evaluation_config.save()
+    phase.result_display_choice = Phase.MOST_RECENT
+    phase.save()
 
-    calculate_ranks(challenge_pk=challenge.pk)
+    calculate_ranks(phase_pk=phase.pk)
 
     expected_ranks = [0, 0, 0, 1, 0, 0, 2]
     assert_ranks(queryset, expected_ranks)
@@ -211,25 +202,23 @@ def test_results_display():
 
 @pytest.mark.django_db
 def test_null_results():
-    challenge = ChallengeFactory()
+    phase = PhaseFactory()
 
     results = [{"a": 0.6}, {"a": None}]
 
     queryset = [
-        EvaluationFactory(
-            submission__challenge=challenge, status=Evaluation.SUCCESS
-        )
+        EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS)
         for _ in range(len(results))
     ]
 
     for e, r in zip(queryset, results):
         e.create_result(result=r)
 
-    challenge.evaluation_config.score_jsonpath = "a"
-    challenge.evaluation_config.result_display_choice = Config.ALL
-    challenge.evaluation_config.save()
+    phase.score_jsonpath = "a"
+    phase.result_display_choice = Phase.ALL
+    phase.save()
 
-    calculate_ranks(challenge_pk=challenge.pk)
+    calculate_ranks(phase_pk=phase.pk)
 
     expected_ranks = [1, 0]
     assert_ranks(queryset, expected_ranks)

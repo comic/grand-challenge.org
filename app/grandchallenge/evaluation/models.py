@@ -94,7 +94,7 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
 }
 
 
-class Config(UUIDModel):
+class Phase(UUIDModel):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
     ASCENDING = "asc"
@@ -142,11 +142,8 @@ class Config(UUIDModel):
         ZIP = 2, "ZIP"
         ALGORITHM = 3, "Algorithm"
 
-    challenge = models.OneToOneField(
-        Challenge,
-        on_delete=models.CASCADE,
-        related_name="evaluation_config",
-        editable=False,
+    challenge = models.ForeignKey(
+        Challenge, on_delete=models.CASCADE, editable=False,
     )
     use_teams = models.BooleanField(
         default=False,
@@ -343,7 +340,7 @@ class Config(UUIDModel):
         if adding:
             self.set_default_interfaces()
 
-        calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
+        calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
 
     def set_default_interfaces(self):
         self.inputs.set(
@@ -364,7 +361,7 @@ def method_image_path(instance, filename):
     """Deprecated: only used in a migration."""
     return (
         f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
-        f"{instance.challenge.pk}/"
+        f"{instance.phase.challenge.pk}/"
         f"methods/"
         f"{instance.pk}/"
         f"{filename}"
@@ -374,14 +371,17 @@ def method_image_path(instance, filename):
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
+    challenge = models.ForeignKey(
+        Challenge, on_delete=models.CASCADE, null=True
+    )
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
 
     def get_absolute_url(self):
         return reverse(
             "evaluation:method-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.phase.challenge.short_name,
             },
         )
 
@@ -390,7 +390,7 @@ def submission_file_path(instance, filename):
     # Must match the protected serving url
     return (
         f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
-        f"{instance.challenge.pk}/"
+        f"{instance.phase.challenge.pk}/"
         f"submissions/"
         f"{instance.creator.pk}/"
         f"{instance.pk}/"
@@ -401,7 +401,7 @@ def submission_file_path(instance, filename):
 def submission_supplementary_file_path(instance, filename):
     return (
         f"evaluation-supplementary/"
-        f"{instance.challenge.pk}/"
+        f"{instance.phase.challenge.pk}/"
         f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
     )
@@ -413,7 +413,10 @@ class Submission(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
+    challenge = models.ForeignKey(
+        Challenge, on_delete=models.CASCADE, null=True
+    )
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.SET_NULL
     )
@@ -451,9 +454,7 @@ class Submission(UUIDModel):
     )
 
     class Meta:
-        unique_together = (
-            ("challenge", "predictions_file", "algorithm_image"),
-        )
+        unique_together = (("phase", "predictions_file", "algorithm_image"),)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -474,7 +475,7 @@ class Submission(UUIDModel):
 
         if self.algorithm_image:
             test_set = ImageSet.objects.get(
-                challenge=self.challenge, phase=ImageSet.TESTING
+                challenge=self.phase.challenge, phase=ImageSet.TESTING
             )
 
             default_input_interface = ComponentInterface.objects.get(
@@ -534,7 +535,7 @@ class Submission(UUIDModel):
 
             # Convert this submission to an annotation set
             base = ImageSet.objects.get(
-                challenge=self.challenge, phase=ImageSet.TESTING
+                challenge=self.phase.challenge, phase=ImageSet.TESTING
             )
             SubmissionToAnnotationSetJob.objects.create(
                 base=base, submission=self
@@ -543,7 +544,7 @@ class Submission(UUIDModel):
     @property
     def latest_ready_method(self):
         return (
-            Method.objects.filter(challenge=self.challenge, ready=True)
+            Method.objects.filter(phase=self.phase, ready=True)
             .order_by("-created")
             .first()
         )
@@ -553,7 +554,7 @@ class Submission(UUIDModel):
             "evaluation:submission-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.phase.challenge.short_name,
             },
         )
 
@@ -660,17 +661,17 @@ class Evaluation(UUIDModel, ComponentJob):
         adding = self._state.adding
 
         if adding:
-            self.published = (
-                self.challenge.evaluation_config.auto_publish_new_results
-            )
+            self.published = self.submission.phase.auto_publish_new_results
 
         super().save(*args, **kwargs)
 
-        calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
+        calculate_ranks.apply_async(
+            kwargs={"phase_pk": self.submission.phase.pk}
+        )
 
     @cached_property
     def challenge(self):
-        return self.submission.challenge
+        return self.submission.phase.challenge
 
     @cached_property
     def creator(self):
@@ -703,12 +704,12 @@ class Evaluation(UUIDModel, ComponentJob):
             send_successful_evaluation_email(self)
 
     def clean(self):
-        if self.submission.challenge != self.method.challenge:
+        if self.submission.phase != self.method.phase:
             raise ValidationError(
-                "The submission and method challenges should"
+                "The submission and method phases should"
                 "be the same. You are trying to evaluate a"
-                f"submission for {self.submission.challenge}"
-                f"with a method for {self.method.challenge}"
+                f"submission for {self.submission.phase}"
+                f"with a method for {self.method.phase}"
             )
 
         super().clean()
@@ -726,7 +727,7 @@ class Evaluation(UUIDModel, ComponentJob):
             "evaluation:detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.submission.phase.challenge.short_name,
             },
         )
 

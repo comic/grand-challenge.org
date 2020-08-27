@@ -17,15 +17,15 @@ from grandchallenge.core.permissions.mixins import (
 )
 from grandchallenge.core.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
-    ConfigForm,
     LegacySubmissionForm,
     MethodForm,
+    PhaseForm,
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import (
-    Config,
     Evaluation,
     Method,
+    Phase,
     Submission,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
@@ -33,13 +33,13 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.teams.models import Team
 
 
-class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
-    form_class = ConfigForm
+class PhaseUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+    form_class = PhaseForm
     success_message = "Configuration successfully updated"
 
     def get_object(self, queryset=None):
         challenge = self.request.challenge
-        return challenge.evaluation_config
+        return challenge.phase_set.get()
 
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):
@@ -53,7 +53,7 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.challenge = self.request.challenge
+        form.instance.phase = self.request.challenge.phase_set.get()
 
         uploaded_file: StagedAjaxFile = form.cleaned_data["chunked_upload"][0]
         form.instance.staged_image_uuid = uploaded_file.uuid
@@ -66,7 +66,7 @@ class MethodList(UserIsChallengeAdminMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(challenge=self.request.challenge)
+        return queryset.filter(phase__challenge=self.request.challenge)
 
 
 class MethodDetail(UserIsChallengeAdminMixin, DetailView):
@@ -89,7 +89,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
 
-        config: Config = Config.objects.get(challenge=self.request.challenge)
+        config: Phase = Phase.objects.get(challenge=self.request.challenge)
 
         kwargs.update(
             {
@@ -109,19 +109,24 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        config = Config.objects.get(challenge=self.request.challenge)
+        phase = Phase.objects.get(challenge=self.request.challenge)
 
         context.update(
-            self.get_next_submission(max_subs=config.daily_submission_limit)
+            self.get_next_submission(max_subs=phase.daily_submission_limit)
         )
 
         pending_evaluations = Evaluation.objects.filter(
-            submission__challenge=self.request.challenge,
+            submission__phase__challenge=self.request.challenge,
             submission__creator=self.request.user,
             status__in=(Evaluation.PENDING, Evaluation.STARTED),
         ).count()
 
-        context.update({"pending_evaluations": pending_evaluations})
+        context.update(
+            {
+                "pending_evaluations": pending_evaluations,
+                "evaluation_config": phase,
+            }
+        )
 
         return context
 
@@ -143,7 +148,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
         subs = (
             Submission.objects.filter(
-                challenge=self.request.challenge,
+                phase__challenge=self.request.challenge,
                 creator=self.request.user,
                 created__gte=now - period,
             )
@@ -166,7 +171,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         if form.instance.creator is None:
             form.instance.creator = self.request.user
 
-        form.instance.challenge = self.request.challenge
+        form.instance.phase = self.request.challenge.phase_set.get()
 
         if "algorithm" in form.cleaned_data:
             # Algorithm submission
@@ -208,11 +213,10 @@ class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
         queryset = super().get_queryset()
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
-            return queryset.filter(challenge=self.request.challenge)
-
+            return queryset.filter(phase__challenge=self.request.challenge)
         else:
             return queryset.filter(
-                Q(challenge=self.request.challenge),
+                Q(phase__challenge=self.request.challenge),
                 Q(creator__pk=self.request.user.pk),
             )
 
@@ -225,7 +229,8 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
 class TeamContextMixin:
     @cached_property
     def evaluation_config(self):
-        return self.request.challenge.evaluation_config
+        # TODO Fix for multiple phases
+        return self.request.challenge.phase_set.get()
 
     @cached_property
     def user_teams(self):
@@ -268,8 +273,8 @@ class EvaluationList(
 
         queryset = super().get_queryset()
         queryset = queryset.select_related(
-            "submission__creator__user_profile", "submission__challenge"
-        ).filter(submission__challenge=challenge)
+            "submission__creator__user_profile", "submission__phase__challenge"
+        ).filter(submission__phase__challenge=challenge)
 
         if challenge.is_admin(self.request.user):
             return queryset
@@ -293,7 +298,12 @@ class EvaluationDetail(DetailView):
         except ObjectDoesNotExist:
             metrics = None
 
-        context.update({"metrics": metrics})
+        context.update(
+            {
+                "metrics": metrics,
+                "evaluation_config": self.object.submission.phase,
+            }
+        )
 
         return context
 
@@ -398,10 +408,11 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
         queryset = self.filter_by_date(queryset=queryset)
         queryset = (
             queryset.select_related(
-                "submission__creator__user_profile", "submission__challenge"
+                "submission__creator__user_profile",
+                "submission__phase__challenge",
             )
             .filter(
-                submission__challenge=self.request.challenge,
+                submission__phase__challenge=self.request.challenge,
                 published=True,
                 status=Evaluation.SUCCESS,
                 rank__gt=0,

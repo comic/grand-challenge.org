@@ -29,10 +29,9 @@ def test_copy_challenge():
     site.save()
     src = ChallengeFactory(short_name="foo", use_evaluation=True)
     # toggle a boolean field
-    src.evaluation_config.show_publication_url = (
-        not src.evaluation_config.show_publication_url
-    )
-    src.evaluation_config.save()
+    phase = src.phase_set.get()
+    phase.show_publication_url = not phase.show_publication_url
+    phase.save()
 
     src.modalities.add(ImagingModalityFactory())
 
@@ -72,8 +71,8 @@ def test_copy_challenge():
         )
 
     assert (
-        dest.evaluation_config.show_publication_url
-        == src.evaluation_config.show_publication_url
+        dest.phase_set.get().show_publication_url
+        == src.phase_set.get().show_publication_url
     )
     assert {*dest.modalities.all()} == {*src.modalities.all()}
     assert {*dest.get_admins()} == {*src.get_admins()}

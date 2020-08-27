@@ -4,10 +4,10 @@ import pytest
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
+from tests.evaluation_tests.factories import SubmissionFactory
 from tests.factories import (
     AnnotationSetFactory,
     ImageFileFactory,
-    SubmissionFactory,
     UserFactory,
 )
 from tests.utils import get_view_for_user

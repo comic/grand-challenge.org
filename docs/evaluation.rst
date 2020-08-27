@@ -115,9 +115,9 @@ is one number per evaluation. For example::
 Evaluation Options
 ~~~~~~~~~~~~~~~~~~
 
-.. automodule:::: grandchallenge.evaluation.models.Config
+.. automodule:::: grandchallenge.evaluation.models.Phase
 
-.. autoclass:: grandchallenge.evaluation.models.Config
+.. autoclass:: grandchallenge.evaluation.models.Phase
     :members:
 
 

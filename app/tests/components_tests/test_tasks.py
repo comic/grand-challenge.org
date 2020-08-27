@@ -7,7 +7,7 @@ from grandchallenge.algorithms.models import Job as AlgorithmJob
 from grandchallenge.components.tasks import mark_long_running_jobs_failed
 from grandchallenge.evaluation.models import Evaluation as EvaluationJob
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.factories import EvaluationFactory
+from tests.evaluation_tests.factories import EvaluationFactory
 
 
 @pytest.mark.django_db
