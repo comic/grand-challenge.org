@@ -191,7 +191,9 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def get_success_url(self):
         return reverse(
             "evaluation:list",
-            kwargs={"challenge_short_name": self.object.challenge.short_name},
+            kwargs={
+                "challenge_short_name": self.object.phase.challenge.short_name
+            },
         )
 
 
