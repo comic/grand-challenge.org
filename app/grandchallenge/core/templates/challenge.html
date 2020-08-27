@@ -61,7 +61,7 @@
 
                 {% if challenge.use_evaluation %}
                     {% if "change_challenge" in challenge_perms or user_is_participant %}
-                        {% if challenge.evaluation_config.use_teams %}
+                        {% if challenge.use_teams %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'teams:list' %}active{% endif %}"
                                    href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a>

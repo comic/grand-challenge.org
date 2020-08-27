@@ -9,7 +9,7 @@
 <split/>
 
 {{ evaluation.creator|user_profile_link }}
-{% if evaluation_config.use_teams %}
+{% if challenge.use_teams %}
     {% with user_teams|get_key:evaluation.creator.username as team %}
         {% if team %}
             (<a href="{{ team.1 }}">{{ team.0 }}</a>)

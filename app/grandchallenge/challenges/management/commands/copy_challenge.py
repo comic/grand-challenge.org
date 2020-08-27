@@ -21,6 +21,7 @@ class Command(BaseCommand):
         "use_evaluation",
         "logo",
         "banner",
+        "use_teams",
     ]
 
     challenge_m2m_fields = [
@@ -30,7 +31,6 @@ class Command(BaseCommand):
     ]
 
     config_fields = [
-        "use_teams",
         "score_title",
         "score_jsonpath",
         "score_error_jsonpath",

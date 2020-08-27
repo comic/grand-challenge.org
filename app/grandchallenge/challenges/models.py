@@ -410,6 +410,13 @@ class Challenge(ChallengeBase):
             "page created in the Challenge site."
         ),
     )
+    use_teams = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, users are able to form teams to participate in "
+            "this challenge together."
+        ),
+    )
     admins_group = models.OneToOneField(
         Group,
         null=True,
