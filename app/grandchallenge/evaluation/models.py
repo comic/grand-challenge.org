@@ -8,6 +8,7 @@ from django.db import models
 from django.db.models import BooleanField
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
+from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.algorithms.models import (
     AlgorithmExecutor,
@@ -145,12 +146,13 @@ class Phase(UUIDModel):
     challenge = models.ForeignKey(
         Challenge, on_delete=models.CASCADE, editable=False,
     )
-    use_teams = models.BooleanField(
-        default=False,
-        help_text=(
-            "If true, users are able to form teams together to participate in "
-            "challenges."
-        ),
+    title = models.CharField(
+        max_length=64,
+        help_text="The title of this phase.",
+        default="Challenge",
+    )
+    slug = AutoSlugField(
+        populate_from="title", allow_duplicates=True, max_length=64
     )
     score_title = models.CharField(
         max_length=32,
@@ -287,12 +289,25 @@ class Phase(UUIDModel):
         default=False,
         help_text=("Show a link to the publication on the results page"),
     )
-
     daily_submission_limit = models.PositiveIntegerField(
         default=10,
         help_text=(
             "The limit on the number of times that a user can make a "
             "submission in a 24 hour period."
+        ),
+    )
+    submissions_open = models.DateTimeField(
+        null=True,
+        help_text=(
+            "If set, participants will not be able to make submissions to "
+            "this phase before this time."
+        ),
+    )
+    submissions_close = models.DateTimeField(
+        null=True,
+        help_text=(
+            "If set, participants will not be able to make submissions to "
+            "this phase after this time."
         ),
     )
     submission_page_html = models.TextField(
@@ -331,6 +346,12 @@ class Phase(UUIDModel):
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="evaluation_outputs"
     )
+
+    class Meta:
+        unique_together = (
+            ("challenge", "title"),
+            ("challenge", "slug"),
+        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -371,9 +392,6 @@ def method_image_path(instance, filename):
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE, null=True
-    )
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
 
     def get_absolute_url(self):
@@ -412,9 +430,6 @@ class Submission(UUIDModel):
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE, null=True
     )
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
     algorithm_image = models.ForeignKey(
