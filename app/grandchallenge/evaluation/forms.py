@@ -44,7 +44,6 @@ scoring_options = (
 )
 
 leaderboard_options = (
-    "use_teams",
     "display_submission_comments",
     "show_supplementary_file_link",
     "show_publication_url",

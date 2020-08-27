@@ -236,9 +236,7 @@ class TeamContextMixin:
 
     @cached_property
     def user_teams(self):
-        evaluation_config = self.evaluation_config
-
-        if evaluation_config.use_teams:
+        if self.request.challenge.use_teams:
             user_teams = {
                 teammember.user.username: (team.name, team.get_absolute_url())
                 for team in Team.objects.filter(
@@ -327,7 +325,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
             ),
             Column(
                 title="User (Team)"
-                if self.evaluation_config.use_teams
+                if self.request.challenge.use_teams
                 else "User",
                 sort_field="submission__creator__username",
             ),
@@ -403,6 +401,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
             "evaluation": job,
             "evaluation_config": self.evaluation_config,
             "user_teams": self.user_teams,
+            "challenge": self.evaluation_config.challenge,
         }
 
     def get_unfiltered_queryset(self):
