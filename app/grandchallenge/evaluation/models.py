@@ -352,6 +352,7 @@ class Phase(UUIDModel):
             ("challenge", "title"),
             ("challenge", "slug"),
         )
+        ordering = ("challenge", "submissions_open", "created")
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
