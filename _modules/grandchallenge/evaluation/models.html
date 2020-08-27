@@ -249,7 +249,7 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+<div class="viewcode-block" id="Phase"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a><span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
     <span class="c1"># This must match the syntax used in jquery datatables</span>
     <span class="c1"># https://datatables.net/reference/option/order</span>
     <span class="n">ASCENDING</span> <span class="o">=</span> <span class="s2">&quot;asc&quot;</span>
@@ -292,16 +292,13 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
-<div class="viewcode-block" id="Config.SubmissionKind"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Config.SubmissionKind">[docs]</a>    <span class="k">class</span> <span class="nc">SubmissionKind</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
+<div class="viewcode-block" id="Phase.SubmissionKind"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.SubmissionKind">[docs]</a>    <span class="k">class</span> <span class="nc">SubmissionKind</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerChoices</span><span class="p">):</span>
         <span class="n">CSV</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;CSV&quot;</span>
         <span class="n">ZIP</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;ZIP&quot;</span>
         <span class="n">ALGORITHM</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;Algorithm&quot;</span></div>
 
-    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
-        <span class="n">Challenge</span><span class="p">,</span>
-        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span>
-        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_config&quot;</span><span class="p">,</span>
-        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">use_teams</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -490,7 +487,7 @@
         <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_outputs&quot;</span>
     <span class="p">)</span>
 
-<div class="viewcode-block" id="Config.save"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Config.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Phase.save"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -498,7 +495,7 @@
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_default_interfaces</span><span class="p">()</span>
 
-        <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;challenge_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span></div>
+        <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span></div>
 
     <span class="k">def</span> <span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
@@ -519,7 +516,7 @@
     <span class="sd">&quot;&quot;&quot;Deprecated: only used in a migration.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">EVALUATION_FILES_SUBDIRECTORY</span><span class="si">}</span><span class="s2">/&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;methods/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -529,14 +526,17 @@
 <span class="k">class</span> <span class="nc">Method</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentImage</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Store the methods for performing an evaluation.&quot;&quot;&quot;</span>
 
-    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:method-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
-                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
@@ -545,7 +545,7 @@
     <span class="c1"># Must match the protected serving url</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">EVALUATION_FILES_SUBDIRECTORY</span><span class="si">}</span><span class="s2">/&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;submissions/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">creator</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
@@ -556,7 +556,7 @@
 <span class="k">def</span> <span class="nf">submission_supplementary_file_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;evaluation-supplementary/&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_valid_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="p">)</span>
@@ -568,7 +568,10 @@
     <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
     <span class="p">)</span>
-    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">algorithm_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">AlgorithmImage</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
     <span class="p">)</span>
@@ -606,9 +609,7 @@
     <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
-        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="p">(</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;predictions_file&quot;</span><span class="p">,</span> <span class="s2">&quot;algorithm_image&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;predictions_file&quot;</span><span class="p">,</span> <span class="s2">&quot;algorithm_image&quot;</span><span class="p">),)</span>
 
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
@@ -629,7 +630,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
             <span class="n">test_set</span> <span class="o">=</span> <span class="n">ImageSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
+                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
             <span class="p">)</span>
 
             <span class="n">default_input_interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -689,7 +690,7 @@
 
             <span class="c1"># Convert this submission to an annotation set</span>
             <span class="n">base</span> <span class="o">=</span> <span class="n">ImageSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
+                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
             <span class="p">)</span>
             <span class="n">SubmissionToAnnotationSetJob</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
                 <span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">,</span> <span class="n">submission</span><span class="o">=</span><span class="bp">self</span>
@@ -698,7 +699,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">latest_ready_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">Method</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">ready</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">Method</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">,</span> <span class="n">ready</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;-created&quot;</span><span class="p">)</span>
             <span class="o">.</span><span class="n">first</span><span class="p">()</span>
         <span class="p">)</span>
@@ -708,7 +709,7 @@
             <span class="s2">&quot;evaluation:submission-detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
-                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
@@ -815,17 +816,17 @@
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">published</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">evaluation_config</span><span class="o">.</span><span class="n">auto_publish_new_results</span>
-            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">published</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">auto_publish_new_results</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;challenge_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
+        <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+        <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">challenge</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">challenge</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">creator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -858,12 +859,12 @@
             <span class="n">send_successful_evaluation_email</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">challenge</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">challenge</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">phase</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;The submission and method challenges should&quot;</span>
+                <span class="s2">&quot;The submission and method phases should&quot;</span>
                 <span class="s2">&quot;be the same. You are trying to evaluate a&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;submission for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">challenge</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;with a method for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">challenge</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;submission for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;with a method for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">phase</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
@@ -881,7 +882,7 @@
             <span class="s2">&quot;evaluation:detail&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
-                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+                <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
