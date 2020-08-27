@@ -22,7 +22,7 @@ class Command(BaseCommand):
         )
 
         submissions = Submission.objects.filter(
-            challenge=challenge, annotationset=None
+            phase__challenge=challenge, annotationset=None
         )
 
         for submission in submissions:
