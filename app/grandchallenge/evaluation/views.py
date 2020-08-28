@@ -9,7 +9,13 @@ from django.core.files import File
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    ListView,
+    RedirectView,
+    UpdateView,
+)
 
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
@@ -308,6 +314,21 @@ class EvaluationDetail(DetailView):
         context.update({"metrics": metrics})
 
         return context
+
+
+class LeaderboardRedirect(RedirectView):
+    permanent = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        # Redirect old leaderboard urls to the first leaderboard for this
+        # challenge
+        return reverse(
+            "evaluation:leaderboard",
+            kwargs={
+                "challenge_short_name": self.request.challenge.short_name,
+                "slug": self.request.challenge.phase_set.first().slug,
+            },
+        )
 
 
 class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
