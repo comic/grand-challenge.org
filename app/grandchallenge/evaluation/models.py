@@ -349,6 +349,9 @@ class Phase(UUIDModel):
         )
         ordering = ("challenge", "submissions_open", "created")
 
+    def __str__(self):
+        return f"{self.title} Evaluation for {self.challenge.short_name}"
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 

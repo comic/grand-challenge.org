@@ -9,6 +9,7 @@ from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
@@ -82,9 +83,13 @@ class PhaseForm(forms.ModelForm):
         }
 
 
-class MethodForm(forms.ModelForm):
+class MethodForm(SaveFormInitMixin, forms.ModelForm):
+    phase = ModelChoiceField(
+        queryset=None,
+        help_text="Which phase is this evaluation container for?",
+    )
     chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False),
+        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
         label="Evaluation Method Container",
         validators=[
             ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
@@ -96,14 +101,14 @@ class MethodForm(forms.ModelForm):
         ),
     )
 
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args, user, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
         self.fields["chunked_upload"].widget.user = user
+        self.fields["phase"].queryset = challenge.phase_set.all()
 
     class Meta:
         model = Method
-        fields = ["chunked_upload"]
+        fields = ["phase", "chunked_upload"]
 
 
 submission_fields = (
