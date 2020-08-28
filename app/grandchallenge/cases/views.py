@@ -55,7 +55,11 @@ class RawImageUploadSessionDetail(
 
 class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = ImageSerializer
-    queryset = Image.objects.all()
+    queryset = Image.objects.all().prefetch_related(
+        "files",
+        "archive_set",
+        "componentinterfacevalue_set__algorithms_jobs_as_input",
+    )
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (
         DjangoFilterBackend,
