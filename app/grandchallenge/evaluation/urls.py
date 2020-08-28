@@ -23,21 +23,31 @@ urlpatterns = [
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
     ),
     path("<slug>/update/", PhaseUpdate.as_view(), name="phase-update"),
+    path(
+        "<slug>/submissions/create/",
+        SubmissionCreate.as_view(),
+        name="submission-create",
+    ),
+    path(
+        "<slug>/submissions/create-legacy/",
+        LegacySubmissionCreate.as_view(),
+        name="submission-create-legacy",
+    ),
     # path("config/", PhaseUpdate.as_view(), name="config-update"),
     path("methods/", MethodList.as_view(), name="method-list"),
     path("methods/create/", MethodCreate.as_view(), name="method-create"),
     path("methods/<uuid:pk>/", MethodDetail.as_view(), name="method-detail"),
     path("submissions/", SubmissionList.as_view(), name="submission-list"),
-    path(
-        "submissions/create/",
-        SubmissionCreate.as_view(),
-        name="submission-create",
-    ),
-    path(
-        "submissions/create-legacy/",
-        LegacySubmissionCreate.as_view(),
-        name="submission-create-legacy",
-    ),
+    # path(
+    #    "submissions/create/",
+    #    SubmissionCreate.as_view(),
+    #    name="submission-create",
+    # ),
+    # path(
+    #    "submissions/create-legacy/",
+    #    LegacySubmissionCreate.as_view(),
+    #    name="submission-create-legacy",
+    # ),
     path(
         "submissions/<uuid:pk>/",
         SubmissionDetail.as_view(),

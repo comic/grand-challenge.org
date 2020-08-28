@@ -169,13 +169,20 @@ def test_submission_create(client, two_challenge_sets):
         viewname="evaluation:submission-create",
         two_challenge_set=two_challenge_sets,
         client=client,
+        reverse_kwargs={
+            "challenge_short_name": two_challenge_sets.challenge_set_1.challenge.short_name,
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.get().slug,
+        },
     )
 
     response = get_view_for_user(
         viewname="evaluation:submission-create",
-        challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.challenge_set_1.participant,
         client=client,
+        reverse_kwargs={
+            "challenge_short_name": two_challenge_sets.challenge_set_1.challenge.short_name,
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.get().slug,
+        },
     )
 
     assert response.status_code == 200
@@ -188,13 +195,20 @@ def test_legacy_submission_create(client, two_challenge_sets):
         viewname="evaluation:submission-create-legacy",
         two_challenge_set=two_challenge_sets,
         client=client,
+        reverse_kwargs={
+            "challenge_short_name": two_challenge_sets.challenge_set_1.challenge.short_name,
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.get().slug,
+        },
     )
 
     response = get_view_for_user(
         viewname="evaluation:submission-create-legacy",
-        challenge=two_challenge_sets.challenge_set_1.challenge,
         user=two_challenge_sets.admin12,
         client=client,
+        reverse_kwargs={
+            "challenge_short_name": two_challenge_sets.challenge_set_1.challenge.short_name,
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.get().slug,
+        },
     )
 
     assert response.status_code == 200
@@ -212,9 +226,12 @@ def test_submission_time_limit(client, two_challenge_sets):
     def get_submission_view():
         return get_view_for_user(
             viewname="evaluation:submission-create",
-            challenge=two_challenge_sets.challenge_set_1.challenge,
             client=client,
             user=two_challenge_sets.challenge_set_1.participant,
+            reverse_kwargs={
+                "challenge_short_name": two_challenge_sets.challenge_set_1.challenge.short_name,
+                "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.get().slug,
+            },
         )
 
     assert "make 9 more" in get_submission_view().rendered_content

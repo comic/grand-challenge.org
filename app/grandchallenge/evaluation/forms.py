@@ -3,6 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models.functions import Lower
 from django.forms import ModelChoiceField
 from django.utils.text import format_lazy
 from django_summernote.widgets import SummernoteInplaceWidget
@@ -207,6 +208,14 @@ class SubmissionForm(forms.ModelForm):
 
 
 class LegacySubmissionForm(SubmissionForm):
+    def __init__(self, *args, challenge, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[
+            "creator"
+        ].queryset = challenge.participants_group.user_set.all().order_by(
+            Lower("username")
+        )
+
     class Meta:
         model = Submission
         fields = ("creator", *submission_fields)

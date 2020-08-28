@@ -97,21 +97,25 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         "Your result will appear on the leaderboard when it is ready."
     )
 
+    @cached_property
+    def phase(self):
+        return Phase.objects.get(
+            challenge=self.request.challenge, slug=self.kwargs["slug"]
+        )
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-
-        config: Phase = Phase.objects.get(challenge=self.request.challenge)
 
         kwargs.update(
             {
                 "user": self.request.user,
-                "display_comment_field": config.allow_submission_comments,
-                "supplementary_file_choice": config.supplementary_file_choice,
-                "supplementary_file_label": config.supplementary_file_label,
-                "supplementary_file_help_text": config.supplementary_file_help_text,
-                "publication_url_choice": config.publication_url_choice,
-                "algorithm_submission": config.submission_kind
-                == config.SubmissionKind.ALGORITHM,
+                "display_comment_field": self.phase.allow_submission_comments,
+                "supplementary_file_choice": self.phase.supplementary_file_choice,
+                "supplementary_file_label": self.phase.supplementary_file_label,
+                "supplementary_file_help_text": self.phase.supplementary_file_help_text,
+                "publication_url_choice": self.phase.publication_url_choice,
+                "algorithm_submission": self.phase.submission_kind
+                == self.phase.SubmissionKind.ALGORITHM,
             }
         )
 
@@ -120,10 +124,10 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        phase = Phase.objects.get(challenge=self.request.challenge)
-
         context.update(
-            self.get_next_submission(max_subs=phase.daily_submission_limit)
+            self.get_next_submission(
+                max_subs=self.phase.daily_submission_limit
+            )
         )
 
         pending_evaluations = Evaluation.objects.filter(
@@ -133,10 +137,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         ).count()
 
         context.update(
-            {
-                "pending_evaluations": pending_evaluations,
-                "evaluation_config": phase,
-            }
+            {"pending_evaluations": pending_evaluations, "phase": self.phase}
         )
 
         return context
@@ -182,7 +183,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         if form.instance.creator is None:
             form.instance.creator = self.request.user
 
-        form.instance.phase = self.request.challenge.phase_set.get()
+        form.instance.phase = self.phase
 
         if "algorithm" in form.cleaned_data:
             # Algorithm submission
@@ -216,6 +217,11 @@ class SubmissionCreate(
 
 class LegacySubmissionCreate(UserIsChallengeAdminMixin, SubmissionCreateBase):
     form_class = LegacySubmissionForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"challenge": self.request.challenge})
+        return kwargs
 
 
 class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
