@@ -6,7 +6,6 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import BooleanField
-from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
 
@@ -674,14 +673,6 @@ class Evaluation(UUIDModel, ComponentJob):
         calculate_ranks.apply_async(
             kwargs={"phase_pk": self.submission.phase.pk}
         )
-
-    @cached_property
-    def challenge(self):
-        return self.submission.phase.challenge
-
-    @cached_property
-    def creator(self):
-        return self.submission.creator
 
     @property
     def container(self):

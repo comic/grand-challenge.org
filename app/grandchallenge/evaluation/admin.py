@@ -52,7 +52,7 @@ class AlgorithmEvaluationAdmin(admin.ModelAdmin):
 
 class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    list_display = ("pk", "created", "challenge", "creator", "status")
+    list_display = ("pk", "created", "submission", "status")
     list_filter = ("submission__phase__challenge__short_name", "status")
     list_select_related = (
         "submission__phase__challenge",

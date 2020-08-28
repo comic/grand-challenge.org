@@ -11,25 +11,25 @@ def send_failed_evaluation_email(evaluation):
     message = (
         f"Dear {{}},\n\n"
         f"Unfortunately the evaluation for the submission to "
-        f"{evaluation.challenge.short_name} failed with an error. "
-        f"The error message is:\n\n"
+        f"{evaluation.submission.phase.challenge.short_name} failed with an "
+        f"error. The error message is:\n\n"
         f"{user_error(evaluation.output)}\n\n"
         f"You may wish to try and correct this, or contact the challenge "
         f"organizers. The following information may help them:\n"
-        f"User: {evaluation.creator.username}\n"
+        f"User: {evaluation.submission.creator.username}\n"
         f"Evaluation ID: {evaluation.pk}\n"
         f"Submission ID: {evaluation.submission.pk}\n\n"
         f"Regards,\n"
         f"{site.name}\n\n"
         f"This is an automated service email from {site.domain}."
     )
-    recipients = list(evaluation.challenge.get_admins())
-    recipients.append(evaluation.creator)
+    recipients = list(evaluation.submission.phase.challenge.get_admins())
+    recipients.append(evaluation.submission.creator)
     for recipient in recipients:
         send_mail(
             subject=(
                 f"[{site.domain.lower()}] "
-                f"[{evaluation.challenge.short_name.lower()}] "
+                f"[{evaluation.submission.phase.challenge.short_name.lower()}] "
                 f"Evaluation Failed"
             ),
             message=message.format(recipient.username),
@@ -40,7 +40,7 @@ def send_failed_evaluation_email(evaluation):
 
 def send_successful_evaluation_email(evaluation):
     site = Site.objects.get_current()
-    challenge = evaluation.challenge
+    challenge = evaluation.submission.phase.challenge
 
     recipients = list(challenge.get_admins())
     message = (

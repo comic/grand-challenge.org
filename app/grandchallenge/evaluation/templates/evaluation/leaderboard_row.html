@@ -8,9 +8,9 @@
 {{ object.rank|ordinal }}
 <split/>
 
-{{ object.creator|user_profile_link }}
+{{ object.submission.creator|user_profile_link }}
 {% if object.submission.phase.challenge.use_teams %}
-    {% with user_teams|get_key:object.creator.username as team %}
+    {% with user_teams|get_key:object.submission.creator.username as team %}
         {% if team %}
             (<a href="{{ team.1 }}">{{ team.0 }}</a>)
         {% endif %}
