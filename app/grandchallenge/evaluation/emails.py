@@ -51,7 +51,10 @@ def send_successful_evaluation_email(evaluation):
     if evaluation.published:
         leaderboard_url = reverse(
             "evaluation:leaderboard",
-            kwargs={"challenge_short_name": challenge.short_name},
+            kwargs={
+                "challenge_short_name": challenge.short_name,
+                "slug": evaluation.submission.phase.slug,
+            },
         )
         message += (
             f"You can view the result on the leaderboard here: "

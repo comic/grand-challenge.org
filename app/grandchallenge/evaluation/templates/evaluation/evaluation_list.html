@@ -28,15 +28,14 @@
                 <th>ID</th>
                 <th>Created</th>
                 <th>Updated</th>
+                <th>Phase</th>
                 {% if "change_challenge" in challenge_perms %}
                     <th>User</th>
                 {% endif %}
                 <th>Status</th>
                 <th>Output</th>
                 <th>Position</th>
-                {% if evaluation_config.allow_submission_comments %}
-                    <th>Comment</th>
-                {% endif %}
+                <th>Comment</th>
                 {% if "change_challenge" in challenge_perms %}
                     <th>Hide/Publish</th>
                 {% endif %}
@@ -48,6 +47,7 @@
                     <td>{{ evaluation.id }}</td>
                     <td data-order="{{ evaluation.created|date:"U" }}">{{ evaluation.created }}</td>
                     <td data-order="{{ evaluation.modified|date:"U" }}">{{ evaluation.modified }}</td>
+                    <td>{{ evaluation.submission.phase.title }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
                             {{ evaluation.creator|user_profile_link }}
@@ -100,9 +100,7 @@
                         {% endif %}
                     </td>
 
-                    {% if evaluation_config.allow_submission_comments %}
-                        <td>{{ evaluation.submission.comment }}</td>
-                    {% endif %}
+                    <td>{{ evaluation.submission.comment }}</td>
 
                     {% if "change_challenge" in challenge_perms %}
                         <td>

@@ -19,6 +19,9 @@ from grandchallenge.evaluation.views import (
 app_name = "evaluation"
 
 urlpatterns = [
+    path(
+        "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
+    ),
     path("config/", PhaseUpdate.as_view(), name="config-update"),
     path("methods/", MethodList.as_view(), name="method-list"),
     path("methods/create/", MethodCreate.as_view(), name="method-create"),
@@ -39,7 +42,7 @@ urlpatterns = [
         SubmissionDetail.as_view(),
         name="submission-detail",
     ),
-    path("leaderboard/", LeaderboardDetail.as_view(), name="leaderboard",),
+    # path("leaderboard/", LeaderboardDetail.as_view(), name="leaderboard",),
     path("", EvaluationList.as_view(), name="list"),
     path("<uuid:pk>/", EvaluationDetail.as_view(), name="detail"),
     path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),

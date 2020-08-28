@@ -72,10 +72,12 @@
                                href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name %}">Submit</a>
                         </li>
                     {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
-                           href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name %}">Leaderboard</a>
-                    </li>
+                    {% for phase in challenge.phase_set.all %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                               href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }} Leaderboard</a>
+                        </li>
+                    {% endfor %}
                 {% endif %}
 
                 {% if "change_challenge" in challenge_perms %}

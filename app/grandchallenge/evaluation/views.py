@@ -230,11 +230,6 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
 
 class TeamContextMixin:
     @cached_property
-    def evaluation_config(self):
-        # TODO Fix for multiple phases
-        return self.request.challenge.phase_set.get()
-
-    @cached_property
     def user_teams(self):
         if self.request.challenge.use_teams:
             user_teams = {
@@ -253,12 +248,7 @@ class TeamContextMixin:
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "evaluation_config": self.evaluation_config,
-                "user_teams": self.user_teams,
-            }
-        )
+        context.update({"user_teams": self.user_teams})
         return context
 
 
@@ -298,12 +288,7 @@ class EvaluationDetail(DetailView):
         except ObjectDoesNotExist:
             metrics = None
 
-        context.update(
-            {
-                "metrics": metrics,
-                "evaluation_config": self.object.submission.phase,
-            }
-        )
+        context.update({"metrics": metrics})
 
         return context
 
@@ -313,6 +298,12 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
+
+    @cached_property
+    def phase(self):
+        return Phase.objects.get(
+            challenge=self.request.challenge, slug=self.kwargs["slug"]
+        )
 
     @property
     def columns(self):
@@ -332,53 +323,41 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
             Column(title="Created", sort_field="created"),
         ]
 
-        if (
-            self.evaluation_config.scoring_method_choice
-            == self.evaluation_config.MEAN
-        ):
+        if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))
-        elif (
-            self.evaluation_config.scoring_method_choice
-            == self.evaluation_config.MEDIAN
-        ):
+        elif self.phase.scoring_method_choice == self.phase.MEDIAN:
             columns.append(Column(title="Median Position", sort_field="rank"))
 
-        if (
-            self.evaluation_config.scoring_method_choice
-            == self.evaluation_config.ABSOLUTE
-        ):
+        if self.phase.scoring_method_choice == self.phase.ABSOLUTE:
             columns.append(
-                Column(
-                    title=self.evaluation_config.score_title, sort_field="rank"
-                )
+                Column(title=self.phase.score_title, sort_field="rank")
             )
         else:
             columns.append(
                 Column(
-                    title=f"{self.evaluation_config.score_title} (Position)",
+                    title=f"{self.phase.score_title} (Position)",
                     sort_field="rank",
                     toggleable=True,
                 )
             )
 
-        for c in self.evaluation_config.extra_results_columns:
+        for c in self.phase.extra_results_columns:
             columns.append(
                 Column(
                     title=c["title"]
-                    if self.evaluation_config.scoring_method_choice
-                    == self.evaluation_config.ABSOLUTE
+                    if self.phase.scoring_method_choice == self.phase.ABSOLUTE
                     else f"{c['title']} (Position)",
                     sort_field="rank",
                     toggleable=True,
                 )
             )
 
-        if self.evaluation_config.display_submission_comments:
+        if self.phase.display_submission_comments:
             columns.append(
                 Column(title="Comment", sort_field="submission__comment")
             )
 
-        if self.evaluation_config.show_publication_url:
+        if self.phase.show_publication_url:
             columns.append(
                 Column(
                     title="Publication",
@@ -386,10 +365,10 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
                 )
             )
 
-        if self.evaluation_config.show_supplementary_file_link:
+        if self.phase.show_supplementary_file_link:
             columns.append(
                 Column(
-                    title=self.evaluation_config.supplementary_file_label,
+                    title=self.phase.supplementary_file_label,
                     sort_field="submission__supplementary_file",
                 )
             )
@@ -398,11 +377,14 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
 
     def get_row_context(self, job, *args, **kwargs):
         return {
-            "evaluation": job,
-            "evaluation_config": self.evaluation_config,
+            "object": job,
             "user_teams": self.user_teams,
-            "challenge": self.evaluation_config.challenge,
         }
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"phase": self.phase})
+        return context
 
     def get_unfiltered_queryset(self):
         queryset = super().get_queryset()
@@ -413,7 +395,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
                 "submission__phase__challenge",
             )
             .filter(
-                submission__phase__challenge=self.request.challenge,
+                submission__phase=self.phase,
                 published=True,
                 status=Evaluation.SUCCESS,
                 rank__gt=0,
@@ -431,7 +413,7 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
         if "leaderboardDate" in self.request.GET:
             year, month, day = self.request.GET["leaderboardDate"].split("-")
             before = datetime(
-                year=int(year), month=int(month), day=int(day),
+                year=int(year), month=int(month), day=int(day)
             ) + relativedelta(days=1)
             return queryset.filter(submission__created__lt=before)
         else:

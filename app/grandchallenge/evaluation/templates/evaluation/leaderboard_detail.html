@@ -11,13 +11,13 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active">
-            Leaderboard
+            {{ phase.title }} Leaderboard
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Leaderboard {{ request.GET.leaderboardDate }}</h2>
+    <h2>{{ phase.title }} Leaderboard {{ request.GET.leaderboardDate }}</h2>
 
     <div class="table-responsive mb-3">
         <table class="table table-hover table-borderless table-sm"
@@ -33,11 +33,11 @@
         </table>
     </div>
 
-    {% if evaluation_config.result_display_choice == evaluation_config.BEST %}
+    {% if phase.result_display_choice == phase.BEST %}
         <p class="small ml-3">Only the best published result for each
             participant is
             listed.</p>
-    {% elif evaluation_config.result_display_choice == evaluation_config.MOST_RECENT %}
+    {% elif phase.result_display_choice == phase.MOST_RECENT %}
         <p class="small ml-3"> Only the most recent published result for each
             participant is
             listed.</p>
@@ -71,14 +71,14 @@
                     url: "",
                 },
                 columnDefs: [{
-                    {%  if evaluation_config.show_supplementary_file_link %}
+                    {%  if phase.show_supplementary_file_link %}
                         "targets": [-1],
                     {% endif %}
                     searchable: false,
                     orderable: false,
                     visible: true
                 }
-                    {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                    {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
                         ,{
                         targets: 'toggleable',
                         visible: false,
@@ -90,7 +90,7 @@
                 {% comment %}
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
-                {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
                     dom: "<'row'<'col-md-5'l><'col-md-7'f>>" +
                         "<'row'<'col-12'Btr>>" +
                         "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",

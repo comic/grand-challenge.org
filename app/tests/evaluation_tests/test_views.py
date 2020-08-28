@@ -308,6 +308,10 @@ def test_leaderboard(client, eval_challenge_set):
         viewname="evaluation:leaderboard",
         challenge_set=eval_challenge_set.challenge_set,
         client=client,
+        reverse_kwargs={
+            "slug": eval_challenge_set.challenge_set.challenge.phase_set.get().slug,
+            "challenge_short_name": eval_challenge_set.challenge_set.challenge.short_name,
+        },
     )
 
 
