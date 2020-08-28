@@ -4,10 +4,10 @@ import pytest
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.datasets.models import AnnotationSet, ImageSet
+from tests.evaluation_tests.factories import SubmissionFactory
 from tests.factories import (
     AnnotationSetFactory,
     ImageFileFactory,
-    SubmissionFactory,
     UserFactory,
 )
 from tests.utils import get_view_for_user
@@ -151,7 +151,7 @@ def test_image_response(client, settings, cloudfront, tmpdir):
 def test_submission_download(client, two_challenge_sets):
     """Only the challenge admin should be able to download submissions."""
     submission = SubmissionFactory(
-        challenge=two_challenge_sets.challenge_set_1.challenge,
+        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
         creator=two_challenge_sets.challenge_set_1.participant,
     )
 
@@ -178,6 +178,6 @@ def test_submission_download(client, two_challenge_sets):
 
     for test in tests:
         response = get_view_for_user(
-            url=submission.file.url, client=client, user=test[1]
+            url=submission.predictions_file.url, client=client, user=test[1]
         )
         assert response.status_code == test[0]

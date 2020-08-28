@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.factories import EvaluationFactory
+from tests.evaluation_tests.factories import EvaluationFactory
 
 
 @pytest.mark.django_db

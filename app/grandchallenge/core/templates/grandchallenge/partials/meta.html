@@ -10,24 +10,20 @@
 <meta property="og:url" content="{{ request.build_absolute_uri }}">
 <meta property="og:site_name" content="{{ request.site }}">
 
-{% if challenge %}
-    <meta name="title" content="{% firstof challenge.title challenge.short_name %} - {{ request.site.name }}">
-    <meta property="og:title" content="{% firstof challenge.title challenge.short_name %} - {{ request.site.name }}">
+{% if object %}
+    <meta name="title" content="{% firstof object.title object.short_name %} - {{ request.site.name }}">
+    <meta property="og:title" content="{% firstof object.title object.short_name %} - {{ request.site.name }}">
 
-    <meta name="description" content="{{ challenge.description }}">
-    <meta property="og:description" content="{{ challenge.description }}">
+    <meta name="description" content="{{ object.description }}">
+    <meta property="og:description" content="{{ object.description }}">
 
-    {% if challenge.logo %}
-        <meta property="og:image" content="{{ request.scheme }}://{{ request.site.domain }}{{ challenge.logo.url }}">
-    {% else %}
-        <meta property="og:image" content="{% static 'images/pathology_banner.jpg' %}">
+    {% if object.logo %}
+        <meta property="og:image" content="{{ request.scheme }}://{{ request.site.domain }}{{ object.logo.url }}">
     {% endif %}
 {% else %}
     <meta name="title" content="{{ request.site.name }}">
     <meta property="og:title" content="{{ request.site.name }}">
 
-    <meta name="description" content="The home of challenges in biomedical image analysis">
-    <meta property="og:description" content="The home of challenges in biomedical image analysis">
-
-    <meta property="og:image" content="{% static 'images/pathology_banner.jpg' %}">
+    <meta name="description" content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
+    <meta property="og:description" content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
 {% endif %}

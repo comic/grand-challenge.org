@@ -6,7 +6,6 @@ from django.db.models import Q
 from django.shortcuts import reverse
 from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import FormView
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.products.forms import ImportForm
 from grandchallenge.products.models import Company, Product, Status
@@ -157,7 +156,7 @@ class ContactPage(TemplateView):
     template_name = "products/contact.html"
 
 
-class ImportDataView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
+class ImportDataView(PermissionRequiredMixin, FormView):
     template_name = "products/import_data.html"
     form_class = ImportForm
     permission_required = (

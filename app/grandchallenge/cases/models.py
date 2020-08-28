@@ -9,6 +9,8 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -160,7 +162,13 @@ class RawImageUploadSession(UUIDModel):
         kwargs = {"args": (self.pk,)}
 
         if linked_task is not None:
-            kwargs.update({"link": linked_task.s(upload_session_pk=self.pk)})
+            kwargs.update(
+                {
+                    "link": linked_task.signature(
+                        kwargs={"upload_session_pk": self.pk}
+                    )
+                }
+            )
 
         build_images.apply_async(**kwargs)
 
@@ -574,6 +582,17 @@ class ImageFile(UUIDModel):
     file = models.FileField(
         upload_to=image_file_path, blank=False, storage=protected_s3_storage
     )
+
+
+@receiver(post_delete, sender=ImageFile)
+def delete_image_files(*_, instance: ImageFile, **__):
+    """
+    Deletes the related image files, note that DZI files are not handled!
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
+    """
+    instance.file.storage.delete(name=instance.file.name)
 
 
 class FolderUpload:

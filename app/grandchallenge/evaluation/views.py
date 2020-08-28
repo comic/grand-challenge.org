@@ -1,41 +1,45 @@
 from datetime import datetime, timedelta
 from typing import Dict
 
+from dateutil.relativedelta import relativedelta
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
 )
+from grandchallenge.core.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
-    ConfigForm,
     LegacySubmissionForm,
     MethodForm,
+    PhaseForm,
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import (
-    Config,
     Evaluation,
     Method,
+    Phase,
     Submission,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.teams.models import Team
 
 
-class ConfigUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
-    form_class = ConfigForm
+class PhaseUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+    form_class = PhaseForm
     success_message = "Configuration successfully updated"
 
     def get_object(self, queryset=None):
         challenge = self.request.challenge
-        return challenge.evaluation_config
+        return challenge.phase_set.get()
 
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):
@@ -49,7 +53,7 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.challenge = self.request.challenge
+        form.instance.phase = self.request.challenge.phase_set.get()
 
         uploaded_file: StagedAjaxFile = form.cleaned_data["chunked_upload"][0]
         form.instance.staged_image_uuid = uploaded_file.uuid
@@ -62,7 +66,7 @@ class MethodList(UserIsChallengeAdminMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(challenge=self.request.challenge)
+        return queryset.filter(phase__challenge=self.request.challenge)
 
 
 class MethodDetail(UserIsChallengeAdminMixin, DetailView):
@@ -85,9 +89,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
 
-        config = Config.objects.get(
-            challenge=self.request.challenge
-        )  # type: Config
+        config: Phase = Phase.objects.get(challenge=self.request.challenge)
 
         kwargs.update(
             {
@@ -97,6 +99,8 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
                 "supplementary_file_label": config.supplementary_file_label,
                 "supplementary_file_help_text": config.supplementary_file_help_text,
                 "publication_url_choice": config.publication_url_choice,
+                "algorithm_submission": config.submission_kind
+                == config.SubmissionKind.ALGORITHM,
             }
         )
 
@@ -105,19 +109,24 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        config = Config.objects.get(challenge=self.request.challenge)
+        phase = Phase.objects.get(challenge=self.request.challenge)
 
         context.update(
-            self.get_next_submission(max_subs=config.daily_submission_limit)
+            self.get_next_submission(max_subs=phase.daily_submission_limit)
         )
 
         pending_evaluations = Evaluation.objects.filter(
-            submission__challenge=self.request.challenge,
+            submission__phase__challenge=self.request.challenge,
             submission__creator=self.request.user,
             status__in=(Evaluation.PENDING, Evaluation.STARTED),
         ).count()
 
-        context.update({"pending_evaluations": pending_evaluations})
+        context.update(
+            {
+                "pending_evaluations": pending_evaluations,
+                "evaluation_config": phase,
+            }
+        )
 
         return context
 
@@ -139,7 +148,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
         subs = (
             Submission.objects.filter(
-                challenge=self.request.challenge,
+                phase__challenge=self.request.challenge,
                 creator=self.request.user,
                 created__gte=now - period,
             )
@@ -159,23 +168,32 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         }
 
     def form_valid(self, form):
-
         if form.instance.creator is None:
             form.instance.creator = self.request.user
 
-        form.instance.challenge = self.request.challenge
+        form.instance.phase = self.request.challenge.phase_set.get()
 
-        uploaded_file = form.cleaned_data["chunked_upload"][0]
-
-        with uploaded_file.open() as f:
-            form.instance.file.save(uploaded_file.name, File(f))
+        if "algorithm" in form.cleaned_data:
+            # Algorithm submission
+            form.instance.algorithm_image = form.cleaned_data[
+                "algorithm"
+            ].latest_ready_image
+        else:
+            # Predictions file submission
+            uploaded_file = form.cleaned_data["chunked_upload"][0]
+            with uploaded_file.open() as f:
+                form.instance.predictions_file.save(
+                    uploaded_file.name, File(f)
+                )
 
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(
             "evaluation:list",
-            kwargs={"challenge_short_name": self.object.challenge.short_name},
+            kwargs={
+                "challenge_short_name": self.object.phase.challenge.short_name
+            },
         )
 
 
@@ -197,11 +215,10 @@ class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
         queryset = super().get_queryset()
         challenge = self.request.challenge
         if challenge.is_admin(self.request.user):
-            return queryset.filter(challenge=self.request.challenge)
-
+            return queryset.filter(phase__challenge=self.request.challenge)
         else:
             return queryset.filter(
-                Q(challenge=self.request.challenge),
+                Q(phase__challenge=self.request.challenge),
                 Q(creator__pk=self.request.user.pk),
             )
 
@@ -211,7 +228,43 @@ class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
     model = Submission
 
 
-class EvaluationList(UserIsChallengeParticipantOrAdminMixin, ListView):
+class TeamContextMixin:
+    @cached_property
+    def evaluation_config(self):
+        # TODO Fix for multiple phases
+        return self.request.challenge.phase_set.get()
+
+    @cached_property
+    def user_teams(self):
+        if self.request.challenge.use_teams:
+            user_teams = {
+                teammember.user.username: (team.name, team.get_absolute_url())
+                for team in Team.objects.filter(
+                    challenge=self.request.challenge
+                )
+                .select_related("challenge")
+                .prefetch_related("teammember_set__user")
+                for teammember in team.teammember_set.all()
+            }
+        else:
+            user_teams = {}
+
+        return user_teams
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "evaluation_config": self.evaluation_config,
+                "user_teams": self.user_teams,
+            }
+        )
+        return context
+
+
+class EvaluationList(
+    UserIsChallengeParticipantOrAdminMixin, TeamContextMixin, ListView
+):
     model = Evaluation
 
     def get_queryset(self):
@@ -220,8 +273,8 @@ class EvaluationList(UserIsChallengeParticipantOrAdminMixin, ListView):
 
         queryset = super().get_queryset()
         queryset = queryset.select_related(
-            "submission__creator__user_profile", "submission__challenge"
-        ).filter(submission__challenge=challenge)
+            "submission__creator__user_profile", "submission__phase__challenge"
+        ).filter(submission__phase__challenge=challenge)
 
         if challenge.is_admin(self.request.user):
             return queryset
@@ -245,36 +298,122 @@ class EvaluationDetail(DetailView):
         except ObjectDoesNotExist:
             metrics = None
 
-        context.update({"metrics": metrics})
-
-        return context
-
-
-class Leaderboard(ListView):
-    model = Evaluation
-    template_name = "evaluation/leaderboard.html"
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-
         context.update(
             {
-                "evaluation_config": Config.objects.get(
-                    challenge=self.request.challenge
-                )
+                "metrics": metrics,
+                "evaluation_config": self.object.submission.phase,
             }
         )
 
         return context
 
-    def get_queryset(self):
+
+class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
+    model = Evaluation
+    template_name = "evaluation/leaderboard_detail.html"
+    row_template = "evaluation/leaderboard_row.html"
+    search_fields = ["pk", "submission__creator__username"]
+
+    @property
+    def columns(self):
+        columns = [
+            Column(
+                title="Current #"
+                if "leaderboardDate" in self.request.GET
+                else "#",
+                sort_field="rank",
+            ),
+            Column(
+                title="User (Team)"
+                if self.request.challenge.use_teams
+                else "User",
+                sort_field="submission__creator__username",
+            ),
+            Column(title="Created", sort_field="created"),
+        ]
+
+        if (
+            self.evaluation_config.scoring_method_choice
+            == self.evaluation_config.MEAN
+        ):
+            columns.append(Column(title="Mean Position", sort_field="rank"))
+        elif (
+            self.evaluation_config.scoring_method_choice
+            == self.evaluation_config.MEDIAN
+        ):
+            columns.append(Column(title="Median Position", sort_field="rank"))
+
+        if (
+            self.evaluation_config.scoring_method_choice
+            == self.evaluation_config.ABSOLUTE
+        ):
+            columns.append(
+                Column(
+                    title=self.evaluation_config.score_title, sort_field="rank"
+                )
+            )
+        else:
+            columns.append(
+                Column(
+                    title=f"{self.evaluation_config.score_title} (Position)",
+                    sort_field="rank",
+                    toggleable=True,
+                )
+            )
+
+        for c in self.evaluation_config.extra_results_columns:
+            columns.append(
+                Column(
+                    title=c["title"]
+                    if self.evaluation_config.scoring_method_choice
+                    == self.evaluation_config.ABSOLUTE
+                    else f"{c['title']} (Position)",
+                    sort_field="rank",
+                    toggleable=True,
+                )
+            )
+
+        if self.evaluation_config.display_submission_comments:
+            columns.append(
+                Column(title="Comment", sort_field="submission__comment")
+            )
+
+        if self.evaluation_config.show_publication_url:
+            columns.append(
+                Column(
+                    title="Publication",
+                    sort_field="submission__publication_url",
+                )
+            )
+
+        if self.evaluation_config.show_supplementary_file_link:
+            columns.append(
+                Column(
+                    title=self.evaluation_config.supplementary_file_label,
+                    sort_field="submission__supplementary_file",
+                )
+            )
+
+        return columns
+
+    def get_row_context(self, job, *args, **kwargs):
+        return {
+            "evaluation": job,
+            "evaluation_config": self.evaluation_config,
+            "user_teams": self.user_teams,
+            "challenge": self.evaluation_config.challenge,
+        }
+
+    def get_unfiltered_queryset(self):
         queryset = super().get_queryset()
+        queryset = self.filter_by_date(queryset=queryset)
         queryset = (
             queryset.select_related(
-                "submission__creator__user_profile", "submission__challenge"
+                "submission__creator__user_profile",
+                "submission__phase__challenge",
             )
             .filter(
-                submission__challenge=self.request.challenge,
+                submission__phase__challenge=self.request.challenge,
                 published=True,
                 status=Evaluation.SUCCESS,
                 rank__gt=0,
@@ -287,6 +426,16 @@ class Leaderboard(ListView):
             )
         )
         return queryset
+
+    def filter_by_date(self, queryset):
+        if "leaderboardDate" in self.request.GET:
+            year, month, day = self.request.GET["leaderboardDate"].split("-")
+            before = datetime(
+                year=int(year), month=int(month), day=int(day),
+            ) + relativedelta(days=1)
+            return queryset.filter(submission__created__lt=before)
+        else:
+            return queryset
 
 
 class EvaluationUpdate(

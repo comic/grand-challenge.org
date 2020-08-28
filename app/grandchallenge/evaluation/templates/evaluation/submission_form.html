@@ -23,7 +23,7 @@
 
     <h2>Submission</h2>
 
-    {{ challenge.evaluation_config.submission_page_html|clean }}
+    {{ evaluation_config.submission_page_html|clean }}
 
     <h3>Create a new submission</h3>
 
@@ -32,8 +32,8 @@
         <p>
             As an admin for this challenge you can make as many submissions as
             you like. Challenge participants will be allow to make
-            {{ challenge.evaluation_config.daily_submission_limit }}
-            submission{{ challenge.evaluation_config.daily_submission_limit|pluralize }}
+            {{ evaluation_config.daily_submission_limit }}
+            submission{{ evaluation_config.daily_submission_limit|pluralize }}
             per day. You can change the Daily Submission Limit in <a
                 href="{% url 'evaluation:config-update' challenge_short_name=challenge.short_name %}">
             Evaluation Settings</a>.
@@ -54,7 +54,7 @@
                 to see their status.
             </p>
 
-        {% elif challenge.evaluation_config.daily_submission_limit == 0 %}
+        {% elif evaluation_config.daily_submission_limit == 0 %}
 
             <p>Submissions are closed for this challenge.</p>
 

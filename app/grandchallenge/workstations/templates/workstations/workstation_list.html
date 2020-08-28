@@ -4,14 +4,14 @@
 {% load guardian_tags %}
 {% load meta_attr %}
 
-{% block title %}Workstations - {{ block.super }}{% endblock %}
+{% block title %}Viewers - {{ block.super }}{% endblock %}
 
 {% block content %}
     {% if perms.workstations.add_workstation %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'workstations:create' %}">
-                <i class="fas fa-plus"></i> Add a new workstation
+                <i class="fas fa-plus"></i> Add a new viewer
             </a>
         </p>
     {% endif %}
@@ -40,7 +40,7 @@
                             {% if "change_workstation" in workstation_perms %}
                                 <a href="{% url 'workstations:update' slug=object.slug %}"
                                    class="btn btn-primary"
-                                   title="Edit Workstation">
+                                   title="Edit Viewer">
                                     <i class="fa fa-edit"></i>
                                 </a>
                             {% endif %}
@@ -53,7 +53,7 @@
 
     {% if not object_list %}
         <h3>
-            You do not have permission to view any of the workstations
+            You do not have permission to view any of the viewers
         </h3>
     {% endif %}
 

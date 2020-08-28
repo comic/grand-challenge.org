@@ -36,3 +36,14 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
                 schema=OVERLAY_SEGMENTS_SCHEMA
             ),
         }
+        help_texts = {
+            "overlay_segments": (
+                "If an categorical overlay is shown, it is possible to show toggles "
+                "to change the visibility of the different overlay categories. To do "
+                "so, configure the categories that should be displayed. Data from the"
+                " algorithm's output.json can be added as an extra label to each "
+                "toggle using jinja templating. "
+                'For example: [{ "voxel_value": 0, "name": "Level 0", "visible": '
+                'false, "metric_template": "{{metrics.volumes[0]}} mm³"},]'
+            ),
+        }

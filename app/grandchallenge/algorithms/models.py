@@ -12,7 +12,6 @@ from django.utils._os import safe_join
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 
-from grandchallenge.algorithms.emails import send_failed_job_email
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
@@ -358,7 +357,7 @@ class AlgorithmExecutor(Executor):
         default_output_interface = ComponentInterface.objects.get(
             slug=DEFAULT_OUTPUT_INTERFACE_SLUG
         )
-        job = Job.objects.get(pk=self._job_id)
+        job = self._job_class.objects.get(pk=self._job_id)
 
         for image in importer_result.new_images:
             civ = ComponentInterfaceValue.objects.create(
@@ -380,9 +379,10 @@ class Job(UUIDModel, ComponentJob):
     public = models.BooleanField(
         default=False,
         help_text=(
-            "If True, allow anyone to view this result along "
+            "If True, allow anyone to download this result along "
             "with the input image. Otherwise, only the job creator and "
-            "algorithm editor will have permission to view this result."
+            "algorithm editor(s) will have permission to download and view "
+            "this result."
         ),
     )
     comment = models.TextField(blank=True, default="")
@@ -465,14 +465,6 @@ class Job(UUIDModel, ComponentJob):
         for interface_value in [*self.inputs.all(), *self.outputs.all()]:
             if interface_value.image:
                 interface_value.image.update_public_group_permissions()
-
-    def update_status(self, *args, **kwargs):
-        res = super().update_status(*args, **kwargs)
-
-        if self.status == self.FAILURE:
-            send_failed_job_email(self)
-
-        return res
 
 
 class AlgorithmPermissionRequest(RequestBase):

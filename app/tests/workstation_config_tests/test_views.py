@@ -120,11 +120,11 @@ def test_workstation_config_delete_view(client):
     )
     assert response.status_code == 200
     assert (
-        f'Are you sure that you want to delete workstation config "{wc.title}"?'
+        f'Are you sure that you want to delete viewer configuration "{wc.title}"?'
         in response.rendered_content
     )
 
-    response = get_view_for_user(
+    _ = get_view_for_user(
         viewname="workstation-configs:delete",
         reverse_kwargs={"slug": wc.slug},
         client=client,

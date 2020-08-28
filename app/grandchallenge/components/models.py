@@ -241,23 +241,23 @@ class ComponentJob(models.Model):
         """
         raise NotImplementedError
 
-    def schedule_job(self):
-
-        kwargs = {}
+    @property
+    def signature(self):
+        options = {}
 
         if self.container.requires_gpu:
-            kwargs.update({"queue": "gpu"})
+            options.update({"queue": "gpu"})
 
         if getattr(self.container, "queue_override", None):
-            kwargs.update({"queue": self.container.queue_override})
+            options.update({"queue": self.container.queue_override})
 
-        execute_job.apply_async(
-            **kwargs,
+        return execute_job.signature(
             kwargs={
                 "job_pk": self.pk,
                 "job_app_label": self._meta.app_label,
                 "job_model_name": self._meta.model_name,
             },
+            options=options,
         )
 
     class Meta:

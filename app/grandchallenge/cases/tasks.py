@@ -22,6 +22,7 @@ from grandchallenge.cases.image_builders.fallback import image_builder_fallback
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
+from grandchallenge.cases.image_builders.nifti import image_builder_nifti
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.image_builders.types import (
     ImageBuilderResult,
@@ -121,6 +122,7 @@ def populate_provisioning_directory(
 
 DEFAULT_IMAGE_BUILDERS = [
     image_builder_mhd,
+    image_builder_nifti,
     image_builder_dicom,
     image_builder_tiff,
     image_builder_fallback,
@@ -446,7 +448,7 @@ def _handle_raw_files(
 ):
     unconsumed_files = input_files - consumed_files
 
-    errors = []
+    n_errors = 0
 
     for filepath in consumed_files:
         raw_image = filepath_lookup[str(filepath)]
@@ -460,7 +462,7 @@ def _handle_raw_files(
         raw_file.error = (
             f"File could not be processed by any image builder:\n\n{error}"
         )
-        errors.append(f"{raw_file.filename}:\n{error}\n\n")
+        n_errors += 1
         raw_file.save()
 
     if unconsumed_files:
@@ -469,7 +471,7 @@ def _handle_raw_files(
         )
 
         if upload_session.creator and upload_session.creator.email:
-            send_failed_file_import(errors, upload_session)
+            send_failed_file_import(n_errors, upload_session)
 
 
 def _delete_session_files(*, session_files, upload_session):

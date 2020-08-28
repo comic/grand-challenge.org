@@ -139,7 +139,7 @@ class RawImageUploadSessionViewSet(
                 consumed=True
             ).exists()
         ):
-            upload_session.process_images(linked_task=self._get_linked_task())
+            upload_session.process_images(linked_task=self._linked_task)
             return Response(
                 "Image processing job queued.", status=status.HTTP_200_OK
             )
@@ -149,7 +149,8 @@ class RawImageUploadSessionViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    def _get_linked_task(self):
+    @property
+    def _linked_task(self):
         upload_session = self.get_object()
 
         if upload_session.algorithm_image:

@@ -45,4 +45,4 @@ def user_can_download_image(*, user, image: Image) -> bool:
 
 
 def user_can_download_submission(*, user, submission: Submission) -> bool:
-    return submission.challenge.is_admin(user=user)
+    return submission.phase.challenge.is_admin(user=user)

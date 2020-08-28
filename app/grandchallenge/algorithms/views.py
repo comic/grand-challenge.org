@@ -63,6 +63,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import (
+    Column,
     PaginatedTableListView,
     PermissionRequestUpdate,
 )
@@ -72,10 +73,7 @@ logger = logging.getLogger(__name__)
 
 
 class AlgorithmCreate(
-    UserFormKwargsMixin,
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-    CreateView,
+    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
 ):
     model = Algorithm
     form_class = AlgorithmForm
@@ -364,34 +362,6 @@ class AlgorithmExecutionSessionCreate(
         )
 
 
-class AlgorithmExecutionSessionList(
-    LoginRequiredMixin, PermissionListMixin, ListView
-):
-    model = RawImageUploadSession
-    template_name = "algorithms/executionsession_list.html"
-    permission_required = "cases.view_rawimageuploadsession"
-    raise_exception = True
-
-    @cached_property
-    def algorithm(self):
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
-        return context
-
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset(*args, **kwargs)
-        return (
-            qs.filter(algorithm_image__algorithm=self.algorithm)
-            .prefetch_related(
-                "image_set__componentinterfacevalue_set__algorithms_jobs_as_input"
-            )
-            .select_related("creator__user_profile")
-        )
-
-
 class AlgorithmExecutionSessionDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
@@ -429,12 +399,12 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
         "comment",
     ]
     columns = [
-        "created",
-        "creator__username",
-        "inputs__image__name",
-        "public",
-        "inputs__image__files__file",
-        "comment",
+        Column(title="Created", sort_field="created"),
+        Column(title="Creator", sort_field="creator__username"),
+        Column(title="Result", sort_field="inputs__image__name"),
+        Column(title="Visibility", sort_field="public"),
+        Column(title="Output", sort_field="inputs__image__files__file"),
+        Column(title="Edit", sort_field="comment"),
     ]
     order_by = "created"
 
@@ -457,9 +427,7 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
     def get_unfiltered_queryset(self):
         queryset = self.object_list
         return (
-            queryset.filter(
-                algorithm_image__algorithm=self.algorithm, status=Job.SUCCESS
-            )
+            queryset.filter(algorithm_image__algorithm=self.algorithm,)
             .prefetch_related("outputs__image__files", "inputs__image__files")
             .select_related("creator__user_profile")
         )

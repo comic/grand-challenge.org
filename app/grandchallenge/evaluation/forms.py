@@ -2,18 +2,24 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
+from django.core.exceptions import ValidationError
+from django.forms import ModelChoiceField
+from django.utils.text import format_lazy
 from django_summernote.widgets import SummernoteInplaceWidget
+from guardian.shortcuts import get_objects_for_user
 
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
-    Config,
     EXTRA_RESULT_COLUMNS_SCHEMA,
     Method,
+    Phase,
     Submission,
 )
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
+from grandchallenge.subdomains.utils import reverse_lazy
 
 submission_options = (
     "submission_page_html",
@@ -38,7 +44,6 @@ scoring_options = (
 )
 
 leaderboard_options = (
-    "use_teams",
     "display_submission_comments",
     "show_supplementary_file_link",
     "show_publication_url",
@@ -47,7 +52,7 @@ leaderboard_options = (
 result_detail_options = ("display_all_metrics", "submission_join_key")
 
 
-class ConfigForm(forms.ModelForm):
+class PhaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
@@ -62,7 +67,7 @@ class ConfigForm(forms.ModelForm):
         )
 
     class Meta:
-        model = Config
+        model = Phase
         fields = (
             *submission_options,
             *scoring_options,
@@ -111,20 +116,30 @@ submission_fields = (
 
 class SubmissionForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False),
+        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
         label="Predictions File",
         validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
+    )
+    algorithm = ModelChoiceField(
+        queryset=None,
+        help_text=format_lazy(
+            "Select one of your algorithms to submit as a solution to this "
+            "challenge. If you have not created your algorithm yet you can "
+            "do so <a href={}>on this page</a>.",
+            reverse_lazy("algorithms:create"),
+        ),
     )
 
     def __init__(
         self,
         *args,
         user,
+        algorithm_submission=False,
         display_comment_field=False,
-        supplementary_file_choice=Config.OFF,
+        supplementary_file_choice=Phase.OFF,
         supplementary_file_label="",
         supplementary_file_help_text="",
-        publication_url_choice=Config.OFF,
+        publication_url_choice=Phase.OFF,
         **kwargs,
     ):
         """
@@ -144,19 +159,42 @@ class SubmissionForm(forms.ModelForm):
                 "supplementary_file"
             ].help_text = supplementary_file_help_text
 
-        if supplementary_file_choice == Config.REQUIRED:
+        if supplementary_file_choice == Phase.REQUIRED:
             self.fields["supplementary_file"].required = True
-        elif supplementary_file_choice == Config.OFF:
+        elif supplementary_file_choice == Phase.OFF:
             del self.fields["supplementary_file"]
 
-        if publication_url_choice == Config.REQUIRED:
+        if publication_url_choice == Phase.REQUIRED:
             self.fields["publication_url"].required = True
-        elif publication_url_choice == Config.OFF:
+        elif publication_url_choice == Phase.OFF:
             del self.fields["publication_url"]
 
-        self.helper = FormHelper(self)
+        if algorithm_submission:
+            del self.fields["chunked_upload"]
 
-        self.fields["chunked_upload"].widget.user = user
+            self.fields["algorithm"].queryset = get_objects_for_user(
+                user,
+                f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}",
+                Algorithm,
+            ).order_by("title")
+        else:
+            del self.fields["algorithm"]
+
+            self.fields["chunked_upload"].widget.user = user
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
+
+    def clean_algorithm(self):
+        algorithm = self.cleaned_data["algorithm"]
+
+        if algorithm.latest_ready_image is None:
+            raise ValidationError(
+                "This algorithm does not have a usable container image. "
+                "Please add one and try again."
+            )
+
+        return algorithm
 
     class Meta:
         model = Submission

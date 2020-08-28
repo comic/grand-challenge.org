@@ -21,6 +21,7 @@ class Command(BaseCommand):
         "use_evaluation",
         "logo",
         "banner",
+        "use_teams",
     ]
 
     challenge_m2m_fields = [
@@ -30,7 +31,6 @@ class Command(BaseCommand):
     ]
 
     config_fields = [
-        "use_teams",
         "score_title",
         "score_jsonpath",
         "score_error_jsonpath",
@@ -107,8 +107,8 @@ class Command(BaseCommand):
             dest_m2m.set(src_m2m.all())
 
     def _copy_evaluation_config(self, *, src_challenge, dest_challenge):
-        src_config = src_challenge.evaluation_config
-        dest_config = dest_challenge.evaluation_config
+        src_config = src_challenge.phase_set.get()
+        dest_config = dest_challenge.phase_set.get()
 
         for attr in self.config_fields:
             setattr(dest_config, attr, getattr(src_config, attr))
@@ -128,6 +128,10 @@ class Command(BaseCommand):
         domain = site.domain
         old = src_challenge.short_name
         new = dest_challenge.short_name
+
+        for auto_page in dest_challenge.page_set.all():
+            # Remove any existing pages
+            auto_page.delete()
 
         for src_page in src_pages:
             Page.objects.create(

@@ -294,11 +294,9 @@ class ImagePathologyAnnotation(AbstractImageAnnotationModel):
 class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
     """Model to annotate presence of specific pathologies."""
 
-    amd_present = models.BooleanField(
-        help_text="Is Age-related Macular Degeneration present in this image?"
-    )
-    dr_present = models.BooleanField(
-        help_text="Is Diabetic Retinopathy present in this image?"
+    rf_present = models.BooleanField(
+        help_text="Are retinal pathologies present in this image?",
+        default=False,
     )
     oda_present = models.BooleanField(
         help_text="Are optic disc abnormalitites present in this image?"
@@ -306,11 +304,41 @@ class RetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
     myopia_present = models.BooleanField(
         help_text="Is myopia present in this image?"
     )
-    cysts_present = models.BooleanField(
-        help_text="Are cysts present in this image?"
-    )
     other_present = models.BooleanField(
         help_text="Are other findings present in this image?"
+    )
+
+    # Legacy fields, remove when all old annotations have been migrated
+    amd_present = models.BooleanField(
+        help_text="Is Age-related Macular Degeneration present in this image?",
+        default=False,
+    )
+    dr_present = models.BooleanField(
+        help_text="Is Diabetic Retinopathy present in this image?",
+        default=False,
+    )
+    cysts_present = models.BooleanField(
+        help_text="Are cysts present in this image?", default=False
+    )
+
+
+class OctRetinaImagePathologyAnnotation(AbstractImageAnnotationModel):
+    """Model to annotate presence of specific pathologies on OCT."""
+
+    macular = models.BooleanField(
+        help_text="Are pathologies present in macular OCT?", default=False
+    )
+    myopia = models.BooleanField(
+        help_text="Are myopia related pathologies present?", default=False
+    )
+    optic_disc = models.BooleanField(
+        help_text="Are pathologies present in optic disc OCT?", default=False
+    )
+    other = models.BooleanField(
+        help_text="Are other pathologies present in this image?", default=False
+    )
+    layers = models.BooleanField(
+        help_text="Are retinal layers annotated?", default=False
     )
 
 

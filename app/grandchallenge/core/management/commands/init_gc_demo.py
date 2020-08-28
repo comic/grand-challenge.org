@@ -187,14 +187,16 @@ class Command(BaseCommand):
             challenge=demo, title="adm", permission_level="ADM"
         )
 
-        method = Method(challenge=demo, creator=self.users["demo"])
+        phase = demo.phase_set.get()
+
+        method = Method(phase=phase, creator=self.users["demo"])
         container = ContentFile(base64.b64decode(b""))
         method.image.save("test.tar", container)
         method.save()
 
-        submission = Submission(challenge=demo, creator=self.users["demop"])
+        submission = Submission(phase=phase, creator=self.users["demop"])
         content = ContentFile(base64.b64decode(b""))
-        submission.file.save("test.csv", content)
+        submission.predictions_file.save("test.csv", content)
         submission.save()
 
         e = Evaluation.objects.create(
@@ -207,10 +209,10 @@ class Command(BaseCommand):
             }
         )
 
-        demo.evaluation_config.score_title = "Accuracy ± std"
-        demo.evaluation_config.score_jsonpath = "acc.mean"
-        demo.evaluation_config.score_error_jsonpath = "acc.std"
-        demo.evaluation_config.extra_results_columns = [
+        phase.score_title = "Accuracy ± std"
+        phase.score_jsonpath = "acc.mean"
+        phase.score_error_jsonpath = "acc.std"
+        phase.extra_results_columns = [
             {
                 "title": "Dice ± std",
                 "path": "dice.mean",
@@ -218,7 +220,8 @@ class Command(BaseCommand):
                 "order": "desc",
             }
         ]
-        demo.evaluation_config.save()
+        phase.submission_kind = phase.SubmissionKind.ALGORITHM
+        phase.save()
 
     def _create_external_challenge(self):
         ex_challenge = ExternalChallenge.objects.create(
@@ -289,7 +292,9 @@ class Command(BaseCommand):
         algorithm = Algorithm.objects.create(
             title="Test Algorithm", logo=get_temporary_image()
         )
-        algorithm.editors_group.user_set.add(self.users["algorithm"])
+        algorithm.editors_group.user_set.add(
+            self.users["algorithm"], self.users["demo"]
+        )
         algorithm.users_group.user_set.add(self.users["algorithmuser"])
 
         algorithm_image = AlgorithmImage(

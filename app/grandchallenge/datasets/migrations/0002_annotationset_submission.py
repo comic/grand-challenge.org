@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("evaluation", "0007_auto_20180815_1321"),
+        ("evaluation", "0001_squashed_0033_auto_20200816_1357"),
         ("datasets", "0001_initial"),
     ]
 

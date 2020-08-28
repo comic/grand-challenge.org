@@ -26,6 +26,7 @@ from grandchallenge.retina_api.views import (
     BooleanClassificationAnnotationViewSet,
     ImageLevelAnnotationsForImageViewSet,
     LandmarkAnnotationSetViewSet,
+    OctRetinaPathologyAnnotationViewSet,
     PathologyAnnotationViewSet,
     PolygonAnnotationSetViewSet,
     QualityAnnotationViewSet,
@@ -104,6 +105,11 @@ router.register(
     r"retina/retina-pathology-annotation",
     RetinaPathologyAnnotationViewSet,
     basename="retina-retina-pathology-annotation",
+)
+router.register(
+    r"retina/oct-retina-pathology-annotation",
+    OctRetinaPathologyAnnotationViewSet,
+    basename="oct-retina-retina-pathology-annotation",
 )
 router.register(
     r"retina/text-annotation",

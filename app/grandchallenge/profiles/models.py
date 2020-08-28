@@ -8,6 +8,7 @@ from userena.models import UserenaBaseProfile
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.subdomains.utils import reverse
 
 
 class UserProfile(UserenaBaseProfile):
@@ -28,6 +29,11 @@ class UserProfile(UserenaBaseProfile):
         return Challenge.objects.filter(
             participants_group__in=self.user.groups.all()
         ).filter(hidden=False)
+
+    def get_absolute_url(self):
+        return reverse(
+            "userena_profile_detail", kwargs={"username": self.user.username}
+        )
 
 
 @disable_for_loaddata

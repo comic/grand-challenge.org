@@ -10,7 +10,7 @@ from grandchallenge.challenges.emails import (
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.datasets.models import ImageSet
-from grandchallenge.evaluation.models import Config
+from grandchallenge.evaluation.models import Phase
 
 
 @receiver(post_save, sender=Challenge)
@@ -20,7 +20,7 @@ def setup_challenge_groups(
 ):
     if created:
         # Create the evaluation config
-        Config.objects.create(challenge=instance)
+        Phase.objects.create(challenge=instance)
 
         # Create the groups only on first save
         admins_group = Group.objects.create(name=instance.admin_group_name())
@@ -30,6 +30,8 @@ def setup_challenge_groups(
         instance.admins_group = admins_group
         instance.participants_group = participants_group
         instance.save()
+
+        instance.create_default_pages()
 
         assign_perm("change_challenge", admins_group, instance)
 

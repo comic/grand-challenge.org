@@ -1,8 +1,8 @@
 import userena.forms as userena_forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from disposable_email_domains import blocklist
 from django import forms
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django_countries import countries
 
@@ -87,9 +87,11 @@ class SignupFormExtra(userena_forms.SignupForm):
     def clean_email(self):
         email = super().clean_email()
 
-        if email.split("@")[1] in blocklist:
+        domain = email.split("@")[1].lower()
+
+        if domain in settings.DISALLOWED_EMAIL_DOMAINS:
             raise forms.ValidationError(
-                "Disposable email addresses cannot be used."
+                f"Email addresses hosted by {domain} cannot be used."
             )
 
         return email
