@@ -4,6 +4,7 @@ from django.contrib.sites.models import Site
 from django.core.management import BaseCommand, CommandError
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.evaluation.models import Phase
 from grandchallenge.pages.models import Page
 
 
@@ -81,7 +82,7 @@ class Command(BaseCommand):
         self._copy_m2m_fields(
             src_challenge=src_challenge, dest_challenge=dest_challenge
         )
-        self._copy_evaluation_config(
+        self._copy_evaluation_phases(
             src_challenge=src_challenge, dest_challenge=dest_challenge
         )
         self._copy_pages(
@@ -106,20 +107,22 @@ class Command(BaseCommand):
             dest_m2m = getattr(dest_challenge, f)
             dest_m2m.set(src_m2m.all())
 
-    def _copy_evaluation_config(self, *, src_challenge, dest_challenge):
-        src_config = src_challenge.phase_set.get()
-        dest_config = dest_challenge.phase_set.get()
+    def _copy_evaluation_phases(self, *, src_challenge, dest_challenge):
+        for src_phase in src_challenge.phase_set.all():
+            (dest_phase, _) = Phase.objects.get_or_create(
+                challenge=dest_challenge, title=src_phase.title
+            )
 
-        for attr in self.config_fields:
-            setattr(dest_config, attr, getattr(src_config, attr))
+            for attr in self.config_fields:
+                setattr(dest_phase, attr, getattr(src_phase, attr))
 
-        dest_config.save()
+            dest_phase.save()
 
     def _substitute_urls(self, html, domain, old, new):
         quote_replace = r"href='([^']*)'"
         regex = fr'href="[^/]*//{old}.{domain}([^""]*)"'
         html = re.sub(quote_replace, r'href="\1"', html)
-        return re.sub(regex, fr'href="https://{new}.{domain}\1"', html,)
+        return re.sub(regex, fr'href="https://{new}.{domain}\1"', html)
 
     def _copy_pages(self, *, src_challenge, dest_challenge):
         src_pages = src_challenge.page_set.all()
