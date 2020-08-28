@@ -38,8 +38,18 @@ class PhaseUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
     success_message = "Configuration successfully updated"
 
     def get_object(self, queryset=None):
-        challenge = self.request.challenge
-        return challenge.phase_set.get()
+        return Phase.objects.get(
+            challenge=self.request.challenge, slug=self.kwargs["slug"]
+        )
+
+    def get_success_url(self):
+        return reverse(
+            "evaluation:leaderboard",
+            kwargs={
+                "challenge_short_name": self.request.challenge.short_name,
+                "slug": self.kwargs["slug"],
+            },
+        )
 
 
 class MethodCreate(UserIsChallengeAdminMixin, CreateView):

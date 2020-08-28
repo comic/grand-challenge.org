@@ -22,7 +22,8 @@ urlpatterns = [
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
     ),
-    path("config/", PhaseUpdate.as_view(), name="config-update"),
+    path("<slug>/update/", PhaseUpdate.as_view(), name="phase-update"),
+    # path("config/", PhaseUpdate.as_view(), name="config-update"),
     path("methods/", MethodList.as_view(), name="method-list"),
     path("methods/create/", MethodCreate.as_view(), name="method-create"),
     path("methods/<uuid:pk>/", MethodDetail.as_view(), name="method-detail"),
