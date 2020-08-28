@@ -87,6 +87,7 @@ class ChallengeList(TemplateView):
         int_paginator = Paginator(
             Challenge.objects.filter(hidden=False)
             .filter(self._search_filter)
+            .prefetch_related("phase_set")
             .order_by("-created"),
             self.paginate_by // 2,
         )

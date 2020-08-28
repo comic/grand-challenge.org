@@ -5,12 +5,12 @@
 {% load remove_whitespace %}
 {% load url %}
 
-{{ evaluation.rank|ordinal }}
+{{ object.rank|ordinal }}
 <split/>
 
-{{ evaluation.creator|user_profile_link }}
-{% if challenge.use_teams %}
-    {% with user_teams|get_key:evaluation.creator.username as team %}
+{{ object.submission.creator|user_profile_link }}
+{% if object.submission.phase.challenge.use_teams %}
+    {% with user_teams|get_key:object.submission.creator.username as team %}
         {% if team %}
             (<a href="{{ team.1 }}">{{ team.0 }}</a>)
         {% endif %}
@@ -18,50 +18,50 @@
 {% endif %}
 <split/>
 
-{{ evaluation.submission.created|date:"j N Y" }}
+{{ object.submission.created|date:"j N Y" }}
 <split/>
 
-{% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-    <a href="{{ evaluation.get_absolute_url }}">
-        <b>{{ evaluation.rank_score|floatformat }}</b>
+{% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
+    <a href="{{ object.get_absolute_url }}">
+        <b>{{ object.rank_score|floatformat }}</b>
     </a>
     <split/>
 {% endif %}
 
-{% with evaluation.metrics.0|get_jsonpath:evaluation_config.score_jsonpath as metric %}
-    <a href="{{ evaluation.get_absolute_url }}">
-        {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
+{% with object.metrics.0|get_jsonpath:object.submission.phase.score_jsonpath as metric %}
+    <a href="{{ object.get_absolute_url }}">
+        {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
             <b>{% endif %}
         {% filter remove_whitespace %}
-            {{ metric|floatformat:evaluation_config.score_decimal_places }}
-            {% if evaluation_config.score_error_jsonpath %}
+            {{ metric|floatformat:object.submission.phase.score_decimal_places }}
+            {% if object.submission.phase.score_error_jsonpath %}
                 &nbsp;±&nbsp;
-                {{ evaluation.metrics.0|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
+                {{ object.metrics.0|get_jsonpath:object.submission.phase.score_error_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
             {% endif %}
-            {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+            {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
                 &nbsp;(
-                {{ evaluation.rank_per_metric|get_key:evaluation_config.score_jsonpath }}
+                {{ object.rank_per_metric|get_key:object.submission.phase.score_jsonpath }}
                 )
             {% endif %}
         {% endfilter %}
-        {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
+        {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
             </b>{% endif %}
     </a>
     <split/>
 {% endwith %}
 
-{% for col in evaluation_config.extra_results_columns %}
-    {% with evaluation.metrics.0|get_jsonpath:col.path as metric %}
-        <a href="{{ evaluation.get_absolute_url }}">
+{% for col in object.submission.phase.extra_results_columns %}
+    {% with object.metrics.0|get_jsonpath:col.path as metric %}
+        <a href="{{ object.get_absolute_url }}">
             {% filter remove_whitespace %}
-                {{ metric|floatformat:evaluation_config.score_decimal_places }}
+                {{ metric|floatformat:object.submission.phase.score_decimal_places }}
                 {% if col.error_path %}
                     &nbsp;±&nbsp;
-                    {{ evaluation.metrics.0|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
+                    {{ object.metrics.0|get_jsonpath:col.error_path|floatformat:object.submission.phase.score_decimal_places }}
                 {% endif %}
-                {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
+                {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
                     &nbsp;(
-                    {{ evaluation.rank_per_metric|get_key:col.path }}
+                    {{ object.rank_per_metric|get_key:col.path }}
                     )
                 {% endif %}
             {% endfilter %}
@@ -70,23 +70,23 @@
     {% endwith %}
 {% endfor %}
 
-{% if evaluation_config.display_submission_comments %}
-    {{ evaluation.submission.comment }}
+{% if object.submission.phase.display_submission_comments %}
+    {{ object.submission.comment }}
     <split/>
 {% endif %}
 
-{% if evaluation_config.show_publication_url %}
-    {% if evaluation.submission.publication_url %}
-        <a href="{{ evaluation.submission.publication_url }}">
+{% if object.submission.phase.show_publication_url %}
+    {% if object.submission.publication_url %}
+        <a href="{{ object.submission.publication_url }}">
             <i class="fa fa-file"></i>
         </a>
     {% endif %}
     <split/>
 {% endif %}
 
-{% if evaluation_config.show_supplementary_file_link %}
-    {% if evaluation.submission.supplementary_file %}
-        <a href="{{ evaluation.submission.supplementary_file.url }}">
+{% if object.submission.phase.show_supplementary_file_link %}
+    {% if object.submission.supplementary_file %}
+        <a href="{{ object.submission.supplementary_file.url }}">
             <i class="fa fa-file"></i>
         </a>
     {% endif %}

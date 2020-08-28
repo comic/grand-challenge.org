@@ -6,7 +6,6 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import BooleanField
-from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
 
@@ -349,6 +348,9 @@ class Phase(UUIDModel):
         )
         ordering = ("challenge", "submissions_open", "created")
 
+    def __str__(self):
+        return f"{self.title} Evaluation for {self.challenge.short_name}"
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -672,14 +674,6 @@ class Evaluation(UUIDModel, ComponentJob):
             kwargs={"phase_pk": self.submission.phase.pk}
         )
 
-    @cached_property
-    def challenge(self):
-        return self.submission.phase.challenge
-
-    @cached_property
-    def creator(self):
-        return self.submission.creator
-
     @property
     def container(self):
         return self.method
@@ -733,15 +727,3 @@ class Evaluation(UUIDModel, ComponentJob):
                 "challenge_short_name": self.submission.phase.challenge.short_name,
             },
         )
-
-
-def result_screenshot_path(instance, filename):
-    # Used in a migration so cannot delete
-    return (
-        f"evaluation/"
-        f"{instance.challenge.pk}/"
-        f"screenshots/"
-        f"{instance.result.pk}/"
-        f"{instance.pk}/"
-        f"{filename}"
-    )

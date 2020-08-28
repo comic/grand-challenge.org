@@ -17,19 +17,9 @@
 
     <h2>Submissions</h2>
 
-    <p>
-        <a class="btn btn-primary"
-           href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name %}">
-            <i class="fas fa-plus"></i> Add a new submission
-        </a>
-    </p>
-
     {% if "change_challenge" in challenge_perms %}
     <p>
-        <a class="btn btn-primary"
-           href="{% url 'evaluation:submission-create-legacy' challenge_short_name=challenge.short_name %}">
-            <i class="fas fa-plus"></i> Add a legacy submission
-        </a>
+
     </p>
     {% endif %}
 
@@ -39,6 +29,7 @@
             <tr>
                 <th>ID</th>
                 <th>Created</th>
+                <th>Phase</th>
                 <th>User</th>
                 <th>Comment</th>
             </tr>
@@ -54,6 +45,7 @@
                         {% endif %}
                     </td>
                     <td data-order="{{ submission.created|date:"U" }}">{{ submission.created }}</td>
+                    <td>{{ submission.phase.title }}</td>
                     <td><a
                             href="{% url 'userena_profile_detail' submission.creator.username %}">{{ submission.creator }}</a>
                     </td>

@@ -30,6 +30,7 @@
             <tr>
                 <th>ID</th>
                 <th>Created</th>
+                <th>Phase</th>
                 <th>User</th>
                 <th>SHA</th>
                 <th>Ready</th>
@@ -43,6 +44,7 @@
                         <a href="{{ method.get_absolute_url }}">{{ method.id }}</a>
                     </td>
                     <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
+                    <td>{{ method.phase.title }}</td>
                     <td><a
                             href="{% url 'userena_profile_detail' method.creator.username %}">{{ method.creator }}</a>
                     </td>
