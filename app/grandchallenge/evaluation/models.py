@@ -727,15 +727,3 @@ class Evaluation(UUIDModel, ComponentJob):
                 "challenge_short_name": self.submission.phase.challenge.short_name,
             },
         )
-
-
-def result_screenshot_path(instance, filename):
-    # Used in a migration so cannot delete
-    return (
-        f"evaluation/"
-        f"{instance.challenge.pk}/"
-        f"screenshots/"
-        f"{instance.result.pk}/"
-        f"{instance.pk}/"
-        f"{filename}"
-    )
