@@ -63,20 +63,6 @@ class RawImageUploadSession(UUIDModel):
 
     error_message = models.TextField(blank=False, null=True, default=None)
 
-    imageset = models.ForeignKey(
-        to="datasets.ImageSet",
-        null=True,
-        default=None,
-        on_delete=models.CASCADE,
-    )
-
-    annotationset = models.ForeignKey(
-        to="datasets.AnnotationSet",
-        null=True,
-        default=None,
-        on_delete=models.CASCADE,
-    )
-
     algorithm_image = models.ForeignKey(
         to="algorithms.AlgorithmImage",
         null=True,

@@ -14,9 +14,14 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
+from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from tldextract import extract
 
+from grandchallenge.challenges.emails import (
+    send_challenge_created_email,
+    send_external_challenge_created_email,
+)
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
@@ -440,6 +445,37 @@ class Challenge(ChallengeBase):
         editable=False, blank=True, null=True
     )
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            # Create the evaluation config
+            self.phase_set.create(challenge=self)
+
+            # Create the groups only on first save
+            admins_group = Group.objects.create(name=self.admin_group_name())
+            participants_group = Group.objects.create(
+                name=self.participants_group_name()
+            )
+            self.admins_group = admins_group
+            self.participants_group = participants_group
+            self.save()
+
+            self.create_default_pages()
+
+            assign_perm("change_challenge", admins_group, self)
+
+            # add current user to admins for this challenge
+            try:
+                self.creator.groups.add(admins_group)
+            except AttributeError:
+                # No creator set
+                pass
+
+            send_challenge_created_email(self)
+
     def create_default_pages(self):
         Page.objects.create(
             title=self.short_name,
@@ -543,6 +579,14 @@ class ExternalChallenge(ChallengeBase):
         default=False,
         help_text=("Has the grand-challenge team stored the data?"),
     )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            send_external_challenge_created_email(self)
 
     def get_absolute_url(self):
         return self.homepage
