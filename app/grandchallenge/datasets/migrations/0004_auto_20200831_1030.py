@@ -6,26 +6,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('datasets', '0003_annotationset_labels'),
+        ("datasets", "0003_annotationset_labels"),
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='imageset',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='imageset',
-            name='challenge',
-        ),
-        migrations.RemoveField(
-            model_name='imageset',
-            name='images',
-        ),
-        migrations.DeleteModel(
-            name='AnnotationSet',
-        ),
-        migrations.DeleteModel(
-            name='ImageSet',
-        ),
+        migrations.AlterUniqueTogether(name="imageset", unique_together=None,),
+        migrations.RemoveField(model_name="imageset", name="challenge",),
+        migrations.RemoveField(model_name="imageset", name="images",),
+        migrations.DeleteModel(name="AnnotationSet",),
+        migrations.DeleteModel(name="ImageSet",),
     ]
