@@ -19,6 +19,7 @@ from guardian.shortcuts import get_objects_for_user
 from rest_framework import authentication, mixins, status, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_guardian import filters
@@ -50,7 +51,6 @@ from grandchallenge.annotations.serializers import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
-from grandchallenge.cases.permissions import ImagePermission
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.core.serializers import UserSerializer
 from grandchallenge.patients.models import Patient
@@ -861,7 +861,7 @@ class ArchiveAPIView(APIView):
 
 
 class B64ThumbnailAPIView(RetrieveAPIView):
-    permission_classes = (ImagePermission, RetinaAPIPermission)
+    permission_classes = (DjangoObjectPermissions, RetinaAPIPermission)
     authentication_classes = (authentication.TokenAuthentication,)
     renderer_classes = (Base64Renderer,)
     queryset = Image.objects.all()
