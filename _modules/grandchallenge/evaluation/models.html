@@ -169,6 +169,7 @@
     <span class="n">AlgorithmImage</span><span class="p">,</span>
     <span class="n">DEFAULT_INPUT_INTERFACE_SLUG</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">Archive</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.backends.docker</span> <span class="kn">import</span> <span class="n">Executor</span><span class="p">,</span> <span class="n">put_file</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
@@ -185,7 +186,6 @@
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
     <span class="n">get_file_mimetype</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.datasets.models</span> <span class="kn">import</span> <span class="n">ImageSet</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.emails</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">send_failed_evaluation_email</span><span class="p">,</span>
     <span class="n">send_successful_evaluation_email</span><span class="p">,</span>
@@ -642,9 +642,8 @@
         <span class="n">evaluation</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
-            <span class="n">test_set</span> <span class="o">=</span> <span class="n">ImageSet</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="n">challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">ImageSet</span><span class="o">.</span><span class="n">TESTING</span>
-            <span class="p">)</span>
+            <span class="c1"># TODO: allow setting of archives for phases</span>
+            <span class="n">test_set</span> <span class="o">=</span> <span class="n">Archive</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 
             <span class="n">default_input_interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                 <span class="n">slug</span><span class="o">=</span><span class="n">DEFAULT_INPUT_INTERFACE_SLUG</span>
