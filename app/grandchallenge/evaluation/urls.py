@@ -19,6 +19,10 @@ from grandchallenge.evaluation.views import (
 app_name = "evaluation"
 
 urlpatterns = [
+    path("", EvaluationList.as_view(), name="list"),
+    path("<uuid:pk>/", EvaluationDetail.as_view(), name="detail"),
+    # UUID should be matched before slugs
+    path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
     ),
@@ -42,9 +46,6 @@ urlpatterns = [
         SubmissionDetail.as_view(),
         name="submission-detail",
     ),
-    path("", EvaluationList.as_view(), name="list"),
-    path("<uuid:pk>/", EvaluationDetail.as_view(), name="detail"),
-    path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
     path("results/", LeaderboardRedirect.as_view()),
     path("leaderboard/", LeaderboardRedirect.as_view()),
 ]
