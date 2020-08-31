@@ -142,6 +142,15 @@ class Phase(UUIDModel):
     challenge = models.ForeignKey(
         Challenge, on_delete=models.CASCADE, editable=False,
     )
+    archive = models.ForeignKey(
+        Archive,
+        on_delete=models.SET_NULL,
+        null=True,
+        help_text=(
+            "Which archive should be used as the source dataset for this "
+            "phase?"
+        ),
+    )
     title = models.CharField(
         max_length=64,
         help_text="The title of this phase.",
@@ -487,16 +496,13 @@ class Submission(UUIDModel):
         evaluation = Evaluation.objects.create(submission=self, method=method)
 
         if self.algorithm_image:
-            # TODO: allow setting of archives for phases
-            test_set = Archive.objects.get()
-
             default_input_interface = ComponentInterface.objects.get(
                 slug=DEFAULT_INPUT_INTERFACE_SLUG
             )
 
             jobs = []
 
-            for image in test_set.images.all():
+            for image in self.phase.archive.images.all():
                 if not ComponentInterfaceValue.objects.filter(
                     interface=default_input_interface,
                     image=image,

@@ -9,13 +9,13 @@ from tests.factories import ImageFactory
 
 class TestSubmission(TestCase):
     def setUp(self) -> None:
-        self.method = MethodFactory(ready=True)
+        self.method = MethodFactory(
+            ready=True, phase__archive=ArchiveFactory()
+        )
         self.algorithm_image = AlgorithmImageFactory()
 
         self.images = ImageFactory.create_batch(3)
-        # TODO: allow setting of archives for phases
-        archive = ArchiveFactory()
-        archive.images.set(self.images[:2])
+        self.method.phase.archive.images.set(self.images[:2])
 
     def test_algorithm_submission_creates_one_job_per_test_set_image(self):
         SubmissionFactory(
