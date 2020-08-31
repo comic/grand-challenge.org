@@ -88,8 +88,6 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
     readonly_fields = (
         "creator",
         "algorithm_image",
-        "imageset",
-        "annotationset",
         "reader_study",
         "archive",
         "status",

@@ -29,17 +29,10 @@ from tests.jqfileupload_tests.external_test_support import (
 
 
 def create_raw_upload_image_session(
-    images: List[str],
-    delete_file=False,
-    imageset=None,
-    annotationset=None,
-    user=None,
-    linked_task=None,
+    *, images: List[str], delete_file=False, user=None, linked_task=None,
 ) -> Tuple[RawImageUploadSession, Dict[str, RawImageFile]]:
     creator = user or UserFactory(email="test@example.com")
-    upload_session = RawImageUploadSession(
-        imageset=imageset, annotationset=annotationset, creator=creator
-    )
+    upload_session = RawImageUploadSession(creator=creator)
 
     uploaded_images = {}
     for image in images:
@@ -65,7 +58,7 @@ def create_raw_upload_image_session(
 @pytest.mark.django_db
 def test_file_session_creation():
     images = ["image10x10x10.zraw"]
-    _, uploaded_images = create_raw_upload_image_session(images)
+    _, uploaded_images = create_raw_upload_image_session(images=images)
 
     assert len(uploaded_images) == 1
     assert uploaded_images[images[0]].staged_file_id is not None
@@ -99,7 +92,7 @@ def test_image_file_creation(settings):
         "invalid_utf8.mhd",
         "invalid_resolutions_tiff.tif",
     )
-    session, uploaded_images = create_raw_upload_image_session(images)
+    session, uploaded_images = create_raw_upload_image_session(images=images)
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -128,7 +121,7 @@ def test_staged_uploaded_file_cleanup_interferes_with_image_build(settings):
 
     images = ["image10x10x10.zraw", "image10x10x10.mhd"]
     session, uploaded_images = create_raw_upload_image_session(
-        images, delete_file=True
+        images=images, delete_file=True
     )
 
     session.refresh_from_db()
@@ -149,7 +142,7 @@ def test_staged_4d_mha_and_4d_mhd_upload(settings, images: List):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    session, uploaded_images = create_raw_upload_image_session(images)
+    session, uploaded_images = create_raw_upload_image_session(images=images)
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -187,7 +180,7 @@ def test_staged_mhd_upload_with_additional_headers(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    session, uploaded_images = create_raw_upload_image_session(images)
+    session, uploaded_images = create_raw_upload_image_session(images=images)
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -232,7 +225,7 @@ def test_no_convertible_file(settings):
     settings.task_always_eager = (True,)
 
     images = ["no_image", "image10x10x10.mhd", "referring_to_system_file.mhd"]
-    session, uploaded_images = create_raw_upload_image_session(images)
+    session, uploaded_images = create_raw_upload_image_session(images=images)
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -263,7 +256,7 @@ def test_errors_on_files_with_duplicate_file_names(settings):
         "image10x10x10.zraw",
         "image10x10x10.mhd",
     ]
-    session, uploaded_images = create_raw_upload_image_session(images)
+    session, uploaded_images = create_raw_upload_image_session(images=images)
     uploaded_images = RawImageFile.objects.filter(upload_session=session).all()
     assert len(uploaded_images) == 4
 
@@ -285,7 +278,7 @@ def test_mhd_file_annotation_creation(settings, format):
     settings.task_always_eager = (True,)
 
     images = ["image5x6x7.mhd", "image5x6x7.zraw"]
-    session, uploaded_images = create_raw_upload_image_session(images)
+    session, uploaded_images = create_raw_upload_image_session(images=images)
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -335,7 +328,7 @@ def test_check_compressed_and_extract(tmpdir, file_name):
 
 
 @pytest.mark.parametrize(
-    "file_name", ("tar_with_link.tar", "tar_with_sym_link.tar",)
+    "file_name", ("tar_with_link.tar", "tar_with_sym_link.tar",),
 )
 def test_check_compressed_and_extract_with_symlink(tmpdir, file_name):
 
@@ -412,7 +405,7 @@ def test_build_zip_file(settings):
     # valid.zip contains a tarred version of the dicom folder,
     # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff
     images = ["valid.zip"]
-    session, uploaded_images = create_raw_upload_image_session(images)
+    session, uploaded_images = create_raw_upload_image_session(images=images)
 
     session.refresh_from_db()
     assert session.error_message is None
@@ -440,7 +433,7 @@ def test_build_multiple_zip_files(settings):
     # valid.zip contains a tarred version of the dicom folder,
     # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff
     images = ["valid.zip", "deep_folder.tar"]
-    session, uploaded_images = create_raw_upload_image_session(images)
+    session, uploaded_images = create_raw_upload_image_session(images=images)
 
     session.refresh_from_db()
     assert session.error_message is None
@@ -453,7 +446,7 @@ def test_failed_dicom_files_are_retained(settings):
 
     # A valid set of dicom images. Files should not be retained
     images = [f"dicom/{x}.dcm" for x in range(1, 21)]
-    session, _ = create_raw_upload_image_session(images)
+    session, _ = create_raw_upload_image_session(images=images)
     session.refresh_from_db()
     session.process_images()
     assert Image.objects.count() == 1
@@ -465,7 +458,7 @@ def test_failed_dicom_files_are_retained(settings):
     # An invalid set of dicom images, but the creator is not in the dedicated
     # user group. Files should not be retained
     images = [f"dicom/{x}.dcm" for x in range(1, 22)]
-    session, _ = create_raw_upload_image_session(images)
+    session, _ = create_raw_upload_image_session(images=images)
     session.refresh_from_db()
     session.process_images()
     assert Image.objects.count() == 1
@@ -479,7 +472,7 @@ def test_failed_dicom_files_are_retained(settings):
     user = UserFactory()
     g = Group.objects.get(name=settings.DICOM_DATA_CREATORS_GROUP_NAME)
     g.user_set.add(user)
-    session, _ = create_raw_upload_image_session(images, user=user)
+    session, _ = create_raw_upload_image_session(images=images, user=user)
     session.refresh_from_db()
     session.process_images()
     assert Image.objects.count() == 1

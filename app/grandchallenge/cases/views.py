@@ -37,10 +37,6 @@ from grandchallenge.cases.serializers import (
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyWithCustomPostPermissions,
 )
-from grandchallenge.datasets.tasks import (
-    add_images_to_annotationset,
-    add_images_to_imageset,
-)
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.reader_studies.tasks import add_images_to_reader_study
 
@@ -159,12 +155,8 @@ class RawImageUploadSessionViewSet(
 
         if upload_session.algorithm_image:
             return create_algorithm_jobs
-        elif upload_session.annotationset:
-            return add_images_to_annotationset
         elif upload_session.archive:
             return add_images_to_archive
-        elif upload_session.imageset:
-            return add_images_to_imageset
         elif upload_session.reader_study:
             return add_images_to_reader_study
         else:
