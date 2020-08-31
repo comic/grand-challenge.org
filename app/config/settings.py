@@ -370,7 +370,6 @@ LOCAL_APPS = [
     "grandchallenge.cases",
     "grandchallenge.algorithms",
     "grandchallenge.components",
-    "grandchallenge.datasets",
     "grandchallenge.statistics",
     "grandchallenge.archives",
     "grandchallenge.patients",

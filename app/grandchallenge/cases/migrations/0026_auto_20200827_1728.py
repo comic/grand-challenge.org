@@ -8,11 +8,4 @@ class Migration(migrations.Migration):
         ("cases", "0025_remove_rawimageuploadsession_algorithm_result"),
     ]
 
-    operations = [
-        migrations.RemoveField(
-            model_name="rawimageuploadsession", name="annotationset",
-        ),
-        migrations.RemoveField(
-            model_name="rawimageuploadsession", name="imageset",
-        ),
-    ]
+    operations = []
