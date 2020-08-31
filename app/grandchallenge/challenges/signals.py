@@ -9,7 +9,6 @@ from grandchallenge.challenges.emails import (
 )
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.utils import disable_for_loaddata
-from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.models import Phase
 
 
@@ -34,10 +33,6 @@ def setup_challenge_groups(
         instance.create_default_pages()
 
         assign_perm("change_challenge", admins_group, instance)
-
-        # Create the datasets
-        ImageSet.objects.create(phase=ImageSet.TESTING, challenge=instance)
-        ImageSet.objects.create(phase=ImageSet.TRAINING, challenge=instance)
 
         # add current user to admins for this challenge
         try:

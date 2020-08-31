@@ -14,6 +14,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     DEFAULT_INPUT_INTERFACE_SLUG,
 )
+from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
 from grandchallenge.components.models import (
@@ -30,7 +31,6 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
     get_file_mimetype,
 )
-from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
     send_successful_evaluation_email,
@@ -487,9 +487,8 @@ class Submission(UUIDModel):
         evaluation = Evaluation.objects.create(submission=self, method=method)
 
         if self.algorithm_image:
-            test_set = ImageSet.objects.get(
-                challenge=self.phase.challenge, phase=ImageSet.TESTING
-            )
+            # TODO: allow setting of archives for phases
+            test_set = Archive.objects.get()
 
             default_input_interface = ComponentInterface.objects.get(
                 slug=DEFAULT_INPUT_INTERFACE_SLUG
