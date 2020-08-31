@@ -76,7 +76,6 @@ from grandchallenge.retina_api.serializers import (
     TreeObjectSerializer,
 )
 from grandchallenge.retina_api.tasks import cache_archive_data
-from grandchallenge.serving.permissions import user_can_download_image
 from grandchallenge.studies.models import Study
 
 
@@ -772,7 +771,7 @@ class ImageElementSpacingView(RetinaAPIPermissionMixin, View):
     def get(self, request, image_id):
         image = get_object_or_404(Image, pk=image_id)
 
-        if not user_can_download_image(user=request.user, image=image):
+        if not request.user.has_perm("view_image", image):
             return HttpResponse(status=status.HTTP_403_FORBIDDEN)
 
         # This endpoint expects spacing in SimpleITK ordering (x, y, (z)), so reverse image.spacing

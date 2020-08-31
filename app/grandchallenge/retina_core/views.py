@@ -11,7 +11,6 @@ from rest_framework import status
 
 from grandchallenge.cases.models import Image
 from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
-from grandchallenge.serving.permissions import user_can_download_image
 
 
 class IndexView(RetinaAPIPermissionMixin, generic.TemplateView):
@@ -39,7 +38,7 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
     def get(self, request, image_id):
         image_object = get_object_or_404(Image, pk=image_id)
 
-        if not user_can_download_image(user=request.user, image=image_object):
+        if not request.user.has_perm("view_image", image_object):
             return HttpResponse(status=status.HTTP_403_FORBIDDEN)
 
         image_itk = image_object.get_sitk_image()
@@ -71,7 +70,7 @@ class NumpyView(RetinaAPIPermissionMixin, View):
     def get(self, request, image_id):
         image_object = get_object_or_404(Image, pk=image_id)
 
-        if not user_can_download_image(user=request.user, image=image_object):
+        if not request.user.has_perm("view_image", image_object):
             return HttpResponse(status=status.HTTP_403_FORBIDDEN)
 
         image_itk = image_object.get_sitk_image()

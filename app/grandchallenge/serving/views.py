@@ -10,10 +10,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from grandchallenge.cases.models import Image
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.serving.permissions import (
-    user_can_download_image,
-    user_can_download_submission,
-)
+from grandchallenge.serving.permissions import user_can_download_submission
 from grandchallenge.serving.tasks import create_download
 
 
@@ -51,7 +48,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
     except (AuthenticationFailed, TypeError):
         user = request.user
 
-    if user_can_download_image(user=user, image=image):
+    if user.has_perm("view_image", image):
         create_download.apply_async(
             kwargs={"creator_id": user.pk, "image_id": image.pk}
         )

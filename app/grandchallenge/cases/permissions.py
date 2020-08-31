@@ -1,7 +1,5 @@
 from rest_framework import permissions
 
-from grandchallenge.serving.permissions import user_can_download_image
-
 
 class ImagePermission(permissions.BasePermission):
     """
@@ -10,4 +8,4 @@ class ImagePermission(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        return user_can_download_image(user=request.user, image=obj)
+        return request.user.has_perm("view_image", obj)
