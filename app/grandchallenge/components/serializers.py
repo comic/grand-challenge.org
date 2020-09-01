@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
+from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -26,9 +27,8 @@ class ComponentInterfaceSerialzer(serializers.ModelSerializer):
 
 
 class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
-    image = serializers.HyperlinkedRelatedField(
-        queryset=Image.objects.all(), view_name="api:image-detail",
-    )
+    # Serializes images in place rather than with hyperlinks for internal usage
+    image = ImageSerializer()
     interface = ComponentInterfaceSerialzer()
 
     class Meta:
@@ -40,3 +40,12 @@ class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
             "image",
             "pk",
         ]
+
+
+class HyperlinkedComponentInterfaceValueSerializer(
+    ComponentInterfaceValueSerializer
+):
+    # Serializes images with hyperlinks for external usage
+    image = serializers.HyperlinkedRelatedField(
+        queryset=Image.objects.all(), view_name="api:image-detail",
+    )

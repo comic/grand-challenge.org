@@ -301,6 +301,7 @@ class Phase(UUIDModel):
     )
     submissions_open = models.DateTimeField(
         null=True,
+        blank=True,
         help_text=(
             "If set, participants will not be able to make submissions to "
             "this phase before this time."
@@ -308,6 +309,7 @@ class Phase(UUIDModel):
     )
     submissions_close = models.DateTimeField(
         null=True,
+        blank=True,
         help_text=(
             "If set, participants will not be able to make submissions to "
             "this phase after this time."
