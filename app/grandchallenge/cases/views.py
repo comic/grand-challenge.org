@@ -30,7 +30,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.cases.serializers import (
-    ImageSerializer,
+    HyperlinkedImageSerializer,
     RawImageFileSerializer,
     RawImageUploadSessionSerializer,
 )
@@ -50,7 +50,7 @@ class RawImageUploadSessionDetail(
 
 
 class ImageViewSet(ReadOnlyModelViewSet):
-    serializer_class = ImageSerializer
+    serializer_class = HyperlinkedImageSerializer
     queryset = Image.objects.all().prefetch_related(
         "files",
         "archive_set",

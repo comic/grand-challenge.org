@@ -188,4 +188,4 @@ class TestSetEvaluationInputs(TestCase):
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.PENDING
         assert evaluation.output == ""
-        assert list(evaluation.inputs.all()) == civs
+        assert evaluation.inputs.count() == 1

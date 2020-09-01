@@ -21,7 +21,7 @@ class ImageFileSerializer(serializers.ModelSerializer):
         fields = ("pk", "image", "file", "image_type")
 
 
-class ImageSerializer(serializers.ModelSerializer):
+class HyperlinkedImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
     job_set = SerializerMethodField()
     archive_set = HyperlinkedRelatedField(

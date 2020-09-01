@@ -12,7 +12,7 @@ from rest_framework import generics, parsers, status
 from grandchallenge.archives.models import Archive
 from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.cases.models import Image, ImageFile
-from grandchallenge.cases.serializers import ImageSerializer
+from grandchallenge.cases.serializers import HyperlinkedImageSerializer
 from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializers import PatientSerializer
@@ -167,7 +167,7 @@ class UploadImage(generics.CreateAPIView):
             response_obj.update(
                 {
                     "image_created": image_created,
-                    "image": ImageSerializer(
+                    "image": HyperlinkedImageSerializer(
                         img, context={"request": request}
                     ).data,
                 }

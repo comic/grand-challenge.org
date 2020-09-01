@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
-from grandchallenge.cases.serializers import ImageSerializer
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -26,9 +25,20 @@ class ComponentInterfaceSerialzer(serializers.ModelSerializer):
         )
 
 
+class SimpleImageSerializer(serializers.ModelSerializer):
+    # Used for component interface values where only the user provided
+    # name is needed
+    class Meta:
+        model = Image
+        fields = (
+            "pk",
+            "name",
+        )
+
+
 class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
     # Serializes images in place rather than with hyperlinks for internal usage
-    image = ImageSerializer()
+    image = SimpleImageSerializer()
     interface = ComponentInterfaceSerialzer()
 
     class Meta:
