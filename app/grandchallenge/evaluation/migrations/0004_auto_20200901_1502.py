@@ -18,6 +18,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 help_text="Which archive should be used as the source dataset for this phase?",
                 null=True,
+                blank=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 to="archives.Archive",
             ),

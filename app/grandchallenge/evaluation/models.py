@@ -1,9 +1,11 @@
+from json import dumps
 from pathlib import Path
 
 from celery import group
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
 from django.db.models import BooleanField
 from django.utils.text import get_valid_filename
@@ -146,6 +148,7 @@ class Phase(UUIDModel):
         Archive,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         help_text=(
             "Which archive should be used as the source dataset for this "
             "phase?"
@@ -618,8 +621,11 @@ class SubmissionEvaluator(Executor):
             dest_file = "/tmp/submission-src"
             put_file(container=writer, src=file, dest=dest_file)
 
-            with file.open("rb") as f:
-                mimetype = get_file_mimetype(f)
+            if hasattr(file, "content_type"):
+                mimetype = file.content_type
+            else:
+                with file.open("rb") as f:
+                    mimetype = get_file_mimetype(f)
 
             if mimetype.lower() == "application/zip":
                 # Unzip the file in the container rather than in the python
@@ -646,6 +652,9 @@ class SubmissionEvaluator(Executor):
                         f'/bin/sh -c "mv /input/{input_files[0]}/* /input/ '
                         f'&& rm -r /input/{input_files[0]}/"'
                     )
+
+            elif mimetype.lower() == "application/json":
+                writer.exec_run(f"mv {dest_file} /input/predictions.json")
 
             else:
                 # Not a zip file, so must be a csv
@@ -687,7 +696,20 @@ class Evaluation(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
-        return [inpt.file for inpt in self.inputs.all()]
+        try:
+            return [
+                SimpleUploadedFile(
+                    "predictions.json",
+                    dumps(
+                        self.inputs.get(
+                            interface__title="Predictions JSON File"
+                        ).value
+                    ).encode("utf-8"),
+                    content_type="application/json",
+                )
+            ]
+        except ObjectDoesNotExist:
+            return [inpt.file for inpt in self.inputs.all()]
 
     @property
     def executor_cls(self):
