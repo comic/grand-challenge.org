@@ -153,12 +153,14 @@
            <div itemprop="articleBody">
             
   <h1>Source code for grandchallenge.evaluation.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span></span><span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">dumps</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span> <span class="nn">celery</span> <span class="kn">import</span> <span class="n">group</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.postgres.fields</span> <span class="kn">import</span> <span class="n">JSONField</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span> <span class="nn">django.core.files.uploadedfile</span> <span class="kn">import</span> <span class="n">SimpleUploadedFile</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">BooleanField</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
@@ -296,6 +298,16 @@
 
     <span class="n">challenge</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">Challenge</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">archive</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Archive</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Which archive should be used as the source dataset for this &quot;</span>
+            <span class="s2">&quot;phase?&quot;</span>
+        <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
@@ -447,6 +459,7 @@
     <span class="p">)</span>
     <span class="n">submissions_open</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;If set, participants will not be able to make submissions to &quot;</span>
             <span class="s2">&quot;this phase before this time.&quot;</span>
@@ -454,6 +467,7 @@
     <span class="p">)</span>
     <span class="n">submissions_close</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
             <span class="s2">&quot;If set, participants will not be able to make submissions to &quot;</span>
             <span class="s2">&quot;this phase after this time.&quot;</span>
@@ -642,16 +656,13 @@
         <span class="n">evaluation</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
-            <span class="c1"># TODO: allow setting of archives for phases</span>
-            <span class="n">test_set</span> <span class="o">=</span> <span class="n">Archive</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-
             <span class="n">default_input_interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                 <span class="n">slug</span><span class="o">=</span><span class="n">DEFAULT_INPUT_INTERFACE_SLUG</span>
             <span class="p">)</span>
 
             <span class="n">jobs</span> <span class="o">=</span> <span class="p">[]</span>
 
-            <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">test_set</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                     <span class="n">interface</span><span class="o">=</span><span class="n">default_input_interface</span><span class="p">,</span>
                     <span class="n">image</span><span class="o">=</span><span class="n">image</span><span class="p">,</span>
@@ -765,8 +776,11 @@
             <span class="n">dest_file</span> <span class="o">=</span> <span class="s2">&quot;/tmp/submission-src&quot;</span>
             <span class="n">put_file</span><span class="p">(</span><span class="n">container</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">file</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="n">dest_file</span><span class="p">)</span>
 
-            <span class="k">with</span> <span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s2">&quot;content_type&quot;</span><span class="p">):</span>
+                <span class="n">mimetype</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">content_type</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">mimetype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;application/zip&quot;</span><span class="p">:</span>
                 <span class="c1"># Unzip the file in the container rather than in the python</span>
@@ -793,6 +807,9 @@
                         <span class="sa">f</span><span class="s1">&#39;/bin/sh -c &quot;mv /input/</span><span class="si">{</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">/* /input/ &#39;</span>
                         <span class="sa">f</span><span class="s1">&#39;&amp;&amp; rm -r /input/</span><span class="si">{</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">/&quot;&#39;</span>
                     <span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">mimetype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;application/json&quot;</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mv </span><span class="si">{</span><span class="n">dest_file</span><span class="si">}</span><span class="s2"> /input/predictions.json&quot;</span><span class="p">)</span>
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Not a zip file, so must be a csv</span>
@@ -834,7 +851,20 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">inpt</span><span class="o">.</span><span class="n">file</span> <span class="k">for</span> <span class="n">inpt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">SimpleUploadedFile</span><span class="p">(</span>
+                    <span class="s2">&quot;predictions.json&quot;</span><span class="p">,</span>
+                    <span class="n">dumps</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                            <span class="n">interface__title</span><span class="o">=</span><span class="s2">&quot;Predictions JSON File&quot;</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">value</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
+                    <span class="n">content_type</span><span class="o">=</span><span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">inpt</span><span class="o">.</span><span class="n">file</span> <span class="k">for</span> <span class="n">inpt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">executor_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
