@@ -409,6 +409,13 @@
             <span class="s2">&quot;cases in this reader study.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">allow_show_all_annotations</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If true, readers are allowed to show/hide all annotations &quot;</span>
+            <span class="s2">&quot;for a case.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">&quot;reader studies&quot;</span>
@@ -423,6 +430,7 @@
         <span class="s2">&quot;is_educational&quot;</span><span class="p">,</span>
         <span class="s2">&quot;allow_answer_modification&quot;</span><span class="p">,</span>
         <span class="s2">&quot;allow_case_navigation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;allow_show_all_annotations&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
