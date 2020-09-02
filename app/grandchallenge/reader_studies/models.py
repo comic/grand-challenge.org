@@ -254,7 +254,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "cases in this reader study."
         ),
     )
-
+    allow_show_all_annotations= models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, readers are allowed to show/hide all annotations "
+            "for a case."
+        ),
+    )
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
         ordering = ("created",)
@@ -268,6 +274,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "is_educational",
         "allow_answer_modification",
         "allow_case_navigation",
+        "allow_show_all_annotations",
     )
 
     def __str__(self):
