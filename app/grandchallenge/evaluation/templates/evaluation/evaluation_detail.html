@@ -89,7 +89,7 @@
             {% endif %}
         </dd>
 
-        {% if "change_challenge" in challenge_perms %}
+        {% if "change_challenge" in challenge_perms and object.submission.predictions_file %}
             <dt>Submission File</dt>
             <dd>
                 <a href="{{ object.submission.predictions_file.url }}">

@@ -25,10 +25,20 @@ class ComponentInterfaceSerialzer(serializers.ModelSerializer):
         )
 
 
+class SimpleImageSerializer(serializers.ModelSerializer):
+    # Used for component interface values where only the user provided
+    # name is needed
+    class Meta:
+        model = Image
+        fields = (
+            "pk",
+            "name",
+        )
+
+
 class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
-    image = serializers.HyperlinkedRelatedField(
-        queryset=Image.objects.all(), view_name="api:image-detail",
-    )
+    # Serializes images in place rather than with hyperlinks for internal usage
+    image = SimpleImageSerializer()
     interface = ComponentInterfaceSerialzer()
 
     class Meta:
@@ -40,3 +50,12 @@ class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
             "image",
             "pk",
         ]
+
+
+class HyperlinkedComponentInterfaceValueSerializer(
+    ComponentInterfaceValueSerializer
+):
+    # Serializes images with hyperlinks for external usage
+    image = serializers.HyperlinkedRelatedField(
+        queryset=Image.objects.all(), view_name="api:image-detail",
+    )

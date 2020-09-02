@@ -157,6 +157,7 @@ class Command(BaseCommand):
 
         add_archive_perm = Permission.objects.get(codename="add_archive")
         self.users["archive"].user_permissions.add(add_archive_perm)
+        self.users["demo"].user_permissions.add(add_archive_perm)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
