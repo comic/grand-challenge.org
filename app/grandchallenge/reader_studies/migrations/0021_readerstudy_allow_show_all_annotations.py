@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reader_studies', '0020_auto_20200708_1155'),
+        ("reader_studies", "0020_auto_20200708_1155"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='readerstudy',
-            name='allow_show_all_annotations',
-            field=models.BooleanField(default=False, help_text='If true, readers are allowed to show/hide all annotations for a case.'),
+            model_name="readerstudy",
+            name="allow_show_all_annotations",
+            field=models.BooleanField(
+                default=False,
+                help_text="If true, readers are allowed to show/hide all annotations"
+                " for a case.",
+            ),
         ),
     ]
