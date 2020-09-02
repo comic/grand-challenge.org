@@ -4,6 +4,7 @@ import uuid
 from datetime import timedelta
 from typing import Dict
 
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
@@ -168,6 +169,11 @@ def execute_job(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
         job.update_status(status=job.FAILURE, output=str(e))
+    except (SoftTimeLimitExceeded, TimeLimitExceeded):
+        job = get_model_instance(
+            pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        )
+        job.update_status(status=job.FAILURE, output="Time limit exceeded.")
     except Exception:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
