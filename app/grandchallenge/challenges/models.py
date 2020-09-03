@@ -446,6 +446,10 @@ class Challenge(ChallengeBase):
         editable=False, blank=True, null=True
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._hidden_orig = self.hidden
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -477,10 +481,10 @@ class Challenge(ChallengeBase):
 
             send_challenge_created_email(self)
 
-        # Changing the hidden state requires updating all evaluation permissions
-        assign_evaluation_permissions.apply_async(
-            kwargs={"challenge_pk": self.pk}
-        )
+        if self.hidden != self._hidden_orig:
+            assign_evaluation_permissions.apply_async(
+                kwargs={"challenge_pk": self.pk}
+            )
 
     def create_default_pages(self):
         Page.objects.create(
