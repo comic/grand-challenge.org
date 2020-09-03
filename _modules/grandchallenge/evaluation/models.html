@@ -158,6 +158,7 @@
 
 <span class="kn">from</span> <span class="nn">celery</span> <span class="kn">import</span> <span class="n">group</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
 <span class="kn">from</span> <span class="nn">django.contrib.postgres.fields</span> <span class="kn">import</span> <span class="n">JSONField</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.core.files.uploadedfile</span> <span class="kn">import</span> <span class="n">SimpleUploadedFile</span>
@@ -165,7 +166,7 @@
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">BooleanField</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
-<span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span>
+<span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AlgorithmExecutor</span><span class="p">,</span>
@@ -528,6 +529,7 @@
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_default_interfaces</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
 
         <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span></div>
 
@@ -538,6 +540,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
             <span class="p">[</span><span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;metrics-json-file&quot;</span><span class="p">)]</span>
         <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_phase&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;change_phase&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
@@ -561,6 +567,17 @@
     <span class="sd">&quot;&quot;&quot;Store the methods for performing an evaluation.&quot;&quot;&quot;</span>
 
     <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_method&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_absolute_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
@@ -646,6 +663,11 @@
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">create_evaluation</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_ready_method</span>
@@ -742,9 +764,9 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">update_permissions</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">update_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span>
             <span class="s2">&quot;view_algorithmevaluation&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span>
@@ -857,9 +879,37 @@
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
+
         <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
         <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">admins_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span>
+
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;change_evaluation&quot;</span><span class="p">,</span> <span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">hidden</span><span class="p">:</span>
+            <span class="n">viewer_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">participants_group</span>
+            <span class="n">non_viewer_group</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">REGISTERED_AND_ANON_USERS_GROUP_NAME</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">viewer_group</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">REGISTERED_AND_ANON_USERS_GROUP_NAME</span>
+            <span class="p">)</span>
+            <span class="n">non_viewer_group</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">participants_group</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">published</span><span class="p">:</span>
+            <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">viewer_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">viewer_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">non_viewer_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
