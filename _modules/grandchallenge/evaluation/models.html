@@ -165,6 +165,7 @@
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">BooleanField</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
+<span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AlgorithmExecutor</span><span class="p">,</span>
@@ -734,6 +735,21 @@
     <span class="n">created</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">modified</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_permissions</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">update_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">assign_perm</span><span class="p">(</span>
+            <span class="s2">&quot;view_algorithmevaluation&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
