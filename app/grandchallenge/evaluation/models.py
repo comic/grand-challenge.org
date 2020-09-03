@@ -750,10 +750,10 @@ class Evaluation(UUIDModel, ComponentJob):
 
         if self.published:
             assign_perm("view_evaluation", viewer_group, self)
-            remove_perm("view_evaluation", non_viewer_group, self)
         else:
             remove_perm("view_evaluation", viewer_group, self)
-            remove_perm("view_evaluation", non_viewer_group, self)
+
+        remove_perm("view_evaluation", non_viewer_group, self)
 
     @property
     def container(self):
