@@ -23,6 +23,7 @@ from grandchallenge.challenges.emails import (
     send_external_challenge_created_email,
 )
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 
@@ -445,15 +446,16 @@ class Challenge(ChallengeBase):
         editable=False, blank=True, null=True
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._hidden_orig = self.hidden
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
         super().save(*args, **kwargs)
 
         if adding:
-            # Create the evaluation config
-            self.phase_set.create(challenge=self)
-
             # Create the groups only on first save
             admins_group = Group.objects.create(name=self.admin_group_name())
             participants_group = Group.objects.create(
@@ -462,6 +464,9 @@ class Challenge(ChallengeBase):
             self.admins_group = admins_group
             self.participants_group = participants_group
             self.save()
+
+            # Create the evaluation config
+            self.phase_set.create(challenge=self)
 
             self.create_default_pages()
 
@@ -475,6 +480,11 @@ class Challenge(ChallengeBase):
                 pass
 
             send_challenge_created_email(self)
+
+        if self.hidden != self._hidden_orig:
+            assign_evaluation_permissions.apply_async(
+                kwargs={"challenge_pk": self.pk}
+            )
 
     def create_default_pages(self):
         Page.objects.create(

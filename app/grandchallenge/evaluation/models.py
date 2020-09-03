@@ -3,6 +3,7 @@ from pathlib import Path
 
 from celery import group
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -10,7 +11,7 @@ from django.db import models
 from django.db.models import BooleanField
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import (
     AlgorithmExecutor,
@@ -373,6 +374,7 @@ class Phase(UUIDModel):
 
         if adding:
             self.set_default_interfaces()
+            self.assign_permissions()
 
         calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
 
@@ -383,6 +385,10 @@ class Phase(UUIDModel):
         self.outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
+
+    def assign_permissions(self):
+        assign_perm("view_phase", self.challenge.admins_group, self)
+        assign_perm("change_phase", self.challenge.admins_group, self)
 
     def get_absolute_url(self):
         return reverse(
@@ -406,6 +412,17 @@ class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("view_method", self.phase.challenge.admins_group, self)
 
     def get_absolute_url(self):
         return reverse(
@@ -491,6 +508,11 @@ class Submission(UUIDModel):
 
         if adding:
             self.create_evaluation()
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("view_submission", self.phase.challenge.admins_group, self)
+        assign_perm("view_submission", self.creator, self)
 
     def create_evaluation(self):
         method = self.latest_ready_method
@@ -587,9 +609,9 @@ class AlgorithmEvaluation(ComponentJob):
         super().save(*args, **kwargs)
 
         if adding:
-            self.update_permissions()
+            self.assign_permissions()
 
-    def update_permissions(self):
+    def assign_permissions(self):
         assign_perm(
             "view_algorithmevaluation",
             self.submission.phase.challenge.admins_group,
@@ -702,9 +724,37 @@ class Evaluation(UUIDModel, ComponentJob):
 
         super().save(*args, **kwargs)
 
+        self.assign_permissions()
+
         calculate_ranks.apply_async(
             kwargs={"phase_pk": self.submission.phase.pk}
         )
+
+    def assign_permissions(self):
+        admins_group = self.submission.phase.challenge.admins_group
+
+        assign_perm("view_evaluation", admins_group, self)
+        assign_perm("change_evaluation", admins_group, self)
+
+        if self.submission.phase.challenge.hidden:
+            viewer_group = self.submission.phase.challenge.participants_group
+            non_viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
+        else:
+            viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
+            non_viewer_group = (
+                self.submission.phase.challenge.participants_group
+            )
+
+        if self.published:
+            assign_perm("view_evaluation", viewer_group, self)
+        else:
+            remove_perm("view_evaluation", viewer_group, self)
+
+        remove_perm("view_evaluation", non_viewer_group, self)
 
     @property
     def container(self):
