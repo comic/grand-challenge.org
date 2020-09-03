@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import docker
 import pytest
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -26,12 +25,7 @@ def test_submission_evaluation(
     settings.task_always_eager = (True,)
 
     # Upload a submission and create an evaluation
-    dockerclient = docker.DockerClient(
-        base_url=settings.COMPONENTS_DOCKER_BASE_URL
-    )
-
     eval_container, sha256 = evaluation_image
-
     method = MethodFactory(
         image__from_path=eval_container, image_sha256=sha256, ready=True
     )
@@ -40,17 +34,10 @@ def test_submission_evaluation(
     with pytest.raises(NotImplementedError):
         _ = method.image.url
 
-    num_containers_before = len(dockerclient.containers.list())
-    num_volumes_before = len(dockerclient.volumes.list())
-
     # This will create an evaluation, and we'll wait for it to be executed
     submission = SubmissionFactory(
         predictions_file__from_path=submission_file, phase=method.phase
     )
-
-    # The evaluation method should clean up after itself
-    assert len(dockerclient.volumes.list()) == num_volumes_before
-    assert len(dockerclient.containers.list()) == num_containers_before
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
