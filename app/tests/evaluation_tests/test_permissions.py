@@ -1,11 +1,17 @@
 from django.test import TestCase
 from guardian.shortcuts import get_groups_with_perms, get_users_with_perms
 
-from grandchallenge.evaluation.models import AlgorithmEvaluation, Method, Phase
+from grandchallenge.evaluation.models import (
+    AlgorithmEvaluation,
+    Method,
+    Phase,
+    Submission,
+)
 from tests.evaluation_tests.factories import (
     AlgorithmEvaluationFactory,
     MethodFactory,
     PhaseFactory,
+    SubmissionFactory,
 )
 
 
@@ -29,6 +35,22 @@ class TestMethodPermissions(TestCase):
             m.phase.challenge.admins_group: ["change_method", "view_method"]
         }
         assert get_users_with_perms(m, with_group_users=False).count() == 0
+
+
+class TestSubmissionPermissions(TestCase):
+    def test_submission_permissions(self):
+        """
+        Challenge admins and submission creators should be able to view
+        submissions
+        """
+        s: Submission = SubmissionFactory()
+
+        assert get_groups_with_perms(s, attach_perms=True) == {
+            s.phase.challenge.admins_group: ["view_submission"]
+        }
+        assert get_users_with_perms(
+            s, attach_perms=True, with_group_users=False
+        ) == {s.creator: ["view_submission"]}
 
 
 class TestAlgorithmEvaluationPermissions(TestCase):

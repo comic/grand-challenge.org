@@ -508,6 +508,11 @@ class Submission(UUIDModel):
 
         if adding:
             self.create_evaluation()
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("view_submission", self.phase.challenge.admins_group, self)
+        assign_perm("view_submission", self.creator, self)
 
     def create_evaluation(self):
         method = self.latest_ready_method
