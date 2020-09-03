@@ -732,6 +732,7 @@ class Evaluation(UUIDModel, ComponentJob):
 
     def assign_permissions(self):
         admins_group = self.submission.phase.challenge.admins_group
+
         assign_perm("view_evaluation", admins_group, self)
         assign_perm("change_evaluation", admins_group, self)
 

@@ -90,8 +90,10 @@ class TestEvaluationPermissions:
     @pytest.mark.parametrize("hidden_challenge", [True, False])
     def test_published_evaluation_permissions(self, hidden_challenge):
         """
-        Challenge admins can change and view published evaluations,
-        and anyone can view published evaluations.
+        Challenge admins can change and view published evaluations.
+
+        If the challenge is hidden, only the participants can view published
+        evaluations, otherwise anyone can view published evaluations.
         """
         e: Evaluation = EvaluationFactory(
             submission__phase__auto_publish_new_results=True,
@@ -170,6 +172,7 @@ class TestEvaluationPermissions:
         }
 
     def test_hiding_challenge_updates_perms(self, settings):
+        """If a challenge is hidden then the viewer group should be updated"""
         e: Evaluation = EvaluationFactory(
             submission__phase__auto_publish_new_results=True,
             submission__phase__challenge__hidden=False,
@@ -204,6 +207,7 @@ class TestEvaluationPermissions:
         }
 
     def test_unhiding_challenge_updates_perms(self, settings):
+        """If a challenge is unhidden then the viewer group should be updated"""
         e: Evaluation = EvaluationFactory(
             submission__phase__auto_publish_new_results=True,
             submission__phase__challenge__hidden=True,
