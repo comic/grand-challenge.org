@@ -10,6 +10,7 @@ from django.db import models
 from django.db.models import BooleanField
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import (
     AlgorithmExecutor,
@@ -579,6 +580,21 @@ class AlgorithmEvaluation(ComponentJob):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.update_permissions()
+
+    def update_permissions(self):
+        assign_perm(
+            "view_algorithmevaluation",
+            self.submission.phase.challenge.admins_group,
+            self,
+        )
 
     @property
     def container(self):
