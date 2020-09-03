@@ -87,14 +87,15 @@ class TestAlgorithmEvaluationPermissions(TestCase):
 
 @pytest.mark.django_db
 class TestEvaluationPermissions:
-    @pytest.mark.parametrize("hidden_challenge", [False])
+    @pytest.mark.parametrize("hidden_challenge", [True, False])
     def test_published_evaluation_permissions(self, hidden_challenge):
         """
         Challenge admins can change and view published evaluations,
-        and anyone can view published evaluations
+        and anyone can view published evaluations.
         """
         e: Evaluation = EvaluationFactory(
-            submission__phase__auto_publish_new_results=True
+            submission__phase__auto_publish_new_results=True,
+            submission__phase__challenge__hidden=hidden_challenge,
         )
 
         if hidden_challenge:
@@ -114,10 +115,12 @@ class TestEvaluationPermissions:
         }
         assert get_users_with_perms(e, with_group_users=False).count() == 0
 
-    def test_unpublished_evaluation_permissions(self):
+    @pytest.mark.parametrize("hidden_challenge", [True, False])
+    def test_unpublished_evaluation_permissions(self, hidden_challenge):
         """Only challenge admins can change and view unpublished evaluations."""
         e: Evaluation = EvaluationFactory(
-            submission__phase__auto_publish_new_results=False
+            submission__phase__auto_publish_new_results=False,
+            submission__phase__challenge__hidden=hidden_challenge,
         )
 
         assert e.published is False
@@ -129,17 +132,23 @@ class TestEvaluationPermissions:
         }
         assert get_users_with_perms(e, with_group_users=False).count() == 0
 
-    def test_unpublishing_results_removes_permissions(self):
+    @pytest.mark.parametrize("hidden_challenge", [True, False])
+    def test_unpublishing_results_removes_permissions(self, hidden_challenge):
         """
         If an evaluation is unpublished then the view permission should be
         removed.
         """
         e: Evaluation = EvaluationFactory(
-            submission__phase__auto_publish_new_results=True
+            submission__phase__auto_publish_new_results=True,
+            submission__phase__challenge__hidden=hidden_challenge,
         )
-        g_reg_anon = Group.objects.get(
-            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-        )
+
+        if hidden_challenge:
+            viewer_group = e.submission.phase.challenge.participants_group
+        else:
+            viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
 
         assert e.published is True
         assert get_groups_with_set_perms(e) == {
@@ -147,7 +156,7 @@ class TestEvaluationPermissions:
                 "change_evaluation",
                 "view_evaluation",
             },
-            g_reg_anon: {"view_evaluation"},
+            viewer_group: {"view_evaluation"},
         }
 
         e.published = False
@@ -158,4 +167,72 @@ class TestEvaluationPermissions:
                 "change_evaluation",
                 "view_evaluation",
             },
+        }
+
+    def test_hiding_challenge_updates_perms(self, settings):
+        e: Evaluation = EvaluationFactory(
+            submission__phase__auto_publish_new_results=True,
+            submission__phase__challenge__hidden=False,
+        )
+
+        participants = e.submission.phase.challenge.participants_group
+        all_users = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
+                "change_evaluation",
+                "view_evaluation",
+            },
+            all_users: {"view_evaluation"},
+        }
+
+        # Override the celery settings
+        settings.task_eager_propagates = (True,)
+        settings.task_always_eager = (True,)
+
+        e.submission.phase.challenge.hidden = True
+        e.submission.phase.challenge.save()
+
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
+                "change_evaluation",
+                "view_evaluation",
+            },
+            participants: {"view_evaluation"},
+        }
+
+    def test_unhiding_challenge_updates_perms(self, settings):
+        e: Evaluation = EvaluationFactory(
+            submission__phase__auto_publish_new_results=True,
+            submission__phase__challenge__hidden=True,
+        )
+
+        participants = e.submission.phase.challenge.participants_group
+        all_users = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
+                "change_evaluation",
+                "view_evaluation",
+            },
+            participants: {"view_evaluation"},
+        }
+
+        # Override the celery settings
+        settings.task_eager_propagates = (True,)
+        settings.task_always_eager = (True,)
+
+        e.submission.phase.challenge.hidden = False
+        e.submission.phase.challenge.save()
+
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
+                "change_evaluation",
+                "view_evaluation",
+            },
+            all_users: {"view_evaluation"},
         }

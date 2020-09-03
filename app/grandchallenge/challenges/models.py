@@ -23,6 +23,7 @@ from grandchallenge.challenges.emails import (
     send_external_challenge_created_email,
 )
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 
@@ -475,6 +476,11 @@ class Challenge(ChallengeBase):
                 pass
 
             send_challenge_created_email(self)
+
+        # Changing the hidden state requires updating all evaluation permissions
+        assign_evaluation_permissions.apply_async(
+            kwargs={"challenge_pk": self.pk}
+        )
 
     def create_default_pages(self):
         Page.objects.create(

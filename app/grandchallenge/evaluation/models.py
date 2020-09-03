@@ -736,14 +736,25 @@ class Evaluation(UUIDModel, ComponentJob):
         assign_perm("view_evaluation", admins_group, self)
         assign_perm("change_evaluation", admins_group, self)
 
-        g_reg_anon = Group.objects.get(
-            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-        )
+        if self.submission.phase.challenge.hidden:
+            viewer_group = self.submission.phase.challenge.participants_group
+            non_viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
+        else:
+            viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
+            non_viewer_group = (
+                self.submission.phase.challenge.participants_group
+            )
 
         if self.published:
-            assign_perm("view_evaluation", g_reg_anon, self)
+            assign_perm("view_evaluation", viewer_group, self)
+            remove_perm("view_evaluation", non_viewer_group, self)
         else:
-            remove_perm("view_evaluation", g_reg_anon, self)
+            remove_perm("view_evaluation", viewer_group, self)
+            remove_perm("view_evaluation", non_viewer_group, self)
 
     @property
     def container(self):
