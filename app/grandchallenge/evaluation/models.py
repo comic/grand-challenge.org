@@ -412,6 +412,18 @@ class Method(UUIDModel, ComponentImage):
 
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("view_method", self.phase.challenge.admins_group, self)
+        assign_perm("change_method", self.phase.challenge.admins_group, self)
+
     def get_absolute_url(self):
         return reverse(
             "evaluation:method-detail",
