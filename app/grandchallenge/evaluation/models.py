@@ -3,6 +3,7 @@ from pathlib import Path
 
 from celery import group
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -10,7 +11,7 @@ from django.db import models
 from django.db.models import BooleanField
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import (
     AlgorithmExecutor,
@@ -724,9 +725,25 @@ class Evaluation(UUIDModel, ComponentJob):
 
         super().save(*args, **kwargs)
 
+        self.assign_permissions()
+
         calculate_ranks.apply_async(
             kwargs={"phase_pk": self.submission.phase.pk}
         )
+
+    def assign_permissions(self):
+        admins_group = self.submission.phase.challenge.admins_group
+        assign_perm("view_evaluation", admins_group, self)
+        assign_perm("change_evaluation", admins_group, self)
+
+        g_reg_anon = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.published:
+            assign_perm("view_evaluation", g_reg_anon, self)
+        else:
+            remove_perm("view_evaluation", g_reg_anon, self)
 
     @property
     def container(self):
