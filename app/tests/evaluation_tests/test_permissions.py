@@ -1,3 +1,4 @@
+import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.test import TestCase
@@ -19,13 +20,23 @@ from tests.evaluation_tests.factories import (
 )
 
 
+def get_groups_with_set_perms(*args, **kwargs):
+    """
+    Executes get_groups_with_perms with attach_perms=True, and converts the
+    resulting list for each group to a set for easier comparison in tests as
+    the ordering of permissions is not always consistent.
+    """
+    kwargs.update({"attach_perms": True})
+    return {k: {*v} for k, v in get_groups_with_perms(*args, **kwargs).items()}
+
+
 class TestPhasePermissions(TestCase):
     def test_phase_permissions(self):
         """Only challenge admins should be able to view and change phases."""
         p: Phase = PhaseFactory()
 
-        assert get_groups_with_perms(p, attach_perms=True) == {
-            p.challenge.admins_group: ["change_phase", "view_phase"]
+        assert get_groups_with_set_perms(p) == {
+            p.challenge.admins_group: {"change_phase", "view_phase"}
         }
         assert get_users_with_perms(p, with_group_users=False).count() == 0
 
@@ -35,8 +46,8 @@ class TestMethodPermissions(TestCase):
         """Only challenge admins should be able to view and change methods."""
         m: Method = MethodFactory()
 
-        assert get_groups_with_perms(m, attach_perms=True) == {
-            m.phase.challenge.admins_group: ["change_method", "view_method"]
+        assert get_groups_with_set_perms(m) == {
+            m.phase.challenge.admins_group: {"change_method", "view_method"}
         }
         assert get_users_with_perms(m, with_group_users=False).count() == 0
 
@@ -49,8 +60,8 @@ class TestSubmissionPermissions(TestCase):
         """
         s: Submission = SubmissionFactory()
 
-        assert get_groups_with_perms(s, attach_perms=True) == {
-            s.phase.challenge.admins_group: ["view_submission"]
+        assert get_groups_with_set_perms(s) == {
+            s.phase.challenge.admins_group: {"view_submission"}
         }
         assert get_users_with_perms(
             s, attach_perms=True, with_group_users=False
@@ -66,16 +77,18 @@ class TestAlgorithmEvaluationPermissions(TestCase):
         """
         ae: AlgorithmEvaluation = AlgorithmEvaluationFactory()
 
-        assert get_groups_with_perms(ae, attach_perms=True) == {
-            ae.submission.phase.challenge.admins_group: [
+        assert get_groups_with_set_perms(ae) == {
+            ae.submission.phase.challenge.admins_group: {
                 "view_algorithmevaluation"
-            ]
+            }
         }
         assert get_users_with_perms(ae, with_group_users=False).count() == 0
 
 
-class TestEvaluationPermissions(TestCase):
-    def test_published_evaluation_permissions(self):
+@pytest.mark.django_db
+class TestEvaluationPermissions:
+    @pytest.mark.parametrize("hidden_challenge", [False])
+    def test_published_evaluation_permissions(self, hidden_challenge):
         """
         Challenge admins can change and view published evaluations,
         and anyone can view published evaluations
@@ -84,17 +97,20 @@ class TestEvaluationPermissions(TestCase):
             submission__phase__auto_publish_new_results=True
         )
 
-        g_reg_anon = Group.objects.get(
-            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-        )
+        if hidden_challenge:
+            viewer_group = e.submission.phase.challenge.participants_group
+        else:
+            viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
 
         assert e.published is True
-        assert get_groups_with_perms(e, attach_perms=True) == {
-            e.submission.phase.challenge.admins_group: [
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
                 "change_evaluation",
                 "view_evaluation",
-            ],
-            g_reg_anon: ["view_evaluation"],
+            },
+            viewer_group: {"view_evaluation"},
         }
         assert get_users_with_perms(e, with_group_users=False).count() == 0
 
@@ -105,11 +121,11 @@ class TestEvaluationPermissions(TestCase):
         )
 
         assert e.published is False
-        assert get_groups_with_perms(e, attach_perms=True) == {
-            e.submission.phase.challenge.admins_group: [
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
                 "change_evaluation",
                 "view_evaluation",
-            ],
+            },
         }
         assert get_users_with_perms(e, with_group_users=False).count() == 0
 
@@ -126,20 +142,20 @@ class TestEvaluationPermissions(TestCase):
         )
 
         assert e.published is True
-        assert get_groups_with_perms(e, attach_perms=True) == {
-            e.submission.phase.challenge.admins_group: [
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
                 "change_evaluation",
                 "view_evaluation",
-            ],
-            g_reg_anon: ["view_evaluation"],
+            },
+            g_reg_anon: {"view_evaluation"},
         }
 
         e.published = False
         e.save()
 
-        assert get_groups_with_perms(e, attach_perms=True) == {
-            e.submission.phase.challenge.admins_group: [
+        assert get_groups_with_set_perms(e) == {
+            e.submission.phase.challenge.admins_group: {
                 "change_evaluation",
                 "view_evaluation",
-            ],
+            },
         }
