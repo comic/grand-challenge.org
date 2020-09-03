@@ -1,8 +1,22 @@
 from django.test import TestCase
 from guardian.shortcuts import get_groups_with_perms, get_users_with_perms
 
-from grandchallenge.evaluation.models import AlgorithmEvaluation
-from tests.evaluation_tests.factories import AlgorithmEvaluationFactory
+from grandchallenge.evaluation.models import AlgorithmEvaluation, Phase
+from tests.evaluation_tests.factories import (
+    AlgorithmEvaluationFactory,
+    PhaseFactory,
+)
+
+
+class TestPhasePermissions(TestCase):
+    def test_phase_permissions(self):
+        """Only challenge admins should be able to view and change phases."""
+        p: Phase = PhaseFactory()
+
+        assert get_groups_with_perms(p, attach_perms=True) == {
+            p.challenge.admins_group: ["change_phase", "view_phase"]
+        }
+        assert get_users_with_perms(p, with_group_users=False).count() == 0
 
 
 class TestAlgorithmEvaluationPermissions(TestCase):

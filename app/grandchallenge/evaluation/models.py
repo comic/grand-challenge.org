@@ -373,6 +373,7 @@ class Phase(UUIDModel):
 
         if adding:
             self.set_default_interfaces()
+            self.assign_permissions()
 
         calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
 
@@ -383,6 +384,10 @@ class Phase(UUIDModel):
         self.outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
+
+    def assign_permissions(self):
+        assign_perm("view_phase", self.challenge.admins_group, self)
+        assign_perm("change_phase", self.challenge.admins_group, self)
 
     def get_absolute_url(self):
         return reverse(
@@ -587,9 +592,9 @@ class AlgorithmEvaluation(ComponentJob):
         super().save(*args, **kwargs)
 
         if adding:
-            self.update_permissions()
+            self.assign_permissions()
 
-    def update_permissions(self):
+    def assign_permissions(self):
         assign_perm(
             "view_algorithmevaluation",
             self.submission.phase.challenge.admins_group,

@@ -451,9 +451,6 @@ class Challenge(ChallengeBase):
         super().save(*args, **kwargs)
 
         if adding:
-            # Create the evaluation config
-            self.phase_set.create(challenge=self)
-
             # Create the groups only on first save
             admins_group = Group.objects.create(name=self.admin_group_name())
             participants_group = Group.objects.create(
@@ -462,6 +459,9 @@ class Challenge(ChallengeBase):
             self.admins_group = admins_group
             self.participants_group = participants_group
             self.save()
+
+            # Create the evaluation config
+            self.phase_set.create(challenge=self)
 
             self.create_default_pages()
 
