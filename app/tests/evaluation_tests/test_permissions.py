@@ -43,7 +43,7 @@ class TestPhasePermissions(TestCase):
 
 class TestMethodPermissions(TestCase):
     def test_method_permissions(self):
-        """Only challenge admins should be able to view and change methods."""
+        """Only challenge admins should be able to view methods."""
         m: Method = MethodFactory()
 
         assert get_groups_with_set_perms(m) == {
