@@ -23,7 +23,6 @@ from guardian.mixins import (
 )
 
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
 )
 from grandchallenge.core.views import Column, PaginatedTableListView
@@ -311,30 +310,25 @@ class TeamContextMixin:
 
 
 class EvaluationList(
-    UserIsChallengeParticipantOrAdminMixin, TeamContextMixin, ListView
+    LoginRequiredMixin, PermissionListMixin, TeamContextMixin, ListView
 ):
     model = Evaluation
+    permission_required = "view_evaluation"
+    login_url = reverse_lazy("userena_signin")
 
     def get_queryset(self):
-        """Admins see everything, participants just their evaluations."""
-        challenge = self.request.challenge
-
         queryset = super().get_queryset()
-        queryset = queryset.select_related(
+        return queryset.filter(
+            submission__phase__challenge=self.request.challenge
+        ).select_related(
             "submission__creator__user_profile", "submission__phase__challenge"
-        ).filter(submission__phase__challenge=challenge)
-
-        if challenge.is_admin(self.request.user):
-            return queryset
-        else:
-            return queryset.filter(
-                Q(submission__creator__pk=self.request.user.pk)
-            )
+        )
 
 
-class EvaluationDetail(DetailView):
-    # TODO - if participant: list only their evaluations
+class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
     model = Evaluation
+    permission_required = "view_evaluation"
+    raise_exception = True
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -366,11 +360,14 @@ class LeaderboardRedirect(RedirectView):
         )
 
 
-class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
+class LeaderboardDetail(
+    PermissionListMixin, TeamContextMixin, PaginatedTableListView
+):
     model = Evaluation
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
+    permission_required = "view_evaluation"
 
     @cached_property
     def phase(self):
@@ -494,8 +491,14 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
 
 
 class EvaluationUpdate(
-    UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
 ):
     model = Evaluation
     fields = ("published",)
     success_message = "Result successfully updated."
+    permission_required = "change_evaluation"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
