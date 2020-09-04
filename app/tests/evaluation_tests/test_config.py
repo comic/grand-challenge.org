@@ -61,6 +61,7 @@ def test_setting_display_all_metrics(client, challenge_set):
         viewname="evaluation:detail",
         challenge=challenge_set.challenge,
         reverse_kwargs={"pk": e.pk},
+        user=challenge_set.challenge.creator,
     )
 
     assert response.status_code == 200
@@ -76,6 +77,7 @@ def test_setting_display_all_metrics(client, challenge_set):
         viewname="evaluation:detail",
         challenge=challenge_set.challenge,
         reverse_kwargs={"pk": e.pk},
+        user=challenge_set.challenge.creator,
     )
 
     assert response.status_code == 200

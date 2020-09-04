@@ -16,11 +16,12 @@ from django.views.generic import (
     RedirectView,
     UpdateView,
 )
-
-from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin,
-    UserIsChallengeParticipantOrAdminMixin,
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionListMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+
 from grandchallenge.core.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,
@@ -35,13 +36,21 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 
 
-class PhaseUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+class PhaseUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
     form_class = PhaseForm
     success_message = "Configuration successfully updated"
+    permission_required = "change_phase"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
 
     def get_object(self, queryset=None):
         return Phase.objects.get(
@@ -58,9 +67,17 @@ class PhaseUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
         )
 
 
-class MethodCreate(UserIsChallengeAdminMixin, CreateView):
+class MethodCreate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+):
     model = Method
     form_class = MethodForm
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -78,16 +95,23 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
         return super().form_valid(form)
 
 
-class MethodList(UserIsChallengeAdminMixin, ListView):
+class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Method
+    permission_required = "view_method"
+    login_url = reverse_lazy("userena_signin")
 
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.filter(phase__challenge=self.request.challenge)
 
 
-class MethodDetail(UserIsChallengeAdminMixin, DetailView):
+class MethodDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = Method
+    permission_required = "view_method"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
 
 
 class SubmissionCreateBase(SuccessMessageMixin, CreateView):
@@ -216,13 +240,27 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
 
 class SubmissionCreate(
-    UserIsChallengeParticipantOrAdminMixin, SubmissionCreateBase
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, SubmissionCreateBase
 ):
     form_class = SubmissionForm
+    permission_required = "create_phase_submission"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
+
+    def get_permission_object(self):
+        return self.phase
 
 
-class LegacySubmissionCreate(UserIsChallengeAdminMixin, SubmissionCreateBase):
+class LegacySubmissionCreate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, SubmissionCreateBase
+):
     form_class = LegacySubmissionForm
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -230,25 +268,23 @@ class LegacySubmissionCreate(UserIsChallengeAdminMixin, SubmissionCreateBase):
         return kwargs
 
 
-class SubmissionList(UserIsChallengeParticipantOrAdminMixin, ListView):
+class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Submission
+    permission_required = "view_submission"
+    login_url = reverse_lazy("userena_signin")
 
     def get_queryset(self):
-        """Admins see everything, participants just their submissions."""
         queryset = super().get_queryset()
-        challenge = self.request.challenge
-        if challenge.is_admin(self.request.user):
-            return queryset.filter(phase__challenge=self.request.challenge)
-        else:
-            return queryset.filter(
-                Q(phase__challenge=self.request.challenge),
-                Q(creator__pk=self.request.user.pk),
-            )
+        return queryset.filter(phase__challenge=self.request.challenge)
 
 
-class SubmissionDetail(UserIsChallengeAdminMixin, DetailView):
-    # TODO - if participant: list only their submissions
+class SubmissionDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = Submission
+    permission_required = "view_submission"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
 
 
 class TeamContextMixin:
@@ -276,20 +312,21 @@ class TeamContextMixin:
 
 
 class EvaluationList(
-    UserIsChallengeParticipantOrAdminMixin, TeamContextMixin, ListView
+    LoginRequiredMixin, PermissionListMixin, TeamContextMixin, ListView
 ):
     model = Evaluation
+    permission_required = "view_evaluation"
+    login_url = reverse_lazy("userena_signin")
 
     def get_queryset(self):
-        """Admins see everything, participants just their evaluations."""
-        challenge = self.request.challenge
-
         queryset = super().get_queryset()
-        queryset = queryset.select_related(
+        queryset = queryset.filter(
+            submission__phase__challenge=self.request.challenge
+        ).select_related(
             "submission__creator__user_profile", "submission__phase__challenge"
-        ).filter(submission__phase__challenge=challenge)
+        )
 
-        if challenge.is_admin(self.request.user):
+        if self.request.challenge.is_admin(self.request.user):
             return queryset
         else:
             return queryset.filter(
@@ -297,9 +334,10 @@ class EvaluationList(
             )
 
 
-class EvaluationDetail(DetailView):
-    # TODO - if participant: list only their evaluations
+class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
     model = Evaluation
+    permission_required = "view_evaluation"
+    raise_exception = True
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -331,11 +369,14 @@ class LeaderboardRedirect(RedirectView):
         )
 
 
-class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
+class LeaderboardDetail(
+    PermissionListMixin, TeamContextMixin, PaginatedTableListView
+):
     model = Evaluation
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
+    permission_required = "view_evaluation"
 
     @cached_property
     def phase(self):
@@ -424,8 +465,8 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
         context.update({"phase": self.phase})
         return context
 
-    def get_unfiltered_queryset(self):
-        queryset = super().get_queryset()
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs)
         queryset = self.filter_by_date(queryset=queryset)
         queryset = (
             queryset.select_related(
@@ -459,8 +500,14 @@ class LeaderboardDetail(TeamContextMixin, PaginatedTableListView):
 
 
 class EvaluationUpdate(
-    UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
 ):
     model = Evaluation
     fields = ("published",)
     success_message = "Result successfully updated."
+    permission_required = "change_evaluation"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
