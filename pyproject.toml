@@ -34,7 +34,6 @@ gunicorn = "*"
 uvicorn = "*"
 django-celery-email = "*"
 simpleitk = "*"
-django-favicon-plus = "*"
 "psycopg2" = "*"
 "django-select2" = "*"
 django-celery-results = "*"
@@ -54,7 +53,6 @@ django-simple-history = "*"
 sentry-sdk = "*"
 django-cors-headers = "*"
 pyvips = "*"
-django-speedinfo = "*"
 drf-yasg = {version = "*", extras = ["validation"]}
 pydicom = "*"
 scikit-learn = "*"
@@ -70,6 +68,7 @@ prometheus_client = "*"
 openslide-python = "*"
 humanize = "*"
 disposable-email-domains = "*"
+docutils = "<0.16" # Required for boto3 depedency resolution
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

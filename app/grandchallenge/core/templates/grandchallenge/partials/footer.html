@@ -27,28 +27,19 @@
                 <ul class="list-unstyled">
                     {% for policy in policy_pages %}
                         <li class="my-1"><a class="text-muted"
-                               href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
+                                            href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
                         </li>
                     {% endfor %}
                 </ul>
             </div>
             <div class="col-sm-6 col-md-3 p-3">
-                <h6>OpenAPI</h6>
+                <h6>Blog Posts</h6>
                 <ul class="list-unstyled">
-                    <li class="my-1">
-                        <a class="text-muted"
-                           href="{% url 'api:schema-docs' %}"
-                           title="The interactive documentation for the API.">
-                            Documentation
-                        </a>
-                    </li>
-                    <li class="my-1">
-                        <a class="text-muted"
-                           href="{% url 'api:schema-json' '.yaml' %}"
-                           title="The OpenAPI schema for the API.">
-                            Schema
-                        </a>
-                    </li>
+                    {% for post in blog_posts %}
+                        <li class="my-1"><a class="text-muted"
+                                            href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                        </li>
+                    {% endfor %}
                 </ul>
             </div>
             <div class="col-sm-6 col-md-3 p-3">
@@ -56,9 +47,23 @@
                 <ul class="list-unstyled">
                     <li class="my-1">
                         <a class="text-muted"
+                           href="{% url 'api:schema-docs' %}"
+                           title="The interactive documentation for the API.">
+                            API Documentation
+                        </a>
+                    </li>
+                    <li class="my-1">
+                        <a class="text-muted"
+                           href="{% url 'api:schema-json' '.yaml' %}"
+                           title="The OpenAPI schema for the API.">
+                            API Schema
+                        </a>
+                    </li>
+                    <li class="my-1">
+                        <a class="text-muted"
                            href="https://comic.github.io/grand-challenge.org/"
                            title="Read the developer documentation">
-                            Documentation
+                            Developer Documentation
                         </a>
                     </li>
                     <li class="my-1">

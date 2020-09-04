@@ -8,8 +8,8 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Workstation
-            Configs</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Viewer
+            Configurations</a></li>
         <li class="breadcrumb-item active" aria-current="page">{{ object.title }}
         </li>
     </ol>
@@ -18,7 +18,7 @@
 {% block content %}
     {% get_obj_perms request.user for object as "config_perms" %}
 
-    <h1>Workstation Config {{ object.title }}</h1>
+    <h1>Viewer Configuration {{ object.title }}</h1>
 
     {% if object.description %}
         <p>{{ object.description }}</p>
@@ -111,11 +111,11 @@
         <div class="d-flex justify-content-start align-items-center">
             <a class="btn btn-primary mr-1"
                href="{% url 'workstation-configs:update' slug=object.slug %}">
-                <i class="fa fa-edit"></i> Edit this workstation config
+                <i class="fa fa-edit"></i> Edit this viewer configuration
             </a>
             <a href="{% url 'workstation-configs:delete' slug=object.slug %}"
                class="btn btn-danger">
-                <i class="fa fa-times"></i> Delete this workstation config
+                <i class="fa fa-times"></i> Delete this viewer configuration
             </a>
         </div>
     {% endif %}

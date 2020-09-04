@@ -28,15 +28,14 @@
                 <th>ID</th>
                 <th>Created</th>
                 <th>Updated</th>
+                <th>Phase</th>
                 {% if "change_challenge" in challenge_perms %}
                     <th>User</th>
                 {% endif %}
                 <th>Status</th>
                 <th>Output</th>
                 <th>Position</th>
-                {% if challenge.evaluation_config.allow_submission_comments %}
-                    <th>Comment</th>
-                {% endif %}
+                <th>Comment</th>
                 {% if "change_challenge" in challenge_perms %}
                     <th>Hide/Publish</th>
                 {% endif %}
@@ -48,17 +47,19 @@
                     <td>{{ evaluation.id }}</td>
                     <td data-order="{{ evaluation.created|date:"U" }}">{{ evaluation.created }}</td>
                     <td data-order="{{ evaluation.modified|date:"U" }}">{{ evaluation.modified }}</td>
+                    <td>{{ evaluation.submission.phase.title }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
                             {{ evaluation.submission.creator|user_profile_link }}
 
-                            {% if challenge.evaluation_config.use_teams %}
-                                {% with evaluation|get_team_html as team_html %}
-                                    {% if team_html %}
-                                        ({{ team_html }})
+                            {% if challenge.use_teams %}
+                                {% with user_teams|get_key:evaluation.submission.creator.username as team %}
+                                    {% if team %}
+                                        (<a href="{{ team.1 }}">{{ team.0 }}</a>)
                                     {% endif %}
                                 {% endwith %}
                             {% endif %}
+
                         </td>
                     {% endif %}
                     <td>
@@ -99,9 +100,7 @@
                         {% endif %}
                     </td>
 
-                    {% if challenge.evaluation_config.allow_submission_comments %}
-                        <td>{{ evaluation.submission.comment }}</td>
-                    {% endif %}
+                    <td>{{ evaluation.submission.comment }}</td>
 
                     {% if "change_challenge" in challenge_perms %}
                         <td>

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Update The Workstation Image Settings -
+{% block title %}Update The Viewer Image Settings -
     {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Viewers</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ object.workstation.get_absolute_url }}">{{ object.workstation.title }}</a>
@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Update The Workstation Image Settings</h2>
+    <h2>Update The Viewer Image Settings</h2>
     <form action="" method="post">
         {% csrf_token %}
         {{ form | crispy }}

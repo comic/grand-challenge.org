@@ -29,10 +29,9 @@ def test_copy_challenge():
     site.save()
     src = ChallengeFactory(short_name="foo", use_evaluation=True)
     # toggle a boolean field
-    src.evaluation_config.show_publication_url = (
-        not src.evaluation_config.show_publication_url
-    )
-    src.evaluation_config.save()
+    phase = src.phase_set.get()
+    phase.show_publication_url = not phase.show_publication_url
+    phase.save()
 
     src.modalities.add(ImagingModalityFactory())
 
@@ -48,7 +47,7 @@ def test_copy_challenge():
         )
 
     assert Challenge.objects.count() == 1
-    assert Page.objects.count() == 3
+    assert Page.objects.count() == 5
 
     with pytest.raises(CommandError):
         call_command("copy_challenge", "foo", "fOo")
@@ -59,11 +58,11 @@ def test_copy_challenge():
     call_command("copy_challenge", "foo", "bar")
 
     assert Challenge.objects.count() == 2
-    assert Page.objects.count() == 6
+    assert Page.objects.count() == 10
 
     dest = Challenge.objects.get(short_name="bar")
 
-    for page in dest.page_set.all():
+    for page in dest.page_set.exclude(title="Contact").exclude(title="foo"):
         assert page.html == (
             '<p><a href="https://bar.foo.bar/test">test1</a>'
             '<a href="https://bar.foo.bar/test">test2</a>'
@@ -72,8 +71,8 @@ def test_copy_challenge():
         )
 
     assert (
-        dest.evaluation_config.show_publication_url
-        == src.evaluation_config.show_publication_url
+        dest.phase_set.get().show_publication_url
+        == src.phase_set.get().show_publication_url
     )
     assert {*dest.modalities.all()} == {*src.modalities.all()}
     assert {*dest.get_admins()} == {*src.get_admins()}

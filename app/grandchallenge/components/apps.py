@@ -22,6 +22,11 @@ def init_default_interfaces(*_, **__):
             "relative_path": "results.json",
         },
         {
+            "title": "Predictions JSON File",
+            "kind": ComponentInterface.Kind.JSON,
+            "relative_path": "predictions.json",
+        },
+        {
             "title": "Predictions CSV File",
             "kind": ComponentInterface.Kind.CSV,
             "relative_path": "predictions.csv",

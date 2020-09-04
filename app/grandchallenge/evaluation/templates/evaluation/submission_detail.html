@@ -1,5 +1,6 @@
 {% extends "challenge.html" %}
 {% load url %}
+{% load humanize %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -24,8 +25,11 @@
 
         <dt>Challenge</dt>
         <dd>
-            <a href="{{ object.challenge.get_absolute_url }}">{{ object.challenge.short_name }}</a>
+            <a href="{{ object.phase.challenge.get_absolute_url }}">{{ object.phase.challenge.short_name }}</a>
         </dd>
+
+        <dt>Phase</dt>
+        <dd>{{ object.phase.title }}</dd>
 
         <dt>Creator</dt>
         <dd>
@@ -37,10 +41,19 @@
             {{ object.comment }}
         </dd>
 
-        {% if "change_challenge" in challenge_perms %}
+        {% if object.algorithm_image %}
+            <dt>Algorithm</dt>
+            <dd>
+                <a href="{{ object.algorithm_image.get_absolute_url }}">
+                    Container for {{ object.algorithm_image.algorithm }} uploaded
+                    by {{ object.algorithm_image.creator }} {{ object.algorithm_image.created|naturaltime }}
+                </a></dd>
+        {% endif %}
+
+        {% if "change_challenge" in challenge_perms and object.predictions_file %}
             <dt>Submission File</dt>
             <dd>
-                <a href="{{ object.file.url }}">
+                <a href="{{ object.predictions_file.url }}">
                     <i class="fa fa-file"></i>
                     Download the submission file
                 </a>

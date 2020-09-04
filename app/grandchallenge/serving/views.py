@@ -8,29 +8,24 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 from grandchallenge.cases.models import Image
-from grandchallenge.core.storage import ProtectedS3Storage
+from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.serving.permissions import (
-    user_can_download_image,
-    user_can_download_submission,
-)
+from grandchallenge.serving.permissions import user_can_download_submission
 from grandchallenge.serving.tasks import create_download
 
 
 def protected_storage_redirect(*, name):
     # Get the storage with the internal redirect and auth. This will prepend
     # settings.PROTECTED_S3_STORAGE_KWARGS['endpoint_url'] to the url
-    storage = ProtectedS3Storage(internal=True)
-
-    if not storage.exists(name=name):
+    if not internal_protected_s3_storage.exists(name=name):
         raise Http404("File not found.")
 
     if settings.PROTECTED_S3_STORAGE_USE_CLOUDFRONT:
         response = HttpResponseRedirect(
-            storage.cloudfront_signed_url(name=name)
+            internal_protected_s3_storage.cloudfront_signed_url(name=name)
         )
     else:
-        url = storage.url(name=name)
+        url = internal_protected_s3_storage.url(name=name)
         response = HttpResponseRedirect(url)
 
     return response
@@ -53,7 +48,7 @@ def serve_images(request, *, pk, path, pa="", pb=""):
     except (AuthenticationFailed, TypeError):
         user = request.user
 
-    if user_can_download_image(user=user, image=image):
+    if user.has_perm("view_image", image):
         create_download.apply_async(
             kwargs={"creator_id": user.pk, "image_id": image.pk}
         )
@@ -75,6 +70,8 @@ def serve_submissions(request, *, submission_pk, **_):
                 "submission_id": submission.pk,
             }
         )
-        return protected_storage_redirect(name=submission.file.name)
+        return protected_storage_redirect(
+            name=submission.predictions_file.name
+        )
 
     raise PermissionDenied

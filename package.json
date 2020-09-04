@@ -14,8 +14,7 @@
     "blueimp-file-upload": "^9.31.0",
     "jquery.cookie": "^1.4.1",
     "mathjax": "^2.7.5",
-    "chart.js": "^2.7.2",
-    "lazysizes": "^4.1.5"
+    "chart.js": "^2.7.2"
   },
   "devDependencies": {
     "sass": "^1.25.0"

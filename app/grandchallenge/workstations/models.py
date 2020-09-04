@@ -92,7 +92,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
     def __str__(self):
         public = " (Public)" if self.public else ""
-        return f"Workstation {self.title}{public}"
+        return f"Viewer {self.title}{public}"
 
     def get_absolute_url(self):
         return reverse("workstations:detail", kwargs={"slug": self.slug})
@@ -210,7 +210,7 @@ class WorkstationImage(UUIDModel, ComponentImage):
         ordering = ("created", "creator")
 
     def __str__(self):
-        return f"Workstation Image {self.pk}"
+        return f"Viewer Image {self.pk}"
 
     def get_absolute_url(self):
         return reverse(
@@ -406,7 +406,7 @@ class Session(UUIDModel):
         """
         return Service(
             job_id=self.pk,
-            job_model=f"{self._meta.app_label}-{self._meta.model_name}",
+            job_class=Session,
             exec_image=self.workstation_image.image,
             exec_image_sha256=self.workstation_image.image_sha256,
         )

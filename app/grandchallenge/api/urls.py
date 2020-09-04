@@ -16,6 +16,7 @@ from grandchallenge.cases.views import (
     RawImageFileViewSet,
     RawImageUploadSessionViewSet,
 )
+from grandchallenge.evaluation.views.api import AlgorithmEvaluationViewSet
 from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
@@ -23,8 +24,10 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyViewSet,
 )
 from grandchallenge.retina_api.views import (
+    BooleanClassificationAnnotationViewSet,
     ImageLevelAnnotationsForImageViewSet,
     LandmarkAnnotationSetViewSet,
+    OctRetinaPathologyAnnotationViewSet,
     PathologyAnnotationViewSet,
     PolygonAnnotationSetViewSet,
     QualityAnnotationViewSet,
@@ -67,6 +70,13 @@ router.register(
 # Chunked uploads
 router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
+# Evaluations
+router.register(
+    r"evaluations/algorithms",
+    AlgorithmEvaluationViewSet,
+    basename="evaluations-algorithm-evaluation",
+)
+
 # Reader studies
 router.register(
     r"reader-studies/answers", AnswerViewSet, basename="reader-studies-answer"
@@ -105,6 +115,11 @@ router.register(
     basename="retina-retina-pathology-annotation",
 )
 router.register(
+    r"retina/oct-retina-pathology-annotation",
+    OctRetinaPathologyAnnotationViewSet,
+    basename="oct-retina-retina-pathology-annotation",
+)
+router.register(
     r"retina/text-annotation",
     TextAnnotationViewSet,
     basename="retina-text-annotation",
@@ -118,6 +133,11 @@ router.register(
     r"retina/single-polygon-annotation",
     SinglePolygonViewSet,
     basename="retina-single-polygon-annotation",
+)
+router.register(
+    r"retina/boolean-classification-annotation",
+    BooleanClassificationAnnotationViewSet,
+    basename="retina-boolean-classification-annotation",
 )
 
 # Workstations

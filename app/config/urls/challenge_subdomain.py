@@ -13,12 +13,6 @@ urlpatterns = [
         name="subdomain_robots_txt",
     ),
     path(
-        "",
-        include(
-            "grandchallenge.favicons.urls", namespace="subdomain-favicons"
-        ),
-    ),
-    path(
         "evaluation/",
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
     ),
@@ -28,10 +22,6 @@ urlpatterns = [
         include("grandchallenge.participants.urls", namespace="participants"),
     ),
     path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
-    path(
-        "datasets/",
-        include("grandchallenge.datasets.urls", namespace="datasets"),
-    ),
     path("update/", ChallengeUpdate.as_view(), name="update"),
     path("summernote/", include("django_summernote.urls")),
     path("", include("grandchallenge.pages.urls", namespace="pages")),

@@ -4,6 +4,7 @@ import uuid
 from datetime import timedelta
 from typing import Dict
 
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
@@ -137,11 +138,12 @@ def get_model_instance(*, pk, app_label, model_name):
 
 @shared_task
 def execute_job(
-    *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str
+    *_, job_pk: uuid.UUID, job_app_label: str, job_model_name: str
 ) -> dict:
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    Job = apps.get_model(  # noqa: N806
+        app_label=job_app_label, model_name=job_model_name
     )
+    job = Job.objects.get(pk=job_pk)
 
     if job.status in [job.PENDING, job.RETRY]:
         job.update_status(status=job.STARTED)
@@ -156,7 +158,7 @@ def execute_job(
     try:
         with job.executor_cls(
             job_id=str(job.pk),
-            job_model=f"{job_app_label}-{job_model_name}",
+            job_class=Job,
             input_files=job.input_files,
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
@@ -167,6 +169,11 @@ def execute_job(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
         job.update_status(status=job.FAILURE, output=str(e))
+    except (SoftTimeLimitExceeded, TimeLimitExceeded):
+        job = get_model_instance(
+            pk=job_pk, app_label=job_app_label, model_name=job_model_name
+        )
+        job.update_status(status=job.FAILURE, output="Time limit exceeded.")
     except Exception:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name

@@ -4,7 +4,7 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Workstation Configs</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'workstation-configs:list' %}">Viewer Configurations</a></li>
         {% if object %}
             <li class="breadcrumb-item"><a
                     href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
@@ -15,11 +15,11 @@
 {% endblock %}
 
 {% block title %}
-    {{ object|yesno:"Update,Create" }} Workstation Config - {{ block.super }}
+    {{ object|yesno:"Update,Create" }} Viewer Configuration - {{ block.super }}
 {% endblock %}
 
 {% block content %}
-    <h2>{{ object|yesno:"Update,Create" }} Workstation Config</h2>
+    <h2>{{ object|yesno:"Update,Create" }} Viewer Configuration</h2>
 
     {% crispy form %}
 {% endblock %}

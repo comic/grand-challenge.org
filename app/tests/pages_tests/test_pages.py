@@ -1,3 +1,5 @@
+from itertools import chain
+
 import pytest
 from django.db.models import BLANK_CHOICE_DASH
 
@@ -192,11 +194,6 @@ def test_page_delete(client, two_challenge_sets):
     assert response.status_code == 200
 
 
-def assert_page_order(pages, expected):
-    for page, order in zip(pages, expected):
-        assert Page.objects.get(pk=page.pk).order == order
-
-
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "page_to_move,move_op,expected",
@@ -211,9 +208,10 @@ def assert_page_order(pages, expected):
 def test_page_move(
     page_to_move, move_op, expected, client, two_challenge_sets
 ):
-    pages = []
-    c2_pages = []
-    for i in range(4):
+    pages = [*two_challenge_sets.challenge_set_1.challenge.page_set.all()]
+    c2_pages = [*two_challenge_sets.challenge_set_2.challenge.page_set.all()]
+
+    for i in range(2):
         pages.append(
             PageFactory(challenge=two_challenge_sets.challenge_set_1.challenge)
         )
@@ -221,11 +219,13 @@ def test_page_move(
         c2_pages.append(
             PageFactory(
                 challenge=two_challenge_sets.challenge_set_2.challenge,
-                title=pages[i].title,
+                title=pages[i + 2].title,
             )
         )
-    assert_page_order(pages, [1, 2, 3, 4])
-    assert_page_order(c2_pages, [1, 2, 3, 4])
+
+    assert [p.order for p in pages] == [1, 2, 3, 4]
+    assert [p.order for p in c2_pages] == [1, 2, 3, 4]
+
     response = get_view_for_user(
         viewname="pages:update",
         client=client,
@@ -240,9 +240,13 @@ def test_page_move(
             "move": move_op,
         },
     )
+
+    for p in chain(pages, c2_pages):
+        p.refresh_from_db()
+
     assert response.status_code == 302
-    assert_page_order(pages, expected)
-    assert_page_order(c2_pages, [1, 2, 3, 4])
+    assert [p.order for p in pages] == expected
+    assert [p.order for p in c2_pages] == [1, 2, 3, 4]
 
 
 @pytest.mark.django_db

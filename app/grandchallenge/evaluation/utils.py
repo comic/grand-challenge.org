@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from typing import Callable, Dict, Iterable, List, NamedTuple, Tuple
 
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
 )
@@ -15,6 +17,16 @@ class Positions(NamedTuple):
     ranks: Dict[str, float]
     rank_scores: Dict[str, float]
     rank_per_metric: Dict[str, Dict[str, float]]
+
+
+def get(inputs):
+    """Substitute for queryset.get when the qs already exists."""
+    if len(inputs) == 1:
+        return inputs[0]
+    elif len(inputs) == 0:
+        raise ObjectDoesNotExist
+    else:
+        raise MultipleObjectsReturned
 
 
 def rank_results(
@@ -50,7 +62,13 @@ def _filter_valid_results(
         for e in evaluations
         if all(
             get_jsonpath(
-                e.outputs.get(interface__slug="metrics-json-file").value,
+                get(
+                    [
+                        o.value
+                        for o in e.outputs.all()
+                        if o.interface.slug == "metrics-json-file"
+                    ]
+                ),
                 m.path,
             )
             not in ["", None]
@@ -75,7 +93,13 @@ def _get_rank_per_metric(
         # value of the metric
         metric_scores = {
             e.pk: get_jsonpath(
-                e.outputs.get(interface__slug="metrics-json-file").value,
+                get(
+                    [
+                        o.value
+                        for o in e.outputs.all()
+                        if o.interface.slug == "metrics-json-file"
+                    ]
+                ),
                 metric.path,
             )
             for e in evaluations

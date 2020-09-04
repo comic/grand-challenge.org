@@ -1,13 +1,24 @@
+from json import dumps
 from pathlib import Path
 
+from celery import group
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
 from django.db.models import BooleanField
-from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
+from django_extensions.db.fields import AutoSlugField
+from guardian.shortcuts import assign_perm, remove_perm
 
+from grandchallenge.algorithms.models import (
+    AlgorithmExecutor,
+    AlgorithmImage,
+    DEFAULT_INPUT_INTERFACE_SLUG,
+)
+from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
 from grandchallenge.components.models import (
@@ -24,16 +35,15 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
     get_file_mimetype,
 )
-from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
     send_successful_evaluation_email,
 )
-from grandchallenge.evaluation.tasks import calculate_ranks
-from grandchallenge.subdomains.utils import reverse
-from grandchallenge.submission_conversion.models import (
-    SubmissionToAnnotationSetJob,
+from grandchallenge.evaluation.tasks import (
+    calculate_ranks,
+    set_evaluation_inputs,
 )
+from grandchallenge.subdomains.utils import reverse
 
 EXTRA_RESULT_COLUMNS_SCHEMA = {
     "definitions": {},
@@ -85,7 +95,7 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
 }
 
 
-class Config(UUIDModel):
+class Phase(UUIDModel):
     # This must match the syntax used in jquery datatables
     # https://datatables.net/reference/option/order
     ASCENDING = "asc"
@@ -128,19 +138,30 @@ class Config(UUIDModel):
         ),
     )
 
-    challenge = models.OneToOneField(
-        Challenge,
-        on_delete=models.CASCADE,
-        related_name="evaluation_config",
-        editable=False,
+    class SubmissionKind(models.IntegerChoices):
+        CSV = 1, "CSV"
+        ZIP = 2, "ZIP"
+        ALGORITHM = 3, "Algorithm"
+
+    challenge = models.ForeignKey(
+        Challenge, on_delete=models.CASCADE, editable=False,
     )
-    use_teams = models.BooleanField(
-        default=False,
+    archive = models.ForeignKey(
+        Archive,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         help_text=(
-            "If true, users are able to form teams together to participate in "
-            "challenges."
+            "Which archive should be used as the source dataset for this "
+            "phase?"
         ),
     )
+    title = models.CharField(
+        max_length=64,
+        help_text="The title of this phase.",
+        default="Challenge",
+    )
+    slug = AutoSlugField(populate_from="title", max_length=64)
     score_title = models.CharField(
         max_length=32,
         blank=False,
@@ -201,6 +222,14 @@ class Config(UUIDModel):
         choices=RESULT_DISPLAY_CHOICES,
         default=ALL,
         help_text=("Which results should be displayed on the leaderboard?"),
+    )
+    submission_kind = models.PositiveSmallIntegerField(
+        default=SubmissionKind.CSV,
+        choices=SubmissionKind.choices,
+        help_text=(
+            "Should participants submit a .csv/.zip file of predictions, "
+            "or an algorithm?"
+        ),
     )
     allow_submission_comments = models.BooleanField(
         default=False,
@@ -268,12 +297,27 @@ class Config(UUIDModel):
         default=False,
         help_text=("Show a link to the publication on the results page"),
     )
-
     daily_submission_limit = models.PositiveIntegerField(
         default=10,
         help_text=(
             "The limit on the number of times that a user can make a "
             "submission in a 24 hour period."
+        ),
+    )
+    submissions_open = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=(
+            "If set, participants will not be able to make submissions to "
+            "this phase before this time."
+        ),
+    )
+    submissions_close = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=(
+            "If set, participants will not be able to make submissions to "
+            "this phase after this time."
         ),
     )
     submission_page_html = models.TextField(
@@ -313,6 +357,16 @@ class Config(UUIDModel):
         to=ComponentInterface, related_name="evaluation_outputs"
     )
 
+    class Meta:
+        unique_together = (
+            ("challenge", "title"),
+            ("challenge", "slug"),
+        )
+        ordering = ("challenge", "submissions_open", "created")
+
+    def __str__(self):
+        return f"{self.title} Evaluation for {self.challenge.short_name}"
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -320,8 +374,9 @@ class Config(UUIDModel):
 
         if adding:
             self.set_default_interfaces()
+            self.assign_permissions()
 
-        calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
+        calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
 
     def set_default_interfaces(self):
         self.inputs.set(
@@ -330,6 +385,10 @@ class Config(UUIDModel):
         self.outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
+
+    def assign_permissions(self):
+        assign_perm("view_phase", self.challenge.admins_group, self)
+        assign_perm("change_phase", self.challenge.admins_group, self)
 
     def get_absolute_url(self):
         return reverse(
@@ -342,7 +401,7 @@ def method_image_path(instance, filename):
     """Deprecated: only used in a migration."""
     return (
         f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
-        f"{instance.challenge.pk}/"
+        f"{instance.phase.challenge.pk}/"
         f"methods/"
         f"{instance.pk}/"
         f"{filename}"
@@ -352,14 +411,25 @@ def method_image_path(instance, filename):
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("view_method", self.phase.challenge.admins_group, self)
 
     def get_absolute_url(self):
         return reverse(
             "evaluation:method-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.phase.challenge.short_name,
             },
         )
 
@@ -368,7 +438,7 @@ def submission_file_path(instance, filename):
     # Must match the protected serving url
     return (
         f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
-        f"{instance.challenge.pk}/"
+        f"{instance.phase.challenge.pk}/"
         f"submissions/"
         f"{instance.creator.pk}/"
         f"{instance.pk}/"
@@ -379,7 +449,7 @@ def submission_file_path(instance, filename):
 def submission_supplementary_file_path(instance, filename):
     return (
         f"evaluation-supplementary/"
-        f"{instance.challenge.pk}/"
+        f"{instance.phase.challenge.pk}/"
         f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
     )
@@ -391,14 +461,18 @@ class Submission(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE)
-    file = models.FileField(
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
+    algorithm_image = models.ForeignKey(
+        AlgorithmImage, null=True, on_delete=models.SET_NULL
+    )
+    predictions_file = models.FileField(
         upload_to=submission_file_path,
         validators=[
             MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
             ExtensionValidator(allowed_extensions=(".zip", ".csv")),
         ],
         storage=protected_s3_storage,
+        blank=True,
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
@@ -424,6 +498,9 @@ class Submission(UUIDModel):
         ),
     )
 
+    class Meta:
+        unique_together = (("phase", "predictions_file", "algorithm_image"),)
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -431,14 +508,11 @@ class Submission(UUIDModel):
 
         if adding:
             self.create_evaluation()
+            self.assign_permissions()
 
-            # Convert this submission to an annotation set
-            base = ImageSet.objects.get(
-                challenge=self.challenge, phase=ImageSet.TESTING
-            )
-            SubmissionToAnnotationSetJob.objects.create(
-                base=base, submission=self
-            )
+    def assign_permissions(self):
+        assign_perm("view_submission", self.phase.challenge.admins_group, self)
+        assign_perm("view_submission", self.creator, self)
 
     def create_evaluation(self):
         method = self.latest_ready_method
@@ -447,39 +521,68 @@ class Submission(UUIDModel):
             # TODO Email admins
             return
 
-        e = Evaluation.objects.create(
-            submission=self, method=self.latest_ready_method
-        )
+        evaluation = Evaluation.objects.create(submission=self, method=method)
 
-        mimetype = get_file_mimetype(self.file)
+        if self.algorithm_image:
+            default_input_interface = ComponentInterface.objects.get(
+                slug=DEFAULT_INPUT_INTERFACE_SLUG
+            )
 
-        if mimetype == "application/zip":
-            interface = ComponentInterface.objects.get(
-                slug="predictions-zip-file"
-            )
-        elif mimetype == "text/plain":
-            interface = ComponentInterface.objects.get(
-                slug="predictions-csv-file"
-            )
+            jobs = []
+
+            for image in self.phase.archive.images.all():
+                if not ComponentInterfaceValue.objects.filter(
+                    interface=default_input_interface,
+                    image=image,
+                    evaluation_algorithmevaluations_as_input__submission=self,
+                ).exists():
+                    j = AlgorithmEvaluation.objects.create(submission=self)
+                    j.inputs.set(
+                        [
+                            ComponentInterfaceValue.objects.create(
+                                interface=default_input_interface, image=image
+                            )
+                        ]
+                    )
+                    jobs.append(j.signature)
+
+            if jobs:
+                (
+                    group(*jobs)
+                    | set_evaluation_inputs.signature(
+                        kwargs={"evaluation_pk": evaluation.pk}
+                    )
+                ).apply_async()
+
         else:
-            raise NotImplementedError(
-                f"Interface is not defined for {mimetype} files"
-            )
+            mimetype = get_file_mimetype(self.predictions_file)
 
-        e.inputs.set(
-            [
-                ComponentInterfaceValue.objects.create(
-                    interface=interface, file=self.file
+            if mimetype == "application/zip":
+                interface = ComponentInterface.objects.get(
+                    slug="predictions-zip-file"
                 )
-            ]
-        )
+            elif mimetype == "text/plain":
+                interface = ComponentInterface.objects.get(
+                    slug="predictions-csv-file"
+                )
+            else:
+                raise NotImplementedError(
+                    f"Interface is not defined for {mimetype} files"
+                )
 
-        e.schedule_job()
+            evaluation.inputs.set(
+                [
+                    ComponentInterfaceValue.objects.create(
+                        interface=interface, file=self.predictions_file
+                    )
+                ]
+            )
+            evaluation.signature.apply_async()
 
     @property
     def latest_ready_method(self):
         return (
-            Method.objects.filter(challenge=self.challenge, ready=True)
+            Method.objects.filter(phase=self.phase, ready=True)
             .order_by("-created")
             .first()
         )
@@ -489,9 +592,60 @@ class Submission(UUIDModel):
             "evaluation:submission-detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.phase.challenge.short_name,
             },
         )
+
+
+class AlgorithmEvaluation(ComponentJob):
+    id = models.BigAutoField(primary_key=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm(
+            "view_algorithmevaluation",
+            self.submission.phase.challenge.admins_group,
+            self,
+        )
+
+    @property
+    def container(self):
+        return self.submission.algorithm_image
+
+    @property
+    def input_files(self):
+        return [
+            im.file
+            for inpt in self.inputs.all()
+            for im in inpt.image.files.all()
+        ]
+
+    @property
+    def executor_cls(self):
+        return AlgorithmExecutor
+
+    def create_result(self, *, result: dict):
+        interface = ComponentInterface.objects.get(slug="results-json-file")
+
+        try:
+            output_civ = self.outputs.get(interface=interface)
+            output_civ.value = result
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=result
+            )
+            self.outputs.add(output_civ)
 
 
 class SubmissionEvaluator(Executor):
@@ -505,8 +659,11 @@ class SubmissionEvaluator(Executor):
             dest_file = "/tmp/submission-src"
             put_file(container=writer, src=file, dest=dest_file)
 
-            with file.open("rb") as f:
-                mimetype = get_file_mimetype(f)
+            if hasattr(file, "content_type"):
+                mimetype = file.content_type
+            else:
+                with file.open("rb") as f:
+                    mimetype = get_file_mimetype(f)
 
             if mimetype.lower() == "application/zip":
                 # Unzip the file in the container rather than in the python
@@ -534,6 +691,9 @@ class SubmissionEvaluator(Executor):
                         f'&& rm -r /input/{input_files[0]}/"'
                     )
 
+            elif mimetype.lower() == "application/json":
+                writer.exec_run(f"mv {dest_file} /input/predictions.json")
+
             else:
                 # Not a zip file, so must be a csv
                 writer.exec_run(f"mv {dest_file} /input/submission.csv")
@@ -560,21 +720,41 @@ class Evaluation(UUIDModel, ComponentJob):
         adding = self._state.adding
 
         if adding:
-            self.published = (
-                self.challenge.evaluation_config.auto_publish_new_results
-            )
+            self.published = self.submission.phase.auto_publish_new_results
 
         super().save(*args, **kwargs)
 
-        calculate_ranks.apply_async(kwargs={"challenge_pk": self.challenge.pk})
+        self.assign_permissions()
 
-    @cached_property
-    def challenge(self):
-        return self.submission.challenge
+        calculate_ranks.apply_async(
+            kwargs={"phase_pk": self.submission.phase.pk}
+        )
 
-    @cached_property
-    def creator(self):
-        return self.submission.creator
+    def assign_permissions(self):
+        admins_group = self.submission.phase.challenge.admins_group
+
+        assign_perm("view_evaluation", admins_group, self)
+        assign_perm("change_evaluation", admins_group, self)
+
+        if self.submission.phase.challenge.hidden:
+            viewer_group = self.submission.phase.challenge.participants_group
+            non_viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
+        else:
+            viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
+            non_viewer_group = (
+                self.submission.phase.challenge.participants_group
+            )
+
+        if self.published:
+            assign_perm("view_evaluation", viewer_group, self)
+        else:
+            remove_perm("view_evaluation", viewer_group, self)
+
+        remove_perm("view_evaluation", non_viewer_group, self)
 
     @property
     def container(self):
@@ -582,7 +762,20 @@ class Evaluation(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
-        return [inpt.file for inpt in self.inputs.all()]
+        try:
+            return [
+                SimpleUploadedFile(
+                    "predictions.json",
+                    dumps(
+                        self.inputs.get(
+                            interface__title="Predictions JSON File"
+                        ).value
+                    ).encode("utf-8"),
+                    content_type="application/json",
+                )
+            ]
+        except ObjectDoesNotExist:
+            return [inpt.file for inpt in self.inputs.all()]
 
     @property
     def executor_cls(self):
@@ -603,12 +796,12 @@ class Evaluation(UUIDModel, ComponentJob):
             send_successful_evaluation_email(self)
 
     def clean(self):
-        if self.submission.challenge != self.method.challenge:
+        if self.submission.phase != self.method.phase:
             raise ValidationError(
-                "The submission and method challenges should"
+                "The submission and method phases should"
                 "be the same. You are trying to evaluate a"
-                f"submission for {self.submission.challenge}"
-                f"with a method for {self.method.challenge}"
+                f"submission for {self.submission.phase}"
+                f"with a method for {self.method.phase}"
             )
 
         super().clean()
@@ -626,18 +819,6 @@ class Evaluation(UUIDModel, ComponentJob):
             "evaluation:detail",
             kwargs={
                 "pk": self.pk,
-                "challenge_short_name": self.challenge.short_name,
+                "challenge_short_name": self.submission.phase.challenge.short_name,
             },
         )
-
-
-def result_screenshot_path(instance, filename):
-    # Used in a migration so cannot delete
-    return (
-        f"evaluation/"
-        f"{instance.challenge.pk}/"
-        f"screenshots/"
-        f"{instance.result.pk}/"
-        f"{instance.pk}/"
-        f"{filename}"
-    )

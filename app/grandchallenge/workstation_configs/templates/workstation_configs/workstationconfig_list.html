@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% load url %}
 
-{% block title %}Workstation Configurations - {{ block.super }}{% endblock %}
+{% block title %}Viewer Configurations - {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item active" aria-current="page">Workstation Configurations
+        <li class="breadcrumb-item active" aria-current="page">Viewer Configurations
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Workstation Configurations</h2>
+    <h2>Viewer Configurations</h2>
 
     <div class="card-columns">
         {% for config in object_list %}
@@ -34,13 +34,13 @@
                     </div>
                     <a href="{{ config.get_absolute_url }}"
                        class="btn btn-primary"
-                       title="View Workstation Config">
+                       title="View Viewer Configuration">
                         <i class="fa fa-eye"></i> View
                     </a>
                 </div>
             </div>
         {% empty %}
-            <p>No workstation configs available.</p>
+            <p>No viewer configurations available.</p>
         {% endfor %}
     </div>
 
@@ -48,7 +48,7 @@
         <p class="mt-3">
             <a class="btn btn-primary"
                href="{% url 'workstation-configs:create' %}">
-                <i class="fas fa-plus"></i> Add a new Workstation Config
+                <i class="fas fa-plus"></i> Add a new Viewer Configuration
             </a>
         </p>
     {% endif %}

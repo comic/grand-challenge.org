@@ -27,7 +27,12 @@ from grandchallenge.challenges.models import (
     TaskType,
 )
 from grandchallenge.core.storage import public_s3_storage
-from grandchallenge.evaluation.models import Evaluation, Method, Submission
+from grandchallenge.evaluation.models import (
+    Evaluation,
+    Method,
+    Phase,
+    Submission,
+)
 from grandchallenge.overview_pages.models import OverviewPage
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -152,6 +157,7 @@ class Command(BaseCommand):
 
         add_archive_perm = Permission.objects.get(codename="add_archive")
         self.users["archive"].user_permissions.add(add_archive_perm)
+        self.users["demo"].user_permissions.add(add_archive_perm)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
@@ -187,38 +193,42 @@ class Command(BaseCommand):
             challenge=demo, title="adm", permission_level="ADM"
         )
 
-        method = Method(challenge=demo, creator=self.users["demo"])
-        container = ContentFile(base64.b64decode(b""))
-        method.image.save("test.tar", container)
-        method.save()
+        Phase.objects.create(challenge=demo, title="Phase 2")
 
-        submission = Submission(challenge=demo, creator=self.users["demop"])
-        content = ContentFile(base64.b64decode(b""))
-        submission.file.save("test.csv", content)
-        submission.save()
+        for phase_num, phase in enumerate(demo.phase_set.all()):
+            phase.score_title = "Accuracy ± std"
+            phase.score_jsonpath = "acc.mean"
+            phase.score_error_jsonpath = "acc.std"
+            phase.extra_results_columns = [
+                {
+                    "title": "Dice ± std",
+                    "path": "dice.mean",
+                    "error_path": "dice.std",
+                    "order": "desc",
+                }
+            ]
+            phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.save()
 
-        e = Evaluation.objects.create(
-            submission=submission, method=method, status=Evaluation.SUCCESS
-        )
-        e.create_result(
-            result={
-                "acc": {"mean": 0.5, "std": 0.1},
-                "dice": {"mean": 0.71, "std": 0.05},
-            }
-        )
+            method = Method(phase=phase, creator=self.users["demo"])
+            container = ContentFile(base64.b64decode(b""))
+            method.image.save("test.tar", container)
+            method.save()
 
-        demo.evaluation_config.score_title = "Accuracy ± std"
-        demo.evaluation_config.score_jsonpath = "acc.mean"
-        demo.evaluation_config.score_error_jsonpath = "acc.std"
-        demo.evaluation_config.extra_results_columns = [
-            {
-                "title": "Dice ± std",
-                "path": "dice.mean",
-                "error_path": "dice.std",
-                "order": "desc",
-            }
-        ]
-        demo.evaluation_config.save()
+            submission = Submission(phase=phase, creator=self.users["demop"])
+            content = ContentFile(base64.b64decode(b""))
+            submission.predictions_file.save("test.csv", content)
+            submission.save()
+
+            e = Evaluation.objects.create(
+                submission=submission, method=method, status=Evaluation.SUCCESS
+            )
+            e.create_result(
+                result={
+                    "acc": {"mean": 0.1 * phase_num, "std": 0.1},
+                    "dice": {"mean": 0.71, "std": 0.05},
+                }
+            )
 
     def _create_external_challenge(self):
         ex_challenge = ExternalChallenge.objects.create(
@@ -289,7 +299,9 @@ class Command(BaseCommand):
         algorithm = Algorithm.objects.create(
             title="Test Algorithm", logo=get_temporary_image()
         )
-        algorithm.editors_group.user_set.add(self.users["algorithm"])
+        algorithm.editors_group.user_set.add(
+            self.users["algorithm"], self.users["demo"]
+        )
         algorithm.users_group.user_set.add(self.users["algorithmuser"])
 
         algorithm_image = AlgorithmImage(

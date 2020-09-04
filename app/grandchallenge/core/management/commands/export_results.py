@@ -29,8 +29,8 @@ class Command(BaseCommand):
                 "created": j.created.isoformat(),
                 "submission": str(j.submission.pk),
                 "submission_comment": j.submission.comment,
-                "submission_file": j.submission.file.url
-                if j.submission.file
+                "submission_file": j.submission.predictions_file.url
+                if j.submission.predictions_file
                 else None,
                 "supplementary_file": j.submission.supplementary_file.url
                 if j.submission.supplementary_file

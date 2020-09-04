@@ -1,9 +1,7 @@
 User-agent: *
-Disallow: /accounts/
 Disallow: /admins/
 Disallow: /api/
 Disallow: /cases/
-Disallow: /datasets/
 Disallow: /media/
 Disallow: /participants/
 Disallow: /registrations/
@@ -12,6 +10,7 @@ Disallow: /socialauth/
 Disallow: /static/
 Disallow: /summernote/
 Disallow: /update/
+Disallow: /users/
 Disallow: /workstations/*/sessions/
 
 User-agent: AhrefsBot

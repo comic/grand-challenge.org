@@ -32,9 +32,7 @@ class WorkstationConfigList(LoginRequiredMixin, ListView):
     model = WorkstationConfig
 
 
-class WorkstationConfigCreate(
-    LoginRequiredMixin, PermissionRequiredMixin, CreateView
-):
+class WorkstationConfigCreate(PermissionRequiredMixin, CreateView):
     model = WorkstationConfig
     form_class = WorkstationConfigForm
     permission_required = f"{WorkstationConfig._meta.app_label}.add_{WorkstationConfig._meta.model_name}"

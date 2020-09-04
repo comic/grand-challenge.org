@@ -8,6 +8,7 @@ from django.views.generic import TemplateView
 
 from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
 from grandchallenge.archives.sitemaps import ArchivesSitemap
+from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
 from grandchallenge.core.views import HomeTemplate
@@ -29,6 +30,7 @@ def handler500(request):
 sitemaps = {
     "algorithms": AlgorithmsSitemap,
     "archives": ArchivesSitemap,
+    "blogs": PostsSitemap,
     "challenges": ChallengesSitemap,
     "companies": CompaniesSitemap,
     "core": CoreSitemap,
@@ -54,7 +56,6 @@ urlpatterns = [
         {"sitemaps": sitemaps},
         name="django.contrib.sitemaps.views.sitemap",
     ),
-    path("", include("grandchallenge.favicons.urls", namespace="favicons")),
     path(settings.ADMIN_URL, admin.site.urls),
     path(
         "stats/",
@@ -66,7 +67,7 @@ urlpatterns = [
     # Used for logging in and managing grandchallenge.profiles. This is done on
     # the framework level because it is too hard to get this all under each
     # project
-    path("accounts/", include("grandchallenge.profiles.urls")),
+    path("users/", include("grandchallenge.profiles.urls")),
     path("socialauth/", include("social_django.urls", namespace="social")),
     path(
         "challenges/",
@@ -82,7 +83,7 @@ urlpatterns = [
         include("grandchallenge.archives.urls", namespace="archives"),
     ),
     path(
-        "workstations/",
+        "viewers/",
         include("grandchallenge.workstations.urls", namespace="workstations"),
     ),
     path(
@@ -92,7 +93,7 @@ urlpatterns = [
         ),
     ),
     path(
-        "workstation-configurations/",
+        "viewer-configurations/",
         include(
             "grandchallenge.workstation_configs.urls",
             namespace="workstation-configs",
@@ -121,6 +122,7 @@ urlpatterns = [
     path(
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
+    path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs"),),
     path(
         "",
         include(

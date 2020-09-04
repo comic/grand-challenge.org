@@ -5,7 +5,6 @@ from grandchallenge.algorithms.views import (
     AlgorithmDetail,
     AlgorithmExecutionSessionCreate,
     AlgorithmExecutionSessionDetail,
-    AlgorithmExecutionSessionList,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
     AlgorithmImageUpdate,
@@ -52,11 +51,6 @@ urlpatterns = [
         "<slug>/experiments/create/",
         AlgorithmExecutionSessionCreate.as_view(),
         name="execution-session-create",
-    ),
-    path(
-        "<slug>/experiments/",
-        AlgorithmExecutionSessionList.as_view(),
-        name="execution-session-list",
     ),
     path(
         "<slug>/experiments/<uuid:pk>/",

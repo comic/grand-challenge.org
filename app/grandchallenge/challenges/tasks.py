@@ -15,7 +15,7 @@ def update_challenge_results_cache():
         }
 
         challenge_results = Evaluation.objects.filter(
-            submission__challenge=c, published=True
+            submission__phase__challenge=c, published=True
         ).order_by("-created")
 
         try:

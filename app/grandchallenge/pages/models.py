@@ -7,7 +7,6 @@ from django.template.loader import render_to_string
 from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
 from grandchallenge.pages.substitutions import Substitution
@@ -35,7 +34,7 @@ class Page(models.Model):
 
     title = models.SlugField(max_length=64, blank=False)
     challenge = models.ForeignKey(
-        Challenge,
+        "challenges.Challenge",
         help_text="Which challenge does this page belong to?",
         on_delete=models.CASCADE,
     )

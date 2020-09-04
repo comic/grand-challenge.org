@@ -14,12 +14,14 @@ from grandchallenge.annotations.models import (
     PolygonAnnotationSet,
 )
 from grandchallenge.annotations.serializers import (
+    BooleanClassificationAnnotationSerializer,
     ETDRSGridAnnotationSerializer,
     ImagePathologyAnnotationSerializer,
     ImageQualityAnnotationSerializer,
     ImageTextAnnotationSerializer,
     LandmarkAnnotationSetSerializer,
     NestedPolygonAnnotationSetSerializer,
+    OctRetinaImagePathologyAnnotationSerializer,
     PolygonAnnotationSetSerializer,
     RetinaImagePathologyAnnotationSerializer,
     SinglePolygonAnnotationSerializer,
@@ -29,6 +31,7 @@ from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
 )
 from grandchallenge.retina_api.views import (
+    BooleanClassificationAnnotationViewSet,
     ETDRSGridAnnotationViewSet,
     GradersWithPolygonAnnotationsListView,
     ImageLevelAnnotationsForImageViewSet,
@@ -40,6 +43,7 @@ from grandchallenge.retina_api.views import (
     LegacyPolygonAnnotationSetViewSet,
     LegacySinglePolygonViewSet,
     OctObsRegistrationRetrieve,
+    OctRetinaPathologyAnnotationViewSet,
     PathologyAnnotationViewSet,
     PolygonAnnotationSetViewSet,
     PolygonListView,
@@ -51,11 +55,13 @@ from grandchallenge.retina_api.views import (
 )
 from grandchallenge.subdomains.utils import reverse
 from tests.annotations_tests.factories import (
+    BooleanClassificationAnnotationFactory,
     ETDRSGridAnnotationFactory,
     ImagePathologyAnnotationFactory,
     ImageQualityAnnotationFactory,
     ImageTextAnnotationFactory,
     LandmarkAnnotationSetFactory,
+    OctRetinaImagePathologyAnnotationFactory,
     PolygonAnnotationSetFactory,
     RetinaImagePathologyAnnotationFactory,
     SinglePolygonAnnotationFactory,
@@ -1559,6 +1565,13 @@ class TestETDRSAnnotationViewSet:
             False,
         ),
         (
+            OctRetinaPathologyAnnotationViewSet,
+            OctRetinaImagePathologyAnnotationFactory,
+            OctRetinaImagePathologyAnnotationSerializer,
+            "oct-retina-retina-pathology-annotation",
+            False,
+        ),
+        (
             TextAnnotationViewSet,
             ImageTextAnnotationFactory,
             ImageTextAnnotationSerializer,
@@ -1570,6 +1583,13 @@ class TestETDRSAnnotationViewSet:
             PolygonAnnotationSetFactory,
             NestedPolygonAnnotationSetSerializer,
             "retina-polygon-annotation-set",
+            False,
+        ),
+        (
+            BooleanClassificationAnnotationViewSet,
+            BooleanClassificationAnnotationFactory,
+            BooleanClassificationAnnotationSerializer,
+            "retina-boolean-classification-annotation",
             False,
         ),
     ),
@@ -2301,6 +2321,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": None,
                 "pathology": None,
                 "retina_pathology": None,
+                "oct_retina_pathology": None,
                 "text": None,
             }
 
@@ -2316,6 +2337,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": None,
                 "pathology": None,
                 "retina_pathology": None,
+                "oct_retina_pathology": None,
                 "text": None,
             }
 
@@ -2332,6 +2354,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": None,
                 "pathology": None,
                 "retina_pathology": None,
+                "oct_retina_pathology": None,
                 "text": None,
             }
 
@@ -2349,6 +2372,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": None,
                 "pathology": None,
                 "retina_pathology": None,
+                "oct_retina_pathology": None,
                 "text": None,
             }
         elif user_type == "retina_grader":
@@ -2357,6 +2381,7 @@ class TestImageLevelAnnotationsForImageViewSet:
                 "quality": annotations["quality"].id,
                 "pathology": annotations["pathology"].id,
                 "retina_pathology": annotations["retina_pathology"].id,
+                "oct_retina_pathology": annotations["oct_retina_pathology"].id,
                 "text": annotations["text"].id,
             }
         else:

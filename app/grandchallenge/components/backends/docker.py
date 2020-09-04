@@ -14,11 +14,14 @@ from typing import Tuple
 import docker
 from django.conf import settings
 from django.core.files import File
+from django.db.models import Model
 from docker.api.container import ContainerApiMixin
 from docker.errors import APIError, ContainerError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
+
+MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
 
 
 class ComponentException(Exception):
@@ -35,13 +38,14 @@ class DockerConnection:
         self,
         *,
         job_id: str,
-        job_model: str,
+        job_class: Model,
         exec_image: File,
         exec_image_sha256: str,
     ):
         super().__init__()
         self._job_id = job_id
-        self._job_label = f"{job_model}-{job_id}"
+        self._job_label = f"{job_class._meta.app_label}-{job_class._meta.model_name}-{job_id}"
+        self._job_class = job_class
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
 
@@ -103,7 +107,7 @@ class DockerConnection:
             if cpus in [None, 1]:
                 return "0"
             else:
-                return f"0-{cpus-1}"
+                return f"0-{cpus - 1}"
 
     @staticmethod
     def __retry_docker_obj_prune(*, obj, filters: dict):
@@ -146,10 +150,9 @@ class DockerConnection:
             # This can take a long time so increase the default timeout #1330
             old_timeout = self._client.api.timeout
             self._client.api.timeout = 600  # 10 minutes
-            max_size = 10 * 1024 * 1024 * 1024
 
             with SpooledTemporaryFile(
-                max_size=max_size
+                max_size=MAX_SPOOL_SIZE
             ) as fdst, self._exec_image.open("rb") as fsrc:
                 copyfileobj(fsrc=fsrc, fdst=fdst)
                 fdst.seek(0)
@@ -410,16 +413,15 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     :param dest: The path to the target file in the container
     :return:
     """
-    tar_b = io.BytesIO()
+    with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as tar_b:
+        tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
+        tarinfo.size = src.size
 
-    tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
-    tarinfo.size = src.size
+        with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
+            tar.addfile(tarinfo, fileobj=f)
 
-    with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
-        tar.addfile(tarinfo, fileobj=f)
-
-    tar_b.seek(0)
-    container.put_archive(os.path.dirname(dest), tar_b)
+        tar_b.seek(0)
+        container.put_archive(os.path.dirname(dest), tar_b)
 
 
 def get_file(*, container: ContainerApiMixin, src: Path):

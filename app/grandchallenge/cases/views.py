@@ -30,16 +30,12 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.cases.serializers import (
-    ImageSerializer,
+    HyperlinkedImageSerializer,
     RawImageFileSerializer,
     RawImageUploadSessionSerializer,
 )
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyWithCustomPostPermissions,
-)
-from grandchallenge.datasets.tasks import (
-    add_images_to_annotationset,
-    add_images_to_imageset,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.reader_studies.tasks import add_images_to_reader_study
@@ -54,8 +50,12 @@ class RawImageUploadSessionDetail(
 
 
 class ImageViewSet(ReadOnlyModelViewSet):
-    serializer_class = ImageSerializer
-    queryset = Image.objects.all()
+    serializer_class = HyperlinkedImageSerializer
+    queryset = Image.objects.all().prefetch_related(
+        "files",
+        "archive_set",
+        "componentinterfacevalue_set__algorithms_jobs_as_input",
+    )
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (
         DjangoFilterBackend,
@@ -139,7 +139,7 @@ class RawImageUploadSessionViewSet(
                 consumed=True
             ).exists()
         ):
-            upload_session.process_images(linked_task=self._get_linked_task())
+            upload_session.process_images(linked_task=self._linked_task)
             return Response(
                 "Image processing job queued.", status=status.HTTP_200_OK
             )
@@ -149,17 +149,14 @@ class RawImageUploadSessionViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    def _get_linked_task(self):
+    @property
+    def _linked_task(self):
         upload_session = self.get_object()
 
         if upload_session.algorithm_image:
             return create_algorithm_jobs
-        elif upload_session.annotationset:
-            return add_images_to_annotationset
         elif upload_session.archive:
             return add_images_to_archive
-        elif upload_session.imageset:
-            return add_images_to_imageset
         elif upload_session.reader_study:
             return add_images_to_reader_study
         else:

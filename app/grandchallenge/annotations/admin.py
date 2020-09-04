@@ -5,7 +5,9 @@ from grandchallenge.annotations.models import (
     ETDRSGridAnnotation,
     LandmarkAnnotationSet,
     MeasurementAnnotation,
+    OctRetinaImagePathologyAnnotation,
     PolygonAnnotationSet,
+    RetinaImagePathologyAnnotation,
     SingleLandmarkAnnotation,
     SinglePolygonAnnotation,
 )
@@ -23,10 +25,16 @@ class SinglePolygonAnnotationInline(admin.StackedInline):
 
 
 class PolygonAnnotationSetAdmin(admin.ModelAdmin):
-    search_fields = ("grader__username", "created", "name", "image__name")
+    search_fields = (
+        "grader__username",
+        "created",
+        "name",
+        "image__name",
+        "id",
+    )
     list_filter = ("created", "name")
     inlines = [SinglePolygonAnnotationInline]
-    readonly_fields = ("grader", "image", "name", "created")
+    readonly_fields = ("grader", "image", "created")
 
 
 class SingleLandmarkAnnotationInline(admin.StackedInline):
@@ -42,6 +50,16 @@ class LandmarkAnnotationSetAdmin(admin.ModelAdmin):
     readonly_fields = ("grader", "created")
 
 
+class RetinaImagePathologyAnnotationAdmin(admin.ModelAdmin):
+    search_fields = ("grader__username", "image__name")
+    readonly_fields = ("grader", "image")
+
+
+class OctRetinaImagePathologyAnnotationAdmin(admin.ModelAdmin):
+    search_fields = ("grader__username", "image__name")
+    readonly_fields = ("grader", "image")
+
+
 admin.site.register(ETDRSGridAnnotation)
 admin.site.register(MeasurementAnnotation)
 admin.site.register(
@@ -51,3 +69,9 @@ admin.site.register(PolygonAnnotationSet, PolygonAnnotationSetAdmin)
 admin.site.register(SinglePolygonAnnotation)
 admin.site.register(LandmarkAnnotationSet, LandmarkAnnotationSetAdmin)
 admin.site.register(SingleLandmarkAnnotation)
+admin.site.register(
+    RetinaImagePathologyAnnotation, RetinaImagePathologyAnnotationAdmin
+)
+admin.site.register(
+    OctRetinaImagePathologyAnnotation, OctRetinaImagePathologyAnnotationAdmin
+)

@@ -17,6 +17,7 @@
                     <div class="embed-responsive embed-responsive-1by1">
                         {% if object.logo %}
                             <img class="card-img-top embed-responsive-item"
+                                 loading="lazy"
                                  src="{{ object.logo.url }}"
                                  alt="{{ object }} Logo">
                         {% endif %}

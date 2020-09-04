@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load url %}
 
-{% block title %}Workstation Container Image - {{ block.super }}{% endblock %}
+{% block title %}Viewer Container Image - {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Workstations</a>
+        <li class="breadcrumb-item"><a href="{% url 'workstations:list' %}">Viewers</a>
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ object.workstation.get_absolute_url }}">{{ object.workstation.title }}</a>
@@ -16,13 +16,13 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Workstation Container Image</h2>
+    <h2>Viewer Container Image</h2>
 
     <dl class="inline">
         <dt>ID</dt>
         <dd>{{ object.pk }}</dd>
 
-        <dt>Workstation</dt>
+        <dt>Viewer</dt>
         <dd>
             <a href="{{ object.workstation.get_absolute_url }}">{{ object.workstation.title }}</a>
         </dd>

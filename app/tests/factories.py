@@ -13,8 +13,6 @@ from grandchallenge.challenges.models import (
     ExternalChallenge,
     ImagingModality,
 )
-from grandchallenge.datasets.models import AnnotationSet, ImageSet
-from grandchallenge.evaluation.models import Evaluation, Method, Submission
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
@@ -83,32 +81,6 @@ class RegistrationRequestFactory(factory.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
 
 
-class MethodFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Method
-
-    challenge = factory.SubFactory(ChallengeFactory)
-    image = factory.django.FileField()
-    image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
-
-
-class SubmissionFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Submission
-
-    challenge = factory.SubFactory(ChallengeFactory)
-    file = factory.django.FileField()
-    creator = factory.SubFactory(UserFactory)
-
-
-class EvaluationFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = Evaluation
-
-    method = factory.SubFactory(MethodFactory)
-    submission = factory.SubFactory(SubmissionFactory)
-
-
 class TeamFactory(factory.DjangoModelFactory):
     class Meta:
         model = Team
@@ -146,19 +118,6 @@ class ImageFileFactory(factory.DjangoModelFactory):
     image = factory.SubFactory(ImageFactory)
     image_type = ImageFile.IMAGE_TYPE_MHD
     file = factory.django.FileField()
-
-
-class ImageSetFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = ImageSet
-
-
-class AnnotationSetFactory(factory.DjangoModelFactory):
-    class Meta:
-        model = AnnotationSet
-
-    creator = factory.SubFactory(UserFactory)
-    base = factory.SubFactory(ImageSetFactory)
 
 
 class ImagingModalityFactory(factory.DjangoModelFactory):

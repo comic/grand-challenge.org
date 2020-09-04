@@ -1,4 +1,3 @@
-import importlib
 import inspect
 from typing import Dict, Type
 
@@ -60,13 +59,12 @@ def check_response_schema_formatting(response):
 
 
 def extract_all_api_exposed_model_serializers():
-    serializer_module_names = {
-        klass.__module__.replace(".views", ".serializers")
+    modules = {
+        klass.serializer_class
         for _, klass, _ in grandchallenge.api.urls.router.registry
     }
     serializers = []
-    for module_name in serializer_module_names:
-        module = importlib.import_module(module_name)
+    for module in modules:
         serializers = serializers + [
             v
             for v in module.__dict__.values()

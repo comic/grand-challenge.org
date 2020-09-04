@@ -1,0 +1,95 @@
+{% load humanize %}
+{% load evaluation_extras %}
+{% load profiles %}
+{% load humanize %}
+{% load remove_whitespace %}
+{% load url %}
+
+{{ object.rank|ordinal }}
+<split/>
+
+{{ object.submission.creator|user_profile_link }}
+{% if object.submission.phase.challenge.use_teams %}
+    {% with user_teams|get_key:object.submission.creator.username as team %}
+        {% if team %}
+            (<a href="{{ team.1 }}">{{ team.0 }}</a>)
+        {% endif %}
+    {% endwith %}
+{% endif %}
+<split/>
+
+{{ object.submission.created|date:"j N Y" }}
+<split/>
+
+{% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
+    <a href="{{ object.get_absolute_url }}">
+        <b>{{ object.rank_score|floatformat }}</b>
+    </a>
+    <split/>
+{% endif %}
+
+{% with object.metrics.0|get_jsonpath:object.submission.phase.score_jsonpath as metric %}
+    <a href="{{ object.get_absolute_url }}">
+        {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
+            <b>{% endif %}
+        {% filter remove_whitespace %}
+            {{ metric|floatformat:object.submission.phase.score_decimal_places }}
+            {% if object.submission.phase.score_error_jsonpath %}
+                &nbsp;±&nbsp;
+                {{ object.metrics.0|get_jsonpath:object.submission.phase.score_error_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
+            {% endif %}
+            {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
+                &nbsp;(
+                {{ object.rank_per_metric|get_key:object.submission.phase.score_jsonpath }}
+                )
+            {% endif %}
+        {% endfilter %}
+        {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
+            </b>{% endif %}
+    </a>
+    <split/>
+{% endwith %}
+
+{% for col in object.submission.phase.extra_results_columns %}
+    {% with object.metrics.0|get_jsonpath:col.path as metric %}
+        <a href="{{ object.get_absolute_url }}">
+            {% filter remove_whitespace %}
+                {{ metric|floatformat:object.submission.phase.score_decimal_places }}
+                {% if col.error_path %}
+                    &nbsp;±&nbsp;
+                    {{ object.metrics.0|get_jsonpath:col.error_path|floatformat:object.submission.phase.score_decimal_places }}
+                {% endif %}
+                {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
+                    &nbsp;(
+                    {{ object.rank_per_metric|get_key:col.path }}
+                    )
+                {% endif %}
+            {% endfilter %}
+        </a>
+        <split/>
+    {% endwith %}
+{% endfor %}
+
+{% if object.submission.phase.display_submission_comments %}
+    {{ object.submission.comment }}
+    <split/>
+{% endif %}
+
+{% if object.submission.phase.show_publication_url %}
+    {% if object.submission.publication_url %}
+        <a href="{{ object.submission.publication_url }}">
+            <i class="fa fa-file"></i>
+        </a>
+    {% endif %}
+    <split/>
+{% endif %}
+
+{% if object.submission.phase.show_supplementary_file_link %}
+    {% if object.submission.supplementary_file %}
+        <a href="{{ object.submission.supplementary_file.url }}">
+            <i class="fa fa-file"></i>
+        </a>
+    {% endif %}
+    <split/>
+{% endif %}
+
