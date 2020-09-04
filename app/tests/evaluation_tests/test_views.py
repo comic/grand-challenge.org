@@ -1,4 +1,3 @@
-from collections import namedtuple
 from datetime import timedelta
 
 import factory
@@ -7,13 +6,14 @@ from django.db.models import signals
 from django.utils import timezone
 from guardian.shortcuts import assign_perm, remove_perm
 
+from grandchallenge.evaluation.models import Evaluation
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
 )
-from tests.factories import UserFactory
+from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -145,7 +145,9 @@ class TestObjectPermissionRequiredViews:
         p = PhaseFactory()
         m = MethodFactory(phase=p)
         s = SubmissionFactory(phase=p, creator=u)
-        e = EvaluationFactory(method=m, submission=s)
+        e = EvaluationFactory(
+            method=m, submission=s, rank=1, status=Evaluation.SUCCESS
+        )
 
         for view_name, kwargs, permission, obj in [
             ("method-list", {}, "view_method", m),
@@ -189,87 +191,76 @@ class TestObjectPermissionRequiredViews:
             assert obj not in response.context[-1]["object_list"]
 
 
-def submission_and_evaluation(*, phase, creator):
-    """Creates a submission and an evaluation for that submission."""
-    s = SubmissionFactory(phase=phase, creator=creator)
-    e = EvaluationFactory(submission=s)
-    return s, e
-
-
-def submissions_and_evaluations(two_challenge_sets):
-    """
-    Create (e)valuations and (s)ubmissions for each (p)articipant and
-    (c)hallenge.
-    """
-    SubmissionsAndEvaluations = namedtuple(
-        "SubmissionsAndEvaluations",
-        [
-            "p_s1",
-            "p_s2",
-            "p1_s1",
-            "p12_s1_c1",
-            "p12_s1_c2",
-            "e_p_s1",
-            "e_p_s2",
-            "e_p1_s1",
-            "e_p12_s1_c1",
-            "e_p12_s1_c2",
-        ],
-    )
-    # participant 0, submission 1, challenge 1, etc
-    p_s1, e_p_s1 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        creator=two_challenge_sets.challenge_set_1.participant,
-    )
-    p_s2, e_p_s2 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        creator=two_challenge_sets.challenge_set_1.participant,
-    )
-    p1_s1, e_p1_s1 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        creator=two_challenge_sets.challenge_set_1.participant1,
-    )
-    # participant12, submission 1 to each challenge
-    p12_s1_c1, e_p12_s1_c1 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        creator=two_challenge_sets.participant12,
-    )
-    p12_s1_c2, e_p12_s1_c2 = submission_and_evaluation(
-        phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
-        creator=two_challenge_sets.participant12,
-    )
-    return SubmissionsAndEvaluations(
-        p_s1,
-        p_s2,
-        p1_s1,
-        p12_s1_c1,
-        p12_s1_c2,
-        e_p_s1,
-        e_p_s2,
-        e_p1_s1,
-        e_p12_s1_c1,
-        e_p12_s1_c2,
-    )
-
-
 @pytest.mark.django_db
-@factory.django.mute_signals(signals.post_save)
-def test_submission_list(client, two_challenge_sets):
-    p_s1, p_s2, p1_s1, p12_s1_c1, p12_s1_c2, *_ = submissions_and_evaluations(
-        two_challenge_sets
-    )
-    # Only submissions relevant to this challenge should be listed
-    response = get_view_for_user(
-        viewname="evaluation:submission-list",
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        client=client,
-        user=two_challenge_sets.participant12,
-    )
-    assert str(p12_s1_c1.pk) in response.rendered_content
-    assert str(p12_s1_c2.pk) not in response.rendered_content
-    assert str(p_s1.pk) not in response.rendered_content
-    assert str(p_s2.pk) not in response.rendered_content
-    assert str(p1_s1.pk) not in response.rendered_content
+class TestViewFilters:
+    def test_challenge_filtered_views(self, client):
+        c1, c2 = ChallengeFactory.create_batch(2, hidden=False)
+
+        u = UserFactory()
+
+        e1 = EvaluationFactory(
+            method__phase__challenge=c1,
+            submission__phase__challenge=c1,
+            submission__creator=u,
+        )
+        e2 = EvaluationFactory(
+            method__phase__challenge=c2,
+            submission__phase__challenge=c2,
+            submission__creator=u,
+        )
+
+        assign_perm("view_method", u, e1.method)
+        assign_perm("view_method", u, e2.method)
+
+        for view_name, obj in [
+            ("method-list", e1.method),
+            ("submission-list", e1.submission),
+            ("list", e1),
+        ]:
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e1.submission.phase.challenge.short_name,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 200
+            assert {obj.pk} == {
+                o.pk for o in response.context[-1]["object_list"]
+            }
+
+    def test_phase_filtered_views(self, client):
+        c = ChallengeFactory(hidden=False)
+
+        p1, p2 = PhaseFactory.create_batch(2, challenge=c)
+
+        e1 = EvaluationFactory(
+            method__phase=p1,
+            submission__phase=p1,
+            rank=1,
+            status=Evaluation.SUCCESS,
+        )
+        _ = EvaluationFactory(
+            method__phase=p2,
+            submission__phase=p2,
+            rank=1,
+            status=Evaluation.SUCCESS,
+        )
+
+        response = get_view_for_user(
+            client=client,
+            viewname="evaluation:leaderboard",
+            reverse_kwargs={
+                "challenge_short_name": e1.submission.phase.challenge.short_name,
+                "slug": e1.submission.phase.slug,
+            },
+        )
+
+        assert response.status_code == 200
+        assert {e1.pk} == {o.pk for o in response.context[-1]["object_list"]}
 
 
 @pytest.mark.django_db
@@ -311,14 +302,29 @@ def test_submission_time_limit(client, two_challenge_sets):
 @pytest.mark.django_db
 @factory.django.mute_signals(signals.post_save)
 def test_evaluation_list(client, two_challenge_sets):
-    (
-        *_,
-        e_p_s1,
-        e_p_s2,
-        e_p1_s1,
-        e_p12_s1_c1,
-        e_p12_s1_c2,
-    ) = submissions_and_evaluations(two_challenge_sets)
+    # participant 0, submission 1, challenge 1, etc
+    e_p_s1 = EvaluationFactory(
+        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
+        submission__creator=two_challenge_sets.challenge_set_1.participant,
+    )
+    e_p_s2 = EvaluationFactory(
+        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
+        submission__creator=two_challenge_sets.challenge_set_1.participant,
+    )
+    e_p1_s1 = EvaluationFactory(
+        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
+        submission__creator=two_challenge_sets.challenge_set_1.participant1,
+    )
+    # participant12, submission 1 to each challenge
+    e_p12_s1_c1 = EvaluationFactory(
+        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
+        submission__creator=two_challenge_sets.participant12,
+    )
+    e_p12_s1_c2 = EvaluationFactory(
+        submission__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
+        submission__creator=two_challenge_sets.participant12,
+    )
+
     # Participants should only be able to see their own evaluations
     response = get_view_for_user(
         viewname="evaluation:list",
@@ -331,6 +337,7 @@ def test_evaluation_list(client, two_challenge_sets):
     assert str(e_p1_s1.pk) not in response.rendered_content
     assert str(e_p12_s1_c1.pk) not in response.rendered_content
     assert str(e_p12_s1_c2.pk) not in response.rendered_content
+
     # Admins should be able to see all evaluations
     response = get_view_for_user(
         viewname="evaluation:list",
@@ -343,6 +350,7 @@ def test_evaluation_list(client, two_challenge_sets):
     assert str(e_p1_s1.pk) in response.rendered_content
     assert str(e_p12_s1_c1.pk) in response.rendered_content
     assert str(e_p12_s1_c2.pk) not in response.rendered_content
+
     # Only evaluations relevant to this challenge should be listed
     response = get_view_for_user(
         viewname="evaluation:list",

@@ -465,8 +465,8 @@ class LeaderboardDetail(
         context.update({"phase": self.phase})
         return context
 
-    def get_unfiltered_queryset(self):
-        queryset = super().get_queryset()
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs)
         queryset = self.filter_by_date(queryset=queryset)
         queryset = (
             queryset.select_related(
