@@ -22,9 +22,6 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeParticipantOrAdminMixin,
-)
 from grandchallenge.core.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,
@@ -243,10 +240,15 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
 
 
 class SubmissionCreate(
-    UserIsChallengeParticipantOrAdminMixin, SubmissionCreateBase
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, SubmissionCreateBase
 ):
-    # TODO: Create a submission create permission
     form_class = SubmissionForm
+    permission_required = "create_phase_submission"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
+
+    def get_permission_object(self):
+        return self.phase
 
 
 class LegacySubmissionCreate(
