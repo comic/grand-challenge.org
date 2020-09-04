@@ -13,31 +13,35 @@ html {
     background-color: #00afdc;
     border-color: #00afdc;
 }
+
 .text-radboud {
-    color: #00afdc!important
+    color: #00afdc !important
 }
 
 .btn:hover {
-  background-color: #007896;
-  border-color: #007896;
-  color: white;
+    background-color: #007896;
+    border-color: #007896;
+    color: white;
 }
 
-a {color: #212529;}
+a {
+    color: #212529;
+}
 
 a:hover {
-  color: #007896;
+    color: #007896;
 }
 
 .logo img {
-  max-width: 100%;
-  max-height: 80px;
+    max-width: 100%;
+    max-height: 80px;
 }
 
 ul {
     padding: 0;
     font-size: 0;
 }
+
 ul li {
     list-style-type: disc !important;
     font-size: 16px;
@@ -48,7 +52,4 @@ ul li {
 .carousel-indicators li {
     background-color: #00afdc;
     opacity: 0.2;
-  }
-
-
-
+}
