@@ -352,6 +352,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",  # to allow api communication from subdomains
     "drf_yasg",
     "markdownx",  # for editing markdown
+    "django_filters",
 ]
 
 LOCAL_APPS = [
@@ -369,8 +370,6 @@ LOCAL_APPS = [
     "grandchallenge.cases",
     "grandchallenge.algorithms",
     "grandchallenge.components",
-    "grandchallenge.datasets",
-    "grandchallenge.submission_conversion",
     "grandchallenge.statistics",
     "grandchallenge.archives",
     "grandchallenge.patients",

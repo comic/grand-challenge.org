@@ -15,29 +15,37 @@
             <a href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Submissions</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">Create</li>
+            aria-current="page">Create
+        </li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Submission</h2>
+    <h2>{{ phase.title }} Submission</h2>
 
-    {{ evaluation_config.submission_page_html|clean }}
+    {{ phase.submission_page_html|clean }}
 
     <h3>Create a new submission</h3>
 
     {% if "change_challenge" in challenge_perms %}
 
-        <p>
-            As an admin for this challenge you can make as many submissions as
-            you like. Challenge participants will be allow to make
-            {{ evaluation_config.daily_submission_limit }}
-            submission{{ evaluation_config.daily_submission_limit|pluralize }}
-            per day. You can change the Daily Submission Limit in <a
-                href="{% url 'evaluation:config-update' challenge_short_name=challenge.short_name %}">
-            Evaluation Settings</a>.
-        </p>
+        {% if request.resolver_match.view_name != "evaluation:submission-create-legacy" %}
+
+            <p>
+                As an admin for this challenge you can make as many submissions as
+                you like. Challenge participants will be allow to make
+                {{ phase.daily_submission_limit }}
+                submission{{ phase.daily_submission_limit|pluralize }}
+                per day to this phase. You can change the Daily Submission Limit in <a
+                    href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                Phase Settings</a>. Please use
+                <a href="{% url 'evaluation:submission-create-legacy' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                    this form</a>
+                if you would like to create a submission on the behalf of one of the participants of this challenge.
+            </p>
+
+        {% endif %}
 
         {% crispy form %}
 
@@ -54,9 +62,9 @@
                 to see their status.
             </p>
 
-        {% elif evaluation_config.daily_submission_limit == 0 %}
+        {% elif phase.daily_submission_limit == 0 %}
 
-            <p>Submissions are closed for this challenge.</p>
+            <p>Submissions are closed for this phase.</p>
 
         {% elif remaining_submissions <= 0 %}
 

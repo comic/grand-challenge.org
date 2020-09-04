@@ -3,12 +3,14 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models.functions import Lower
 from django.forms import ModelChoiceField
 from django.utils.text import format_lazy
 from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
@@ -82,9 +84,13 @@ class PhaseForm(forms.ModelForm):
         }
 
 
-class MethodForm(forms.ModelForm):
+class MethodForm(SaveFormInitMixin, forms.ModelForm):
+    phase = ModelChoiceField(
+        queryset=None,
+        help_text="Which phase is this evaluation container for?",
+    )
     chunked_upload = UploadedAjaxFileList(
-        widget=uploader.AjaxUploadWidget(multifile=False),
+        widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
         label="Evaluation Method Container",
         validators=[
             ExtensionValidator(allowed_extensions=(".tar", ".tar.gz"))
@@ -96,14 +102,14 @@ class MethodForm(forms.ModelForm):
         ),
     )
 
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args, user, challenge, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
         self.fields["chunked_upload"].widget.user = user
+        self.fields["phase"].queryset = challenge.phase_set.all()
 
     class Meta:
         model = Method
-        fields = ["chunked_upload"]
+        fields = ["phase", "chunked_upload"]
 
 
 submission_fields = (
@@ -202,6 +208,14 @@ class SubmissionForm(forms.ModelForm):
 
 
 class LegacySubmissionForm(SubmissionForm):
+    def __init__(self, *args, challenge, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[
+            "creator"
+        ].queryset = challenge.participants_group.user_set.all().order_by(
+            Lower("username")
+        )
+
     class Meta:
         model = Submission
         fields = ("creator", *submission_fields)

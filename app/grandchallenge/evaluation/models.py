@@ -1,20 +1,24 @@
+from json import dumps
 from pathlib import Path
 
 from celery import group
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
 from django.db.models import BooleanField
-from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import (
     AlgorithmExecutor,
     AlgorithmImage,
     DEFAULT_INPUT_INTERFACE_SLUG,
 )
+from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
 from grandchallenge.components.models import (
@@ -31,7 +35,6 @@ from grandchallenge.core.validators import (
     MimeTypeValidator,
     get_file_mimetype,
 )
-from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
     send_successful_evaluation_email,
@@ -142,6 +145,16 @@ class Phase(UUIDModel):
 
     challenge = models.ForeignKey(
         Challenge, on_delete=models.CASCADE, editable=False,
+    )
+    archive = models.ForeignKey(
+        Archive,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text=(
+            "Which archive should be used as the source dataset for this "
+            "phase?"
+        ),
     )
     title = models.CharField(
         max_length=64,
@@ -293,6 +306,7 @@ class Phase(UUIDModel):
     )
     submissions_open = models.DateTimeField(
         null=True,
+        blank=True,
         help_text=(
             "If set, participants will not be able to make submissions to "
             "this phase before this time."
@@ -300,6 +314,7 @@ class Phase(UUIDModel):
     )
     submissions_close = models.DateTimeField(
         null=True,
+        blank=True,
         help_text=(
             "If set, participants will not be able to make submissions to "
             "this phase after this time."
@@ -349,6 +364,9 @@ class Phase(UUIDModel):
         )
         ordering = ("challenge", "submissions_open", "created")
 
+    def __str__(self):
+        return f"{self.title} Evaluation for {self.challenge.short_name}"
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -356,6 +374,7 @@ class Phase(UUIDModel):
 
         if adding:
             self.set_default_interfaces()
+            self.assign_permissions()
 
         calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
 
@@ -366,6 +385,10 @@ class Phase(UUIDModel):
         self.outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
+
+    def assign_permissions(self):
+        assign_perm("view_phase", self.challenge.admins_group, self)
+        assign_perm("change_phase", self.challenge.admins_group, self)
 
     def get_absolute_url(self):
         return reverse(
@@ -389,6 +412,17 @@ class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("view_method", self.phase.challenge.admins_group, self)
 
     def get_absolute_url(self):
         return reverse(
@@ -474,6 +508,11 @@ class Submission(UUIDModel):
 
         if adding:
             self.create_evaluation()
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm("view_submission", self.phase.challenge.admins_group, self)
+        assign_perm("view_submission", self.creator, self)
 
     def create_evaluation(self):
         method = self.latest_ready_method
@@ -485,17 +524,13 @@ class Submission(UUIDModel):
         evaluation = Evaluation.objects.create(submission=self, method=method)
 
         if self.algorithm_image:
-            test_set = ImageSet.objects.get(
-                challenge=self.phase.challenge, phase=ImageSet.TESTING
-            )
-
             default_input_interface = ComponentInterface.objects.get(
                 slug=DEFAULT_INPUT_INTERFACE_SLUG
             )
 
             jobs = []
 
-            for image in test_set.images.all():
+            for image in self.phase.archive.images.all():
                 if not ComponentInterfaceValue.objects.filter(
                     interface=default_input_interface,
                     image=image,
@@ -568,6 +603,21 @@ class AlgorithmEvaluation(ComponentJob):
     modified = models.DateTimeField(auto_now=True)
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
+    def assign_permissions(self):
+        assign_perm(
+            "view_algorithmevaluation",
+            self.submission.phase.challenge.admins_group,
+            self,
+        )
+
     @property
     def container(self):
         return self.submission.algorithm_image
@@ -609,8 +659,11 @@ class SubmissionEvaluator(Executor):
             dest_file = "/tmp/submission-src"
             put_file(container=writer, src=file, dest=dest_file)
 
-            with file.open("rb") as f:
-                mimetype = get_file_mimetype(f)
+            if hasattr(file, "content_type"):
+                mimetype = file.content_type
+            else:
+                with file.open("rb") as f:
+                    mimetype = get_file_mimetype(f)
 
             if mimetype.lower() == "application/zip":
                 # Unzip the file in the container rather than in the python
@@ -637,6 +690,9 @@ class SubmissionEvaluator(Executor):
                         f'/bin/sh -c "mv /input/{input_files[0]}/* /input/ '
                         f'&& rm -r /input/{input_files[0]}/"'
                     )
+
+            elif mimetype.lower() == "application/json":
+                writer.exec_run(f"mv {dest_file} /input/predictions.json")
 
             else:
                 # Not a zip file, so must be a csv
@@ -668,17 +724,37 @@ class Evaluation(UUIDModel, ComponentJob):
 
         super().save(*args, **kwargs)
 
+        self.assign_permissions()
+
         calculate_ranks.apply_async(
             kwargs={"phase_pk": self.submission.phase.pk}
         )
 
-    @cached_property
-    def challenge(self):
-        return self.submission.phase.challenge
+    def assign_permissions(self):
+        admins_group = self.submission.phase.challenge.admins_group
 
-    @cached_property
-    def creator(self):
-        return self.submission.creator
+        assign_perm("view_evaluation", admins_group, self)
+        assign_perm("change_evaluation", admins_group, self)
+
+        if self.submission.phase.challenge.hidden:
+            viewer_group = self.submission.phase.challenge.participants_group
+            non_viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
+        else:
+            viewer_group = Group.objects.get(
+                name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+            )
+            non_viewer_group = (
+                self.submission.phase.challenge.participants_group
+            )
+
+        if self.published:
+            assign_perm("view_evaluation", viewer_group, self)
+        else:
+            remove_perm("view_evaluation", viewer_group, self)
+
+        remove_perm("view_evaluation", non_viewer_group, self)
 
     @property
     def container(self):
@@ -686,7 +762,20 @@ class Evaluation(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
-        return [inpt.file for inpt in self.inputs.all()]
+        try:
+            return [
+                SimpleUploadedFile(
+                    "predictions.json",
+                    dumps(
+                        self.inputs.get(
+                            interface__title="Predictions JSON File"
+                        ).value
+                    ).encode("utf-8"),
+                    content_type="application/json",
+                )
+            ]
+        except ObjectDoesNotExist:
+            return [inpt.file for inpt in self.inputs.all()]
 
     @property
     def executor_cls(self):
@@ -733,15 +822,3 @@ class Evaluation(UUIDModel, ComponentJob):
                 "challenge_short_name": self.submission.phase.challenge.short_name,
             },
         )
-
-
-def result_screenshot_path(instance, filename):
-    # Used in a migration so cannot delete
-    return (
-        f"evaluation/"
-        f"{instance.challenge.pk}/"
-        f"screenshots/"
-        f"{instance.result.pk}/"
-        f"{instance.pk}/"
-        f"{filename}"
-    )

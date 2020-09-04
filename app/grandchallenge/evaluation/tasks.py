@@ -4,7 +4,6 @@ from statistics import mean, median
 from celery import shared_task
 from django.apps import apps
 
-from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.evaluation.utils import Metric, rank_results
 
 
@@ -42,11 +41,25 @@ def set_evaluation_inputs(*_, evaluation_pk):
             ),
         )
     else:
-        evaluation.inputs.set(
-            ComponentInterfaceValue.objects.filter(
-                evaluation_algorithmevaluations_as_output__submission=evaluation.submission
-            )
+        from grandchallenge.evaluation.serializers import (
+            AlgorithmEvaluationSerializer,
         )
+        from grandchallenge.components.models import (
+            ComponentInterface,
+            ComponentInterfaceValue,
+        )
+
+        serializer = AlgorithmEvaluationSerializer(
+            evaluation.submission.algorithmevaluation_set.all(), many=True
+        )
+        interface = ComponentInterface.objects.get(
+            title="Predictions JSON File"
+        )
+        civ = ComponentInterfaceValue.objects.create(
+            interface=interface, value=serializer.data
+        )
+
+        evaluation.inputs.set([civ])
         evaluation.signature.apply_async()
 
 
@@ -181,3 +194,15 @@ def _update_evaluations(*, evaluations, final_positions):
     Evaluation.objects.bulk_update(
         evaluations, ["rank", "rank_score", "rank_per_metric"]
     )
+
+
+@shared_task
+def assign_evaluation_permissions(*, challenge_pk: uuid.UUID):
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+
+    for e in Evaluation.objects.filter(
+        submission__phase__challenge__id=challenge_pk
+    ):
+        e.assign_permissions()

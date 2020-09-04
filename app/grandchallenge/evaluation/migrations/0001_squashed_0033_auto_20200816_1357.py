@@ -180,36 +180,6 @@ class Migration(migrations.Migration):
             options={"abstract": False},
         ),
         migrations.CreateModel(
-            name="ResultScreenshot",
-            fields=[
-                (
-                    "id",
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("modified", models.DateTimeField(auto_now=True)),
-                (
-                    "image",
-                    models.ImageField(
-                        upload_to=grandchallenge.evaluation.models.result_screenshot_path
-                    ),
-                ),
-                (
-                    "result",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="evaluation.Result",
-                    ),
-                ),
-            ],
-            options={"abstract": False},
-        ),
-        migrations.CreateModel(
             name="Submission",
             fields=[
                 (
@@ -821,7 +791,6 @@ class Migration(migrations.Migration):
         ),
         migrations.RemoveField(model_name="job", name="challenge",),
         migrations.RemoveField(model_name="result", name="challenge",),
-        migrations.DeleteModel(name="ResultScreenshot",),
         migrations.AddField(
             model_name="config",
             name="display_all_metrics",

@@ -3,77 +3,12 @@ from textwrap import dedent
 import pytest
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.datasets.models import AnnotationSet, ImageSet
 from tests.evaluation_tests.factories import SubmissionFactory
 from tests.factories import (
-    AnnotationSetFactory,
     ImageFileFactory,
     UserFactory,
 )
 from tests.utils import get_view_for_user
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "kind", [AnnotationSet.PREDICTION, AnnotationSet.GROUNDTRUTH]
-)
-@pytest.mark.parametrize("phase", [ImageSet.TRAINING, ImageSet.TESTING])
-def test_imageset_annotationset_download(
-    client, two_challenge_sets, phase, kind
-):
-    """Only participants of a challenge should be able to download imageset images."""
-
-    imageset = two_challenge_sets.challenge_set_1.challenge.imageset_set.get(
-        phase=phase
-    )
-    image_file = ImageFileFactory()
-    imageset.images.add(image_file.image)
-
-    annotationset = AnnotationSetFactory(base=imageset, kind=kind)
-    annotation_file = ImageFileFactory()
-    annotationset.images.add(annotation_file.image)
-
-    tests = [
-        # (
-        #   image response + annotation response not test ground truth,
-        #   annotation response - testing gt,
-        #   user
-        # )
-        (403, 403, None),
-        (403, 403, UserFactory()),
-        (403, 403, UserFactory(is_staff=True)),
-        (403, 403, two_challenge_sets.challenge_set_1.non_participant),
-        (302, 403, two_challenge_sets.challenge_set_1.participant),
-        (302, 403, two_challenge_sets.challenge_set_1.participant1),
-        (302, 302, two_challenge_sets.challenge_set_1.creator),
-        (302, 302, two_challenge_sets.challenge_set_1.admin),
-        (403, 403, two_challenge_sets.challenge_set_2.non_participant),
-        (403, 403, two_challenge_sets.challenge_set_2.participant),
-        (403, 403, two_challenge_sets.challenge_set_2.participant1),
-        (403, 403, two_challenge_sets.challenge_set_2.creator),
-        (403, 403, two_challenge_sets.challenge_set_2.admin),
-        (302, 302, two_challenge_sets.admin12),
-        (302, 403, two_challenge_sets.participant12),
-        (302, 302, two_challenge_sets.admin1participant2),
-    ]
-
-    for test in tests:
-
-        response = get_view_for_user(
-            url=image_file.file.url, client=client, user=test[2]
-        )
-        assert response.status_code == test[0]
-
-        response = get_view_for_user(
-            url=annotation_file.file.url, client=client, user=test[2]
-        )
-        if phase == ImageSet.TESTING and kind == AnnotationSet.GROUNDTRUTH:
-            # testing ground truth
-            assert response.status_code == test[1]
-        else:
-            # training ground truth, training predictions and
-            # ground truth predictions
-            assert response.status_code == test[0]
 
 
 @pytest.mark.django_db

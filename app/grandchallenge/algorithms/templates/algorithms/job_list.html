@@ -81,7 +81,8 @@
         $(document).ready(function () {
             $('.table').DataTable({
                 order: [[0, "desc"]],
-                pageLength: 50,
+                lengthChange: false,
+                pageLength: 100,
                 serverSide: true,
                 ajax: {
                     url: "",

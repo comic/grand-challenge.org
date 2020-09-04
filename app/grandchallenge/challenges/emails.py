@@ -3,11 +3,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
-from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.subdomains.utils import reverse
 
 
-def send_challenge_created_email(challenge: Challenge):
+def send_challenge_created_email(challenge):
     site = Site.objects.get_current()
     message = (
         f"Dear {{}},\n\n"
@@ -29,7 +28,7 @@ def send_challenge_created_email(challenge: Challenge):
         )
 
 
-def send_external_challenge_created_email(challenge: ExternalChallenge):
+def send_external_challenge_created_email(challenge):
     site = Site.objects.get_current()
     update_url = reverse(
         "challenges:external-update",

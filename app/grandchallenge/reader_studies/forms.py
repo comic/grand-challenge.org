@@ -90,6 +90,7 @@ class ReaderStudyCreateForm(
             "public",
             "allow_answer_modification",
             "allow_case_navigation",
+            "allow_show_all_annotations",
         )
         help_texts = READER_STUDY_HELP_TEXTS
         widgets = {
@@ -122,6 +123,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "public",
             "allow_answer_modification",
             "allow_case_navigation",
+            "allow_show_all_annotations",
             "hanging_list",
             "case_text",
         )

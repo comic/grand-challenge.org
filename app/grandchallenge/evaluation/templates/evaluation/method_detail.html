@@ -26,6 +26,9 @@
         <dt>Challenge</dt>
         <dd><a href="{{ object.phase.challenge.get_absolute_url }}">{{ object.phase.challenge.short_name }}</a></dd>
 
+        <dt>Phase</dt>
+        <dd>{{ object.phase.title }}</dd>
+
         <dt>Creator</dt>
         <dd><a href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a></dd>
 

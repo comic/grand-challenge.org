@@ -11,7 +11,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
-            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name %}">Leaderboard</a>
+            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }} Leaderboard</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.pk }}</li>
@@ -35,8 +35,12 @@
         </dd>
 
         <dt>Challenge</dt>
-        <dd><a href="{{ object.challenge.get_absolute_url }}">
-            {{ object.challenge.short_name }}</a></dd>
+        <dd><a href="{{ object.submission.phase.challenge.get_absolute_url }}">
+            {{ object.submission.phase.challenge.short_name }}</a></dd>
+
+        <dt>Phase</dt>
+        <dd><a href="{% url 'evaluation:leaderboard' challenge_short_name=object.submission.phase.challenge.short_name slug=object.submission.phase.slug %}">
+            {{ object.submission.phase.title }}</a></dd>
 
         <dt>Submission created</dt>
         <dd>{{ object.submission.created }}</dd>
@@ -85,7 +89,7 @@
             {% endif %}
         </dd>
 
-        {% if "change_challenge" in challenge_perms %}
+        {% if "change_challenge" in challenge_perms and object.submission.predictions_file %}
             <dt>Submission File</dt>
             <dd>
                 <a href="{{ object.submission.predictions_file.url }}">
@@ -95,8 +99,8 @@
             </dd>
         {% endif %}
 
-        {% if evaluation_config.show_supplementary_file_link %}
-            <dt>{{ evaluation_config.supplementary_file_label }}:</dt>
+        {% if object.submission.phase.show_supplementary_file_link %}
+            <dt>{{ object.submission.phase.supplementary_file_label }}:</dt>
             <dd>
                 {% if object.submission.supplementary_file %}
                     <a href="{{ object.submission.supplementary_file.url }}">
@@ -106,7 +110,7 @@
             </dd>
         {% endif %}
 
-        {% if evaluation_config.show_publication_url %}
+        {% if object.submission.phase.show_publication_url %}
             <dt>Publication:</dt>
             <dd>
                 {% if object.submission.publication_url %}
@@ -117,7 +121,7 @@
             </dd>
         {% endif %}
 
-        {% if evaluation_config.display_submission_comments %}
+        {% if object.submission.phase.display_submission_comments %}
             <dt>Comment:</dt>
             <dd>{{ object.submission.comment }}</dd>
         {% endif %}
@@ -136,30 +140,30 @@
     {% if object.status == object.SUCCESS %}
 
         <h3>Metrics</h3>
-        {% if evaluation_config.display_all_metrics %}
+        {% if object.submission.phase.display_all_metrics %}
             <pre>{{ metrics|json_dumps }}</pre>
         {% else %}
             <dl>
                 <dt>
-                    {{ evaluation_config.score_title }}
+                    {{ object.submission.phase.score_title }}
                 </dt>
                 <dd>
-                    {{ metrics|get_jsonpath:evaluation_config.score_jsonpath|floatformat:evaluation_config.score_decimal_places }}
-                    {% if evaluation_config.score_error_jsonpath %}
+                    {{ metrics|get_jsonpath:object.submission.phase.score_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
+                    {% if object.submission.phase.score_error_jsonpath %}
                         &nbsp;±&nbsp;
-                        {{ metrics|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
+                        {{ metrics|get_jsonpath:object.submission.phase.score_error_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
                     {% endif %}
                 </dd>
 
-                {% for col in evaluation_config.extra_results_columns %}
+                {% for col in object.submission.phase.extra_results_columns %}
                     <dt>
                         {{ col.title }}
                     </dt>
                     <dd>
-                        {{ metrics|get_jsonpath:col.path|floatformat:evaluation_config.score_decimal_places }}
+                        {{ metrics|get_jsonpath:col.path|floatformat:object.submission.phase.score_decimal_places }}
                         {% if col.error_path %}
                             &nbsp;±&nbsp;
-                            {{ metrics|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
+                            {{ metrics|get_jsonpath:col.error_path|floatformat:object.submission.phase.score_decimal_places }}
                         {% endif %}
                     </dd>
                 {% endfor %}

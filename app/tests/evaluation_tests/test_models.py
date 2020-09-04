@@ -1,23 +1,21 @@
 from django.test import TestCase
 
-from grandchallenge.datasets.models import ImageSet
 from grandchallenge.evaluation.models import AlgorithmEvaluation
 from tests.algorithms_tests.factories import AlgorithmImageFactory
+from tests.archives_tests.factories import ArchiveFactory
 from tests.evaluation_tests.factories import MethodFactory, SubmissionFactory
 from tests.factories import ImageFactory
 
 
 class TestSubmission(TestCase):
     def setUp(self) -> None:
-        self.method = MethodFactory(ready=True)
+        self.method = MethodFactory(
+            ready=True, phase__archive=ArchiveFactory()
+        )
         self.algorithm_image = AlgorithmImageFactory()
 
         self.images = ImageFactory.create_batch(3)
-        # TODO Fix image set dependency
-        imageset = self.method.phase.challenge.imageset_set.get(
-            phase=ImageSet.TESTING
-        )
-        imageset.images.set(self.images[:2])
+        self.method.phase.archive.images.set(self.images[:2])
 
     def test_algorithm_submission_creates_one_job_per_test_set_image(self):
         SubmissionFactory(

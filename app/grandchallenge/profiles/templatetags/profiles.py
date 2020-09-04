@@ -20,9 +20,10 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
         )
         mugshot = format_html(
             (
-                '<img class="mugshot" src="{0}" alt="User Mugshot"'
-                # Match the "fa-lg" class style:
-                '     style="height: 1.33em; vertical-align: -25%;"/>'
+                '<img class="mugshot" loading="lazy" src="{0}" '
+                'alt="User Mugshot" '
+                # Match the "fa-lg" class style
+                'style="height: 1.33em; vertical-align: -25%;"/>'
             ),
             user.user_profile.get_mugshot_url(),
         )

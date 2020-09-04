@@ -27,7 +27,12 @@ from grandchallenge.challenges.models import (
     TaskType,
 )
 from grandchallenge.core.storage import public_s3_storage
-from grandchallenge.evaluation.models import Evaluation, Method, Submission
+from grandchallenge.evaluation.models import (
+    Evaluation,
+    Method,
+    Phase,
+    Submission,
+)
 from grandchallenge.overview_pages.models import OverviewPage
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -152,6 +157,7 @@ class Command(BaseCommand):
 
         add_archive_perm = Permission.objects.get(codename="add_archive")
         self.users["archive"].user_permissions.add(add_archive_perm)
+        self.users["demo"].user_permissions.add(add_archive_perm)
 
     def _create_user_tokens(self):
         Token.objects.get_or_create(
@@ -187,41 +193,42 @@ class Command(BaseCommand):
             challenge=demo, title="adm", permission_level="ADM"
         )
 
-        phase = demo.phase_set.get()
+        Phase.objects.create(challenge=demo, title="Phase 2")
 
-        method = Method(phase=phase, creator=self.users["demo"])
-        container = ContentFile(base64.b64decode(b""))
-        method.image.save("test.tar", container)
-        method.save()
+        for phase_num, phase in enumerate(demo.phase_set.all()):
+            phase.score_title = "Accuracy ± std"
+            phase.score_jsonpath = "acc.mean"
+            phase.score_error_jsonpath = "acc.std"
+            phase.extra_results_columns = [
+                {
+                    "title": "Dice ± std",
+                    "path": "dice.mean",
+                    "error_path": "dice.std",
+                    "order": "desc",
+                }
+            ]
+            phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.save()
 
-        submission = Submission(phase=phase, creator=self.users["demop"])
-        content = ContentFile(base64.b64decode(b""))
-        submission.predictions_file.save("test.csv", content)
-        submission.save()
+            method = Method(phase=phase, creator=self.users["demo"])
+            container = ContentFile(base64.b64decode(b""))
+            method.image.save("test.tar", container)
+            method.save()
 
-        e = Evaluation.objects.create(
-            submission=submission, method=method, status=Evaluation.SUCCESS
-        )
-        e.create_result(
-            result={
-                "acc": {"mean": 0.5, "std": 0.1},
-                "dice": {"mean": 0.71, "std": 0.05},
-            }
-        )
+            submission = Submission(phase=phase, creator=self.users["demop"])
+            content = ContentFile(base64.b64decode(b""))
+            submission.predictions_file.save("test.csv", content)
+            submission.save()
 
-        phase.score_title = "Accuracy ± std"
-        phase.score_jsonpath = "acc.mean"
-        phase.score_error_jsonpath = "acc.std"
-        phase.extra_results_columns = [
-            {
-                "title": "Dice ± std",
-                "path": "dice.mean",
-                "error_path": "dice.std",
-                "order": "desc",
-            }
-        ]
-        phase.submission_kind = phase.SubmissionKind.ALGORITHM
-        phase.save()
+            e = Evaluation.objects.create(
+                submission=submission, method=method, status=Evaluation.SUCCESS
+            )
+            e.create_result(
+                result={
+                    "acc": {"mean": 0.1 * phase_num, "std": 0.1},
+                    "dice": {"mean": 0.71, "std": 0.05},
+                }
+            )
 
     def _create_external_challenge(self):
         ex_challenge = ExternalChallenge.objects.create(

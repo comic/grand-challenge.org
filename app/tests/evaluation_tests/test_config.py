@@ -14,7 +14,10 @@ def test_setting_submission_page_html(client, challenge_set):
         client=client,
         user=challenge_set.participant,
         viewname="evaluation:submission-create",
-        challenge=challenge_set.challenge,
+        reverse_kwargs={
+            "challenge_short_name": challenge_set.challenge.short_name,
+            "slug": challenge_set.challenge.phase_set.get().slug,
+        },
     )
 
     assert response.status_code == 200
@@ -28,7 +31,10 @@ def test_setting_submission_page_html(client, challenge_set):
         client=client,
         user=challenge_set.participant,
         viewname="evaluation:submission-create",
-        challenge=challenge_set.challenge,
+        reverse_kwargs={
+            "challenge_short_name": challenge_set.challenge.short_name,
+            "slug": challenge_set.challenge.phase_set.get().slug,
+        },
     )
 
     assert response.status_code == 200
