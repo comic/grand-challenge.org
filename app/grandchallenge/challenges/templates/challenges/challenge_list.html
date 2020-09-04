@@ -49,7 +49,8 @@
                     <a class="stretched-link" href="{{ challenge.get_absolute_url }}"
                        title="View {{ challenge|meta_attr:'verbose_name'|title }}"></a>
                     <div class="embed-responsive embed-responsive-1by1">
-                        <img class="card-img-top embed-responsive-item lazyload"
+                        <img class="card-img-top embed-responsive-item"
+                             loading="lazy"
                              alt="{{ challenge.short_name }} logo"
                              src="{% static 'images/3697E1-0.8.png' %}"
                                 {% if challenge.logo %}
