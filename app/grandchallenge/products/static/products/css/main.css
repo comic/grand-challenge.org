@@ -44,3 +44,11 @@ ul li {
     display: inline-block;
     margin-bottom: 0.5em;
 }
+
+.carousel-indicators li {
+    background-color: #00afdc;
+    opacity: 0.2;
+  }
+
+
+
