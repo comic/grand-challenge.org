@@ -320,11 +320,18 @@ class EvaluationList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(
+        queryset = queryset.filter(
             submission__phase__challenge=self.request.challenge
         ).select_related(
             "submission__creator__user_profile", "submission__phase__challenge"
         )
+
+        if self.request.challenge.is_admin(self.request.user):
+            return queryset
+        else:
+            return queryset.filter(
+                Q(submission__creator__pk=self.request.user.pk)
+            )
 
 
 class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
