@@ -10,7 +10,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from grandchallenge.cases.models import Image
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.serving.permissions import user_can_download_submission
 from grandchallenge.serving.tasks import create_download
 
 
@@ -63,7 +62,7 @@ def serve_submissions(request, *, submission_pk, **_):
     except Submission.DoesNotExist:
         raise Http404("Submission not found.")
 
-    if user_can_download_submission(user=request.user, submission=submission):
+    if request.user.has_perm("view_submission", submission):
         create_download.apply_async(
             kwargs={
                 "creator_id": request.user.pk,
