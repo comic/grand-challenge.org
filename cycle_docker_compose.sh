@@ -6,7 +6,7 @@ sleep 1
 
 export GIT_COMMIT_ID=$(git describe --always --dirty)
 export GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
-export DOCKER_GID=$(getent group docker | cut -d: -f3)
+export DOCKER_GID=0
 
 make build_web_test
 make build_http
