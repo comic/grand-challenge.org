@@ -16,6 +16,10 @@ from django.views.generic import (
     RedirectView,
     UpdateView,
 )
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
@@ -35,13 +39,21 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 
 
-class PhaseUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView):
+class PhaseUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
     form_class = PhaseForm
     success_message = "Configuration successfully updated"
+    permission_required = "update_phase"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
 
     def get_object(self, queryset=None):
         return Phase.objects.get(
