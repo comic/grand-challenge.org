@@ -18,6 +18,7 @@ from django.views.generic import (
 )
 from guardian.mixins import (
     LoginRequiredMixin,
+    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
@@ -51,7 +52,7 @@ class PhaseUpdate(
 ):
     form_class = PhaseForm
     success_message = "Configuration successfully updated"
-    permission_required = "update_phase"
+    permission_required = "change_phase"
     raise_exception = True
     login_url = reverse_lazy("userena_signin")
 
@@ -70,9 +71,18 @@ class PhaseUpdate(
         )
 
 
-class MethodCreate(UserIsChallengeAdminMixin, CreateView):
+class MethodCreate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, CreateView
+):
     model = Method
     form_class = MethodForm
+    permission_required = "change_phase"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
+
+    def get_permission_object(self):
+        # Challenge users have permission to change all phases for a challenge
+        return self.request.challenge.phase_set.first()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -90,16 +100,23 @@ class MethodCreate(UserIsChallengeAdminMixin, CreateView):
         return super().form_valid(form)
 
 
-class MethodList(UserIsChallengeAdminMixin, ListView):
+class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Method
+    permission_required = "view_method"
+    login_url = reverse_lazy("userena_signin")
 
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.filter(phase__challenge=self.request.challenge)
 
 
-class MethodDetail(UserIsChallengeAdminMixin, DetailView):
+class MethodDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
     model = Method
+    permission_required = "view_method"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
 
 
 class SubmissionCreateBase(SuccessMessageMixin, CreateView):
