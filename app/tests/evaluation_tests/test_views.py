@@ -19,6 +19,59 @@ from tests.utils import (
 )
 
 
+@pytest.mark.django_db
+class TestLoginViews:
+    def test_login_redirect(self, client):
+        e = EvaluationFactory()
+
+        for view_name, kwargs in [
+            ("phase-update", {"slug": e.submission.phase.slug}),
+            ("method-create", {}),
+            ("method-list", {}),
+            ("method-detail", {"pk": e.method.pk}),
+            ("submission-create", {"slug": e.submission.phase.slug}),
+            ("submission-create-legacy", {"slug": e.submission.phase.slug}),
+            ("submission-list", {}),
+            ("submission-detail", {"pk": e.submission.pk}),
+            ("list", {}),
+            ("update", {"pk": e.pk}),
+        ]:
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=None,
+            )
+
+            assert response.status_code == 302
+            assert response.url.startswith(
+                f"https://testserver/users/signin/?next=http%3A//"
+                f"{e.submission.phase.challenge.short_name}.testserver/"
+            )
+
+    def test_open_views(self, client):
+        e = EvaluationFactory(submission__phase__challenge__hidden=False)
+
+        for view_name, kwargs in [
+            ("leaderboard", {"slug": e.submission.phase.slug}),
+            ("detail", {"pk": e.pk}),
+        ]:
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=None,
+            )
+
+            assert response.status_code == 200
+
+
 def submission_and_evaluation(*, phase, creator):
     """Creates a submission and an evaluation for that submission."""
     s = SubmissionFactory(phase=phase, creator=creator)
