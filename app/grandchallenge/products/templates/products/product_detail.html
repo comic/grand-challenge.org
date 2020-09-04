@@ -142,8 +142,7 @@
             <td>
                 <div class="d-flex flex-row">
                     <div class="text-muted pr-1">CE</div>
-                    <img data-toggle="tooltip" title="Software that may impact patient outcome is considered a medical device and needs to conform to certain safety standards. The CE mark indicates conformity to those standards and allows for selling and clinical use of the product within Europe. There are different classes from low risk (class I) to high risk (class III)."
-                         src="{% static 'products/images/icon_info.png' %}" alt="info" style="width:4%; height:4%">
+                    <img data-toggle="tooltip" title={% include "products/partials/tooltip_CE.html" %} src="{% static 'products/images/icon_info.png' %}" alt="info" style="width:4%; height:4%">
                 </div>
             </td>
             <td>
@@ -154,8 +153,7 @@
             <td>
                 <div class="d-flex flex-row">
                     <div class="text-muted pr-1">FDA</div>
-                    <img data-toggle="tooltip" title="Software that may impact patient outcome is considered a medical device and needs to conform to certain safety standards. The FDA clearance indicates conformity to those standards and allows for selling and clinical use of the product within the United States. There are different classes from low risk (class I) to high risk (class III). Most software as a medical device is categorized as class II."
-                         src="{% static 'products/images/icon_info.png' %}" alt="info" style="width:4%; height:4%">
+                    <img data-toggle="tooltip" title={% include "products/partials/tooltip_FDA.html" %} src="{% static 'products/images/icon_info.png' %}" alt="info" style="width:4%; height:4%">
                 </div>
             </td>
             <td>
