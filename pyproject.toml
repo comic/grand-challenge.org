@@ -69,6 +69,7 @@ openslide-python = "*"
 humanize = "*"
 disposable-email-domains = "*"
 docutils = "<0.16" # Required for boto3 depedency resolution
+django-machina = "^1.1.2"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
