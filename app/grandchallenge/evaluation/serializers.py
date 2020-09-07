@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
+from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
 
+from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
@@ -73,6 +75,7 @@ class AlgorithmEvaluationSerializer(ModelSerializer):
 
 class EvaluationSerializer(ModelSerializer):
     submission = SubmissionSerializer()
+    status = CharField(source="get_status_display", read_only=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
 
     class Meta:
@@ -87,4 +90,8 @@ class EvaluationSerializer(ModelSerializer):
             "rank",
             "rank_score",
             "rank_per_metric",
+            "status",
+        )
+        swagger_schema_fields = swagger_schema_fields_for_charfield(
+            status=model._meta.get_field("status")
         )
