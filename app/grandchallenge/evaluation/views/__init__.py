@@ -275,7 +275,11 @@ class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(phase__challenge=self.request.challenge)
+        return (
+            queryset.filter(phase__challenge=self.request.challenge)
+            .select_related("creator__user_profile", "phase__challenge")
+            .prefetch_related("evaluation_set")
+        )
 
 
 class SubmissionDetail(
