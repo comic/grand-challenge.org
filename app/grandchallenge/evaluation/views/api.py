@@ -36,3 +36,6 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
         DjangoFilterBackend,
         ObjectPermissionsFilter,
     )
+    filterset_fields = [
+        "submission__phase",
+    ]
