@@ -1,6 +1,8 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework_csv.renderers import PaginatedCSVRenderer
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.evaluation.models import (
@@ -39,3 +41,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
     filterset_fields = [
         "submission__phase",
     ]
+    renderer_classes = (
+        *api_settings.DEFAULT_RENDERER_CLASSES,
+        PaginatedCSVRenderer,
+    )
