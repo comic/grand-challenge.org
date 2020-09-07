@@ -57,7 +57,7 @@
         {% for offset in offsets %}
             <p>
                 <a class="btn btn-primary"
-                   href="{% url 'api:evaluation-list' %}?format=json&submission__phase={{ phase.pk }}&offset={{ offset }}&limit={{ limit }}"
+                   href="{% url 'api:evaluation-list' %}?format=csv&submission__phase={{ phase.pk }}&offset={{ offset }}&limit={{ limit }}"
                    download="{{ phase.challenge.short_name }}_{{ phase.slug }}_evaluations_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}">
                     <i class="fas fa-file-csv"></i> Evaluations ({{ offset|add:1 }} to {{ offset|add:limit }})
                 </a>
