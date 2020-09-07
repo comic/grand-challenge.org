@@ -16,7 +16,10 @@ from grandchallenge.cases.views import (
     RawImageFileViewSet,
     RawImageUploadSessionViewSet,
 )
-from grandchallenge.evaluation.views.api import AlgorithmEvaluationViewSet
+from grandchallenge.evaluation.views.api import (
+    AlgorithmEvaluationViewSet,
+    EvaluationViewSet,
+)
 from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
@@ -75,6 +78,9 @@ router.register(
     r"evaluations/algorithms",
     AlgorithmEvaluationViewSet,
     basename="evaluations-algorithm-evaluation",
+)
+router.register(
+    r"evaluations", EvaluationViewSet, basename="evaluation",
 )
 
 # Reader studies
