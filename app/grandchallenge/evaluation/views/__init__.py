@@ -9,6 +9,7 @@ from django.core.files import File
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -466,7 +467,15 @@ class LeaderboardDetail(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"phase": self.phase})
+        limit = 1000
+        context.update(
+            {
+                "phase": self.phase,
+                "now": now().isoformat(),
+                "limit": limit,
+                "offsets": range(0, context["object_list"].count(), limit),
+            }
+        )
         return context
 
     def get_queryset(self, *args, **kwargs):
