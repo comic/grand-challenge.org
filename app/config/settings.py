@@ -9,6 +9,7 @@ import sentry_sdk
 from corsheaders.defaults import default_headers
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
+from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
@@ -204,7 +205,11 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
         "LOCATION": "memcached:11211",
-    }
+    },
+    "machina_attachments": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": "/tmp",
+    },
 }
 
 ROOT_URLCONF = "config.urls.root"
@@ -257,7 +262,7 @@ STATICFILES_FINDERS = (
 )
 
 # Vendored static files will be put here
-STATICFILES_DIRS = ["/opt/static/"]
+STATICFILES_DIRS = ["/opt/static/", MACHINA_MAIN_STATIC_DIR]
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
@@ -269,7 +274,7 @@ SECRET_KEY = os.environ.get(
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [str(APPS_DIR)],
+        "DIRS": [str(APPS_DIR), MACHINA_MAIN_TEMPLATE_DIR],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -286,7 +291,8 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.debug",
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
-            ]
+                "machina.core.context_processors.metadata",
+            ],
         },
     }
 ]
@@ -310,6 +316,7 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
 )
@@ -353,6 +360,22 @@ THIRD_PARTY_APPS = [
     "drf_yasg",
     "markdownx",  # for editing markdown
     "django_filters",
+    # django-machina dependencies:
+    "mptt",
+    "haystack",
+    "widget_tweaks",
+    # djano-machina apps:
+    "machina",
+    "machina.apps.forum",
+    "machina.apps.forum_conversation",
+    "machina.apps.forum_conversation.forum_attachments",
+    "machina.apps.forum_conversation.forum_polls",
+    "machina.apps.forum_feeds",
+    "machina.apps.forum_moderation",
+    "machina.apps.forum_search",
+    "machina.apps.forum_tracking",
+    "machina.apps.forum_member",
+    "machina.apps.forum_permission",
 ]
 
 LOCAL_APPS = [
@@ -519,6 +542,10 @@ MARKDOWNX_MARKDOWNIFY_FUNCTION = (
 )
 MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
+
+HAYSTACK_CONNECTIONS = {
+    "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"},
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
