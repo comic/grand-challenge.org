@@ -3,6 +3,7 @@ from django.contrib import admin
 from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
     ETDRSGridAnnotation,
+    ImageTextAnnotation,
     LandmarkAnnotationSet,
     MeasurementAnnotation,
     OctRetinaImagePathologyAnnotation,
@@ -50,12 +51,7 @@ class LandmarkAnnotationSetAdmin(admin.ModelAdmin):
     readonly_fields = ("grader", "created")
 
 
-class RetinaImagePathologyAnnotationAdmin(admin.ModelAdmin):
-    search_fields = ("grader__username", "image__name")
-    readonly_fields = ("grader", "image")
-
-
-class OctRetinaImagePathologyAnnotationAdmin(admin.ModelAdmin):
+class AbstractImageAnnotationAdmin(admin.ModelAdmin):
     search_fields = ("grader__username", "image__name")
     readonly_fields = ("grader", "image")
 
@@ -70,8 +66,9 @@ admin.site.register(SinglePolygonAnnotation)
 admin.site.register(LandmarkAnnotationSet, LandmarkAnnotationSetAdmin)
 admin.site.register(SingleLandmarkAnnotation)
 admin.site.register(
-    RetinaImagePathologyAnnotation, RetinaImagePathologyAnnotationAdmin
+    RetinaImagePathologyAnnotation, AbstractImageAnnotationAdmin
 )
 admin.site.register(
-    OctRetinaImagePathologyAnnotation, OctRetinaImagePathologyAnnotationAdmin
+    OctRetinaImagePathologyAnnotation, AbstractImageAnnotationAdmin
 )
+admin.site.register(ImageTextAnnotation, AbstractImageAnnotationAdmin)
