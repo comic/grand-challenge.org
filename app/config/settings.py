@@ -54,7 +54,7 @@ IGNORABLE_404_URLS = [
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the config dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
+APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge/core/templates/")
 
 DATABASES = {
     "default": {
@@ -275,7 +275,6 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [str(APPS_DIR), MACHINA_MAIN_TEMPLATE_DIR],
-        "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.contrib.auth.context_processors.auth",
@@ -293,9 +292,15 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.footer_links",
                 "machina.core.context_processors.metadata",
             ],
+            "loaders": [
+                "django.template.loaders.filesystem.Loader",
+                "django.template.loaders.app_directories.Loader",
+            ],
         },
     }
 ]
+
+MACHINA_BASE_TEMPLATE_NAME = "base.html"
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top

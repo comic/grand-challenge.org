@@ -1,0 +1,11 @@
+{% extends "machina/board_base.html" %}
+
+{% block title %}{% block sub_title %}{% endblock sub_title %} - {{ request.site.name }} Forums{% endblock title %}
+
+{% block header %}
+    {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
+    {% include "machina/partials/breadcrumb.html" %}
+{% endblock %}
+
+{% block breadcrumb %}
+{% endblock %}
