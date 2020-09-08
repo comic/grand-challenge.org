@@ -124,7 +124,7 @@ urlpatterns = [
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
     path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs"),),
-    path("forum/", include(machina_urls)),
+    path("forums/", include(machina_urls)),
     path(
         "",
         include(

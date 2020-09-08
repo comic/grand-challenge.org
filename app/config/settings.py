@@ -413,8 +413,7 @@ LOCAL_APPS = [
     "grandchallenge.blogs",
 ]
 
-# Keep LOCAL_APPS last as we depend on some THIRD_PARTY_APPS
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
@@ -548,7 +547,7 @@ HAYSTACK_CONNECTIONS = {
     "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"},
 }
 
-FORUMS_CHALLENGE_CATEGORY_NAME = "Challenge"
+FORUMS_CHALLENGE_CATEGORY_NAME = "Challenges"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -851,6 +850,7 @@ DISALLOWED_CHALLENGE_NAMES = {
     "i",
     "cache",
     "challenge",
+    "challenges",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
     *WORKSTATIONS_RENDERING_SUBDOMAINS,

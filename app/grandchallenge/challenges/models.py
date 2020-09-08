@@ -2,6 +2,7 @@ import datetime
 import logging
 import re
 from collections import namedtuple
+from itertools import chain, product
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -16,6 +17,12 @@ from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
+from machina.apps.forum.models import Forum
+from machina.apps.forum_permission.models import (
+    ForumPermission,
+    GroupForumPermission,
+    UserForumPermission,
+)
 from tldextract import extract
 
 from grandchallenge.challenges.emails import (
@@ -425,17 +432,18 @@ class Challenge(ChallengeBase):
     )
     admins_group = models.OneToOneField(
         Group,
-        null=True,
         editable=False,
         on_delete=models.CASCADE,
         related_name="admins_of_challenge",
     )
     participants_group = models.OneToOneField(
         Group,
-        null=True,
         editable=False,
         on_delete=models.CASCADE,
         related_name="participants_of_challenge",
+    )
+    forum = models.ForeignKey(
+        Forum, null=True, editable=False, on_delete=models.CASCADE
     )
 
     cached_num_participants = models.PositiveIntegerField(
@@ -453,22 +461,102 @@ class Challenge(ChallengeBase):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
+        if adding:
+            self.create_groups()
+            self.create_forum()
+
         super().save(*args, **kwargs)
 
         if adding:
-            self.create_groups()
+            self.update_permissions()
+            self.create_forum_permissions()
             self.create_default_pages()
             self.create_default_phases()
-            self.update_permissions()
             send_challenge_created_email(self)
 
         if self.hidden != self._hidden_orig:
             assign_evaluation_permissions.apply_async(
                 kwargs={"challenge_pk": self.pk}
             )
+            self.update_user_forum_permissions()
 
     def update_permissions(self):
         assign_perm("change_challenge", self.admins_group, self)
+
+    def create_forum_permissions(self):
+        participant_group_perms = {
+            "can_see_forum",
+            "can_read_forum",
+            "can_start_new_topics",
+            "can_reply_to_topics",
+            "can_delete_own_posts",
+            "can_edit_own_posts",
+            "can_post_without_approval",
+            "can_create_polls",
+            "can_vote_in_polls",
+        }
+        admin_group_perms = {
+            "can_lock_topics",
+            "can_edit_posts",
+            "can_delete_posts",
+            "can_approve_posts",
+            "can_reply_to_locked_topics",
+            "can_post_announcements",
+            "can_post_stickies",
+            *participant_group_perms,
+        }
+
+        permissions = ForumPermission.objects.filter(
+            codename__in=admin_group_perms
+        ).values_list("codename", "pk")
+        permissions = {codename: pk for codename, pk in permissions}
+
+        GroupForumPermission.objects.bulk_create(
+            chain(
+                (
+                    GroupForumPermission(
+                        permission_id=permissions[codename],
+                        group=self.participants_group,
+                        forum=self.forum,
+                        has_perm=True,
+                    )
+                    for codename in participant_group_perms
+                ),
+                (
+                    GroupForumPermission(
+                        permission_id=permissions[codename],
+                        group=self.admins_group,
+                        forum=self.forum,
+                        has_perm=True,
+                    )
+                    for codename in admin_group_perms
+                ),
+            )
+        )
+
+        UserForumPermission.objects.bulk_create(
+            UserForumPermission(
+                permission_id=permissions[codename],
+                **{user: True},
+                forum=self.forum,
+                has_perm=not self.hidden,
+            )
+            for codename, user in product(
+                ["can_see_forum", "can_read_forum"],
+                ["anonymous_user", "authenticated_user"],
+            )
+        )
+
+    def update_user_forum_permissions(self):
+        perms = UserForumPermission.objects.filter(
+            permission__codename__in=["can_see_forum", "can_read_forum"],
+            forum=self.forum,
+        )
+
+        for p in perms:
+            p.has_perm = not self.hidden
+
+        UserForumPermission.objects.bulk_update(perms, ["has_perm"])
 
     def create_groups(self):
         # Create the groups only on first save
@@ -478,13 +566,39 @@ class Challenge(ChallengeBase):
         )
         self.admins_group = admins_group
         self.participants_group = participants_group
-        self.save()
 
         try:
             self.creator.groups.add(admins_group)
         except AttributeError:
             # No creator set
             pass
+
+    def create_forum(self):
+        f, created = Forum.objects.get_or_create(
+            name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT,
+        )
+
+        if created:
+            UserForumPermission.objects.bulk_create(
+                UserForumPermission(
+                    permission_id=perm_id,
+                    **{user: True},
+                    forum=self.forum,
+                    has_perm=True,
+                )
+                for perm_id, user in product(
+                    ForumPermission.objects.filter(
+                        codename__in=["can_see_forum", "can_read_forum"]
+                    ).values_list("pk", flat=True),
+                    ["anonymous_user", "authenticated_user"],
+                )
+            )
+
+        self.forum = Forum.objects.create(
+            name=self.title if self.title else self.short_name,
+            parent=f,
+            type=Forum.FORUM_POST,
+        )
 
     def create_default_pages(self):
         Page.objects.create(
