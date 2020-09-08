@@ -456,35 +456,35 @@ class Challenge(ChallengeBase):
         super().save(*args, **kwargs)
 
         if adding:
-            # Create the groups only on first save
-            admins_group = Group.objects.create(name=self.admin_group_name())
-            participants_group = Group.objects.create(
-                name=self.participants_group_name()
-            )
-            self.admins_group = admins_group
-            self.participants_group = participants_group
-            self.save()
-
-            # Create the evaluation config
-            self.phase_set.create(challenge=self)
-
+            self.create_groups()
             self.create_default_pages()
-
-            assign_perm("change_challenge", admins_group, self)
-
-            # add current user to admins for this challenge
-            try:
-                self.creator.groups.add(admins_group)
-            except AttributeError:
-                # No creator set
-                pass
-
+            self.create_default_phases()
+            self.update_permissions()
             send_challenge_created_email(self)
 
         if self.hidden != self._hidden_orig:
             assign_evaluation_permissions.apply_async(
                 kwargs={"challenge_pk": self.pk}
             )
+
+    def update_permissions(self):
+        assign_perm("change_challenge", self.admins_group, self)
+
+    def create_groups(self):
+        # Create the groups only on first save
+        admins_group = Group.objects.create(name=f"{self.short_name}_admins")
+        participants_group = Group.objects.create(
+            name=f"{self.short_name}_participants"
+        )
+        self.admins_group = admins_group
+        self.participants_group = participants_group
+        self.save()
+
+        try:
+            self.creator.groups.add(admins_group)
+        except AttributeError:
+            # No creator set
+            pass
 
     def create_default_pages(self):
         Page.objects.create(
@@ -504,13 +504,8 @@ class Challenge(ChallengeBase):
             permission_level=Page.REGISTERED_ONLY,
         )
 
-    def admin_group_name(self):
-        """Return the name of this challenges admin group."""
-        return self.short_name + "_admins"
-
-    def participants_group_name(self):
-        """Return the name of the participants group."""
-        return self.short_name + "_participants"
+    def create_default_phases(self):
+        self.phase_set.create(challenge=self)
 
     def is_admin(self, user) -> bool:
         """Determines if this user is an admin of this challenge."""
