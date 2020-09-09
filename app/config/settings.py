@@ -306,6 +306,7 @@ TEMPLATES = [
 
 MACHINA_BASE_TEMPLATE_NAME = "base.html"
 MACHINA_PROFILE_AVATARS_ENABLED = False
+MACHINA_FORUM_NAME = "Grand Challenge Forums"
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
@@ -384,8 +385,9 @@ THIRD_PARTY_APPS = [
     "machina.apps.forum_moderation",
     "machina.apps.forum_search",
     "machina.apps.forum_tracking",
-    "machina.apps.forum_member",
     "machina.apps.forum_permission",
+    # Overridden apps
+    "grandchallenge.forum_member",
 ]
 
 LOCAL_APPS = [
