@@ -304,10 +304,6 @@ TEMPLATES = [
     }
 ]
 
-MACHINA_BASE_TEMPLATE_NAME = "base.html"
-MACHINA_PROFILE_AVATARS_ENABLED = False
-MACHINA_FORUM_NAME = "Grand Challenge Forums"
-
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -560,6 +556,9 @@ HAYSTACK_CONNECTIONS = {
 }
 
 FORUMS_CHALLENGE_CATEGORY_NAME = "Challenges"
+MACHINA_BASE_TEMPLATE_NAME = "base.html"
+MACHINA_PROFILE_AVATARS_ENABLED = False
+MACHINA_FORUM_NAME = "Grand Challenge Forums"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
