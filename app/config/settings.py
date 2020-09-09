@@ -378,7 +378,6 @@ THIRD_PARTY_APPS = [
     # djano-machina apps:
     "machina",
     "machina.apps.forum",
-    "machina.apps.forum_conversation",
     "machina.apps.forum_conversation.forum_attachments",
     "machina.apps.forum_conversation.forum_polls",
     "machina.apps.forum_feeds",
@@ -387,6 +386,7 @@ THIRD_PARTY_APPS = [
     "machina.apps.forum_tracking",
     "machina.apps.forum_permission",
     # Overridden apps
+    "grandchallenge.forum_conversation",
     "grandchallenge.forum_member",
 ]
 
