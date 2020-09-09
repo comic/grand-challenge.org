@@ -54,7 +54,6 @@ IGNORABLE_404_URLS = [
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the config dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge/core/templates/")
 
 DATABASES = {
     "default": {
@@ -274,7 +273,12 @@ SECRET_KEY = os.environ.get(
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [str(APPS_DIR), MACHINA_MAIN_TEMPLATE_DIR],
+        "DIRS": [
+            # Override the machina templates, everything else is found with
+            # django.template.loaders.app_directories.Loader
+            os.path.join(SITE_ROOT, "grandchallenge/forums/templates/"),
+            MACHINA_MAIN_TEMPLATE_DIR,
+        ],
         "OPTIONS": {
             "context_processors": [
                 "django.contrib.auth.context_processors.auth",
@@ -301,6 +305,7 @@ TEMPLATES = [
 ]
 
 MACHINA_BASE_TEMPLATE_NAME = "base.html"
+MACHINA_PROFILE_AVATARS_ENABLED = False
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
