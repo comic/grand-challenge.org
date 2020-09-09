@@ -43,7 +43,7 @@ def migrate_oct_annotations(annotations):  # noqa: C901
             )
             grader_image_keyed_map[grader_id][
                 image_id
-            ] = grader_image_keyed_map[annotation.grader].get(image_id, []) + [
+            ] = grader_image_keyed_map[grader_id].get(image_id, []) + [
                 annotation
             ]
 
