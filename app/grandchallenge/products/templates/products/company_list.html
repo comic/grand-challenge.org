@@ -34,9 +34,9 @@
             <div class="d-flex justify-content-between flex-column h-100">
                 <a class="pb-5" href="{% url 'products:company-detail' slug=company.slug %}" title="{{ company.company_name }}">
                   {% if company.logo %}
-                    <img src="{{ company.logo.url }}" alt="Logo" style="width:70%">
+                    <img loading="lazy" src="{{ company.logo.url }}" alt="Logo" style="width:70%">
                   {% else %}
-                    <img src="{% static 'products/images/error.png' %}" alt="Logo" style="width:70%">
+                    <img loading="lazy" src="{% static 'products/images/error.png' %}" alt="Logo" style="width:70%">
                   {% endif %}
                 </a>
 

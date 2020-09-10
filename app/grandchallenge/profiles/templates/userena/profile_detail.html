@@ -2,6 +2,9 @@
 {% load i18n %}
 {% load url %}
 {% load guardian_tags %}
+{% load meta_attr %}
+{% load evaluation_extras %}
+{% load humanize %}
 
 {% block title %}{% blocktrans with profile.user.username as username %}
     {{ username }}'s profile
@@ -11,82 +14,118 @@
         {{ profile.user.get_full_name }}
         ){% endif %}</h2>{% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href>Users</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ profile.user.username }}</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
-    <h2>{{ profile.user.username }}</h2>
     <div id="details" class="row">
         {% block profile_details %}
-            <div class="col-sm-2">
-                <img class="mugshot" src="{{ profile.get_mugshot_url }}"
-                     style="display: block; margin: auto;"
-                     alt="{% trans "Your mugshot" %}"/>
-            </div>
-            <div class="col-sm-10">
-                <dl>
-                    {% block profile_definition_list %}
-                        {% if profile.user.get_full_name %}
-                            <dt>{% trans "Name" %}</dt>
-                            <dd>{{ profile.user.get_full_name }}</dd>
+            <div class="col-sm-3">
+                <div class="embed-responsive embed-responsive-1by1 mb-3">
+                    <img class="card-img-top embed-responsive-item rounded-circle"
+                         src="{{ profile.get_mugshot_url }}"
+                         style="display: block; margin: auto;"
+                         alt="{% trans "Your mugshot" %}"/>
+                </div>
+                <div>
+                    {% if profile.user.get_full_name %}
+                        <h2 class="mb-0">{{ profile.user.get_full_name }}</h2>
+                        <p class="lead text-muted">{{ profile.user.username }}</p>
+                    {% else %}
+                        <h2 class="mb-3">{{ profile.user.username }}</h2>
+                    {% endif %}
+
+                    {% get_obj_perms request.user for profile as "profile_perms" %}
+                    {% if "change_profile" in profile_perms %}
+                        <ul class="list-group mb-3">
+                            <a class="list-group-item list-group-item-action"
+                               href='{% url 'userena_profile_edit' user.username %}'><i
+                                    class="fa fa-edit fa-fw"></i>&nbsp;{% trans "Edit profile" %}</a>
+                            {% if profile.user.has_usable_password %}
+                                <a class="list-group-item list-group-item-action"
+                                   href='{% url 'userena_password_change' user.username %}'><i
+                                        class="fa fa-key fa-fw"></i>&nbsp;{% trans "Change password" %}
+                                </a>
+                            {% endif %}
+                        </ul>
+                    {% endif %}
+
+                    <ul class="list-unstyled">
+                        {% if profile.country %}
+                            <li class="my-1"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;{{ profile.country.name }}
+                            </li>
                         {% endif %}
                         {% if profile.institution %}
-                            <dt>{% trans "Institution" %}</dt>
-                            <dd>{{ profile.institution }}</dd>
+                            <li class="my-1"><i class="fa fa-fw fa-university"></i>&nbsp;{{ profile.institution }}</li>
                         {% endif %}
                         {% if profile.department %}
-                            <dt>{% trans "Department" %}</dt>
-                            <dd>{{ profile.department }}</dd>
+                            <li class="my-1"><i class="fa fa-fw fa-building"></i>&nbsp;{{ profile.department }}</li>
                         {% endif %}
                         {% if profile.website %}
-                            <dt>{% trans "Website" %}</dt>
-                            <dd>{{ profile.website|urlize }}</dd>
+                            <li class="my-1"><i class="fa fa-fw fa-link"></i>&nbsp;<a
+                                    href="{{ profile.website }}">{{ profile.website }}</a></li>
                         {% endif %}
-                        {% if profile.location %}
-                            <dt>{% trans "Location" %}</dt>
-                            <dd>{{ profile.location }}</dd>
+                    </ul>
+
+                    <h5>Statistics</h5>
+                    <ul class="list-unstyled">
+                        <li>Member for {{ profile.user.date_joined|timesince }}</li>
+                        {% if num_submissions %}
+                            <li>{{ num_submissions }} challenge submissions</li>
                         {% endif %}
-                        {% if profile.about_me %}
-                            <dt>{% trans "About me" %}</dt>
-                            <dd>{{ profile.about_me }}</dd>
+                        {% if num_algorithms_run %}
+                            <li>{{ num_algorithms_run }} algorithms run</li>
                         {% endif %}
-                    {% endblock %}
-                </dl>
-
-                <div id="user-challenges">
-                    <h3>Challenges</h3>
-                    <p>{{ profile.user.username }} is participating in:</p>
-                    <ul>
-                        {% for challenge in profile.get_challenges_as_participant %}
-
-                            <li>
-                                <a href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">{{ challenge.short_name }}</a>
-                            </li>
-
-                        {% empty %}
-
-                            <p>no challenges yet!</p>
-
-                        {% endfor %}
                     </ul>
                 </div>
 
-                {% block profile_navigation %}
-                    {% get_obj_perms request.user for profile as "profile_perms" %}
-                    {% if "change_profile" in profile_perms %}
-                        <h3>Settings</h3>
-                        <ul id="box-nav">
-                            {% block profile_navigation_items %}
-                                <li>
-                                    <a href='{% url 'userena_profile_edit' user.username %}'>{% trans "Edit profile" %}</a>
-                                </li>
-                                {% if profile.user.has_usable_password %}
-                                    <li>
-                                        <a href='{% url 'userena_password_change' user.username %}'>{% trans "Change password" %}</a>
-                                    </li>
-                                {% endif %}
-                            {% endblock %}
-                        </ul>
-                    {% endif %}
-                {% endblock %}
-
+            </div>
+            <div class="col">
+                <h3>Activity Overview</h3>
+                <div class="row equal-height mx-n2">
+                    {% for object in object_list %}
+                        <div class="col-12 col-sm-12 col-md-6 col-lg-4 mb-3 px-2">
+                            <div class="card">
+                                <a class="stretched-link" href="{{ object.get_absolute_url }}"
+                                   title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
+                                <div class="embed-responsive embed-responsive-1by1">
+                                    {% if object.logo %}
+                                        <img class="card-img-top embed-responsive-item"
+                                             loading="lazy"
+                                             src="{{ object.logo.url }}"
+                                             alt="{{ object }} Logo">
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title mb-0">
+                                        {% firstof object.title object.short_name %}
+                                        {% if not object.public %}
+                                            <i class="fas fa-lock above-stretched-link"
+                                               title="{{ object|meta_attr:'verbose_name'|title }} is private"></i>
+                                        {% endif %}
+                                    </h5>
+                                    <span class="badge badge-info above-stretched-link"
+                                        title="{{ object|meta_attr:'verbose_name'|title }} {% firstof object.title object.short_name %}">
+                                        <i class="far fa-circle fa-fw"></i>
+                                        {{ object|meta_attr:'verbose_name'|title }}
+                                    </span>
+                                    <span class="badge badge-info above-stretched-link"
+                                        title="{{ profile.user.username }} is {{ object_role|get_key:object }} of this {{ object|meta_attr:'verbose_name' }}">
+                                        <i class="fas fa-user fa-fw"></i>
+                                        {{ object_role|get_key:object|title }}
+                                    </span>
+                                    <p class="card-text">
+                                        {{ object.description }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         {% endblock %}
     </div>
