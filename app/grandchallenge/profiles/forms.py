@@ -113,6 +113,36 @@ class SignupFormExtra(userena_forms.SignupForm):
 
 
 class EditProfileForm(userena_forms.EditProfileForm):
+    first_name = forms.CharField(
+        label=_("First Name"), max_length=30, required=True
+    )
+    last_name = forms.CharField(
+        label=_("Last Name"), max_length=30, required=True
+    )
+    institution = forms.CharField(
+        label=_("Institution"),
+        max_length=100,
+        required=True,
+        help_text=_("Institution you are affiliated to."),
+    )
+    department = forms.CharField(
+        label=_("Department"),
+        max_length=100,
+        required=True,
+        help_text=_("Department you represent."),
+    )
+    country = forms.ChoiceField(
+        label=_("Location"),
+        choices=tuple([("00", _("-" * 9))] + list(countries)),
+        required=True,
+    )
+    website = forms.URLField(
+        label=_("Website"),
+        max_length=150,
+        required=False,
+        help_text=_("A website which describes you or your department"),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         del self.fields["privacy"]

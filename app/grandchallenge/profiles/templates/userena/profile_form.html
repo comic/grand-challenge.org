@@ -7,6 +7,14 @@
 {% block content_title %}<h2>{% blocktrans with profile.user.username as username %}Account &raquo;
     {{ username }}{% endblocktrans %}</h2>{% endblock %}
 
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href>Users</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'userena_profile_detail' username=profile.user.username %}">{{ profile.user.username }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Edit Profile</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <div class="white-box">
         <form action="" enctype="multipart/form-data" method="post">

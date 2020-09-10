@@ -90,6 +90,7 @@ REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
 USERENA_DEFAULT_PRIVACY = "open"
+USERENA_MUGSHOT_SIZE = 460
 LOGIN_URL = "/users/signin/"
 LOGOUT_URL = "/users/signout/"
 
