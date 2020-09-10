@@ -34,39 +34,31 @@ def migrate_oct_annotations(annotations):  # noqa: C901
                 or annotation.image.modality.modality != "OCT"
             ):
                 non_oct.append(annotation.id)
-                break
+                continue
 
-            grader_id = str(annotation.grader.id)
-            image_id = str(annotation.image.pk)
-            grader_image_keyed_map[grader_id] = grader_image_keyed_map.get(
-                grader_id, {}
-            )
-            grader_image_keyed_map[grader_id][
-                image_id
-            ] = grader_image_keyed_map[grader_id].get(image_id, []) + [
-                annotation
-            ]
+            key = f"{annotation.grader.id}-{annotation.image.pk}"
+            grader_image_keyed_map[key] = grader_image_keyed_map.get(
+                key, []
+            ) + [annotation]
 
     print("Grader and image keyed map created")
-    for grader, images in grader_image_keyed_map.items():
-        print(f"For grader: {grader}")
-        for annotations in images.values():
-            text_annotation, _ = ImageTextAnnotation.objects.get_or_create(
-                grader=annotations[0].grader,
-                image=annotations[0].image,
-                defaults={"text": ""},
-            )
-            text = "\n\nAnnotations created in legacy workstation:\n"
-            for annotation in annotations:
-                text += f"- {annotation.singlepolygonannotation_set.count()} annotations named {annotation.name}"
-                annotation.delete()
-                translated_annotations.append(annotation.id)
+    for annotations in grader_image_keyed_map.values():
+        text_annotation, _ = ImageTextAnnotation.objects.get_or_create(
+            grader=annotations[0].grader,
+            image=annotations[0].image,
+            defaults={"text": ""},
+        )
+        text = "\n\nAnnotations created in legacy workstation:\n"
+        for annotation in annotations:
+            text += f"- {annotation.singlepolygonannotation_set.count()} annotations named {annotation.name}"
+            translated_annotations.append(annotation.id)
+            annotation.delete()
 
-            text_annotation.text += text
-            text_annotation.save()
-            print(
-                f"-- For image: {annotations[0].image.name} - {len(annotations)} combined into 1 text annotation"
-            )
+        text_annotation.text += text
+        text_annotation.save()
+        print(
+            f"-- For image {annotations[0].image.name} and grader {annotations[0].grader} - {len(annotations)} combined into 1 text annotation"
+        )
 
     return {
         "translated_annotations": translated_annotations,
@@ -89,11 +81,15 @@ class Command(BaseCommand):
         print(
             f"Done! {len(result['translated_annotations'])}/{len(annotations)} annotations translated."
         )
-
-        print(
-            "translated_annotations = "
-            + array_to_string(result["translated_annotations"])
+        missed_annotations = list(
+            filter(
+                lambda a: a not in result["translated_annotations"]
+                and a not in result["non_oct"],
+                oct_no_match,
+            )
         )
+
+        print("missed_annotations = " + array_to_string(missed_annotations))
         print("non_oct = " + array_to_string(result["non_oct"]))
 
 
