@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load url %}
 {% load guardian_tags %}
+{% load meta_attr %}
+{% load evaluation_extras %}
 
 {% block title %}{% blocktrans with profile.user.username as username %}
     {{ username }}'s profile
@@ -71,17 +73,42 @@
 
             </div>
             <div class="col">
-                <h3>Challenges</h3>
-                <p>{{ profile.user.username }} is participating in:</p>
-                <ul>
-                    {% for challenge in profile.get_challenges_as_participant %}
-                        <li>
-                            <a href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">{{ challenge.short_name }}</a>
-                        </li>
-                    {% empty %}
-                        <p>no challenges yet!</p>
+                <h3>Overview</h3>
+                <div class="row equal-height mx-n2">
+                    {% for object in object_list %}
+                        <div class="col-12 col-sm-12 col-md-6 col-lg-4 mb-3 px-2">
+                            <div class="card">
+                                <a class="stretched-link" href="{{ object.get_absolute_url }}"
+                                   title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
+                                <div class="embed-responsive embed-responsive-1by1">
+                                    {% if object.logo %}
+                                        <img class="card-img-top embed-responsive-item"
+                                             loading="lazy"
+                                             src="{{ object.logo.url }}"
+                                             alt="{{ object }} Logo">
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title mb-0">
+                                        {% firstof object.title object.short_name %}
+                                        {% if not object.public %}
+                                            <i class="fas fa-lock above-stretched-link"
+                                               title="{{ object|meta_attr:'verbose_name'|title }} is private"></i>
+                                        {% endif %}
+                                    </h5>
+                                    <span class="badge badge-info above-stretched-link"
+                                        title="{{ profile.user.username }} is {{ object_role|get_key:object }} of this {{ object|meta_attr:'verbose_name' }}">
+                                        <i class="fas fa-user fa-fw"></i>
+                                        {{ object_role|get_key:object|title }}
+                                    </span>
+                                    <p class="card-text">
+                                        {{ object.description }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     {% endfor %}
-                </ul>
+                </div>
             </div>
         {% endblock %}
     </div>
