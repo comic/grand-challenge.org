@@ -39,6 +39,10 @@
                         <h2 class="mb-3">{{ profile.user.username }}</h2>
                     {% endif %}
 
+                    {% if profile.user.is_staff %}
+                        <span class="btn btn-sm btn-outline-success disabled mb-3">STAFF</span>
+                    {% endif %}
+
                     {% get_obj_perms request.user for profile as "profile_perms" %}
                     {% if "change_profile" in profile_perms %}
                         <ul class="list-group mb-3">
@@ -67,7 +71,7 @@
                         {% endif %}
                         {% if profile.website %}
                             <li class="my-1"><i class="fa fa-fw fa-link"></i>&nbsp;<a
-                                    href="{{ profile.website }}">{{ profile.website }}</a></li>
+                                    href="{{ profile.website }}">Website</a></li>
                         {% endif %}
                     </ul>
 
@@ -109,12 +113,12 @@
                                         {% endif %}
                                     </h5>
                                     <span class="badge badge-info above-stretched-link"
-                                        title="{{ object|meta_attr:'verbose_name'|title }} {% firstof object.title object.short_name %}">
+                                          title="{{ object|meta_attr:'verbose_name'|title }} {% firstof object.title object.short_name %}">
                                         <i class="far fa-circle fa-fw"></i>
                                         {{ object|meta_attr:'verbose_name'|title }}
                                     </span>
                                     <span class="badge badge-info above-stretched-link"
-                                        title="{{ profile.user.username }} is {{ object_role|get_key:object }} of this {{ object|meta_attr:'verbose_name' }}">
+                                          title="{{ profile.user.username }} is {{ object_role|get_key:object }} of this {{ object|meta_attr:'verbose_name' }}">
                                         <i class="fas fa-user fa-fw"></i>
                                         {{ object_role|get_key:object|title }}
                                     </span>
