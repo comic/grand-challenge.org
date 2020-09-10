@@ -312,6 +312,38 @@ class TestSetRetinaPathologiesCommand:
             getattr(oct_pathology_annotation, pathology_options_oct[0]) is True
         )
 
+    def test_testsetretinapathologies_multiple_objects(self):
+        annotation = PolygonAnnotationSetFactory(
+            name=f"retina::enface::{pathology_options_enface[0]}::bla"
+        )
+        pathology_annotation = RetinaImagePathologyAnnotationFactory(
+            **{
+                "image": annotation.image,
+                "grader": annotation.grader,
+                pathology_options_enface[0]: False,
+            }
+        )
+        RetinaImagePathologyAnnotationFactory(
+            **{
+                "image": annotation.image,
+                "grader": annotation.grader,
+                pathology_options_enface[0]: False,
+                "created": pathology_annotation.created + timedelta(days=-1),
+            }
+        )
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 2
+        result = set_retina_pathologies(PolygonAnnotationSet.objects.all())
+        assert result["pathology_set"] == 1
+        assert result["old_annotation"] == 0
+        assert len(result["non_matching_pathology"]) == 0
+        assert RetinaImagePathologyAnnotation.objects.all().count() == 2
+        pathology_annotation.refresh_from_db()
+        assert pathology_annotation.image == annotation.image
+        assert pathology_annotation.grader == annotation.grader
+        assert (
+            getattr(pathology_annotation, pathology_options_enface[0]) is True
+        )
+
 
 @pytest.mark.django_db
 class TestOCTMigratelesionnamesCommand:
