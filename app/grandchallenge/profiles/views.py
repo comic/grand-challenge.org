@@ -8,9 +8,10 @@ from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user
 from userena import views as userena_views
 
-from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.evaluation.models import Submission
 from grandchallenge.profiles.forms import EditProfileForm, PreSocialForm
 from grandchallenge.profiles.models import UserProfile
 from grandchallenge.profiles.utils import signin_redirect
@@ -184,7 +185,18 @@ class UserProfileDetail(UserPassesTestMixin, DetailView):
             else:
                 role[obj] = "participant"
 
-        context.update({"object_list": object_list, "object_role": role})
+        context.update(
+            {
+                "object_list": object_list,
+                "object_role": role,
+                "num_submissions": Submission.objects.filter(
+                    creator=profile_user
+                ).count(),
+                "num_algorithms_run": Job.objects.filter(
+                    creator=profile_user
+                ).count(),
+            }
+        )
 
         return context
 

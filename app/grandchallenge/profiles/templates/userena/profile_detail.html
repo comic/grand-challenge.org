@@ -4,6 +4,7 @@
 {% load guardian_tags %}
 {% load meta_attr %}
 {% load evaluation_extras %}
+{% load humanize %}
 
 {% block title %}{% blocktrans with profile.user.username as username %}
     {{ username }}'s profile
@@ -67,6 +68,17 @@
                         {% if profile.website %}
                             <li class="my-1"><i class="fa fa-fw fa-link"></i>&nbsp;<a
                                     href="{{ profile.website }}">{{ profile.website }}</a></li>
+                        {% endif %}
+                    </ul>
+
+                    <h5>Statistics</h5>
+                    <ul class="list-unstyled">
+                        <li>Member for {{ profile.user.date_joined|timesince }}</li>
+                        {% if num_submissions %}
+                            <li>{{ num_submissions }} challenge submissions</li>
+                        {% endif %}
+                        {% if num_algorithms_run %}
+                            <li>{{ num_algorithms_run }} algorithms run</li>
                         {% endif %}
                     </ul>
                 </div>
