@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 
 from grandchallenge.annotations.models import (
@@ -379,6 +381,34 @@ class TestOCTMigratelesionnamesCommand:
         assert text_annotation.image == image
         for annotation in annotations:
             assert annotation.name in text_annotation.text
+
+    def test_migrateunmatchedocts_match_existing_duplicate(self):
+        name = "oct_annotation_name"
+        image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))
+        annotation = PolygonAnnotationSetFactory(name=name, image=image,)
+        not_deleted_text = "This text should not be deleted"
+        not_deleted_text_duplicate = "This text should ALSO not be deleted"
+        text_annotation = ImageTextAnnotationFactory(
+            image=image, grader=annotation.grader, text=not_deleted_text
+        )
+        text_annotation_duplicate = ImageTextAnnotationFactory(
+            image=image,
+            grader=annotation.grader,
+            text=not_deleted_text_duplicate,
+            created=text_annotation.created + timedelta(days=1),
+        )
+        assert ImageTextAnnotation.objects.count() == 2
+        result = migrate_oct_annotations(PolygonAnnotationSet.objects.all())
+        assert result["translated_annotations"] == [annotation.id]
+        assert len(result["non_oct"]) == 0
+        assert ImageTextAnnotation.objects.count() == 2
+        assert PolygonAnnotationSet.objects.count() == 0
+        text_annotation.refresh_from_db()
+        assert name not in text_annotation.text
+        assert not_deleted_text in text_annotation.text
+        text_annotation_duplicate.refresh_from_db()
+        assert name in text_annotation_duplicate.text
+        assert not_deleted_text_duplicate in text_annotation_duplicate.text
 
     def test_migrateunmatchedocts_match_combined(self):
         non_oct_annotation = PolygonAnnotationSetFactory(name="non_oct")
