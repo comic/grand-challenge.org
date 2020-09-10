@@ -48,7 +48,7 @@ def migrate_oct_annotations(annotations):  # noqa: C901
             ]
 
     print("Grader and image keyed map created")
-    for grader, images in grader_image_keyed_map.values():
+    for grader, images in grader_image_keyed_map.items():
         print(f"For grader: {grader}")
         for annotations in images.values():
             text_annotation, _ = ImageTextAnnotation.objects.get_or_create(
@@ -59,6 +59,7 @@ def migrate_oct_annotations(annotations):  # noqa: C901
             text = "\n\nAnnotations created in legacy workstation:\n"
             for annotation in annotations:
                 text += f"- {annotation.singlepolygonannotation_set.count()} annotations named {annotation.name}"
+                annotation.delete()
                 translated_annotations.append(annotation.id)
 
             text_annotation.text += text
