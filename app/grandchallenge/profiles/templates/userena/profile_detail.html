@@ -109,6 +109,11 @@
                                         {% endif %}
                                     </h5>
                                     <span class="badge badge-info above-stretched-link"
+                                        title="{{ object|meta_attr:'verbose_name'|title }} {% firstof object.title object.short_name %}">
+                                        <i class="far fa-circle fa-fw"></i>
+                                        {{ object|meta_attr:'verbose_name'|title }}
+                                    </span>
+                                    <span class="badge badge-info above-stretched-link"
                                         title="{{ profile.user.username }} is {{ object_role|get_key:object }} of this {{ object|meta_attr:'verbose_name' }}">
                                         <i class="fas fa-user fa-fw"></i>
                                         {{ object_role|get_key:object|title }}
