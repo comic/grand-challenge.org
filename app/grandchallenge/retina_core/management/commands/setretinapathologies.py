@@ -33,7 +33,7 @@ pathology_options_oct = [
 ]
 
 
-def set_retina_pathologies(annotations):
+def set_retina_pathologies(annotations):  # noqa: C901
     pathology_set = 0
     old_annotation = 0
     non_matching_pathology = []
@@ -70,11 +70,20 @@ def set_retina_pathologies(annotations):
                 if modality == "oct":
                     pathology_options = pathology_options_oct
                     model = OctRetinaImagePathologyAnnotation
-                (pathology_annotation, _,) = model.objects.get_or_create(
-                    grader=annotation.grader,
-                    image=annotation.image,
-                    defaults={v: False for v in pathology_options},
-                )
+                try:
+                    pathology_annotation, _ = model.objects.get_or_create(
+                        grader=annotation.grader,
+                        image=annotation.image,
+                        defaults={v: False for v in pathology_options},
+                    )
+                except model.MultipleObjectsReturned:
+                    pathology_annotation = (
+                        model.objects.filter(
+                            grader=annotation.grader, image=annotation.image,
+                        )
+                        .order_by("-created")
+                        .first()
+                    )
 
                 setattr(pathology_annotation, name_parts[2], True)
                 pathology_annotation.save()
