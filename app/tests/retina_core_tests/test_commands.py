@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 import pytest
 
 from grandchallenge.annotations.models import (
     BooleanClassificationAnnotation,
+    ImageTextAnnotation,
     OctRetinaImagePathologyAnnotation,
     PolygonAnnotationSet,
     RetinaImagePathologyAnnotation,
@@ -9,17 +12,21 @@ from grandchallenge.annotations.models import (
 from grandchallenge.retina_core.management.commands.migratelesionnames import (
     migrate_annotations,
 )
+from grandchallenge.retina_core.management.commands.migrateunmatchedlesionnames import (
+    migrate_oct_annotations,
+)
 from grandchallenge.retina_core.management.commands.setretinapathologies import (
     pathology_options_enface,
     pathology_options_oct,
     set_retina_pathologies,
 )
 from tests.annotations_tests.factories import (
+    ImageTextAnnotationFactory,
     PolygonAnnotationSetFactory,
     RetinaImagePathologyAnnotationFactory,
     SinglePolygonAnnotationFactory,
 )
-from tests.factories import ImageFactory, ImagingModalityFactory
+from tests.factories import ImageFactory, ImagingModalityFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -304,3 +311,174 @@ class TestSetRetinaPathologiesCommand:
         assert (
             getattr(oct_pathology_annotation, pathology_options_oct[0]) is True
         )
+
+
+@pytest.mark.django_db
+class TestOCTMigratelesionnamesCommand:
+    def test_migrateunmatchedocts_none(self):
+        result = migrate_oct_annotations(PolygonAnnotationSet.objects.all())
+        assert len(result["translated_annotations"]) == 0
+        assert result["non_oct"] == []
+
+    def test_migrateunmatchedocts_non_oct(self):
+        annotation = PolygonAnnotationSetFactory(name="no oct")
+        result = migrate_oct_annotations(PolygonAnnotationSet.objects.all())
+        assert len(result["translated_annotations"]) == 0
+        assert result["non_oct"] == [annotation.id]
+
+    def test_migrateunmatchedocts_match(self):
+        name = "oct_annotation_name"
+        image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))
+        annotation = PolygonAnnotationSetFactory(name=name, image=image,)
+        assert ImageTextAnnotation.objects.count() == 0
+        result = migrate_oct_annotations(PolygonAnnotationSet.objects.all())
+        assert result["translated_annotations"] == [annotation.id]
+        assert len(result["non_oct"]) == 0
+        assert ImageTextAnnotation.objects.count() == 1
+        assert PolygonAnnotationSet.objects.count() == 0
+        text_annotation = ImageTextAnnotation.objects.first()
+        assert text_annotation.grader == annotation.grader
+        assert text_annotation.image == image
+        assert name in text_annotation.text
+
+    def test_migrateunmatchedocts_match_existing(self):
+        name = "oct_annotation_name"
+        image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))
+        annotation = PolygonAnnotationSetFactory(name=name, image=image,)
+        not_deleted_text = "This text should not be deleted"
+        text_annotation = ImageTextAnnotationFactory(
+            image=image, grader=annotation.grader, text=not_deleted_text
+        )
+        assert ImageTextAnnotation.objects.count() == 1
+        result = migrate_oct_annotations(PolygonAnnotationSet.objects.all())
+        assert result["translated_annotations"] == [annotation.id]
+        assert len(result["non_oct"]) == 0
+        assert ImageTextAnnotation.objects.count() == 1
+        assert PolygonAnnotationSet.objects.count() == 0
+        text_annotation.refresh_from_db()
+        assert text_annotation.grader == annotation.grader
+        assert text_annotation.image == image
+        assert name in text_annotation.text
+        assert not_deleted_text in text_annotation.text
+
+    def test_migrateunmatchedocts_match_multiple_annotations(self):
+        image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))
+        grader = UserFactory()
+        extra_kwargs = {"image": image, "grader": grader}
+        annotations = (
+            PolygonAnnotationSetFactory(name="annotation1", **extra_kwargs),
+            PolygonAnnotationSetFactory(name="annotation2", **extra_kwargs),
+            PolygonAnnotationSetFactory(name="annotation3", **extra_kwargs),
+        )
+        assert ImageTextAnnotation.objects.count() == 0
+        result = migrate_oct_annotations(PolygonAnnotationSet.objects.all())
+        assert len(result["translated_annotations"]) == 3
+        assert len(result["non_oct"]) == 0
+        assert ImageTextAnnotation.objects.count() == 1
+        assert PolygonAnnotationSet.objects.count() == 0
+        text_annotation = ImageTextAnnotation.objects.first()
+        assert text_annotation.grader == grader
+        assert text_annotation.image == image
+        for annotation in annotations:
+            assert annotation.name in text_annotation.text
+
+    def test_migrateunmatchedocts_match_existing_duplicate(self):
+        name = "oct_annotation_name"
+        image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))
+        annotation = PolygonAnnotationSetFactory(name=name, image=image,)
+        not_deleted_text = "This text should not be deleted"
+        not_deleted_text_duplicate = "This text should ALSO not be deleted"
+        text_annotation = ImageTextAnnotationFactory(
+            image=image, grader=annotation.grader, text=not_deleted_text
+        )
+        text_annotation_duplicate = ImageTextAnnotationFactory(
+            image=image,
+            grader=annotation.grader,
+            text=not_deleted_text_duplicate,
+            created=text_annotation.created + timedelta(days=1),
+        )
+        assert ImageTextAnnotation.objects.count() == 2
+        result = migrate_oct_annotations(PolygonAnnotationSet.objects.all())
+        assert result["translated_annotations"] == [annotation.id]
+        assert len(result["non_oct"]) == 0
+        assert ImageTextAnnotation.objects.count() == 2
+        assert PolygonAnnotationSet.objects.count() == 0
+        text_annotation.refresh_from_db()
+        assert name not in text_annotation.text
+        assert not_deleted_text in text_annotation.text
+        text_annotation_duplicate.refresh_from_db()
+        assert name in text_annotation_duplicate.text
+        assert not_deleted_text_duplicate in text_annotation_duplicate.text
+
+    def test_migrateunmatchedocts_match_combined(self):
+        non_oct_annotation = PolygonAnnotationSetFactory(name="non_oct")
+        image = ImageFactory(modality=ImagingModalityFactory(modality="OCT"))
+        grader = UserFactory()
+        extra_kwargs = {"image": image, "grader": grader}
+        image_grader_annotations = (
+            PolygonAnnotationSetFactory(name="ig_annotation1", **extra_kwargs),
+            PolygonAnnotationSetFactory(name="ig_annotation2", **extra_kwargs),
+            PolygonAnnotationSetFactory(name="ig_annotation3", **extra_kwargs),
+        )
+        grader_annotations = (
+            PolygonAnnotationSetFactory(
+                name="grader_annotation1",
+                grader=grader,
+                image=ImageFactory(
+                    modality=ImagingModalityFactory(modality="OCT")
+                ),
+            ),
+            PolygonAnnotationSetFactory(
+                name="grader_annotation2",
+                grader=grader,
+                image=ImageFactory(
+                    modality=ImagingModalityFactory(modality="OCT")
+                ),
+            ),
+        )
+        image_annotations = (
+            PolygonAnnotationSetFactory(
+                name="image_annotation1", image=image,
+            ),
+            PolygonAnnotationSetFactory(
+                name="image_annotation2", image=image,
+            ),
+        )
+        not_deleted_text = "This text should not be deleted"
+        existing_text_annotation = ImageTextAnnotationFactory(
+            image=image,
+            grader=image_annotations[0].grader,
+            text=not_deleted_text,
+        )
+        assert ImageTextAnnotation.objects.count() == 1
+        result = migrate_oct_annotations(PolygonAnnotationSet.objects.all())
+        assert len(result["translated_annotations"]) == 7
+        assert result["non_oct"] == [non_oct_annotation.pk]
+        assert PolygonAnnotationSet.objects.count() == 1
+        assert ImageTextAnnotation.objects.count() == 5
+        assert ImageTextAnnotation.objects.filter(grader=grader).count() == 3
+        assert ImageTextAnnotation.objects.filter(image=image).count() == 3
+        text_annotation = ImageTextAnnotation.objects.get(
+            grader=grader, image=image
+        )
+        for annotation in image_grader_annotations:
+            assert annotation.name in text_annotation.text
+        text_annotations = ImageTextAnnotation.objects.filter(
+            grader=grader
+        ).exclude(image=image)
+        for text_annotation in text_annotations:
+            assert (
+                grader_annotations[0].name in text_annotation.text
+                or grader_annotations[1].name in text_annotation.text
+            )
+        text_annotations = ImageTextAnnotation.objects.filter(
+            image=image
+        ).exclude(grader=grader)
+        for text_annotation in text_annotations:
+            assert (
+                image_annotations[0].name in text_annotation.text
+                or image_annotations[1].name in text_annotation.text
+            )
+        existing_text_annotation.refresh_from_db()
+        assert not_deleted_text in existing_text_annotation.text
+        assert image_annotations[0].name in existing_text_annotation.text
