@@ -442,8 +442,12 @@ class Challenge(ChallengeBase):
         on_delete=models.CASCADE,
         related_name="participants_of_challenge",
     )
-    forum = models.ForeignKey(
-        Forum, null=True, editable=False, on_delete=models.CASCADE
+    forum = models.OneToOneField(
+        Forum, editable=False, on_delete=models.CASCADE
+    )
+    display_forum_link = models.BooleanField(
+        default=False,
+        help_text="Display a link to the challenge forum in the nav bar.",
     )
 
     cached_num_participants = models.PositiveIntegerField(
@@ -583,7 +587,7 @@ class Challenge(ChallengeBase):
                 UserForumPermission(
                     permission_id=perm_id,
                     **{user: True},
-                    forum=self.forum,
+                    forum=f,
                     has_perm=True,
                 )
                 for perm_id, user in product(

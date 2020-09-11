@@ -136,12 +136,11 @@ class UserProfileDetail(UserPassesTestMixin, DetailView):
             )
             .distinct()
         )
-        participant_challenges = Challenge.objects.filter(
-            participants_group__in=profile_groups
-        ).filter(hidden=False)
-        admin_challenges = Challenge.objects.filter(
-            admins_group__in=profile_groups
-        ).filter(hidden=False)
+        challenges = Challenge.objects.filter(
+            Q(admins_group__in=profile_groups)
+            | Q(participants_group__in=profile_groups),
+            hidden=False,
+        ).distinct()
         algorithms = (
             get_objects_for_user(
                 user=self.request.user,
@@ -160,8 +159,7 @@ class UserProfileDetail(UserPassesTestMixin, DetailView):
         for qs in [
             archives,
             reader_studies,
-            participant_challenges,
-            admin_challenges,
+            challenges,
             algorithms,
         ]:
             # Perms can only be prefetched for sets of the same objects
@@ -170,8 +168,7 @@ class UserProfileDetail(UserPassesTestMixin, DetailView):
         object_list = [
             *archives,
             *reader_studies,
-            *participant_challenges,
-            *admin_challenges,
+            *challenges,
             *algorithms,
         ]
 

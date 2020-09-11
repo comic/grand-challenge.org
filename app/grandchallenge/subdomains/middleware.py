@@ -44,9 +44,11 @@ def challenge_subdomain_middleware(get_response):
             request.challenge = None
         else:
             try:
-                request.challenge = Challenge.objects.prefetch_related(
-                    "phase_set"
-                ).get(short_name__iexact=subdomain)
+                request.challenge = (
+                    Challenge.objects.select_related("forum")
+                    .prefetch_related("phase_set")
+                    .get(short_name__iexact=subdomain)
+                )
             except Challenge.DoesNotExist:
                 logger.warning(f"Could not find challenge {subdomain}")
                 domain = request.site.domain.lower()
