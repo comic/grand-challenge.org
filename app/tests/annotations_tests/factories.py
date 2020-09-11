@@ -149,11 +149,8 @@ class RetinaImagePathologyAnnotationFactory(
     class Meta:
         model = RetinaImagePathologyAnnotation
 
-    amd_present = factory.fuzzy.FuzzyChoice([True, False])
-    dr_present = factory.fuzzy.FuzzyChoice([True, False])
     oda_present = factory.fuzzy.FuzzyChoice([True, False])
     myopia_present = factory.fuzzy.FuzzyChoice([True, False])
-    cysts_present = factory.fuzzy.FuzzyChoice([True, False])
     other_present = factory.fuzzy.FuzzyChoice([True, False])
     rf_present = factory.fuzzy.FuzzyChoice([True, False])
 
