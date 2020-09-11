@@ -587,7 +587,7 @@ class Challenge(ChallengeBase):
                 UserForumPermission(
                     permission_id=perm_id,
                     **{user: True},
-                    forum=self.forum,
+                    forum=f,
                     has_perm=True,
                 )
                 for perm_id, user in product(

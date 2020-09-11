@@ -180,6 +180,7 @@ class Command(BaseCommand):
             creator=self.users["demo"],
             use_evaluation=True,
             hidden=False,
+            display_forum_link=True,
         )
         demo.add_participant(self.users["demop"])
 
