@@ -494,6 +494,41 @@ Django = ">=2.2"
 
 [[package]]
 category = "main"
+description = "Pluggable search for Django."
+name = "django-haystack"
+optional = false
+python-versions = "*"
+version = "3.0b1"
+
+[package.dependencies]
+Django = ">=2.2"
+
+[[package]]
+category = "main"
+description = "script tag with additional attributes for django.forms.Media"
+name = "django-js-asset"
+optional = false
+python-versions = "*"
+version = "1.2.2"
+
+[[package]]
+category = "main"
+description = "A Django forum engine for building powerful community driven websites."
+name = "django-machina"
+optional = false
+python-versions = ">=3.5,<4.0"
+version = "1.1.2"
+
+[package.dependencies]
+django = ">=2.2"
+django-haystack = ">=2.1"
+django-mptt = ">=0.10.0"
+django-widget-tweaks = ">=1.4"
+markdown2 = ">=2.3"
+pillow = ">=2.2"
+
+[[package]]
+category = "main"
 description = "A comprehensive Markdown editor built for Django."
 name = "django-markdownx"
 optional = false
@@ -504,6 +539,18 @@ version = "3.0.1"
 Django = "*"
 Markdown = "*"
 Pillow = "*"
+
+[[package]]
+category = "main"
+description = "Utilities for implementing Modified Preorder Tree Traversal with your Django Models and working with trees of Model instances."
+name = "django-mptt"
+optional = false
+python-versions = ">=3.5"
+version = "0.11.0"
+
+[package.dependencies]
+Django = ">=1.11"
+django-js-asset = "*"
 
 [[package]]
 category = "main"
@@ -586,6 +633,14 @@ Django = ">=2.2"
 django-guardian = ">=2.0"
 easy-thumbnails = "*"
 html2text = "*"
+
+[[package]]
+category = "main"
+description = "Tweak the form field rendering in templates, not in python-level form definitions."
+name = "django-widget-tweaks"
+optional = false
+python-versions = "*"
+version = "1.4.8"
 
 [[package]]
 category = "main"
@@ -947,6 +1002,14 @@ version = "3.2.2"
 
 [package.extras]
 testing = ["coverage", "pyyaml"]
+
+[[package]]
+category = "main"
+description = "A fast and complete Python implementation of Markdown"
+name = "markdown2"
+optional = false
+python-versions = "*"
+version = "2.3.9"
 
 [[package]]
 category = "main"
@@ -2020,7 +2083,8 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "399ce9c75c18e1427daa3140c90d9eaa9fe588729dd995d069899f93beeeb9eb"
+content-hash = "d8025db0748b273c66d2abd906a869b6b81dc5552001f22bce91249458e1ff97"
+lock-version = "1.0"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -2079,6 +2143,7 @@ botocore = [
 ]
 brotli = [
     {file = "Brotli-1.0.7-cp27-cp27m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:50dd9ad2a2bb12da4e9002a438672d182f98e546e99952de80280a1e1729664f"},
+    {file = "Brotli-1.0.7-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:aeaae3d60ecd72f04a54f4e7d4fccf2f83aab8e6362c625e003651bebf4347ba"},
     {file = "Brotli-1.0.7-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:c675c6cce4295cb1a692f3de7416aacace7314e064b94bc86e93aceefce7fd3e"},
     {file = "Brotli-1.0.7-cp27-cp27m-manylinux1_x86_64.whl", hash = "sha256:a19ef0952b9d2803df88dff07f45a6c92d5676afb9b8d69cf32232d684036d11"},
     {file = "Brotli-1.0.7-cp27-cp27m-win32.whl", hash = "sha256:0970a47f471782912d7705160b2b0a9306e68e6fadf9cffcaeb42d8f0951e26c"},
@@ -2091,16 +2156,19 @@ brotli = [
     {file = "Brotli-1.0.7-cp34-cp34m-win32.whl", hash = "sha256:c16201060c5a3f8742e3deae759014251ac92f382f82bc2a41dc079ff18c3f24"},
     {file = "Brotli-1.0.7-cp34-cp34m-win_amd64.whl", hash = "sha256:f9dc52cd70907aafb99a773b66b156f2f995c7a0d284397c487c8b71ddbef2f9"},
     {file = "Brotli-1.0.7-cp35-cp35m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:f969ec7f56ba9636679e69ca07fba548312ccaca37412ee823c7f413541ad7e0"},
+    {file = "Brotli-1.0.7-cp35-cp35m-macosx_10_6_intel.whl", hash = "sha256:fb7fd630e6096112d9f159cb19516e8eccb9daa1c258608c2cbe21686dea36e8"},
     {file = "Brotli-1.0.7-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:dc91f6129953861a73d9a65c52a8dd682b561a9ebaf65283541645cab6489917"},
     {file = "Brotli-1.0.7-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:5f06b4d5b6f58e5b5c220c2f23cad034dc5efa51b01fde2351ced1605bd980e2"},
     {file = "Brotli-1.0.7-cp35-cp35m-win32.whl", hash = "sha256:5519a4b01b1a4f965083cbfa2ef2b9774c5a5f352341c47b50776ad109423d72"},
     {file = "Brotli-1.0.7-cp35-cp35m-win_amd64.whl", hash = "sha256:ad766ca8b8c1419b71a22756b45264f45725c86133dc80a7cbe30b6b78c75620"},
     {file = "Brotli-1.0.7-cp36-cp36m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:f775b07026af2b1b0b5a8b05e41571cdcf3a315a67df265d60af301656a5425b"},
+    {file = "Brotli-1.0.7-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:92ae753b9cc13d9d91f5636607afbca961fa7ca9e9770ac2a849b38424bf5bea"},
     {file = "Brotli-1.0.7-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:2f2f4f78f29ac4a45d15b3d9fc3fd9705e0ad313a44b129f6e1d0c6916bad0e2"},
     {file = "Brotli-1.0.7-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:1e1aa9c4d1558889f42749c8baf846007953bfd32c8209230cf1cd1f5ef33495"},
     {file = "Brotli-1.0.7-cp36-cp36m-win32.whl", hash = "sha256:5eb27722d320370315971c427eb8aa7cc0791f2a458840d357ac653bd0ad3a14"},
     {file = "Brotli-1.0.7-cp36-cp36m-win_amd64.whl", hash = "sha256:72848d25a5f9e736db4af4512e0c3feecc094d57d241f8f1ae959115a2c39756"},
     {file = "Brotli-1.0.7-cp37-cp37m-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.macosx_10_10_intel.macosx_10_10_x86_64.whl", hash = "sha256:ad7963f261988ee0883816b6b9f206f11461c9b3cb5cfbca0c9ab5adc406d395"},
+    {file = "Brotli-1.0.7-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:315fbb0d1294594a3701d735c44a2a059219b82fc59aa02cd9c827c38b0980c4"},
     {file = "Brotli-1.0.7-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:a13ce9b419fe9f277c63f700efb0e444331509d1881b5610d2ba7e9080606967"},
     {file = "Brotli-1.0.7-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:f192e6d3556714105c10486bbd6d045e38a0c04d9da3cef21e0a8dfd8e162df4"},
     {file = "Brotli-1.0.7-cp37-cp37m-win32.whl", hash = "sha256:743001bca75f4a6b4454be3510feca46f9d61a0c782a9bc2bc684bdb245e279e"},
@@ -2286,9 +2354,25 @@ django-guardian = [
     {file = "django-guardian-2.3.0.tar.gz", hash = "sha256:ed2de26e4defb800919c5749fb1bbe370d72829fbd72895b6cf4f7f1a7607e1b"},
     {file = "django_guardian-2.3.0-py3-none-any.whl", hash = "sha256:0e70706c6cda88ddaf8849bddb525b8df49de05ba0798d4b3506049f0d95cbc8"},
 ]
+django-haystack = [
+    {file = "django-haystack-3.0b1.tar.gz", hash = "sha256:9dba64f5c76cf147ac382d4a4a270f30d30a45a3a7a1738a9d05c96d18777c07"},
+    {file = "django_haystack-3.0b1-py3-none-any.whl", hash = "sha256:b83705e1cf8141cd1755fc6683ac65fea4e1281f4b4306bc9224af96495b0df3"},
+]
+django-js-asset = [
+    {file = "django-js-asset-1.2.2.tar.gz", hash = "sha256:c163ae80d2e0b22d8fb598047cd0dcef31f81830e127cfecae278ad574167260"},
+    {file = "django_js_asset-1.2.2-py2.py3-none-any.whl", hash = "sha256:8ec12017f26eec524cab436c64ae73033368a372970af4cf42d9354fcb166bdd"},
+]
+django-machina = [
+    {file = "django-machina-1.1.2.tar.gz", hash = "sha256:652a31848f0e1945b86a4ba3b4c8cb2b4189a4336ed27a23abb9b9a4caf339b1"},
+    {file = "django_machina-1.1.2-py3-none-any.whl", hash = "sha256:6d1d8a25469dec7d7e9187e7bce437e77ca6d0939c73530cd01d2b6b817d996b"},
+]
 django-markdownx = [
     {file = "django-markdownx-3.0.1.tar.gz", hash = "sha256:e18e395cad0ade96afbb250a81cad15618e417ac3c0d9c37d964be3d8fd57bcf"},
     {file = "django_markdownx-3.0.1-py2.py3-none-any.whl", hash = "sha256:f4d8998618c0548bf5349713d805e7440684d70116de0f10413932286c4e375f"},
+]
+django-mptt = [
+    {file = "django-mptt-0.11.0.tar.gz", hash = "sha256:dfdb3af75ad27cdd4458b0544ec8574174f2b90f99bc2cafab6a15b4bc1895a8"},
+    {file = "django_mptt-0.11.0-py2.py3-none-any.whl", hash = "sha256:90eb236eb4f1a92124bd7c37852bbe09c0d21158477cc237556d59842a91c509"},
 ]
 django-select2 = [
     {file = "django-select2-7.4.2.tar.gz", hash = "sha256:9d3330fa0083a03fb69fceb5dcd2e78065cfd08e45c89d4fd727fce4673d3e08"},
@@ -2312,6 +2396,10 @@ django-timezone-field = [
 django-userena-ce = [
     {file = "django-userena-ce-6.0.0.tar.gz", hash = "sha256:454c6da624573fc501cc51870ec7f4dbc6947335ea71ef2ebdb0fe005e22b65b"},
     {file = "django_userena_ce-6.0.0-py3-none-any.whl", hash = "sha256:9a1f628e284d6e48aef758c84036014ae232bfe03657d605d5f7568836ec7225"},
+]
+django-widget-tweaks = [
+    {file = "django-widget-tweaks-1.4.8.tar.gz", hash = "sha256:9f91ca4217199b7671971d3c1f323a2bec71a0c27dec6260b3c006fa541bc489"},
+    {file = "django_widget_tweaks-1.4.8-py2.py3-none-any.whl", hash = "sha256:f80bff4a8a59b278bb277a405a76a8b9a884e4bae7a6c70e78a39c626cd1c836"},
 ]
 djangorestframework = [
     {file = "djangorestframework-3.11.0-py3-none-any.whl", hash = "sha256:05809fc66e1c997fd9a32ea5730d9f4ba28b109b9da71fccfa5ff241201fd0a4"},
@@ -2456,6 +2544,10 @@ markdown = [
     {file = "Markdown-3.2.2-py3-none-any.whl", hash = "sha256:c467cd6233885534bf0fe96e62e3cf46cfc1605112356c4f9981512b8174de59"},
     {file = "Markdown-3.2.2.tar.gz", hash = "sha256:1fafe3f1ecabfb514a5285fca634a53c1b32a81cb0feb154264d55bf2ff22c17"},
 ]
+markdown2 = [
+    {file = "markdown2-2.3.9-py2.py3-none-any.whl", hash = "sha256:e6b401ec80b75e76a6b3dbb2c8ade513156fa55fa6c30b9640a1abf6184a07c8"},
+    {file = "markdown2-2.3.9.tar.gz", hash = "sha256:89526090907ae5ece66d783c434b35c29ee500c1986309e306ce2346273ada6a"},
+]
 markupsafe = [
     {file = "MarkupSafe-1.1.1-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:09027a7803a62ca78792ad89403b1b7a73a01c8cb65909cd876f7fcebd79b161"},
     {file = "MarkupSafe-1.1.1-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:e249096428b3ae81b08327a63a485ad0878de3fb939049038579ac0ef61e17e7"},
@@ -2594,6 +2686,8 @@ pillow = [
     {file = "Pillow-7.2.0-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:5e51ee2b8114def244384eda1c82b10e307ad9778dac5c83fb0943775a653cd8"},
     {file = "Pillow-7.2.0-cp38-cp38-win32.whl", hash = "sha256:725aa6cfc66ce2857d585f06e9519a1cc0ef6d13f186ff3447ab6dff0a09bc7f"},
     {file = "Pillow-7.2.0-cp38-cp38-win_amd64.whl", hash = "sha256:a060cf8aa332052df2158e5a119303965be92c3da6f2d93b6878f0ebca80b2f6"},
+    {file = "Pillow-7.2.0-pp36-pypy36_pp73-macosx_10_10_x86_64.whl", hash = "sha256:9c87ef410a58dd54b92424ffd7e28fd2ec65d2f7fc02b76f5e9b2067e355ebf6"},
+    {file = "Pillow-7.2.0-pp36-pypy36_pp73-manylinux2010_x86_64.whl", hash = "sha256:e901964262a56d9ea3c2693df68bc9860b8bdda2b04768821e4c44ae797de117"},
     {file = "Pillow-7.2.0-pp36-pypy36_pp73-win32.whl", hash = "sha256:25930fadde8019f374400f7986e8404c8b781ce519da27792cbe46eabec00c4d"},
     {file = "Pillow-7.2.0.tar.gz", hash = "sha256:97f9e7953a77d5a70f49b9a48da7776dc51e9b738151b22dacf101641594a626"},
 ]

@@ -192,11 +192,8 @@ class RetinaImagePathologyAnnotationSerializer(AbstractAnnotationSerializer):
             "created",
             "grader",
             "image",
-            "amd_present",
-            "dr_present",
             "oda_present",
             "myopia_present",
-            "cysts_present",
             "other_present",
             "rf_present",
         )

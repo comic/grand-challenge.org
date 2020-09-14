@@ -23,6 +23,7 @@ class MethodFactory(factory.DjangoModelFactory):
     class Meta:
         model = Method
 
+    creator = factory.SubFactory(UserFactory)
     phase = factory.SubFactory(PhaseFactory)
     image = factory.django.FileField()
     image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))

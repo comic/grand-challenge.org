@@ -52,11 +52,10 @@
                         <img class="card-img-top embed-responsive-item"
                              loading="lazy"
                              alt="{{ challenge.short_name }} logo"
-                             src="{% static 'images/3697E1-0.8.png' %}"
                                 {% if challenge.logo %}
-                             data-src="{{ challenge.logo.url }}"
+                             src="{{ challenge.logo.url }}"
                                 {% else %}
-                             data-src="{% static 'images/3697E1-0.8.png' %}"
+                             src="{% static 'images/3697E1-0.8.png' %}"
                                 {% endif %}
                         >
                     </div>

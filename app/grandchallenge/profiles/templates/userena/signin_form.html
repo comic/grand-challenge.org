@@ -20,7 +20,7 @@
             </li>
         </ul>
 
-        <div class="tab-content border border-top-0" id="signinRegisterContent">
+        <div class="tab-content" id="signinRegisterContent">
             <div id="signin" class="tab-pane fade show active py-3">
                 <form class="mt-3" action="{% url 'social:begin' 'google-oauth2' %}">
                     {% csrf_token %}
@@ -40,7 +40,7 @@
                     <div class="col">
                         <hr>
                     </div>
-                    <div class="col-auto  align-self-center"><b>OR</b></div>
+                    <div class="col-auto align-self-center"><b>OR</b></div>
                     <div class="col">
                         <hr>
                     </div>

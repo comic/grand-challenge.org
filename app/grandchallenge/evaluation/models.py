@@ -363,6 +363,7 @@ class Phase(UUIDModel):
             ("challenge", "slug"),
         )
         ordering = ("challenge", "submissions_open", "created")
+        permissions = (("create_phase_submission", "Create Phase Submission"),)
 
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
@@ -389,6 +390,12 @@ class Phase(UUIDModel):
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)
         assign_perm("change_phase", self.challenge.admins_group, self)
+        assign_perm(
+            "create_phase_submission", self.challenge.admins_group, self
+        )
+        assign_perm(
+            "create_phase_submission", self.challenge.participants_group, self
+        )
 
     def get_absolute_url(self):
         return reverse(

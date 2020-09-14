@@ -108,6 +108,7 @@ class StatisticsDetail(TemplateView):
                     rank__gt=0,
                     status=EvaluationJob.SUCCESS,
                 )
+                .select_related("submission__phase__challenge")
                 .order_by("-created")
                 .first()
             ),

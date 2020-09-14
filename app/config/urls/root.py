@@ -5,6 +5,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
+from machina import urls as machina_urls
 
 from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
 from grandchallenge.archives.sitemaps import ArchivesSitemap
@@ -123,6 +124,7 @@ urlpatterns = [
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
     path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs"),),
+    path("forums/", include(machina_urls)),
     path(
         "",
         include(

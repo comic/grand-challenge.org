@@ -4,6 +4,7 @@ from django.urls import path, re_path
 from grandchallenge.profiles.forms import SignupFormExtra
 from grandchallenge.profiles.views import (
     PreSocialView,
+    UserProfileDetail,
     login_redirect,
     profile,
     profile_edit,
@@ -30,6 +31,11 @@ urlpatterns = [
         r"^(?P<username>[\@\.\+\w-]+)/edit/$",
         profile_edit,
         name="userena_profile_edit",
+    ),
+    re_path(
+        r"^(?P<username>(?!(signout|signup|signin)/)[\@\.\+\w-]+)/$",
+        UserProfileDetail.as_view(),
+        name="userena_profile_detail",
     ),
     path("", include("userena.urls")),
 ]

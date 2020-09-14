@@ -44,7 +44,7 @@
             <tbody>
             {% for evaluation in object_list %}
                 <tr>
-                    <td>{{ evaluation.id }}</td>
+                    <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id }}</a></td>
                     <td data-order="{{ evaluation.created|date:"U" }}">{{ evaluation.created }}</td>
                     <td data-order="{{ evaluation.modified|date:"U" }}">{{ evaluation.modified }}</td>
                     <td>{{ evaluation.submission.phase.title }}</td>
