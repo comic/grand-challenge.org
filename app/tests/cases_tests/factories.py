@@ -222,14 +222,14 @@ class ImageFactoryWithImageFile3DLarge4Slices(ImageFactoryWithImageFile3D):
             ImageFileFactoryWithRAWFile3DLarge4Slices(image=self)
 
 
-class RawImageUploadSessionFactory(factory.DjangoModelFactory):
+class RawImageUploadSessionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RawImageUploadSession
 
     algorithm_image = factory.SubFactory(AlgorithmImageFactory)
 
 
-class RawImageFileFactory(factory.DjangoModelFactory):
+class RawImageFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RawImageFile
 

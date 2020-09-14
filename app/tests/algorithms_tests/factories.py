@@ -10,7 +10,7 @@ from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 
 
-class AlgorithmFactory(factory.DjangoModelFactory):
+class AlgorithmFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Algorithm
 
@@ -19,7 +19,7 @@ class AlgorithmFactory(factory.DjangoModelFactory):
     workstation = factory.SubFactory(WorkstationFactory)
 
 
-class AlgorithmImageFactory(factory.DjangoModelFactory):
+class AlgorithmImageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = AlgorithmImage
 
@@ -27,7 +27,7 @@ class AlgorithmImageFactory(factory.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
 
 
-class AlgorithmJobFactory(factory.DjangoModelFactory):
+class AlgorithmJobFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Job
 
@@ -47,7 +47,7 @@ class AlgorithmJobFactory(factory.DjangoModelFactory):
             )
 
 
-class AlgorithmPermissionRequestFactory(factory.DjangoModelFactory):
+class AlgorithmPermissionRequestFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = AlgorithmPermissionRequest
 

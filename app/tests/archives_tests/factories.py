@@ -4,7 +4,7 @@ from grandchallenge.archives.models import Archive
 from tests.cases_tests.factories import ImageFactory
 
 
-class ArchiveFactory(factory.DjangoModelFactory):
+class ArchiveFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Archive
 
