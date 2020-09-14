@@ -34,7 +34,7 @@ def hash_sha256(s):
     return f"sha256:{m.hexdigest()}"
 
 
-class UserFactory(factory.DjangoModelFactory):
+class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = settings.AUTH_USER_MODEL
 
@@ -48,7 +48,7 @@ class UserFactory(factory.DjangoModelFactory):
     is_superuser = False
 
 
-class ChallengeFactory(factory.DjangoModelFactory):
+class ChallengeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Challenge
 
@@ -56,7 +56,7 @@ class ChallengeFactory(factory.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
 
 
-class ExternalChallengeFactory(factory.DjangoModelFactory):
+class ExternalChallengeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ExternalChallenge
 
@@ -64,7 +64,7 @@ class ExternalChallengeFactory(factory.DjangoModelFactory):
     homepage = factory.Faker("url")
 
 
-class PageFactory(factory.DjangoModelFactory):
+class PageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Page
 
@@ -73,7 +73,7 @@ class PageFactory(factory.DjangoModelFactory):
     html = factory.LazyAttribute(lambda t: f"<h2>{t.title}</h2>")
 
 
-class RegistrationRequestFactory(factory.DjangoModelFactory):
+class RegistrationRequestFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RegistrationRequest
 
@@ -81,7 +81,7 @@ class RegistrationRequestFactory(factory.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
 
 
-class TeamFactory(factory.DjangoModelFactory):
+class TeamFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Team
 
@@ -89,19 +89,19 @@ class TeamFactory(factory.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
 
 
-class TeamMemberFactory(factory.DjangoModelFactory):
+class TeamMemberFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TeamMember
 
     team = factory.SubFactory(TeamFactory)
 
 
-class UploadSessionFactory(factory.DjangoModelFactory):
+class UploadSessionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RawImageUploadSession
 
 
-class ImageFactory(factory.DjangoModelFactory):
+class ImageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Image
 
@@ -111,7 +111,7 @@ class ImageFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: f"image_{n}")
 
 
-class ImageFileFactory(factory.DjangoModelFactory):
+class ImageFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ImageFile
 
@@ -120,7 +120,7 @@ class ImageFileFactory(factory.DjangoModelFactory):
     file = factory.django.FileField()
 
 
-class ImagingModalityFactory(factory.DjangoModelFactory):
+class ImagingModalityFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ImagingModality
         django_get_or_create = ("modality",)
@@ -128,7 +128,7 @@ class ImagingModalityFactory(factory.DjangoModelFactory):
     modality = factory.sequence(lambda n: f"Modality {n}")
 
 
-class StagedFileFactory(factory.DjangoModelFactory):
+class StagedFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = StagedFile
 
@@ -140,12 +140,12 @@ class StagedFileFactory(factory.DjangoModelFactory):
     client_filename = factory.LazyAttribute(lambda s: s.file.name)
 
 
-class WorkstationConfigFactory(factory.DjangoModelFactory):
+class WorkstationConfigFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = WorkstationConfig
 
 
-class WorkstationFactory(factory.DjangoModelFactory):
+class WorkstationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Workstation
 
@@ -153,7 +153,7 @@ class WorkstationFactory(factory.DjangoModelFactory):
     logo = factory.django.ImageField()
 
 
-class WorkstationImageFactory(factory.DjangoModelFactory):
+class WorkstationImageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = WorkstationImage
 
@@ -163,7 +163,7 @@ class WorkstationImageFactory(factory.DjangoModelFactory):
     image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
 
 
-class SessionFactory(factory.DjangoModelFactory):
+class SessionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Session
 
@@ -200,6 +200,6 @@ class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
         return fuzzy_list
 
 
-class PolicyFactory(factory.DjangoModelFactory):
+class PolicyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Policy
