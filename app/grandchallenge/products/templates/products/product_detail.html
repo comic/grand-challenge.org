@@ -146,7 +146,13 @@
                 </div>
             </td>
             <td>
-              {{product.get_ce_status_display}}{% if product.ce_class %}, {{product.ce_class}}{% endif %}
+                <div class="d-flex flex-row">
+                    {{product.get_ce_status_display}},
+                    {% if product.ce_class %}
+                        {{product.ce_class}}
+                        <img data-toggle="tooltip" title={% include "products/partials/tooltip_CE_class.html" %} src="{% static 'products/images/icon_info.png' %}" alt="info" style="height:2.5%; width:2.5%">
+                    {% endif %}
+                </div>
             </td>
           </tr>
           <tr>
