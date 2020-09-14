@@ -57,7 +57,7 @@ RUN apt-get update \
 ENV PYTHONUNBUFFERED 1
 
 RUN mkdir -p /opt/poetry /app /static /opt/static \
-    && python -m pip install -U "pip!=20.0" setuptools==45 \
+    && python -m pip install -U pip \
     && python -m pip install -U poetry \
     && groupadd -r django && useradd -m -r -g django django \
     && chown django:django /opt/poetry /app /static /opt/static
