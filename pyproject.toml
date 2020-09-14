@@ -81,7 +81,7 @@ django-debug-toolbar = "*"
 sphinx-autobuild = "*"
 sphinx = "*"
 pyupgrade = "*"
-pytest-xdist = "*"
+pytest-xdist = {version = "*", extras = ["psutil"]}
 sphinx-autodoc-typehints = "*"
 werkzeug = "*"
 sphinx-rtd-theme = "*"
