@@ -23,6 +23,8 @@ class ProductList(ListView):
         queryset = super().get_queryset()
         subspeciality_query = self.request.GET.get("subspeciality")
         modality_query = self.request.GET.get("modality")
+        ce_class_query = self.request.GET.get("ce_class")
+        fda_class_query = self.request.GET.get("fda_class")
         search_query = self.request.GET.get("search")
 
         if search_query:
@@ -44,18 +46,34 @@ class ProductList(ListView):
                 Q(),
             )
             queryset = queryset.filter(q)
+
         if subspeciality_query and subspeciality_query != "All":
             queryset = queryset.filter(
                 Q(subspeciality__icontains=subspeciality_query)
             )
         if modality_query and modality_query != "All":
             queryset = queryset.filter(Q(modality__icontains=modality_query))
+
+        if ce_class_query and ce_class_query != "All":
+            queryset = queryset.filter(Q(ce_class=ce_class_query))
+
+        if (
+            fda_class_query
+            and fda_class_query != "All"
+            and fda_class_query != "No FDA"
+        ):
+            queryset = queryset.filter(Q(fda_class=fda_class_query))
+        elif fda_class_query == "No FDA":
+            queryset = queryset.filter(Q(fda_class=""))
+
         return queryset
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         subspeciality_query = self.request.GET.get("subspeciality", "All")
         modality_query = self.request.GET.get("modality", "All")
+        ce_class_query = self.request.GET.get("ce_class", "All")
+        fda_class_query = self.request.GET.get("fda_class", "All")
         search_query = self.request.GET.get("search", "")
         subspecialities = [
             "All",
@@ -79,13 +97,27 @@ class ProductList(ListView):
             "Other",
         ]
 
+        ce_classes = [
+            "All",
+            "Class I",
+            "Class IIa",
+            "Class IIb",
+            "Class III",
+        ]
+
+        fda_classes = ["All", "Class I", "Class II", "Class III", "No FDA"]
+
         context.update(
             {
                 "q_search": search_query,
                 "subspecialities": subspecialities,
                 "modalities": modalities,
+                "ce_classes": ce_classes,
+                "fda_classes": fda_classes,
                 "selected_subspeciality": subspeciality_query,
                 "selected_modality": modality_query,
+                "selected_ce_class": ce_class_query,
+                "selected_fda_class": fda_class_query,
                 "products_selected_page": True,
                 "product_total": context["object_list"].count(),
             }
