@@ -16,7 +16,7 @@ class PublicationForm(forms.ModelForm):
         if self.errors:
             return self.cleaned_data
 
-        doi = self.cleaned_data["doi"]
+        doi = self.cleaned_data.get("doi", self.instance.doi)
 
         response = requests.get(
             f"https://doi.org/{doi}",

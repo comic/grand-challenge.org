@@ -6,7 +6,12 @@ from grandchallenge.publications.models import Publication
 
 class PublicationAdmin(admin.ModelAdmin):
     list_display = ["doi", "title", "referenced_by_count"]
-    readonly_fields = ["title", "referenced_by_count", "citeproc_json"]
+    readonly_fields = [
+        "title",
+        "referenced_by_count",
+        "citeproc_json",
+        "ama_html",
+    ]
     form = PublicationForm
 
     def get_readonly_fields(self, request, obj=None):

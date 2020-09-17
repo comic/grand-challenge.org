@@ -1,13 +1,24 @@
+import re
 from copy import deepcopy
-from re import IGNORECASE
+from pathlib import Path
 
+from citeproc import (
+    Citation,
+    CitationItem,
+    CitationStylesBibliography,
+    CitationStylesStyle,
+    formatter,
+)
+from citeproc.source.json import CiteProcJSON
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator
 from django.db import models
 from django.template.defaultfilters import truncatechars
 
+from grandchallenge.core.templatetags.bleach import clean
+
 doi_validator = RegexValidator(
-    regex=r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$", flags=IGNORECASE
+    regex=r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$", flags=re.IGNORECASE
 )
 
 
@@ -29,7 +40,7 @@ class Publication(models.Model):
     referenced_by_count = models.PositiveIntegerField(editable=False)
 
     def __str__(self):
-        return f"{self.doi} {truncatechars(self.title,20)}"
+        return f"{self.doi} {truncatechars(self.title, 20)}"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,3 +57,23 @@ class Publication(models.Model):
         self.referenced_by_count = self.citeproc_json.get(
             "is-referenced-by-count", 0
         )
+
+    @property
+    def ama_html(self):
+        csl = (
+            Path(__file__).parent
+            / "styles"
+            / "american-medical-association-no-url.csl"
+        )
+
+        bib_source = CiteProcJSON([{"id": self.doi, **self.citeproc_json}])
+        bibliography = CitationStylesBibliography(
+            CitationStylesStyle(str(csl.resolve())), bib_source, formatter.html
+        )
+        bibliography.register(Citation([CitationItem(self.doi)]))
+
+        # The bibliography only contains 1 element
+        citation = str(bibliography.bibliography()[0])
+        citation = re.sub(r"^1\. ", "", citation)
+
+        return clean(citation)
