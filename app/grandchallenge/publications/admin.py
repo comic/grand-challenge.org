@@ -5,12 +5,13 @@ from grandchallenge.publications.models import Publication
 
 
 class PublicationAdmin(admin.ModelAdmin):
-    list_display = ["doi", "title", "referenced_by_count"]
+    list_display = ["doi", "year", "title", "referenced_by_count"]
     readonly_fields = [
         "title",
         "referenced_by_count",
         "citeproc_json",
         "ama_html",
+        "year",
     ]
     form = PublicationForm
 
