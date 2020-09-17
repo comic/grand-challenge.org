@@ -31,6 +31,7 @@ common_information_items = (
     "modalities",
     "structures",
     "series",
+    "publications",
     "hidden",
     "educational",
 )
@@ -39,12 +40,6 @@ common_images_items = ("logo",)
 
 event_items = ("event_url", "workshop_date")
 
-publication_items = (
-    "publication_url",
-    "publication_journal_name",
-    "publication_citation_count",
-    "publication_google_scholar_id",
-)
 registration_items = (
     "use_registration_page",
     "require_participant_review",
@@ -63,7 +58,6 @@ class ChallengeUpdateForm(forms.ModelForm):
                 Tab("Event", *event_items),
                 Tab("Registration", *registration_items),
                 Tab("Automated Evaluation", "use_evaluation", "use_teams"),
-                Tab("Publication", *publication_items),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -79,7 +73,6 @@ class ChallengeUpdateForm(forms.ModelForm):
             *registration_items,
             "use_evaluation",
             "use_teams",
-            *publication_items,
         ]
         widgets = {
             "workshop_date": forms.TextInput(attrs={"type": "date"}),
@@ -87,6 +80,7 @@ class ChallengeUpdateForm(forms.ModelForm):
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
             "series": Select2MultipleWidget,
+            "publications": Select2MultipleWidget,
             "registration_page_text": SummernoteInplaceWidget(),
         }
 
@@ -114,7 +108,6 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
                 Tab("Images", *common_images_items),
                 Tab("Event", *event_items),
                 Tab("Data", *data_items),
-                Tab("Publication", *publication_items),
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -128,7 +121,6 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             *common_images_items,
             *event_items,
             *data_items,
-            *publication_items,
         )
         widgets = {
             "workshop_date": forms.TextInput(attrs={"type": "date"}),
@@ -137,4 +129,5 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
             "series": Select2MultipleWidget,
+            "publications": Select2MultipleWidget,
         }

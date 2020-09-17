@@ -7,7 +7,7 @@ from grandchallenge.products.models import (
 )
 
 
-class CompanyFactory(factory.DjangoModelFactory):
+class CompanyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Company
 
@@ -16,7 +16,7 @@ class CompanyFactory(factory.DjangoModelFactory):
     founded = 2010
 
 
-class ProductFactory(factory.DjangoModelFactory):
+class ProductFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Product
 
@@ -25,6 +25,6 @@ class ProductFactory(factory.DjangoModelFactory):
     company = factory.SubFactory(CompanyFactory)
 
 
-class ProductImageFactory(factory.DjangoModelFactory):
+class ProductImageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ProductImage

@@ -7,7 +7,7 @@ from grandchallenge.components.models import (
 )
 
 
-class ComponentInterfaceFactory(factory.DjangoModelFactory):
+class ComponentInterfaceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ComponentInterface
 
@@ -17,7 +17,7 @@ class ComponentInterfaceFactory(factory.DjangoModelFactory):
     relative_path = factory.Sequence(lambda n: f"interface-{n}")
 
 
-class ComponentInterfaceValueFactory(factory.DjangoModelFactory):
+class ComponentInterfaceValueFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ComponentInterfaceValue
 

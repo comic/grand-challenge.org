@@ -9,7 +9,7 @@ from grandchallenge.reader_studies.models import (
 from tests.factories import UserFactory, WorkstationFactory
 
 
-class ReaderStudyFactory(factory.DjangoModelFactory):
+class ReaderStudyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ReaderStudy
 
@@ -18,14 +18,14 @@ class ReaderStudyFactory(factory.DjangoModelFactory):
     workstation = factory.SubFactory(WorkstationFactory)
 
 
-class QuestionFactory(factory.DjangoModelFactory):
+class QuestionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Question
 
     reader_study = factory.SubFactory(ReaderStudyFactory)
 
 
-class AnswerFactory(factory.DjangoModelFactory):
+class AnswerFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Answer
 
@@ -33,7 +33,7 @@ class AnswerFactory(factory.DjangoModelFactory):
     question = factory.SubFactory(QuestionFactory)
 
 
-class CategoricalOptionFactory(factory.DjangoModelFactory):
+class CategoricalOptionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CategoricalOption
 
