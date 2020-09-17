@@ -44,7 +44,7 @@ class Publication(models.Model):
     year = models.PositiveIntegerField(editable=False, null=True)
 
     def __str__(self):
-        return f"{self.doi} {self.title}"
+        return f"{self.doi} {self.ama_html}"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,7 +60,7 @@ class Publication(models.Model):
         super().save(*args, **kwargs)
 
     def update_metadata(self):
-        reference = self.bib_source[self.doi]
+        reference = self.bib_source[self.bib_id]
 
         self.title = str(reference.get("title", ""))
         self.year = reference.get("issued", {}).get("year")
@@ -73,8 +73,15 @@ class Publication(models.Model):
             self.referenced_by_count = None
 
     @property
+    def bib_id(self):
+        if self.pk:
+            return str(self.pk)
+        else:
+            return "__publication__"
+
+    @property
     def bib_source(self):
-        return CiteProcJSON([{**self.citeproc_json, "id": self.doi}])
+        return CiteProcJSON([{**self.citeproc_json, "id": self.bib_id}])
 
     @property
     def ama_html(self):
@@ -92,7 +99,7 @@ class Publication(models.Model):
             self.bib_source,
             formatter.html,
         )
-        bibliography.register(Citation([CitationItem(self.doi)]))
+        bibliography.register(Citation([CitationItem(self.bib_id)]))
 
         # The bibliography only contains 1 element
         citation = str(bibliography.bibliography()[0])
