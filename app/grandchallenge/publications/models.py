@@ -44,7 +44,7 @@ class Publication(models.Model):
     year = models.PositiveIntegerField(editable=False, null=True)
 
     def __str__(self):
-        return f"{self.doi} {self.title}"
+        return f"{self.doi} {self.ama_html}"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
