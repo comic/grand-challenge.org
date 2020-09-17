@@ -7,6 +7,7 @@ from grandchallenge.publications.models import Publication, doi_validator
 class PublicationForm(forms.ModelForm):
     def clean_doi(self):
         doi = self.cleaned_data["doi"]
+        doi = doi.lower()
         doi_validator(doi)
         return doi
 
