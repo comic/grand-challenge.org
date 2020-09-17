@@ -296,6 +296,11 @@ class ChallengeBase(models.Model):
             "https://scholar.google.com/scholar?cluster=5362332738201102290"
         ),
     )
+    publications = models.ManyToManyField(
+        "publications.Publication",
+        blank=True,
+        help_text="Which publications are associated with this challenge?",
+    )
     data_license_agreement = models.TextField(
         blank=True,
         help_text="What is the data license agreement for this challenge?",

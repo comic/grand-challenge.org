@@ -13,7 +13,6 @@ from citeproc.source.json import CiteProcJSON
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator
 from django.db import models
-from django.template.defaultfilters import truncatechars
 
 from grandchallenge.core.templatetags.bleach import clean
 
@@ -45,7 +44,7 @@ class Publication(models.Model):
     year = models.PositiveIntegerField(editable=False, null=True)
 
     def __str__(self):
-        return f"{self.doi} {truncatechars(self.title, 20)}"
+        return f"{self.doi} {self.title}"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
