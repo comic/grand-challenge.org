@@ -22,7 +22,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for subspec in subspecialities %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}&ce-class={{ selected_ce_class }}&fda-class={{ selected_fda_class }}&search={{ q_search }}">{{ subspec }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ subspec }}&modality={{ selected_modality }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&search={{ q_search }}">{{ subspec }}</a>
           {% endfor %}
         </div>
       </div>
@@ -37,7 +37,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for modality in modalities %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}&ce-class={{ selected_ce_class }}&fda-class={{ selected_fda_class }}&search={{ q_search }}">{{ modality }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ modality }}&ce_class={{ selected_ce_class }}&fda_class={{ selected_fda_class }}&search={{ q_search }}">{{ modality }}</a>
           {% endfor %}
         </div>
       </div>
@@ -52,7 +52,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for ce_class in ce_classes %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce-class={{ ce_class }}&fda-class={{ selected_fda_class }}&search={{ q_search }}">{{ ce_class }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_class={{ ce_class }}&fda_class={{ selected_fda_class }}&search={{ q_search }}">{{ ce_class }}</a>
           {% endfor %}
         </div>
       </div>
@@ -67,7 +67,7 @@
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
           {% for fda_class in fda_classes %}
-            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce-class={{ selected_ce_class }}&fda-class={{ fda_class }}&search={{ q_search }}">{{ fda_class }}</a>
+            <a class="dropdown-item " href="{% url 'products:product-list' %}?subspeciality={{ selected_subspeciality }}&modality={{ selected_modality }}&ce_class={{ selected_ce_class }}&fda_class={{ fda_class }}&search={{ q_search }}">{{ fda_class }}</a>
           {% endfor %}
         </div>
       </div>
@@ -79,8 +79,8 @@
           <div class="col-auto">
             <input hidden name="subspeciality" value="{{ selected_subspeciality }}">
             <input hidden name="modality" value="{{ selected_modality }}">
-            <input hidden name="ce-class" value="{{ selected_ce_class }}">
-            <input hidden name="fda-class" value="{{ selected_fda_class }}">
+            <input hidden name="ce_class" value="{{ selected_ce_class }}">
+            <input hidden name="fda_class" value="{{ selected_fda_class }}">
             <input class="form-control" name="search" type="text" placeholder="Search..." value={{ q_search }} >
           </div>
           <div class="col-auto">
