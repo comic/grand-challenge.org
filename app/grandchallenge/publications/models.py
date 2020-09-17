@@ -75,7 +75,7 @@ class Publication(models.Model):
     @property
     def bib_id(self):
         if self.pk:
-            return self.pk
+            return str(self.pk)
         else:
             return "__publication__"
 
