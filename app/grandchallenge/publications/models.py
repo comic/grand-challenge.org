@@ -74,7 +74,7 @@ class Publication(models.Model):
 
     @property
     def bib_source(self):
-        return CiteProcJSON([{"id": self.doi, **self.citeproc_json}])
+        return CiteProcJSON([{**self.citeproc_json, "id": self.doi}])
 
     @property
     def ama_html(self):
