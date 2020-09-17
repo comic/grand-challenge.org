@@ -34,7 +34,7 @@ class Publication(models.Model):
         help_text="The DOI, e.g., 10.1002/mrm.25227",
     )
 
-    citeproc_json = JSONField(default=dict, editable=False)
+    citeproc_json = JSONField(editable=False)
 
     # Metadata that is indexed from citeproc_json
     title = models.TextField(editable=False)

@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 (
                     "citeproc_json",
                     django.contrib.postgres.fields.jsonb.JSONField(
-                        default=dict, editable=False
+                        editable=False
                     ),
                 ),
                 ("title", models.TextField(editable=False)),
