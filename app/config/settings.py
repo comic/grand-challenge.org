@@ -420,6 +420,7 @@ LOCAL_APPS = [
     "grandchallenge.overview_pages",
     "grandchallenge.serving",
     "grandchallenge.blogs",
+    "grandchallenge.publications",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
