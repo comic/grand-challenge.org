@@ -105,7 +105,7 @@ def date_to_date_parts(date):  # noqaL C901
         return date_parts
 
 
-def get_arxiv_csl_item_oai(arxiv_id):
+def get_arxiv_csl(*, arxiv_id):
     """
     Generate a CSL Item for an unversioned arXiv identifier
     using arXiv's OAI_PMH v2.0 API <https://arxiv.org/help/oa>.
@@ -136,7 +136,7 @@ def get_arxiv_csl_item_oai(arxiv_id):
     response_arxiv_id = arxiv_elem.findtext(f"{ns_arxiv}id")
 
     if arxiv_id != response_arxiv_id:
-        raise RuntimeError(
+        raise ValueError(
             f"arXiv oai2 query returned a different arxiv_id:"
             f" {arxiv_id} became {response_arxiv_id}"
         )

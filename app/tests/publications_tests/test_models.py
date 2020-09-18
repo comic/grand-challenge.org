@@ -1,7 +1,7 @@
 import pytest
 
 from grandchallenge.publications.models import Publication
-from grandchallenge.publications.utils.manubot import get_arxiv_csl_item_oai
+from grandchallenge.publications.utils.manubot import get_arxiv_csl
 
 TEST_DOI = "10.1002/mrm.25227"
 TEST_CITEPROC_JSON = {
@@ -275,7 +275,7 @@ def test_consortium_json():
 
 
 def test_arxiv_to_citeproc():
-    citeproc_json = get_arxiv_csl_item_oai("2006.12449")
+    citeproc_json = get_arxiv_csl(arxiv_id="2006.12449")
     assert (
         citeproc_json["title"]
         == "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge"

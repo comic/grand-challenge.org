@@ -1,10 +1,11 @@
-import requests
 from django import forms
+from django.core.exceptions import ValidationError
 
 from grandchallenge.publications.models import (
     Publication,
     identifier_validator,
 )
+from grandchallenge.publications.utils import get_identifier_csl
 
 
 class PublicationForm(forms.ModelForm):
@@ -24,16 +25,17 @@ class PublicationForm(forms.ModelForm):
             "identifier", self.instance.identifier
         )
 
-        response = requests.get(
-            f"https://doi.org/{identifier}",
-            headers={"Accept": "application/vnd.citationstyles.csl+json"},
-        )
+        try:
+            csl, new_identifier = get_identifier_csl(doi_or_arxiv=identifier)
+        except ValueError:
+            raise ValidationError("Identifier not recognised")
 
-        if response.status_code != 200:
-            self.add_error("identifier", "This identifier could not be found.")
-        else:
-            self.cleaned_data["citeproc_json"] = response.json()
-            self.instance.citeproc_json = response.json()
+        if new_identifier != identifier:
+            self.cleaned_data["identifier"] = new_identifier
+            self.instance.identifier = new_identifier
+
+        self.cleaned_data["citeproc_json"] = csl
+        self.instance.citeproc_json = csl
 
         return self.cleaned_data
 
