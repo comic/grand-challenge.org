@@ -1,6 +1,7 @@
 import pytest
 
 from grandchallenge.publications.models import Publication
+from grandchallenge.publications.utils.manubot import get_arxiv_csl_item_oai
 
 TEST_DOI = "10.1002/mrm.25227"
 TEST_CITEPROC_JSON = {
@@ -270,4 +271,12 @@ def test_consortium_json():
     assert (
         publication.ama_html
         == "Ehteshami Bejnordi B, and the CAMELYON16 Consortium. Diagnostic Assessment of Deep Learning Algorithms for Detection of Lymph Node Metastases in Women With Breast Cancer. <i>JAMA</i>. 2017;318(22):2199."
+    )
+
+
+def test_arxiv_to_citeproc():
+    citeproc_json = get_arxiv_csl_item_oai("2006.12449")
+    assert (
+        citeproc_json["title"]
+        == "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge"
     )
