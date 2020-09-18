@@ -240,8 +240,6 @@ class Command(BaseCommand):
             description="An example of an external challenge",
             event_name="Example Event",
             event_url="https://www.example.com/2018",
-            publication_journal_name="Nature",
-            publication_url="https://doi.org/10.1038/s41586-018-0367-9",
             hidden=False,
         )
 
