@@ -34,8 +34,8 @@ class PublicationForm(forms.ModelForm):
             self.cleaned_data["identifier"] = new_identifier
             self.instance.identifier = new_identifier
 
-        self.cleaned_data["citeproc_json"] = csl
-        self.instance.citeproc_json = csl
+        self.cleaned_data["csl"] = csl
+        self.instance.csl = csl
 
         return self.cleaned_data
 

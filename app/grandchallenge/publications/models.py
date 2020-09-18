@@ -50,9 +50,9 @@ class Publication(models.Model):
         help_text="The DOI, e.g., 10.1002/mrm.25227, or the arXiv id, e.g., 2006.12449",
     )
 
-    citeproc_json = JSONField(editable=False)
+    csl = JSONField(editable=False)
 
-    # Metadata that is indexed from citeproc_json
+    # Metadata that is indexed from the csl
     title = models.TextField(editable=False)
     referenced_by_count = models.PositiveIntegerField(
         editable=False, null=True
@@ -64,13 +64,10 @@ class Publication(models.Model):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._citeproc_json_orig = deepcopy(self.citeproc_json)
+        self._csl_orig = deepcopy(self.csl)
 
     def save(self, *args, **kwargs):
-        if (
-            self._state.adding
-            or self._citeproc_json_orig != self.citeproc_json
-        ):
+        if self._state.adding or self._csl_orig != self.csl:
             self.update_metadata()
 
         super().save(*args, **kwargs)
@@ -97,13 +94,11 @@ class Publication(models.Model):
 
     @property
     def bib_source(self):
-        return ConsortiumNameCiteProcJSON(
-            [{**self.citeproc_json, "id": self.bib_id}]
-        )
+        return ConsortiumNameCiteProcJSON([{**self.csl, "id": self.bib_id}])
 
     @property
     def ama_html(self):
-        if not self.citeproc_json:
+        if not self.csl:
             return ""
 
         bibliography = CitationStylesBibliography(

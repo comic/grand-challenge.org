@@ -4,7 +4,7 @@ from grandchallenge.publications.models import Publication
 from grandchallenge.publications.utils.manubot import get_arxiv_csl
 
 TEST_DOI = "10.1002/mrm.25227"
-TEST_CITEPROC_JSON = {
+TEST_CSL = {
     "DOI": "10.1002/mrm.25227",
     "URL": "http://dx.doi.org/10.1002/mrm.25227",
     "ISSN": ["0740-3194"],
@@ -242,9 +242,7 @@ TEST_CONSORTIUM_JSON = {
 
 @pytest.mark.django_db
 def test_metadata_extraction_and_update():
-    publication = Publication.objects.create(
-        identifier=TEST_DOI, citeproc_json=TEST_CITEPROC_JSON
-    )
+    publication = Publication.objects.create(identifier=TEST_DOI, csl=TEST_CSL)
 
     assert (
         publication.title
@@ -257,7 +255,7 @@ def test_metadata_extraction_and_update():
         == "Guo J, Meakin JA, Jezzard P, Wong EC. An optimized design to reduce eddy current sensitivity in velocity-selective arterial spin labeling using symmetric BIR-8 pulses. <i>Magn Reson Med</i>. 2014;73(3):1085-1094."
     )
 
-    publication.citeproc_json["is-referenced-by-count"] = 100
+    publication.csl["is-referenced-by-count"] = 100
     publication.save()
 
     assert publication.referenced_by_count == 100
@@ -266,7 +264,7 @@ def test_metadata_extraction_and_update():
 @pytest.mark.django_db
 def test_consortium_json():
     publication = Publication.objects.create(
-        identifier=TEST_DOI, citeproc_json=TEST_CONSORTIUM_JSON
+        identifier=TEST_DOI, csl=TEST_CONSORTIUM_JSON
     )
     assert (
         publication.ama_html
@@ -275,9 +273,9 @@ def test_consortium_json():
 
 
 def test_arxiv_to_citeproc():
-    citeproc_json = get_arxiv_csl(arxiv_id="2006.12449")
+    csl = get_arxiv_csl(arxiv_id="2006.12449")
     assert (
-        citeproc_json["title"]
+        csl["title"]
         == "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge"
     )
 
@@ -306,7 +304,7 @@ TEST_ARXIV_JSON = {
 @pytest.mark.django_db
 def test_arxiv_json_citation():
     publication = Publication.objects.create(
-        identifier=TEST_ARXIV_JSON["number"], citeproc_json=TEST_ARXIV_JSON
+        identifier=TEST_ARXIV_JSON["number"], csl=TEST_ARXIV_JSON
     )
     assert (
         publication.ama_html

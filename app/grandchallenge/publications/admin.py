@@ -9,7 +9,7 @@ class PublicationAdmin(admin.ModelAdmin):
     readonly_fields = [
         "title",
         "referenced_by_count",
-        "citeproc_json",
+        "csl",
         "ama_html",
         "year",
     ]

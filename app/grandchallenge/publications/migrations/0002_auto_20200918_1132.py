@@ -12,4 +12,7 @@ class Migration(migrations.Migration):
         migrations.RenameField(
             model_name="publication", old_name="doi", new_name="identifier",
         ),
+        migrations.RenameField(
+            model_name="publication", old_name="citeproc_json", new_name="csl",
+        ),
     ]
