@@ -1,26 +1,10 @@
-import re
-
 import requests
-from django.db.models import TextChoices
 
-from grandchallenge.publications.models import ARXIV_REGEX, DOI_REGEX
+from grandchallenge.publications.models import (
+    PublicationType,
+    get_publication_type,
+)
 from grandchallenge.publications.utils.manubot import get_arxiv_csl
-
-
-class PublicationType(TextChoices):
-    DOI = "D"
-    ARXIV = "A"
-
-
-def get_publication_type(*, identifier: str) -> PublicationType:
-    if re.match(DOI_REGEX, identifier):
-        return PublicationType.DOI
-    elif re.match(ARXIV_REGEX, identifier):
-        return PublicationType.ARXIV
-    else:
-        raise ValueError(
-            f"Could not determine publication type from {identifier}"
-        )
 
 
 def get_identifier_csl(*, doi_or_arxiv):
@@ -40,7 +24,7 @@ def get_identifier_csl(*, doi_or_arxiv):
         if "DOI" in csl:
             # This arXiv paper is now published, update the identifier and
             # fetch the information from the DOI provider
-            new_id = csl["DOI"]
+            new_id = csl["DOI"].lower()
             csl = get_doi_csl(doi=new_id)
 
     elif pub_type == PublicationType.DOI:

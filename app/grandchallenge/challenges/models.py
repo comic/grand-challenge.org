@@ -265,37 +265,6 @@ class ChallengeBase(models.Model):
         null=True,
         help_text="Website of the event which will host the workshop",
     )
-    publication_url = models.URLField(
-        blank=True,
-        null=True,
-        help_text="URL of a publication describing this project",
-    )
-    publication_journal_name = models.CharField(
-        max_length=225,
-        blank=True,
-        null=True,
-        help_text=(
-            "If publication was in a journal, please list the journal name "
-            "here We use <a target='new' "
-            "href='https://www.ncbi.nlm.nih.gov/nlmcatalog/journals'>PubMed "
-            "journal abbreviations</a> format"
-        ),
-    )
-    publication_citation_count = models.PositiveIntegerField(
-        blank=True,
-        default=0,
-        help_text="The number of citations for the publication",
-    )
-    publication_google_scholar_id = models.BigIntegerField(
-        blank=True,
-        null=True,
-        help_text=(
-            "The ID of the article in google scholar. For instance, setting "
-            "this to 5362332738201102290, which the ID for LeCun et al. "
-            "in Nature 2015, and corresponds to the url"
-            "https://scholar.google.com/scholar?cluster=5362332738201102290"
-        ),
-    )
     publications = models.ManyToManyField(
         "publications.Publication",
         blank=True,

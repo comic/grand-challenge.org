@@ -87,13 +87,14 @@ class ChallengeList(TemplateView):
         int_paginator = Paginator(
             Challenge.objects.filter(hidden=False)
             .filter(self._search_filter)
-            .prefetch_related("phase_set")
+            .prefetch_related("phase_set", "publications")
             .order_by("-created"),
             self.paginate_by // 2,
         )
         ext_paginator = Paginator(
             ExternalChallenge.objects.filter(hidden=False)
             .filter(self._search_filter)
+            .prefetch_related("publications")
             .order_by("-created"),
             self.paginate_by // 2,
         )

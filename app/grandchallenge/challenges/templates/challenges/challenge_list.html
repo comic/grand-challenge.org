@@ -119,14 +119,13 @@
                             </a>
                         {% endif %}
 
-                        {% if challenge.publication_journal_name or challenge.publication_url %}
+                        {% for publication in challenge.publications.all %}
                             <a class="badge badge-info above-stretched-link"
-                               href="{% firstof challenge.publication_url '#' %}"
-                               title="Article">
-                                <i class="fas fa-file fa-fw"></i>
-                                {% firstof challenge.publication_journal_name "Article" %}
+                               href="{{ publication.url }}"
+                               title="{{ publication.title }}">
+                                <i class="fas fa-file fa-fw"></i>&nbsp;Article
                             </a>
-                        {% endif %}
+                        {% endfor %}
 
                         {% if challenge.registered_domain %}
                             <a class="badge badge-info above-stretched-link"

@@ -14,6 +14,7 @@ from citeproc.source.json import CiteProcJSON
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import TextChoices
 
 from grandchallenge.core.templatetags.bleach import clean
 
@@ -23,6 +24,22 @@ DOI_REGEX = r"^10\.\d{4,9}/[-._;()/:a-z0-9]+$"
 ARXIV_REGEX = r"^\d{4}\.\d{4,5}$"
 
 identifier_validator = RegexValidator(regex=f"{DOI_REGEX}|{ARXIV_REGEX}")
+
+
+class PublicationType(TextChoices):
+    DOI = "D"
+    ARXIV = "A"
+
+
+def get_publication_type(*, identifier: str) -> PublicationType:
+    if re.match(DOI_REGEX, identifier):
+        return PublicationType.DOI
+    elif re.match(ARXIV_REGEX, identifier):
+        return PublicationType.ARXIV
+    else:
+        raise ValueError(
+            f"Could not determine publication type from {identifier}"
+        )
 
 
 class ConsortiumNameCiteProcJSON(CiteProcJSON):
@@ -84,6 +101,17 @@ class Publication(models.Model):
             )
         except ValueError:
             self.referenced_by_count = None
+
+    @property
+    def url(self):
+        pub_type = get_publication_type(identifier=self.identifier)
+
+        if pub_type == PublicationType.ARXIV:
+            return f"https://arxiv.org/abs/{self.identifier}"
+        elif pub_type == PublicationType.DOI:
+            return f"https://doi.org/{self.identifier}"
+        else:
+            return "#"
 
     @property
     def bib_id(self):
