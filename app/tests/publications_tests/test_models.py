@@ -1,9 +1,10 @@
 import pytest
 
 from grandchallenge.publications.models import Publication
+from grandchallenge.publications.utils.manubot import get_arxiv_csl
 
 TEST_DOI = "10.1002/mrm.25227"
-TEST_CITEPROC_JSON = {
+TEST_CSL = {
     "DOI": "10.1002/mrm.25227",
     "URL": "http://dx.doi.org/10.1002/mrm.25227",
     "ISSN": ["0740-3194"],
@@ -241,9 +242,7 @@ TEST_CONSORTIUM_JSON = {
 
 @pytest.mark.django_db
 def test_metadata_extraction_and_update():
-    publication = Publication.objects.create(
-        doi=TEST_DOI, citeproc_json=TEST_CITEPROC_JSON
-    )
+    publication = Publication.objects.create(identifier=TEST_DOI, csl=TEST_CSL)
 
     assert (
         publication.title
@@ -256,7 +255,7 @@ def test_metadata_extraction_and_update():
         == "Guo J, Meakin JA, Jezzard P, Wong EC. An optimized design to reduce eddy current sensitivity in velocity-selective arterial spin labeling using symmetric BIR-8 pulses. <i>Magn Reson Med</i>. 2014;73(3):1085-1094."
     )
 
-    publication.citeproc_json["is-referenced-by-count"] = 100
+    publication.csl["is-referenced-by-count"] = 100
     publication.save()
 
     assert publication.referenced_by_count == 100
@@ -265,9 +264,55 @@ def test_metadata_extraction_and_update():
 @pytest.mark.django_db
 def test_consortium_json():
     publication = Publication.objects.create(
-        doi=TEST_DOI, citeproc_json=TEST_CONSORTIUM_JSON
+        identifier=TEST_DOI, csl=TEST_CONSORTIUM_JSON
     )
     assert (
         publication.ama_html
         == "Ehteshami Bejnordi B, and the CAMELYON16 Consortium. Diagnostic Assessment of Deep Learning Algorithms for Detection of Lymph Node Metastases in Women With Breast Cancer. <i>JAMA</i>. 2017;318(22):2199."
     )
+
+
+def test_arxiv_to_citeproc():
+    csl = get_arxiv_csl(arxiv_id="2006.12449")
+    assert (
+        csl["title"]
+        == "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge"
+    )
+
+
+TEST_ARXIV_JSON = {
+    "id": "2006.12449",
+    "URL": "https://arxiv.org/abs/2006.12449",
+    "number": "2006.12449",
+    "container-title": "arXiv",
+    "publisher": "arXiv",
+    "type": "manuscript",
+    "title": "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge",
+    "issued": {"date-parts": [[2020, 6, 25]]},
+    "author": [
+        {"given": "Jianning", "family": "Li"},
+        {"given": "Antonio", "family": "Pepe"},
+        {"given": "Christina", "family": "Gsaxner"},
+        {"given": "Gord", "family": "von Campe"},
+        {"given": "Jan", "family": "Egger"},
+    ],
+    "abstract": "In this study, we present a baseline approach for AutoImplant (https://autoimplant.grand-challenge.org/) - the cranial implant design challenge, which, as suggested by the organizers, can be formulated as a volumetric shape learning task. In this task, the defective skull, the complete skull and the cranial implant are represented as binary voxel grids. To accomplish this task, the implant can be either reconstructed directly from the defective skull or obtained by taking the difference between a defective skull and a complete skull. In the latter case, a complete skull has to be reconstructed given a defective skull, which defines a volumetric shape completion problem. Our baseline approach for this task is based on the former formulation, i.e., a deep neural network is trained to predict the implants directly from the defective skulls. The approach generates high-quality implants in two steps: First, an encoder-decoder network learns a coarse representation of the implant from down-sampled, defective skulls; The coarse implant is only used to generate the bounding box of the defected region in the original high-resolution skull. Second, another encoder-decoder network is trained to generate a fine implant from the bounded area. On the test set, the proposed approach achieves an average dice similarity score (DSC) of 0.8555 and Hausdorff distance (HD) of 5.1825 mm. The code is publicly available at https://github.com/Jianningli/autoimplant.",
+    "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+}
+
+
+@pytest.mark.django_db
+def test_arxiv_json_citation():
+    publication = Publication.objects.create(
+        identifier=TEST_ARXIV_JSON["number"], csl=TEST_ARXIV_JSON
+    )
+    assert (
+        publication.ama_html
+        == "Li J, Pepe A, Gsaxner C, von Campe G, Egger J. A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge. <i>arXiv</i>. Published online June 25, 2020."
+    )
+    assert publication.year == 2020
+    assert (
+        publication.title
+        == "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge"
+    )
+    assert publication.referenced_by_count is None

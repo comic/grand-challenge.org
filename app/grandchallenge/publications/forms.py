@@ -1,15 +1,19 @@
-import requests
 from django import forms
+from django.core.exceptions import ValidationError
 
-from grandchallenge.publications.models import Publication, doi_validator
+from grandchallenge.publications.models import (
+    Publication,
+    identifier_validator,
+)
+from grandchallenge.publications.utils import get_identifier_csl
 
 
 class PublicationForm(forms.ModelForm):
-    def clean_doi(self):
-        doi = self.cleaned_data["doi"]
-        doi = doi.lower()
-        doi_validator(doi)
-        return doi
+    def clean_identifier(self):
+        identifier = self.cleaned_data["identifier"]
+        identifier = identifier.lower()
+        identifier_validator(identifier)
+        return identifier
 
     def clean(self):
         self.cleaned_data = super().clean()
@@ -17,21 +21,24 @@ class PublicationForm(forms.ModelForm):
         if self.errors:
             return self.cleaned_data
 
-        doi = self.cleaned_data.get("doi", self.instance.doi)
-
-        response = requests.get(
-            f"https://doi.org/{doi}",
-            headers={"Accept": "application/vnd.citationstyles.csl+json"},
+        identifier = self.cleaned_data.get(
+            "identifier", self.instance.identifier
         )
 
-        if response.status_code != 200:
-            self.add_error("doi", "This DOI could not be found.")
-        else:
-            self.cleaned_data["citeproc_json"] = response.json()
-            self.instance.citeproc_json = response.json()
+        try:
+            csl, new_identifier = get_identifier_csl(doi_or_arxiv=identifier)
+        except ValueError:
+            raise ValidationError("Identifier not recognised")
+
+        if new_identifier != identifier:
+            self.cleaned_data["identifier"] = new_identifier
+            self.instance.identifier = new_identifier
+
+        self.cleaned_data["csl"] = csl
+        self.instance.csl = csl
 
         return self.cleaned_data
 
     class Meta:
         model = Publication
-        fields = ("doi",)
+        fields = ("identifier",)
