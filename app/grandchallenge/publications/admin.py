@@ -5,7 +5,7 @@ from grandchallenge.publications.models import Publication
 
 
 class PublicationAdmin(admin.ModelAdmin):
-    list_display = ["doi", "year", "title", "referenced_by_count"]
+    list_display = ["identifier", "year", "title", "referenced_by_count"]
     readonly_fields = [
         "title",
         "referenced_by_count",
@@ -17,7 +17,7 @@ class PublicationAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ["doi"]
+            return self.readonly_fields + ["identifier"]
         else:
             return self.readonly_fields
 

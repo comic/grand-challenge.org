@@ -243,7 +243,7 @@ TEST_CONSORTIUM_JSON = {
 @pytest.mark.django_db
 def test_metadata_extraction_and_update():
     publication = Publication.objects.create(
-        doi=TEST_DOI, citeproc_json=TEST_CITEPROC_JSON
+        identifier=TEST_DOI, citeproc_json=TEST_CITEPROC_JSON
     )
 
     assert (
@@ -266,7 +266,7 @@ def test_metadata_extraction_and_update():
 @pytest.mark.django_db
 def test_consortium_json():
     publication = Publication.objects.create(
-        doi=TEST_DOI, citeproc_json=TEST_CONSORTIUM_JSON
+        identifier=TEST_DOI, citeproc_json=TEST_CONSORTIUM_JSON
     )
     assert (
         publication.ama_html
@@ -306,7 +306,7 @@ TEST_ARXIV_JSON = {
 @pytest.mark.django_db
 def test_arxiv_json_citation():
     publication = Publication.objects.create(
-        doi=TEST_ARXIV_JSON["number"], citeproc_json=TEST_ARXIV_JSON
+        identifier=TEST_ARXIV_JSON["number"], citeproc_json=TEST_ARXIV_JSON
     )
     assert (
         publication.ama_html

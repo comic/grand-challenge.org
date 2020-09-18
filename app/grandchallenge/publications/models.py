@@ -17,9 +17,12 @@ from django.db import models
 
 from grandchallenge.core.templatetags.bleach import clean
 
-doi_validator = RegexValidator(
-    regex=r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$", flags=re.IGNORECASE
-)
+# regex modified for python syntax from
+# https://www.crossref.org/blog/dois-and-matching-regular-expressions/
+DOI_REGEX = r"^10\.\d{4,9}/[-._;()/:a-z0-9]+$"
+ARXIV_REGEX = r"^\d{4}\.\d{4,5}$"
+
+identifier_validator = RegexValidator(regex=f"{DOI_REGEX}|{ARXIV_REGEX}")
 
 
 class ConsortiumNameCiteProcJSON(CiteProcJSON):
@@ -40,13 +43,11 @@ class Publication(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
-    doi = models.CharField(
+    identifier = models.CharField(
         max_length=255,
-        # regex modified for python syntax from
-        # https://www.crossref.org/blog/dois-and-matching-regular-expressions/
-        validators=[doi_validator],
+        validators=[identifier_validator],
         unique=True,
-        help_text="The DOI, e.g., 10.1002/mrm.25227",
+        help_text="The DOI, e.g., 10.1002/mrm.25227, or the arXiv id, e.g., 2006.12449",
     )
 
     citeproc_json = JSONField(editable=False)
@@ -59,7 +60,7 @@ class Publication(models.Model):
     year = models.PositiveIntegerField(editable=False, null=True)
 
     def __str__(self):
-        return f"{self.doi} {self.ama_html}"
+        return f"{self.identifier} {self.ama_html}"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
