@@ -9,6 +9,7 @@ from citeproc import (
     CitationStylesStyle,
     formatter,
 )
+from citeproc.source import Name
 from citeproc.source.json import CiteProcJSON
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator
@@ -19,6 +20,20 @@ from grandchallenge.core.templatetags.bleach import clean
 doi_validator = RegexValidator(
     regex=r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$", flags=re.IGNORECASE
 )
+
+
+class ConsortiumNameCiteProcJSON(CiteProcJSON):
+    """CiteProcJSON, but handles consortium names"""
+
+    def parse_names(self, json_data):
+        names = []
+        for name_data in json_data:
+            if "family" not in name_data and "name" in name_data:
+                # Handle consortium data
+                name_data["family"] = name_data.pop("name")
+            name = Name(**name_data)
+            names.append(name)
+        return names
 
 
 class Publication(models.Model):
@@ -81,7 +96,9 @@ class Publication(models.Model):
 
     @property
     def bib_source(self):
-        return CiteProcJSON([{**self.citeproc_json, "id": self.bib_id}])
+        return ConsortiumNameCiteProcJSON(
+            [{**self.citeproc_json, "id": self.bib_id}]
+        )
 
     @property
     def ama_html(self):

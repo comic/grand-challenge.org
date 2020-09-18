@@ -157,6 +157,87 @@ TEST_CITEPROC_JSON = {
     "is-referenced-by-count": 14,
 }
 
+TEST_CONSORTIUM_JSON = {
+    "indexed": {
+        "date-parts": [[2020, 9, 18]],
+        "date-time": "2020-09-18T05:43:50Z",
+        "timestamp": 1600407830703,
+    },
+    "reference-count": 0,
+    "publisher": "American Medical Association (AMA)",
+    "issue": "22",
+    "content-domain": {"domain": [], "crossmark-restriction": False},
+    "published-print": {"date-parts": [[2017, 12, 12]]},
+    "DOI": "10.1001/jama.2017.14585",
+    "type": "article-journal",
+    "created": {
+        "date-parts": [[2017, 12, 12]],
+        "date-time": "2017-12-12T20:31:15Z",
+        "timestamp": 1513110675000,
+    },
+    "page": "2199",
+    "source": "Crossref",
+    "is-referenced-by-count": 556,
+    "title": "Diagnostic Assessment of Deep Learning Algorithms for Detection of Lymph Node Metastases in Women With Breast Cancer",
+    "prefix": "10.1001",
+    "volume": "318",
+    "author": [
+        {
+            "given": "Babak",
+            "family": "Ehteshami Bejnordi",
+            "sequence": "first",
+            "affiliation": [
+                {
+                    "name": "Diagnostic Image Analysis Group, Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, the Netherlands"
+                }
+            ],
+        },
+        {
+            "name": "and the CAMELYON16 Consortium",
+            "sequence": "additional",
+            "affiliation": [],
+        },
+    ],
+    "member": "10",
+    "container-title": "JAMA",
+    "original-title": [],
+    "language": "en",
+    "link": [
+        {
+            "URL": "http://jama.jamanetwork.com/article.aspx?doi=10.1001/jama.2017.14585",
+            "content-type": "unspecified",
+            "content-version": "vor",
+            "intended-application": "similarity-checking",
+        }
+    ],
+    "deposited": {
+        "date-parts": [[2017, 12, 12]],
+        "date-time": "2017-12-12T20:31:15Z",
+        "timestamp": 1513110675000,
+    },
+    "score": 1.0,
+    "subtitle": [],
+    "short-title": [],
+    "issued": {"date-parts": [[2017, 12, 12]]},
+    "references-count": 0,
+    "journal-issue": {
+        "published-print": {"date-parts": [[2017, 12, 12]]},
+        "issue": "22",
+    },
+    "URL": "http://dx.doi.org/10.1001/jama.2017.14585",
+    "relation": {
+        "has-review": [
+            {
+                "id-type": "doi",
+                "id": "10.3410/f.732283043.793567347",
+                "asserted-by": "object",
+            }
+        ]
+    },
+    "ISSN": ["0098-7484"],
+    "container-title-short": "JAMA",
+}
+
 
 @pytest.mark.django_db
 def test_metadata_extraction_and_update():
@@ -179,3 +260,14 @@ def test_metadata_extraction_and_update():
     publication.save()
 
     assert publication.referenced_by_count == 100
+
+
+@pytest.mark.django_db
+def test_consortium_json():
+    publication = Publication.objects.create(
+        doi=TEST_DOI, citeproc_json=TEST_CONSORTIUM_JSON
+    )
+    assert (
+        publication.ama_html
+        == "Ehteshami Bejnordi B, and the CAMELYON16 Consortium. Diagnostic Assessment of Deep Learning Algorithms for Detection of Lymph Node Metastases in Women With Breast Cancer. <i>JAMA</i>. 2017;318(22):2199."
+    )
