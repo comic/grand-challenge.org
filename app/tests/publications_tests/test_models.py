@@ -280,3 +280,41 @@ def test_arxiv_to_citeproc():
         citeproc_json["title"]
         == "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge"
     )
+
+
+TEST_ARXIV_JSON = {
+    "id": "2006.12449",
+    "URL": "https://arxiv.org/abs/2006.12449",
+    "number": "2006.12449",
+    "container-title": "arXiv",
+    "publisher": "arXiv",
+    "type": "manuscript",
+    "title": "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge",
+    "issued": {"date-parts": [[2020, 6, 25]]},
+    "author": [
+        {"given": "Jianning", "family": "Li"},
+        {"given": "Antonio", "family": "Pepe"},
+        {"given": "Christina", "family": "Gsaxner"},
+        {"given": "Gord", "family": "von Campe"},
+        {"given": "Jan", "family": "Egger"},
+    ],
+    "abstract": "In this study, we present a baseline approach for AutoImplant (https://autoimplant.grand-challenge.org/) - the cranial implant design challenge, which, as suggested by the organizers, can be formulated as a volumetric shape learning task. In this task, the defective skull, the complete skull and the cranial implant are represented as binary voxel grids. To accomplish this task, the implant can be either reconstructed directly from the defective skull or obtained by taking the difference between a defective skull and a complete skull. In the latter case, a complete skull has to be reconstructed given a defective skull, which defines a volumetric shape completion problem. Our baseline approach for this task is based on the former formulation, i.e., a deep neural network is trained to predict the implants directly from the defective skulls. The approach generates high-quality implants in two steps: First, an encoder-decoder network learns a coarse representation of the implant from down-sampled, defective skulls; The coarse implant is only used to generate the bounding box of the defected region in the original high-resolution skull. Second, another encoder-decoder network is trained to generate a fine implant from the bounded area. On the test set, the proposed approach achieves an average dice similarity score (DSC) of 0.8555 and Hausdorff distance (HD) of 5.1825 mm. The code is publicly available at https://github.com/Jianningli/autoimplant.",
+    "license": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/",
+}
+
+
+@pytest.mark.django_db
+def test_arxiv_json_citation():
+    publication = Publication.objects.create(
+        doi=TEST_ARXIV_JSON["number"], citeproc_json=TEST_ARXIV_JSON
+    )
+    assert (
+        publication.ama_html
+        == "Li J, Pepe A, Gsaxner C, von Campe G, Egger J. A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge. <i>arXiv</i>. Published online June 25, 2020."
+    )
+    assert publication.year == 2020
+    assert (
+        publication.title
+        == "A Baseline Approach for AutoImplant: the MICCAI 2020 Cranial Implant Design Challenge"
+    )
+    assert publication.referenced_by_count is None

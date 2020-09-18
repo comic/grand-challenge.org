@@ -147,7 +147,7 @@ def get_arxiv_csl_item_oai(arxiv_id):
         "number": arxiv_id,
         "container-title": "arXiv",
         "publisher": "arXiv",
-        "type": "report",
+        "type": "manuscript",
     }
 
     # Set title and date
@@ -177,11 +177,15 @@ def get_arxiv_csl_item_oai(arxiv_id):
 
     abstract = arxiv_elem.findtext(f"{ns_arxiv}abstract")
     if abstract:
-        csl_item["abstract"] = abstract.replace("\n", " ").replace("\r", "")
+        csl_item["abstract"] = (
+            abstract.replace("\n", " ").replace("\r", "").strip()
+        )
 
     license = arxiv_elem.findtext(f"{ns_arxiv}license")
     if license:
-        csl_item["license"] = license.replace("\n", " ").replace("\r", "")
+        csl_item["license"] = (
+            license.replace("\n", " ").replace("\r", "").strip()
+        )
 
     doi = arxiv_elem.findtext(f"{ns_arxiv}doi")
     if doi:
