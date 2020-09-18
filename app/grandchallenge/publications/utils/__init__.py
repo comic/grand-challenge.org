@@ -40,7 +40,7 @@ def get_identifier_csl(*, doi_or_arxiv):
         if "DOI" in csl:
             # This arXiv paper is now published, update the identifier and
             # fetch the information from the DOI provider
-            new_id = csl["DOI"]
+            new_id = csl["DOI"].lower()
             csl = get_doi_csl(doi=new_id)
 
     elif pub_type == PublicationType.DOI:
