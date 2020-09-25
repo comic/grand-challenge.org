@@ -44,7 +44,7 @@
                     {% endif %}
 
                     {% if profile.is_verified %}
-                        <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified user"><i class="fas fa-user-check"></i></span>
+                        <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified User"><i class="fas fa-user-check"></i></span>
                     {% endif %}
 
                     {% get_obj_perms request.user for profile as "profile_perms" %}
