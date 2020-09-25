@@ -22,6 +22,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from ipware import get_client_ip
 
 from grandchallenge.core.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
@@ -213,6 +214,12 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
     def form_valid(self, form):
         if form.instance.creator is None:
             form.instance.creator = self.request.user
+
+        client_ip, _ = get_client_ip(self.request)
+        form.instance.creators_ip = client_ip
+        form.instance.creators_user_agent = self.request.META.get(
+            "HTTP_USER_AGENT", ""
+        )
 
         form.instance.phase = self.phase
 
