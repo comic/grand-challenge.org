@@ -245,6 +245,12 @@ SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "same-origin"
 )
 
+IPWARE_META_PRECEDENCE_ORDER = (
+    # Set by nginx
+    "HTTP_X_FORWARDED_FOR",
+    "HTTP_X_REAL_IP",
+)
+
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
