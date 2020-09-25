@@ -146,3 +146,6 @@ class EditProfileForm(userena_forms.EditProfileForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         del self.fields["privacy"]
+
+    class Meta(userena_forms.EditProfileForm.Meta):
+        exclude = ["is_verified", "user"]
