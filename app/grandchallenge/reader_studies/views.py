@@ -896,7 +896,7 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
         )
 
 
-class QuestionViewSet(ReadOnlyModelViewSet):
+class QuestionViewSet(ModelViewSet):
     serializer_class = QuestionSerializer
     queryset = Question.objects.all().select_related("reader_study")
     permission_classes = [DjangoObjectPermissions]

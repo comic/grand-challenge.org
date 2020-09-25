@@ -47,6 +47,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "reader_study",
             "required",
             "options",
+            "order",
         )
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             answer_type=model._meta.get_field("answer_type"),

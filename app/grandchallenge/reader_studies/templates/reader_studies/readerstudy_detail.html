@@ -295,11 +295,20 @@
                  aria-labelledby="v-pills-questions-tab">
                 <h2>Questions</h2>
 
-                <ul class="list-group list-group-flush">
+                <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+                <ul class="list-group list-group-flush" id="full-questions-list">
                     {% for question in object.questions.all %}
-                        <li class="list-group-item">
+                        <li class="list-group-item" gc-update-link="{% url 'api:reader-studies-question-detail' pk=question.pk %}">
                             <div class="w-100 d-flex justify-content-between">
-                                <div>{{ question }}</div>
+                                <div>
+                                    <i class="fa fa-grip-vertical grip-handle" style="cursor: grab; color: gray;"></i>
+                                    {{ question.question_text }}
+                                </div>
+                                <div>
+                                    {{ question.answer_type_display }}
+                                </div>
+
                                 <a class="btn btn-primary btn-sm"
                                    href="{% url 'reader-studies:question-update' slug=object.slug pk=question.pk %}">
                                     <i class="fa fa-edit"></i>
@@ -308,6 +317,36 @@
                         </li>
                     {% endfor %}
                 </ul>
+                <script>
+                    (function () {
+                        const el = document.getElementById("full-questions-list");
+
+                        function processUpdate() {
+                            let i = 1;
+                            for (const c of el.children) {
+                                const url = c.attributes.getNamedItem("gc-update-link").value;
+                                jQuery.ajax({
+                                    url: url,
+                                    method: 'PATCH',
+                                    data: {order: i}
+                                }).fail(() => {
+                                    console.log("FAILED");
+                                }).done(() => {
+                                    console.log("success");
+                                });
+                                i += 1;
+                            }
+                        }
+
+                        const sortable = new Sortable(
+                            el,
+                            {
+                                handle: ".grip-handle",
+                                onUpdate: processUpdate,
+                            }
+                        );
+                    })();
+                </script>
 
                 <p class="mt-3">
                     <a class="btn btn-primary"
