@@ -13,11 +13,16 @@ register = template.Library()
 
 @register.filter
 def user_profile_link(user: Union[AbstractUser, None]) -> str:
+    verified = ""
+
     if user:
         username = user.username
         profile_url = reverse(
             "userena_profile_detail", kwargs={"username": user.username}
         )
+
+        profile = user.user_profile
+
         mugshot = format_html(
             (
                 '<img class="mugshot" loading="lazy" src="{0}" '
@@ -25,18 +30,24 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
                 # Match the "fa-lg" class style
                 'style="height: 1.33em; vertical-align: -25%;"/>'
             ),
-            user.user_profile.get_mugshot_url(),
+            profile.get_mugshot_url(),
         )
+
+        if profile.is_verified:
+            verified = mark_safe(
+                '<i class="fas fa-user-check text-success" title="Verified User"></i>'
+            )
     else:
         username = "Unknown"
         profile_url = "#"
         mugshot = mark_safe('<i class="fas fa-user fa-lg"></i>')
 
     return format_html(
-        '<a href="{0}">{1}</a>&nbsp;<a href="{0}">{2}</a>',
+        '<a href="{0}">{1}</a>&nbsp;<a href="{0}">{2}</a>&nbsp;{3}',
         profile_url,
         mugshot,
         username,
+        verified,
     )
 
 

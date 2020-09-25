@@ -1,6 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views.generic import DetailView
 from django.views.generic.edit import FormView
@@ -99,9 +101,12 @@ class UserProfileDetail(UserPassesTestMixin, DetailView):
         return can_view_profile
 
     def get_object(self, queryset=None):
-        return UserProfile.objects.select_related("user").get(
-            user__username__iexact=self.kwargs["username"]
-        )
+        try:
+            return UserProfile.objects.select_related("user").get(
+                user__username__iexact=self.kwargs["username"]
+            )
+        except ObjectDoesNotExist:
+            raise Http404("User not found.")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
