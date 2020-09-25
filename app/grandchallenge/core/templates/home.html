@@ -7,6 +7,7 @@
 {% load image_filter %}
 
 {% block content %}
+    {{ request.META }}
     {% for highlight in highlights %}
         <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
             <div class="col-lg-6 py-5">
