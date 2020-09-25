@@ -23,6 +23,7 @@ class UserProfile(UserenaBaseProfile):
     department = models.CharField(max_length=100)
     country = CountryField()
     website = models.CharField(max_length=150, blank=True)
+    is_verified = models.BooleanField(default=False)
 
     def get_absolute_url(self):
         return reverse(
