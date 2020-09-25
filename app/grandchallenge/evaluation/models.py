@@ -468,8 +468,12 @@ class Submission(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    creators_ip = models.GenericIPAddressField(null=True, default=None, editable=False)
-    creators_user_agent = models.TextField(blank=True, default="", editable=False)
+    creators_ip = models.GenericIPAddressField(
+        null=True, default=None, editable=False
+    )
+    creators_user_agent = models.TextField(
+        blank=True, default="", editable=False
+    )
 
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
     algorithm_image = models.ForeignKey(
