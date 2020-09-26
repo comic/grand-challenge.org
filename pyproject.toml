@@ -73,6 +73,7 @@ django-machina = "^1.1.2"
 django-haystack = "3.0b1"
 citeproc-py = "*"
 django-ipware = "^3.0.1"
+pyswot = "^0.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
