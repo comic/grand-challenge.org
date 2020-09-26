@@ -33,9 +33,8 @@ class UserProfile(UserenaBaseProfile):
         )
 
     def save(self, *args, **kwargs):
-        if not self.is_verified:
-            # For now, only academic emails are verified
-            self.is_verified = is_academic(self.user.email)
+        # For now, only academic emails are verified
+        self.is_verified = is_academic(self.user.email)
 
         super().save(*args, **kwargs)
 
