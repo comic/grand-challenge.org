@@ -43,6 +43,7 @@ class VerificationAdmin(admin.ModelAdmin):
     )
     search_fields = ("user__username", "email", "user__email")
     actions = (mark_verified, mark_not_verified)
+    autocomplete_fields = ("user",)
 
     def signup_email_activated(self, instance):
         return instance.signup_email_activated

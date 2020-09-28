@@ -25,8 +25,6 @@ class UserProfile(UserenaBaseProfile):
     country = CountryField()
     website = models.CharField(max_length=150, blank=True)
 
-    is_verified = models.BooleanField(default=False, editable=False)
-
     def get_absolute_url(self):
         return reverse(
             "userena_profile_detail", kwargs={"username": self.user.username}
