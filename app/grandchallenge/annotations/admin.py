@@ -56,7 +56,7 @@ class AbstractImageAnnotationAdmin(admin.ModelAdmin):
     readonly_fields = ("grader", "image")
 
 
-admin.site.register(ETDRSGridAnnotation)
+admin.site.register(ETDRSGridAnnotation, AbstractImageAnnotationAdmin)
 admin.site.register(MeasurementAnnotation)
 admin.site.register(
     BooleanClassificationAnnotation, BooleanClassificationAnnotationAdmin
