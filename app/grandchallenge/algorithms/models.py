@@ -92,7 +92,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     result_template = models.TextField(
         blank=True,
         help_text=(
-            "Define the jjinja template to render the content of the "
+            "Define the jinja template to render the content of the "
             "result.json to html."
         ),
     )
