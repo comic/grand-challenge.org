@@ -312,7 +312,7 @@ class ArchivePermissionRequestList(ObjectPermissionRequiredMixin, ListView):
         queryset = (
             queryset.filter(archive=self.archive)
             .exclude(status=ArchivePermissionRequest.ACCEPTED)
-            .select_related("user__user_profile")
+            .select_related("user__user_profile", "user__verification")
         )
         return queryset
 
@@ -420,7 +420,7 @@ class ArchiveUploadSessionList(
         qs = super().get_queryset(*args, **kwargs)
         return (
             qs.filter(archive=self.archive)
-            .select_related("creator__user_profile")
+            .select_related("creator__user_profile", "creator__verification")
             .annotate(
                 Count("image", distinct=True),
                 Count("rawimagefile", distinct=True),
@@ -455,7 +455,10 @@ class ArchiveCasesList(
         return (
             qs.filter(archive=self.archive)
             .prefetch_related("files")
-            .select_related("origin__creator__user_profile")
+            .select_related(
+                "origin__creator__user_profile",
+                "origin__creator__verification",
+            )
         )
 
 

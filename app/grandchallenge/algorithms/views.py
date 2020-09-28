@@ -429,7 +429,7 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
         return (
             queryset.filter(algorithm_image__algorithm=self.algorithm,)
             .prefetch_related("outputs__image__files", "inputs__image__files")
-            .select_related("creator__user_profile")
+            .select_related("creator__user_profile", "creator__verification")
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -539,7 +539,7 @@ class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
         queryset = (
             queryset.filter(algorithm=self.algorithm)
             .exclude(status=AlgorithmPermissionRequest.ACCEPTED)
-            .select_related("user__user_profile")
+            .select_related("user__user_profile", "user__verification")
         )
         return queryset
 

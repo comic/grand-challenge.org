@@ -3,6 +3,7 @@ from typing import Union
 from django import template
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -20,9 +21,6 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
         profile_url = reverse(
             "userena_profile_detail", kwargs={"username": user.username}
         )
-
-        profile = user.user_profile
-
         mugshot = format_html(
             (
                 '<img class="mugshot" loading="lazy" src="{0}" '
@@ -30,13 +28,18 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
                 # Match the "fa-lg" class style
                 'style="height: 1.33em; vertical-align: -25%;"/>'
             ),
-            profile.get_mugshot_url(),
+            user.user_profile.get_mugshot_url(),
         )
 
-        if profile.is_verified:
-            verified = mark_safe(
-                '<i class="fas fa-user-check text-success" title="Verified User"></i>'
-            )
+        try:
+            if user.verification.is_verified:
+                verified = mark_safe(
+                    '<i class="fas fa-user-check text-success" '
+                    'title="Verified User"></i>'
+                )
+        except ObjectDoesNotExist:
+            # No verification request
+            pass
     else:
         username = "Unknown"
         profile_url = "#"

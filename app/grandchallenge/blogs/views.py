@@ -17,5 +17,7 @@ class PostDetail(DetailView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.prefetch_related("authors__user_profile")
+        qs = qs.prefetch_related(
+            "authors__user_profile", "authors__verification"
+        )
         return qs

@@ -135,7 +135,7 @@ class Page(models.Model):
 
     def _substitute_geochart(self, *, html):
         users = self.challenge.get_participants().select_related(
-            "user_profile"
+            "user_profile", "verification"
         )
         country_data = (
             users.exclude(user_profile__country="")

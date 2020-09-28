@@ -747,7 +747,7 @@ class ReaderStudyPermissionRequestList(
         queryset = (
             queryset.filter(reader_study=self.reader_study)
             .exclude(status=ReaderStudyPermissionRequest.ACCEPTED)
-            .select_related("user__user_profile")
+            .select_related("user__user_profile", "user__verification")
         )
         return queryset
 
