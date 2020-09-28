@@ -12,6 +12,14 @@
 {% block content %}
     <h2>Verification</h2>
 
-    Your request for verification {{ object.is_approved|yesno:"has,has not yet" }} been approved.
+    <p>
+        {% if object.is_verified %}
+            Your verification request has been approved.
+        {% elif not object.signup_email_is_trusted and not object.email_is_verified %}
+            Please check your email for the link to confirm your account.
+        {% else %}
+            Your verification request is under review by the site administrators.
+        {% endif %}
+    </p>
 
 {% endblock %}
