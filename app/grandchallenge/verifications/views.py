@@ -71,7 +71,7 @@ class ConfirmEmailView(LoginRequiredMixin, FormView):
         messages.add_message(
             self.request,
             messages.INFO,
-            "Your request is now under review by the site admins.",
+            "Your request is now under review by the site administrators.",
         )
 
         return response
