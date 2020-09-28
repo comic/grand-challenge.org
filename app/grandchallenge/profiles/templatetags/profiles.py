@@ -28,7 +28,7 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
                 # Match the "fa-lg" class style
                 'style="height: 1.33em; vertical-align: -25%;"/>'
             ),
-            user.profile.get_mugshot_url(),
+            user.user_profile.get_mugshot_url(),
         )
 
         try:
