@@ -28,7 +28,7 @@ class VerificationCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         response = super().form_valid(form=form)
 
-        if self.object.email.lower() != self.request.user.email.lower():
+        if not self.object.signup_email_is_trusted:
             send_verification_email(verification=self.object)
             messages.add_message(
                 self.request,

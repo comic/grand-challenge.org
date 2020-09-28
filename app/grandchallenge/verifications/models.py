@@ -40,11 +40,17 @@ class Verification(models.Model):
 
     @property
     def signup_email_is_trusted(self):
-        return self.signup_email_activated and is_academic(self.signup_email)
+        return self.signup_email_activated and self._email_is_trusted(
+            self.signup_email
+        )
 
     @property
     def verification_email_is_trusted(self):
-        return self.email_is_verified and is_academic(self.email)
+        return self.email_is_verified and self._email_is_trusted(self.email)
+
+    @staticmethod
+    def _email_is_trusted(email):
+        return is_academic(email)
 
     @property
     def verification_url(self):
