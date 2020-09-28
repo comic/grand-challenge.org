@@ -3,11 +3,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, FormView
-from guardian.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
+from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.emails import send_verification_email
 from grandchallenge.verifications.forms import (
     ConfirmEmailForm,
@@ -38,19 +36,16 @@ class VerificationCreate(LoginRequiredMixin, CreateView):
 
         return response
 
+    def get_success_url(self):
+        return reverse("verifications:detail")
 
-class VerificationDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
+
+class VerificationDetail(LoginRequiredMixin, DetailView):
     model = Verification
-    permission_required = "view_verification"
-    raise_exception = True
 
     def get_object(self, queryset=None):
         try:
-            return Verification.objects.get(
-                user__username__iexact=self.kwargs["username"]
-            )
+            return self.request.user.verification
         except ObjectDoesNotExist:
             raise Http404("User not found")
 
@@ -82,4 +77,4 @@ class ConfirmEmailView(LoginRequiredMixin, FormView):
         return response
 
     def get_success_url(self):
-        return self.request.user.verification.get_absolute_url()
+        return reverse("verifications:detail")

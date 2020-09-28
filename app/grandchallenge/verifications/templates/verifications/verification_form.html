@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load url %}
 
 {% block title %}Request Verification - {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="#">Verifications</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Create</li>
+        <li class="breadcrumb-item"><a href="{% url 'verifications:detail' %}">Verification</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Request Verification</li>
     </ol>
 {% endblock %}
 
