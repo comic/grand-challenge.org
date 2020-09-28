@@ -44,12 +44,19 @@
                     {% endif %}
 
                     {% if profile.user.verification.is_verified %}
-                        <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified User"><i class="fas fa-user-check"></i></span>
+                        <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified User"><i
+                                class="fas fa-user-check"></i></span>
                     {% endif %}
 
                     {% get_obj_perms request.user for profile as "profile_perms" %}
                     {% if "change_profile" in profile_perms %}
                         <ul class="list-group mb-3">
+                            {% if not profile.user.verification %}
+                                <a class="list-group-item list-group-item-action"
+                                   href="{% url 'verifications:create' %}">
+                                    <i class="fas fa-user-check"></i>&nbsp;Request Verification
+                                </a>
+                            {% endif %}
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'userena_profile_edit' user.username %}'><i
                                     class="fa fa-edit fa-fw"></i>&nbsp;{% trans "Edit profile" %}</a>
@@ -117,12 +124,15 @@
                                         {% endif %}
                                     </h5>
                                     <span class="badge badge-info above-stretched-link"
-                                          title="{{ object|meta_attr:'verbose_name'|title }} {% firstof object.title object.short_name %}">
+                                          title="
+                                                  {{ object|meta_attr:'verbose_name'|title }} {% firstof object.title object.short_name %}">
                                         <i class="far fa-circle fa-fw"></i>
                                         {{ object|meta_attr:'verbose_name'|title }}
                                     </span>
                                     <span class="badge badge-info above-stretched-link"
-                                          title="{{ profile.user.username }} is {{ object_role|get_key:object }} of this {{ object|meta_attr:'verbose_name' }}">
+                                          title="{{ profile.user.username }} is
+                                                  {{ object_role|get_key:object }} of this
+                                                  {{ object|meta_attr:'verbose_name' }}">
                                         <i class="fas fa-user fa-fw"></i>
                                         {{ object_role|get_key:object|title }}
                                     </span>
