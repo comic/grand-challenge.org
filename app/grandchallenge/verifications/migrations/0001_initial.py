@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ("created", models.DateTimeField(auto_now_add=True)),
                 (
                     "modified",
-                    models.DateTimeField(default=django.utils.timezone.now),
+                    models.DateTimeField(auto_now=True),
                 ),
                 ("email", models.EmailField(blank=True, max_length=254)),
                 (
