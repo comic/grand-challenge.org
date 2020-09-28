@@ -714,11 +714,15 @@ class GradersWithPolygonAnnotationsListView(ListAPIView):
 
 
 class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
-    permission_classes = (RetinaOwnerAPIPermission,)
-    authentication_classes = (authentication.SessionAuthentication,)
+    permission_classes = (RetinaAPIPermission,)
     serializer_class = ETDRSGridAnnotationSerializer
-    filter_backends = (filters.ObjectPermissionsFilter,)
+    filter_backends = (
+        filters.ObjectPermissionsFilter,
+        RetinaAnnotationFilter,
+        drf_filters.DjangoFilterBackend,
+    )
     pagination_class = None
+    filterset_fields = ("image",)
     queryset = ETDRSGridAnnotation.objects.all()
 
 

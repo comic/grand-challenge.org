@@ -17,11 +17,6 @@ annotation_router.register(
     basename="polygonannotationset",
 )
 annotation_router.register(
-    "etdrsgridannotation",
-    views.ETDRSGridAnnotationViewSet,
-    basename="etdrsgridannotation",
-)
-annotation_router.register(
     "imagequalityannotation",
     views.ImageQualityAnnotationViewSet,
     basename="imagequalityannotation",
