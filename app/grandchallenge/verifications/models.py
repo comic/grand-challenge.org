@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils.timezone import now
+from pyswot import is_academic
 
 
 class Verification(models.Model):
@@ -21,3 +23,26 @@ class Verification(models.Model):
 
     def __str__(self):
         return f"Verification for {self.user}"
+
+    @property
+    def signup_email(self):
+        return self.user.email
+
+    @property
+    def signup_email_activated(self):
+        return self.user.userena_signup.activation_completed
+
+    @property
+    def signup_email_is_trusted(self):
+        return self.signup_email_activated and is_academic(self.signup_email)
+
+    @property
+    def verification_email_is_trusted(self):
+        return self.email_is_verified and is_academic(self.email)
+
+    def save(self, *args, **kwargs):
+        if self.signup_email_is_trusted or self.verification_email_is_trusted:
+            self.is_verified = True
+            self.verified_at = now()
+
+        super().save(*args, **kwargs)

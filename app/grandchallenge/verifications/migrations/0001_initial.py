@@ -26,10 +26,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("created", models.DateTimeField(auto_now_add=True)),
-                (
-                    "modified",
-                    models.DateTimeField(auto_now=True),
-                ),
+                ("modified", models.DateTimeField(auto_now=True)),
                 ("email", models.EmailField(blank=True, max_length=254)),
                 (
                     "email_is_verified",
