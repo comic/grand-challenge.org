@@ -89,3 +89,8 @@ def test_outputs_are_set():
     assert len(outputs) == 1
     assert outputs[0].interface.kind == InterfaceKindChoices.JSON
     assert outputs[0].value == {"dsaf": 35421}
+
+    job = AlgorithmJobFactory()
+    job.algorithm_image.algorithm.result_template = "foo score: {{dict.foo}}"
+    job.create_result(result={"foo": 13.37})
+    assert job.rendered_result_text == "<p>foo score: 13.37</p>"

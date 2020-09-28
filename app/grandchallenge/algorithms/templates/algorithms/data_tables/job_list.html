@@ -33,6 +33,7 @@
         {% firstof job.output|user_error job.get_status_display %}
    {% endif %}"
    data-pk="{{ job.pk }}"
+   data-rendered-output="{{ job.rendered_result_text }}"
    title="Result Info">
     <i class="fa fa-file"></i>
     {% for input in job.inputs.all %}

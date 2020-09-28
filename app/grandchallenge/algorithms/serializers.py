@@ -28,6 +28,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "latest_ready_image",
             "pk",
             "title",
+            "result_template",
         ]
 
     def get_latest_ready_image(self, obj: Algorithm):
@@ -67,6 +68,7 @@ class JobSerializer(serializers.ModelSerializer):
             "inputs",
             "outputs",
             "status",
+            "rendered_result_text",
         ]
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             status=model._meta.get_field("status")

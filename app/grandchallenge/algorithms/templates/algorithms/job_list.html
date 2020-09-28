@@ -97,7 +97,7 @@
             let button = $(event.relatedTarget);
             let modal = $(this);
             modal.find('.modal-title').text(button.data('title'));
-            modal.find('.modal-job-output').text(button.data('output'));
+            modal.find('.modal-job-output').html(button.data('rendered-output'));
             modal.find('#footerText').text("ID: " + button.data('pk'));
         })
     </script>

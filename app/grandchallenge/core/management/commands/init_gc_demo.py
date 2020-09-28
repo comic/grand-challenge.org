@@ -26,6 +26,10 @@ from grandchallenge.challenges.models import (
     ImagingModality,
     TaskType,
 )
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import (
     Evaluation,
@@ -302,7 +306,11 @@ class Command(BaseCommand):
             self.users["algorithm"], self.users["demo"]
         )
         algorithm.users_group.user_set.add(self.users["algorithmuser"])
-
+        algorithm.result_template = (
+            "{% for key, value in dict.metrics.items() -%}"
+            "{{ key }}  {{ value }}"
+            "{% endfor %}"
+        )
         algorithm_image = AlgorithmImage(
             creator=self.users["algorithm"], algorithm=algorithm
         )
@@ -317,6 +325,14 @@ class Command(BaseCommand):
             status=Evaluation.SUCCESS,
         )
         algorithms_job.save()
+        algorithms_job.inputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="generic-medical-image"
+                ),
+                image=cases_image,
+            )
+        )
         algorithms_job.create_result(result={"cancer_score": 0.5})
 
     def _create_workstation(self):

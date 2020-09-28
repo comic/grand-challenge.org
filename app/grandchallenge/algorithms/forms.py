@@ -45,12 +45,14 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "detail_page_markdown",
             "job_create_page_markdown",
             "additional_terms_markdown",
+            "result_template",
         )
         widgets = {
             "description": TextInput,
             "detail_page_markdown": MarkdownEditorWidget,
             "job_create_page_markdown": MarkdownEditorWidget,
             "additional_terms_markdown": MarkdownEditorWidget,
+            "result_template": MarkdownEditorWidget,
         }
         help_texts = {
             "workstation_config": format_lazy(
