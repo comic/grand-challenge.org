@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Verification - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#">Verifications</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.user }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Verification</h2>
+
+    Your request for verification {{ object.is_approved|yesno:"has,has not yet" }} been approved.
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Request Verification - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#">Verifications</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Create</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Request Verification</h2>
+
+    <p>
+        Please use this form for verification of your account.
+        The email address that you provide here will be only be used once to verify your identity,
+        and will not be used for any further communications.
+    </p>
+
+    {% crispy form %}
+{% endblock %}
