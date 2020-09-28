@@ -4,7 +4,6 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 from django_countries.fields import CountryField
-from pyswot import is_academic
 from userena.models import UserenaBaseProfile
 
 from grandchallenge.core.utils import disable_for_loaddata
@@ -29,12 +28,6 @@ class UserProfile(UserenaBaseProfile):
         return reverse(
             "userena_profile_detail", kwargs={"username": self.user.username}
         )
-
-    def save(self, *args, **kwargs):
-        # For now, only academic emails are verified
-        self.is_verified = is_academic(self.user.email)
-
-        super().save(*args, **kwargs)
 
 
 @disable_for_loaddata
