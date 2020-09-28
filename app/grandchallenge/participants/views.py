@@ -26,7 +26,9 @@ class ParticipantsList(UserIsChallengeAdminMixin, ListView):
 
     def get_queryset(self):
         challenge = self.request.challenge
-        return challenge.get_participants().select_related("user_profile")
+        return challenge.get_participants().select_related(
+            "user_profile", "verification"
+        )
 
 
 class RegistrationRequestCreate(

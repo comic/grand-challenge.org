@@ -102,9 +102,9 @@ class UserProfileDetail(UserPassesTestMixin, DetailView):
 
     def get_object(self, queryset=None):
         try:
-            return UserProfile.objects.select_related("user").get(
-                user__username__iexact=self.kwargs["username"]
-            )
+            return UserProfile.objects.select_related(
+                "user__verification"
+            ).get(user__username__iexact=self.kwargs["username"])
         except ObjectDoesNotExist:
             raise Http404("User not found.")
 

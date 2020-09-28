@@ -285,7 +285,11 @@ class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
         queryset = super().get_queryset()
         return (
             queryset.filter(phase__challenge=self.request.challenge)
-            .select_related("creator__user_profile", "phase__challenge")
+            .select_related(
+                "creator__user_profile",
+                "creator__verification",
+                "phase__challenge",
+            )
             .prefetch_related("evaluation_set")
         )
 
@@ -335,7 +339,9 @@ class EvaluationList(
         queryset = queryset.filter(
             submission__phase__challenge=self.request.challenge
         ).select_related(
-            "submission__creator__user_profile", "submission__phase__challenge"
+            "submission__creator__user_profile",
+            "submission__creator__verification",
+            "submission__phase__challenge",
         )
 
         if self.request.challenge.is_admin(self.request.user):
@@ -491,6 +497,7 @@ class LeaderboardDetail(
         queryset = (
             queryset.select_related(
                 "submission__creator__user_profile",
+                "submission__creator__verification",
                 "submission__phase__challenge",
             )
             .filter(
