@@ -5,6 +5,9 @@ from guardian.shortcuts import assign_perm
 from pyswot import is_academic
 
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.tokens import (
+    email_verification_token_generator,
+)
 
 
 class Verification(models.Model):
@@ -42,6 +45,17 @@ class Verification(models.Model):
     @property
     def verification_email_is_trusted(self):
         return self.email_is_verified and is_academic(self.email)
+
+    @property
+    def verification_url(self):
+        return reverse(
+            "verifications:confirm",
+            kwargs={
+                "token": email_verification_token_generator.make_token(
+                    self.user
+                ),
+            },
+        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
