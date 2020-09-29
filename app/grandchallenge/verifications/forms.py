@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import BaseUserManager
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from pyswot.pyswot import _domain_parts, _is_stoplisted
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.verifications.models import Verification
@@ -42,7 +43,9 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
         if domain in settings.DISALLOWED_EMAIL_DOMAINS:
             raise ValidationError(f"Email hosted by {domain} cannot be used")
 
-        if domain in FREE_EMAIL_DOMAINS:
+        if domain in FREE_EMAIL_DOMAINS or _is_stoplisted(
+            _domain_parts(email)
+        ):
             raise ValidationError(
                 f"Email hosted by {domain} cannot be used for verification"
             )
