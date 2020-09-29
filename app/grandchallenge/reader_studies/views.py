@@ -501,6 +501,7 @@ class ReaderStudyCopy(
 
         rs = ReaderStudy.objects.create(
             title=form.cleaned_data["title"],
+            description=form.cleaned_data["description"],
             **{
                 field: getattr(reader_study, field)
                 for field in ReaderStudy.copy_fields
