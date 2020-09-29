@@ -26,14 +26,13 @@
    data-title="Result Info"
    data-output="
    {% if job.status == job.SUCCESS %}
-        {% for output in job.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
+        {% if job.rendered_result_text %}{{ job.rendered_result_text|force_escape }}{% else %}No output produced.{% endif %}
    {% elif change_job %}
         {% firstof job.output job.get_status_display %}
    {% else %}
         {% firstof job.output|user_error job.get_status_display %}
    {% endif %}"
    data-pk="{{ job.pk }}"
-   data-rendered-output="{{ job.rendered_result_text }}"
    title="Result Info">
     <i class="fa fa-file"></i>
     {% for input in job.inputs.all %}
@@ -95,12 +94,12 @@
 {% endif %}
 <split/>
 {% if job.comment %}
-    <a href="#resultInfoModal"
+    <a href="#commentInfoModal"
        class="badge badge-primary"
        data-toggle="modal"
-       data-target="#resultInfoModal"
+       data-target="#commentInfoModal"
        data-title="Result Comment"
-       data-output="{{ job.comment }}"
+       data-comment="{{ job.comment }}"
        data-pk="{{ job.pk }}"
        title="Result Comment">
         <i class="fa fa-file"></i>
