@@ -1,4 +1,3 @@
-from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.utils.timezone import now
@@ -28,11 +27,6 @@ class VerificationCreate(LoginRequiredMixin, CreateView):
 
         if not self.object.signup_email_is_trusted:
             send_verification_email(verification=self.object)
-            messages.add_message(
-                self.request,
-                messages.INFO,
-                f"Please check {self.object.email} for a confirmation link.",
-            )
 
         return response
 
@@ -67,12 +61,6 @@ class ConfirmEmailView(LoginRequiredMixin, FormView):
         self.request.user.verification.email_is_verified = True
         self.request.user.verification.email_verified_at = now()
         self.request.user.verification.save()
-
-        messages.add_message(
-            self.request,
-            messages.INFO,
-            "Your request is now under review by the site administrators.",
-        )
 
         return response
 
