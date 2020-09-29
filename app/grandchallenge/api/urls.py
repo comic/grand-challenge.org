@@ -28,6 +28,7 @@ from grandchallenge.reader_studies.views import (
 )
 from grandchallenge.retina_api.views import (
     BooleanClassificationAnnotationViewSet,
+    ETDRSGridAnnotationViewSet,
     ImageLevelAnnotationsForImageViewSet,
     LandmarkAnnotationSetViewSet,
     OctRetinaPathologyAnnotationViewSet,
@@ -144,6 +145,11 @@ router.register(
     r"retina/boolean-classification-annotation",
     BooleanClassificationAnnotationViewSet,
     basename="retina-boolean-classification-annotation",
+)
+router.register(
+    r"retina/etdrs-grid-annotation",
+    ETDRSGridAnnotationViewSet,
+    basename="retina-etdrs-grid-annotation",
 )
 
 # Workstations
