@@ -3,6 +3,11 @@ from django.db import models
 from django.utils.timezone import now
 from pyswot import is_academic
 
+from grandchallenge.subdomains.utils import reverse
+from grandchallenge.verifications.tokens import (
+    email_verification_token_generator,
+)
+
 
 class Verification(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -34,11 +39,25 @@ class Verification(models.Model):
 
     @property
     def signup_email_is_trusted(self):
-        return self.signup_email_activated and is_academic(self.signup_email)
+        return self.signup_email_activated and self._email_is_trusted(
+            self.signup_email
+        )
 
     @property
     def verification_email_is_trusted(self):
-        return self.email_is_verified and is_academic(self.email)
+        return self.email_is_verified and self._email_is_trusted(self.email)
+
+    @staticmethod
+    def _email_is_trusted(email):
+        return is_academic(email)
+
+    @property
+    def token(self):
+        return email_verification_token_generator.make_token(self.user)
+
+    @property
+    def verification_url(self):
+        return reverse("verifications:confirm", kwargs={"token": self.token},)
 
     def save(self, *args, **kwargs):
         if self.signup_email_is_trusted or self.verification_email_is_trusted:

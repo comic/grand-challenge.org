@@ -39,7 +39,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         model = settings.AUTH_USER_MODEL
 
     username = factory.Sequence(lambda n: f"test_user_{n:04}")
-    email = factory.LazyAttribute(lambda u: "%s@test.com" % u.username)
+    email = factory.LazyAttribute(lambda u: "%s@example.com" % u.username)
     password = factory.PostGenerationMethodCall(
         "set_password", SUPER_SECURE_TEST_PASSWORD
     )
