@@ -56,7 +56,7 @@ class ConfirmEmailView(LoginRequiredMixin, FormView):
         return kwargs
 
     def form_valid(self, form):
-        response = super().form_valid(form)
+        response = super().form_valid(form=form)
 
         self.request.user.verification.email_is_verified = True
         self.request.user.verification.email_verified_at = now()
