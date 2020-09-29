@@ -6,6 +6,9 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.verifications.models import Verification
+from grandchallenge.verifications.resources.free_email_domains import (
+    FREE_EMAIL_DOMAINS,
+)
 from grandchallenge.verifications.tokens import (
     email_verification_token_generator,
 )
@@ -37,8 +40,11 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
         domain = email.split("@")[1].lower()
 
         if domain in settings.DISALLOWED_EMAIL_DOMAINS:
-            raise forms.ValidationError(
-                f"Email addresses hosted by {domain} cannot be used"
+            raise ValidationError(f"Email hosted by {domain} cannot be used")
+
+        if domain in FREE_EMAIL_DOMAINS:
+            raise ValidationError(
+                f"Email hosted by {domain} cannot be used for verification"
             )
 
         if (
@@ -74,10 +80,12 @@ class ConfirmEmailForm(SaveFormInitMixin, forms.Form):
         self.fields["token"].initial = token
         self.user = user
 
-    def clean(self):
-        cleaned_data = super().clean()
+    def clean_token(self):
+        token = self.cleaned_data["token"]
 
         if not email_verification_token_generator.check_token(
-            self.user, cleaned_data["token"]
+            self.user, token
         ):
             raise ValidationError("Token is invalid")
+
+        return token

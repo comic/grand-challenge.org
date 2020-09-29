@@ -52,15 +52,12 @@ class Verification(models.Model):
         return is_academic(email)
 
     @property
+    def token(self):
+        return email_verification_token_generator.make_token(self.user)
+
+    @property
     def verification_url(self):
-        return reverse(
-            "verifications:confirm",
-            kwargs={
-                "token": email_verification_token_generator.make_token(
-                    self.user
-                ),
-            },
-        )
+        return reverse("verifications:confirm", kwargs={"token": self.token},)
 
     def save(self, *args, **kwargs):
         if self.signup_email_is_trusted or self.verification_email_is_trusted:
