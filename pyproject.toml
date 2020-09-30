@@ -19,7 +19,7 @@ packages = [
 python = "^3.8"
 "beautifulsoup4" = "*"
 celery = {extras = ["redis", "sqs"], version = "^4.4.6"}
-django = "<3.1"
+django = "<3.2"
 django-countries = "*"
 django-crispy-forms = "*"
 django-userena-ce = "*"
@@ -69,11 +69,11 @@ openslide-python = "*"
 humanize = "*"
 disposable-email-domains = "*"
 docutils = "<0.16" # Required for boto3 depedency resolution
-django-machina = "^1.1.2"
+django-machina = "*"
 django-haystack = "3.0b1"
 citeproc-py = "*"
-django-ipware = "^3.0.1"
-pyswot = "^0.1.0"
+django-ipware = "*"
+pyswot = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
