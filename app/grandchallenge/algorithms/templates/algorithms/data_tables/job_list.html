@@ -26,7 +26,7 @@
    data-title="Result Info"
    data-output="
    {% if job.status == job.SUCCESS %}
-        {% if job.rendered_result_text %}{{ job.rendered_result_text|force_escape }}{% else %}No output produced.{% endif %}
+        {% for output in job.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
    {% elif change_job %}
         {% firstof job.output job.get_status_display %}
    {% else %}
@@ -40,6 +40,9 @@
     {% endfor %}
     ({{ job.get_status_display }})
 </a>
+{% if job.rendered_result_text %}
+    {{ job.rendered_result_text|json_script:job.pk }}
+{% endif %}
 <split/>
 {% if job.public %}
     <i class="fa fa-eye text-success"

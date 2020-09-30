@@ -12,7 +12,7 @@ from django.utils._os import safe_join
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
-from jinja2.exceptions import SecurityError
+from jinja2.exceptions import SecurityError, UndefinedError
 
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
 DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
-JINJA_ENGINE = sandbox.SandboxedEnvironment()
+JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):
@@ -93,7 +93,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         help_text=(
             "Define the jinja template to render the content of the "
-            "result.json to html."
+            "result.json to html. For example, the following template will print "
+            "out all the keys and values of the result.json. Use result-dict to access"
+            "the json root."
+            "{% for key, value in result_dict.metrics.items() -%}"
+            "{{ key }}  {{ value }}"
+            "{% endfor %}"
         ),
     )
 
@@ -436,14 +441,16 @@ class Job(UUIDModel, ComponentJob):
         interface = ComponentInterface.objects.get(slug="results-json-file")
         try:
             output = self.outputs.get(interface=interface)
-            if not self.algorithm_image.algorithm.result_template:
-                return output.value
             template_output = JINJA_ENGINE.from_string(
                 self.algorithm_image.algorithm.result_template
-            ).render(dict=output.value)
+            ).render(result_dict=output.value)
 
             return md2html(template_output)
-        except (ObjectDoesNotExist, SecurityError):
+        except UndefinedError:
+            return "Jinja template is incorrect"
+        except SecurityError:
+            return "Jinja template is incorrect"
+        except ObjectDoesNotExist:
             return ""
 
     def get_absolute_url(self):

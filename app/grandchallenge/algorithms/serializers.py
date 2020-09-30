@@ -28,7 +28,6 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "latest_ready_image",
             "pk",
             "title",
-            "result_template",
         ]
 
     def get_latest_ready_image(self, obj: Algorithm):

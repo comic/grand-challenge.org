@@ -307,7 +307,7 @@ class Command(BaseCommand):
         )
         algorithm.users_group.user_set.add(self.users["algorithmuser"])
         algorithm.result_template = (
-            "{% for key, value in dict.metrics.items() -%}"
+            "{% for key, value in result_dict.metrics.items() -%}"
             "{{ key }}  {{ value }}"
             "{% endfor %}"
         )
@@ -318,6 +318,14 @@ class Command(BaseCommand):
         algorithm_image.image.save("test_algorithm.tar", container)
         algorithm_image.save()
 
+        for res in [
+            {"cancer_score": 0.5},
+            {"cancer_score": 0.6},
+            {"cancer_score": 0.7},
+        ]:
+            self.create_job_result(algorithm_image, cases_image, res)
+
+    def create_job_result(self, algorithm_image, cases_image, result):
         algorithms_job = grandchallenge.algorithms.models.Job(
             creator=self.users["algorithm"],
             algorithm_image=algorithm_image,
@@ -333,7 +341,7 @@ class Command(BaseCommand):
                 image=cases_image,
             )
         )
-        algorithms_job.create_result(result={"cancer_score": 0.5})
+        algorithms_job.create_result(result=result)
 
     def _create_workstation(self):
         w = Workstation.objects.create(
