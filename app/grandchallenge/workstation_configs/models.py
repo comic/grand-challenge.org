@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.validators import (
     MaxValueValidator,
@@ -206,13 +205,13 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         ],
     )
 
-    overlay_segments = JSONField(
+    overlay_segments = models.JSONField(
         default=list,
         blank=True,
         validators=[JSONSchemaValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
 
-    key_bindings = JSONField(
+    key_bindings = models.JSONField(
         default=list,
         blank=True,
         validators=[JSONSchemaValidator(schema=KEY_BINDINGS_SCHEMA)],

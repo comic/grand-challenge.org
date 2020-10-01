@@ -2,7 +2,6 @@ from decimal import Decimal
 from typing import Tuple, Type
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.core.files import File
 from django.db import models
 from django.db.models import Avg, F
@@ -69,7 +68,7 @@ class ComponentInterface(models.Model):
     description = models.TextField(
         blank=True, help_text="Description of this input/output field.",
     )
-    default_value = JSONField(
+    default_value = models.JSONField(
         null=True,
         default=None,
         help_text="Default value for this field, only valid for inputs.",
@@ -127,7 +126,7 @@ class ComponentInterfaceValue(models.Model):
     interface = models.ForeignKey(
         to=ComponentInterface, on_delete=models.CASCADE
     )
-    value = JSONField(null=True, default=None)
+    value = models.JSONField(null=True, default=None)
     file = models.FileField(
         upload_to=component_interface_value_path, storage=protected_s3_storage
     )

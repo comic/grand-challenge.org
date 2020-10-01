@@ -4,7 +4,6 @@ from urllib.parse import unquote, urljoin
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
@@ -328,7 +327,7 @@ class Session(UUIDModel):
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
     logs = models.TextField(editable=False, blank=True)
-    ping_times = JSONField(null=True, default=None)
+    ping_times = models.JSONField(null=True, default=None)
     history = HistoricalRecords(excluded_fields=["logs", "ping_times"])
 
     class Meta(UUIDModel.Meta):

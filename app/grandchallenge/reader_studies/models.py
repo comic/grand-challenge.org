@@ -5,7 +5,6 @@ from collections import Counter
 import numpy as np
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Avg, Count, OuterRef, Subquery, Sum
@@ -219,7 +218,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     # A hanging_list is a list of dictionaries where the keys are the
     # view names, and the values are the filenames to place there.
-    hanging_list = JSONField(
+    hanging_list = models.JSONField(
         default=list,
         blank=True,
         validators=[JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)],
@@ -234,7 +233,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "the readers."
         ),
     )
-    case_text = JSONField(
+    case_text = models.JSONField(
         default=dict,
         blank=True,
         validators=[JSONSchemaValidator(schema=CASE_TEXT_SCHEMA)],
@@ -1261,7 +1260,7 @@ class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
-    answer = JSONField(
+    answer = models.JSONField(
         null=True, validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
     is_ground_truth = models.BooleanField(default=False)
