@@ -11,10 +11,8 @@ from citeproc import (
 )
 from citeproc.source import Name
 from citeproc.source.json import CiteProcJSON
-from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import TextChoices
 
 from grandchallenge.core.templatetags.bleach import clean
 
@@ -26,7 +24,7 @@ ARXIV_REGEX = r"^\d{4}\.\d{4,5}$"
 identifier_validator = RegexValidator(regex=f"{DOI_REGEX}|{ARXIV_REGEX}")
 
 
-class PublicationType(TextChoices):
+class PublicationType(models.TextChoices):
     DOI = "D"
     ARXIV = "A"
 
@@ -67,7 +65,7 @@ class Publication(models.Model):
         help_text="The DOI, e.g., 10.1002/mrm.25227, or the arXiv id, e.g., 2006.12449",
     )
 
-    csl = JSONField(editable=False)
+    csl = models.JSONField(editable=False)
 
     # Metadata that is indexed from the csl
     title = models.TextField(editable=False)

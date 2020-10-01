@@ -4,11 +4,9 @@ from pathlib import Path
 from celery import group
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import models
-from django.db.models import BooleanField
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
@@ -202,7 +200,7 @@ class Phase(UUIDModel):
         default=4,
         help_text=("The number of decimal places to display for the score"),
     )
-    extra_results_columns = JSONField(
+    extra_results_columns = models.JSONField(
         default=list,
         blank=True,
         help_text=(
@@ -326,7 +324,7 @@ class Phase(UUIDModel):
         ),
         blank=True,
     )
-    auto_publish_new_results = BooleanField(
+    auto_publish_new_results = models.BooleanField(
         default=True,
         help_text=(
             "If true, new results are automatically made public. If false, "
@@ -728,7 +726,7 @@ class Evaluation(UUIDModel, ComponentJob):
         ),
     )
     rank_score = models.FloatField(default=0.0)
-    rank_per_metric = JSONField(default=dict)
+    rank_per_metric = models.JSONField(default=dict)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
