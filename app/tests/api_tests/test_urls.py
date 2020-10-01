@@ -15,25 +15,23 @@ from tests.utils import assert_viewname_status
 
 @pytest.mark.xfail
 @pytest.mark.parametrize(
-    "schema, schema_format",
+    "schema, content_type",
     [
-        ("schema-json", ".json"),
-        ("schema-json", ".yaml"),
-        ("schema-docs", None),
+        ("schema", "application/vnd.oai.openapi+json"),
+        ("schema", "application/vnd.oai.openapi"),
     ],
 )
 @pytest.mark.django_db
-def test_api_docs_generation(client, schema, schema_format):
-    kwargs = dict(format=schema_format) if schema == "schema-json" else None
+def test_api_docs_generation(client, schema, content_type):
     response = assert_viewname_status(
-        code=200, url=reverse(f"api:{schema}", kwargs=kwargs), client=client
+        code=200,
+        url=reverse(f"api:{schema}"),
+        client=client,
+        HTTP_ACCEPT=content_type,
     )
-    if schema_format is not None:
-        assert len(response.data["paths"]) > 0
-        check_answer_type_schema_from_response(response)
-        check_response_schema_formatting(response)
-    else:
-        assert len(response.content) > 0
+    assert len(response.data["paths"]) > 0
+    check_answer_type_schema_from_response(response)
+    check_response_schema_formatting(response)
 
 
 def check_answer_type_schema_from_response(response):

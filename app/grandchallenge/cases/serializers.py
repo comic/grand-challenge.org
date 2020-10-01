@@ -7,7 +7,7 @@ from rest_framework.relations import (
     SlugRelatedField,
 )
 
-from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import (
     Image,

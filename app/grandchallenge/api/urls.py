@@ -1,6 +1,6 @@
 from django.conf.urls import include
-from django.urls import path, re_path
-from django.views.generic import RedirectView
+from django.urls import path
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework import routers
 
 from grandchallenge.algorithms.views import (
@@ -177,15 +177,15 @@ schema_view = get_schema_view(
 """
 
 urlpatterns = [
-    re_path(
-        r"^swagger(?P<format>\.json|\.yaml)$",
-        RedirectView.as_view(url="/"),  # TODO
-        name="schema-json",
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "schema/swagger/",
+        SpectacularSwaggerView.as_view(url_name="api:schema"),
+        name="swagger-ui",
     ),
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),
     path("v1/metrics/", MetricsAPIView.as_view(), name="metrics"),
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
-    path("", RedirectView.as_view(url="/"), name="schema-docs"),  # TODO
 ]

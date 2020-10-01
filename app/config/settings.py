@@ -358,8 +358,10 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # custom extensions
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
+    "drf_yasg",
     "markdownx",  # for editing markdown
     "django_filters",
+    "drf_spectacular",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -645,6 +647,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "grandchallenge.api.pagination.MaxLimit1000OffsetPagination",
     "PAGE_SIZE": 100,
     "UNAUTHENTICATED_USER": "guardian.utils.get_anonymous_user",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SWAGGER_SETTINGS = {
