@@ -1,9 +1,7 @@
-from django.conf import settings
 from django.conf.urls import include
 from django.urls import path, re_path
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
-from rest_framework import permissions, routers
+from django.views.generic import RedirectView
+from rest_framework import routers
 
 from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
@@ -38,7 +36,6 @@ from grandchallenge.retina_api.views import (
     TextAnnotationViewSet,
 )
 from grandchallenge.statistics.views import MetricsAPIView
-from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
@@ -158,6 +155,8 @@ router.register(
 )
 router.register(r"workstations/sessions", SessionViewSet)
 
+# TODO Reintroduce the schema view
+"""
 schema_view = get_schema_view(
     openapi.Info(
         title=f"{settings.SESSION_COOKIE_DOMAIN.lstrip('.')} API",
@@ -175,11 +174,12 @@ schema_view = get_schema_view(
         path("api/v1/metrics/", MetricsAPIView.as_view()),
     ],
 )
+"""
 
 urlpatterns = [
     re_path(
         r"^swagger(?P<format>\.json|\.yaml)$",
-        schema_view.without_ui(),
+        RedirectView.as_view(url="/"),  # TODO
         name="schema-json",
     ),
     # Do not namespace the router.urls without updating the view names in
@@ -187,5 +187,5 @@ urlpatterns = [
     path("v1/", include(router.urls)),
     path("v1/metrics/", MetricsAPIView.as_view(), name="metrics"),
     path("auth/", include("rest_framework.urls", namespace="rest_framework")),
-    path("", schema_view.with_ui("swagger"), name="schema-docs"),
+    path("", RedirectView.as_view(url="/"), name="schema-docs"),  # TODO
 ]
