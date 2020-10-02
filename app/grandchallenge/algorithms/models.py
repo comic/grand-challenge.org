@@ -441,17 +441,17 @@ class Job(UUIDModel, ComponentJob):
         interface = ComponentInterface.objects.get(slug="results-json-file")
         try:
             output = self.outputs.get(interface=interface)
+        except ObjectDoesNotExist:
+            return ""
+
+        try:
             template_output = JINJA_ENGINE.from_string(
                 self.algorithm_image.algorithm.result_template
             ).render(result_dict=output.value)
+        except (UndefinedError, SecurityError):
+            return "Jinja template is invalid"
 
-            return md2html(template_output)
-        except UndefinedError as e:
-            return f"Jinja template is incorrect: {e}"
-        except SecurityError:
-            return "Jinja template is not allowed"
-        except ObjectDoesNotExist:
-            return ""
+        return md2html(template_output)
 
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
