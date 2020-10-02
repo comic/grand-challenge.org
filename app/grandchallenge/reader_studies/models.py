@@ -1091,15 +1091,11 @@ class Question(UUIDModel):
     class Meta:
         ordering = ("order", "created")
 
-    @property
-    def answer_type_display(self):
-        return self.get_answer_type_display()
-
     def __str__(self):
         return (
             f"{self.question_text} "
             "("
-            f"{self.answer_type_display}, "
+            f"{self.get_answer_type_display()}, "
             f"{self.get_image_port_display() + ' port,' if self.image_port else ''}"
             f"{'' if self.required else 'not'} required, "
             f"order {self.order}"
@@ -1111,7 +1107,7 @@ class Question(UUIDModel):
         """Values that are included in this ``Question``'s csv export."""
         return [
             self.question_text,
-            self.answer_type_display,
+            self.get_answer_type_display(),
             self.required,
             f"{self.get_image_port_display() + ' port,' if self.image_port else ''}",
         ]

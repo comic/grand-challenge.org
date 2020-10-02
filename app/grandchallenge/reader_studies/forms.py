@@ -1,6 +1,7 @@
 import csv
 import io
 import itertools
+from functools import cached_property
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
@@ -26,8 +27,17 @@ from django.forms import (
     ModelChoiceField,
     ModelForm,
     TextInput,
+    BaseFormSet,
+    widgets,
+    forms,
+    BaseModelForm,
+    BaseModelFormSet,
+    formsets,
 )
 from django.forms.models import inlineformset_factory
+from django.shortcuts import render
+from django.template.loader import get_template, select_template
+from django.utils.safestring import mark_safe
 from django.utils.text import format_lazy
 from guardian.utils import get_anonymous_user
 
@@ -349,6 +359,65 @@ class ReadersForm(UserGroupForm):
             permission_request.status = ReaderStudyPermissionRequest.ACCEPTED
 
         permission_request.save()
+
+
+class SimpleTextWidget(widgets.Widget):
+    def subwidgets(self):
+        pass
+
+    def render(self, name, value, attrs=None, renderer=None):
+        return mark_safe(
+            rf"<p>{self.format_value(value)} - {name}: {value}</p>"
+        )
+
+
+class SortablelistDraggableWidget(widgets.Widget):
+    class Media:
+        css = {"all": ("reader_studies/css/sortablelist.css",)}
+
+    def render(self, name, value, attrs=None, renderer=None):
+        return mark_safe(
+            '<i class="fa fa-grip-vertical grip-handle" style="cursor: grab; color: gray;"></i>'
+        )
+
+
+class QuestionEditForm(ModelForm):
+    class Meta:
+        fields = ("question_text", "answer_type")
+        widgets = {
+            "question_text": SimpleTextWidget(),
+            "answer_type": SimpleTextWidget(),
+        }
+
+
+class SortableJSListForm(BaseModelFormSet):
+    ordering_widget = SortablelistDraggableWidget
+
+    def add_fields(self, form, index):
+        super(SortableJSListForm, self).add_fields(form, index)
+
+        # Put ordering widget in front - if enabled
+        if self.can_order:
+            form.order_fields((formsets.ORDERING_FIELD_NAME,))
+
+    def as_table(self):
+        raise NotImplementedError()
+
+    def as_ul(self):
+        items = mark_safe(
+            "\n".join(
+                rf"""
+                    <li class="sortablejs-draggable">
+                        {form.as_p()}
+                    </li>
+                """
+                for form in self
+            )
+        )
+        return mark_safe(f'<ul class="sortablejs-sortable">{items}</ul>')
+
+    def as_p(self):
+        raise NotImplementedError()
 
 
 class AnswersRemoveForm(Form):

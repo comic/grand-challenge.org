@@ -295,7 +295,12 @@
                  aria-labelledby="v-pills-questions-tab">
                 <h2>Questions</h2>
 
-                <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+                <p>------------</p>
+
+                {{ questions_list_form.management_form }}
+                {{ questions_list_form.as_ul }}
+
+                <p>------------</p>
 
                 <ul class="list-group list-group-flush" id="full-questions-list">
                     {% for question in object.questions.all %}
@@ -317,7 +322,23 @@
                         </li>
                     {% endfor %}
                 </ul>
+
+                <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
                 <script>
+                    (function() {
+                        var sortables = document.getElementsByClassName("sortablejs-sortable");
+
+                        for (const sortable of sortables) {
+                            new Sortable(
+                                sortable,
+                                {
+                                    handle: ".grip-handle",
+                                    //onUpdate: processUpdate,
+                                }
+                            );
+                        }
+                    })();
+
                     (function () {
                         const el = document.getElementById("full-questions-list");
 
@@ -562,6 +583,8 @@
 
 {% block script %}
     {{ block.super }}
+    {{ questions_list_form.media }}
+
     <script>
         window.drf = {
             csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",

@@ -1,0 +1,17 @@
+<div class="w-100 d-flex justify-content-between">
+    {{ question }}
+    {{ question.keys }}
+
+    <div>
+        <i class="fa fa-grip-vertical grip-handle" style="cursor: grab; color: gray;"></i>
+        {{ question.question_text }}
+    </div>
+    <div>
+        {{ question.answer_type_display }}
+    </div>
+
+    <a class="btn btn-primary btn-sm"
+       href="% url 'reader-studies:question-update' slug=object.slug pk=question.pk %">
+        <i class="fa fa-edit"></i>
+    </a>
+</div>

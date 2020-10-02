@@ -17,6 +17,11 @@ from django.core.exceptions import (
 )
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.forms import (
+    formset_factory,
+    modelform_factory,
+    modelformset_factory,
+)
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -72,6 +77,7 @@ from grandchallenge.reader_studies.forms import (
     ReaderStudyPermissionRequestUpdateForm,
     ReaderStudyUpdateForm,
     ReadersForm,
+    QuestionEditForm, SortableJSListForm,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -215,6 +221,16 @@ class ReaderStudyDetail(
         editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
         answers_remove_form = AnswersRemoveForm()
 
+        questions_list = modelformset_factory(
+            Question,
+            form=QuestionEditForm,
+            formset=SortableJSListForm,
+            fields=("question_text", "answer_type"),
+            can_order=True,
+            can_delete=False,
+            extra=0,
+        )
+
         context.update(
             {
                 "user_score": self.object.score_for_user(self.request.user),
@@ -223,6 +239,7 @@ class ReaderStudyDetail(
                 "editor_remove_form": editor_remove_form,
                 "reader_remove_form": reader_remove_form,
                 "answers_remove_form": answers_remove_form,
+                "questions_list_form": questions_list,
                 "user_is_reader": self.object.is_reader(
                     user=self.request.user
                 ),
