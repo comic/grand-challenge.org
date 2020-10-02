@@ -6,8 +6,7 @@ from grandchallenge.serving.models import Download
 
 @shared_task
 def create_download(*_, **kwargs):
-    d, created = Download.objects.get_or_create(**kwargs)
+    n_updated = Download.objects.filter(**kwargs).update(count=F("count") + 1)
 
-    if not created:
-        d.count = F("count") + 1
-        d.save()
+    if n_updated == 0:
+        Download.objects.create(**kwargs)
