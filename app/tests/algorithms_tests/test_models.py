@@ -106,4 +106,4 @@ def test_outputs_are_set():
     )
 
     job.algorithm_image.algorithm.result_template = "{{ str.__add__('test')}}"
-    assert job.rendered_result_text == "Jinja template is not allowed"
+    assert job.rendered_result_text == "Jinja template is invalid"
