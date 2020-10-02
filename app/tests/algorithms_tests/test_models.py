@@ -100,10 +100,7 @@ def test_outputs_are_set():
     assert job.rendered_result_text == "<p>foo score: 13.37</p>"
 
     job.algorithm_image.algorithm.result_template = "{% for key, value in dict.metrics.items() -%}{{ key }}  {{ value }}{% endfor %}"
-    assert (
-        job.rendered_result_text
-        == "Jinja template is incorrect: 'type object' has no attribute 'metrics'"
-    )
+    assert job.rendered_result_text == "Jinja template is invalid"
 
     job.algorithm_image.algorithm.result_template = "{{ str.__add__('test')}}"
     assert job.rendered_result_text == "Jinja template is invalid"
