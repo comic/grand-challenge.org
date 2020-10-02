@@ -446,10 +446,10 @@ class Job(UUIDModel, ComponentJob):
             ).render(result_dict=output.value)
 
             return md2html(template_output)
-        except UndefinedError:
-            return "Jinja template is incorrect"
+        except UndefinedError as e:
+            return f"Jinja template is incorrect: {e}"
         except SecurityError:
-            return "Jinja template is incorrect"
+            return "Jinja template is not allowed"
         except ObjectDoesNotExist:
             return ""
 

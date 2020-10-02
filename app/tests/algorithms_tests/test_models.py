@@ -94,5 +94,16 @@ def test_outputs_are_set():
     job.algorithm_image.algorithm.result_template = (
         "foo score: {{result_dict.foo}}"
     )
+
+    assert job.rendered_result_text == ""
     job.create_result(result={"foo": 13.37})
     assert job.rendered_result_text == "<p>foo score: 13.37</p>"
+
+    job.algorithm_image.algorithm.result_template = "{% for key, value in dict.metrics.items() -%}{{ key }}  {{ value }}{% endfor %}"
+    assert (
+        job.rendered_result_text
+        == "Jinja template is incorrect: 'type object' has no attribute 'metrics'"
+    )
+
+    job.algorithm_image.algorithm.result_template = "{{ str.__add__('test')}}"
+    assert job.rendered_result_text == "Jinja template is not allowed"
