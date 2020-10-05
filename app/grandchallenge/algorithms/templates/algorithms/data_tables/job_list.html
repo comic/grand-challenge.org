@@ -40,6 +40,9 @@
     {% endfor %}
     ({{ job.get_status_display }})
 </a>
+{% if job.rendered_result_text %}
+    {{ job.rendered_result_text|json_script:job.pk }}
+{% endif %}
 <split/>
 {% if job.public %}
     <i class="fa fa-eye text-success"
@@ -94,12 +97,12 @@
 {% endif %}
 <split/>
 {% if job.comment %}
-    <a href="#resultInfoModal"
+    <a href="#commentInfoModal"
        class="badge badge-primary"
        data-toggle="modal"
-       data-target="#resultInfoModal"
+       data-target="#commentInfoModal"
        data-title="Result Comment"
-       data-output="{{ job.comment }}"
+       data-comment="{{ job.comment }}"
        data-pk="{{ job.pk }}"
        title="Result Comment">
         <i class="fa fa-file"></i>

@@ -11,6 +11,8 @@ from django.dispatch import receiver
 from django.utils._os import safe_join
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from jinja2 import sandbox
+from jinja2.exceptions import SecurityError, UndefinedError
 
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
@@ -31,6 +33,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -38,6 +41,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
 DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
+
+JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):
@@ -82,6 +87,19 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "By using this algortihm, users agree to the site wide "
             "terms of service. If your algorithm has any additional "
             "terms of usage, define them here."
+        ),
+    )
+    result_template = models.TextField(
+        blank=True,
+        default="<pre>{{ result_dict }}</pre>",
+        help_text=(
+            "Define the jinja template to render the content of the "
+            "result.json to html. For example, the following template will print "
+            "out all the keys and values of the result.json. Use result-dict to access"
+            "the json root."
+            "{% for key, value in result_dict.metrics.items() -%}"
+            "{{ key }}  {{ value }}"
+            "{% endfor %}"
         ),
     )
 
@@ -418,6 +436,24 @@ class Job(UUIDModel, ComponentJob):
                 interface=interface, value=result
             )
             self.outputs.add(output_civ)
+
+    @property
+    def rendered_result_text(self):
+        interface = ComponentInterface.objects.get(slug="results-json-file")
+
+        try:
+            output = self.outputs.get(interface=interface)
+        except ObjectDoesNotExist:
+            return ""
+
+        try:
+            template_output = JINJA_ENGINE.from_string(
+                self.algorithm_image.algorithm.result_template
+            ).render(result_dict=output.value)
+        except (UndefinedError, SecurityError):
+            return "Jinja template is invalid"
+
+        return md2html(template_output)
 
     def get_absolute_url(self):
         return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})

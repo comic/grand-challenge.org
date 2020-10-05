@@ -67,6 +67,7 @@ class JobSerializer(serializers.ModelSerializer):
             "inputs",
             "outputs",
             "status",
+            "rendered_result_text",
         ]
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             status=model._meta.get_field("status")

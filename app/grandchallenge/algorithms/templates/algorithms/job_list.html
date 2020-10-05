@@ -72,6 +72,24 @@
         </div>
     </div>
 
+    <div class="modal fade" id="commentInfoModal" tabindex="-1" role="dialog"
+         aria-labelledby="commentInfoModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-job-comment"></p>
+                    <p id="footerText" class="small text-muted"></p>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block script %}
@@ -96,9 +114,25 @@
         $('#resultInfoModal').on('show.bs.modal', function (event) {
             let button = $(event.relatedTarget);
             let modal = $(this);
+            const json_element = document.getElementById(button.data('pk'));
+            if (json_element){
+                modal.find('.modal-job-output').html(JSON.parse(json_element.textContent));
+            }else {
+                modal.find('.modal-job-output').text(button.data('output'));
+            }
             modal.find('.modal-title').text(button.data('title'));
-            modal.find('.modal-job-output').text(button.data('output'));
             modal.find('#footerText').text("ID: " + button.data('pk'));
         })
     </script>
+
+    <script type="text/javascript">
+        $('#commentInfoModal').on('show.bs.modal', function (event) {
+            let button = $(event.relatedTarget);
+            let modal = $(this);
+            modal.find('.modal-title').text(button.data('title'));
+            modal.find('.modal-job-comment').text(button.data('comment'));
+            modal.find('#footerText').text("ID: " + button.data('pk'));
+        })
+    </script>
+
 {% endblock %}
