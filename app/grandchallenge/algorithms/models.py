@@ -91,6 +91,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     )
     result_template = models.TextField(
         blank=True,
+        default="<pre>{{ result_dict }}</pre>",
         help_text=(
             "Define the jinja template to render the content of the "
             "result.json to html. For example, the following template will print "
@@ -439,6 +440,7 @@ class Job(UUIDModel, ComponentJob):
     @property
     def rendered_result_text(self):
         interface = ComponentInterface.objects.get(slug="results-json-file")
+
         try:
             output = self.outputs.get(interface=interface)
         except ObjectDoesNotExist:
