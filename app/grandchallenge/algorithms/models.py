@@ -12,7 +12,7 @@ from django.utils._os import safe_join
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
-from jinja2.exceptions import SecurityError, UndefinedError
+from jinja2.exceptions import TemplateError
 
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
@@ -450,7 +450,7 @@ class Job(UUIDModel, ComponentJob):
             template_output = JINJA_ENGINE.from_string(
                 self.algorithm_image.algorithm.result_template
             ).render(result_dict=output.value)
-        except (UndefinedError, SecurityError):
+        except TemplateError:
             return "Jinja template is invalid"
 
         return md2html(template_output)
