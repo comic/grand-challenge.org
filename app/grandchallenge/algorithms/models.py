@@ -34,6 +34,7 @@ from grandchallenge.components.models import (
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.evaluation.utils import get
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -439,17 +440,21 @@ class Job(UUIDModel, ComponentJob):
 
     @property
     def rendered_result_text(self):
-        interface = ComponentInterface.objects.get(slug="results-json-file")
-
         try:
-            output = self.outputs.get(interface=interface)
+            result_dict = get(
+                [
+                    o.value
+                    for o in self.outputs.all()
+                    if o.interface.slug == "results-json-file"
+                ]
+            )
         except ObjectDoesNotExist:
             return ""
 
         try:
             template_output = JINJA_ENGINE.from_string(
                 self.algorithm_image.algorithm.result_template
-            ).render(result_dict=output.value)
+            ).render(result_dict=result_dict)
         except TemplateError:
             return "Jinja template is invalid"
 
