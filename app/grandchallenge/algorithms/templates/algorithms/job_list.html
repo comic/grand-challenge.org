@@ -49,6 +49,13 @@
             </tr>
             </thead>
             <tbody>
+            <tr>
+                <td colspan="100%" class="text-center">
+                    <div class="text-secondary text-center spinner-border" role="status">
+                        <span class="sr-only">Loading Results...</span>
+                    </div>
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>
@@ -100,7 +107,7 @@
             $('.table').DataTable({
                 order: [[0, "desc"]],
                 lengthChange: false,
-                pageLength: 100,
+                pageLength: 25,
                 serverSide: true,
                 ajax: {
                     url: "",

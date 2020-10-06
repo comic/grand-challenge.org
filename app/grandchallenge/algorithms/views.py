@@ -480,7 +480,11 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
 
 
 class JobViewSet(ReadOnlyModelViewSet):
-    queryset = Job.objects.all()
+    queryset = (
+        Job.objects.all()
+        .prefetch_related("outputs__interface", "inputs__interface")
+        .select_related("algorithm_image__algorithm")
+    )
     serializer_class = JobSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
