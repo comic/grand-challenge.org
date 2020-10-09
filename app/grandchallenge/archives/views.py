@@ -421,10 +421,7 @@ class ArchiveUploadSessionList(
         return (
             qs.filter(archive=self.archive)
             .select_related("creator__user_profile", "creator__verification")
-            .annotate(
-                Count("image", distinct=True),
-                Count("rawimagefile", distinct=True),
-            )
+            .annotate(Count("image", distinct=True),)
         )
 
 
