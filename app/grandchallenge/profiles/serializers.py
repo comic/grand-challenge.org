@@ -1,7 +1,7 @@
 from django_countries.serializers import CountryFieldMixin
 from rest_framework import serializers
 
-from grandchallenge.core.serializers import UserSerializer
+from grandchallenge.evaluation.serializers import UserSerializer
 from grandchallenge.profiles.models import UserProfile
 
 

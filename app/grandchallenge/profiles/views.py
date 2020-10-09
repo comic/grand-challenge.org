@@ -217,8 +217,12 @@ class PreSocialView(FormView):
         return reverse("social:begin", args=["google-oauth2"])
 
 
+class UserProfileObjectPermissionsFilter(filters.ObjectPermissionsFilter):
+    perm_format = "%(app_label)s.view_profile"
+
+
 class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = (DjangoObjectOnlyPermissions,)
-    filter_backends = (filters.ObjectPermissionsFilter,)
+    filter_backends = (UserProfileObjectPermissionsFilter,)
     queryset = UserProfile.objects.all()
