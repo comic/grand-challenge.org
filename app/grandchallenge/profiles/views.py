@@ -8,14 +8,20 @@ from django.views.generic import DetailView
 from django.views.generic.edit import FormView
 from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user
+from rest_framework import viewsets
+from rest_framework_guardian import filters
 from userena import views as userena_views
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyPermissions,
+)
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.profiles.forms import EditProfileForm, PreSocialForm
 from grandchallenge.profiles.models import UserProfile
+from grandchallenge.profiles.serializers import UserProfileSerializer
 from grandchallenge.profiles.utils import signin_redirect
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
@@ -209,3 +215,10 @@ class PreSocialView(FormView):
 
     def get_success_url(self, *args, **kwargs):
         return reverse("social:begin", args=["google-oauth2"])
+
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+    serializer_class = UserProfileSerializer
+    permission_classes = (DjangoObjectOnlyPermissions,)
+    filter_backends = (filters.ObjectPermissionsFilter,)
+    queryset = UserProfile.objects.all()
