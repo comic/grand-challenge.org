@@ -16,6 +16,7 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.evaluation.models import (
+    AlgorithmEvaluation,
     Evaluation as EvaluationJob,
     Submission,
 )
@@ -177,11 +178,21 @@ class MetricsAPIView(APIView):
         metrics.ALGORITHM_JOBS_ACTIVE.set(
             AlgorithmJob.objects.filter(status=AlgorithmJob.STARTED).count()
         )
+        metrics.ALGORITHM_EVALUATION_JOBS_PENDING.set(
+            AlgorithmEvaluation.objects.filter(
+                status=AlgorithmEvaluation.PENDING
+            ).count()
+        )
+        metrics.ALGORITHM_EVALUATION_JOBS_ACTIVE.set(
+            AlgorithmEvaluation.objects.filter(
+                status=AlgorithmEvaluation.STARTED
+            ).count()
+        )
         metrics.EVALUATION_JOBS_PENDING.set(
-            EvaluationJob.objects.filter(status=AlgorithmJob.PENDING).count()
+            EvaluationJob.objects.filter(status=EvaluationJob.PENDING).count()
         )
         metrics.EVALUATION_JOBS_ACTIVE.set(
-            EvaluationJob.objects.filter(status=AlgorithmJob.STARTED).count()
+            EvaluationJob.objects.filter(status=EvaluationJob.STARTED).count()
         )
         metrics.UPLOAD_SESSIONS_PENDING.set(
             RawImageUploadSession.objects.filter(
