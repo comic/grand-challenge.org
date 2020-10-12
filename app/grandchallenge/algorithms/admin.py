@@ -27,7 +27,6 @@ class JobAdmin(admin.ModelAdmin):
         "public",
     )
     readonly_fields = (
-        "image",
         "creator",
         "algorithm_image",
         "inputs",

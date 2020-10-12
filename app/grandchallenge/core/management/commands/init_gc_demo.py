@@ -329,7 +329,6 @@ class Command(BaseCommand):
         algorithms_job = grandchallenge.algorithms.models.Job(
             creator=self.users["algorithm"],
             algorithm_image=algorithm_image,
-            image=cases_image,
             status=Evaluation.SUCCESS,
         )
         algorithms_job.save()

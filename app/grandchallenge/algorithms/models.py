@@ -389,9 +389,6 @@ class Job(UUIDModel, ComponentJob):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
-    image = models.ForeignKey(
-        "cases.Image", null=True, on_delete=models.SET_NULL
-    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
