@@ -98,3 +98,51 @@ def test_terms_form_fields(client):
     response = client.get(reverse("pre-social"))
     assert response.status_code == 200
     assert p.get_absolute_url() in response.rendered_content
+
+
+@pytest.mark.django_db
+class TestProfileViewSets:
+    def test_profile_self_not_logged_in(self, client):
+        UserFactory()
+        url = reverse("profiles-user-self")
+        response = client.get(reverse(url))
+        assert response.status_code == 401
+
+    def test_profile_self(self, client):
+        user = UserFactory()
+        url = reverse("profiles-user-self")
+        client.force_login(user)
+        response = client.get(reverse(url))
+        assert response.status_code == 200
+        assert response.data.user == {"username": user.username}  # no user id
+        for field in (
+            "mugshot",
+            "privacy",
+            "institution",
+            "department",
+            "country",
+            "website",
+        ):
+            assert field in response.data
+
+    @pytest.mark.parametrize(
+        "user,expected_count",
+        (
+            (None, 0),
+            (UserFactory(), 1),
+            (UserFactory(is_staff=True), 1),
+            (UserFactory(is_superuser=True), 3),
+        ),
+    )
+    def test_profiles_list(self, client, user, expected_count):
+        UserFactory()
+        UserFactory()
+        url = reverse("profiles-user-list")
+        if user:
+            client.force_login(user)
+        response = client.get(reverse(url))
+        if user:
+            assert response.status_code == 200
+            assert response.data["count"] == expected_count
+        else:
+            assert response.status_code == 401
