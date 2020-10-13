@@ -452,7 +452,7 @@ class Job(UUIDModel, ComponentJob):
             template_output = JINJA_ENGINE.from_string(
                 self.algorithm_image.algorithm.result_template
             ).render(result_dict=result_dict)
-        except (TemplateError, ValueError):
+        except (TemplateError, TypeError, ValueError):
             return "Jinja template is invalid"
 
         return md2html(template_output)
