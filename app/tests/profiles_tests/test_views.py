@@ -1,7 +1,11 @@
 import pytest
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from guardian.shortcuts import assign_perm
 from rest_framework import status
+from rest_framework.test import force_authenticate
 
+from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import PolicyFactory, UserFactory
 
@@ -102,47 +106,101 @@ def test_terms_form_fields(client):
 
 @pytest.mark.django_db
 class TestProfileViewSets:
-    def test_profile_self_not_logged_in(self, client):
+    def test_profile_self_not_logged_in(self, rf):
         UserFactory()
-        url = reverse("profiles-user-self")
-        response = client.get(reverse(url))
+        url = reverse("api:profiles-user-self")
+        request = rf.get(url)
+        response = UserProfileViewSet.as_view(actions={"get": "list"})(request)
         assert response.status_code == 401
 
-    def test_profile_self(self, client):
-        user = UserFactory()
-        url = reverse("profiles-user-self")
-        client.force_login(user)
-        response = client.get(reverse(url))
-        assert response.status_code == 200
-        assert response.data.user == {"username": user.username}  # no user id
-        for field in (
-            "mugshot",
-            "privacy",
-            "institution",
-            "department",
-            "country",
-            "website",
-        ):
-            assert field in response.data
-
     @pytest.mark.parametrize(
-        "user,expected_count",
+        "permission",
         (
-            (None, 0),
-            (UserFactory(), 1),
-            (UserFactory(is_staff=True), 1),
-            (UserFactory(is_superuser=True), 3),
+            (True,),
+            (False,),
         ),
     )
-    def test_profiles_list(self, client, user, expected_count):
+    def test_profile_self(self, rf, permission):
+        user = UserFactory()
+        url = reverse("api:profiles-user-self")
+        request = rf.get(url)
+        force_authenticate(request, user=user)
+        if permission:
+            assign_perm("view_profile", user, user.user_profile)
+        response = UserProfileViewSet.as_view(actions={"get": "self"})(request)
+        if permission:
+            assert response.status_code == 200
+            assert response.data["user"] == {
+                "username": user.username
+            }  # no user id
+            for field in (
+                "mugshot",
+                "privacy",
+                "institution",
+                "department",
+                "country",
+                "website",
+            ):
+                assert field in response.data
+        else:
+            assert response.status_code == 403
+
+    @pytest.mark.parametrize(
+        "user_kwargs,permission, expected_count",
+        (
+            (None, False, 0),
+            ({}, False, 0),
+            ({"is_staff": True}, False, 0),
+            ({"is_superuser": True}, False, 3),
+            (None, True, 0),
+            ({}, True, 1),
+            ({"is_staff": True}, True, 1),
+            ({"is_superuser": True}, True, 3),
+        ),
+    )
+    def test_profiles_list_permissions(
+        self, rf, user_kwargs, permission, expected_count
+    ):
+        get_user_model().objects.all().delete()
+        user = None
+        if user_kwargs is not None:
+            user = UserFactory(**user_kwargs)
         UserFactory()
         UserFactory()
-        url = reverse("profiles-user-list")
-        if user:
-            client.force_login(user)
-        response = client.get(reverse(url))
+        url = reverse("api:profiles-user-list")
+        request = rf.get(url)
+        if user is not None:
+            force_authenticate(request, user=user)
+
+        if user is not None and permission:
+            assign_perm("view_profile", user, user.user_profile)
+        response = UserProfileViewSet.as_view(actions={"get": "list"})(request)
         if user:
             assert response.status_code == 200
             assert response.data["count"] == expected_count
+        else:
+            assert response.status_code == 401
+
+    @pytest.mark.parametrize(
+        "permission",
+        (
+            (True,),
+            (False,),
+        ),
+    )
+    def test_profiles_retrieve_permissions(self, rf, permission):
+        user = UserFactory()
+        kwargs = {"pk": user.user_profile.pk}
+        url = reverse("api:profiles-user-detail", kwargs=kwargs)
+        request = rf.get(url)
+        force_authenticate(request, user=user)
+        if permission:
+            assign_perm("view_profile", user, user.user_profile)
+        response = UserProfileViewSet.as_view(actions={"get": "retrieve"})(
+            request, **kwargs
+        )
+        if permission:
+            assert response.status_code == 200
+            assert response.data["user"]["username"] == user.username
         else:
             assert response.status_code == 401
