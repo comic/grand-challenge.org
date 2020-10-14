@@ -3,14 +3,14 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView
 from django.views.generic.edit import FormView
 from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from userena import views as userena_views
 
@@ -229,5 +229,7 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=["get"])
     def self(self, request):
         obj = get_object_or_404(UserProfile, user=request.user)
+        if not request.user.has_perm("view_profile", obj):
+            raise PermissionDenied()
         serializer = self.get_serializer(instance=obj)
         return Response(serializer.data)
