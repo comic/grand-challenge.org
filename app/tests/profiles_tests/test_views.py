@@ -114,11 +114,7 @@ class TestProfileViewSets:
         assert response.status_code == 401
 
     @pytest.mark.parametrize(
-        "permission",
-        (
-            (True,),
-            (False,),
-        ),
+        "permission", (True, False),
     )
     def test_profile_self(self, rf, permission):
         user = UserFactory()
@@ -182,11 +178,7 @@ class TestProfileViewSets:
             assert response.status_code == 401
 
     @pytest.mark.parametrize(
-        "permission",
-        (
-            (True,),
-            (False,),
-        ),
+        "permission", (True, False),
     )
     def test_profiles_retrieve_permissions(self, rf, permission):
         user = UserFactory()
@@ -203,4 +195,4 @@ class TestProfileViewSets:
             assert response.status_code == 200
             assert response.data["user"]["username"] == user.username
         else:
-            assert response.status_code == 401
+            assert response.status_code == 404
