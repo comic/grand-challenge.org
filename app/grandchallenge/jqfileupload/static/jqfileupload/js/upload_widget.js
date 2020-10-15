@@ -84,7 +84,7 @@
             var countSpan = failed_files_list.find("span.count");
             countSpan.text("" + (parseInt(countSpan.text(), 10) + 1));
             failed_files_list.append(
-                $("<div id='" + filename.replace('.', '-') + "' class='failed-upload'><p><span class='left'>" + filename + "</span>" + message + "</p></div>"));
+                $("<div id='failed-file-" + CSS.escape(filename) + "' class='failed-upload'><p><span class='left'>" + filename + "</span>" + message + "</p></div>"));
         }
 
         function generate_uploaded_file_element(filename, uuid, extra_attributes) {
@@ -102,7 +102,7 @@
         function add_succeeded_upload(file_info_list) {
             for (var i = 0; i < file_info_list.length; i++) {
                 var file_info = file_info_list[i];
-                failed_files_list.find("#" + file_info.filename.replace('.', '-')).remove();
+                failed_files_list.find("#failed-file-" + CSS.escape(file_info.filename)).remove();
                 upload_element.append(
                     generate_uploaded_file_element(
                         file_info.filename,
