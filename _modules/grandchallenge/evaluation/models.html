@@ -717,7 +717,8 @@
                 <span class="p">(</span>
                     <span class="n">group</span><span class="p">(</span><span class="o">*</span><span class="n">jobs</span><span class="p">)</span>
                     <span class="o">|</span> <span class="n">set_evaluation_inputs</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                        <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+                        <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span>
+                        <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
 
