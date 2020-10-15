@@ -21,6 +21,7 @@ from grandchallenge.evaluation.views.api import (
     EvaluationViewSet,
 )
 from grandchallenge.jqfileupload.views import StagedFileViewSet
+from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
     QuestionViewSet,
@@ -82,6 +83,11 @@ router.register(
 )
 router.register(
     r"evaluations", EvaluationViewSet, basename="evaluation",
+)
+
+# Profiles
+router.register(
+    r"profiles/users", UserProfileViewSet, basename="profiles-user"
 )
 
 # Reader studies

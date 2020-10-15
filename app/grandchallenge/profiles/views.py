@@ -3,19 +3,28 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView
 from django.views.generic.edit import FormView
 from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
 from userena import views as userena_views
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.permissions.rest_framework import (
+    DjangoObjectOnlyPermissions,
+)
 from grandchallenge.evaluation.models import Submission
+from grandchallenge.profiles.filters import UserProfileObjectPermissionsFilter
 from grandchallenge.profiles.forms import EditProfileForm, PreSocialForm
 from grandchallenge.profiles.models import UserProfile
+from grandchallenge.profiles.serializers import UserProfileSerializer
 from grandchallenge.profiles.utils import signin_redirect
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
@@ -209,3 +218,18 @@ class PreSocialView(FormView):
 
     def get_success_url(self, *args, **kwargs):
         return reverse("social:begin", args=["google-oauth2"])
+
+
+class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = UserProfileSerializer
+    permission_classes = (DjangoObjectOnlyPermissions,)
+    filter_backends = (UserProfileObjectPermissionsFilter,)
+    queryset = UserProfile.objects.all()
+
+    @action(detail=False, methods=["get"])
+    def self(self, request):
+        obj = get_object_or_404(UserProfile, user=request.user)
+        if not request.user.has_perm("view_profile", obj):
+            raise PermissionDenied()
+        serializer = self.get_serializer(instance=obj)
+        return Response(serializer.data)
