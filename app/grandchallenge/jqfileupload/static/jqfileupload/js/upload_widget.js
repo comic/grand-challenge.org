@@ -162,8 +162,8 @@
 
         upload_element.on('fileuploadfail', function (e, data) {
             var file = data.files[0];
-            // This is a failed chunk and gets handled seprately.
-            if (file.size > data.maxChunkSize) {
+            // This is an empty file or a failed chunk and gets handled seprately.
+            if (file.size <= 0 || file.size > data.maxChunkSize) {
                 return
             }
             if (!is_multiupload) {
