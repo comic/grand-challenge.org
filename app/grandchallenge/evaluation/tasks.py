@@ -8,7 +8,7 @@ from grandchallenge.evaluation.utils import Metric, rank_results
 
 
 @shared_task
-def set_evaluation_inputs(*_, evaluation_pk):
+def set_evaluation_inputs(evaluation_pk):
     """
     Sets the inputs to the Evaluation for a algorithm submission.
 

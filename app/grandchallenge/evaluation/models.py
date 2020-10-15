@@ -562,7 +562,8 @@ class Submission(UUIDModel):
                 (
                     group(*jobs)
                     | set_evaluation_inputs.signature(
-                        kwargs={"evaluation_pk": evaluation.pk}
+                        kwargs={"evaluation_pk": evaluation.pk},
+                        immutable=True,
                     )
                 ).apply_async()
 

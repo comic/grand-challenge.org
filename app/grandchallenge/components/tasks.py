@@ -139,7 +139,7 @@ def get_model_instance(*, pk, app_label, model_name):
 @shared_task
 def execute_job(
     *_, job_pk: uuid.UUID, job_app_label: str, job_model_name: str
-) -> dict:
+) -> None:
     Job = apps.get_model(  # noqa: N806
         app_label=job_app_label, model_name=job_model_name
     )
@@ -188,7 +188,6 @@ def execute_job(
         )
         job.create_result(result=result)
         job.update_status(status=job.SUCCESS, output=logs)
-        return result
 
 
 @shared_task
