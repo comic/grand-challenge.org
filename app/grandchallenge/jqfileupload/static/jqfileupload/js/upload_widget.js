@@ -84,7 +84,7 @@
             var countSpan = failed_files_list.find("span.count");
             countSpan.text("" + (parseInt(countSpan.text(), 10) + 1));
             failed_files_list.append(
-                $("<div id='failed-file-" + CSS.escape(filename) + "' class='failed-upload'><p><span class='left'>" + filename + "</span>" + message + "</p></div>"));
+                $("<div id='failed-file-" + filename + "' class='failed-upload'><p><span class='left'>" + filename + "</span>" + message + "</p></div>"));
         }
 
         function generate_uploaded_file_element(filename, uuid, extra_attributes) {
