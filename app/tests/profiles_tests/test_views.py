@@ -134,10 +134,11 @@ class TestProfileViewSets:
                 "privacy",
                 "institution",
                 "department",
-                "country",
+                "location",
                 "website",
             ):
                 assert field in response.data
+            assert "country" not in response.data
         else:
             assert response.status_code == 403
 
