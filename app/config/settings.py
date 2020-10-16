@@ -660,6 +660,9 @@ CORS_ALLOW_CREDENTIALS = True
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
+CELERY_TASK_ACKS_LATE = strtobool(
+    os.environ.get("CELERY_TASK_ACKS_LATE", "False")
+)
 CELERY_TASK_SOFT_TIME_LIMIT = int(
     os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", "7200")
 )
