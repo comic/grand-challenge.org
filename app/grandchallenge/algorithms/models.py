@@ -92,7 +92,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     )
     result_template = models.TextField(
         blank=True,
-        default="<pre>{{ result_dict }}</pre>",
+        default="<pre>{{ result_dict|tojson(indent=2) }}</pre>",
         help_text=(
             "Define the jinja template to render the content of the "
             "result.json to html. For example, the following template will print "
