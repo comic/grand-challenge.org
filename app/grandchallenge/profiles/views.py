@@ -140,7 +140,7 @@ class UserProfileDetail(UserPassesTestMixin, DetailView):
         reader_studies = (
             get_objects_for_user(
                 user=self.request.user,
-                perms="read_readerstudy",
+                perms="view_readerstudy",
                 klass=ReaderStudy,
                 use_groups=True,
             )
