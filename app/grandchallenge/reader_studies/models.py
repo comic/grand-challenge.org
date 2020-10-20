@@ -264,6 +264,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
         ordering = ("created",)
+        permissions = [("read_readerstudy", "Can read reader study")]
 
     copy_fields = (
         "workstation",
@@ -336,30 +337,44 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         assign_perm(
             f"change_{self._meta.model_name}", self.editors_group, self
         )
-        # Allow the editors and readers groups to view this study
-        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
-        assign_perm(f"view_{self._meta.model_name}", self.readers_group, self)
-        # Allow readers to add answers (globally), adding them to this reader
-        # study is checked in the serializers as there is no
-        # get_permission_object in django rest framework.
+
+        # Allow the editors and readers groups to read this study
+        assign_perm(f"read_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(f"read_{self._meta.model_name}", self.readers_group, self)
+
+        # Allow readers and editors to add answers (globally)
+        # adding them to this reader study is checked in the serializers as
+        # there is no get_permission_object in django rest framework.
+        assign_perm(
+            f"{Answer._meta.app_label}.add_{Answer._meta.model_name}",
+            self.editors_group,
+        )
         assign_perm(
             f"{Answer._meta.app_label}.add_{Answer._meta.model_name}",
             self.readers_group,
         )
 
+        # Allow the editors and readers groups to view this study
+        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(f"view_{self._meta.model_name}", self.readers_group, self)
+
     def assign_workstation_permissions(self):
         perm = f"view_{Workstation._meta.model_name}"
-        group = self.readers_group
 
-        workstations = get_objects_for_group(
-            group=group, perms=perm, klass=Workstation
-        )
+        for group in (self.editors_group, self.readers_group):
+            workstations = get_objects_for_group(
+                group=group, perms=perm, klass=Workstation
+            )
 
-        if (self.workstation not in workstations) or workstations.count() > 1:
-            remove_perm(perm=perm, user_or_group=group, obj=workstations)
+            if (
+                self.workstation not in workstations
+            ) or workstations.count() > 1:
+                remove_perm(perm=perm, user_or_group=group, obj=workstations)
 
-            # Allow readers to view the workstation used for this reader study
-            assign_perm(perm=perm, user_or_group=group, obj=self.workstation)
+                # Allow readers to view the workstation used for this study
+                assign_perm(
+                    perm=perm, user_or_group=group, obj=self.workstation
+                )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

@@ -92,7 +92,7 @@ from grandchallenge.subdomains.utils import reverse
 class ReaderStudyList(PermissionListMixin, ListView):
     model = ReaderStudy
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
+        f"{ReaderStudy._meta.app_label}.read_{ReaderStudy._meta.model_name}"
     )
     ordering = "-created"
 
@@ -172,7 +172,7 @@ class ReaderStudyDetail(
 ):
     model = ReaderStudy
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
+        f"{ReaderStudy._meta.app_label}.read_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
 
@@ -223,9 +223,6 @@ class ReaderStudyDetail(
                 "editor_remove_form": editor_remove_form,
                 "reader_remove_form": reader_remove_form,
                 "answers_remove_form": answers_remove_form,
-                "user_is_reader": self.object.is_reader(
-                    user=self.request.user
-                ),
                 "example_ground_truth": self.object.get_example_ground_truth_csv_text(
                     limit=2
                 ),

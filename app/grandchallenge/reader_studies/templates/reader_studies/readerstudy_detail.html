@@ -148,7 +148,7 @@
                 </div>
             {% endif %}
 
-            {% if user_is_reader and object.is_valid %}
+            {% if "read_readerstudy" in readerstudy_perms and object.is_valid %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
