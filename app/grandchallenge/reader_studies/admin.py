@@ -1,4 +1,5 @@
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -8,7 +9,7 @@ from grandchallenge.reader_studies.models import (
 )
 
 
-class ReaderStudyAdmin(admin.ModelAdmin):
+class ReaderStudyAdmin(GuardedModelAdmin):
     exclude = ("images",)
 
 
