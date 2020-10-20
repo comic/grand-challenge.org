@@ -13,7 +13,7 @@ class ReaderStudyAdmin(GuardedModelAdmin):
     exclude = ("images",)
 
 
-class AnswersAdmin(admin.ModelAdmin):
+class AnswersAdmin(GuardedModelAdmin):
     ordering = ("-created",)
     list_display = (
         "pk",
@@ -27,7 +27,7 @@ class AnswersAdmin(admin.ModelAdmin):
     search_fields = ("creator__username",)
 
 
-class QuestionsAdmin(admin.ModelAdmin):
+class QuestionsAdmin(GuardedModelAdmin):
     list_filter = ("reader_study__slug",)
     readonly_fields = ("reader_study",)
 
