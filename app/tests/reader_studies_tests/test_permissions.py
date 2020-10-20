@@ -1,4 +1,6 @@
 import pytest
+from django.conf import settings
+from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_perms
 
 from grandchallenge.subdomains.utils import reverse
@@ -498,3 +500,23 @@ def test_workstation_changes(client):
 
     assert "view_workstation" not in get_perms(reader, ws1)
     assert "view_workstation" in get_perms(reader, ws2)
+
+
+@pytest.mark.django_db
+def test_visible_to_public_group_permissions():
+    g_reg_anon = Group.objects.get(
+        name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+    )
+    rs = ReaderStudyFactory()
+
+    assert "view_readerstudy" not in get_perms(g_reg_anon, rs)
+
+    rs.public = True
+    rs.save()
+
+    assert "view_readerstudy" in get_perms(g_reg_anon, rs)
+
+    rs.public = False
+    rs.save()
+
+    assert "view_readerstudy" not in get_perms(g_reg_anon, rs)

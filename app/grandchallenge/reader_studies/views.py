@@ -92,16 +92,9 @@ from grandchallenge.subdomains.utils import reverse
 class ReaderStudyList(PermissionListMixin, ListView):
     model = ReaderStudy
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.read_{ReaderStudy._meta.model_name}"
+        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     ordering = "-created"
-
-    def get_queryset(self, *args, **kwargs):
-        queryset = super().get_queryset()
-        queryset = (
-            queryset | ReaderStudy.objects.filter(public=True)
-        ).distinct()
-        return queryset
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -172,7 +165,7 @@ class ReaderStudyDetail(
 ):
     model = ReaderStudy
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.read_{ReaderStudy._meta.model_name}"
+        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
 

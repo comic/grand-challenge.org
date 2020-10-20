@@ -3,6 +3,7 @@ import json
 from collections import Counter
 
 import numpy as np
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -358,6 +359,15 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
         assign_perm(f"view_{self._meta.model_name}", self.readers_group, self)
 
+        reg_and_anon = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+
     def assign_workstation_permissions(self):
         perm = f"view_{Workstation._meta.model_name}"
 
@@ -384,9 +394,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         super().save(*args, **kwargs)
 
-        if adding:
-            self.assign_permissions()
-
+        self.assign_permissions()
         self.assign_workstation_permissions()
 
     def is_editor(self, user):
