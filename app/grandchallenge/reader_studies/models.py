@@ -1399,7 +1399,7 @@ class Answer(UUIDModel):
                     f"User {creator} has already answered this question "
                     f"for at least 1 of these images."
                 )
-            if not question.reader_study.is_reader(user=creator):
+            if not creator.has_perm("read_readerstudy", question.reader_study):
                 raise ValidationError(
                     "This user is not a reader for this study."
                 )
