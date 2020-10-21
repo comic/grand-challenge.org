@@ -1,4 +1,5 @@
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -8,11 +9,11 @@ from grandchallenge.reader_studies.models import (
 )
 
 
-class ReaderStudyAdmin(admin.ModelAdmin):
+class ReaderStudyAdmin(GuardedModelAdmin):
     exclude = ("images",)
 
 
-class AnswersAdmin(admin.ModelAdmin):
+class AnswersAdmin(GuardedModelAdmin):
     ordering = ("-created",)
     list_display = (
         "pk",
@@ -26,7 +27,7 @@ class AnswersAdmin(admin.ModelAdmin):
     search_fields = ("creator__username",)
 
 
-class QuestionsAdmin(admin.ModelAdmin):
+class QuestionsAdmin(GuardedModelAdmin):
     list_filter = ("reader_study__slug",)
     readonly_fields = ("reader_study",)
 

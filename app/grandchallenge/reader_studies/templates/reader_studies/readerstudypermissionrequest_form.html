@@ -45,8 +45,8 @@
 
         {% if not permission_request %}
             <p>
-                You currently do not have permission to view this reader study.
-                If you would like to view the reader study, you can request permission here.
+                You currently do not have permission to read this reader study.
+                If you would like to read the reader study, you can request permission here.
             </p>
             <p>
                 An email will be sent to the reader study's editors.
@@ -62,7 +62,8 @@
             </form>
         {% else %}
             <p>
-                You currently {% if permission_request.status != permission_request.ACCEPTED %}do not {% endif %}have permission to view this
+                You currently {% if permission_request.status != permission_request.ACCEPTED %}do not {% endif %}have
+                permission to read this
                 reader study.
             </p>
             <p>

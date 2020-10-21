@@ -96,13 +96,6 @@ class ReaderStudyList(PermissionListMixin, ListView):
     )
     ordering = "-created"
 
-    def get_queryset(self, *args, **kwargs):
-        queryset = super().get_queryset()
-        queryset = (
-            queryset | ReaderStudy.objects.filter(public=True)
-        ).distinct()
-        return queryset
-
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
@@ -167,9 +160,7 @@ class ReaderStudyExampleGroundTruth(
         return response
 
 
-class ReaderStudyDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
+class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
     model = ReaderStudy
     permission_required = (
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
@@ -193,8 +184,9 @@ class ReaderStudyDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        change_perm = f"change_{ReaderStudy._meta.model_name}"
-        if change_perm in get_perms(self.request.user, self.object):
+        object_perms = get_perms(self.request.user, self.object)
+
+        if f"change_{ReaderStudy._meta.model_name}" in object_perms:
             readers = [
                 {
                     "obj": reader,
@@ -202,43 +194,45 @@ class ReaderStudyDetail(
                 }
                 for reader in self.object.readers_group.user_set.all()
             ]
-            context.update({"readers": readers})
-        else:
+
+            reader_remove_form = ReadersForm()
+            reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
+            editor_remove_form = EditorsForm()
+            editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+            answers_remove_form = AnswersRemoveForm()
+
+            pending_permission_requests = ReaderStudyPermissionRequest.objects.filter(
+                reader_study=context["object"],
+                status=ReaderStudyPermissionRequest.PENDING,
+            ).count()
+
+            context.update(
+                {
+                    "readers": readers,
+                    "editor_remove_form": editor_remove_form,
+                    "reader_remove_form": reader_remove_form,
+                    "answers_remove_form": answers_remove_form,
+                    "example_ground_truth": self.object.get_example_ground_truth_csv_text(
+                        limit=2
+                    ),
+                    "pending_permission_requests": pending_permission_requests,
+                }
+            )
+
+        if f"read_{ReaderStudy._meta.model_name}" in object_perms:
             user_progress = self.object.get_progress_for_user(
                 self.request.user
             )
-            context.update({"progress": user_progress})
-
-        reader_remove_form = ReadersForm()
-        reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
-        editor_remove_form = EditorsForm()
-        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
-        answers_remove_form = AnswersRemoveForm()
-
-        context.update(
-            {
-                "user_score": self.object.score_for_user(self.request.user),
-                "answerable_questions": self.object.answerable_question_count
-                * len(self.object.hanging_list),
-                "editor_remove_form": editor_remove_form,
-                "reader_remove_form": reader_remove_form,
-                "answers_remove_form": answers_remove_form,
-                "user_is_reader": self.object.is_reader(
-                    user=self.request.user
-                ),
-                "example_ground_truth": self.object.get_example_ground_truth_csv_text(
-                    limit=2
-                ),
-            }
-        )
-
-        pending_permission_requests = ReaderStudyPermissionRequest.objects.filter(
-            reader_study=context["object"],
-            status=ReaderStudyPermissionRequest.PENDING,
-        ).count()
-        context.update(
-            {"pending_permission_requests": pending_permission_requests}
-        )
+            context.update(
+                {
+                    "progress": user_progress,
+                    "user_score": self.object.score_for_user(
+                        self.request.user
+                    ),
+                    "answerable_questions": self.object.answerable_question_count
+                    * len(self.object.hanging_list),
+                }
+            )
 
         return context
 

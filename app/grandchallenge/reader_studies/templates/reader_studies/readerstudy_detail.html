@@ -17,15 +17,15 @@
 
 {% block sidebar %}
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
-    {% if "change_readerstudy" in readerstudy_perms %}
-        <div class="col-12 col-md-4 col-lg-3 mb-3">
-            <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
-                 aria-orientation="vertical">
-                <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
-                   href="#v-pills-home" role="tab" aria-controls="v-pills-home"
-                   aria-selected="true"><i
-                        class="fas fa-info fa-fw"></i>&nbsp;Information
-                </a>
+    <div class="col-12 col-md-4 col-lg-3 mb-3">
+        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+             aria-orientation="vertical">
+            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
+               href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+               aria-selected="true"><i
+                    class="fas fa-info fa-fw"></i>&nbsp;Information
+            </a>
+            {% if "change_readerstudy" in readerstudy_perms %}
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
                    href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
                    aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
@@ -69,14 +69,21 @@
                    aria-selected="false"><i class="fas fa-download fa-fw"></i>&nbsp;Export
                 </a>
                 {% if perms.reader_studies.add_readerstudy %}
-                     <a class="nav-link" id="v-pills-copy-tab" data-toggle="pill"
+                    <a class="nav-link" id="v-pills-copy-tab" data-toggle="pill"
                        href="#v-pills-copy" role="tab" aria-controls="v-pills-copy"
                        aria-selected="false"><i class="fas fa-copy fa-fw"></i>&nbsp;Copy
                     </a>
                 {% endif %}
-            </div>
+            {% endif %}
+
+            {% if "read_readerstudy" not in readerstudy_perms %}
+                <a class="nav-link"
+                   href="{% url 'reader-studies:permission-request-create' slug=object.slug %}">
+                    <i class="fa fa-question fa-fw"></i>&nbsp;Request Access
+                </a>
+            {% endif %}
         </div>
-    {% endif %}
+    </div>
 {% endblock %}
 
 {% block content %}
@@ -148,7 +155,7 @@
                 </div>
             {% endif %}
 
-            {% if user_is_reader and object.is_valid %}
+            {% if "read_readerstudy" in readerstudy_perms and object.is_valid %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'workstations:workstation-session-create' slug=object.workstation.slug %}?{% workstation_query reader_study=object %}">
