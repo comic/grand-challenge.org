@@ -416,6 +416,7 @@
             <span class="s2">&quot;for a case.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">validate_hanging_list</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">&quot;reader studies&quot;</span>
@@ -608,9 +609,9 @@
 <span class="sd">        Tests that all of the study images are included in the hanging list</span>
 <span class="sd">        exactly once.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">study_image_names</span><span class="p">)</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">hanging_image_names</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_hanging_list</span> <span class="ow">or</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">study_image_names</span>
+        <span class="p">)</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hanging_image_names</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ReaderStudy.hanging_list_diff"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.hanging_list_diff">[docs]</a>    <span class="k">def</span> <span class="nf">hanging_list_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provided</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1541,23 +1542,24 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">is_ground_truth</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                     <span class="n">creator</span><span class="o">=</span><span class="n">creator</span><span class="p">,</span>
                     <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
-                    <span class="n">images__in</span><span class="o">=</span><span class="n">images</span><span class="p">,</span>
                     <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">images__in</span><span class="o">=</span><span class="n">images</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">count_images</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;images&quot;</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">count_images</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">))</span>
                 <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;User </span><span class="si">{</span><span class="n">creator</span><span class="si">}</span><span class="s2"> has already answered this question &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;for at least 1 of these images.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;for this set of images.&quot;</span>
                 <span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">creator</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s2">&quot;read_readerstudy&quot;</span><span class="p">,</span> <span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                    <span class="s2">&quot;This user is not a reader for this study.&quot;</span>
-                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">creator</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="s2">&quot;read_readerstudy&quot;</span><span class="p">,</span> <span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;This user is not a reader for this study.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_CHOICE</span>
