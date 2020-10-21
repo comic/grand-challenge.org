@@ -1397,7 +1397,7 @@ class Answer(UUIDModel):
                 )
                 .distinct()
             )
-            image_pks = {[im.pk for im in images]}
+            image_pks = {im.pk for im in images}
             for ans in answers:
                 if set(ans.images.values_list("pk", flat=True)) == image_pks:
                     raise ValidationError(
