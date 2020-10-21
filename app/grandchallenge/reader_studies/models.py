@@ -1386,28 +1386,25 @@ class Answer(UUIDModel):
                 )
 
         if not is_ground_truth:
-            answers = (
-                Answer.objects.annotate(image_count=Count("images"))
-                .exclude(pk=getattr(instance, "pk", None))
+            if (
+                Answer.objects.exclude(pk=getattr(instance, "pk", None))
                 .filter(
                     creator=creator,
                     question=question,
                     is_ground_truth=False,
-                    image_count=len(images),
+                    images__in=images,
                 )
-                .distinct()
-            )
-            image_pks = {im.pk for im in images}
-            for ans in answers:
-                if set(ans.images.values_list("pk", flat=True)) == image_pks:
-                    raise ValidationError(
-                        f"User {creator} has already answered this question "
-                        f"for this set of images."
-                    )
-            if not creator.has_perm("read_readerstudy", question.reader_study):
+                .annotate(count_images=Count("images", distinct=True))
+                .filter(count_images=len(images))
+                .exists()
+            ):
                 raise ValidationError(
-                    "This user is not a reader for this study."
+                    f"User {creator} has already answered this question "
+                    f"for this set of images."
                 )
+
+        if not creator.has_perm("read_readerstudy", question.reader_study):
+            raise ValidationError("This user is not a reader for this study.")
 
         if (
             question.answer_type == Question.ANSWER_TYPE_CHOICE
