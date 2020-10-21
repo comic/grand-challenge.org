@@ -1,7 +1,7 @@
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
-from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -354,3 +354,57 @@ def test_case_text_is_scrubbed(client):
     assert response.json()["case_text"] == {
         im.api_url: "<p><b>My Help Text</b>naughty</p>"
     }
+
+
+@pytest.mark.django_db
+def test_validate_answer():
+    u = UserFactory()
+    im1, im2, im3 = ImageFactory(), ImageFactory(), ImageFactory()
+    rs = ReaderStudyFactory(
+        hanging_list=[
+            {"main": im1.name, "main-overlay": im3.name},
+            {"main": im2.name, "main-overlay": im3.name},
+        ]
+    )
+    rs.images.set([im1, im2, im3])
+    rs.add_reader(u)
+
+    q = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.ANSWER_TYPE_BOOL,
+        question_text="q1",
+    )
+
+    answer = AnswerFactory(creator=u, question=q, answer=True,)
+    answer.images.set([im1, im3])
+
+    with pytest.raises(ValidationError) as e:
+        Answer.validate(
+            creator=u, question=q, answer=True, images=[im1, im3],
+        )
+        assert (
+            e.value.message
+            == f"User {u} has already answered this question for this set of images."
+        )
+
+    assert (
+        Answer.validate(creator=u, question=q, answer=True, images=[im2, im3],)
+        is None
+    )
+
+
+@pytest.mark.django_db
+def test_validate_hanging_list():
+    im1, im2, im3 = ImageFactory(), ImageFactory(), ImageFactory()
+    rs = ReaderStudyFactory(
+        hanging_list=[
+            {"main": im1.name, "main-overlay": im3.name},
+            {"main": im2.name, "main-overlay": im3.name},
+        ]
+    )
+    rs.images.set([im1, im2, im3])
+
+    assert rs.hanging_list_valid is False
+
+    rs.validate_hanging_list = False
+    assert rs.hanging_list_valid is True

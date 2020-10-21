@@ -261,6 +261,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "for a case."
         ),
     )
+    validate_hanging_list = models.BooleanField(default=True)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
@@ -453,9 +454,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Tests that all of the study images are included in the hanging list
         exactly once.
         """
-        return sorted(self.study_image_names) == sorted(
-            self.hanging_image_names
-        )
+        return not self.validate_hanging_list or sorted(
+            self.study_image_names
+        ) == sorted(self.hanging_image_names)
 
     def hanging_list_diff(self, provided=None):
         """
@@ -1386,23 +1387,24 @@ class Answer(UUIDModel):
 
         if not is_ground_truth:
             if (
-                Answer.objects.filter(
+                Answer.objects.exclude(pk=getattr(instance, "pk", None))
+                .filter(
                     creator=creator,
                     question=question,
-                    images__in=images,
                     is_ground_truth=False,
+                    images__in=images,
                 )
-                .exclude(pk=getattr(instance, "pk", None))
+                .annotate(count_images=Count("images", distinct=True))
+                .filter(count_images=len(images))
                 .exists()
             ):
                 raise ValidationError(
                     f"User {creator} has already answered this question "
-                    f"for at least 1 of these images."
+                    f"for this set of images."
                 )
-            if not creator.has_perm("read_readerstudy", question.reader_study):
-                raise ValidationError(
-                    "This user is not a reader for this study."
-                )
+
+        if not creator.has_perm("read_readerstudy", question.reader_study):
+            raise ValidationError("This user is not a reader for this study.")
 
         if (
             question.answer_type == Question.ANSWER_TYPE_CHOICE
