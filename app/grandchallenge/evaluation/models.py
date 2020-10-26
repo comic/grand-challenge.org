@@ -338,15 +338,9 @@ class Phase(UUIDModel):
             "Should all of the metrics be displayed on the Result detail page?"
         ),
     )
-    submission_join_key = models.CharField(
-        blank=True,
-        default="",
-        max_length=32,
-        help_text=(
-            "If predictions are submitted as csv files, which column should "
-            "be used to join the data? eg. case_id"
-        ),
-    )
+
+    detail_view_observable_url = models.URLField(blank=True)
+    list_view_observable_url = models.URLField(blank=True)
 
     inputs = models.ManyToManyField(
         to=ComponentInterface, related_name="evaluation_inputs"

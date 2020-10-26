@@ -169,6 +169,10 @@
                 {% endfor %}
             </dl>
         {% endif %}
+
+        {% if object.submission.phase.detail_view_observable_url %}
+            <a href="{{ object.submission.phase.detail_view_observable_url }}">Observable Notebook</a>
+        {% endif %}
     {% endif %}
 
 {% endblock %}
