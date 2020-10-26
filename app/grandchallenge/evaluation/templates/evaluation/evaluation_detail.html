@@ -180,9 +180,15 @@
 
 {% block script %}
     {{ block.super }}
+
+    {{ metrics|json_script:"metrics" }}
+
     <script type="text/javascript">
         $(document).ready(function () {
             document.getElementById('observableNotebook').contentWindow.document.write("<html><body>Hello world</body></html>");
+
+            console.log(JSON.parse(document.getElementById("metrics").textContent))
+
         });
     </script>
 {% endblock %}
