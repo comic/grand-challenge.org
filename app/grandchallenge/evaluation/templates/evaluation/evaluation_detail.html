@@ -171,8 +171,18 @@
         {% endif %}
 
         {% if object.submission.phase.detail_view_observable_url %}
+            <iframe id="observableNotebook" sandbox="allow-same-origin" src="about:blank"></iframe>
             <a href="{{ object.submission.phase.detail_view_observable_url }}">Observable Notebook</a>
         {% endif %}
     {% endif %}
 
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            document.getElementById('observableNotebook').contentWindow.document.write("<html><body>Hello world</body></html>");
+        });
+    </script>
 {% endblock %}
