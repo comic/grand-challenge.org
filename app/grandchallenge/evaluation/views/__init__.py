@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from dateutil.relativedelta import relativedelta
 from django.contrib.messages.views import SuccessMessageMixin
@@ -374,6 +375,21 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
 
 class ObservableEvaluationDetail(EvaluationDetail):
     template_name_suffix = "_observable_detail"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        url = self.object.submission.phase.detail_view_observable_url.replace(
+            "//observablehq.com/embed/", "//api.observablehq.com/"
+        )
+
+        context.update(
+            {
+                "observable_js_definition": f"{urljoin(url, urlparse(url).path)}.js?v=3",
+                "observable_cells": parse_qs(urlparse(url).query)["cell"],
+            }
+        )
+        return context
 
 
 class LeaderboardRedirect(RedirectView):
