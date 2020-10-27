@@ -145,11 +145,9 @@
             <iframe id="observableNotebook"
                     class="w-100"
                     height="600px"
-                    {# sandbox params taken from observable, TODO: reduce these #}
-                    sandbox="allow-same-origin allow-scripts allow-downloads allow-popups allow-forms allow-popups-to-escape-sandbox allow-top-navigation"
-                    src="{{ object.submission.phase.detail_view_observable_url }}">
+                    sandbox="allow-scripts"
+                    src="{% url 'evaluation:detail-observable' challenge_short_name=challenge.short_name pk=object.pk %}">
             </iframe>
-            <a href="{{ object.submission.phase.detail_view_observable_url }}">Observable Notebook</a>
         {% endif %}
 
         <h3>Metrics</h3>
@@ -182,20 +180,6 @@
                 {% endfor %}
             </dl>
         {% endif %}
-
     {% endif %}
 
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    {{ metrics|json_script:"metrics" }}
-
-    <script type="text/javascript">
-        $(document).ready(function () {
-            console.log(JSON.parse(document.getElementById("metrics").textContent))
-            // document.getElementById('observableNotebook').contentWindow.document.write("<html><body>Hello world</body></html>");
-        });
-    </script>
 {% endblock %}

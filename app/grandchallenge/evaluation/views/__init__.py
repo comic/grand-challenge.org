@@ -372,6 +372,10 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         return context
 
 
+class ObservableEvaluationDetail(EvaluationDetail):
+    template_name_suffix = "_observable_detail"
+
+
 class LeaderboardRedirect(RedirectView):
     permanent = False
 

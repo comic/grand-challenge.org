@@ -1,6 +1,6 @@
 DEMO_NOTEBOOKS = [
-    "https://observablehq.com/embed/@bpmweel/comic-challenge-results-visualization",
-    "https://observablehq.com/embed/@maartenvm/comic-challenge-results-visualization",
+    "https://api.observablehq.com/@bpmweel/comic-challenge-results-visualization.js?v=3",
+    "https://api.observablehq.com/@maartenvm/comic-challenge-results-visualization.js?v=3",
 ]
 
 DEMO_RESULTS = [

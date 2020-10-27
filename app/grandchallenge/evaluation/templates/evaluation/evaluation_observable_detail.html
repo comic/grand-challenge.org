@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load url %}
+{% load profiles %}
+{% load evaluation_extras %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block body %}
+    <div id="observablehq"></div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    {{ metrics|json_script:"metrics" }}
+
+    <script type="module">
+        import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
+        {# TODO: templating this doesn't seem right #}
+        import define from "{{ object.submission.phase.detail_view_observable_url }}";
+
+        const runtime = new Runtime()
+        const main = runtime.module(define, Inspector.into("#observablehq"));
+        main.redefine("data_file", JSON.parse(document.getElementById("metrics").textContent))
+    </script>
+{% endblock %}
