@@ -11,7 +11,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
-            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }} Leaderboard</a>
+            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }}
+                Leaderboard</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.pk }}</li>
@@ -39,8 +40,9 @@
             {{ object.submission.phase.challenge.short_name }}</a></dd>
 
         <dt>Phase</dt>
-        <dd><a href="{% url 'evaluation:leaderboard' challenge_short_name=object.submission.phase.challenge.short_name slug=object.submission.phase.slug %}">
-            {{ object.submission.phase.title }}</a></dd>
+        <dd>
+            <a href="{% url 'evaluation:leaderboard' challenge_short_name=object.submission.phase.challenge.short_name slug=object.submission.phase.slug %}">
+                {{ object.submission.phase.title }}</a></dd>
 
         <dt>Submission created</dt>
         <dd>{{ object.submission.created }}</dd>
@@ -139,6 +141,17 @@
 
     {% if object.status == object.SUCCESS %}
 
+        {% if object.submission.phase.detail_view_observable_url %}
+            <iframe id="observableNotebook"
+                    class="w-100"
+                    height="600px"
+                    {# sandbox params taken from observable, TODO: reduce these #}
+                    sandbox="allow-same-origin allow-scripts allow-downloads allow-popups allow-forms allow-popups-to-escape-sandbox allow-top-navigation"
+                    src="{{ object.submission.phase.detail_view_observable_url }}">
+            </iframe>
+            <a href="{{ object.submission.phase.detail_view_observable_url }}">Observable Notebook</a>
+        {% endif %}
+
         <h3>Metrics</h3>
         {% if object.submission.phase.display_all_metrics %}
             <pre>{{ metrics|json_dumps }}</pre>
@@ -170,10 +183,6 @@
             </dl>
         {% endif %}
 
-        {% if object.submission.phase.detail_view_observable_url %}
-            <iframe id="observableNotebook" sandbox="allow-same-origin" src="about:blank"></iframe>
-            <a href="{{ object.submission.phase.detail_view_observable_url }}">Observable Notebook</a>
-        {% endif %}
     {% endif %}
 
 {% endblock %}
@@ -185,10 +194,8 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            document.getElementById('observableNotebook').contentWindow.document.write("<html><body>Hello world</body></html>");
-
             console.log(JSON.parse(document.getElementById("metrics").textContent))
-
+            // document.getElementById('observableNotebook').contentWindow.document.write("<html><body>Hello world</body></html>");
         });
     </script>
 {% endblock %}

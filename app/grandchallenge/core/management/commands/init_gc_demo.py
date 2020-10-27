@@ -31,6 +31,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.management.commands.evaluation_results import (
+    DEMO_NOTEBOOKS,
     DEMO_RESULTS,
 )
 from grandchallenge.core.storage import public_s3_storage
@@ -203,7 +204,7 @@ class Command(BaseCommand):
 
         Phase.objects.create(challenge=demo, title="Phase 2")
 
-        for phase in demo.phase_set.all():
+        for phase, notebook in zip(demo.phase_set.all(), DEMO_NOTEBOOKS):
             phase.score_title = "AUC"
             phase.score_jsonpath = "aggregates.az_ci_mean"
             phase.extra_results_columns = [
@@ -219,6 +220,7 @@ class Command(BaseCommand):
                 },
             ]
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.detail_view_observable_url = notebook
             phase.save()
 
             method = Method(phase=phase, creator=self.users["demo"])

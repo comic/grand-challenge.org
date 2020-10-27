@@ -1,3 +1,8 @@
+DEMO_NOTEBOOKS = [
+    "https://observablehq.com/embed/@bpmweel/comic-challenge-results-visualization",
+    "https://observablehq.com/embed/@maartenvm/comic-challenge-results-visualization",
+]
+
 DEMO_RESULTS = [
     {
         "case": {},
