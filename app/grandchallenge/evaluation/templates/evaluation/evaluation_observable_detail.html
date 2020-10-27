@@ -26,7 +26,7 @@
         if (window.self !== window.top) {
             const runtime = new Runtime()
             const main = runtime.module(define, Inspector.into("#observablehq"));
-            main.redefine("data_file", JSON.parse(document.getElementById("metrics").textContent))
+            main.redefine("parse_results", JSON.parse(document.getElementById("metrics").textContent))
         }
     </script>
 {% endblock %}
