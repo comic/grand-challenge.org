@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load url %}
+{% load profiles %}
+{% load evaluation_extras %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block body %}
+    {% for cell in observable_cells %}
+        <div id="{{ cell|cut:" " }}" class="text-center">
+            <div class="text-secondary spinner-border" role="status">
+                <span class="sr-only">Loading Results...</span>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    {{ metrics|json_script:"metrics" }}
+    {{ observable_cells|json_script:"cells" }}
+
+    <script type="module">
+        import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
+        {# TODO: templating this doesn't seem right #}
+        import define from "{{ observable_js_definition }}";
+
+        if (window.self !== window.top) {
+            const metrics = JSON.parse(document.getElementById("metrics").textContent)
+            const selectedCells = JSON.parse(document.getElementById("cells").textContent)
+            const runtime = new Runtime()
+
+            const main = runtime.module(define, (name) => {
+                const selected = selectedCells.indexOf(name)
+                if (selected > -1) {
+                    const id = selectedCells[selected].replace(/\s/g, '')  // remove spaces from cell names
+                    return new Inspector(document.querySelector('#' + id))
+                }
+            });
+            main.redefine("parse_results", metrics)
+        }
+    </script>
+{% endblock %}

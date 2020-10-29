@@ -65,10 +65,38 @@
         {% endfor %}
     {% endif %}
 
+    {% if phase.list_view_observable_url %}
+        <button type="button" onclick="updateCompareIframe()" class="btn btn-primary" data-toggle="modal" data-target="#compareModal">
+            Compare Results
+        </button>
+
+        <div class="modal fade" id="compareModal" tabindex="-1" role="dialog" aria-labelledby="compareModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="compareModalLabel">Compare Results</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <iframe id="observableNotebook"
+                                class="w-100"
+                                height="600px"
+                                sandbox="allow-scripts">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
+
     <script type="text/javascript">
         $(document).ready(function () {
 
@@ -205,6 +233,12 @@
         $(window).resize(function () {
             $('#resultsTable').DataTable().columns.adjust()
         });
+
+        function updateCompareIframe() {
+            var pks = ["9de37cf7-9e02-45f2-bc95-874a6c5dd6d3", "fa785ae7-26a1-4cc1-8a18-97b2031bfbc5"];
+            var search = new URLSearchParams(pks.map(pk => ["pk", pk]))
+            document.getElementById('observableNotebook').src = "{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=phase.slug %}?" + search.toString();
+        }
     </script>
 {% endblock %}
 

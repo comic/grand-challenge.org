@@ -1,6 +1,6 @@
 DEMO_NOTEBOOKS = [
     "https://observablehq.com/embed/@maartenvm/comic-challenge-results-visualization?cell=viewof+confusion_matrix&cell=viewof+ROC_graph&cell=viewof+summary_stats_table",
-    "https://observablehq.com/embed/@bpmweel/comic-challenge-results-visualization?cell=viewof+view",
+    "https://observablehq.com/embed/@pushpanjalip/comic-challenge-results-visualization?cell=parse_results&cell=viewof+view",
 ]
 
 DEMO_RESULTS = [
