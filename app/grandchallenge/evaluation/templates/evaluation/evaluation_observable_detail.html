@@ -10,10 +10,8 @@
 {% endblock %}
 
 {% block body %}
-    <div id="observablehq"></div>
-
     {% for cell in observable_cells %}
-        <div id="{{ cell|cut:" "}}"></div>
+        <div id="{{ cell|cut:" " }}"></div>
     {% endfor %}
 {% endblock %}
 
@@ -29,19 +27,19 @@
         import define from "{{ observable_js_definition }}";
 
         if (window.self !== window.top) {
+            const metrics = JSON.parse(document.getElementById("metrics").textContent)
             const selectedCells = JSON.parse(document.getElementById("cells").textContent)
-            const observable = document.querySelector("#observablehq")
             const runtime = new Runtime()
+
             const main = runtime.module(define,(name) =>{
+                console.log(name);
                 const selected = selectedCells.indexOf(name)
                 if(selected > -1) {
-                    const cellToRender = document.createElement('div')
                     const id = selectedCells[selected].replace(/\s/g,'')  // remove spaces from cell names
                     return new Inspector(document.querySelector('#'+id))
                 }
             } );
-            main.redefine("parse_results", JSON.parse(document.getElementById("metrics").textContent))
-            
+            main.redefine("parse_results", metrics)
         }
     </script>
 {% endblock %}
