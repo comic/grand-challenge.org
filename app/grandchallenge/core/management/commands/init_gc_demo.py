@@ -221,6 +221,7 @@ class Command(BaseCommand):
             ]
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
             phase.detail_view_observable_url = notebook
+            phase.list_view_observable_url = notebook
             phase.save()
 
             method = Method(phase=phase, creator=self.users["demo"])
