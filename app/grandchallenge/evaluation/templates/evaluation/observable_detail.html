@@ -11,7 +11,11 @@
 
 {% block body %}
     {% for cell in observable_cells %}
-        <div id="{{ cell|cut:" " }}"></div>
+        <div id="{{ cell|cut:" " }}" class="text-center">
+            <div class="text-secondary spinner-border" role="status">
+                <span class="sr-only">Loading Results...</span>
+            </div>
+        </div>
     {% endfor %}
 {% endblock %}
 
@@ -31,14 +35,13 @@
             const selectedCells = JSON.parse(document.getElementById("cells").textContent)
             const runtime = new Runtime()
 
-            const main = runtime.module(define,(name) =>{
-                console.log(name);
+            const main = runtime.module(define, (name) => {
                 const selected = selectedCells.indexOf(name)
-                if(selected > -1) {
-                    const id = selectedCells[selected].replace(/\s/g,'')  // remove spaces from cell names
-                    return new Inspector(document.querySelector('#'+id))
+                if (selected > -1) {
+                    const id = selectedCells[selected].replace(/\s/g, '')  // remove spaces from cell names
+                    return new Inspector(document.querySelector('#' + id))
                 }
-            } );
+            });
             main.redefine("parse_results", metrics)
         }
     </script>

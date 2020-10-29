@@ -373,25 +373,6 @@ class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
         return context
 
 
-class ObservableEvaluationDetail(EvaluationDetail):
-    template_name_suffix = "_observable_detail"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        url = self.object.submission.phase.detail_view_observable_url.replace(
-            "//observablehq.com/embed/", "//api.observablehq.com/"
-        )
-
-        context.update(
-            {
-                "observable_js_definition": f"{urljoin(url, urlparse(url).path)}.js?v=3",
-                "observable_cells": parse_qs(urlparse(url).query)["cell"],
-            }
-        )
-        return context
-
-
 class LeaderboardRedirect(RedirectView):
     permanent = False
 
@@ -544,6 +525,42 @@ class LeaderboardDetail(
             return queryset.filter(submission__created__lt=before)
         else:
             return queryset
+
+
+class ObservableDetail(LeaderboardDetail):
+    template_name = "evaluation/observable_detail.html"
+
+    def get_queryset(self, *args, **kwargs):
+        return (
+            super()
+            .get_queryset(*args, **kwargs)
+            .filter(pk__in=self.request.GET.getlist("pk"))
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # TODO: serialize result metadata
+        metrics = [e.metrics[0] for e in self.object_list]
+
+        if len(metrics) == 1:
+            url = self.phase.detail_view_observable_url
+            metrics = metrics[0]
+        else:
+            url = self.phase.list_view_observable_url
+
+        url = url.replace(
+            "//observablehq.com/embed/", "//api.observablehq.com/"
+        )
+
+        context.update(
+            {
+                "observable_js_definition": f"{urljoin(url, urlparse(url).path)}.js?v=3",
+                "observable_cells": parse_qs(urlparse(url).query)["cell"],
+                "metrics": metrics,
+            }
+        )
+        return context
 
 
 class EvaluationUpdate(
