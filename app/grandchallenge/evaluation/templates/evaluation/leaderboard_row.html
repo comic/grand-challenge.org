@@ -5,6 +5,21 @@
 {% load remove_whitespace %}
 {% load url %}
 
+<input type="checkbox" class="checkboxResult" value="{{ object.pk }}" >
+{{ object.pk }}
+<split/>
+
+<script type="text/javascript">
+    /**
+     * Check if the current row has been selected previously.
+     */
+    currentKey = "{{object.pk}}";
+    activeResults = JSON.parse(localStorage.getItem('compareResults'))
+    if (activeResults && activeResults[currentKey]) {
+        $(`.checkboxResult[value=${currentKey}]`).prop('checked', true)
+    }
+</script>
+
 {{ object.rank|ordinal }}
 <split/>
 

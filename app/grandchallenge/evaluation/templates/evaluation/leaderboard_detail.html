@@ -24,6 +24,7 @@
                id="resultsTable">
             <thead class="thead-light">
             <tr>
+                <th> <input type="checkbox" id="generalCheck"></th>
                 {% for column in columns %}
                     <th {% if column.toggleable %}class="toggleable"{% endif %}>{{ column.title }}</th>
                 {% endfor %}
@@ -34,16 +35,15 @@
     </div>
 
     {% if phase.result_display_choice == phase.BEST %}
-        <p class="small ml-3">Only the best published result for each
-            participant is
-            listed.</p>
+        <p class="small ml-3">
+            Only the best published result for each participant is listed.
+        </p>
     {% elif phase.result_display_choice == phase.MOST_RECENT %}
-        <p class="small ml-3"> Only the most recent published result for each
-            participant is
-            listed.</p>
+        <p class="small ml-3">
+            Only the most recent published result for each participant is listed.
+        </p>
     {% else %}
         <h3>Historical Leaderboard</h3>
-
         <form class="form-inline" action="">
             <label class="mr-sm-2" for="leaderboardDate">View the leaderboard from this date:</label>
             <input class="mr-sm-2" type="date" id="leaderboardDate" name="leaderboardDate" required
@@ -71,26 +71,31 @@
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
+
             var table = $('#resultsTable').DataTable({
-                {% comment %}
-                    The column index of the default sort, must match the table
-                    set up.
-                {% endcomment %}
-                order: [[0, "asc"]],
+                // The column index of the default sort, must match the table set up.
+                order: [[1, "asc"]],
                 lengthChange: false,
                 pageLength: 100,
                 serverSide: true,
                 ajax: {
                     url: "",
                 },
-                columnDefs: [{
-                    {%  if phase.show_supplementary_file_link %}
-                        "targets": [-1],
-                    {% endif %}
-                    searchable: false,
-                    orderable: false,
-                    visible: true
-                }
+                columnDefs: [
+                    {
+                        "targets": [0],
+                        searchable: false,
+                        orderable: false,
+                        visible: true
+                    },
+                    {
+                        {%  if phase.show_supplementary_file_link %}
+                            "targets": [-1],
+                        {% endif %}
+                        searchable: false,
+                        orderable: false,
+                        visible: true
+                    }
                     {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
                         ,{
                         targets: 'toggleable',
@@ -126,11 +131,19 @@
                                     $(node).text('Hide additional metrics');
                                 }
                             }
-                        }
+                        },
+                        {
+                            text: 'Compare results',
+                            action: function (e, dt, node, config) {
+                                // TODO add the action for the comparison
+                                console.log('🎹', Object.keys(JSON.parse(localStorage.getItem('compareResults'))));
+                            }
+                        },
                     ],
                 {% endif %}
                 scrollX: true
             });
+
             $('#resultsTable').on('column-visibility.dt', function (e, settings, column, state) {
                 var button = table.button(1).node();
                 visibility_columns = table.columns('.toggleable').visible();
@@ -149,6 +162,45 @@
                     button.text('Show all metrics');
                 }
             });
+
+            // Todo general checkbox
+            $("input#generalCheck").change(function(){
+                console.log('🎹', this.value);
+            })
+
+            // Clean results
+            localStorage.removeItem('compareResults')
+            $('button:contains("Compare results")').addClass('disabled')
+
+            // On click on the table
+            $("#resultsTable").on('click', function(e){
+                if($(e.target).is(':checkbox')){
+
+                    // Get the existing data from localstorage or create {}
+                    var existing = JSON.parse(localStorage.getItem('compareResults')) || {};
+                    var resultId = $(e.target).val()
+                    var compareResultsButton = $('button:contains("Compare results")')
+                    var generalCheckbox = $('#generalCheck')
+
+                    // Add or remove data to the object
+                    if($(e.target).is(':checked')){
+                        existing[resultId] = true
+                        compareResultsButton.removeClass('disabled')
+                        generalCheckbox.prop('indeterminate', true)
+                    }
+                    else {
+                        delete existing[resultId];
+                    }
+                    // Remove indeterminate
+                    if (Object.entries(existing).length === 0){
+                        generalCheckbox.prop('indeterminate', false)
+                        compareResultsButton.addClass('disabled')
+                    }
+
+                    // Save current state to localStorage
+                    localStorage.setItem('compareResults', JSON.stringify(existing));
+                }
+            })
         });
         $(window).resize(function () {
             $('#resultsTable').DataTable().columns.adjust()
