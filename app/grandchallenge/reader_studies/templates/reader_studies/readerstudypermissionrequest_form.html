@@ -43,42 +43,45 @@
 
         <h2>Request access</h2>
 
-        {% if not permission_request %}
+        {% if "read_readerstudy" in reader_study_perms %}
             <p>
-                You currently do not have permission to read this reader study.
-                If you would like to read the reader study, you can request permission here.
+                You already have permission to read this study, please
+                <a href="{{ reader_study.get_absolute_url }}">click here</a> to continue.
             </p>
-            <p>
-                An email will be sent to the reader study's editors.
-                They can grant you access.
-            </p>
-
-            <form action="{% url 'reader-studies:permission-request-create' slug=reader_study.slug %}" method="post">
-                {% csrf_token %}
-                {{ form | crispy }}
-                <input type="submit"
-                       value="Request access to {{ reader_study.title }}"
-                       class="btn btn-primary"/>
-            </form>
         {% else %}
             <p>
-                You currently {% if permission_request.status != permission_request.ACCEPTED %}do not {% endif %}have
-                permission to read this
-                reader study.
+                You currently do not have permission to read this study.
             </p>
-            <p>
-                You have already sent a permission request.
-                The status of your request is <span
-                    class="font-weight-bold">{{ permission_request.get_status_display|lower }}</span>.
-            </p>
-            {% if permission_request.status == permission_request.REJECTED %}
-                {% if permission_request.rejection_text %}
-                    <p>
-                        The reader study's editors have left the following reason for the rejection:
-                    </p>
-                    <p>
-                        {{ permission_request.rejection_text }}
-                    </p>
+
+            {% if not permission_request %}
+                <p>
+                    If you would like to read the reader study, you can request permission here.
+                    An email will be sent to the reader study's editors who will review your request.
+                </p>
+
+                <form action="{% url 'reader-studies:permission-request-create' slug=reader_study.slug %}"
+                      method="post">
+                    {% csrf_token %}
+                    {{ form | crispy }}
+                    <input type="submit"
+                           value="Request access to {{ reader_study.title }}"
+                           class="btn btn-primary"/>
+                </form>
+            {% else %}
+                <p>
+                    You have already sent a permission request.
+                    The status of your request is <span
+                        class="font-weight-bold">{{ permission_request.get_status_display|lower }}</span>.
+                </p>
+                {% if permission_request.status == permission_request.REJECTED %}
+                    {% if permission_request.rejection_text %}
+                        <p>
+                            The reader study's editors have left the following reason for the rejection:
+                        </p>
+                        <p>
+                            {{ permission_request.rejection_text }}
+                        </p>
+                    {% endif %}
                 {% endif %}
             {% endif %}
         {% endif %}
