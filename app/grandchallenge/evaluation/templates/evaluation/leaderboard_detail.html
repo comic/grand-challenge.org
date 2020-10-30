@@ -214,8 +214,7 @@
                     var existing = JSON.parse(localStorage.getItem('compareResults')) || {};
                     var resultId = $(e.target).val()
                     var compareResultsButton = $('button:contains("Compare results")')
-
-
+                    
                     // Add or remove data to the object
                     if($(e.target).is(':checked')){
                         existing[resultId] = true
