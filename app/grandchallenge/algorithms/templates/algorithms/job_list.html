@@ -44,7 +44,7 @@
             <thead class="thead-light">
             <tr>
                 {% for column in columns %}
-                    <th {% if column.toggleable %}class="toggleable"{% endif %}>{{ column.title }}</th>
+                    <th {% if column.classes %}class="{% for cls in column.classes %}{{ cls }} {% endfor %}"{% endif %}>{{ column.title }}</th>
                 {% endfor %}
             </tr>
             </thead>

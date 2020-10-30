@@ -407,7 +407,7 @@ class LeaderboardDetail(
     @property
     def columns(self):
         columns = [
-            Column(title="", sort_field=""),
+            Column(title="", sort_field="", classes=("nonSortable",)),
             Column(
                 title="Current #"
                 if "leaderboardDate" in self.request.GET
@@ -437,7 +437,7 @@ class LeaderboardDetail(
                 Column(
                     title=f"{self.phase.score_title} (Position)",
                     sort_field="rank",
-                    toggleable=True,
+                    classes=("toggleable",),
                 )
             )
 
@@ -448,7 +448,7 @@ class LeaderboardDetail(
                     if self.phase.scoring_method_choice == self.phase.ABSOLUTE
                     else f"{c['title']} (Position)",
                     sort_field="rank",
-                    toggleable=True,
+                    classes=("toggleable",),
                 )
             )
 
@@ -470,6 +470,7 @@ class LeaderboardDetail(
                 Column(
                     title=self.phase.supplementary_file_label,
                     sort_field="submission__supplementary_file",
+                    classes=("nonSortable",),
                 )
             )
 

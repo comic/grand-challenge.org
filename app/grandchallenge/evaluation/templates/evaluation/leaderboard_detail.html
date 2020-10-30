@@ -30,7 +30,7 @@
             <thead class="thead-light">
             <tr>
                 {% for column in columns %}
-                    <th {% if column.toggleable %}class="toggleable"{% endif %}>{{ column.title }}</th>
+                    <th {% if column.classes %}class="{% for cls in column.classes %}{{ cls }} {% endfor %}"{% endif %}>{{ column.title }}</th>
                 {% endfor %}
             </tr>
             </thead>
@@ -98,10 +98,8 @@
 
     <script type="text/javascript">
 
-        const SELECT_TEXT = "Select to compare"
+        const SELECT_TEXT = "Select results for comparison"
         const MAX_NUM_RESULTS_WARNING = 6
-
-        $('#compare-warning-alert').hide()
 
         $(document).ready(function () {
             // Clean results on init
@@ -111,39 +109,33 @@
                 // The column index of the default sort, must match the table set up.
                 order: [[1, "asc"]],
                 lengthChange: false,
-                pageLength: 100,
+                pageLength: 50,
                 serverSide: true,
                 ajax: {
                     url: "",
                 },
                 columnDefs: [
                     {
-                        "targets": [0],
+                        targets: 'nonSortable',
                         searchable: false,
                         orderable: false,
                         visible: true
                     },
                     {
-                        {%  if phase.show_supplementary_file_link %}
-                            "targets": [-1],
-                        {% endif %}
-                        searchable: false,
-                        orderable: false,
-                        visible: true
-                    }
-                    {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
-                        ,{
                         targets: 'toggleable',
                         visible: false,
                     }
-                    {% endif %}
                 ],
                 ordering: true,
                 autoWidth: false,
                 {% comment %}
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
-                dom: "<'row'<'#compare-buttons-group.col-md-3'><'col-md-9'Bf>>" +
+                dom: "<'row'<'col-12'f>>" +
+                    "<'row'" +
+                    "<'#compare-buttons-group.col-md-6'>" +
+                    "<'col px-0 text-right'B>" +
+                    ">" +
                     "<'row'<'col-12'tr>>" +
                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                 buttons: [
