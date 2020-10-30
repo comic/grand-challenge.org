@@ -19,7 +19,7 @@
 {% block content %}
     <h2>{{ phase.title }} Leaderboard {{ request.GET.leaderboardDate }}</h2>
 
-    <div id="compare-warning-alert" class="alert alert-warning" role="alert">
+    <div id="compare-warning-alert" class="alert alert-warning d-none" role="alert">
         <h5>Attention</h5>
         Selecting more than 6 results may affect the performance of the visualization
     </div>
@@ -125,7 +125,6 @@
                     },
                     {
                         {%  if phase.show_supplementary_file_link %}
-
                             "targets": [-1],
                         {% endif %}
                         searchable: false,
@@ -176,7 +175,7 @@
             var button = `<button type="button" id="compare-results-button" class="btn btn-link"
                             onclick="updateCompareIframe()" data-toggle="modal" data-target="#compareModal"
                             disabled>
-                            Select to compare
+                        ${SELECT_TEXT}
                         </button>`
 
             var checkbox = `<span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
@@ -215,7 +214,7 @@
                 // Clean up all the checkboxes
                 localStorage.removeItem('compareResults')
                 $(`.checkboxResult`).prop('checked', false)
-                compareResultsButton.prop('disabled',true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
+                compareResultsButton.prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
                 $('#compare-warning-alert').slideUp();
             })
 
@@ -236,25 +235,28 @@
                     }
 
                     // Modify compare results button
-                    if(Object.entries(existing).length > 1){
-                        compareResultsButton.prop('disabled',false)
+                    if (Object.entries(existing).length === 1) {
+                       compareResultsButton.prop('disabled', false)
+                            .text(`Visualise result`)
+                            .removeClass('btn-link').addClass('btn-primary')
+                    } else if (Object.entries(existing).length > 1) {
+                        compareResultsButton.prop('disabled', false)
                             .text(`Compare ${Object.entries(existing).length} results`)
                             .removeClass('btn-link').addClass('btn-primary')
-                    }
-                    else{
-                        compareResultsButton.text(SELECT_TEXT).prop('disabled',true)
+                    } else {
+                        compareResultsButton.text(SELECT_TEXT).prop('disabled', true)
                             .removeClass('btn-primary').addClass('btn-link')
                     }
 
                     // Toggle alert too many results
                     Object.entries(existing).length >= MAX_NUM_RESULTS_WARNING
-                        ? $('#compare-warning-alert').slideDown()
-                        : $('#compare-warning-alert').slideUp()
+                        ? $('#compare-warning-alert').removeClass("d-none")
+                        : $('#compare-warning-alert').addClass("d-none")
 
                     // Remove General Checkbox
                     if (Object.entries(existing).length === 0) {
                         generalCheckbox.hide()
-                        compareResultsButton.text(SELECT_TEXT).prop('disabled',true)
+                        compareResultsButton.text(SELECT_TEXT).prop('disabled', true)
                             .removeClass('btn-primary').addClass('btn-link')
                     }
 
@@ -268,8 +270,8 @@
             $('#resultsTable').DataTable().columns.adjust()
         });
 
-        function updateCompareIframe(pks = []) {
-            let search = new URLSearchParams(pks.map(pk => ["pk", pk]))
+        function updateCompareIframe() {
+            let search = new URLSearchParams(Object.keys(JSON.parse(localStorage.getItem('compareResults'))).map(pk => ["pk", pk]))
             let notebook = document.getElementById('observableNotebook')
 
             notebook.src = ""
