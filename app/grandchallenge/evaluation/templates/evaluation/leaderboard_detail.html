@@ -19,6 +19,11 @@
 {% block content %}
     <h2>{{ phase.title }} Leaderboard {{ request.GET.leaderboardDate }}</h2>
 
+    <div id="compare-warning-alert" class="alert alert-warning" role="alert">
+        <h5>Attention</h5>
+        Selecting more than 6 results may affect the performance of the visualization
+    </div>
+
     <div class="table-responsive mb-3">
         <table class="table table-hover table-borderless table-sm"
                id="resultsTable">
@@ -93,13 +98,14 @@
 
     <script type="text/javascript">
 
+        const SELECT_TEXT = "Select to compare"
+        const MAX_NUM_RESULTS_WARNING = 6
+
+        $('#compare-warning-alert').hide()
+
         $(document).ready(function () {
-            // Initializations table
-            var generalCheckbox = $('#generalCheck')
-            generalCheckbox.hide()
             // Clean results on init
             localStorage.removeItem('compareResults')
-
 
             var table = $('#resultsTable').DataTable({
                 // The column index of the default sort, must match the table set up.
@@ -119,6 +125,7 @@
                     },
                     {
                         {%  if phase.show_supplementary_file_link %}
+
                             "targets": [-1],
                         {% endif %}
                         searchable: false,
@@ -137,18 +144,10 @@
                 {% comment %}
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
-                dom: "<'row'<'col-md-8'B><'col-md-4'f>>" +
+                dom: "<'row'<'#compare-buttons-group.col-md-3'><'col-md-9'Bf>>" +
                     "<'row'<'col-12'tr>>" +
                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                 buttons: [
-                    {
-                        text: 'Compare results',
-                        action: function (e, dt, node, config) {
-                            $('#compareModal').modal('toggle');
-                            var pks = Object.keys(JSON.parse(localStorage.getItem('compareResults')))
-                            updateCompareIframe(pks)
-                        }
-                    },
                     {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
                         {
                             extend: 'colvis',
@@ -174,7 +173,22 @@
                 scrollX: true
             });
 
-            $('button:contains("Compare results")').addClass('disabled')
+            var button = `<button type="button" id="compare-results-button" class="btn btn-link"
+                            onclick="updateCompareIframe()" data-toggle="modal" data-target="#compareModal"
+                            disabled>
+                            Select to compare
+                        </button>`
+
+            var checkbox = `<span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
+                                <input type="checkbox" id="generalCheckbox"/>
+                            </span>`
+
+            $('table thead th.sorting_disabled').html(checkbox)
+            var generalCheckbox = $('#generalCheckbox')
+            generalCheckbox.prop('indeterminate', true).hide()
+            $('#compare-buttons-group').html(button)
+
+            var compareResultsButton = $('#compare-results-button')
 
             $('#resultsTable').on('column-visibility.dt', function (e, settings, column, state) {
                 var button = table.button(1).node();
@@ -201,31 +215,47 @@
                 // Clean up all the checkboxes
                 localStorage.removeItem('compareResults')
                 $(`.checkboxResult`).prop('checked', false)
-                $('button:contains("Compare results")').addClass('disabled')
-
+                compareResultsButton.prop('disabled',true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
+                $('#compare-warning-alert').slideUp();
             })
 
-            // On click on the table
+            // On click on the table checkboxes
             $("#resultsTable").on('click', function (e) {
                 if ($(e.target).is(':checkbox')) {
 
                     // Get the existing data from localstorage or create {}
                     var existing = JSON.parse(localStorage.getItem('compareResults')) || {};
                     var resultId = $(e.target).val()
-                    var compareResultsButton = $('button:contains("Compare results")')
 
                     // Add or remove data to the object
                     if ($(e.target).is(':checked')) {
                         existing[resultId] = true
-                        compareResultsButton.removeClass('disabled')
                         generalCheckbox.prop('indeterminate', true).show()
                     } else {
                         delete existing[resultId];
                     }
-                    // Remove indeterminate
+
+                    // Modify compare results button
+                    if(Object.entries(existing).length > 1){
+                        compareResultsButton.prop('disabled',false)
+                            .text(`Compare ${Object.entries(existing).length} results`)
+                            .removeClass('btn-link').addClass('btn-primary')
+                    }
+                    else{
+                        compareResultsButton.text(SELECT_TEXT).prop('disabled',true)
+                            .removeClass('btn-primary').addClass('btn-link')
+                    }
+
+                    // Toggle alert too many results
+                    Object.entries(existing).length >= MAX_NUM_RESULTS_WARNING
+                        ? $('#compare-warning-alert').slideDown()
+                        : $('#compare-warning-alert').slideUp()
+
+                    // Remove General Checkbox
                     if (Object.entries(existing).length === 0) {
                         generalCheckbox.hide()
-                        compareResultsButton.addClass('disabled')
+                        compareResultsButton.text(SELECT_TEXT).prop('disabled',true)
+                            .removeClass('btn-primary').addClass('btn-link')
                     }
 
                     // Save current state to localStorage
