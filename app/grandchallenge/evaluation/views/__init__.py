@@ -559,7 +559,7 @@ class ObservableDetail(LeaderboardDetail):
 
         context.update(
             {
-                "observable_js_definition": f"{urljoin(url, urlparse(url).path)}.js?v=3",
+                "observable_js": f"{urljoin(url, urlparse(url).path)}.js?v=3",
                 "observable_cells": parse_qs(urlparse(url).query)["cell"],
                 "metrics": metrics,
             }
