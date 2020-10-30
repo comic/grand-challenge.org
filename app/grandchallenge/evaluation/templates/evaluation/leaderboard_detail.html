@@ -24,7 +24,6 @@
                id="resultsTable">
             <thead class="thead-light">
             <tr>
-                <th> <input type="checkbox" id="generalCheck"></th>
                 {% for column in columns %}
                     <th {% if column.toggleable %}class="toggleable"{% endif %}>{{ column.title }}</th>
                 {% endfor %}
@@ -138,11 +137,19 @@
                 {% comment %}
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
-                {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
-                    dom: "<'row'<'col-md-5'l><'col-md-7'f>>" +
-                        "<'row'<'col-12'Btr>>" +
-                        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-                    buttons: [
+                dom: "<'row'<'col-md-8'B><'col-md-4'f>>" +
+                    "<'row'<'col-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                buttons: [
+                    {
+                        text: 'Compare results',
+                        action: function (e, dt, node, config) {
+                            $('#compareModal').modal('toggle');
+                            var pks = Object.keys(JSON.parse(localStorage.getItem('compareResults')))
+                            updateCompareIframe(pks)
+                        }
+                    },
+                    {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
                         {
                             extend: 'colvis',
                             text: 'Additional metrics',
@@ -162,16 +169,8 @@
                                 }
                             }
                         },
-                        {
-                            text: 'Compare results',
-                            action: function (e, dt, node, config) {
-                                $('#compareModal').modal('toggle');
-                                var pks = Object.keys(JSON.parse(localStorage.getItem('compareResults')))
-                                updateCompareIframe(pks)
-                            }
-                        },
-                    ],
-                {% endif %}
+                    {% endif %}
+                ],
                 scrollX: true
             });
 
@@ -197,7 +196,7 @@
             });
 
             // On click on General checkbox
-            generalCheckbox.on('click', function(){
+            generalCheckbox.on('click', function () {
                 generalCheckbox.hide()
                 // Clean up all the checkboxes
                 localStorage.removeItem('compareResults')
@@ -207,25 +206,24 @@
             })
 
             // On click on the table
-            $("#resultsTable").on('click', function(e){
-                if($(e.target).is(':checkbox')){
+            $("#resultsTable").on('click', function (e) {
+                if ($(e.target).is(':checkbox')) {
 
                     // Get the existing data from localstorage or create {}
                     var existing = JSON.parse(localStorage.getItem('compareResults')) || {};
                     var resultId = $(e.target).val()
                     var compareResultsButton = $('button:contains("Compare results")')
-                    
+
                     // Add or remove data to the object
-                    if($(e.target).is(':checked')){
+                    if ($(e.target).is(':checked')) {
                         existing[resultId] = true
                         compareResultsButton.removeClass('disabled')
                         generalCheckbox.prop('indeterminate', true).show()
-                    }
-                    else {
+                    } else {
                         delete existing[resultId];
                     }
                     // Remove indeterminate
-                    if (Object.entries(existing).length === 0){
+                    if (Object.entries(existing).length === 0) {
                         generalCheckbox.hide()
                         compareResultsButton.addClass('disabled')
                     }
