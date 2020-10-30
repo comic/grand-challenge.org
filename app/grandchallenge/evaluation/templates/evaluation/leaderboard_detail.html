@@ -66,10 +66,6 @@
     {% endif %}
 
     {% if phase.list_view_observable_url %}
-        <button type="button" onclick="updateCompareIframe()" class="btn btn-primary" data-toggle="modal" data-target="#compareModal">
-            Compare Results
-        </button>
-
         <div class="modal fade" id="compareModal" tabindex="-1" role="dialog" aria-labelledby="compareModalLabel"
              aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -98,7 +94,14 @@
     {{ block.super }}
 
     <script type="text/javascript">
+
         $(document).ready(function () {
+            // Initializations table
+            var generalCheckbox = $('#generalCheck')
+            generalCheckbox.hide()
+            // Clean results on init
+            localStorage.removeItem('compareResults')
+
 
             var table = $('#resultsTable').DataTable({
                 // The column index of the default sort, must match the table set up.
@@ -163,14 +166,17 @@
                         {
                             text: 'Compare results',
                             action: function (e, dt, node, config) {
-                                // TODO add the action for the comparison
-                                console.log('🎹', Object.keys(JSON.parse(localStorage.getItem('compareResults'))));
+                                $('#compareModal').modal('toggle');
+                                var pks = Object.keys(JSON.parse(localStorage.getItem('compareResults')))
+                                updateCompareIframe(pks)
                             }
                         },
                     ],
                 {% endif %}
                 scrollX: true
             });
+
+            $('button:contains("Compare results")').addClass('disabled')
 
             $('#resultsTable').on('column-visibility.dt', function (e, settings, column, state) {
                 var button = table.button(1).node();
@@ -191,14 +197,15 @@
                 }
             });
 
-            // Todo general checkbox
-            $("input#generalCheck").change(function(){
-                console.log('🎹', this.value);
-            })
+            // On click on General checkbox
+            generalCheckbox.on('click', function(){
+                generalCheckbox.hide()
+                // Clean up all the checkboxes
+                localStorage.removeItem('compareResults')
+                $(`.checkboxResult`).prop('checked', false)
+                $('button:contains("Compare results")').addClass('disabled')
 
-            // Clean results
-            localStorage.removeItem('compareResults')
-            $('button:contains("Compare results")').addClass('disabled')
+            })
 
             // On click on the table
             $("#resultsTable").on('click', function(e){
@@ -208,20 +215,20 @@
                     var existing = JSON.parse(localStorage.getItem('compareResults')) || {};
                     var resultId = $(e.target).val()
                     var compareResultsButton = $('button:contains("Compare results")')
-                    var generalCheckbox = $('#generalCheck')
+
 
                     // Add or remove data to the object
                     if($(e.target).is(':checked')){
                         existing[resultId] = true
                         compareResultsButton.removeClass('disabled')
-                        generalCheckbox.prop('indeterminate', true)
+                        generalCheckbox.prop('indeterminate', true).show()
                     }
                     else {
                         delete existing[resultId];
                     }
                     // Remove indeterminate
                     if (Object.entries(existing).length === 0){
-                        generalCheckbox.prop('indeterminate', false)
+                        generalCheckbox.hide()
                         compareResultsButton.addClass('disabled')
                     }
 
@@ -230,12 +237,12 @@
                 }
             })
         });
+
         $(window).resize(function () {
             $('#resultsTable').DataTable().columns.adjust()
         });
 
-        function updateCompareIframe() {
-            var pks = ["9de37cf7-9e02-45f2-bc95-874a6c5dd6d3", "fa785ae7-26a1-4cc1-8a18-97b2031bfbc5"];
+        function updateCompareIframe(pks = []) {
             var search = new URLSearchParams(pks.map(pk => ["pk", pk]))
             document.getElementById('observableNotebook').src = "{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=phase.slug %}?" + search.toString();
         }
