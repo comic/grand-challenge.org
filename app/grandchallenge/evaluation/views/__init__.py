@@ -544,7 +544,7 @@ class ObservableDetail(LeaderboardDetail):
 
         metrics = EvaluationSerializer(self.object_list, many=True).data
 
-        if len(metrics) == 1:
+        if len(metrics) == 1 and self.phase.detail_view_observable_url:
             url = self.phase.detail_view_observable_url
             metrics = metrics[0]
         else:
