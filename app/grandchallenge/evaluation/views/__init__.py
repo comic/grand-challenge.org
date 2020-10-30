@@ -407,6 +407,7 @@ class LeaderboardDetail(
     @property
     def columns(self):
         columns = [
+            Column(title="", sort_field=""),
             Column(
                 title="Current #"
                 if "leaderboardDate" in self.request.GET
