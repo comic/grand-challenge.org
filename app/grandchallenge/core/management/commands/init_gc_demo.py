@@ -30,6 +30,10 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.management.commands.evaluation_results import (
+    DEMO_NOTEBOOKS,
+    DEMO_RESULTS,
+)
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import (
     Evaluation,
@@ -200,19 +204,24 @@ class Command(BaseCommand):
 
         Phase.objects.create(challenge=demo, title="Phase 2")
 
-        for phase_num, phase in enumerate(demo.phase_set.all()):
-            phase.score_title = "Accuracy ± std"
-            phase.score_jsonpath = "acc.mean"
-            phase.score_error_jsonpath = "acc.std"
+        for phase, notebook in zip(demo.phase_set.all(), DEMO_NOTEBOOKS):
+            phase.score_title = "AUC"
+            phase.score_jsonpath = "aggregates.az_ci_mean"
             phase.extra_results_columns = [
                 {
-                    "title": "Dice ± std",
-                    "path": "dice.mean",
-                    "error_path": "dice.std",
+                    "path": "aggregates.low_az_val",
                     "order": "desc",
-                }
+                    "title": "AUC 95%CI-",
+                },
+                {
+                    "path": "aggregates.high_az_val",
+                    "order": "desc",
+                    "title": "AUC 95%CI+",
+                },
             ]
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.detail_view_observable_url = notebook
+            phase.list_view_observable_url = notebook
             phase.save()
 
             method = Method(phase=phase, creator=self.users["demo"])
@@ -220,20 +229,20 @@ class Command(BaseCommand):
             method.image.save("test.tar", container)
             method.save()
 
-            submission = Submission(phase=phase, creator=self.users["demop"])
-            content = ContentFile(base64.b64decode(b""))
-            submission.predictions_file.save("test.csv", content)
-            submission.save()
+            for result in DEMO_RESULTS:
+                submission = Submission(
+                    phase=phase, creator=self.users["demop"]
+                )
+                content = ContentFile(base64.b64decode(b""))
+                submission.predictions_file.save("test.csv", content)
+                submission.save()
 
-            e = Evaluation.objects.create(
-                submission=submission, method=method, status=Evaluation.SUCCESS
-            )
-            e.create_result(
-                result={
-                    "acc": {"mean": 0.1 * phase_num, "std": 0.1},
-                    "dice": {"mean": 0.71, "std": 0.05},
-                }
-            )
+                e = Evaluation.objects.create(
+                    submission=submission,
+                    method=method,
+                    status=Evaluation.SUCCESS,
+                )
+                e.create_result(result=result)
 
     def _create_external_challenge(self):
         ex_challenge = ExternalChallenge.objects.create(

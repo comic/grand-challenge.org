@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
@@ -91,6 +92,11 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         },
     },
 }
+
+OBSERVABLE_URL_VALIDATOR = RegexValidator(
+    r"^https\:\/\/observablehq\.com\/embed\/\@[^\/]+\/[^\?\.]+\?cell\=.*$",
+    "URL must be of the form https://observablehq.com/embed/@user/notebook?cell=*",
+)
 
 
 class Phase(UUIDModel):
@@ -338,14 +344,16 @@ class Phase(UUIDModel):
             "Should all of the metrics be displayed on the Result detail page?"
         ),
     )
-    submission_join_key = models.CharField(
+
+    detail_view_observable_url = models.URLField(
         blank=True,
-        default="",
-        max_length=32,
-        help_text=(
-            "If predictions are submitted as csv files, which column should "
-            "be used to join the data? eg. case_id"
-        ),
+        validators=[OBSERVABLE_URL_VALIDATOR],
+        help_text="The URL of the embeddable observable notebook, must be of the form https://observablehq.com/embed/@user/notebook?cell=...",
+    )
+    list_view_observable_url = models.URLField(
+        blank=True,
+        validators=[OBSERVABLE_URL_VALIDATOR],
+        help_text="The URL of the embeddable observable notebook, must be of the form https://observablehq.com/embed/@user/notebook?cell=...",
     )
 
     inputs = models.ManyToManyField(

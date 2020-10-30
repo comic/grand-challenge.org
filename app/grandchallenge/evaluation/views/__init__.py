@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from dateutil.relativedelta import relativedelta
 from django.contrib.messages.views import SuccessMessageMixin
@@ -37,6 +38,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from grandchallenge.evaluation.serializers import EvaluationSerializer
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
@@ -404,21 +406,30 @@ class LeaderboardDetail(
 
     @property
     def columns(self):
-        columns = [
-            Column(
-                title="Current #"
-                if "leaderboardDate" in self.request.GET
-                else "#",
-                sort_field="rank",
-            ),
-            Column(
-                title="User (Team)"
-                if self.request.challenge.use_teams
-                else "User",
-                sort_field="submission__creator__username",
-            ),
-            Column(title="Created", sort_field="created"),
-        ]
+        columns = []
+
+        if self.phase.list_view_observable_url:
+            columns.append(
+                Column(title="", sort_field="", classes=("nonSortable",))
+            )
+
+        columns.extend(
+            [
+                Column(
+                    title="Current #"
+                    if "leaderboardDate" in self.request.GET
+                    else "#",
+                    sort_field="rank",
+                ),
+                Column(
+                    title="User (Team)"
+                    if self.request.challenge.use_teams
+                    else "User",
+                    sort_field="submission__creator__username",
+                ),
+                Column(title="Created", sort_field="created"),
+            ]
+        )
 
         if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))
@@ -434,7 +445,7 @@ class LeaderboardDetail(
                 Column(
                     title=f"{self.phase.score_title} (Position)",
                     sort_field="rank",
-                    toggleable=True,
+                    classes=("toggleable",),
                 )
             )
 
@@ -445,7 +456,7 @@ class LeaderboardDetail(
                     if self.phase.scoring_method_choice == self.phase.ABSOLUTE
                     else f"{c['title']} (Position)",
                     sort_field="rank",
-                    toggleable=True,
+                    classes=("toggleable",),
                 )
             )
 
@@ -467,6 +478,7 @@ class LeaderboardDetail(
                 Column(
                     title=self.phase.supplementary_file_label,
                     sort_field="submission__supplementary_file",
+                    classes=("nonSortable",),
                 )
             )
 
@@ -524,6 +536,44 @@ class LeaderboardDetail(
             return queryset.filter(submission__created__lt=before)
         else:
             return queryset
+
+
+class ObservableDetail(LeaderboardDetail):
+    template_name = "evaluation/observable_detail.html"
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs).order_by("rank")
+
+        pk_filter = self.request.GET.getlist("pk")
+
+        if pk_filter:
+            return queryset.filter(pk__in=pk_filter)
+        else:
+            return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        metrics = EvaluationSerializer(self.object_list, many=True).data
+
+        if len(metrics) == 1 and self.phase.detail_view_observable_url:
+            url = self.phase.detail_view_observable_url
+            metrics = metrics[0]
+        else:
+            url = self.phase.list_view_observable_url
+
+        url = url.replace(
+            "//observablehq.com/embed/", "//api.observablehq.com/"
+        )
+
+        context.update(
+            {
+                "observable_js": f"{urljoin(url, urlparse(url).path)}.js?v=3",
+                "observable_cells": parse_qs(urlparse(url).query)["cell"],
+                "metrics": metrics,
+            }
+        )
+        return context
 
 
 class EvaluationUpdate(
