@@ -38,6 +38,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from grandchallenge.evaluation.serializers import EvaluationSerializer
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
@@ -540,8 +541,7 @@ class ObservableDetail(LeaderboardDetail):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # TODO: serialize result metadata
-        metrics = [e.metrics[0] for e in self.object_list]
+        metrics = EvaluationSerializer(self.object_list, many=True).data
 
         if len(metrics) == 1:
             url = self.phase.detail_view_observable_url
