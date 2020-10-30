@@ -406,22 +406,30 @@ class LeaderboardDetail(
 
     @property
     def columns(self):
-        columns = [
-            Column(title="", sort_field="", classes=("nonSortable",)),
-            Column(
-                title="Current #"
-                if "leaderboardDate" in self.request.GET
-                else "#",
-                sort_field="rank",
-            ),
-            Column(
-                title="User (Team)"
-                if self.request.challenge.use_teams
-                else "User",
-                sort_field="submission__creator__username",
-            ),
-            Column(title="Created", sort_field="created"),
-        ]
+        columns = []
+
+        if self.phase.list_view_observable_url:
+            columns.append(
+                Column(title="", sort_field="", classes=("nonSortable",))
+            )
+
+        columns.extend(
+            [
+                Column(
+                    title="Current #"
+                    if "leaderboardDate" in self.request.GET
+                    else "#",
+                    sort_field="rank",
+                ),
+                Column(
+                    title="User (Team)"
+                    if self.request.challenge.use_teams
+                    else "User",
+                    sort_field="submission__creator__username",
+                ),
+                Column(title="Created", sort_field="created"),
+            ]
+        )
 
         if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))

@@ -132,10 +132,9 @@
                     Default dom-setting copied from here: https://datatables.net/reference/option/dom
                 {% endcomment %}
                 dom: "<'row'<'col-12'f>>" +
-                    "<'row'" +
-                    "<'#compare-buttons-group.col-md-6'>" +
-                    "<'col px-0 text-right'B>" +
-                    ">" +
+                    {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE or phase.list_view_observable_url %}
+                    "<'row'<'#compare-buttons-group.col-md-6'><'col px-0 text-right'B>>" +
+                    {% endif %}
                     "<'row'<'col-12'tr>>" +
                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
                 buttons: [
@@ -177,7 +176,10 @@
             $('table thead th.sorting_disabled').html(checkbox)
             var generalCheckbox = $('#generalCheckbox')
             generalCheckbox.prop('indeterminate', true).hide()
-            $('#compare-buttons-group').html(button)
+
+            {% if phase.list_view_observable_url %}
+                $('#compare-buttons-group').html(button)
+            {% endif %}
 
             var compareResultsButton = $('#compare-results-button')
 

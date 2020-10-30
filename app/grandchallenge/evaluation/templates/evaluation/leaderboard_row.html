@@ -5,19 +5,20 @@
 {% load remove_whitespace %}
 {% load url %}
 
-<input type="checkbox" class="checkboxResult" value="{{ object.pk }}" >
-<split/>
-
-<script type="text/javascript">
-    /**
-     * Check if the current row has been selected previously.
-     */
-    currentKey = "{{object.pk}}";
-    activeResults = JSON.parse(localStorage.getItem('compareResults'))
-    if (activeResults && activeResults[currentKey]) {
-        $(`.checkboxResult[value=${currentKey}]`).prop('checked', true)
-    }
-</script>
+{% if object.submission.phase.list_view_observable_url %}
+    <input type="checkbox" class="checkboxResult" value="{{ object.pk }}">
+    <script type="text/javascript">
+        /**
+         * Check if the current row has been selected previously.
+         */
+        currentKey = "{{object.pk}}";
+        activeResults = JSON.parse(localStorage.getItem('compareResults'))
+        if (activeResults && activeResults[currentKey]) {
+            $(`.checkboxResult[value=${currentKey}]`).prop('checked', true)
+        }
+    </script>
+    <split/>
+{% endif %}
 
 {{ object.rank|ordinal }}
 <split/>
