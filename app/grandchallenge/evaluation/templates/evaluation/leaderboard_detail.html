@@ -239,8 +239,11 @@
         });
 
         function updateCompareIframe(pks = []) {
-            var search = new URLSearchParams(pks.map(pk => ["pk", pk]))
-            document.getElementById('observableNotebook').src = "{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=phase.slug %}?" + search.toString();
+            let search = new URLSearchParams(pks.map(pk => ["pk", pk]))
+            let notebook = document.getElementById('observableNotebook')
+
+            notebook.src = ""
+            notebook.src = "{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=phase.slug %}?" + search.toString();
         }
     </script>
 {% endblock %}

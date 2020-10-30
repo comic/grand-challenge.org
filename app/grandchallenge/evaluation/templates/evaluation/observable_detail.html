@@ -11,7 +11,7 @@
 
 {% block body %}
     {% for cell in observable_cells %}
-        <div id="{{ cell|cut:" " }}" class="text-center my-1">
+        <div id="observableCell{{ cell|cut:" "|cut:"*" }}" class="text-center my-1">
             <div class="text-secondary spinner-border" role="status">
                 <span class="sr-only">Loading Results...</span>
             </div>
@@ -34,14 +34,22 @@
             const metrics = JSON.parse(document.getElementById("metrics").textContent)
             const selectedCells = JSON.parse(document.getElementById("cells").textContent)
             const runtime = new Runtime()
+            let main
 
-            const main = runtime.module(define, (name) => {
-                const selected = selectedCells.indexOf(name)
-                if (selected > -1) {
-                    const id = selectedCells[selected].replace(/\s/g, '')  // remove spaces from cell names
-                    return new Inspector(document.querySelector('#' + id))
-                }
-            });
+            if (selectedCells.length === 1 && selectedCells.every((c) => c === "*")) {
+                const cell = document.querySelector('#observableCell')
+                cell.textContent = ""
+                main = runtime.module(define, Inspector.into(cell));
+            } else {
+                main = runtime.module(define, (name) => {
+                    let selected = selectedCells.indexOf(name)
+                    if (selected > -1) {
+                        const id = selectedCells[selected].replace(/[\s*]/g, '')  // remove spaces and * from cell names
+                        return new Inspector(document.querySelector('#observableCell' + id))
+                    }
+                });
+            }
+
             main.redefine("parse_results", metrics)
         }
     </script>
