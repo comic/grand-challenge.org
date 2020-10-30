@@ -107,7 +107,7 @@
 
             var table = $('#resultsTable').DataTable({
                 // The column index of the default sort, must match the table set up.
-                order: [[1, "asc"]],
+                order: [[{% if phase.list_view_observable_url %}1{% else %}0{% endif %}, "asc"]],
                 lengthChange: false,
                 pageLength: 50,
                 serverSide: true,
