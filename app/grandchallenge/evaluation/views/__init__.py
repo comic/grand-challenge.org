@@ -533,11 +533,14 @@ class ObservableDetail(LeaderboardDetail):
     template_name = "evaluation/observable_detail.html"
 
     def get_queryset(self, *args, **kwargs):
-        return (
-            super()
-            .get_queryset(*args, **kwargs)
-            .filter(pk__in=self.request.GET.getlist("pk"))
-        )
+        queryset = super().get_queryset(*args, **kwargs).order_by("rank")
+
+        pk_filter = self.request.GET.getlist("pk")
+
+        if pk_filter:
+            return queryset.filter(pk__in=pk_filter)
+        else:
+            return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
