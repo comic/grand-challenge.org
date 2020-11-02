@@ -206,15 +206,15 @@ class Command(BaseCommand):
 
         for phase, notebook in zip(demo.phase_set.all(), DEMO_NOTEBOOKS):
             phase.score_title = "AUC"
-            phase.score_jsonpath = "aggregates.az_ci_mean"
+            phase.score_jsonpath = "aggregates.summary_stats.az_ci_mean.value"
             phase.extra_results_columns = [
                 {
-                    "path": "aggregates.low_az_val",
+                    "path": "aggregates.summary_stats.low_az_val.value",
                     "order": "desc",
                     "title": "AUC 95%CI-",
                 },
                 {
-                    "path": "aggregates.high_az_val",
+                    "path": "aggregates.summary_stats.high_az_val.value",
                     "order": "desc",
                     "title": "AUC 95%CI+",
                 },
