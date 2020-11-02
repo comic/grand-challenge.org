@@ -1,5 +1,6 @@
 const SELECT_TEXT = "Select results for comparison"
 const MAX_NUM_RESULTS_WARNING = 6
+const SELECTED_RESULTS_KEY = "selectedResults"
 
 const observableNotebookURL = JSON.parse(document.getElementById("observableNotebookURL").textContent)
 const observableIframeURL = JSON.parse(document.getElementById("observableIframeURL").textContent)
@@ -12,7 +13,7 @@ let resultsTable = $('#resultsTable')
 
 $(document).ready(function () {
     // Clean results on init
-    localStorage.removeItem('compareResults')
+    localStorage.removeItem(SELECTED_RESULTS_KEY)
 
     let table = resultsTable.DataTable({
         // The column index of the default sort, must match the table set up.
@@ -22,6 +23,7 @@ $(document).ready(function () {
         serverSide: true,
         ajax: {
             url: "",
+            complete: updateResultCheckBoxes,
         },
         columnDefs: [
             {
@@ -85,7 +87,7 @@ $(document).ready(function () {
     generalCheckbox.on('click', function () {
         generalCheckbox.hide()
         // Clean up all the checkboxes
-        localStorage.removeItem('compareResults')
+        localStorage.removeItem(SELECTED_RESULTS_KEY)
         $(`.checkboxResult`).prop('checked', false)
         compareResultsButton.prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
         $('#compare-warning-alert').slideUp();
@@ -96,7 +98,7 @@ $(document).ready(function () {
         if ($(e.target).is(':checkbox')) {
 
             // Get the existing data from localstorage or create {}
-            let existing = JSON.parse(localStorage.getItem('compareResults')) || {};
+            let existing = JSON.parse(localStorage.getItem(SELECTED_RESULTS_KEY)) || {};
             let resultId = $(e.target).val()
 
             // Add or remove data to the object
@@ -135,7 +137,7 @@ $(document).ready(function () {
             }
 
             // Save current state to localStorage
-            localStorage.setItem('compareResults', JSON.stringify(existing));
+            localStorage.setItem(SELECTED_RESULTS_KEY, JSON.stringify(existing));
         }
     })
 });
@@ -189,4 +191,11 @@ function getDataTablesButtons() {
     } else {
         return []
     }
+}
+
+function updateResultCheckBoxes() {
+    let activeResults = JSON.parse(localStorage.getItem(SELECTED_RESULTS_KEY)) || {};
+    $(".checkboxResult").filter(() => {
+        return $(this).attr("value") in activeResults
+    }).prop('checked', true)
 }
