@@ -98,7 +98,7 @@
 {% block script %}
     {{ block.super }}
 
-    {{ phase.list_view_observable_url|json_script:"observableURL" }}
+    {{ phase.list_view_observable_url|json_script:"observableNotebookURL" }}
     {{ phase.extra_results_columns|json_script:"extraResultsColumns" }}
     {{ phase.scoring_method_choice|json_script:"scoringMethodChoice" }}
     {{ phase.ABSOLUTE|json_script:"absoluteScore" }}

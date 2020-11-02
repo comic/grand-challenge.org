@@ -1,7 +1,7 @@
 const SELECT_TEXT = "Select results for comparison"
 const MAX_NUM_RESULTS_WARNING = 6
 
-const observableURL = JSON.parse(document.getElementById("observableURL").textContent)
+const observableNotebookURL = JSON.parse(document.getElementById("observableNotebookURL").textContent)
 const observableIframeURL = JSON.parse(document.getElementById("observableIframeURL").textContent)
 const extraResultsColumns = JSON.parse(document.getElementById("extraResultsColumns").textContent)
 const scoringMethodChoice = JSON.parse(document.getElementById("scoringMethodChoice").textContent)
@@ -16,7 +16,7 @@ $(document).ready(function () {
 
     let table = resultsTable.DataTable({
         // The column index of the default sort, must match the table set up.
-        order: [[observableURL !== "" ? 1 : 0, "asc"]],
+        order: [[observableNotebookURL !== "" ? 1 : 0, "asc"]],
         lengthChange: false,
         pageLength: 50,
         serverSide: true,
@@ -37,7 +37,7 @@ $(document).ready(function () {
         ],
         ordering: true,
         autoWidth: false,
-        dom: getDOMTemplate(),
+        dom: getDataTablesDOMTemplate(),
         buttons: getDataTablesButtons(),
         scrollX: true
     });
@@ -56,7 +56,7 @@ $(document).ready(function () {
     let generalCheckbox = $('#generalCheckbox')
     generalCheckbox.prop('indeterminate', true).hide()
 
-    if (observableURL !== "") {
+    if (observableNotebookURL !== "") {
         $('#compare-buttons-group').html(button)
     }
 
@@ -152,10 +152,10 @@ function updateCompareIframe() {
     notebook.src = `${observableIframeURL}?${search.toString()}`;
 }
 
-function getDOMTemplate() {
+function getDataTablesDOMTemplate() {
     let DOM = "<'row'<'col-12'f>>"
 
-    if (extraResultsColumns.length > 0 || scoringMethodChoice !== absoluteScore || observableURL !== "") {
+    if (extraResultsColumns.length > 0 || scoringMethodChoice !== absoluteScore || observableNotebookURL !== "") {
         DOM += "<'row'<'#compare-buttons-group.col-md-6'><'col px-0 text-right'B>>"
     }
 
