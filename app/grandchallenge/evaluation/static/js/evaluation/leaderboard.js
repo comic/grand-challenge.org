@@ -1,6 +1,5 @@
 const SELECT_TEXT = "Select results for comparison"
 const MAX_NUM_RESULTS_WARNING = 6
-const SELECTED_RESULTS_KEY = "selectedResults"
 
 const observableNotebookURL = JSON.parse(document.getElementById("observableNotebookURL").textContent)
 const observableIframeURL = JSON.parse(document.getElementById("observableIframeURL").textContent)
@@ -9,17 +8,15 @@ const scoringMethodChoice = JSON.parse(document.getElementById("scoringMethodCho
 const absoluteScore = JSON.parse(document.getElementById("absoluteScore").textContent)
 
 let resultsTable = $('#resultsTable')
+let selectedResults = {}
 
 
 $(document).ready(function () {
-    // Clean results on init
-    localStorage.removeItem(SELECTED_RESULTS_KEY)
-
     let table = resultsTable.DataTable({
         // The column index of the default sort, must match the table set up.
         order: [[observableNotebookURL !== "" ? 1 : 0, "asc"]],
         lengthChange: false,
-        pageLength: 50,
+        pageLength: 2,
         serverSide: true,
         ajax: {
             url: "",
@@ -86,8 +83,7 @@ $(document).ready(function () {
     // On click on General checkbox
     generalCheckbox.on('click', function () {
         generalCheckbox.hide()
-        // Clean up all the checkboxes
-        localStorage.removeItem(SELECTED_RESULTS_KEY)
+        selectedResults = {};
         $(`.checkboxResult`).prop('checked', false)
         compareResultsButton.prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
         $('#compare-warning-alert').slideUp();
@@ -96,48 +92,38 @@ $(document).ready(function () {
     // On click on the table checkboxes
     resultsTable.on('click', function (e) {
         if ($(e.target).is(':checkbox')) {
-
-            // Get the existing data from localstorage or create {}
-            let existing = JSON.parse(localStorage.getItem(SELECTED_RESULTS_KEY)) || {};
-            let resultId = $(e.target).val()
+            const resultId = $(e.target).val()
 
             // Add or remove data to the object
             if ($(e.target).is(':checked')) {
-                existing[resultId] = true
+                selectedResults[resultId] = true
                 generalCheckbox.prop('indeterminate', true).show()
             } else {
-                delete existing[resultId];
+                delete selectedResults[resultId];
             }
 
+            const numSelectedResults = Object.entries(selectedResults).length
+
             // Modify compare results button
-            if (Object.entries(existing).length === 1) {
+            if (numSelectedResults === 1) {
                 compareResultsButton.prop('disabled', false)
                     .text(`Visualise result`)
                     .removeClass('btn-link').addClass('btn-primary')
-            } else if (Object.entries(existing).length > 1) {
+            } else if (numSelectedResults > 1) {
                 compareResultsButton.prop('disabled', false)
-                    .text(`Compare ${Object.entries(existing).length} results`)
+                    .text(`Compare ${numSelectedResults} results`)
                     .removeClass('btn-link').addClass('btn-primary')
             } else {
+                generalCheckbox.hide()
                 compareResultsButton.text(SELECT_TEXT).prop('disabled', true)
                     .removeClass('btn-primary').addClass('btn-link')
             }
 
             // Toggle alert too many results
             let entriesAlert = $('#compare-warning-alert')
-            Object.entries(existing).length >= MAX_NUM_RESULTS_WARNING
+            numSelectedResults >= MAX_NUM_RESULTS_WARNING
                 ? entriesAlert.removeClass("d-none")
                 : entriesAlert.addClass("d-none")
-
-            // Remove General Checkbox
-            if (Object.entries(existing).length === 0) {
-                generalCheckbox.hide()
-                compareResultsButton.text(SELECT_TEXT).prop('disabled', true)
-                    .removeClass('btn-primary').addClass('btn-link')
-            }
-
-            // Save current state to localStorage
-            localStorage.setItem(SELECTED_RESULTS_KEY, JSON.stringify(existing));
         }
     })
 });
@@ -147,7 +133,7 @@ $(window).resize(function () {
 });
 
 function updateCompareIframe() {
-    let search = new URLSearchParams(Object.keys(JSON.parse(localStorage.getItem(SELECTED_RESULTS_KEY))).map(pk => ["pk", pk]))
+    let search = new URLSearchParams(Object.keys(selectedResults).map(pk => ["pk", pk]))
     let notebook = document.getElementById('observableNotebook')
 
     notebook.src = `${observableIframeURL}?${search.toString()}`;
@@ -193,8 +179,7 @@ function getDataTablesButtons() {
 }
 
 function updateResultCheckBoxes() {
-    let activeResults = JSON.parse(localStorage.getItem(SELECTED_RESULTS_KEY)) || {};
-    $(".checkboxResult").filter(() => {
-        return $(this).attr("value") in activeResults
+    $(".checkboxResult").filter(function () {
+        return $(this).attr("value") in selectedResults
     }).prop('checked', true)
 }
