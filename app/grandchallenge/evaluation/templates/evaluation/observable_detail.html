@@ -23,8 +23,9 @@
 {% block script %}
     {{ block.super }}
 
-    {{ metrics|json_script:"metrics" }}
-    {{ observable_cells|json_script:"cells" }}
-    {{ observable_js|json_script:"observableJS" }}
+    {{ evaluations|json_script:"evaluations" }}
+    {{ observable_cells|json_script:"observableCells" }}
+    {{ observable_notebook|json_script:"observableNotebook" }}
+
     <script type="module" src="{% static 'js/evaluation/observable.js' %}"></script>
 {% endblock %}

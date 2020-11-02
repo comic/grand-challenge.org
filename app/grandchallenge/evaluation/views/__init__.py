@@ -554,11 +554,11 @@ class ObservableDetail(LeaderboardDetail):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        metrics = EvaluationSerializer(self.object_list, many=True).data
+        evaluations = EvaluationSerializer(self.object_list, many=True).data
 
-        if len(metrics) == 1 and self.phase.detail_view_observable_url:
+        if len(evaluations) == 1 and self.phase.detail_view_observable_url:
             url = self.phase.detail_view_observable_url
-            metrics = metrics[0]
+            evaluations = evaluations[0]
         else:
             url = self.phase.list_view_observable_url
 
@@ -568,9 +568,9 @@ class ObservableDetail(LeaderboardDetail):
 
         context.update(
             {
-                "observable_js": f"{urljoin(url, urlparse(url).path)}.js?v=3",
+                "observable_notebook": f"{urljoin(url, urlparse(url).path)}.js?v=3",
                 "observable_cells": parse_qs(urlparse(url).query)["cell"],
-                "metrics": metrics,
+                "evaluations": evaluations,
             }
         )
         return context

@@ -147,10 +147,9 @@ $(window).resize(function () {
 });
 
 function updateCompareIframe() {
-    let search = new URLSearchParams(Object.keys(JSON.parse(localStorage.getItem('compareResults'))).map(pk => ["pk", pk]))
+    let search = new URLSearchParams(Object.keys(JSON.parse(localStorage.getItem(SELECTED_RESULTS_KEY))).map(pk => ["pk", pk]))
     let notebook = document.getElementById('observableNotebook')
 
-    notebook.src = ""
     notebook.src = `${observableIframeURL}?${search.toString()}`;
 }
 

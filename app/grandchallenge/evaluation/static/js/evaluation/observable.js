@@ -1,10 +1,10 @@
 import {Inspector, Runtime} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
 
 if (window.self !== window.top) {
-    import(JSON.parse(document.getElementById("observableJS").textContent)).then(
+    import(JSON.parse(document.getElementById("observableNotebook").textContent)).then(
         module => {
-            const metrics = JSON.parse(document.getElementById("metrics").textContent)
-            const selectedCells = JSON.parse(document.getElementById("cells").textContent)
+            const evaluations = JSON.parse(document.getElementById("evaluations").textContent)
+            const selectedCells = JSON.parse(document.getElementById("observableCells").textContent)
             const runtime = new Runtime()
             let main
 
@@ -22,7 +22,7 @@ if (window.self !== window.top) {
                 });
             }
 
-            main.redefine("parse_results", metrics)
+            main.redefine("parse_results", evaluations)
         }
     )
 }
