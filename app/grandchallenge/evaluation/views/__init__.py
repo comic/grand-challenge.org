@@ -410,7 +410,12 @@ class LeaderboardDetail(
 
         if self.phase.list_view_observable_url:
             columns.append(
-                Column(title="", sort_field="", classes=("nonSortable",))
+                Column(
+                    title="",
+                    sort_field="",
+                    classes=("nonSortable",),
+                    identifier="generalCheckboxHeader",
+                )
             )
 
         columns.extend(

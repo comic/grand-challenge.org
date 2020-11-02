@@ -16,7 +16,7 @@ $(document).ready(function () {
         // The column index of the default sort, must match the table set up.
         order: [[observableNotebookURL !== "" ? 1 : 0, "asc"]],
         lengthChange: false,
-        pageLength: 2,
+        pageLength: 50,
         serverSide: true,
         ajax: {
             url: "",
@@ -41,26 +41,6 @@ $(document).ready(function () {
         scrollX: true
     });
 
-    let button = `<button type="button" id="compare-results-button" class="btn btn-link"
-                    onclick="updateCompareIframe()" data-toggle="modal" data-target="#compareModal"
-                    disabled>
-                ${SELECT_TEXT}
-                </button>`
-
-    let checkbox = `<span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
-                        <input type="checkbox" id="generalCheckbox"/>
-                    </span>`
-
-    $('table thead th.sorting_disabled').html(checkbox)
-    let generalCheckbox = $('#generalCheckbox')
-    generalCheckbox.prop('indeterminate', true).hide()
-
-    if (observableNotebookURL !== "") {
-        $('#compare-buttons-group').html(button)
-    }
-
-    let compareResultsButton = $('#compare-results-button')
-
     resultsTable.on('column-visibility.dt', function () {
         let button = table.button(1).node();
         let visibility_columns = table.columns('.toggleable').visible();
@@ -80,52 +60,72 @@ $(document).ready(function () {
         }
     });
 
-    // On click on General checkbox
-    generalCheckbox.on('click', function () {
-        generalCheckbox.hide()
-        selectedResults = {};
-        $(`.checkboxResult`).prop('checked', false)
-        compareResultsButton.prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
-        $('#compare-warning-alert').slideUp();
-    })
+    if (observableNotebookURL !== "") {
+        let button = `<button type="button" id="compare-results-button" class="btn btn-link"
+                    onclick="updateCompareIframe()" data-toggle="modal" data-target="#compareModal"
+                    disabled>
+                ${SELECT_TEXT}
+                </button>`
 
-    // On click on the table checkboxes
-    resultsTable.on('click', function (e) {
-        if ($(e.target).is(':checkbox')) {
-            const resultId = $(e.target).val()
+        let checkbox = `<span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
+                        <input type="checkbox" id="generalCheckbox"/>
+                    </span>`
 
-            // Add or remove data to the object
-            if ($(e.target).is(':checked')) {
-                selectedResults[resultId] = true
-                generalCheckbox.prop('indeterminate', true).show()
-            } else {
-                delete selectedResults[resultId];
+        $('#generalCheckboxHeader').html(checkbox)
+        let generalCheckbox = $('#generalCheckbox')
+        generalCheckbox.prop('indeterminate', true).hide()
+
+        $('#compare-buttons-group').html(button)
+
+        let compareResultsButton = $('#compare-results-button')
+
+        // On click on General checkbox
+        generalCheckbox.on('click', function () {
+            generalCheckbox.hide()
+            selectedResults = {};
+            $(`.checkboxResult`).prop('checked', false)
+            compareResultsButton.prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
+            $('#compare-warning-alert').slideUp();
+        })
+
+        // On click on the table checkboxes
+        resultsTable.on('click', function (e) {
+            if ($(e.target).is(':checkbox')) {
+                const resultId = $(e.target).val()
+
+                // Add or remove data to the object
+                if ($(e.target).is(':checked')) {
+                    selectedResults[resultId] = true
+                    generalCheckbox.prop('indeterminate', true).show()
+                } else {
+                    delete selectedResults[resultId];
+                }
+
+                const numSelectedResults = Object.entries(selectedResults).length
+
+                // Modify compare results button
+                if (numSelectedResults === 1) {
+                    compareResultsButton.prop('disabled', false)
+                        .text(`Visualise result`)
+                        .removeClass('btn-link').addClass('btn-primary')
+                } else if (numSelectedResults > 1) {
+                    compareResultsButton.prop('disabled', false)
+                        .text(`Compare ${numSelectedResults} results`)
+                        .removeClass('btn-link').addClass('btn-primary')
+                } else {
+                    generalCheckbox.hide()
+                    compareResultsButton.text(SELECT_TEXT).prop('disabled', true)
+                        .removeClass('btn-primary').addClass('btn-link')
+                }
+
+                // Toggle alert too many results
+                let entriesAlert = $('#compare-warning-alert')
+                numSelectedResults >= MAX_NUM_RESULTS_WARNING
+                    ? entriesAlert.removeClass("d-none")
+                    : entriesAlert.addClass("d-none")
             }
-
-            const numSelectedResults = Object.entries(selectedResults).length
-
-            // Modify compare results button
-            if (numSelectedResults === 1) {
-                compareResultsButton.prop('disabled', false)
-                    .text(`Visualise result`)
-                    .removeClass('btn-link').addClass('btn-primary')
-            } else if (numSelectedResults > 1) {
-                compareResultsButton.prop('disabled', false)
-                    .text(`Compare ${numSelectedResults} results`)
-                    .removeClass('btn-link').addClass('btn-primary')
-            } else {
-                generalCheckbox.hide()
-                compareResultsButton.text(SELECT_TEXT).prop('disabled', true)
-                    .removeClass('btn-primary').addClass('btn-link')
-            }
-
-            // Toggle alert too many results
-            let entriesAlert = $('#compare-warning-alert')
-            numSelectedResults >= MAX_NUM_RESULTS_WARNING
-                ? entriesAlert.removeClass("d-none")
-                : entriesAlert.addClass("d-none")
-        }
-    })
+        })
+    }
 });
 
 $(window).resize(function () {

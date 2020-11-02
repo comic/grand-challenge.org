@@ -282,4 +282,5 @@ class PaginatedTableListView(ListView):
 class Column:
     title: str
     sort_field: str
-    classes: Tuple[str] = ()
+    classes: Tuple[str, ...] = ()
+    identifier: str = ""
