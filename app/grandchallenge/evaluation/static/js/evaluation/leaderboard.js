@@ -130,9 +130,9 @@ $(document).ready(function () {
 
     if (allowEvaluationNavigation === true) {
         document.getElementById('compare-buttons-group').innerHTML += `
-            <button type="button" id="navigate-evaluations-button" class="btn btn-primary" 
+            <button type="button" id="browse-evaluations-button" class="btn btn-primary" 
                     onclick="updateEvaluationNavigationModal()" data-toggle="modal" data-target="#observableModal">
-                Navigate results
+                Browse results
             </button>
         `;
     }
@@ -152,7 +152,7 @@ function updateEvaluationComparisonModal() {
 }
 
 function updateEvaluationNavigationModal() {
-    const pkElements = Array.from(document.getElementsByClassName("navigateEvaluationPK"))
+    const pkElements = Array.from(document.getElementsByClassName("browseEvaluationPK"))
     const search = new URLSearchParams(pkElements.map(e => ["pk", e.value]))
     const notebook = document.getElementById('observableNotebook')
     const modelLabel = document.getElementById('observableModalLabel')
@@ -201,7 +201,7 @@ function getDataTablesButtons() {
 }
 
 function updateCompareCheckBoxes() {
-    document.getElementById("navigate-evaluations-button").disabled = document.getElementsByClassName("navigateEvaluationPK").length === 0;
+    document.getElementById("browse-evaluations-button").disabled = document.getElementsByClassName("browseEvaluationPK").length === 0;
 
     $(".compareEvaluationCheckbox").filter(function () {
         return $(this).attr("value") in selectedResults
