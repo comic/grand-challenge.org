@@ -27,9 +27,9 @@
 
         {% if object.status == object.SUCCESS and object.submission.phase.evaluation_detail_observable_url %}
             <iframe id="observableNotebook"
+                    class="border-0"
                     style="height: 75vh; min-width: 100%;"
                     sandbox="allow-scripts"
-                    frameborder="0"
                     src="{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug kind='detail' %}?pk={{ object.pk }}">
             </iframe>
         {% else %}
