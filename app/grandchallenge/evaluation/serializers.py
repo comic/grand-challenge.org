@@ -75,8 +75,9 @@ class AlgorithmEvaluationSerializer(ModelSerializer):
 
 class EvaluationSerializer(ModelSerializer):
     submission = SubmissionSerializer()
-    status = CharField(source="get_status_display", read_only=True)
     outputs = ComponentInterfaceValueSerializer(many=True)
+    status = CharField(source="get_status_display", read_only=True)
+    title = CharField(read_only=True)
 
     class Meta:
         model = Evaluation
@@ -91,6 +92,7 @@ class EvaluationSerializer(ModelSerializer):
             "rank_score",
             "rank_per_metric",
             "status",
+            "title",
         )
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             status=model._meta.get_field("status")

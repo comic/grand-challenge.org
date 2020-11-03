@@ -759,6 +759,10 @@ class Evaluation(UUIDModel, ComponentJob):
             kwargs={"phase_pk": self.submission.phase.pk}
         )
 
+    @property
+    def title(self):
+        return f"#{self.rank} {self.submission.creator.username}"
+
     def assign_permissions(self):
         admins_group = self.submission.phase.challenge.admins_group
 
