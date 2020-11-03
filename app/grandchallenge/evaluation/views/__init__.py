@@ -415,7 +415,7 @@ class LeaderboardDetail(
                     title="",
                     sort_field="",
                     classes=("nonSortable",),
-                    identifier="generalCheckboxHeader",
+                    identifier="compareEvaluationsHeader",
                 )
             )
 

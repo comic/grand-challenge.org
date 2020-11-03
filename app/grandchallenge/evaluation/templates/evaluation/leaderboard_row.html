@@ -6,7 +6,11 @@
 {% load url %}
 
 {% if object.submission.phase.evaluation_comparison_observable_url %}
-    <input type="checkbox" class="checkboxResult" value="{{ object.pk }}">
+    <div class="form-check">
+        <input type="checkbox"
+               class="form-check-input position-static compareEvaluationCheckbox"
+               value="{{ object.pk }}">
+    </div>
     <split/>
 {% endif %}
 

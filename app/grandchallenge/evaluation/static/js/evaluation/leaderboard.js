@@ -18,14 +18,13 @@ $(document).ready(function () {
         serverSide: true,
         ajax: {
             url: "",
-            complete: updateResultCheckBoxes,
+            complete: updateCompareCheckBoxes,
         },
         columnDefs: [
             {
                 targets: 'nonSortable',
                 searchable: false,
                 orderable: false,
-                visible: true
             },
             {
                 targets: 'toggleable',
@@ -61,31 +60,31 @@ $(document).ready(function () {
     }
 
     if (allowEvaluationComparison === true) {
-        let button = `<button type="button" id="compare-results-button" class="btn btn-link"
-                    onclick="updateCompareIframe()" data-toggle="modal" data-target="#compareModal"
-                    disabled>
+        $('#compare-buttons-group').html(
+            `<button type="button" id="compare-results-button" class="btn btn-link" onclick="updateCompareIframe()" 
+                     data-toggle="modal" data-target="#compareModal" disabled>
                 ${SELECT_TEXT}
-                </button>`
+            </button>`
+        )
 
-        let checkbox = `<span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
-                        <input type="checkbox" id="generalCheckbox"/>
-                    </span>`
-
-        $('#generalCheckboxHeader').html(checkbox)
-        let generalCheckbox = $('#generalCheckbox')
-        generalCheckbox.prop('indeterminate', true).hide()
-
-        $('#compare-buttons-group').html(button)
+        $('#compareEvaluationsHeader').html(
+            `<span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
+                <input type="checkbox" id="compareAllEvaluationsCheckbox"/>
+            </span>`
+        )
 
         let compareResultsButton = $('#compare-results-button')
 
+        let compareAllEvaluationsCheckbox = $('#compareAllEvaluationsCheckbox')
+        compareAllEvaluationsCheckbox.prop('indeterminate', true).hide()
+
         // On click on General checkbox
-        generalCheckbox.on('click', function () {
-            generalCheckbox.hide()
+        compareAllEvaluationsCheckbox.on('click', function () {
+            compareAllEvaluationsCheckbox.hide()
             selectedResults = {};
-            $(`.checkboxResult`).prop('checked', false)
+            $(`.compareEvaluationCheckbox`).prop('checked', false)
             compareResultsButton.prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
-            $('#compare-warning-alert').slideUp();
+            $('#compare-warning-alert').addClass("d-none");
         })
 
         // On click on the table checkboxes
@@ -96,7 +95,7 @@ $(document).ready(function () {
                 // Add or remove data to the object
                 if ($(e.target).is(':checked')) {
                     selectedResults[resultId] = true
-                    generalCheckbox.prop('indeterminate', true).show()
+                    compareAllEvaluationsCheckbox.prop('indeterminate', true).show()
                 } else {
                     delete selectedResults[resultId];
                 }
@@ -113,9 +112,10 @@ $(document).ready(function () {
                         .text(`Compare ${numSelectedResults} results`)
                         .removeClass('btn-link').addClass('btn-primary')
                 } else {
-                    generalCheckbox.hide()
-                    compareResultsButton.text(SELECT_TEXT).prop('disabled', true)
+                    compareResultsButton.prop('disabled', true)
+                        .text(SELECT_TEXT)
                         .removeClass('btn-primary').addClass('btn-link')
+                    compareAllEvaluationsCheckbox.hide()
                 }
 
                 // Toggle alert too many results
@@ -178,8 +178,8 @@ function getDataTablesButtons() {
     }
 }
 
-function updateResultCheckBoxes() {
-    $(".checkboxResult").filter(function () {
+function updateCompareCheckBoxes() {
+    $(".compareEvaluationCheckbox").filter(function () {
         return $(this).attr("value") in selectedResults
     }).prop('checked', true)
 }
