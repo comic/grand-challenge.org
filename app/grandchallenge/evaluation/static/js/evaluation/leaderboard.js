@@ -133,7 +133,7 @@ $(document).ready(function () {
         document.getElementById('compare-buttons-group').innerHTML += `
             <button type="button" id="browse-evaluations-button" class="btn btn-primary" 
                     onclick="updateEvaluationNavigationModal()" data-toggle="modal" data-target="#observableModal"
-                    title="Browse Results">
+                    title="Browse through these results">
                 <i class="fas fa-chart-bar"></i>
             </button>
         `;
