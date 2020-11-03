@@ -1,11 +1,9 @@
 const SELECT_TEXT = "Select results for comparison"
 const MAX_NUM_RESULTS_WARNING = 6
 
-const observableNotebookURL = JSON.parse(document.getElementById("observableNotebookURL").textContent)
+const allowEvaluationComparison = JSON.parse(document.getElementById("allowEvaluationComparison").textContent)
 const observableIframeURL = JSON.parse(document.getElementById("observableIframeURL").textContent)
-const extraResultsColumns = JSON.parse(document.getElementById("extraResultsColumns").textContent)
-const scoringMethodChoice = JSON.parse(document.getElementById("scoringMethodChoice").textContent)
-const absoluteScore = JSON.parse(document.getElementById("absoluteScore").textContent)
+const allowMetricsToggling = JSON.parse(document.getElementById("allowMetricsToggling").textContent)
 
 let resultsTable = $('#resultsTable')
 let selectedResults = {}
@@ -14,7 +12,7 @@ let selectedResults = {}
 $(document).ready(function () {
     let table = resultsTable.DataTable({
         // The column index of the default sort, must match the table set up.
-        order: [[observableNotebookURL !== "" ? 1 : 0, "asc"]],
+        order: [[allowEvaluationComparison === true ? 1 : 0, "asc"]],
         lengthChange: false,
         pageLength: 50,
         serverSide: true,
@@ -41,26 +39,28 @@ $(document).ready(function () {
         scrollX: true
     });
 
-    resultsTable.on('column-visibility.dt', function () {
-        let button = table.button(1).node();
-        let visibility_columns = table.columns('.toggleable').visible();
-        let not_all_visible = false;
-        visibility_columns.each(function (value) {
-            if (value === false) {
-                not_all_visible = true;
-                return false;
+    if (allowMetricsToggling === true) {
+        resultsTable.on('column-visibility.dt', function () {
+            let button = table.button(1).node();
+            let visibility_columns = table.columns('.toggleable').visible();
+            let not_all_visible = false;
+            visibility_columns.each(function (value) {
+                if (value === false) {
+                    not_all_visible = true;
+                    return false;
+                }
+            });
+            if (!not_all_visible) {
+                button.addClass('metrics-hidden');
+                button.text('Hide additional metrics');
+            } else {
+                button.removeClass('metrics-hidden');
+                button.text('Show all metrics');
             }
         });
-        if (!not_all_visible) {
-            button.addClass('metrics-hidden');
-            button.text('Hide additional metrics');
-        } else {
-            button.removeClass('metrics-hidden');
-            button.text('Show all metrics');
-        }
-    });
+    }
 
-    if (observableNotebookURL !== "") {
+    if (allowEvaluationComparison === true) {
         let button = `<button type="button" id="compare-results-button" class="btn btn-link"
                     onclick="updateCompareIframe()" data-toggle="modal" data-target="#compareModal"
                     disabled>
@@ -142,7 +142,7 @@ function updateCompareIframe() {
 function getDataTablesDOMTemplate() {
     let DOM = "<'row'<'col-12'f>>"
 
-    if (extraResultsColumns.length > 0 || scoringMethodChoice !== absoluteScore || observableNotebookURL !== "") {
+    if (allowMetricsToggling === true || allowEvaluationComparison === true) {
         DOM += "<'row'<'#compare-buttons-group.col-md-6'><'col px-0 text-right'B>>"
     }
 
@@ -151,7 +151,7 @@ function getDataTablesDOMTemplate() {
 }
 
 function getDataTablesButtons() {
-    if (extraResultsColumns.length > 0 || scoringMethodChoice !== absoluteScore) {
+    if (allowMetricsToggling === true) {
         return [
             {
                 extend: 'colvis',

@@ -99,13 +99,19 @@
 {% block script %}
     {{ block.super }}
 
-    {{ phase.evaluation_comparison_observable_url|json_script:"observableNotebookURL" }}
-    {{ phase.extra_results_columns|json_script:"extraResultsColumns" }}
-    {{ phase.scoring_method_choice|json_script:"scoringMethodChoice" }}
-    {{ phase.ABSOLUTE|json_script:"absoluteScore" }}
-
-    <script id="observableIframeURL"
-            type="application/json">"{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=phase.slug %}"</script>
+    <script id="allowEvaluationComparison" type="application/json">
+        {% if phase.evaluation_comparison_observable_url %}true{% else %}false{% endif %}
+    </script>
+    <script id="observableIframeURL" type="application/json">
+        "{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=phase.slug %}"
+    </script>
+    <script id="allowMetricsToggling" type="application/json">
+        {% if phase.extra_results_columns|length > 0 or phase.scoring_method_choice != phase.ABSOLUTE %}
+            true
+        {% else %}
+            false
+        {% endif %}
+    </script>
 
     <script type="text/javascript" src="{% static 'js/evaluation/leaderboard.js' %}"></script>
 {% endblock %}
