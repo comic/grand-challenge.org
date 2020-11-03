@@ -30,6 +30,9 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.core.management.commands.evaluation_results import (
+    DEMO_RESULTS,
+)
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import (
     Evaluation,
@@ -200,19 +203,24 @@ class Command(BaseCommand):
 
         Phase.objects.create(challenge=demo, title="Phase 2")
 
-        for phase_num, phase in enumerate(demo.phase_set.all()):
-            phase.score_title = "Accuracy ± std"
-            phase.score_jsonpath = "acc.mean"
-            phase.score_error_jsonpath = "acc.std"
+        for phase in demo.phase_set.all():
+            phase.score_title = "AUC"
+            phase.score_jsonpath = "aggregates.summary_stats.az_ci_mean.value"
             phase.extra_results_columns = [
                 {
-                    "title": "Dice ± std",
-                    "path": "dice.mean",
-                    "error_path": "dice.std",
+                    "path": "aggregates.summary_stats.low_az_val.value",
                     "order": "desc",
-                }
+                    "title": "AUC 95%CI-",
+                },
+                {
+                    "path": "aggregates.summary_stats.high_az_val.value",
+                    "order": "desc",
+                    "title": "AUC 95%CI+",
+                },
             ]
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.evaluation_detail_observable_url = "https://observablehq.com/embed/@maartenvm/slideable-comic-challenge-results-visualization?cell=viewof+submissionNo&cell=viewof+confusion_matrix&cell=viewof+ROC_graph&cell=viewof+summary_stats_table"
+            phase.evaluation_comparison_observable_url = "https://observablehq.com/embed/@maartenvm/compare-comic-challenge-results-visualization?cell=viewof+confusion_matrix&cell=viewof+roc_graph&cell=viewof+summary_stats_table"
             phase.save()
 
             method = Method(phase=phase, creator=self.users["demo"])
@@ -220,20 +228,20 @@ class Command(BaseCommand):
             method.image.save("test.tar", container)
             method.save()
 
-            submission = Submission(phase=phase, creator=self.users["demop"])
-            content = ContentFile(base64.b64decode(b""))
-            submission.predictions_file.save("test.csv", content)
-            submission.save()
+            for result in DEMO_RESULTS:
+                submission = Submission(
+                    phase=phase, creator=self.users["demop"]
+                )
+                content = ContentFile(base64.b64decode(b""))
+                submission.predictions_file.save("test.csv", content)
+                submission.save()
 
-            e = Evaluation.objects.create(
-                submission=submission, method=method, status=Evaluation.SUCCESS
-            )
-            e.create_result(
-                result={
-                    "acc": {"mean": 0.1 * phase_num, "std": 0.1},
-                    "dice": {"mean": 0.71, "std": 0.05},
-                }
-            )
+                e = Evaluation.objects.create(
+                    submission=submission,
+                    method=method,
+                    status=Evaluation.SUCCESS,
+                )
+                e.create_result(result=result)
 
     def _create_external_challenge(self):
         ex_challenge = ExternalChallenge.objects.create(

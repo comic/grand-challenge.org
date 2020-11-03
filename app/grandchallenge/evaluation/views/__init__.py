@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from dateutil.relativedelta import relativedelta
 from django.contrib.messages.views import SuccessMessageMixin
@@ -7,6 +8,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models import Q
+from django.http import Http404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -37,6 +39,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from grandchallenge.evaluation.serializers import EvaluationSerializer
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
@@ -404,21 +407,33 @@ class LeaderboardDetail(
 
     @property
     def columns(self):
-        columns = [
-            Column(
-                title="Current #"
-                if "leaderboardDate" in self.request.GET
-                else "#",
-                sort_field="rank",
-            ),
-            Column(
-                title="User (Team)"
-                if self.request.challenge.use_teams
-                else "User",
-                sort_field="submission__creator__username",
-            ),
-            Column(title="Created", sort_field="created"),
-        ]
+        columns = []
+
+        if self.phase.evaluation_comparison_observable_url:
+            columns.append(
+                Column(
+                    title="",
+                    sort_field="",
+                    classes=("nonSortable",),
+                    identifier="compareEvaluationsHeader",
+                )
+            )
+
+        columns.extend(
+            [
+                Column(
+                    title="Current #" if "date" in self.request.GET else "#",
+                    sort_field="rank",
+                ),
+                Column(
+                    title="User (Team)"
+                    if self.request.challenge.use_teams
+                    else "User",
+                    sort_field="submission__creator__username",
+                ),
+                Column(title="Created", sort_field="created"),
+            ]
+        )
 
         if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))
@@ -434,7 +449,7 @@ class LeaderboardDetail(
                 Column(
                     title=f"{self.phase.score_title} (Position)",
                     sort_field="rank",
-                    toggleable=True,
+                    classes=("toggleable",),
                 )
             )
 
@@ -445,7 +460,7 @@ class LeaderboardDetail(
                     if self.phase.scoring_method_choice == self.phase.ABSOLUTE
                     else f"{c['title']} (Position)",
                     sort_field="rank",
-                    toggleable=True,
+                    classes=("toggleable",),
                 )
             )
 
@@ -467,6 +482,7 @@ class LeaderboardDetail(
                 Column(
                     title=self.phase.supplementary_file_label,
                     sort_field="submission__supplementary_file",
+                    classes=("nonSortable",),
                 )
             )
 
@@ -516,14 +532,60 @@ class LeaderboardDetail(
         return queryset
 
     def filter_by_date(self, queryset):
-        if "leaderboardDate" in self.request.GET:
-            year, month, day = self.request.GET["leaderboardDate"].split("-")
+        if "date" in self.request.GET:
+            year, month, day = self.request.GET["date"].split("-")
             before = datetime(
                 year=int(year), month=int(month), day=int(day)
             ) + relativedelta(days=1)
             return queryset.filter(submission__created__lt=before)
         else:
             return queryset
+
+
+class ObservableDetail(LeaderboardDetail):
+    template_name = "evaluation/observable_detail.html"
+
+    @property
+    def pk_filter(self):
+        return self.request.GET.getlist("pk")
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs).order_by("rank")
+
+        if self.pk_filter:
+            return queryset.filter(pk__in=self.pk_filter)
+        else:
+            return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        evaluations = EvaluationSerializer(self.object_list, many=True).data
+
+        kind = self.kwargs.get("kind", "").lower()
+
+        if kind == "detail" and self.phase.evaluation_detail_observable_url:
+            url = self.phase.evaluation_detail_observable_url
+        elif (
+            kind == "comparison"
+            and self.phase.evaluation_comparison_observable_url
+        ):
+            url = self.phase.evaluation_comparison_observable_url
+        else:
+            raise Http404()
+
+        url = url.replace(
+            "//observablehq.com/embed/", "//api.observablehq.com/"
+        )
+
+        context.update(
+            {
+                "observable_notebook": f"{urljoin(url, urlparse(url).path)}.js?v=3",
+                "observable_cells": parse_qs(urlparse(url).query)["cell"],
+                "evaluations": evaluations,
+            }
+        )
+        return context
 
 
 class EvaluationUpdate(

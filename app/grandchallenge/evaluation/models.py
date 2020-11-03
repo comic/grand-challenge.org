@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
@@ -91,6 +92,11 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         },
     },
 }
+
+OBSERVABLE_URL_VALIDATOR = RegexValidator(
+    r"^https\:\/\/observablehq\.com\/embed\/\@[^\/]+\/[^\?\.]+\?cell\=.*$",
+    "URL must be of the form https://observablehq.com/embed/@user/notebook?cell=*",
+)
 
 
 class Phase(UUIDModel):
@@ -338,13 +344,23 @@ class Phase(UUIDModel):
             "Should all of the metrics be displayed on the Result detail page?"
         ),
     )
-    submission_join_key = models.CharField(
+
+    evaluation_detail_observable_url = models.URLField(
         blank=True,
-        default="",
-        max_length=32,
+        validators=[OBSERVABLE_URL_VALIDATOR],
         help_text=(
-            "If predictions are submitted as csv files, which column should "
-            "be used to join the data? eg. case_id"
+            "The URL of the embeddable observable notebook for viewing "
+            "individual results. Must be of the form "
+            "https://observablehq.com/embed/@user/notebook?cell=..."
+        ),
+    )
+    evaluation_comparison_observable_url = models.URLField(
+        blank=True,
+        validators=[OBSERVABLE_URL_VALIDATOR],
+        help_text=(
+            "The URL of the embeddable observable notebook for comparing"
+            "results. Must be of the form "
+            "https://observablehq.com/embed/@user/notebook?cell=..."
         ),
     )
 
@@ -742,6 +758,10 @@ class Evaluation(UUIDModel, ComponentJob):
         calculate_ranks.apply_async(
             kwargs={"phase_pk": self.submission.phase.pk}
         )
+
+    @property
+    def title(self):
+        return f"#{self.rank} {self.submission.creator.username}"
 
     def assign_permissions(self):
         admins_group = self.submission.phase.challenge.admins_group

@@ -52,7 +52,6 @@ class Command(BaseCommand):
         "submission_page_html",
         "auto_publish_new_results",
         "display_all_metrics",
-        "submission_join_key",
     ]
 
     page_fields = [
