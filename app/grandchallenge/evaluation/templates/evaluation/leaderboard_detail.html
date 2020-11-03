@@ -60,12 +60,6 @@
             Only the most recent published result for each participant is listed.
         </p>
     {% else %}
-        <p>
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#leaderboardDateModal" title="Leaderboard History">
-                <i class="fas fa-history"></i>
-            </button>
-        </p>
-
         <div class="modal fade" id="leaderboardDateModal" tabindex="-1" role="dialog"
              aria-labelledby="leaderboardDateModalLabel"
              aria-hidden="true">
@@ -92,7 +86,6 @@
                 </div>
             </div>
         </div>
-
     {% endif %}
 
     {% if "change_challenge" in challenge_perms %}
@@ -130,7 +123,6 @@
             </div>
         </div>
     {% endif %}
-
 {% endblock %}
 
 {% block script %}
@@ -154,6 +146,9 @@
         {% else %}
             false
         {% endif %}
+    </script>
+    <script id="displayLeaderboardDateButton" type="application/json">
+        {% if phase.result_display_choice == phase.ALL %}true{% else %}false{% endif %}
     </script>
 
     <script type="text/javascript" src="{% static 'js/evaluation/leaderboard.js' %}"></script>

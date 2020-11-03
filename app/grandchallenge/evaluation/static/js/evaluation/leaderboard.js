@@ -6,6 +6,7 @@ const observableComparisonURL = JSON.parse(document.getElementById("observableCo
 const allowEvaluationNavigation = JSON.parse(document.getElementById("allowEvaluationNavigation").textContent)
 const observableDetailURL = JSON.parse(document.getElementById("observableDetailURL").textContent)
 const allowMetricsToggling = JSON.parse(document.getElementById("allowMetricsToggling").textContent)
+const displayLeaderboardDateButton = JSON.parse(document.getElementById("displayLeaderboardDateButton").textContent)
 
 let resultsTable = $('#resultsTable')
 let selectedResults = {}
@@ -131,8 +132,18 @@ $(document).ready(function () {
     if (allowEvaluationNavigation === true) {
         document.getElementById('compare-buttons-group').innerHTML += `
             <button type="button" id="browse-evaluations-button" class="btn btn-primary" 
-                    onclick="updateEvaluationNavigationModal()" data-toggle="modal" data-target="#observableModal">
-                Browse results
+                    onclick="updateEvaluationNavigationModal()" data-toggle="modal" data-target="#observableModal"
+                    title="Browse Results">
+                <i class="fas fa-chart-bar"></i>
+            </button>
+        `;
+    }
+
+    if (displayLeaderboardDateButton === true) {
+        document.getElementById('compare-buttons-group').innerHTML += `
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#leaderboardDateModal" 
+                    title="Leaderboard History">
+                <i class="fas fa-history"></i>
             </button>
         `;
     }
@@ -164,7 +175,7 @@ function updateEvaluationNavigationModal() {
 function getDataTablesDOMTemplate() {
     let DOM = "<'row'<'col-12'f>>"
 
-    if (allowMetricsToggling === true || allowEvaluationComparison === true || allowEvaluationNavigation === true) {
+    if (allowMetricsToggling === true || allowEvaluationComparison === true || allowEvaluationNavigation === true || displayLeaderboardDateButton === true) {
         DOM += "<'row'<'#compare-buttons-group.col-md-6'><'col px-0 text-right'B>>"
     }
 
