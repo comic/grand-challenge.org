@@ -201,7 +201,9 @@ function getDataTablesButtons() {
 }
 
 function updateCompareCheckBoxes() {
-    document.getElementById("browse-evaluations-button").disabled = document.getElementsByClassName("browseEvaluationPK").length === 0;
+    if (allowEvaluationNavigation === true) {
+        document.getElementById("browse-evaluations-button").disabled = document.getElementsByClassName("browseEvaluationPK").length === 0;
+    }
 
     $(".compareEvaluationCheckbox").filter(function () {
         return $(this).attr("value") in selectedResults

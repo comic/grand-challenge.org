@@ -422,9 +422,7 @@ class LeaderboardDetail(
         columns.extend(
             [
                 Column(
-                    title="Current #"
-                    if "leaderboardDate" in self.request.GET
-                    else "#",
+                    title="Current #" if "date" in self.request.GET else "#",
                     sort_field="rank",
                 ),
                 Column(
@@ -534,8 +532,8 @@ class LeaderboardDetail(
         return queryset
 
     def filter_by_date(self, queryset):
-        if "leaderboardDate" in self.request.GET:
-            year, month, day = self.request.GET["leaderboardDate"].split("-")
+        if "date" in self.request.GET:
+            year, month, day = self.request.GET["date"].split("-")
             before = datetime(
                 year=int(year), month=int(month), day=int(day)
             ) + relativedelta(days=1)
