@@ -1,4 +1,4 @@
-const SELECT_TEXT = "Select results for comparison"
+const SELECT_TEXT = `Select 2 or more results for comparison`
 const MAX_NUM_RESULTS_WARNING = 6
 
 const allowEvaluationComparison = JSON.parse(document.getElementById("allowEvaluationComparison").textContent)
@@ -64,10 +64,10 @@ $(document).ready(function () {
 
     if (allowEvaluationComparison === true) {
         document.getElementById('compare-buttons-group').innerHTML = `
-            <button type="button" id="compare-results-button" class="btn btn-link" 
+            <button type="button" id="compare-results-button" class="btn btn-secondary" 
                     onclick="updateEvaluationComparisonModal()" data-toggle="modal" data-target="#observableModal" 
-                    disabled>
-                ${SELECT_TEXT}
+                    disabled title="${SELECT_TEXT}">
+                <i class="fas fa-balance-scale-right"></i>
             </button>
         `;
 
@@ -81,11 +81,11 @@ $(document).ready(function () {
         compareAllEvaluationsCheckbox.prop('indeterminate', true).hide()
 
         // On click on General checkbox
-        compareAllEvaluationsCheckbox.on('click', function () {
+        compareAllEvaluationsCheckbox.on("click", function () {
             compareAllEvaluationsCheckbox.hide()
             selectedResults = {};
-            $(`.compareEvaluationCheckbox`).prop('checked', false)
-            $('#compare-results-button').prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
+            $(`.compareEvaluationCheckbox`).prop("checked", false)
+            $('#compare-results-button').prop("disabled", true).prop("title", SELECT_TEXT)
             $('#compare-warning-alert').addClass("d-none");
         })
 
@@ -107,13 +107,11 @@ $(document).ready(function () {
 
                 // Modify compare results button
                 if (numSelectedResults > 1) {
-                    compareResultsButton.prop('disabled', false)
-                        .text(`Compare ${numSelectedResults} results`)
-                        .removeClass('btn-link').addClass('btn-primary')
+                    compareResultsButton.prop("disabled", false)
+                        .prop("title", `Compare ${numSelectedResults} results`)
                 } else {
-                    compareResultsButton.prop('disabled', true)
-                        .text(SELECT_TEXT)
-                        .removeClass('btn-primary').addClass('btn-link')
+                    compareResultsButton.prop("disabled", true)
+                        .prop("title", SELECT_TEXT)
                 }
 
                 if (numSelectedResults === 0) {
@@ -131,7 +129,7 @@ $(document).ready(function () {
 
     if (allowEvaluationNavigation === true) {
         document.getElementById('compare-buttons-group').innerHTML += `
-            <button type="button" id="browse-evaluations-button" class="btn btn-primary" 
+            <button type="button" id="browse-evaluations-button" class="btn btn-secondary" 
                     onclick="updateEvaluationNavigationModal()" data-toggle="modal" data-target="#observableModal"
                     title="Browse through these results">
                 <i class="fas fa-chart-bar"></i>
@@ -141,8 +139,8 @@ $(document).ready(function () {
 
     if (displayLeaderboardDateButton === true) {
         document.getElementById('compare-buttons-group').innerHTML += `
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#leaderboardDateModal" 
-                    title="Leaderboard History">
+            <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#leaderboardDateModal" 
+                    title="Leaderboard history">
                 <i class="fas fa-history"></i>
             </button>
         `;
