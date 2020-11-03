@@ -161,6 +161,7 @@
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.core.files.uploadedfile</span> <span class="kn">import</span> <span class="n">SimpleUploadedFile</span>
+<span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">RegexValidator</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
@@ -246,6 +247,11 @@
         <span class="p">},</span>
     <span class="p">},</span>
 <span class="p">}</span>
+
+<span class="n">OBSERVABLE_URL_VALIDATOR</span> <span class="o">=</span> <span class="n">RegexValidator</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">&quot;^https\:\/\/observablehq\.com\/embed\/\@[^\/]+\/[^\?\.]+\?cell\=.*$&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;URL must be of the form https://observablehq.com/embed/@user/notebook?cell=*&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="Phase"><a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase">[docs]</a><span class="k">class</span> <span class="nc">Phase</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
@@ -493,13 +499,23 @@
             <span class="s2">&quot;Should all of the metrics be displayed on the Result detail page?&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">submission_join_key</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+
+    <span class="n">evaluation_detail_observable_url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">OBSERVABLE_URL_VALIDATOR</span><span class="p">],</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;If predictions are submitted as csv files, which column should &quot;</span>
-            <span class="s2">&quot;be used to join the data? eg. case_id&quot;</span>
+            <span class="s2">&quot;The URL of the embeddable observable notebook for viewing &quot;</span>
+            <span class="s2">&quot;individual results. Must be of the form &quot;</span>
+            <span class="s2">&quot;https://observablehq.com/embed/@user/notebook?cell=...&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">evaluation_comparison_observable_url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">OBSERVABLE_URL_VALIDATOR</span><span class="p">],</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The URL of the embeddable observable notebook for comparing&quot;</span>
+            <span class="s2">&quot;results. Must be of the form &quot;</span>
+            <span class="s2">&quot;https://observablehq.com/embed/@user/notebook?cell=...&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
 
@@ -897,6 +913,10 @@
         <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
         <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;#</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">creator</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">admins_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span>
