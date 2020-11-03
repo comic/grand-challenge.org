@@ -408,7 +408,7 @@ class LeaderboardDetail(
     def columns(self):
         columns = []
 
-        if self.phase.list_view_observable_url:
+        if self.phase.evaluation_comparison_observable_url:
             columns.append(
                 Column(
                     title="",
@@ -561,11 +561,14 @@ class ObservableDetail(LeaderboardDetail):
 
         evaluations = EvaluationSerializer(self.object_list, many=True).data
 
-        if len(evaluations) == 1 and self.phase.detail_view_observable_url:
-            url = self.phase.detail_view_observable_url
+        if (
+            len(evaluations) == 1
+            and self.phase.evaluation_detail_observable_url
+        ):
+            url = self.phase.evaluation_detail_observable_url
             evaluations = evaluations[0]
         else:
-            url = self.phase.list_view_observable_url
+            url = self.phase.evaluation_comparison_observable_url
 
         url = url.replace(
             "//observablehq.com/embed/", "//api.observablehq.com/"

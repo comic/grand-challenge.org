@@ -31,7 +31,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.core.management.commands.evaluation_results import (
-    DEMO_NOTEBOOKS,
     DEMO_RESULTS,
 )
 from grandchallenge.core.storage import public_s3_storage
@@ -204,7 +203,7 @@ class Command(BaseCommand):
 
         Phase.objects.create(challenge=demo, title="Phase 2")
 
-        for phase, notebook in zip(demo.phase_set.all(), DEMO_NOTEBOOKS):
+        for phase in demo.phase_set.all():
             phase.score_title = "AUC"
             phase.score_jsonpath = "aggregates.summary_stats.az_ci_mean.value"
             phase.extra_results_columns = [
@@ -220,8 +219,8 @@ class Command(BaseCommand):
                 },
             ]
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
-            phase.detail_view_observable_url = notebook
-            phase.list_view_observable_url = notebook
+            phase.evaluation_detail_observable_url = "https://observablehq.com/embed/@maartenvm/comic-challenge-results-visualization?cell=viewof+confusion_matrix&cell=viewof+ROC_graph&cell=viewof+summary_stats_table"
+            phase.evaluation_comparison_observable_url = "https://observablehq.com/embed/@maartenvm/compare-comic-challenge-results-visualization?cell=viewof+confusion_matrix&cell=viewof+roc_graph&cell=viewof+summary_stats_table"
             phase.save()
 
             method = Method(phase=phase, creator=self.users["demo"])

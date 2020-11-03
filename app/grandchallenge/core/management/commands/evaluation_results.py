@@ -1,8 +1,3 @@
-DEMO_NOTEBOOKS = [
-    "https://observablehq.com/embed/@maartenvm/compare-comic-challenge-results-visualization?cell=viewof+confusion_matrix&cell=viewof+roc_graph&cell=viewof+summary_stats_table",
-    "https://observablehq.com/embed/@pushpanjalip/comic-challenge-results-visualization?cell=parse_results&cell=viewof+view",
-]
-
 DEMO_RESULTS = [
     {
         "case": {},

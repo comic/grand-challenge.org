@@ -345,15 +345,23 @@ class Phase(UUIDModel):
         ),
     )
 
-    detail_view_observable_url = models.URLField(
+    evaluation_detail_observable_url = models.URLField(
         blank=True,
         validators=[OBSERVABLE_URL_VALIDATOR],
-        help_text="The URL of the embeddable observable notebook, must be of the form https://observablehq.com/embed/@user/notebook?cell=...",
+        help_text=(
+            "The URL of the embeddable observable notebook for viewing "
+            "individual results. Must be of the form "
+            "https://observablehq.com/embed/@user/notebook?cell=..."
+        ),
     )
-    list_view_observable_url = models.URLField(
+    evaluation_comparison_observable_url = models.URLField(
         blank=True,
         validators=[OBSERVABLE_URL_VALIDATOR],
-        help_text="The URL of the embeddable observable notebook, must be of the form https://observablehq.com/embed/@user/notebook?cell=...",
+        help_text=(
+            "The URL of the embeddable observable notebook for comparing"
+            "results. Must be of the form "
+            "https://observablehq.com/embed/@user/notebook?cell=..."
+        ),
     )
 
     inputs = models.ManyToManyField(
