@@ -564,11 +564,14 @@ class ObservableDetail(LeaderboardDetail):
 
         evaluations = EvaluationSerializer(self.object_list, many=True).data
 
-        if self.phase.evaluation_detail_observable_url and (
-            len(self.pk_filter) in [0, 1]
-        ):
+        kind = self.kwargs.get("kind", "").lower()
+
+        if kind == "detail" and self.phase.evaluation_detail_observable_url:
             url = self.phase.evaluation_detail_observable_url
-        elif self.phase.evaluation_comparison_observable_url:
+        elif (
+            kind == "comparison"
+            and self.phase.evaluation_comparison_observable_url
+        ):
             url = self.phase.evaluation_comparison_observable_url
         else:
             raise Http404()

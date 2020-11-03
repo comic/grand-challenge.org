@@ -2,7 +2,9 @@ const SELECT_TEXT = "Select results for comparison"
 const MAX_NUM_RESULTS_WARNING = 6
 
 const allowEvaluationComparison = JSON.parse(document.getElementById("allowEvaluationComparison").textContent)
-const observableIframeURL = JSON.parse(document.getElementById("observableIframeURL").textContent)
+const observableComparisonURL = JSON.parse(document.getElementById("observableComparisonURL").textContent)
+const allowEvaluationNavigation = JSON.parse(document.getElementById("allowEvaluationNavigation").textContent)
+const observableDetailURL = JSON.parse(document.getElementById("observableDetailURL").textContent)
 const allowMetricsToggling = JSON.parse(document.getElementById("allowMetricsToggling").textContent)
 
 let resultsTable = $('#resultsTable')
@@ -60,20 +62,19 @@ $(document).ready(function () {
     }
 
     if (allowEvaluationComparison === true) {
-        $('#compare-buttons-group').html(
-            `<button type="button" id="compare-results-button" class="btn btn-link" onclick="updateCompareIframe()" 
-                     data-toggle="modal" data-target="#compareModal" disabled>
+        document.getElementById('compare-buttons-group').innerHTML = `
+            <button type="button" id="compare-results-button" class="btn btn-link" 
+                    onclick="updateEvaluationComparisonModal()" data-toggle="modal" data-target="#observableModal" 
+                    disabled>
                 ${SELECT_TEXT}
-            </button>`
-        )
+            </button>
+        `;
 
-        $('#compareEvaluationsHeader').html(
-            `<span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
+        document.getElementById('compareEvaluationsHeader').innerHTML = `
+            <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="Deselect all results">
                 <input type="checkbox" id="compareAllEvaluationsCheckbox"/>
-            </span>`
-        )
-
-        let compareResultsButton = $('#compare-results-button')
+            </span>
+        `;
 
         let compareAllEvaluationsCheckbox = $('#compareAllEvaluationsCheckbox')
         compareAllEvaluationsCheckbox.prop('indeterminate', true).hide()
@@ -83,7 +84,7 @@ $(document).ready(function () {
             compareAllEvaluationsCheckbox.hide()
             selectedResults = {};
             $(`.compareEvaluationCheckbox`).prop('checked', false)
-            compareResultsButton.prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
+            $('#compare-results-button').prop('disabled', true).text(SELECT_TEXT).removeClass('btn-primary').addClass('btn-link')
             $('#compare-warning-alert').addClass("d-none");
         })
 
@@ -91,6 +92,7 @@ $(document).ready(function () {
         resultsTable.on('click', function (e) {
             if ($(e.target).is(':checkbox')) {
                 const resultId = $(e.target).val()
+                const compareResultsButton = $("#compare-results-button")
 
                 // Add or remove data to the object
                 if ($(e.target).is(':checked')) {
@@ -103,11 +105,7 @@ $(document).ready(function () {
                 const numSelectedResults = Object.entries(selectedResults).length
 
                 // Modify compare results button
-                if (numSelectedResults === 1) {
-                    compareResultsButton.prop('disabled', false)
-                        .text(`Visualise result`)
-                        .removeClass('btn-link').addClass('btn-primary')
-                } else if (numSelectedResults > 1) {
+                if (numSelectedResults > 1) {
                     compareResultsButton.prop('disabled', false)
                         .text(`Compare ${numSelectedResults} results`)
                         .removeClass('btn-link').addClass('btn-primary')
@@ -115,6 +113,9 @@ $(document).ready(function () {
                     compareResultsButton.prop('disabled', true)
                         .text(SELECT_TEXT)
                         .removeClass('btn-primary').addClass('btn-link')
+                }
+
+                if (numSelectedResults === 0) {
                     compareAllEvaluationsCheckbox.hide()
                 }
 
@@ -126,23 +127,44 @@ $(document).ready(function () {
             }
         })
     }
+
+    if (allowEvaluationNavigation === true) {
+        document.getElementById('compare-buttons-group').innerHTML += `
+            <button type="button" id="navigate-evaluations-button" class="btn btn-primary" 
+                    onclick="updateEvaluationNavigationModal()" data-toggle="modal" data-target="#observableModal">
+                Navigate results
+            </button>
+        `;
+    }
 });
 
 $(window).resize(function () {
     resultsTable.DataTable().columns.adjust()
 });
 
-function updateCompareIframe() {
-    let search = new URLSearchParams(Object.keys(selectedResults).map(pk => ["pk", pk]))
-    let notebook = document.getElementById('observableNotebook')
+function updateEvaluationComparisonModal() {
+    const search = new URLSearchParams(Object.keys(selectedResults).map(pk => ["pk", pk]))
+    const notebook = document.getElementById('observableNotebook')
+    const modelLabel = document.getElementById('observableModalLabel')
 
-    notebook.src = `${observableIframeURL}?${search.toString()}`;
+    modelLabel.textContent = "Compare Results"
+    notebook.src = `${observableComparisonURL}?${search.toString()}`;
+}
+
+function updateEvaluationNavigationModal() {
+    const pkElements = Array.from(document.getElementsByClassName("navigateEvaluationPK"))
+    const search = new URLSearchParams(pkElements.map(e => ["pk", e.value]))
+    const notebook = document.getElementById('observableNotebook')
+    const modelLabel = document.getElementById('observableModalLabel')
+
+    modelLabel.textContent = "Browse Results"
+    notebook.src = `${observableDetailURL}?${search.toString()}`;
 }
 
 function getDataTablesDOMTemplate() {
     let DOM = "<'row'<'col-12'f>>"
 
-    if (allowMetricsToggling === true || allowEvaluationComparison === true) {
+    if (allowMetricsToggling === true || allowEvaluationComparison === true || allowEvaluationNavigation === true) {
         DOM += "<'row'<'#compare-buttons-group.col-md-6'><'col px-0 text-right'B>>"
     }
 
@@ -179,7 +201,9 @@ function getDataTablesButtons() {
 }
 
 function updateCompareCheckBoxes() {
+    document.getElementById("navigate-evaluations-button").disabled = document.getElementsByClassName("navigateEvaluationPK").length === 0;
+
     $(".compareEvaluationCheckbox").filter(function () {
         return $(this).attr("value") in selectedResults
-    }).prop('checked', true)
+    }).prop('checked', true);
 }

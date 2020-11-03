@@ -28,7 +28,7 @@ urlpatterns = [
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
     ),
     path(
-        "<slug>/observable/",
+        "<slug>/observable/<slug:kind>/",
         ObservableDetail.as_view(),
         name="observable-detail",
     ),

@@ -145,7 +145,7 @@
             <iframe id="observableNotebook"
                     style="height: 75vh; min-width: 100%;"
                     sandbox="allow-scripts"
-                    src="{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}?pk={{ object.pk }}">
+                    src="{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug kind='detail' %}?pk={{ object.pk }}">
             </iframe>
         {% endif %}
 
