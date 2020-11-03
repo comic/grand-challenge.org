@@ -111,7 +111,9 @@ def test_user_update_form(client):
 def test_archive_create(client):
     # The archive creator should automatically get added to the editors group
     creator = UserFactory()
-    add_archive_perm = Permission.objects.get(codename=f"add_{Archive._meta.model_name}")
+    add_archive_perm = Permission.objects.get(
+        codename=f"add_{Archive._meta.model_name}"
+    )
     creator.user_permissions.add(add_archive_perm)
 
     ws = WorkstationFactory()
