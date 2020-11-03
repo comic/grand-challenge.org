@@ -219,7 +219,7 @@ class Command(BaseCommand):
                 },
             ]
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
-            phase.evaluation_detail_observable_url = "https://observablehq.com/embed/@maartenvm/comic-challenge-results-visualization?cell=viewof+confusion_matrix&cell=viewof+ROC_graph&cell=viewof+summary_stats_table"
+            phase.evaluation_detail_observable_url = "https://observablehq.com/embed/@maartenvm/slideable-comic-challenge-results-visualization?cell=viewof+submissionNo&cell=viewof+confusion_matrix&cell=viewof+ROC_graph&cell=viewof+summary_stats_table"
             phase.evaluation_comparison_observable_url = "https://observablehq.com/embed/@maartenvm/compare-comic-challenge-results-visualization?cell=viewof+confusion_matrix&cell=viewof+roc_graph&cell=viewof+summary_stats_table"
             phase.save()
 

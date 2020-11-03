@@ -8,6 +8,7 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models import Q
+from django.http import Http404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -546,13 +547,15 @@ class LeaderboardDetail(
 class ObservableDetail(LeaderboardDetail):
     template_name = "evaluation/observable_detail.html"
 
+    @property
+    def pk_filter(self):
+        return self.request.GET.getlist("pk")
+
     def get_queryset(self, *args, **kwargs):
         queryset = super().get_queryset(*args, **kwargs).order_by("rank")
 
-        pk_filter = self.request.GET.getlist("pk")
-
-        if pk_filter:
-            return queryset.filter(pk__in=pk_filter)
+        if self.pk_filter:
+            return queryset.filter(pk__in=self.pk_filter)
         else:
             return queryset
 
@@ -561,14 +564,14 @@ class ObservableDetail(LeaderboardDetail):
 
         evaluations = EvaluationSerializer(self.object_list, many=True).data
 
-        if (
-            len(evaluations) == 1
-            and self.phase.evaluation_detail_observable_url
+        if self.phase.evaluation_detail_observable_url and (
+            len(self.pk_filter) in [0, 1]
         ):
             url = self.phase.evaluation_detail_observable_url
-            evaluations = evaluations[0]
-        else:
+        elif self.phase.evaluation_comparison_observable_url:
             url = self.phase.evaluation_comparison_observable_url
+        else:
+            raise Http404()
 
         url = url.replace(
             "//observablehq.com/embed/", "//api.observablehq.com/"
