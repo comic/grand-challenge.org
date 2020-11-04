@@ -50,16 +50,14 @@ def test_create_jobs_is_limited():
     riu.algorithm_image.algorithm.save()
     riu.creator = user
 
-    im1, im2, im3 = (
-        ImageFactory(origin=riu),
-        ImageFactory(origin=riu),
-        ImageFactory(origin=riu),
-    )
+    ImageFactory(origin=riu),
+    ImageFactory(origin=riu),
+    ImageFactory(origin=riu),
     riu.save()
 
     assert Job.objects.count() == 0
 
-    create_algorithm_jobs(upload_session_pk=im1.origin.pk)
+    create_algorithm_jobs(upload_session_pk=riu.pk)
 
     # A maximum of 2 jobs should be created
     assert Job.objects.count() == 2

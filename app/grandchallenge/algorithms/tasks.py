@@ -66,11 +66,16 @@ def create_algorithm_jobs(*_, upload_session_pk):
 def send_failed_jobs_email(*_, upload_session_pk):
     session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
-    excluded_images_count = len(list(
-        image for image in session.image_set.all() if not Job.objects.filter(
-            inputs__image__origin_id=upload_session_pk, inputs__image=image,
-        ).exists()
-    ))
+    excluded_images_count = len(
+        list(
+            image
+            for image in session.image_set.all()
+            if not Job.objects.filter(
+                inputs__image__origin_id=upload_session_pk,
+                inputs__image=image,
+            ).exists()
+        )
+    )
 
     failed_jobs = Job.objects.filter(
         inputs__image__origin_id=upload_session_pk, status=Job.FAILURE
