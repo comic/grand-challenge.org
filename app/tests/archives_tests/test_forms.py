@@ -18,7 +18,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_editor_update_form(client):
-    archive, _ = ArchiveFactory(), ArchiveFactory()
+    archive = ArchiveFactory()
 
     editor = UserFactory()
     archive.editors_group.user_set.add(editor)
@@ -60,7 +60,7 @@ def test_editor_update_form(client):
 
 @pytest.mark.django_db
 def test_user_update_form(client):
-    archive, _ = ArchiveFactory(), ArchiveFactory()
+    archive = ArchiveFactory()
 
     editor = UserFactory()
     archive.editors_group.user_set.add(editor)
