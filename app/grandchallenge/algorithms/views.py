@@ -149,7 +149,12 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
 
         form = UsersForm()
         form.fields["action"].initial = UsersForm.REMOVE
-        context.update({"form": form})
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+
+        context.update(
+            {"form": form, "editor_remove_form": editor_remove_form}
+        )
 
         pending_permission_requests = AlgorithmPermissionRequest.objects.filter(
             algorithm=context["object"],

@@ -1,7 +1,7 @@
 import factory
 
-from grandchallenge.archives.models import Archive
-from tests.cases_tests.factories import ImageFactory
+from grandchallenge.archives.models import Archive, ArchivePermissionRequest
+from tests.factories import ImageFactory, UserFactory
 
 
 class ArchiveFactory(factory.django.DjangoModelFactory):
@@ -20,3 +20,11 @@ class ArchiveFactory(factory.django.DjangoModelFactory):
                 self.images.add(image)
         if create and not extracted:
             self.images.add(ImageFactory())
+
+
+class ArchivePermissionRequestFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ArchivePermissionRequest
+
+    archive = factory.SubFactory(ArchiveFactory)
+    user = factory.SubFactory(UserFactory)

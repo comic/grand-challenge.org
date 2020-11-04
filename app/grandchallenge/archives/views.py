@@ -141,12 +141,16 @@ class ArchiveDetail(
         uploader_remove_form = UploadersForm()
         uploader_remove_form.fields["action"].initial = UploadersForm.REMOVE
 
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+
         limit = 1000
 
         context.update(
             {
                 "user_remove_form": user_remove_form,
                 "uploader_remove_form": uploader_remove_form,
+                "editor_remove_form": editor_remove_form,
                 "now": now().isoformat(),
                 "limit": limit,
                 "offsets": range(0, context["object"].images.count(), limit),
