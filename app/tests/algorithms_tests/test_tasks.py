@@ -3,6 +3,7 @@ import pytest
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from tests.algorithms_tests.factories import AlgorithmImageFactory
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.factories import ImageFactory, UserFactory
 
 
@@ -38,4 +39,27 @@ def test_create_jobs_is_idempotent():
 
     create_algorithm_jobs(upload_session_pk=image.origin.pk)
 
+    assert Job.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_create_jobs_is_limited():
+    user = UserFactory()
+    riu = RawImageUploadSessionFactory()
+    riu.algorithm_image.algorithm.job_limit = 2
+    riu.algorithm_image.algorithm.save()
+    riu.creator = user
+
+    im1, im2, im3 = (
+        ImageFactory(origin=riu),
+        ImageFactory(origin=riu),
+        ImageFactory(origin=riu),
+    )
+    riu.save()
+
+    assert Job.objects.count() == 0
+
+    create_algorithm_jobs(upload_session_pk=im1.origin.pk)
+
+    # A maximum of 2 jobs should be created
     assert Job.objects.count() == 2

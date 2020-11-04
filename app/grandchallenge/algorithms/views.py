@@ -353,6 +353,7 @@ class AlgorithmExecutionSessionCreate(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
+        context.update({"remaining_jobs": self.get_remaining_jobs()})
         return context
 
     def get_success_url(self):
@@ -360,6 +361,23 @@ class AlgorithmExecutionSessionCreate(
             "algorithms:execution-session-detail",
             kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
+
+    def get_remaining_jobs(self) -> int:
+        """
+        Determines the number of jobs left for the user.
+
+        :return: the number of jobs left for the user.
+        """
+        jobs = (
+            Job.objects.filter(
+                creator=self.request.user,
+                algorithm_image__algorithm=self.algorithm,
+            )
+            .exclude(status=Job.FAILURE)
+            .distinct()
+        )
+
+        return self.algorithm.job_limit - len(jobs)
 
 
 class AlgorithmExecutionSessionDetail(

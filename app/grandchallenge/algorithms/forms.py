@@ -46,6 +46,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "job_create_page_markdown",
             "additional_terms_markdown",
             "result_template",
+            "job_limit",
         )
         widgets = {
             "description": TextInput,

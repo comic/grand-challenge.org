@@ -27,10 +27,17 @@
 
     {{ algorithm.job_create_page_markdown|md2html }}
 
-    <p>Select the images that you would like to run the algorithm on.</p>
+    {% if remaining_jobs == 0 %}
+        <p>It is not possible to upload new images for this algorithm.</p>
+    {% else %}
+        <p>Select the images that you would like to run the algorithm on.</p>
+        <p>
+            You can upload {{ remaining_jobs }} more
+            image{{ remaining_jobs|pluralize }} to try this algorithm.
+        </p>
 
-    {% crispy form %}
-
+        {% crispy form %}
+    {%  endif %}
     <p>
         By running this algorithm you agree to the
         <a href="{% url 'policies:detail' slug='terms-of-service' %}"> General

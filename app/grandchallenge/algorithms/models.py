@@ -111,6 +111,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         to=ComponentInterface, related_name="algorithm_outputs"
     )
 
+    job_limit = models.PositiveIntegerField(
+        default=10,
+        help_text=(
+            "The limit on the number of times that a user can start "
+            "a job for an algorithm."
+        ),
+    )
+
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
         permissions = [("execute_algorithm", "Can execute algorithm")]
