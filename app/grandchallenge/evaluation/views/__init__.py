@@ -588,7 +588,7 @@ class ObservableDetail(LeaderboardDetail):
         context.update(
             {
                 "observable_notebook_js": f"{js_url}.js?v=3",
-                "observable_notebook_edit": edit_url,
+                "observable_notebook_edit": f"{edit_url}?{self.request.GET.urlencode()}",
                 "observable_cells": cells,
                 "evaluations": evaluations,
             }

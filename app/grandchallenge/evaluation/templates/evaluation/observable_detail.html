@@ -21,7 +21,8 @@
             <a id="observableEditLink"
                class="btn btn-primary"
                title="Edit notebook in observable"
-               target="_blank">
+               target="_blank"
+               href="{{ observable_notebook_edit }}">
                 <i class="fa fa-edit"></i>
             </a>
         </p>
@@ -34,7 +35,6 @@
     {{ evaluations|json_script:"evaluations" }}
     {{ observable_cells|json_script:"observableCells" }}
     {{ observable_notebook_js|json_script:"observableNotebookJS" }}
-    {{ observable_notebook_edit|json_script:"observableNotebookEdit" }}
 
     <script type="module" src="{% static 'js/evaluation/observable.js' %}"></script>
 {% endblock %}

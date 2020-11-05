@@ -2,7 +2,6 @@ import {Inspector, Runtime} from "https://cdn.jsdelivr.net/npm/@observablehq/run
 
 if (window.self !== window.top) {
     const observableNotebookJS = JSON.parse(document.getElementById("observableNotebookJS").textContent);
-    const observableNotebookEdit = JSON.parse(document.getElementById("observableNotebookEdit").textContent);
     const selectedCells = JSON.parse(document.getElementById("observableCells").textContent);
     const evaluations = JSON.parse(document.getElementById("evaluations").textContent);
 
@@ -28,10 +27,4 @@ if (window.self !== window.top) {
             main.redefine("parse_results", evaluations);
         }
     )
-
-    const observableEditLink = document.getElementById("observableEditLink");
-    if (observableEditLink !== undefined) {
-        let search = new URLSearchParams(evaluations.map(e => ["pk", e.pk]));
-        observableEditLink.href = `${observableNotebookEdit}?${search}`;
-    }
 }
