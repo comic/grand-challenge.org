@@ -278,7 +278,7 @@ def test_api_rs_question_list_permissions(client):
     )
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (rs_set.creator, 200, []),
         (rs_set.editor1, 200, [q1.pk]),
         (rs_set.reader1, 200, [q1.pk]),
@@ -296,14 +296,10 @@ def test_api_rs_question_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
 
 @pytest.mark.django_db
@@ -313,7 +309,7 @@ def test_api_rs_question_detail_permissions(client):
     q1 = QuestionFactory(reader_study=rs_set.rs1)
 
     tests = (
-        (None, 401),
+        (None, 404),
         (rs_set.creator, 404),
         (rs_set.editor1, 200),
         (rs_set.reader1, 200),
