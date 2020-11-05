@@ -1,3 +1,4 @@
+from guardian.utils import get_anonymous_user
 from rest_framework.permissions import DjangoObjectPermissions
 
 
@@ -19,7 +20,11 @@ class DjangoObjectOnlyPermissions(DjangoObjectPermissions):
             return True
 
         if not request.user or (
-            not request.user.is_authenticated and self.authenticated_users_only
+            (
+                not request.user.is_authenticated
+                or request.user == get_anonymous_user()
+            )
+            and self.authenticated_users_only
         ):
             return False
 
