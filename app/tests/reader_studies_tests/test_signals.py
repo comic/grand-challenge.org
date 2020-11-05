@@ -37,7 +37,7 @@ def test_reader_can_download_images(client, reverse):
         rs_set.rs1.images.remove(im3, im4)
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (rs_set.creator, 200, []),
         (rs_set.editor1, 200, []),
         (rs_set.reader1, 200, [im1.pk, im2.pk]),
@@ -55,14 +55,10 @@ def test_reader_can_download_images(client, reverse):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
     # Test clearing
     if reverse:

@@ -1,7 +1,4 @@
 {% extends "base.html" %}
-{% load url %}
-{% load profiles %}
-{% load evaluation_extras %}
 {% load static %}
 
 {% block breadcrumbs %}
@@ -11,13 +8,27 @@
 {% endblock %}
 
 {% block body %}
+    <div id="observableAlert" class="alert alert-danger d-none" role="alert"></div>
+
     {% for cell in observable_cells %}
-        <div id="observableCell{{ cell|cut:" "|cut:"*" }}" class="text-center my-1">
+        <div id="observableCell{{ cell|cut:" "|cut:"*" }}" class="text-center my-1 observableCell">
             <div class="text-secondary spinner-border" role="status">
                 <span class="sr-only">Loading Results...</span>
             </div>
         </div>
     {% endfor %}
+
+    {% if "change_challenge" in challenge_perms %}
+        <p>
+            <a id="observableEditLink"
+               class="btn btn-primary"
+               title="Edit notebook in observable"
+               target="_blank"
+               href="{{ observable_notebook_edit }}">
+                <i class="fa fa-edit"></i>
+            </a>
+        </p>
+    {% endif %}
 {% endblock %}
 
 {% block script %}
@@ -25,7 +36,7 @@
 
     {{ evaluations|json_script:"evaluations" }}
     {{ observable_cells|json_script:"observableCells" }}
-    {{ observable_notebook|json_script:"observableNotebook" }}
+    {{ observable_notebook_js|json_script:"observableNotebookJS" }}
 
     <script type="module" src="{% static 'js/evaluation/observable.js' %}"></script>
 {% endblock %}

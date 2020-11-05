@@ -338,7 +338,7 @@ def test_api_algorithm_list_permissions(client):
     alg_set = TwoAlgorithms()
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (alg_set.creator, 200, []),
         (alg_set.editor1, 200, [alg_set.alg1.pk]),
         (alg_set.user1, 200, [alg_set.alg1.pk]),
@@ -356,14 +356,10 @@ def test_api_algorithm_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
 
 @pytest.mark.django_db
@@ -374,7 +370,7 @@ def test_api_algorithm_image_list_permissions(client):
     alg2_image_pk = AlgorithmImageFactory(algorithm=alg_set.alg2).pk
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (alg_set.creator, 200, []),
         (alg_set.editor1, 200, [alg1_image_pk]),
         (alg_set.user1, 200, []),
@@ -392,14 +388,10 @@ def test_api_algorithm_image_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
 
 @pytest.mark.django_db
@@ -416,7 +408,7 @@ def test_api_job_list_permissions(client):
     )
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (alg_set.creator, 200, []),
         (alg_set.editor1, 200, [alg1_job]),
         (alg_set.user1, 200, []),
@@ -436,26 +428,24 @@ def test_api_job_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            job_pks = {obj["pk"] for obj in response.json()["results"]}
-            assert job_pks == {str(j.pk) for j in test[2]}
+        job_pks = {obj["pk"] for obj in response.json()["results"]}
+        assert job_pks == {str(j.pk) for j in test[2]}
 
-            # Ensure that the images are downloadable
-            response = get_view_for_user(
-                viewname="api:image-list",
-                client=client,
-                user=test[0],
-                content_type="application/json",
-            )
-            assert response.status_code == 200
+        # Ensure that the images are downloadable
+        response = get_view_for_user(
+            viewname="api:image-list",
+            client=client,
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == 200
 
-            image_pks = {obj["pk"] for obj in response.json()["results"]}
-            assert image_pks == {
-                str(i.image.pk) for j in test[2] for i in j.inputs.all()
-            }
+        image_pks = {obj["pk"] for obj in response.json()["results"]}
+        assert image_pks == {
+            str(i.image.pk) for j in test[2] for i in j.inputs.all()
+        }
 
 
 @pytest.mark.django_db

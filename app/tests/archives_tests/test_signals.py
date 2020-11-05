@@ -33,7 +33,7 @@ def test_user_can_download_images(client, reverse):  # noqa: C901
         arch_set.arch1.images.remove(im3, im4)
 
     tests = (
-        (None, 401, set()),
+        (None, 200, set()),
         (arch_set.editor1, 200, {im1.pk, im2.pk}),
         (arch_set.uploader1, 200, {im1.pk, im2.pk}),
         (arch_set.user1, 200, {im1.pk, im2.pk}),
@@ -52,14 +52,13 @@ def test_user_can_download_images(client, reverse):  # noqa: C901
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            pks = [obj["pk"] for obj in response.json()["results"]]
+        pks = [obj["pk"] for obj in response.json()["results"]]
 
-            for pk in test[2]:
-                assert str(pk) in pks
+        for pk in test[2]:
+            assert str(pk) in pks
 
-            for pk in images - test[2]:
-                assert str(pk) not in pks
+        for pk in images - test[2]:
+            assert str(pk) not in pks
 
     # Test clearing
     if reverse:
