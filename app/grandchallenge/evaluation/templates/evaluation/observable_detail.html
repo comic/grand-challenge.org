@@ -1,7 +1,4 @@
 {% extends "base.html" %}
-{% load url %}
-{% load profiles %}
-{% load evaluation_extras %}
 {% load static %}
 
 {% block breadcrumbs %}
@@ -18,6 +15,17 @@
             </div>
         </div>
     {% endfor %}
+
+    {% if "change_challenge" in challenge_perms %}
+        <p>
+            <a id="observableEditLink"
+               class="btn btn-primary"
+               title="Edit notebook in observable"
+               target="_blank">
+                <i class="fa fa-edit"></i>
+            </a>
+        </p>
+    {% endif %}
 {% endblock %}
 
 {% block script %}
@@ -25,7 +33,12 @@
 
     {{ evaluations|json_script:"evaluations" }}
     {{ observable_cells|json_script:"observableCells" }}
-    {{ observable_notebook|json_script:"observableNotebook" }}
+    {{ observable_notebook_js|json_script:"observableNotebookJS" }}
+    {{ observable_notebook_edit|json_script:"observableNotebookEdit" }}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"
+            integrity="sha512-qoCTmFwBtCPvFhA+WAqatSOrghwpDhFHxwAGh+cppWonXbHA09nG1z5zi4/NGnp8dUhXiVrzA6EnKgJA+fyrpw=="
+            crossorigin="anonymous"></script>
 
     <script type="module" src="{% static 'js/evaluation/observable.js' %}"></script>
 {% endblock %}

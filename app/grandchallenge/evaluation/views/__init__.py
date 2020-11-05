@@ -574,14 +574,22 @@ class ObservableDetail(LeaderboardDetail):
         else:
             raise Http404()
 
-        url = url.replace(
-            "//observablehq.com/embed/", "//api.observablehq.com/"
+        parsed_url = urlparse(url)
+        cells = parse_qs(parsed_url.query)["cell"]
+        url = f"{urljoin(url, parsed_url.path)}"
+
+        js_url = url.replace(
+            "https://observablehq.com/embed/", "https://api.observablehq.com/"
+        )
+        edit_url = url.replace(
+            "https://observablehq.com/embed/", "https://observablehq.com/"
         )
 
         context.update(
             {
-                "observable_notebook": f"{urljoin(url, urlparse(url).path)}.js?v=3",
-                "observable_cells": parse_qs(urlparse(url).query)["cell"],
+                "observable_notebook_js": f"{js_url}.js?v=3",
+                "observable_notebook_edit": edit_url,
+                "observable_cells": cells,
                 "evaluations": evaluations,
             }
         )
