@@ -24,7 +24,16 @@ if (window.self !== window.top) {
                 });
             }
 
-            main.redefine("parse_results", evaluations);
+            try {
+                main.redefine("parse_results", evaluations);
+            } catch (error) {
+                const alert = document.getElementById("observableAlert");
+                alert.textContent = "The variable 'parse_results' has not been defined in the provided notebook.";
+                alert.classList.remove("d-none");
+
+                const cells = document.getElementsByClassName("observableCell");
+                while (cells.length > 0) cells[0].remove();
+            }
         }
     )
 }
