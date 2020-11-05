@@ -31,7 +31,7 @@ if (window.self !== window.top) {
 
     const observableEditLink = document.getElementById("observableEditLink");
     if (observableEditLink !== undefined) {
-        let search = new URLSearchParams([["d", LZString.compressToEncodedURIComponent(JSON.stringify(evaluations.slice(0,2)))]]);
+        let search = new URLSearchParams(evaluations.map(e => ["pk", e.pk]));
         observableEditLink.href = `${observableNotebookEdit}?${search}`;
     }
 }

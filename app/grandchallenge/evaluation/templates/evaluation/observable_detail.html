@@ -36,9 +36,5 @@
     {{ observable_notebook_js|json_script:"observableNotebookJS" }}
     {{ observable_notebook_edit|json_script:"observableNotebookEdit" }}
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"
-            integrity="sha512-qoCTmFwBtCPvFhA+WAqatSOrghwpDhFHxwAGh+cppWonXbHA09nG1z5zi4/NGnp8dUhXiVrzA6EnKgJA+fyrpw=="
-            crossorigin="anonymous"></script>
-
     <script type="module" src="{% static 'js/evaluation/observable.js' %}"></script>
 {% endblock %}
