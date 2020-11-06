@@ -5,6 +5,15 @@ if (window.self !== window.top) {
     const selectedCells = JSON.parse(document.getElementById("observableCells").textContent);
     const evaluations = JSON.parse(document.getElementById("evaluations").textContent);
 
+    function setErrorMessage(msg) {
+        const alert = document.getElementById("observableAlert");
+        alert.textContent = msg
+        alert.classList.remove("d-none");
+
+        const cells = document.getElementsByClassName("observableCell");
+        while (cells.length > 0) cells[0].remove();
+    }
+
     import(observableNotebookJS).then(
         module => {
             const runtime = new Runtime()
@@ -29,13 +38,11 @@ if (window.self !== window.top) {
             try {
                 main.redefine("parse_results", evaluations);
             } catch (error) {
-                const alert = document.getElementById("observableAlert");
-                alert.textContent = "The variable 'parse_results' has not been defined in the provided notebook.";
-                alert.classList.remove("d-none");
-
-                const cells = document.getElementsByClassName("observableCell");
-                while (cells.length > 0) cells[0].remove();
+                setErrorMessage("The variable 'parse_results' has not been defined in the provided notebook.");
             }
         }
-    )
+    ).catch(() => {
+            setErrorMessage("Could not load notebook.");
+        }
+    );
 }
