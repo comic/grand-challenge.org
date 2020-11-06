@@ -19,7 +19,9 @@ if (window.self !== window.top) {
                     let selected = selectedCells.indexOf(name);
                     if (selected > -1) {
                         const id = selectedCells[selected].replace(/[\s*]/g, "");  // remove spaces and * from cell names
-                        return new Inspector(document.querySelector("#observableCell" + id));
+                        let cell = document.querySelector("#observableCell" + id);
+                        cell.classList.remove("text-center");
+                        return new Inspector(cell);
                     }
                 });
             }

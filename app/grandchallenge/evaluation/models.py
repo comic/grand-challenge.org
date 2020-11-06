@@ -348,6 +348,7 @@ class Phase(UUIDModel):
     evaluation_detail_observable_url = models.URLField(
         blank=True,
         validators=[OBSERVABLE_URL_VALIDATOR],
+        max_length=2000,
         help_text=(
             "The URL of the embeddable observable notebook for viewing "
             "individual results. Must be of the form "
@@ -357,6 +358,7 @@ class Phase(UUIDModel):
     evaluation_comparison_observable_url = models.URLField(
         blank=True,
         validators=[OBSERVABLE_URL_VALIDATOR],
+        max_length=2000,
         help_text=(
             "The URL of the embeddable observable notebook for comparing"
             "results. Must be of the form "

@@ -240,7 +240,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = strtobool(
 SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
-X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
+X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
 SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "same-origin"
 )

@@ -10,8 +10,10 @@ from django.core.files import File
 from django.db.models import Q
 from django.http import Http404
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.timezone import now
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -542,6 +544,7 @@ class LeaderboardDetail(
             return queryset
 
 
+@method_decorator(xframe_options_sameorigin, name="dispatch")
 class ObservableDetail(LeaderboardDetail):
     template_name = "evaluation/observable_detail.html"
 
