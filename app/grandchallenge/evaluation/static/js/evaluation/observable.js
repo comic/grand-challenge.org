@@ -36,9 +36,9 @@ if (window.self !== window.top) {
             }
 
             try {
-                main.redefine("parse_results", evaluations);
+                main.redefine("evaluations", evaluations);
             } catch (error) {
-                setErrorMessage("The variable 'parse_results' has not been defined in the provided notebook.");
+                setErrorMessage("The variable 'evaluations' has not been defined in the provided notebook.");
             }
         }
     ).catch(() => {
