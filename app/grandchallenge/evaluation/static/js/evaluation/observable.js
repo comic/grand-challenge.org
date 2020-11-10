@@ -22,6 +22,7 @@ if (window.self !== window.top) {
             if (selectedCells.length === 1 && selectedCells.every((c) => c === "*")) {
                 const cell = document.querySelector("#observableCell");
                 cell.textContent = "";
+                cell.classList.remove("text-center");
                 main = runtime.module(module.default, Inspector.into(cell));
             } else {
                 main = runtime.module(module.default, (name) => {
