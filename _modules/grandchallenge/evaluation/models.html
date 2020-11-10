@@ -155,6 +155,7 @@
   <h1>Source code for grandchallenge.evaluation.models</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">dumps</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">parse_qs</span><span class="p">,</span> <span class="n">urljoin</span><span class="p">,</span> <span class="n">urlparse</span>
 
 <span class="kn">from</span> <span class="nn">celery</span> <span class="kn">import</span> <span class="n">group</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -572,7 +573,49 @@
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;pages:home&quot;</span><span class="p">,</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">},</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_observable_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view_kind</span><span class="p">,</span> <span class="n">url_kind</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">view_kind</span> <span class="o">==</span> <span class="s2">&quot;detail&quot;</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_detail_observable_url</span>
+        <span class="k">elif</span> <span class="n">view_kind</span> <span class="o">==</span> <span class="s2">&quot;comparison&quot;</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_comparison_observable_url</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;View or notebook not found&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">url</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="p">[]</span>
+
+        <span class="n">parsed_url</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">cells</span> <span class="o">=</span> <span class="n">parse_qs</span><span class="p">(</span><span class="n">parsed_url</span><span class="o">.</span><span class="n">query</span><span class="p">)[</span><span class="s2">&quot;cell&quot;</span><span class="p">]</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">urljoin</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">parsed_url</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="n">url_kind</span> <span class="o">==</span> <span class="s2">&quot;js&quot;</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                <span class="s2">&quot;https://observablehq.com/embed/&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;https://api.observablehq.com/&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">url</span> <span class="o">+=</span> <span class="s2">&quot;.js?v=3&quot;</span>
+        <span class="k">elif</span> <span class="n">url_kind</span> <span class="o">==</span> <span class="s2">&quot;edit&quot;</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                <span class="s2">&quot;https://observablehq.com/embed/&quot;</span><span class="p">,</span> <span class="s2">&quot;https://observablehq.com/&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;URL kind must be one of edit or js&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="n">cells</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">observable_detail_edit_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_observable_url</span><span class="p">(</span><span class="n">view_kind</span><span class="o">=</span><span class="s2">&quot;detail&quot;</span><span class="p">,</span> <span class="n">url_kind</span><span class="o">=</span><span class="s2">&quot;edit&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">url</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">observable_comparison_edit_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_observable_url</span><span class="p">(</span>
+            <span class="n">view_kind</span><span class="o">=</span><span class="s2">&quot;comparison&quot;</span><span class="p">,</span> <span class="n">url_kind</span><span class="o">=</span><span class="s2">&quot;edit&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">url</span></div>
 
 
 <span class="k">def</span> <span class="nf">method_image_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
