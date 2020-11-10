@@ -4,6 +4,7 @@ from django.db.models import Count
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -52,6 +53,11 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         on_delete=models.SET_NULL,
     )
     images = models.ManyToManyField(Image)
+    algorithms = models.ManyToManyField(
+        Algorithm,
+        blank=True,
+        help_text="Algorithms that will be executed on all images in this archive",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

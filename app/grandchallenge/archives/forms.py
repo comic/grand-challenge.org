@@ -16,6 +16,7 @@ from django_select2.forms import Select2MultipleWidget
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
 from grandchallenge.cases.models import Image
 from grandchallenge.core.forms import (
@@ -33,6 +34,9 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["logo"].required = True
         self.fields["workstation"].required = True
+        self.fields["algorithms"].queryset = get_objects_for_user(
+            kwargs["user"], "execute_algorithm", Algorithm
+        )
 
     class Meta:
         model = Archive
@@ -42,12 +46,14 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "logo",
             "workstation",
             "workstation_config",
+            "algorithms",
             "public",
             "detail_page_markdown",
         )
         widgets = {
             "description": TextInput,
             "detail_page_markdown": MarkdownEditorWidget,
+            "algorithms": Select2MultipleWidget,
         }
         help_texts = {
             "workstation_config": format_lazy(
