@@ -118,6 +118,17 @@
                                 style="height: 75vh; min-width: 100%;"
                                 sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox">
                         </iframe>
+
+                        {% if "change_challenge" in challenge_perms %}
+                            <p>
+                                <a id="observableEditLink"
+                                   class="btn btn-primary"
+                                   title="Edit notebook in observable"
+                                   target="_blank">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                            </p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -150,6 +161,8 @@
     <script id="displayLeaderboardDateButton" type="application/json">
         {% if phase.result_display_choice == phase.ALL %}true{% else %}false{% endif %}
     </script>
+    {{ phase.observable_detail_edit_url|json_script:"observableDetailEditURL" }}
+    {{ phase.observable_comparison_edit_url|json_script:"observableComparisonEditURL" }}
 
     <script type="text/javascript" src="{% static 'js/evaluation/leaderboard.js' %}"></script>
 {% endblock %}

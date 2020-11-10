@@ -8,6 +8,9 @@ const observableDetailURL = JSON.parse(document.getElementById("observableDetail
 const allowMetricsToggling = JSON.parse(document.getElementById("allowMetricsToggling").textContent)
 const displayLeaderboardDateButton = JSON.parse(document.getElementById("displayLeaderboardDateButton").textContent)
 
+const observableDetailEditURL = JSON.parse(document.getElementById("observableDetailEditURL").textContent)
+const observableComparisonEditURL = JSON.parse(document.getElementById("observableComparisonEditURL").textContent)
+
 let resultsTable = $('#resultsTable')
 let selectedResults = {}
 
@@ -158,6 +161,11 @@ function updateEvaluationComparisonModal() {
 
     modelLabel.textContent = "Compare Results"
     notebook.src = `${observableComparisonURL}?${search.toString()}`;
+
+    const observableEditLink = document.getElementById("observableEditLink")
+    if (observableEditLink !== null) {
+        observableEditLink.href = `${observableComparisonEditURL}?${search.toString()}`;
+    }
 }
 
 function updateEvaluationNavigationModal() {
@@ -168,6 +176,11 @@ function updateEvaluationNavigationModal() {
 
     modelLabel.textContent = "Browse Results"
     notebook.src = `${observableDetailURL}?${search.toString()}`;
+    
+    const observableEditLink = document.getElementById("observableEditLink")
+    if (observableEditLink !== null) {
+        observableEditLink.href = `${observableDetailEditURL}?${search.toString()}`;
+    }
 }
 
 function getDataTablesDOMTemplate() {

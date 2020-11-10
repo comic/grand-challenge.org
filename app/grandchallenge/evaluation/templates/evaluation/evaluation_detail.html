@@ -29,9 +29,21 @@
             <iframe id="observableNotebook"
                     class="border-0"
                     style="height: 75vh; min-width: 100%;"
-                    sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+                    sandbox="allow-scripts"
                     src="{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug kind='detail' %}?pk={{ object.pk }}">
             </iframe>
+
+            {% if "change_challenge" in challenge_perms %}
+                <p>
+                    <a id="observableEditLink"
+                       class="btn btn-primary"
+                       title="Edit notebook in observable"
+                       target="_blank"
+                       href="{{ object.submission.phase.observable_detail_edit_url }}?pk={{ object.pk }}">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                </p>
+            {% endif %}
         {% else %}
             <dt>ID</dt>
             <dd>{{ object.pk }}</dd>

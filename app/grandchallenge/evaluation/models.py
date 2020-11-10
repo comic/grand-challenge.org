@@ -1,5 +1,6 @@
 from json import dumps
 from pathlib import Path
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from celery import group
 from django.conf import settings
@@ -418,6 +419,48 @@ class Phase(UUIDModel):
             "pages:home",
             kwargs={"challenge_short_name": self.challenge.short_name},
         )
+
+    def get_observable_url(self, view_kind, url_kind):
+        if view_kind == "detail":
+            url = self.evaluation_detail_observable_url
+        elif view_kind == "comparison":
+            url = self.evaluation_comparison_observable_url
+        else:
+            raise ValueError("View or notebook not found")
+
+        if not url:
+            return "", []
+
+        parsed_url = urlparse(url)
+        cells = parse_qs(parsed_url.query)["cell"]
+        url = f"{urljoin(url, parsed_url.path)}"
+
+        if url_kind == "js":
+            url = url.replace(
+                "https://observablehq.com/embed/",
+                "https://api.observablehq.com/",
+            )
+            url += ".js?v=3"
+        elif url_kind == "edit":
+            url = url.replace(
+                "https://observablehq.com/embed/", "https://observablehq.com/"
+            )
+        else:
+            raise ValueError("URL kind must be one of edit or js")
+
+        return url, cells
+
+    @property
+    def observable_detail_edit_url(self):
+        url, _ = self.get_observable_url(view_kind="detail", url_kind="edit")
+        return url
+
+    @property
+    def observable_comparison_edit_url(self):
+        url, _ = self.get_observable_url(
+            view_kind="comparison", url_kind="edit"
+        )
+        return url
 
 
 def method_image_path(instance, filename):

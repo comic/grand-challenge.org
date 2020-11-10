@@ -17,18 +17,6 @@
             </div>
         </div>
     {% endfor %}
-
-    {% if "change_challenge" in challenge_perms %}
-        <p>
-            <a id="observableEditLink"
-               class="btn btn-primary"
-               title="Edit notebook in observable"
-               target="_blank"
-               href="{{ observable_notebook_edit }}">
-                <i class="fa fa-edit"></i>
-            </a>
-        </p>
-    {% endif %}
 {% endblock %}
 
 {% block script %}

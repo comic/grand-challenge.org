@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from typing import Dict
-from urllib.parse import parse_qs, urljoin, urlparse
 
 from dateutil.relativedelta import relativedelta
 from django.contrib.messages.views import SuccessMessageMixin
@@ -567,31 +566,16 @@ class ObservableDetail(LeaderboardDetail):
 
         kind = self.kwargs.get("kind", "").lower()
 
-        if kind == "detail" and self.phase.evaluation_detail_observable_url:
-            url = self.phase.evaluation_detail_observable_url
-        elif (
-            kind == "comparison"
-            and self.phase.evaluation_comparison_observable_url
-        ):
-            url = self.phase.evaluation_comparison_observable_url
-        else:
+        try:
+            js_url, cells = self.phase.get_observable_url(
+                view_kind=kind, url_kind="js"
+            )
+        except ValueError:
             raise Http404()
-
-        parsed_url = urlparse(url)
-        cells = parse_qs(parsed_url.query)["cell"]
-        url = f"{urljoin(url, parsed_url.path)}"
-
-        js_url = url.replace(
-            "https://observablehq.com/embed/", "https://api.observablehq.com/"
-        )
-        edit_url = url.replace(
-            "https://observablehq.com/embed/", "https://observablehq.com/"
-        )
 
         context.update(
             {
-                "observable_notebook_js": f"{js_url}.js?v=3",
-                "observable_notebook_edit": f"{edit_url}?{self.request.GET.urlencode()}",
+                "observable_notebook_js": js_url,
                 "observable_cells": cells,
                 "evaluations": evaluations,
             }
