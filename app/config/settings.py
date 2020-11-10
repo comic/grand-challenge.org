@@ -531,6 +531,7 @@ BLEACH_ALLOWED_TAGS = [
     "tr",
     "u",
     "ul",
+    "video",
 ]
 BLEACH_ALLOWED_ATTRIBUTES = {
     "*": ["class", "data-toggle", "id", "style", "role"],
@@ -541,6 +542,7 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
     "th": ["scope", "colspan"],
     "td": ["colspan"],
+    "video": ["src", "loop", "controls"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
