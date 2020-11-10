@@ -29,7 +29,7 @@
             <iframe id="observableNotebook"
                     class="border-0"
                     style="height: 75vh; min-width: 100%;"
-                    sandbox="allow-scripts allow-popups"
+                    sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
                     src="{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug kind='detail' %}?pk={{ object.pk }}">
             </iframe>
         {% else %}
