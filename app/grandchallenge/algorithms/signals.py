@@ -75,7 +75,8 @@ def _update_image_permissions(
                 job.algorithm_image.algorithm.editors_group,
                 civ.image,
             )
-            operation("view_image", job.creator, civ.image)
+            if job.creator is not None:
+                operation("view_image", job.creator, civ.image)
 
         civ.image.update_public_group_permissions(
             exclude_jobs=jobs if exclude_jobs else None,

@@ -2,17 +2,13 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
 
 
 @receiver(m2m_changed, sender=Archive.images.through)
-def update_image_permissions(instance, action, reverse, model, pk_set, **_):
-    """
-    Assign or remove view permissions to the archive groups when images
-    are added or remove to/from the archive images. Handles reverse
-    relations and clearing.
-    """
+def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
     if action not in ["post_add", "post_remove", "pre_clear"]:
         # nothing to do for the other actions
         return
@@ -42,3 +38,7 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
         op("view_image", archive.editors_group, images)
         op("view_image", archive.uploaders_group, images)
         op("view_image", archive.users_group, images)
+
+    create_algorithm_jobs_for_archive.apply_async(
+        args=(archives, action, images)
+    )
