@@ -1,7 +1,7 @@
 import pytest
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.algorithms.tasks import create_algorithm_jobs
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.factories import ImageFactory, UserFactory
 
@@ -18,7 +18,7 @@ def test_create_jobs_is_idempotent():
 
     assert Job.objects.count() == 0
 
-    create_algorithm_jobs(upload_session_pk=image.origin.pk)
+    create_algorithm_jobs_for_session(upload_session_pk=image.origin.pk)
 
     assert Job.objects.count() == 1
 
@@ -28,7 +28,7 @@ def test_create_jobs_is_idempotent():
     assert j.inputs.get(interface__slug="generic-medical-image").image == image
 
     # Running the job twice should not result in new jobs
-    create_algorithm_jobs(upload_session_pk=image.origin.pk)
+    create_algorithm_jobs_for_session(upload_session_pk=image.origin.pk)
 
     assert Job.objects.count() == 1
 
@@ -36,6 +36,6 @@ def test_create_jobs_is_idempotent():
     image.origin.algorithm_image = AlgorithmImageFactory()
     image.origin.save()
 
-    create_algorithm_jobs(upload_session_pk=image.origin.pk)
+    create_algorithm_jobs_for_session(upload_session_pk=image.origin.pk)
 
     assert Job.objects.count() == 2

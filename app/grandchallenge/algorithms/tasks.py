@@ -13,26 +13,47 @@ from grandchallenge.subdomains.utils import reverse
 
 
 @shared_task
-def create_algorithm_jobs(*_, upload_session_pk):
+def create_algorithm_jobs_for_session(*_, upload_session_pk):
     session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
+    create_algorithm_jobs(
+        algorithm_image=session.algorithm_image,
+        images=session.image_set.all(),
+        session_pk=upload_session_pk,
+    )
+
+
+@shared_task
+def create_algorithm_jobs_for_archive(archives, action, images):
+    for archive in archives:
+        if "add" in action:
+            for algorithm in archive.algorithms.all():
+                create_algorithm_jobs(
+                    algorithm_image=algorithm.latest_ready_image, images=images
+                )
+        else:
+            # TODO remove job?
+            return
+
+
+def create_algorithm_jobs(algorithm_image, images, session_pk=None):
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
     )
 
     jobs = []
 
-    if session.creator and session.algorithm_image:
-        for image in session.image_set.all():
+    if algorithm_image:
+        for image in images:
+            creator = image.origin.creator
             if not ComponentInterfaceValue.objects.filter(
                 interface=default_input_interface,
                 image=image,
-                algorithms_jobs_as_input__algorithm_image=session.algorithm_image,
-                algorithms_jobs_as_input__creator=session.creator,
+                algorithms_jobs_as_input__algorithm_image=algorithm_image,
+                algorithms_jobs_as_input__creator=creator,
             ).exists():
                 j = Job.objects.create(
-                    creator=session.creator,
-                    algorithm_image=session.algorithm_image,
+                    creator=creator, algorithm_image=algorithm_image,
                 )
                 j.inputs.set(
                     [
@@ -41,19 +62,21 @@ def create_algorithm_jobs(*_, upload_session_pk):
                         )
                     ]
                 )
-                jobs.append(j.signature)
+                jobs.append(j)
 
     if jobs:
-        workflow = group(*jobs) | send_failed_jobs_email.signature(
-            kwargs={"upload_session_pk": upload_session_pk}
+        job_signatures = [j.signature for j in jobs]
+        job_pks = [j.pk for j in jobs]
+        workflow = group(*job_signatures) | send_failed_jobs_email.signature(
+            kwargs={"job_pks": job_pks, "session_pk": session_pk}
         )
         workflow.apply_async()
 
 
 @shared_task
-def send_failed_jobs_email(*_, upload_session_pk):
+def send_failed_jobs_email(*_, job_pks, session_pk=None):
     failed_jobs = Job.objects.filter(
-        inputs__image__origin_id=upload_session_pk, status=Job.FAILURE
+        status=Job.FAILURE, pk__in=job_pks
     ).distinct()
 
     if failed_jobs.exists():
@@ -62,10 +85,12 @@ def send_failed_jobs_email(*_, upload_session_pk):
         algorithm = failed_jobs.first().algorithm_image.algorithm
         creator = failed_jobs.first().creator
 
-        experiment_url = reverse(
-            "algorithms:execution-session-detail",
-            kwargs={"slug": algorithm.slug, "pk": upload_session_pk},
-        )
+        experiment_url = reverse("algorithms:jobs-list")
+        if session_pk is not None:
+            experiment_url = reverse(
+                "algorithms:execution-session-detail",
+                kwargs={"slug": algorithm.slug, "pk": session_pk},
+            )
 
         message = (
             f"Unfortunately {failed_jobs.count()} of your jobs for algorithm "
@@ -76,7 +101,9 @@ def send_failed_jobs_email(*_, upload_session_pk):
             f"or contact the algorithm editors. "
             f"The following information may help them:\n"
             f"User: {creator.username}\n"
-            f"Experiment ID: {upload_session_pk}"
+        )
+        message += (
+            f"Experiment ID: {session_pk}\n" if session_pk is not None else ""
         )
 
         for email in {
