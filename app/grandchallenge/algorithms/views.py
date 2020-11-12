@@ -473,7 +473,8 @@ class AlgorithmViewSet(ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["slug"]
 
 
 class AlgorithmImageViewSet(ReadOnlyModelViewSet):
