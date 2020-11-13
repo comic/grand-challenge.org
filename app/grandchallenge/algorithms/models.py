@@ -403,6 +403,17 @@ class Job(UUIDModel, ComponentJob):
     )
     comment = models.TextField(blank=True, default="")
 
+    viewer_groups = models.ManyToManyField(
+        Group,
+        help_text="Which groups should have permission to view this job?",
+    )
+    viewers = models.OneToOneField(
+        Group,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="viewers_of_algorithm_job",
+    )
+
     class Meta:
         ordering = ("created",)
 
@@ -465,11 +476,29 @@ class Job(UUIDModel, ComponentJob):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.create_viewers_group()
+
         super().save(*args, **kwargs)
+
+        if adding:
+            self.viewer_groups.set(
+                [self.algorithm_image.algorithm.editors_group, self.viewers]
+            )
 
         self.assign_permissions()
         self.assign_public_permissions()
         self.update_interface_image_permissions()
+
+    def create_viewers_group(self):
+        self.viewers = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_viewers"
+        )
+
+        if self.creator:
+            self.viewers.user_set.add(self.creator)
 
     def assign_permissions(self):
         # Editors and creators can view this job
@@ -503,6 +532,20 @@ class Job(UUIDModel, ComponentJob):
         for interface_value in [*self.inputs.all(), *self.outputs.all()]:
             if interface_value.image:
                 interface_value.image.update_public_group_permissions()
+
+
+@receiver(post_delete, sender=Job)
+def delete_job_groups_hook(*_, instance: Job, using, **__):
+    """
+    Deletes the related group.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
+    """
+    try:
+        instance.viewers.delete(using=using)
+    except ObjectDoesNotExist:
+        pass
 
 
 class AlgorithmPermissionRequest(RequestBase):
