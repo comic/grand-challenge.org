@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from guardian.shortcuts import get_perms
 
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from tests.algorithms_tests.factories import (
@@ -9,7 +10,7 @@ from tests.algorithms_tests.factories import (
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -220,3 +221,61 @@ def test_process_algorithm_permission_request():
         pr.save()
         send_email.assert_called_once()
         assert pr.algorithm.is_user(pr.user)
+
+
+@pytest.mark.django_db
+class TestAlgorithmJobViewersGroup:
+    def test_view_permissions_are_assigned(self):
+        job = AlgorithmJobFactory()
+        viewer_groups = {*job.viewer_groups.all()}
+
+        assert viewer_groups == {
+            job.viewers,
+            job.algorithm_image.algorithm.editors_group,
+        }
+        for group in viewer_groups:
+            assert "view_job" in get_perms(group, job)
+
+    @pytest.mark.parametrize("reverse", [True, False])
+    def test_group_addition(self, reverse):
+        job = AlgorithmJobFactory()
+        group = GroupFactory()
+        assert "view_job" not in get_perms(group, job)
+
+        if reverse:
+            group.job_set.add(job)
+        else:
+            job.viewer_groups.add(group)
+
+        assert "view_job" in get_perms(group, job)
+
+    @pytest.mark.parametrize("reverse", [True, False])
+    def test_group_removal(self, reverse):
+        job = AlgorithmJobFactory()
+        group = job.viewer_groups.first()
+        assert "view_job" in get_perms(group, job)
+
+        if reverse:
+            group.job_set.remove(job)
+        else:
+            job.viewer_groups.remove(group)
+
+        assert "view_job" not in get_perms(group, job)
+
+    @pytest.mark.parametrize("reverse", [True, False])
+    def test_group_clearing(self, reverse):
+        job = AlgorithmJobFactory()
+        groups = job.viewer_groups.all()
+
+        assert len(groups) > 0
+        for group in groups:
+            assert "view_job" in get_perms(group, job)
+
+        if reverse:
+            for group in groups:
+                group.job_set.clear()
+        else:
+            job.viewer_groups.clear()
+
+        for group in groups:
+            assert "view_job" not in get_perms(group, job)

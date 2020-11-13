@@ -501,16 +501,6 @@ class Job(UUIDModel, ComponentJob):
             self.viewers.user_set.add(self.creator)
 
     def assign_permissions(self):
-        # Editors and creators can view this job
-        assign_perm(
-            f"view_{self._meta.model_name}",
-            self.algorithm_image.algorithm.editors_group,
-            self,
-        )
-
-        if self.creator:
-            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-
         # Algorithm editors can change this job
         assign_perm(
             f"change_{self._meta.model_name}",

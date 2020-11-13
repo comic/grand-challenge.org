@@ -70,6 +70,7 @@ def _update_image_permissions(
     for civ in component_interface_values:
         # image__isnull=False is used above so we know that civ.image exists
         for job in jobs:
+            # TODO Move this to update image permissions based on group
             operation(
                 "view_image",
                 job.algorithm_image.algorithm.editors_group,
@@ -80,3 +81,32 @@ def _update_image_permissions(
         civ.image.update_public_group_permissions(
             exclude_jobs=jobs if exclude_jobs else None,
         )
+
+
+@receiver(m2m_changed, sender=Job.viewer_groups.through)
+def update_group_permissions(
+    *_, instance, action, reverse, model, pk_set, **__
+):
+    if action not in ["post_add", "post_remove", "pre_clear"]:
+        # nothing to do for the other actions
+        return
+
+    if reverse:
+        groups = [instance]
+        if pk_set is None:
+            jobs = instance.job_set.all()
+        else:
+            jobs = model.objects.filter(pk__in=pk_set)
+    else:
+        jobs = [instance]
+        if pk_set is None:
+            groups = instance.viewer_groups.all()
+        else:
+            groups = model.objects.filter(pk__in=pk_set)
+
+    operation = assign_perm if "add" in action else remove_perm
+
+    for group in groups:
+        for job in jobs:
+            operation("view_job", group, job)
+            # TODO Update Image Permissions
