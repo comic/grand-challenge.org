@@ -417,6 +417,10 @@ class Job(UUIDModel, ComponentJob):
     class Meta:
         ordering = ("created",)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._public_orig = self.public
+
     @property
     def container(self):
         return self.algorithm_image
@@ -479,28 +483,30 @@ class Job(UUIDModel, ComponentJob):
         adding = self._state.adding
 
         if adding:
-            self.create_viewers_group()
+            self.init_viewers_group()
 
         super().save(*args, **kwargs)
 
         if adding:
-            self.viewer_groups.set(
-                [self.algorithm_image.algorithm.editors_group, self.viewers]
-            )
+            self.init_permissions()
 
-        self.assign_permissions()
-        self.assign_public_permissions()
-        self.update_interface_image_permissions()
+        if adding or self._public_orig != self.public:
+            self.update_viewer_groups_for_public()
+            self._public_orig = self.public
 
-    def create_viewers_group(self):
+    def init_viewers_group(self):
         self.viewers = Group.objects.create(
             name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_viewers"
         )
 
+    def init_permissions(self):
+        # By default, editors and viewers can view this algorithm
+        self.viewer_groups.set(
+            [self.algorithm_image.algorithm.editors_group, self.viewers]
+        )
+        # By default, the creator can view this algorithm
         if self.creator:
             self.viewers.user_set.add(self.creator)
-
-    def assign_permissions(self):
         # Algorithm editors can change this job
         assign_perm(
             f"change_{self._meta.model_name}",
@@ -508,20 +514,15 @@ class Job(UUIDModel, ComponentJob):
             self,
         )
 
-    def assign_public_permissions(self):
+    def update_viewer_groups_for_public(self):
         g = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
 
         if self.public:
-            assign_perm(f"view_{self._meta.model_name}", g, self)
+            self.viewer_groups.add(g)
         else:
-            remove_perm(f"view_{self._meta.model_name}", g, self)
-
-    def update_interface_image_permissions(self):
-        for interface_value in [*self.inputs.all(), *self.outputs.all()]:
-            if interface_value.image:
-                interface_value.image.update_public_group_permissions()
+            self.viewer_groups.remove(g)
 
 
 @receiver(post_delete, sender=Job)

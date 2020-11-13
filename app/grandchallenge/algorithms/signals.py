@@ -69,7 +69,7 @@ def _update_image_permissions(
 ):
     for civ in component_interface_values:
         # image__isnull=False is used above so we know that civ.image exists
-        civ.image.update_public_group_permissions(
+        civ.image.update_viewer_groups_permissions(
             exclude_jobs=jobs if exclude_jobs else None,
         )
 
@@ -101,14 +101,13 @@ def update_group_permissions(
         for group in groups:
             operation("view_job", group, job)
 
-    component_interface_values = (
-        ComponentInterfaceValue.objects.filter(
+    component_interface_values = ComponentInterfaceValue.objects.filter(
+        (
             Q(algorithms_jobs_as_input__in=jobs)
             | Q(algorithms_jobs_as_output__in=jobs)
         )
-        .filter(image__isnull=False)
-        .distinct()
-    )
+        & Q(image__isnull=False)
+    ).distinct()
 
     _update_image_permissions(
         jobs=jobs,
