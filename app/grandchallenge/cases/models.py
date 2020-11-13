@@ -519,6 +519,7 @@ class Image(UUIDModel):
         if exclude_jobs is None:
             exclude_jobs = []
 
+        # TODO 2 - replace this with adding the group to the m2m
         should_be_public = (
             self.componentinterfacevalue_set.filter(
                 Q(algorithms_jobs_as_input__public=True)

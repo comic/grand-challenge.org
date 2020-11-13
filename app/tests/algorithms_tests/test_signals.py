@@ -240,7 +240,15 @@ class TestAlgorithmJobViewersGroup:
     def test_group_addition(self, reverse):
         job = AlgorithmJobFactory()
         group = GroupFactory()
+        civ_in, civ_out = (
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+        )
+        job.inputs.add(civ_in)
+        job.outputs.add(civ_out)
         assert "view_job" not in get_perms(group, job)
+        assert "view_image" not in get_perms(group, civ_in.image)
+        assert "view_image" not in get_perms(group, civ_out.image)
 
         if reverse:
             group.job_set.add(job)
@@ -248,12 +256,23 @@ class TestAlgorithmJobViewersGroup:
             job.viewer_groups.add(group)
 
         assert "view_job" in get_perms(group, job)
+        assert "view_image" in get_perms(group, civ_in.image)
+        assert "view_image" in get_perms(group, civ_out.image)
 
     @pytest.mark.parametrize("reverse", [True, False])
     def test_group_removal(self, reverse):
         job = AlgorithmJobFactory()
+        civ_in, civ_out = (
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+        )
+        job.inputs.add(civ_in)
+        job.outputs.add(civ_out)
         group = job.viewer_groups.first()
+
         assert "view_job" in get_perms(group, job)
+        assert "view_image" in get_perms(group, civ_in.image)
+        assert "view_image" in get_perms(group, civ_out.image)
 
         if reverse:
             group.job_set.remove(job)
@@ -261,15 +280,25 @@ class TestAlgorithmJobViewersGroup:
             job.viewer_groups.remove(group)
 
         assert "view_job" not in get_perms(group, job)
+        assert "view_image" not in get_perms(group, civ_in.image)
+        assert "view_image" not in get_perms(group, civ_out.image)
 
     @pytest.mark.parametrize("reverse", [True, False])
     def test_group_clearing(self, reverse):
         job = AlgorithmJobFactory()
+        civ_in, civ_out = (
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+        )
+        job.inputs.add(civ_in)
+        job.outputs.add(civ_out)
         groups = job.viewer_groups.all()
 
         assert len(groups) > 0
         for group in groups:
             assert "view_job" in get_perms(group, job)
+            assert "view_image" in get_perms(group, civ_in.image)
+            assert "view_image" in get_perms(group, civ_out.image)
 
         if reverse:
             for group in groups:
@@ -279,3 +308,5 @@ class TestAlgorithmJobViewersGroup:
 
         for group in groups:
             assert "view_job" not in get_perms(group, job)
+            assert "view_image" not in get_perms(group, civ_in.image)
+            assert "view_image" not in get_perms(group, civ_out.image)
