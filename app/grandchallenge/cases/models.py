@@ -531,15 +531,20 @@ class Image(UUIDModel):
             .exists()
         )
 
+        expected_groups = {
+            *Group.objects.filter(
+                Q(job__inputs__image=self) | Q(job__outputs__image=self)
+            )
+            .exclude(Q(job__in=exclude_jobs) | Q(job__in=exclude_jobs))
+            .distinct()
+        }
+
         if should_be_public:
-            expected_groups = {
-                *Group.objects.filter(
+            expected_groups.add(
+                Group.objects.get(
                     name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
                 )
-            }
-        else:
-            # TODO - what about the algorithm creator and editors groups?
-            expected_groups = set()
+            )
 
         current_groups = get_groups_with_perms(self, attach_perms=True)
         current_groups = {

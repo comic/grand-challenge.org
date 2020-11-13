@@ -59,25 +59,15 @@ def update_input_image_permissions(
     _update_image_permissions(
         jobs=jobs,
         component_interface_values=component_interface_values,
-        operation=assign_perm if "add" in action else remove_perm,
         exclude_jobs=action == "pre_clear",
     )
 
 
 def _update_image_permissions(
-    *, jobs, component_interface_values, operation, exclude_jobs: bool,
+    *, jobs, component_interface_values, exclude_jobs: bool,
 ):
     for civ in component_interface_values:
         # image__isnull=False is used above so we know that civ.image exists
-        for job in jobs:
-            # TODO Move this to update image permissions based on group
-            operation(
-                "view_image",
-                job.algorithm_image.algorithm.editors_group,
-                civ.image,
-            )
-            operation("view_image", job.creator, civ.image)
-
         civ.image.update_public_group_permissions(
             exclude_jobs=jobs if exclude_jobs else None,
         )
@@ -106,7 +96,8 @@ def update_group_permissions(
 
     operation = assign_perm if "add" in action else remove_perm
 
-    for group in groups:
-        for job in jobs:
+    for job in jobs:
+        for group in groups:
             operation("view_job", group, job)
-            # TODO Update Image Permissions
+
+    # TODO Update Image Permissions
