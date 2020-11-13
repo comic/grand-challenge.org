@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
-from guardian.shortcuts import assign_perm, remove_perm
+from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,
@@ -531,13 +531,30 @@ class Image(UUIDModel):
             .exists()
         )
 
-        g = Group.objects.get(
-            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-        )
-
         if should_be_public:
-            assign_perm("view_image", g, self)
+            expected_groups = {
+                *Group.objects.filter(
+                    name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+                )
+            }
         else:
+            # TODO - what about the algorithm creator and editors groups?
+            expected_groups = set()
+
+        current_groups = get_groups_with_perms(self, attach_perms=True)
+        current_groups = {
+            group
+            for group, perms in current_groups.items()
+            if "view_image" in perms
+        }
+
+        groups_missing_perms = expected_groups - current_groups
+        groups_with_extra_perms = current_groups - expected_groups
+
+        for g in groups_missing_perms:
+            assign_perm("view_image", g, self)
+
+        for g in groups_with_extra_perms:
             remove_perm("view_image", g, self)
 
     @property
