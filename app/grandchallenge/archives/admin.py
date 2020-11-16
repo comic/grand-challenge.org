@@ -8,5 +8,12 @@ class ArchiveAdmin(admin.ModelAdmin):
     readonly_fields = ("images",)
 
 
+class ArchivePermissionRequestAdmin(admin.ModelAdmin):
+    readonly_fields = (
+        "user",
+        "archive",
+    )
+
+
 admin.site.register(Archive, ArchiveAdmin)
-admin.site.register(ArchivePermissionRequest)
+admin.site.register(ArchivePermissionRequest, ArchivePermissionRequestAdmin)

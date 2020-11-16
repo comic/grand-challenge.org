@@ -452,7 +452,7 @@ class Challenge(ChallengeBase):
             self.create_default_phases()
             send_challenge_created_email(self)
 
-        if self.hidden != self._hidden_orig:
+        if adding or self.hidden != self._hidden_orig:
             assign_evaluation_permissions.apply_async(
                 kwargs={"challenge_pk": self.pk}
             )

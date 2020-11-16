@@ -9,7 +9,12 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.evaluation.templatetags.evaluation_extras import user_error
 
 
+class AlgorithmImageAdmin(admin.ModelAdmin):
+    exclude = ("image",)
+
+
 class JobAdmin(admin.ModelAdmin):
+    autocomplete_fields = ("viewer_groups",)
     ordering = ("-created",)
     list_display = (
         "pk",
@@ -31,6 +36,7 @@ class JobAdmin(admin.ModelAdmin):
         "algorithm_image",
         "inputs",
         "outputs",
+        "viewers",
     )
     search_fields = (
         "creator__username",
@@ -46,7 +52,16 @@ class JobAdmin(admin.ModelAdmin):
         return user_error(obj.output)
 
 
+class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
+    readonly_fields = (
+        "user",
+        "algorithm",
+    )
+
+
 admin.site.register(Algorithm)
-admin.site.register(AlgorithmImage)
+admin.site.register(AlgorithmImage, AlgorithmImageAdmin)
 admin.site.register(Job, JobAdmin)
-admin.site.register(AlgorithmPermissionRequest)
+admin.site.register(
+    AlgorithmPermissionRequest, AlgorithmPermissionRequestAdmin
+)
