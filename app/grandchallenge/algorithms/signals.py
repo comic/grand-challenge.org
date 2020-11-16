@@ -40,10 +40,6 @@ def update_input_image_permissions(
             jobs = getattr(instance, reverse_lookup).all()
         else:
             jobs = model.objects.filter(pk__in=pk_set)
-
-        jobs = jobs.select_related(
-            "creator", "algorithm_image__algorithm__editors_group"
-        )
     else:
         jobs = [instance]
         if pk_set is None:
