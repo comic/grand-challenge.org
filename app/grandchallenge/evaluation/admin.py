@@ -21,6 +21,7 @@ class MethodAdmin(admin.ModelAdmin):
     list_filter = ("phase__challenge__short_name",)
     search_fields = ("pk",)
     readonly_fields = ("creator", "phase")
+    exclude = ("image",)
 
 
 class SubmissionAdmin(admin.ModelAdmin):
@@ -37,6 +38,7 @@ class SubmissionAdmin(admin.ModelAdmin):
         "creators_user_agent",
         "phase",
         "predictions_file",
+        "algorithm_image",
     )
 
 

@@ -71,6 +71,7 @@ class MhdOrRawFilter(admin.SimpleListFilter):
 class ImageFileAdmin(admin.ModelAdmin):
     search_fields = ("pk", "file", "image__name")
     list_filter = (MhdOrRawFilter,)
+    readonly_fields = ("image",)
 
 
 class RawImageUploadSessionAdmin(admin.ModelAdmin):
