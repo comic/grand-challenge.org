@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.urls import path
 from django.utils.html import format_html
+from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.cases.models import (
     Image,
@@ -23,7 +24,7 @@ class ImageFileInline(admin.StackedInline):
     extra = 0
 
 
-class ImageAdmin(admin.ModelAdmin):
+class ImageAdmin(GuardedModelAdmin):
     search_fields = (
         "pk",
         "name",
@@ -68,13 +69,13 @@ class MhdOrRawFilter(admin.SimpleListFilter):
             return queryset.filter(file__endswith="raw")
 
 
-class ImageFileAdmin(admin.ModelAdmin):
+class ImageFileAdmin(GuardedModelAdmin):
     search_fields = ("pk", "file", "image__name")
     list_filter = (MhdOrRawFilter,)
     readonly_fields = ("image",)
 
 
-class RawImageUploadSessionAdmin(admin.ModelAdmin):
+class RawImageUploadSessionAdmin(GuardedModelAdmin):
     ordering = ("-created",)
     list_display = (
         "pk",
@@ -127,7 +128,7 @@ class DownloadableFilter(admin.SimpleListFilter):
         return queryset
 
 
-class RawImageFileAdmin(admin.ModelAdmin):
+class RawImageFileAdmin(GuardedModelAdmin):
     list_filter = (DownloadableFilter, "upload_session__archive__slug")
     list_display = ("filename", "upload_session", "download")
     list_select_related = ("upload_session__archive",)

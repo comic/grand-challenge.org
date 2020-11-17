@@ -1,4 +1,5 @@
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -9,11 +10,11 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.evaluation.templatetags.evaluation_extras import user_error
 
 
-class AlgorithmImageAdmin(admin.ModelAdmin):
+class AlgorithmImageAdmin(GuardedModelAdmin):
     exclude = ("image",)
 
 
-class JobAdmin(admin.ModelAdmin):
+class JobAdmin(GuardedModelAdmin):
     autocomplete_fields = ("viewer_groups",)
     ordering = ("-created",)
     list_display = (
@@ -52,14 +53,14 @@ class JobAdmin(admin.ModelAdmin):
         return user_error(obj.output)
 
 
-class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
+class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
     readonly_fields = (
         "user",
         "algorithm",
     )
 
 
-admin.site.register(Algorithm)
+admin.site.register(Algorithm, GuardedModelAdmin)
 admin.site.register(AlgorithmImage, AlgorithmImageAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(

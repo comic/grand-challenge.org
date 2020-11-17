@@ -27,7 +27,9 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
         else:
             reader_studies = model.objects.filter(pk__in=pk_set)
 
-        reader_studies = reader_studies.select_related("readers_group")
+        reader_studies = reader_studies.select_related(
+            "readers_group", "editors_group"
+        )
     else:
         reader_studies = [instance]
         if pk_set is None:
@@ -40,6 +42,7 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
     op = assign_perm if "add" in action else remove_perm
 
     for rs in reader_studies:
+        op("view_image", rs.editors_group, images)
         op("view_image", rs.readers_group, images)
 
 

@@ -515,10 +515,21 @@ class Image(UUIDModel):
         if exclude_jobs is None:
             exclude_jobs = []
 
+        algorithm_jobs_groups = (
+            Q(job__inputs__image=self) | Q(job__outputs__image=self)
+        ) & ~Q(job__in=exclude_jobs)
+        reader_studies_groups = Q(
+            editors_of_readerstudy__images__id__exact=self.pk
+        ) | Q(readers_of_readerstudy__images__id__exact=self.pk)
+        archive_groups = (
+            Q(editors_of_archive__images__id__exact=self.pk)
+            | Q(uploaders_of_archive__images__id__exact=self.pk)
+            | Q(users_of_archive__images__id__exact=self.pk)
+        )
+
         expected_groups = {
             *Group.objects.filter(
-                (Q(job__inputs__image=self) | Q(job__outputs__image=self))
-                & ~Q(job__in=exclude_jobs)
+                algorithm_jobs_groups | reader_studies_groups | archive_groups
             ).distinct()
         }
 
