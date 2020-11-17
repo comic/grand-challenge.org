@@ -12,6 +12,8 @@ def remove_whitespace(value):
 
 @register.filter
 def oxford_comma(items):
+    items = [str(item) for item in items]
+
     if len(items) > 2:
         return ", and ".join([", ".join(items[:-1]), items[-1]])
     elif len(items) == 2:

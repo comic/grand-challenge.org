@@ -5,6 +5,7 @@
 {% load pathlib %}
 {% load humanize %}
 {% load evaluation_extras %}
+{% load remove_whitespace %}
 
 {{ job.created|naturaltime }}
 <split/>
@@ -48,8 +49,14 @@
     <i class="fa fa-eye text-success"
        title="Job and images are public"></i>
 {% else %}
-    <i class="fa fa-eye-slash text-danger"
-       title="Job and images are private"></i>
+    {% if job.viewers.user_set.all|length > 1 %}
+        {# TODO: Hack, we need to exclude the creator rather than checking the length is > 1 #}
+        <i class="fa fa-eye text-warning"
+           title="Job and images are visible by {{ job.viewers.user_set.all|oxford_comma }}"></i>
+    {% else %}
+        <i class="fa fa-eye-slash text-danger"
+           title="Job and images are private"></i>
+    {% endif %}
 {% endif %}
 <split/>
 {% if job.status == job.SUCCESS %}
@@ -109,9 +116,14 @@
     </a>
 {% endif %}
 {% if change_job %}
-    <a href="{% url 'algorithms:job-update' slug=algorithm.slug pk=job.pk %}">
-        <span class="badge badge-primary" title="Edit job">
-            <i class="fa fa-edit"></i>
-        </span>
+    <a class="badge badge-primary"
+       href="{% url 'algorithms:job-update' slug=algorithm.slug pk=job.pk %}"
+       title="Edit job">
+        <i class="fa fa-edit"></i>
+    </a>
+    <a class="badge badge-primary"
+       href="{% url 'algorithms:job-viewers-update' slug=algorithm.slug pk=job.pk %}"
+       title="Share this job with another user">
+        <i class="fa fa-user-plus"></i>
     </a>
 {% endif %}

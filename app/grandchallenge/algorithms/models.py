@@ -416,6 +416,9 @@ class Job(UUIDModel, ComponentJob):
     class Meta:
         ordering = ("created",)
 
+    def __str__(self):
+        return f"Job {self.pk}"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._public_orig = self.public
@@ -472,7 +475,10 @@ class Job(UUIDModel, ComponentJob):
         return md2html(template_output)
 
     def get_absolute_url(self):
-        return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
+        return reverse(
+            "algorithms:jobs-list",
+            kwargs={"slug": self.algorithm_image.algorithm.slug},
+        )
 
     @property
     def api_url(self):
@@ -522,6 +528,12 @@ class Job(UUIDModel, ComponentJob):
             self.viewer_groups.add(g)
         else:
             self.viewer_groups.remove(g)
+
+    def add_viewer(self, user):
+        return user.groups.add(self.viewers)
+
+    def remove_viewer(self, user):
+        return user.groups.remove(self.viewers)
 
 
 @receiver(post_delete, sender=Job)
