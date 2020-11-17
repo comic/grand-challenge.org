@@ -409,7 +409,6 @@ class Job(UUIDModel, ComponentJob):
     )
     viewers = models.OneToOneField(
         Group,
-        null=True,
         on_delete=models.CASCADE,
         related_name="viewers_of_algorithm_job",
     )
