@@ -7,7 +7,7 @@
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ object.get_absolute_url }}">{{ object.title }}
+                href="{{ object.get_absolute_url }}">{% firstof object.title object %}
         </a>
         <li class="breadcrumb-item active"
             aria-current="page">Add user

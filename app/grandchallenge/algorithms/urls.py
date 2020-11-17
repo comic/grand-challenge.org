@@ -17,6 +17,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmUpdate,
     AlgorithmUserAutocomplete,
     EditorsUpdate,
+    JobViewersUpdate,
     UsersUpdate,
 )
 
@@ -62,6 +63,11 @@ urlpatterns = [
         "<slug>/jobs/<uuid:pk>/update/",
         AlgorithmJobUpdate.as_view(),
         name="job-update",
+    ),
+    path(
+        "<slug>/jobs/<uuid:pk>/viewers/update/",
+        JobViewersUpdate.as_view(),
+        name="job-viewers-update",
     ),
     path(
         "<slug>/editors/update/",
