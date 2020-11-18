@@ -44,6 +44,7 @@ from grandchallenge.algorithms.forms import (
     EditorsForm,
     JobForm,
     UsersForm,
+    ViewersForm,
 )
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -149,7 +150,12 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
 
         form = UsersForm()
         form.fields["action"].initial = UsersForm.REMOVE
-        context.update({"form": form})
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+
+        context.update(
+            {"form": form, "editor_remove_form": editor_remove_form}
+        )
 
         pending_permission_requests = AlgorithmPermissionRequest.objects.filter(
             algorithm=context["object"],
@@ -213,38 +219,53 @@ class AlgorithmUserAutocomplete(
         return qs
 
 
-class AlgorithmUserGroupUpdateMixin(
+class UserGroupUpdateMixin(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     FormView,
 ):
-    template_name = "algorithms/algorithm_user_groups_form.html"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
-    )
+    template_name = "algorithms/user_groups_form.html"
     raise_exception = True
 
     def get_permission_object(self):
-        return self.algorithm
+        return self.obj
 
     @property
-    def algorithm(self):
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+    def obj(self):
+        raise NotImplementedError
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(
-            {"object": self.algorithm, "role": self.get_form().role}
-        )
+        context.update({"object": self.obj, "role": self.get_form().role})
         return context
 
     def get_success_url(self):
-        return self.algorithm.get_absolute_url()
+        return self.obj.get_absolute_url()
 
     def form_valid(self, form):
-        form.add_or_remove_user(algorithm=self.algorithm)
+        form.add_or_remove_user(obj=self.obj)
         return super().form_valid(form)
+
+
+class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
+
+    @property
+    def obj(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+
+class JobUserGroupUpdateMixin(UserGroupUpdateMixin):
+    permission_required = (
+        f"{Job._meta.app_label}.change_{Job._meta.model_name}"
+    )
+
+    @property
+    def obj(self):
+        return get_object_or_404(Job, pk=self.kwargs["pk"])
 
 
 class EditorsUpdate(AlgorithmUserGroupUpdateMixin):
@@ -255,6 +276,20 @@ class EditorsUpdate(AlgorithmUserGroupUpdateMixin):
 class UsersUpdate(AlgorithmUserGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+
+class JobViewersUpdate(JobUserGroupUpdateMixin):
+    form_class = ViewersForm
+
+    def get_success_message(self, cleaned_data):
+        return format_html(
+            (
+                "Viewers for {} successfully updated. <br>"
+                "They will be able to see the job by visiting {}"
+            ),
+            self.obj,
+            self.obj.get_absolute_url(),
+        )
 
 
 class AlgorithmImageCreate(
@@ -422,7 +457,7 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
         Column(title="Result", sort_field="inputs__image__name"),
         Column(title="Visibility", sort_field="public"),
         Column(title="Output", sort_field="inputs__image__files__file"),
-        Column(title="Edit", sort_field="comment"),
+        Column(title="Settings", sort_field="comment"),
     ]
     order_by = "created"
 
@@ -450,6 +485,7 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
                 "outputs__image__files",
                 "outputs__interface",
                 "inputs__image__files",
+                "viewers__user_set",
             )
             .select_related(
                 "creator__user_profile",
@@ -486,7 +522,8 @@ class AlgorithmViewSet(ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["slug"]
 
 
 class AlgorithmImageViewSet(ReadOnlyModelViewSet):

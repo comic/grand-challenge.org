@@ -1,11 +1,13 @@
 from json import dumps
 from pathlib import Path
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from celery import group
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
@@ -91,6 +93,11 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         },
     },
 }
+
+OBSERVABLE_URL_VALIDATOR = RegexValidator(
+    r"^https\:\/\/observablehq\.com\/embed\/\@[^\/]+\/[^\?\.]+\?cell\=.*$",
+    "URL must be of the form https://observablehq.com/embed/@user/notebook?cell=*",
+)
 
 
 class Phase(UUIDModel):
@@ -338,13 +345,25 @@ class Phase(UUIDModel):
             "Should all of the metrics be displayed on the Result detail page?"
         ),
     )
-    submission_join_key = models.CharField(
+
+    evaluation_detail_observable_url = models.URLField(
         blank=True,
-        default="",
-        max_length=32,
+        validators=[OBSERVABLE_URL_VALIDATOR],
+        max_length=2000,
         help_text=(
-            "If predictions are submitted as csv files, which column should "
-            "be used to join the data? eg. case_id"
+            "The URL of the embeddable observable notebook for viewing "
+            "individual results. Must be of the form "
+            "https://observablehq.com/embed/@user/notebook?cell=..."
+        ),
+    )
+    evaluation_comparison_observable_url = models.URLField(
+        blank=True,
+        validators=[OBSERVABLE_URL_VALIDATOR],
+        max_length=2000,
+        help_text=(
+            "The URL of the embeddable observable notebook for comparing"
+            "results. Must be of the form "
+            "https://observablehq.com/embed/@user/notebook?cell=..."
         ),
     )
 
@@ -400,6 +419,48 @@ class Phase(UUIDModel):
             "pages:home",
             kwargs={"challenge_short_name": self.challenge.short_name},
         )
+
+    def get_observable_url(self, view_kind, url_kind):
+        if view_kind == "detail":
+            url = self.evaluation_detail_observable_url
+        elif view_kind == "comparison":
+            url = self.evaluation_comparison_observable_url
+        else:
+            raise ValueError("View or notebook not found")
+
+        if not url:
+            return "", []
+
+        parsed_url = urlparse(url)
+        cells = parse_qs(parsed_url.query)["cell"]
+        url = f"{urljoin(url, parsed_url.path)}"
+
+        if url_kind == "js":
+            url = url.replace(
+                "https://observablehq.com/embed/",
+                "https://api.observablehq.com/",
+            )
+            url += ".js?v=3"
+        elif url_kind == "edit":
+            url = url.replace(
+                "https://observablehq.com/embed/", "https://observablehq.com/"
+            )
+        else:
+            raise ValueError("URL kind must be one of edit or js")
+
+        return url, cells
+
+    @property
+    def observable_detail_edit_url(self):
+        url, _ = self.get_observable_url(view_kind="detail", url_kind="edit")
+        return url
+
+    @property
+    def observable_comparison_edit_url(self):
+        url, _ = self.get_observable_url(
+            view_kind="comparison", url_kind="edit"
+        )
+        return url
 
 
 def method_image_path(instance, filename):
@@ -742,6 +803,10 @@ class Evaluation(UUIDModel, ComponentJob):
         calculate_ranks.apply_async(
             kwargs={"phase_pk": self.submission.phase.pk}
         )
+
+    @property
+    def title(self):
+        return f"#{self.rank} {self.submission.creator.username}"
 
     def assign_permissions(self):
         admins_group = self.submission.phase.challenge.admins_group

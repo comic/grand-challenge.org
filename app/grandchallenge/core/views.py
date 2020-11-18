@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from functools import reduce
 from operator import or_
 from random import choice
+from typing import Tuple
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
@@ -281,4 +282,5 @@ class PaginatedTableListView(ListView):
 class Column:
     title: str
     sort_field: str
-    toggleable: bool = False
+    classes: Tuple[str, ...] = ()
+    identifier: str = ""

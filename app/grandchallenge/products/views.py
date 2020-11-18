@@ -20,7 +20,7 @@ class ProductList(ListView):
     )
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related("company")
         subspeciality_query = self.request.GET.get("subspeciality")
         modality_query = self.request.GET.get("modality")
         ce_class_query = self.request.GET.get("ce_class")

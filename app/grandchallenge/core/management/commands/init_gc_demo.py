@@ -213,6 +213,9 @@ class Command(BaseCommand):
                 }
             ]
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.evaluation_detail_observable_url = (
+                phase.evaluation_comparison_observable_url
+            ) = "https://observablehq.com/embed/@grand-challenge/data-fetch-example?cell=*"
             phase.save()
 
             method = Method(phase=phase, creator=self.users["demo"])
@@ -226,7 +229,9 @@ class Command(BaseCommand):
             submission.save()
 
             e = Evaluation.objects.create(
-                submission=submission, method=method, status=Evaluation.SUCCESS
+                submission=submission,
+                method=method,
+                status=Evaluation.SUCCESS,
             )
             e.create_result(
                 result={

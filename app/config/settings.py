@@ -91,6 +91,8 @@ AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
 USERENA_DEFAULT_PRIVACY = "open"
 USERENA_MUGSHOT_SIZE = 460
+USERENA_REGISTER_USER = False
+USERENA_REGISTER_PROFILE = False
 LOGIN_URL = "/users/signin/"
 LOGOUT_URL = "/users/signout/"
 
@@ -240,7 +242,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = strtobool(
 SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
-X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
+X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
 SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "same-origin"
 )
@@ -531,6 +533,7 @@ BLEACH_ALLOWED_TAGS = [
     "tr",
     "u",
     "ul",
+    "video",
 ]
 BLEACH_ALLOWED_ATTRIBUTES = {
     "*": ["class", "data-toggle", "id", "style", "role"],
@@ -541,6 +544,7 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
     "th": ["scope", "colspan"],
     "td": ["colspan"],
+    "video": ["src", "loop", "controls"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
@@ -636,6 +640,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PAGINATION_CLASS": "grandchallenge.api.pagination.MaxLimit1000OffsetPagination",
     "PAGE_SIZE": 100,
+    "UNAUTHENTICATED_USER": "guardian.utils.get_anonymous_user",
 }
 
 SWAGGER_SETTINGS = {
@@ -646,7 +651,8 @@ SWAGGER_SETTINGS = {
 
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
-    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$"
+    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$",
+    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}.static.observableusercontent.com$",
 ]
 CORS_ALLOW_HEADERS = [
     *default_headers,

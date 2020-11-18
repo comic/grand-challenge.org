@@ -14,6 +14,11 @@ class PublicationAdmin(admin.ModelAdmin):
         "year",
     ]
     form = PublicationForm
+    search_fields = (
+        "title",
+        "year",
+        "identifier",
+    )
 
     def get_readonly_fields(self, request, obj=None):
         if obj:

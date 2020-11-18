@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
-from guardian.shortcuts import assign_perm, remove_perm
+from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
 from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,
@@ -330,10 +330,6 @@ class Image(UUIDModel):
     def __str__(self):
         return f"Image {self.name} {self.shape_without_color}"
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.update_public_group_permissions()
-
     @property
     def shape_without_color(self) -> List[int]:
         """
@@ -503,9 +499,9 @@ class Image(UUIDModel):
             group = Group.objects.get(name=group_name)
             assign_perm("view_image", group, self)
 
-    def update_public_group_permissions(self, *, exclude_jobs=None):
+    def update_viewer_groups_permissions(self, *, exclude_jobs=None):
         """
-        Update the permissions for the REGISTERED_AND_ANON_USERS_GROUP to
+        Update the permissions for the algorithm jobs viewers groups to
         view this image.
 
         Parameters
@@ -519,25 +515,38 @@ class Image(UUIDModel):
         if exclude_jobs is None:
             exclude_jobs = []
 
-        should_be_public = (
-            self.componentinterfacevalue_set.filter(
-                Q(algorithms_jobs_as_input__public=True)
-                | Q(algorithms_jobs_as_output__public=True)
-            )
-            .exclude(
-                Q(algorithms_jobs_as_input__in=exclude_jobs)
-                | Q(algorithms_jobs_as_output__in=exclude_jobs)
-            )
-            .exists()
+        algorithm_jobs_groups = (
+            Q(job__inputs__image=self) | Q(job__outputs__image=self)
+        ) & ~Q(job__in=exclude_jobs)
+        reader_studies_groups = Q(
+            editors_of_readerstudy__images__id__exact=self.pk
+        ) | Q(readers_of_readerstudy__images__id__exact=self.pk)
+        archive_groups = (
+            Q(editors_of_archive__images__id__exact=self.pk)
+            | Q(uploaders_of_archive__images__id__exact=self.pk)
+            | Q(users_of_archive__images__id__exact=self.pk)
         )
 
-        g = Group.objects.get(
-            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
-        )
+        expected_groups = {
+            *Group.objects.filter(
+                algorithm_jobs_groups | reader_studies_groups | archive_groups
+            ).distinct()
+        }
 
-        if should_be_public:
+        current_groups = get_groups_with_perms(self, attach_perms=True)
+        current_groups = {
+            group
+            for group, perms in current_groups.items()
+            if "view_image" in perms
+        }
+
+        groups_missing_perms = expected_groups - current_groups
+        groups_with_extra_perms = current_groups - expected_groups
+
+        for g in groups_missing_perms:
             assign_perm("view_image", g, self)
-        else:
+
+        for g in groups_with_extra_perms:
             remove_perm("view_image", g, self)
 
     @property

@@ -1,6 +1,5 @@
 import pytest
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from guardian.shortcuts import assign_perm
 from rest_framework import status
 from rest_framework.test import force_authenticate
@@ -148,17 +147,16 @@ class TestProfileViewSets:
             (None, False, 0),
             ({}, False, 0),
             ({"is_staff": True}, False, 0),
-            ({"is_superuser": True}, False, 3),
+            ({"is_superuser": True}, False, 5),
             (None, True, 0),
             ({}, True, 1),
             ({"is_staff": True}, True, 1),
-            ({"is_superuser": True}, True, 3),
+            ({"is_superuser": True}, True, 5),
         ),
     )
     def test_profiles_list_permissions(
         self, rf, user_kwargs, permission, expected_count
     ):
-        get_user_model().objects.all().delete()
         user = None
         if user_kwargs is not None:
             user = UserFactory(**user_kwargs)

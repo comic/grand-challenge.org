@@ -49,9 +49,13 @@ leaderboard_options = (
     "display_submission_comments",
     "show_supplementary_file_link",
     "show_publication_url",
+    "evaluation_comparison_observable_url",
 )
 
-result_detail_options = ("display_all_metrics", "submission_join_key")
+result_detail_options = (
+    "display_all_metrics",
+    "evaluation_detail_observable_url",
+)
 
 
 class PhaseForm(forms.ModelForm):

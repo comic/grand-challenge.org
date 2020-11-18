@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from grandchallenge.workstations.models import (
@@ -34,6 +35,10 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
     ]
 
 
+class WorkstationImageAdmin(ModelAdmin):
+    exclude = ("image",)
+
+
 admin.site.register(Workstation)
-admin.site.register(WorkstationImage)
+admin.site.register(WorkstationImage, WorkstationImageAdmin)
 admin.site.register(Session, SessionHistoryAdmin)

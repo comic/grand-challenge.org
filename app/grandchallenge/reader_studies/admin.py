@@ -32,7 +32,16 @@ class QuestionsAdmin(GuardedModelAdmin):
     readonly_fields = ("reader_study",)
 
 
+class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
+    readonly_fields = (
+        "user",
+        "reader_study",
+    )
+
+
 admin.site.register(ReaderStudy, ReaderStudyAdmin)
 admin.site.register(Question, QuestionsAdmin)
 admin.site.register(Answer, AnswersAdmin)
-admin.site.register(ReaderStudyPermissionRequest)
+admin.site.register(
+    ReaderStudyPermissionRequest, ReaderStudyPermissionRequestAdmin
+)
