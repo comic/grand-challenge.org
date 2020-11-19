@@ -36,7 +36,7 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         self.fields["workstation"].required = True
         self.fields["algorithms"].queryset = get_objects_for_user(
             kwargs["user"], "execute_algorithm", Algorithm
-        ).exclude(latest_ready_image=None)
+        )
 
     class Meta:
         model = Archive
