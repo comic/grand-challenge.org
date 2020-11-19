@@ -18,7 +18,7 @@ def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
 
     if reverse:
         images = Image.objects.filter(pk=instance.pk)
-        image_pks = instance.pk
+        image_pks = [instance.pk]
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
