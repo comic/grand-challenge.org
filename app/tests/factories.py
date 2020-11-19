@@ -5,6 +5,7 @@ from uuid import uuid4
 import factory
 import factory.fuzzy
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.utils import timezone
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
@@ -46,6 +47,11 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_active = True
     is_staff = False
     is_superuser = False
+
+
+class GroupFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Group
 
 
 class ChallengeFactory(factory.django.DjangoModelFactory):

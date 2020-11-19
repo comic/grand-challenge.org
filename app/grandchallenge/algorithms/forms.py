@@ -123,13 +123,11 @@ class UserGroupForm(SaveFormInitMixin, Form):
             raise ValidationError("You cannot add this user!")
         return user
 
-    def add_or_remove_user(self, *, algorithm):
+    def add_or_remove_user(self, *, obj):
         if self.cleaned_data["action"] == self.ADD:
-            getattr(algorithm, f"add_{self.role}")(self.cleaned_data["user"])
+            getattr(obj, f"add_{self.role}")(self.cleaned_data["user"])
         elif self.cleaned_data["action"] == self.REMOVE:
-            getattr(algorithm, f"remove_{self.role}")(
-                self.cleaned_data["user"]
-            )
+            getattr(obj, f"remove_{self.role}")(self.cleaned_data["user"])
 
 
 class EditorsForm(UserGroupForm):
@@ -139,14 +137,14 @@ class EditorsForm(UserGroupForm):
 class UsersForm(UserGroupForm):
     role = "user"
 
-    def add_or_remove_user(self, *, algorithm):
-        super().add_or_remove_user(algorithm=algorithm)
+    def add_or_remove_user(self, *, obj):
+        super().add_or_remove_user(obj=obj)
 
         user = self.cleaned_data["user"]
 
         try:
             permission_request = AlgorithmPermissionRequest.objects.get(
-                user=user, algorithm=algorithm
+                user=user, algorithm=obj
             )
         except ObjectDoesNotExist:
             return
@@ -157,6 +155,10 @@ class UsersForm(UserGroupForm):
             permission_request.status = AlgorithmPermissionRequest.ACCEPTED
 
         permission_request.save()
+
+
+class ViewersForm(UserGroupForm):
+    role = "viewer"
 
 
 class JobForm(SaveFormInitMixin, ModelForm):

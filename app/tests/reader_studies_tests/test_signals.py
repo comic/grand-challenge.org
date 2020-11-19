@@ -39,7 +39,7 @@ def test_reader_can_download_images(client, reverse):
     tests = (
         (None, 200, []),
         (rs_set.creator, 200, []),
-        (rs_set.editor1, 200, []),
+        (rs_set.editor1, 200, [im1.pk, im2.pk]),
         (rs_set.reader1, 200, [im1.pk, im2.pk]),
         (rs_set.editor2, 200, []),
         (rs_set.reader2, 200, []),

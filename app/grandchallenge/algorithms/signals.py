@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
@@ -39,10 +40,6 @@ def update_input_image_permissions(
             jobs = getattr(instance, reverse_lookup).all()
         else:
             jobs = model.objects.filter(pk__in=pk_set)
-
-        jobs = jobs.select_related(
-            "creator", "algorithm_image__algorithm__editors_group"
-        )
     else:
         jobs = [instance]
         if pk_set is None:
@@ -59,25 +56,57 @@ def update_input_image_permissions(
     _update_image_permissions(
         jobs=jobs,
         component_interface_values=component_interface_values,
-        operation=assign_perm if "add" in action else remove_perm,
         exclude_jobs=action == "pre_clear",
     )
 
 
 def _update_image_permissions(
-    *, jobs, component_interface_values, operation, exclude_jobs: bool,
+    *, jobs, component_interface_values, exclude_jobs: bool,
 ):
     for civ in component_interface_values:
         # image__isnull=False is used above so we know that civ.image exists
-        for job in jobs:
-            operation(
-                "view_image",
-                job.algorithm_image.algorithm.editors_group,
-                civ.image,
-            )
-            if job.creator is not None:
-                operation("view_image", job.creator, civ.image)
-
-        civ.image.update_public_group_permissions(
+        civ.image.update_viewer_groups_permissions(
             exclude_jobs=jobs if exclude_jobs else None,
         )
+
+
+@receiver(m2m_changed, sender=Job.viewer_groups.through)
+def update_group_permissions(
+    *_, instance, action, reverse, model, pk_set, **__
+):
+    if action not in ["post_add", "post_remove", "pre_clear"]:
+        # nothing to do for the other actions
+        return
+
+    if reverse:
+        groups = [instance]
+        if pk_set is None:
+            jobs = instance.job_set.all()
+        else:
+            jobs = model.objects.filter(pk__in=pk_set)
+    else:
+        jobs = [instance]
+        if pk_set is None:
+            groups = instance.viewer_groups.all()
+        else:
+            groups = model.objects.filter(pk__in=pk_set)
+
+    operation = assign_perm if "add" in action else remove_perm
+
+    for job in jobs:
+        for group in groups:
+            operation("view_job", group, job)
+
+    component_interface_values = ComponentInterfaceValue.objects.filter(
+        (
+            Q(algorithms_jobs_as_input__in=jobs)
+            | Q(algorithms_jobs_as_output__in=jobs)
+        )
+        & Q(image__isnull=False)
+    ).distinct()
+
+    _update_image_permissions(
+        jobs=jobs,
+        component_interface_values=component_interface_values,
+        exclude_jobs=action == "pre_clear",
+    )

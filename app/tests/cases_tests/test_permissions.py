@@ -4,8 +4,10 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms
 
 from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 
 @pytest.mark.django_db
@@ -130,3 +132,38 @@ def test_change_job_image():
 
     assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
     assert "view_image" in get_perms(g_reg_anon, job.inputs.first().image)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("in_job", (True, False))
+@pytest.mark.parametrize("in_rs", (True, False))
+@pytest.mark.parametrize("in_archive", (True, False))
+def test_view_permission_when_reused(in_archive, in_rs, in_job):
+    """When an image is reused it should have view_image set correctly"""
+    im = ImageFactory()
+
+    job = AlgorithmJobFactory()
+    rs = ReaderStudyFactory()
+    archive = ArchiveFactory()
+
+    if in_archive:
+        archive.images.add(im)
+    if in_rs:
+        rs.images.add(im)
+    if in_job:
+        civ = ComponentInterfaceValueFactory()
+        civ.image = im
+        civ.save()
+        job.inputs.add(civ)
+
+    assert ("view_image" in get_perms(archive.editors_group, im)) is in_archive
+    assert (
+        "view_image" in get_perms(archive.uploaders_group, im)
+    ) is in_archive
+    assert ("view_image" in get_perms(archive.users_group, im)) is in_archive
+
+    assert ("view_image" in get_perms(rs.editors_group, im)) is in_rs
+    assert ("view_image" in get_perms(rs.readers_group, im)) is in_rs
+
+    for g in job.viewer_groups.all():
+        assert ("view_image" in get_perms(g, im)) is in_job
