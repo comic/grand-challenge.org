@@ -1,7 +1,11 @@
+from datetime import datetime, timedelta
+
 from celery import group, shared_task
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
+from django.db.models import Sum
+from django.utils import timezone
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.cases.models import RawImageUploadSession
@@ -14,7 +18,9 @@ from grandchallenge.subdomains.utils import reverse
 
 @shared_task
 def create_algorithm_jobs(*_, upload_session_pk):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    session = RawImageUploadSession.objects.select_related(
+        "algorithm_image__algorithm"
+    ).get(pk=upload_session_pk)
 
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
@@ -22,17 +28,27 @@ def create_algorithm_jobs(*_, upload_session_pk):
 
     jobs = []
 
-    def remaining_jobs() -> int:
-        finished_jobs = (
-            Job.objects.filter(
-                creator=session.creator,
-                algorithm_image__algorithm=session.algorithm_image.algorithm,
-            )
-            .exclude(status=Job.FAILURE)
-            .distinct()
-        )
+    def remaining_jobs(
+        max_jobs: int = 30, period: timedelta = None, now: datetime = None
+    ) -> int:
+        if now is None:
+            now = timezone.now()
 
-        return session.algorithm_image.algorithm.job_limit - len(finished_jobs)
+        if period is None:
+            period = timedelta(days=30)
+
+        jobs = (
+            Job.objects.filter(
+                creator=session.creator, created__range=[now - period, now],
+            )
+            .distinct()
+            .select_related("algorithm_image__algorithm")
+            .aggregate(total=Sum("algorithm_image__algorithm__job_weight"))
+        )
+        if jobs["total"]:
+            max_jobs = max_jobs - jobs["total"]
+
+        return int(max_jobs / max(session.algorithm_image.algorithm.job_weight, 1))
 
     if session.creator and session.algorithm_image:
         for image in session.image_set.all()[: remaining_jobs()]:

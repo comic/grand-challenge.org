@@ -1,4 +1,6 @@
 import logging
+from datetime import datetime, timedelta
+from typing import Dict
 
 from dal import autocomplete
 from django.conf import settings
@@ -13,9 +15,11 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from django.db.models import Min, Sum
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import (
@@ -388,7 +392,9 @@ class AlgorithmExecutionSessionCreate(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
-        context.update({"remaining_jobs": self.get_remaining_jobs()})
+        context.update(
+            self.get_remaining_jobs(job_weight=self.algorithm.job_weight)
+        )
         return context
 
     def get_success_url(self):
@@ -397,22 +403,54 @@ class AlgorithmExecutionSessionCreate(
             kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
 
-    def get_remaining_jobs(self) -> int:
+    def get_remaining_jobs(
+        self,
+        *,
+        max_jobs: int = 30,
+        period: timedelta = None,
+        now: datetime = None,
+        job_weight: int,
+    ) -> Dict:
         """
-        Determines the number of jobs left for the user.
+        Determines the number of jobs left for the user and when the next job can be started
 
-        :return: the number of jobs left for the user.
+        :return: A dictionary containing remaining_jobs (int) and
+        next_job_at (datetime)
         """
+        if now is None:
+            now = timezone.now()
+
+        if period is None:
+            period = timedelta(days=30)
+
         jobs = (
             Job.objects.filter(
-                creator=self.request.user,
-                algorithm_image__algorithm=self.algorithm,
+                creator=self.request.user, created__range=[now - period, now],
             )
-            .exclude(status=Job.FAILURE)
             .distinct()
+            .order_by("created")
+            .select_related("algorithm_image__algorithm")
+            .aggregate(
+                total=Sum("algorithm_image__algorithm__job_weight"),
+                oldest=Min("created"),
+            )
         )
 
-        return self.algorithm.job_limit - len(jobs)
+        if jobs["oldest"]:
+            next_job_at = jobs["oldest"] + period
+        else:
+            next_job_at = now
+
+        if jobs["total"]:
+            total_jobs = max_jobs - jobs["total"]
+        else:
+            total_jobs = max_jobs
+
+        return {
+            "remaining_jobs": int(total_jobs / max(job_weight, 1)),
+            "next_job_at": next_job_at,
+            "max_jobs": int(max_jobs / max(job_weight, 1)),
+        }
 
 
 class AlgorithmExecutionSessionDetail(

@@ -46,18 +46,18 @@ def test_create_jobs_is_idempotent():
 def test_create_jobs_is_limited():
     user = UserFactory()
     riu = RawImageUploadSessionFactory()
-    riu.algorithm_image.algorithm.job_limit = 2
+    riu.algorithm_image.algorithm.job_weight = 4
     riu.algorithm_image.algorithm.save()
     riu.creator = user
 
-    ImageFactory(origin=riu),
-    ImageFactory(origin=riu),
-    ImageFactory(origin=riu),
+    for i in range(30):
+        ImageFactory(origin=riu),
     riu.save()
 
     assert Job.objects.count() == 0
 
     create_algorithm_jobs(upload_session_pk=riu.pk)
 
-    # A maximum of 2 jobs should be created
-    assert Job.objects.count() == 2
+    # A maximum of 7 jobs should be created (standard nr of jobs is 30 per month,
+    # each job counted by job_weight)
+    assert Job.objects.count() == 7

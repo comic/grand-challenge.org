@@ -111,11 +111,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         to=ComponentInterface, related_name="algorithm_outputs"
     )
 
-    job_limit = models.PositiveIntegerField(
-        default=10,
+    job_weight = models.PositiveIntegerField(
+        default=1,
         help_text=(
-            "The limit on the number of times that a user can start "
-            "a job for an algorithm."
+            "The weight factor that determines how much each job for this algorithm "
+            "contributes to the total number of jobs a user has run."
         ),
     )
 
