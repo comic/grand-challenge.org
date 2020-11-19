@@ -10,7 +10,7 @@ class ArchiveSerializer(serializers.ModelSerializer):
         read_only=True, many=True, view_name="api:image-detail"
     )
     algorithms = HyperlinkedRelatedField(
-        read_only=True, many=True, view_name="ap:algorithm-detail"
+        read_only=True, many=True, view_name="api:algorithm-detail"
     )
     # Include the read only name for legacy clients
     name = ReadOnlyField()
