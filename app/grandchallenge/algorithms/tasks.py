@@ -3,8 +3,13 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
-from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    DEFAULT_INPUT_INTERFACE_SLUG,
+    Job,
+)
+from grandchallenge.archives.models import Archive
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -24,16 +29,23 @@ def create_algorithm_jobs_for_session(*_, upload_session_pk):
 
 
 @shared_task
-def create_algorithm_jobs_for_archive(archives, action, images):
-    for archive in archives:
-        if "add" in action:
-            for algorithm in archive.algorithms.all():
-                create_algorithm_jobs(
-                    algorithm_image=algorithm.latest_ready_image, images=images
-                )
-        else:
-            # TODO remove job?
-            return
+def create_algorithm_jobs_for_archive_images(archive_pks, image_pks):
+    for archive in Archive.objects.filter(pk__in=archive_pks).all():
+        for algorithm in archive.algorithms.all():
+            create_algorithm_jobs(
+                algorithm_image=algorithm.latest_ready_image,
+                images=Image.objects.filter(pk__in=image_pks).all(),
+            )
+
+
+@shared_task
+def create_algorithm_jobs_for_archive_algorithms(archive_pks, algorithm_pks):
+    for algorithm in Algorithm.objects.filter(pk__in=algorithm_pks).all():
+        for archive in Archive.objects.filter(pk__in=archive_pks).all():
+            create_algorithm_jobs(
+                algorithm_image=algorithm.latest_ready_image,
+                images=archive.images.all(),
+            )
 
 
 def create_algorithm_jobs(algorithm_image, images, session_pk=None):
