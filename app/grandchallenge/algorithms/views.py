@@ -404,11 +404,7 @@ class AlgorithmExecutionSessionCreate(
             kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
 
-    def get_remaining_jobs(
-        self,
-        *,
-        job_credit: int,
-    ) -> Dict:
+    def get_remaining_jobs(self, *, job_credit: int,) -> Dict:
         """
         Determines the number of jobs left for the user and when the next job can be started
 
@@ -423,7 +419,7 @@ class AlgorithmExecutionSessionCreate(
             return {
                 "remaining_jobs": 1,
                 "next_job_at": now,
-                "user_credits": user_credit.credits
+                "user_credits": user_credit.credits,
             }
 
         jobs = (
@@ -452,7 +448,7 @@ class AlgorithmExecutionSessionCreate(
         return {
             "remaining_jobs": int(total_jobs / max(job_credit, 1)),
             "next_job_at": next_job_at,
-            "user_credits": total_jobs
+            "user_credits": total_jobs,
         }
 
 
