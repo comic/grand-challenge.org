@@ -111,11 +111,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         to=ComponentInterface, related_name="algorithm_outputs"
     )
 
-    job_weight = models.PositiveIntegerField(
-        default=1,
+    job_credit = models.PositiveIntegerField(
+        default=0,
         help_text=(
-            "The weight factor that determines how much each job for this algorithm "
-            "contributes to the total number of jobs a user has run."
+            "The credits that it will require an algorithm user to run this algorithm."
         ),
     )
 

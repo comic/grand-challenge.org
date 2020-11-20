@@ -72,6 +72,7 @@ from grandchallenge.core.views import (
     PaginatedTableListView,
     PermissionRequestUpdate,
 )
+from grandchallenge.credits.models import Credit
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -393,7 +394,7 @@ class AlgorithmExecutionSessionCreate(
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
         context.update(
-            self.get_remaining_jobs(job_weight=self.algorithm.job_weight)
+            self.get_remaining_jobs(job_credit=self.algorithm.job_credit)
         )
         return context
 
@@ -406,10 +407,7 @@ class AlgorithmExecutionSessionCreate(
     def get_remaining_jobs(
         self,
         *,
-        max_jobs: int = 30,
-        period: timedelta = None,
-        now: datetime = None,
-        job_weight: int,
+        job_credit: int,
     ) -> Dict:
         """
         Determines the number of jobs left for the user and when the next job can be started
@@ -417,11 +415,16 @@ class AlgorithmExecutionSessionCreate(
         :return: A dictionary containing remaining_jobs (int) and
         next_job_at (datetime)
         """
-        if now is None:
-            now = timezone.now()
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_credit = Credit.objects.get(user=self.request.user)
 
-        if period is None:
-            period = timedelta(days=30)
+        if job_credit == 0:
+            return {
+                "remaining_jobs": 1,
+                "next_job_at": now,
+                "user_credits": user_credit.credits
+            }
 
         jobs = (
             Job.objects.filter(
@@ -431,7 +434,7 @@ class AlgorithmExecutionSessionCreate(
             .order_by("created")
             .select_related("algorithm_image__algorithm")
             .aggregate(
-                total=Sum("algorithm_image__algorithm__job_weight"),
+                total=Sum("algorithm_image__algorithm__job_credit"),
                 oldest=Min("created"),
             )
         )
@@ -442,14 +445,14 @@ class AlgorithmExecutionSessionCreate(
             next_job_at = now
 
         if jobs["total"]:
-            total_jobs = max_jobs - jobs["total"]
+            total_jobs = user_credit.credits - jobs["total"]
         else:
-            total_jobs = max_jobs
+            total_jobs = user_credit.credits
 
         return {
-            "remaining_jobs": int(total_jobs / max(job_weight, 1)),
+            "remaining_jobs": int(total_jobs / max(job_credit, 1)),
             "next_job_at": next_job_at,
-            "max_jobs": int(max_jobs / max(job_weight, 1)),
+            "user_credits": total_jobs
         }
 
 

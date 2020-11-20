@@ -13,6 +13,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.credits.models import Credit
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -28,14 +29,10 @@ def create_algorithm_jobs(*_, upload_session_pk):
 
     jobs = []
 
-    def remaining_jobs(
-        max_jobs: int = 30, period: timedelta = None, now: datetime = None
-    ) -> int:
-        if now is None:
-            now = timezone.now()
-
-        if period is None:
-            period = timedelta(days=30)
+    def remaining_jobs() -> int:
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_credit = Credit.objects.get(user=session.creator)
 
         jobs = (
             Job.objects.filter(
@@ -43,15 +40,24 @@ def create_algorithm_jobs(*_, upload_session_pk):
             )
             .distinct()
             .select_related("algorithm_image__algorithm")
-            .aggregate(total=Sum("algorithm_image__algorithm__job_weight"))
+            .aggregate(total=Sum("algorithm_image__algorithm__job_credit"))
         )
-        if jobs["total"]:
-            max_jobs = max_jobs - jobs["total"]
 
-        return int(max_jobs / max(session.algorithm_image.algorithm.job_weight, 1))
+        if jobs["total"]:
+            total_jobs = user_credit.credits - jobs["total"]
+        else:
+            total_jobs = user_credit.credits
+
+        return int(
+            total_jobs / max(session.algorithm_image.algorithm.job_credit, 1)
+        )
 
     if session.creator and session.algorithm_image:
-        for image in session.image_set.all()[: remaining_jobs()]:
+        session_images = session.image_set.all()
+        if session.algorithm_image.algorithm.job_credit > 0:
+            session_images = session_images[: remaining_jobs()]
+
+        for image in session_images:
             if not ComponentInterfaceValue.objects.filter(
                 interface=default_input_interface,
                 image=image,

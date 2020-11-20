@@ -3,6 +3,7 @@
 {% load url %}
 {% load get_obj_perms from guardian_tags %}
 {% load bleach %}
+{% load random_encode %}
 
 {% block title %}
     Try-out Algorithm - {{ block.super }}
@@ -30,27 +31,36 @@
 
     {% if "change_algorithm" in algorithm_perms %}
         <p>
-                As an admin for this algorithm you can start as many jobs as
-                you like. Algorithm users will be allowed to start a maximum of
-                {{ max_jobs }} job{{ max_jobs|pluralize }} per month (taking all algorithms into account).
-                With the algorithm's job weight you can change this maximum number.
-                You can change the job weight in<a href="{% url 'algorithms:update' slug=algorithm.slug %}">
-                Settings</a>.
+            As an editor of this algorithm you can try this algorithm as many times as you like.
+            {% if algorithm.job_credit  == 0 %}
+                It will not cost an algorithm user any credits to try this algorithm.
+            {% else %}
+                It will require an algorithm user {{ algorithm.job_credit }} credits per image to try
+            this algorithm.
+            {%  endif %}
+            You can change the amount of credits that it will cost to try this algorithm by changing the Job credits in
+            <a href="{% url 'algorithms:update' slug=algorithm.slug %}"> Settings</a>
+            (a user receives a 1000 credits a month).
+            A job credit of zero means users can try this algorithm an unlimited number of times.
             </p>
         {% crispy form %}
     {% else %}
-        {% if remaining_jobs < 0 %}
+        {% if remaining_jobs <= 0 %}
             <p>
-            You have reached your algorithm jobs limit. You can make
-                    another submission on {{ next_job_at }}.
+            You have run out of credits to try this algorithm. You can try again on {{ next_job_at }}.
+            You can request more credits by sending an e-mail to
+                <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}" class="text-radboud">
+                    support@grand-challenge.org</a>.
             </p>
         {% else %}
             <p>Select the images that you would like to run the algorithm on.</p>
-            <p>
-                You can upload {{ remaining_jobs }} more
-                image{{ remaining_jobs|pluralize }} to try this algorithm.
-            </p>
-
+            {% if algorithm.job_credit != 0 %}
+                <p>
+                    Trying this algorithm requires {{ algorithm.job_credit }} credit{{ algorithm.job_credit|pluralize }}
+                    per image. You have {{ user_credits }} credit{{ user_credits|pluralize }} left for this month,
+                    allowing you to upload {{ remaining_jobs }} image{{ remaining_jobs|pluralize }}.
+                </p>
+            {%  endif %}
             {% crispy form %}
         {%  endif %}
     <p>
