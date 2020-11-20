@@ -31,7 +31,8 @@ from grandchallenge.core.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,
     MethodForm,
-    PhaseForm,
+    PhaseCreateForm,
+    PhaseUpdateForm,
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import (
@@ -46,13 +47,39 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 
 
+class PhaseCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = Phase
+    form_class = PhaseCreateForm
+    success_message = "Phase successfully created"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"challenge": self.request.challenge})
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.challenge = self.request.challenge
+        return super().form_valid(form)
+
+
 class PhaseUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     UpdateView,
 ):
-    form_class = PhaseForm
+    form_class = PhaseUpdateForm
     success_message = "Configuration successfully updated"
     permission_required = "change_phase"
     raise_exception = True
@@ -62,6 +89,11 @@ class PhaseUpdate(
         return Phase.objects.get(
             challenge=self.request.challenge, slug=self.kwargs["slug"]
         )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"challenge": self.request.challenge})
+        return kwargs
 
     def get_success_url(self):
         return reverse(
