@@ -10,6 +10,9 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
 
 
+# TODO decision - What to do when a new algorithm image is uploaded?
+
+
 @receiver(m2m_changed, sender=Archive.images.through)
 def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
     if action not in ["post_add", "post_remove", "pre_clear"]:
