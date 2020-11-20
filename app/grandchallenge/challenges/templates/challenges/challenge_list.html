@@ -94,10 +94,6 @@
                             {% endif %}
                         </div>
 
-                        {% for filter_tag in challenge.filter_tags %}
-                            {{ filter_tag.badge }}
-                        {% endfor %}
-
                         {% if challenge.event_name %}
                             <a class="badge badge-info above-stretched-link"
                                href="{% firstof challenge.event_url challenge.get_absolute_url %}"

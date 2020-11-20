@@ -1,7 +1,5 @@
 import datetime
 import logging
-import re
-from collections import namedtuple
 from itertools import chain, product
 
 from django.conf import settings
@@ -73,11 +71,6 @@ class TaskType(models.Model):
         return self.type
 
     @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.type)
-        return f"task-{cls}"
-
-    @property
     def badge(self):
         return format_html(
             (
@@ -99,11 +92,6 @@ class ImagingModality(models.Model):
 
     def __str__(self):
         return self.modality
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.modality)
-        return f"modality-{cls}"
 
     @property
     def badge(self):
@@ -128,11 +116,6 @@ class BodyRegion(models.Model):
     def __str__(self):
         return self.region
 
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.region)
-        return f"region-{cls}"
-
 
 class BodyStructure(models.Model):
     """Store the organ name and what region it belongs to."""
@@ -147,11 +130,6 @@ class BodyStructure(models.Model):
 
     def __str__(self):
         return f"{self.structure} ({self.region})"
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.structure)
-        return f"structure-{cls}"
 
     @property
     def badge(self):
@@ -175,11 +153,6 @@ class ChallengeSeries(models.Model):
 
     def __str__(self):
         return f"{self.name}"
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.name)
-        return f"series-{cls}"
 
     @property
     def badge(self):
@@ -328,12 +301,6 @@ class ChallengeBase(models.Model):
     def upcoming_workshop_date(self):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
-
-    @property
-    def host_filter(self):
-        host_filter = namedtuple("host_filter", ["host", "filter_tag"])
-        domain = self.registered_domain
-        return host_filter(domain, re.sub(r"\W+", "", domain))
 
     @property
     def registered_domain(self):
