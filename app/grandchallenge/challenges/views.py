@@ -49,6 +49,10 @@ class ChallengeList(TemplateView):
     def _current_page(self):
         return int(self.request.GET.get("page", 1))
 
+    @property
+    def _filters_applied(self):
+        return any(k for k in self.request.GET if k.lower() != "page")
+
     def _get_page(self):
         self.int_filter = ChallengeFilter(
             self.request.GET,
@@ -89,6 +93,7 @@ class ChallengeList(TemplateView):
         context.update(
             {
                 "int_filter": self.int_filter,
+                "filters_applied": self._filters_applied,
                 "page_obj": page_obj,
                 "num_pages": num_pages,
                 "num_results": num_results,

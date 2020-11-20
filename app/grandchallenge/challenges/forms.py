@@ -1,6 +1,6 @@
-from crispy_forms.bootstrap import FormActions, Tab, TabHolder
+from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import ButtonHolder, Layout, Reset, Submit
+from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
 from django.forms import Form
 from django_select2.forms import Select2MultipleWidget
@@ -139,13 +139,4 @@ class ChallengeFilterForm(Form):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_method = "GET"
-        self.helper.layout.append(
-            FormActions(
-                Submit("submit", "Filter Results"),
-                Reset(
-                    "cancel",
-                    "Clear Filters",
-                    onclick='window.location.href="./"',
-                ),
-            )
-        )
+        self.helper.layout.append(Submit("submit", "Apply Filters"))

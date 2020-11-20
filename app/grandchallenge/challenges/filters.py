@@ -21,7 +21,7 @@ from grandchallenge.challenges.models import (
 
 
 class ChallengeFilter(FilterSet):
-    search = CharFilter(method="search_filter", label="Search")
+    search = CharFilter(method="search_filter", label="Title or Description")
     modalities = ModelMultipleChoiceFilter(
         queryset=ImagingModality.objects.all(),
         widget=Select2MultipleWidget,

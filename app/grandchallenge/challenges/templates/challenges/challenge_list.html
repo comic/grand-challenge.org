@@ -24,7 +24,26 @@
         </p>
     {% endif %}
 
-    {% crispy int_filter.form %}
+    <p>
+        <a class="btn btn-primary"
+           role="button"
+           data-toggle="collapse"
+           data-target="#filterForm"
+           aria-expanded="false"
+           aria-controls="filterForm">
+            <i class="fas fa-filter"></i>&nbsp;Filter Challenges
+        </a>
+        {% if filters_applied %}
+            <a class="btn btn-danger" href="?page={{ current_page }}">
+                <i class="fas fa-times"></i>&nbsp;Remove Filters
+            </a>
+        {% endif %}
+    </p>
+    <div class="collapse" id="filterForm">
+        <div class="card card-body mb-3">
+            {% crispy int_filter.form %}
+        </div>
+    </div>
 
     <p class="text-muted">
         {{ num_results }} challenge{{ num_results|pluralize }} found
