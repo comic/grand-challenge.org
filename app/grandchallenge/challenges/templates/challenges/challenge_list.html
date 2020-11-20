@@ -3,6 +3,8 @@
 {% load url %}
 {% load humanize %}
 {% load meta_attr %}
+{% load crispy_forms_tags %}
+{% load update_search_params %}
 
 {% block title %}Challenges - {{ block.super }}{% endblock %}
 
@@ -22,25 +24,11 @@
         </p>
     {% endif %}
 
-    <div class="d-flex mb-3 justify-content-end">
-        <form action="" method="GET">
-            <div class="form-row justify-content-end">
-                <div class="col-auto">
-                    <input class="form-control" name="search" type="text" placeholder="Search..."
-                           value={{ current_search }}>
-                </div>
-                <div class="col-auto">
-                    <input type="submit" class="btn btn-primary" value="Search">
-                </div>
-            </div>
-        </form>
-    </div>
+    {% crispy int_filter.form %}
 
-    <div>
-        <p class="text-right text-muted">
-            {{ num_results }} challenge{{ num_results|pluralize }} found
-        </p>
-    </div>
+    <p class="text-muted">
+        {{ num_results }} challenge{{ num_results|pluralize }} found
+    </p>
 
     <div class='row equal-height mx-n2'>
         {% for challenge in page_obj %}
@@ -168,7 +156,7 @@
             </div>
         {% empty %}
             <div class="col px-2">
-                <p>No results for {{ current_search }}.</p>
+                <p>No challenges found.</p>
             </div>
         {% endfor %}
     </div>
@@ -176,14 +164,14 @@
     <div class="d-flex justify-content-end">
         <ul class="pagination">
             <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ current_page|add:'-1' }}&search={{ current_search }}">Previous</a>
+                <a class="page-link" href="?{% update_search_params page=previous_page %}">Previous</a>
             </li>
 
             <li class="page-item disabled"><span class="page-link">Page {{ current_page }} of {{ num_pages }}</span>
             </li>
 
             <li class="page-item {% if current_page == num_pages %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ current_page|add:'1' }}&search={{ current_search }}">Next</a>
+                <a class="page-link" href="?{% update_search_params page=next_page %}">Next</a>
             </li>
         </ul>
     </div>
