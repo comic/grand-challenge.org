@@ -50,7 +50,7 @@ def test_create_jobs_is_limited():
     riu.algorithm_image.algorithm.save()
     riu.creator = user
 
-    for i in range(3):
+    for _ in range(3):
         ImageFactory(origin=riu),
     riu.save()
 
