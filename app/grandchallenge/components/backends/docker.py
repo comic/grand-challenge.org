@@ -16,7 +16,7 @@ from django.conf import settings
 from django.core.files import File
 from django.db.models import Model
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, ContainerError, NotFound
+from docker.errors import APIError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
@@ -234,27 +234,29 @@ class Executor(DockerConnection):
         )
 
     def _execute_container(self) -> str:
-        try:
-            logs = self._client.containers.run(
+        with cleanup(
+            self._client.containers.run(
                 image=self._exec_image_sha256,
                 volumes={
                     self._input_volume: {"bind": "/input/", "mode": "ro"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
                 name=f"{self._job_label}-executor",
-                remove=True,
+                detach=True,
                 labels=self._labels,
                 environment={
                     "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
                 },
-                stdout=True,
-                stderr=True,
                 **self._run_kwargs,
             )
-        except ContainerError as e:
-            raise ComponentException(e.stderr.decode())
+        ) as container:
+            container_state = container.wait()
+            logs = container.logs(stdout=True, stderr=True).decode()
 
-        return logs.decode()
+        if container_state["StatusCode"] != 0:
+            raise ComponentException(logs)
+
+        return logs
 
     def _get_result(self) -> dict:
         """
