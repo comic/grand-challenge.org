@@ -279,10 +279,12 @@ class Executor(DockerConnection):
                 },
                 **self._run_kwargs,
             )
-        ) as container:
-            container_state = container.wait()
-            self._stdout = container.logs(stdout=True, stderr=False).decode()
-            self._stderr = container.logs(stdout=False, stderr=True).decode()
+        ) as c:
+            try:
+                container_state = c.wait()
+            finally:
+                self._stdout = c.logs(stdout=True, stderr=False).decode()
+                self._stderr = c.logs(stdout=False, stderr=True).decode()
 
         if container_state["StatusCode"] != 0:
             raise ComponentException(user_error(self._stderr))
