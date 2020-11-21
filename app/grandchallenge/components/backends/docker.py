@@ -177,14 +177,14 @@ class Executor(DockerConnection):
         self._input_volume = f"{self._job_label}-input"
         self._output_volume = f"{self._job_label}-output"
 
-    def execute(self) -> Tuple[dict, str]:
+    def execute(self) -> Tuple[dict, str, str]:
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
         self._chmod_volumes()
-        logs = self._execute_container()
+        stdout, stderr = self._execute_container()
         result = self._get_result()
-        return result, logs
+        return result, stdout, stderr
 
     def _pull_images(self):
         self._client.images.pull(repository=self._io_image)
@@ -233,7 +233,7 @@ class Executor(DockerConnection):
             **self._run_kwargs,
         )
 
-    def _execute_container(self) -> str:
+    def _execute_container(self) -> Tuple[str, str]:
         with cleanup(
             self._client.containers.run(
                 image=self._exec_image_sha256,
@@ -251,12 +251,13 @@ class Executor(DockerConnection):
             )
         ) as container:
             container_state = container.wait()
-            logs = container.logs(stdout=True, stderr=True).decode()
+            stdout = container.logs(stdout=True, stderr=False).decode()
+            stderr = container.logs(stdout=False, stderr=True).decode()
 
         if container_state["StatusCode"] != 0:
-            raise ComponentException(logs)
+            raise ComponentException("\n".join([stdout, stderr]))
 
-        return logs
+        return stdout, stderr
 
     def _get_result(self) -> dict:
         """

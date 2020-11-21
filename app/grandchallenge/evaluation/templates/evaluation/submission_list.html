@@ -58,8 +58,8 @@
                                 {% else %}
                                     Evaluation is under review by the challenge admins.
                                 {% endif %}
-                            {% elif evaluation.FAILURE and evaluation.output %}
-                                {{ evaluation.output|user_error }}
+                            {% elif evaluation.FAILURE %}
+                                {% firstof evaluation.stderr|user_error evaluation.stdout|user_error %}
                             {% endif %}
                         {% endfor %}
                     </td>

@@ -29,9 +29,9 @@
    {% if job.status == job.SUCCESS %}
         {% for output in job.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
    {% elif change_job %}
-        {% firstof job.output job.get_status_display %}
+        {% firstof job.stderr job.stdout job.get_status_display %}
    {% else %}
-        {% firstof job.output|user_error job.get_status_display %}
+        {% firstof job.stderr|user_error job.stdout|user_error job.get_status_display %}
    {% endif %}"
    data-pk="{{ job.pk }}"
    title="Result Info">

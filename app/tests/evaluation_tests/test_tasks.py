@@ -40,6 +40,7 @@ def test_submission_evaluation(
     )
 
     # The evaluation method should return the correct answer
+    assert submission.evaluation_set.first().stderr == ""
     assert len(submission.evaluation_set.all()) == 1
     assert (
         submission.evaluation_set.first()
@@ -156,7 +157,7 @@ class TestSetEvaluationInputs(TestCase):
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.FAILURE
         assert (
-            evaluation.output == "The algorithm failed to execute on 1 images."
+            evaluation.stderr == "The algorithm failed to execute on 1 images."
         )
 
     def test_set_evaluation_inputs(self):
@@ -174,5 +175,5 @@ class TestSetEvaluationInputs(TestCase):
 
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.PENDING
-        assert evaluation.output == ""
+        assert evaluation.stderr == ""
         assert evaluation.inputs.count() == 1

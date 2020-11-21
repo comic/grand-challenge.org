@@ -38,11 +38,12 @@ class JobAdmin(GuardedModelAdmin):
         "inputs",
         "outputs",
         "viewers",
+        "stdout",
+        "stderr",
     )
     search_fields = (
         "creator__username",
         "pk",
-        "output",
         "algorithm_image__algorithm__slug",
     )
 
@@ -50,7 +51,7 @@ class JobAdmin(GuardedModelAdmin):
         return obj.algorithm_image.algorithm
 
     def error_message(self, obj):
-        return user_error(obj.output)
+        return user_error(obj.stderr)
 
 
 class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):

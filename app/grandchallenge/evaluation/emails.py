@@ -13,7 +13,7 @@ def send_failed_evaluation_email(evaluation):
         f"Unfortunately the evaluation for the submission to "
         f"{evaluation.submission.phase.challenge.short_name} failed with an "
         f"error. The error message is:\n\n"
-        f"{user_error(evaluation.output)}\n\n"
+        f"{user_error(evaluation.stderr)}\n\n"
         f"You may wish to try and correct this, or contact the challenge "
         f"organizers. The following information may help them:\n"
         f"User: {evaluation.submission.creator.username}\n"

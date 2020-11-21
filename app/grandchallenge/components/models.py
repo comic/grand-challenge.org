@@ -175,7 +175,8 @@ class ComponentJob(models.Model):
     status = models.PositiveSmallIntegerField(
         choices=STATUS_CHOICES, default=PENDING
     )
-    output = models.TextField()
+    stdout = models.TextField()
+    stderr = models.TextField(default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
 
@@ -190,11 +191,16 @@ class ComponentJob(models.Model):
 
     objects = DurationQuerySet.as_manager()
 
-    def update_status(self, *, status: STATUS_CHOICES, output: str = ""):
+    def update_status(
+        self, *, status: STATUS_CHOICES, stdout: str = "", stderr: str = ""
+    ):
         self.status = status
 
-        if output:
-            self.output = output
+        if stdout:
+            self.stdout = stdout
+
+        if stderr:
+            self.stderr = stderr
 
         if status == self.STARTED and self.started_at is None:
             self.started_at = now()

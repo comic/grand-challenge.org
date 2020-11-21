@@ -68,7 +68,15 @@ class EvaluationAdmin(admin.ModelAdmin):
         "submission__phase__challenge__short_name",
         "submission__creator__username",
     )
-    readonly_fields = ("status", "submission", "method", "inputs", "outputs")
+    readonly_fields = (
+        "status",
+        "submission",
+        "method",
+        "inputs",
+        "outputs",
+        "stdout",
+        "stderr",
+    )
 
 
 admin.site.register(Phase, PhaseAdmin)
