@@ -1,5 +1,6 @@
 import json
 from csv import DictReader
+from warnings import warn
 
 
 def get_classes(csvfile: str):
@@ -30,3 +31,7 @@ if __name__ == "__main__":
     # /output/metrics.json
     metrics = {"acc": acc, "inf": float("inf"), "nan": float("nan")}
     write_metrics(metrics)
+    # stdout should be saved
+    print("Greetings from stdout")
+    # so should stderr
+    warn("Hello from stderr")

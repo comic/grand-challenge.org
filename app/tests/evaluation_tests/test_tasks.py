@@ -40,12 +40,20 @@ def test_submission_evaluation(
     )
 
     # The evaluation method should return the correct answer
-    assert submission.evaluation_set.first().stderr == ""
     assert len(submission.evaluation_set.all()) == 1
+
+    evaluation = submission.evaluation_set.first()
+    assert evaluation.stdout == "Greetings from stdout\n"
     assert (
-        submission.evaluation_set.first()
-        .outputs.get(interface__slug="metrics-json-file")
-        .value["acc"]
+        evaluation.stderr
+        == 'evaluate_submission.py:37: UserWarning: Hello from stderr\n  warn("Hello from stderr")\n'
+    )
+    assert evaluation.error_message == ""
+    assert evaluation.status == evaluation.SUCCESS
+    assert (
+        evaluation.outputs.get(interface__slug="metrics-json-file").value[
+            "acc"
+        ]
         == 0.5
     )
 
