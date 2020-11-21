@@ -39,6 +39,7 @@ class JobAdmin(GuardedModelAdmin):
         "viewers",
         "stdout",
         "stderr",
+        "error_message",
     )
     search_fields = (
         "creator__username",
