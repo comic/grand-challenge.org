@@ -20,6 +20,16 @@ class Migration(migrations.Migration):
             name="stderr",
             field=models.TextField(default=""),
         ),
+        migrations.AddField(
+            model_name="algorithmevaluation",
+            name="error_message",
+            field=models.CharField(default="", max_length=255),
+        ),
+        migrations.AddField(
+            model_name="evaluation",
+            name="error_message",
+            field=models.CharField(default="", max_length=255),
+        ),
         migrations.RenameField(
             model_name="algorithmevaluation",
             old_name="output",

@@ -24,6 +24,21 @@ from requests import HTTPError
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
 
 
+def user_error(obj: str):
+    """
+    Filter an error message to just return the last, none-empty line. Used
+    to return the last line of a traceback to a user.
+
+    :param obj: A string with newlines
+    :return: The last, none-empty line of obj
+    """
+    try:
+        lines = list(filter(None, obj.split("\n")))
+        return lines[-1]
+    except IndexError:
+        return obj
+
+
 class ComponentException(Exception):
     """These exceptions will be sent to the user."""
 
@@ -177,14 +192,29 @@ class Executor(DockerConnection):
         self._input_volume = f"{self._job_label}-input"
         self._output_volume = f"{self._job_label}-output"
 
-    def execute(self) -> Tuple[dict, str, str]:
+        self._stdout = ""
+        self._stderr = ""
+        self._result = {}
+
+    def execute(self):
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
         self._chmod_volumes()
-        stdout, stderr = self._execute_container()
-        result = self._get_result()
-        return result, stdout, stderr
+        self._execute_container()
+        self._get_result()
+
+    @property
+    def stdout(self):
+        return self._stdout
+
+    @property
+    def stderr(self):
+        return self._stderr
+
+    @property
+    def result(self):
+        return self._result
 
     def _pull_images(self):
         self._client.images.pull(repository=self._io_image)
@@ -233,7 +263,7 @@ class Executor(DockerConnection):
             **self._run_kwargs,
         )
 
-    def _execute_container(self) -> Tuple[str, str]:
+    def _execute_container(self) -> None:
         with cleanup(
             self._client.containers.run(
                 image=self._exec_image_sha256,
@@ -251,15 +281,13 @@ class Executor(DockerConnection):
             )
         ) as container:
             container_state = container.wait()
-            stdout = container.logs(stdout=True, stderr=False).decode()
-            stderr = container.logs(stdout=False, stderr=True).decode()
+            self._stdout = container.logs(stdout=True, stderr=False).decode()
+            self._stderr = container.logs(stdout=False, stderr=True).decode()
 
         if container_state["StatusCode"] != 0:
-            raise ComponentException("\n".join([stdout, stderr]))
+            raise ComponentException(user_error(self._stderr))
 
-        return stdout, stderr
-
-    def _get_result(self) -> dict:
+    def _get_result(self):
         """
         Read and parse the created results file. Due to a bug in the docker
         client, copy the file to memory first rather than cat and read
@@ -298,7 +326,7 @@ class Executor(DockerConnection):
         except JSONDecodeError as e:
             raise ComponentException(f"Could not decode results file: {e.msg}")
 
-        return result
+        self._result = result
 
 
 class Service(DockerConnection):

@@ -152,7 +152,7 @@ def execute_job(
 
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used."
-        job.update_status(status=job.FAILURE, stderr=msg)
+        job.update_status(status=job.FAILURE, error_message=msg)
         raise RuntimeError(msg)
 
     try:
@@ -164,31 +164,46 @@ def execute_job(
             exec_image_sha256=job.container.image_sha256,
         ) as ev:
             # This call is potentially very long
-            result, stdout, stderr = ev.execute()
+            ev.execute()
     except ComponentException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.update_status(status=job.FAILURE, stderr=str(e))
+        job.update_status(
+            status=job.FAILURE,
+            stdout=ev.stdout,
+            stderr=ev.stderr,
+            error_message=str(e),
+        )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.update_status(status=job.FAILURE, stderr="Time limit exceeded.")
+        job.update_status(
+            status=job.FAILURE,
+            stdout=ev.stdout,
+            stderr=ev.stderr,
+            error_message="Time limit exceeded.",
+        )
     except Exception:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
         job.update_status(
-            status=job.FAILURE, stderr="An unexpected error occurred."
+            status=job.FAILURE,
+            stdout=ev.stdout,
+            stderr=ev.stderr,
+            error_message="An unexpected error occurred.",
         )
         raise
     else:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.create_result(result=result)
-        job.update_status(status=job.SUCCESS, stdout=stdout, stderr=stderr)
+        job.create_result(result=ev.result)
+        job.update_status(
+            status=job.SUCCESS, stdout=ev.stdout, stderr=ev.stderr
+        )
 
 
 @shared_task
@@ -219,7 +234,9 @@ def mark_long_running_jobs_failed(
         jobs_to_mark = jobs_to_mark.filter(**extra_filters)
 
     for j in jobs_to_mark:
-        j.update_status(status=Job.FAILURE, stderr="Evaluation timed out")
+        j.update_status(
+            status=Job.FAILURE, error_message="Evaluation timed out."
+        )
 
     return [j.pk for j in jobs_to_mark]
 

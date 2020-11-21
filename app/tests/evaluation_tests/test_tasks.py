@@ -157,7 +157,8 @@ class TestSetEvaluationInputs(TestCase):
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.FAILURE
         assert (
-            evaluation.stderr == "The algorithm failed to execute on 1 images."
+            evaluation.error_message
+            == "The algorithm failed to execute on 1 images."
         )
 
     def test_set_evaluation_inputs(self):
@@ -175,5 +176,5 @@ class TestSetEvaluationInputs(TestCase):
 
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.PENDING
-        assert evaluation.stderr == ""
+        assert evaluation.error_message == ""
         assert evaluation.inputs.count() == 1

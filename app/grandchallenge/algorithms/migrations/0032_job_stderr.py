@@ -15,6 +15,11 @@ class Migration(migrations.Migration):
             name="stderr",
             field=models.TextField(default=""),
         ),
+        migrations.AddField(
+            model_name="job",
+            name="error_message",
+            field=models.CharField(default="", max_length=255),
+        ),
         migrations.RenameField(
             model_name="job", old_name="output", new_name="stdout",
         ),

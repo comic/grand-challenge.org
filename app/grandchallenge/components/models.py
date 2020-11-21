@@ -177,6 +177,7 @@ class ComponentJob(models.Model):
     )
     stdout = models.TextField()
     stderr = models.TextField(default="")
+    error_message = models.CharField(max_length=255, default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
 
@@ -192,7 +193,12 @@ class ComponentJob(models.Model):
     objects = DurationQuerySet.as_manager()
 
     def update_status(
-        self, *, status: STATUS_CHOICES, stdout: str = "", stderr: str = ""
+        self,
+        *,
+        status: STATUS_CHOICES,
+        stdout: str = "",
+        stderr: str = "",
+        error_message="",
     ):
         self.status = status
 
@@ -201,6 +207,9 @@ class ComponentJob(models.Model):
 
         if stderr:
             self.stderr = stderr
+
+        if error_message:
+            self.error_message = error_message[:255]
 
         if status == self.STARTED and self.started_at is None:
             self.started_at = now()

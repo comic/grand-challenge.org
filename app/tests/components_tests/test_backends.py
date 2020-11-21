@@ -2,7 +2,10 @@ import os
 
 import pytest
 
-from grandchallenge.components.backends.docker import DockerConnection
+from grandchallenge.components.backends.docker import (
+    DockerConnection,
+    user_error,
+)
 
 
 class FakeJobClass:
@@ -35,3 +38,12 @@ def test_cpuset_cpus(settings, cpuset, expected):
 
     assert os.cpu_count() > 1
     assert c._run_kwargs["cpuset_cpus"] == expected
+
+
+def test_user_error():
+    assert user_error(obj="foo\n") == "foo"
+    assert user_error(obj="foo") == "foo"
+    assert user_error(obj="foo\n\n") == "foo"
+    assert user_error(obj="foo\nbar") == "bar"
+    assert user_error(obj="foo\nbar\n\n") == "bar"
+    assert user_error(obj="") == ""

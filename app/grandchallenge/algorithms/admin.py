@@ -7,7 +7,6 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.evaluation.templatetags.evaluation_extras import user_error
 
 
 class AlgorithmImageAdmin(GuardedModelAdmin):
@@ -49,9 +48,6 @@ class JobAdmin(GuardedModelAdmin):
 
     def algorithm(self, obj):
         return obj.algorithm_image.algorithm
-
-    def error_message(self, obj):
-        return user_error(obj.stderr)
 
 
 class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
