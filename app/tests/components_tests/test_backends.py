@@ -52,6 +52,13 @@ def test_user_error(with_timestamp):
     assert user_error(obj=f"{timestamp}foo\n\n") == "foo"
     assert user_error(obj=f"{timestamp}foo\n{timestamp}bar") == "bar"
     assert user_error(obj=f"{timestamp}foo\n{timestamp}bar\n\n") == "bar"
-    assert user_error(obj=f"{timestamp}foo\n{timestamp}    bar\n\n") == "bar"
+    assert user_error(obj=f"{timestamp}foo\n{timestamp}    a b\n\n") == "a b"
     assert user_error(obj=f"{timestamp}foo\nbar\n\n") == "bar"
-    assert user_error(obj=f"{timestamp}") == ""
+    assert (
+        user_error(obj=f"{timestamp}\n")
+        == "No errors were reported in the logs."
+    )
+    assert (
+        user_error(obj=f"{timestamp}\n{timestamp}\n")
+        == "No errors were reported in the logs."
+    )
