@@ -43,11 +43,8 @@ def test_submission_evaluation(
     assert len(submission.evaluation_set.all()) == 1
 
     evaluation = submission.evaluation_set.first()
-    assert evaluation.stdout == "Greetings from stdout\n"
-    assert (
-        evaluation.stderr
-        == 'evaluate_submission.py:37: UserWarning: Hello from stderr\n  warn("Hello from stderr")\n'
-    )
+    assert evaluation.stdout.endswith("Greetings from stdout\n")
+    assert evaluation.stderr.endswith('warn("Hello from stderr")\n')
     assert evaluation.error_message == ""
     assert evaluation.status == evaluation.SUCCESS
     assert (

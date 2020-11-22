@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import tarfile
 from contextlib import contextmanager
 from json import JSONDecodeError
@@ -22,6 +23,10 @@ from docker.types import LogConfig
 from requests import HTTPError
 
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
+LOGLINES = 2000  # The number of loglines to keep
+
+# Docker logline error message with optional RFC3339 timestamp
+LOGLINE_REGEX = r"^(?P<timestamp>([\d]+)-(0[1-9]|1[012])-(0[1-9]|[12][\d]|3[01])[Tt]([01][\d]|2[0-3]):([0-5][\d]):([0-5][\d]|60)(\.[\d]+)?(([Zz])|([\+|\-]([01][\d]|2[0-3]):[0-5][\d])))?\s*(?P<error_message>.*)$"
 
 
 def user_error(obj: str):
@@ -32,11 +37,16 @@ def user_error(obj: str):
     :param obj: A string with newlines
     :return: The last, none-empty line of obj
     """
-    try:
-        lines = list(filter(None, obj.split("\n")))
-        return lines[-1]
-    except IndexError:
-        return obj
+    pattern = re.compile(LOGLINE_REGEX, re.MULTILINE)
+
+    error_message = ""
+
+    for m in re.finditer(pattern, obj):
+        e = m.group("error_message")
+        if e:
+            error_message = e
+
+    return error_message
 
 
 class ComponentException(Exception):
@@ -283,8 +293,12 @@ class Executor(DockerConnection):
             try:
                 container_state = c.wait()
             finally:
-                self._stdout = c.logs(stdout=True, stderr=False).decode()
-                self._stderr = c.logs(stdout=False, stderr=True).decode()
+                self._stdout = c.logs(
+                    stdout=True, stderr=False, timestamps=True, tail=LOGLINES
+                ).decode()
+                self._stderr = c.logs(
+                    stdout=False, stderr=True, timestamps=True, tail=LOGLINES
+                ).decode()
 
         exit_code = int(container_state["StatusCode"])
         if exit_code == 137:

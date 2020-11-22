@@ -40,10 +40,18 @@ def test_cpuset_cpus(settings, cpuset, expected):
     assert c._run_kwargs["cpuset_cpus"] == expected
 
 
-def test_user_error():
-    assert user_error(obj="foo\n") == "foo"
-    assert user_error(obj="foo") == "foo"
-    assert user_error(obj="foo\n\n") == "foo"
-    assert user_error(obj="foo\nbar") == "bar"
-    assert user_error(obj="foo\nbar\n\n") == "bar"
-    assert user_error(obj="") == ""
+@pytest.mark.parametrize("with_timestamp", (True, False))
+def test_user_error(with_timestamp):
+    if with_timestamp:
+        timestamp = "2020-11-22T07:19:38.976408700Z"
+    else:
+        timestamp = ""
+
+    assert user_error(obj=f"{timestamp}foo\n") == "foo"
+    assert user_error(obj=f"{timestamp}foo") == "foo"
+    assert user_error(obj=f"{timestamp}foo\n\n") == "foo"
+    assert user_error(obj=f"{timestamp}foo\n{timestamp}bar") == "bar"
+    assert user_error(obj=f"{timestamp}foo\n{timestamp}bar\n\n") == "bar"
+    assert user_error(obj=f"{timestamp}foo\n{timestamp}    bar\n\n") == "bar"
+    assert user_error(obj=f"{timestamp}foo\nbar\n\n") == "bar"
+    assert user_error(obj=f"{timestamp}") == ""
