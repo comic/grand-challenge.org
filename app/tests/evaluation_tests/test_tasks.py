@@ -41,10 +41,16 @@ def test_submission_evaluation(
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
+
+    evaluation = submission.evaluation_set.first()
+    assert evaluation.stdout.endswith("Greetings from stdout\n")
+    assert evaluation.stderr.endswith('warn("Hello from stderr")\n')
+    assert evaluation.error_message == ""
+    assert evaluation.status == evaluation.SUCCESS
     assert (
-        submission.evaluation_set.first()
-        .outputs.get(interface__slug="metrics-json-file")
-        .value["acc"]
+        evaluation.outputs.get(interface__slug="metrics-json-file").value[
+            "acc"
+        ]
         == 0.5
     )
 
@@ -156,7 +162,8 @@ class TestSetEvaluationInputs(TestCase):
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.FAILURE
         assert (
-            evaluation.output == "The algorithm failed to execute on 1 images."
+            evaluation.error_message
+            == "The algorithm failed to execute on 1 images."
         )
 
     def test_set_evaluation_inputs(self):
@@ -174,5 +181,5 @@ class TestSetEvaluationInputs(TestCase):
 
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.PENDING
-        assert evaluation.output == ""
+        assert evaluation.error_message == ""
         assert evaluation.inputs.count() == 1

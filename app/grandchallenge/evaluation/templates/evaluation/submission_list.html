@@ -1,6 +1,5 @@
 {% extends "challenge.html" %}
 {% load url %}
-{% load evaluation_extras %}
 {% load profiles %}
 
 {% block breadcrumbs %}
@@ -58,8 +57,8 @@
                                 {% else %}
                                     Evaluation is under review by the challenge admins.
                                 {% endif %}
-                            {% elif evaluation.FAILURE and evaluation.output %}
-                                {{ evaluation.output|user_error }}
+                            {% elif evaluation.FAILURE %}
+                                {% firstof evaluation.error_message evaluation.get_status_display %}
                             {% endif %}
                         {% endfor %}
                     </td>

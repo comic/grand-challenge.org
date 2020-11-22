@@ -4,7 +4,6 @@
 {% load guardian_tags %}
 {% load pathlib %}
 {% load humanize %}
-{% load evaluation_extras %}
 {% load remove_whitespace %}
 
 {{ job.created|naturaltime }}
@@ -28,10 +27,8 @@
    data-output="
    {% if job.status == job.SUCCESS %}
         {% for output in job.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
-   {% elif change_job %}
-        {% firstof job.output job.get_status_display %}
    {% else %}
-        {% firstof job.output|user_error job.get_status_display %}
+        {% firstof job.error_message job.get_status_display %}
    {% endif %}"
    data-pk="{{ job.pk }}"
    title="Result Info">

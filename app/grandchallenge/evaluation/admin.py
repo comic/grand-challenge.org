@@ -43,7 +43,7 @@ class SubmissionAdmin(admin.ModelAdmin):
 
 
 class AlgorithmEvaluationAdmin(admin.ModelAdmin):
-    list_display = ("pk", "created", "submission", "status")
+    list_display = ("pk", "created", "submission", "status", "error_message")
     list_filter = ("submission__phase__challenge__short_name",)
     search_fields = (
         "pk",
@@ -51,12 +51,19 @@ class AlgorithmEvaluationAdmin(admin.ModelAdmin):
         "submission__phase__challenge__short_name",
         "submission__creator__username",
     )
-    readonly_fields = ("inputs", "outputs", "submission")
+    readonly_fields = (
+        "inputs",
+        "outputs",
+        "submission",
+        "stdout",
+        "stderr",
+        "error_message",
+    )
 
 
 class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    list_display = ("pk", "created", "submission", "status")
+    list_display = ("pk", "created", "submission", "status", "error_message")
     list_filter = ("submission__phase__challenge__short_name", "status")
     list_select_related = (
         "submission__phase__challenge",
@@ -68,7 +75,16 @@ class EvaluationAdmin(admin.ModelAdmin):
         "submission__phase__challenge__short_name",
         "submission__creator__username",
     )
-    readonly_fields = ("status", "submission", "method", "inputs", "outputs")
+    readonly_fields = (
+        "status",
+        "submission",
+        "method",
+        "inputs",
+        "outputs",
+        "stdout",
+        "stderr",
+        "error_message",
+    )
 
 
 admin.site.register(Phase, PhaseAdmin)
