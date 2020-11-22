@@ -42,11 +42,11 @@ def user_error(obj: str):
     error_message = "No errors were reported in the logs."
 
     for m in re.finditer(pattern, obj):
-        e = m.group("error_message")
+        e = m.group("error_message").strip()
         if e:
             error_message = e
 
-    return error_message.strip()
+    return error_message
 
 
 class ComponentException(Exception):
