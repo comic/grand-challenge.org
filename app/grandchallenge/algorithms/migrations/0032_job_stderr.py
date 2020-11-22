@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="job",
             name="error_message",
-            field=models.CharField(default="", max_length=255),
+            field=models.CharField(default="", max_length=1024),
         ),
         migrations.RenameField(
             model_name="job", old_name="output", new_name="stdout",

@@ -23,12 +23,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="algorithmevaluation",
             name="error_message",
-            field=models.CharField(default="", max_length=255),
+            field=models.CharField(default="", max_length=1024),
         ),
         migrations.AddField(
             model_name="evaluation",
             name="error_message",
-            field=models.CharField(default="", max_length=255),
+            field=models.CharField(default="", max_length=1024),
         ),
         migrations.RenameField(
             model_name="algorithmevaluation",

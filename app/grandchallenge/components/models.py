@@ -177,7 +177,7 @@ class ComponentJob(models.Model):
     )
     stdout = models.TextField()
     stderr = models.TextField(default="")
-    error_message = models.CharField(max_length=255, default="")
+    error_message = models.CharField(max_length=1024, default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
 
@@ -209,7 +209,7 @@ class ComponentJob(models.Model):
             self.stderr = stderr
 
         if error_message:
-            self.error_message = error_message[:255]
+            self.error_message = error_message[:1024]
 
         if status == self.STARTED and self.started_at is None:
             self.started_at = now()
