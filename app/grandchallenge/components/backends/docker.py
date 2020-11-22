@@ -286,7 +286,13 @@ class Executor(DockerConnection):
                 self._stdout = c.logs(stdout=True, stderr=False).decode()
                 self._stderr = c.logs(stdout=False, stderr=True).decode()
 
-        if container_state["StatusCode"] != 0:
+        exit_code = int(container_state["StatusCode"])
+        if exit_code == 137:
+            raise ComponentException(
+                "The container was killed as it exceeded the memory limit "
+                f"of {settings.COMPONENTS_MEMORY_LIMIT}."
+            )
+        elif exit_code != 0:
             raise ComponentException(user_error(self._stderr))
 
     def _get_result(self):
