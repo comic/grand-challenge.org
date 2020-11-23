@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils._os import safe_join
+from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
@@ -452,7 +453,7 @@ class Job(UUIDModel, ComponentJob):
             )
             self.outputs.add(output_civ)
 
-    @property
+    @cached_property
     def rendered_result_text(self):
         try:
             result_dict = get(

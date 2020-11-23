@@ -26,7 +26,6 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
@@ -435,26 +434,21 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
         "comment",
     ]
     columns = [
+        Column(title="Details", sort_field="created"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="creator__username"),
         Column(title="Result", sort_field="inputs__image__name"),
+        Column(title="Comment", sort_field="comment"),
         Column(title="Visibility", sort_field="public"),
-        Column(title="Output", sort_field="inputs__image__files__file"),
-        Column(title="Settings", sort_field="comment"),
+        Column(title="Viewer", sort_field="inputs__image__files__file"),
     ]
     order_by = "created"
 
-    def get_row_context(self, job, *args, checker, **kwargs):
+    def get_row_context(self, job, *args, **kwargs):
         return {
             "job": job,
             "algorithm": self.algorithm,
-            "change_job": checker.has_perm("change_job", job),
         }
-
-    def get_data(self, jobs, *args, **kwargs):
-        checker = ObjectPermissionChecker(self.request.user)
-        checker.prefetch_perms(jobs.object_list)
-        return [self.render_row_data(job, checker=checker) for job in jobs]
 
     @cached_property
     def algorithm(self):
