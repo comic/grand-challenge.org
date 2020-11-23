@@ -484,7 +484,9 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
         return context
 
 
-class JobDetail(DetailView):
+class JobDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    raise_exception = True
     queryset = (
         Job.objects.with_duration()
         .prefetch_related(
