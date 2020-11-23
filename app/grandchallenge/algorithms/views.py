@@ -484,7 +484,16 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
 
 
 class JobDetail(DetailView):
-    model = Job
+    queryset = Job.objects.with_duration()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        viewers_form = ViewersForm()
+        viewers_form.fields["action"].initial = ViewersForm.REMOVE
+        context.update({"viewers_form": viewers_form})
+
+        return context
 
 
 class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):

@@ -152,7 +152,7 @@
                     see all of the results:
                 </p>
 
-                <ul class="list-group list-group-flush mb-2">
+                <ul class="list-group list-group-flush mb-3">
                     {% for user in object.editors_group.user_set.all %}
                         <li class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">
@@ -203,7 +203,7 @@
                 <h2>Users</h2>
                 <p>The following users are able to use this algorithm:</p>
 
-                <ul class="list-group list-group-flush mb-2">
+                <ul class="list-group list-group-flush mb-3">
                     {% for user in object.users_group.user_set.all %}
                         <li class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">
