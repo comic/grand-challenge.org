@@ -37,7 +37,6 @@ from grandchallenge.components.models import (
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
-from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
