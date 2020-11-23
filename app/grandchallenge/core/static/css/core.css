@@ -100,3 +100,8 @@ dl.inline dt:after {
 .select2-container input:placeholder-shown {
   width: 100% !important;
 }
+
+.console {
+    background-color: var(--gray-dark);
+    color: var(--light);
+}

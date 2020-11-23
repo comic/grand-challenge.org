@@ -93,18 +93,28 @@
                 <dt class="col-sm-3">Status</dt>
                 <dd class="col-sm-9">
                     <span class="badge
-                        {% if job.status == job.FAILURE or job.status == object.CANCELLED %}
+                        {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
                             badge-danger
-                        {% elif job.status == job.RETRY %}
+                        {% elif object.status == object.RETRY %}
                             badge-warning
-                        {% elif job.status == job.SUCCESS %}
-                            badge-success
+                        {% elif object.status == object.SUCCESS %}
+                            {% if object.stderr %}
+                                badge-warning
+                            {% else %}
+                                badge-success
+                            {% endif %}
                         {% else %}
                             badge-info
                         {% endif %}">
-                        {{ object.get_status_display }}
+                        {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %}, with
+                            Warnings{% endif %}
                     </span>
                 </dd>
+
+                {% if object.error_message %}
+                    <dt class="col-sm-3">Error Message</dt>
+                    <dd class="col-sm-9">{{ object.error_message }}</dd>
+                {% endif %}
 
                 {% if object.duration %}
                     <dt class="col-sm-3">Duration</dt>
@@ -238,6 +248,17 @@
             <div class="tab-pane fade" id="v-pills-logs" role="tabpanel"
                  aria-labelledby="v-pills-logs-tab">
                 <h2>Logs</h2>
+
+                <h3>Stdout</h3>
+                {# @formatter:off #}
+                <pre class="console">{% if object.stdout %}{{ object.stdout }}{% else %}No logs found on stdout{% endif %}</pre>
+                {# @formatter:on #}
+
+                <h3>Stderr</h3>
+                {# @formatter:off #}
+                <pre class="console">{% if object.stderr %}{{ object.stderr }}{% else %}No logs found on stderr{% endif %}</pre>
+                {# @formatter:on #}
+
             </div>
         {% endif %}
     </div>

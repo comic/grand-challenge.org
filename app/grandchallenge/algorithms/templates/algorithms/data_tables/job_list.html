@@ -19,7 +19,11 @@
 {% elif job.status == job.RETRY %}
     badge-warning
 {% elif job.status == job.SUCCESS %}
-    badge-success
+    {% if job.stderr %}
+        badge-warning
+    {% else %}
+        badge-success
+    {% endif %}
 {% else %}
     badge-info
 {% endif %}"
@@ -38,7 +42,7 @@
     {% for input in job.inputs.all %}
         {{ input.image.name }}
     {% endfor %}
-    ({{ job.get_status_display }})
+    ({{ job.get_status_display }}{% if job.status == job.SUCCESS and job.stderr %}, with Warnings{% endif %})
 </a>
 {{ job.rendered_result_text|json_script:job.pk }}
 <split/>
