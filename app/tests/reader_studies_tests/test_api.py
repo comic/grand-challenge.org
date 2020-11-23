@@ -291,6 +291,95 @@ def test_answer_creator_is_reader(client):
             '{"version": {"major": 1, "minor": 0}, "type": "2D bounding box", "name": "test_name", "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]]}',
             400,
         ),  # Valid json, but a string
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, "", 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, True, 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, False, 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, 134, 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, "dsfuag", 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, {}, 400),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "2D bounding box",
+                "name": "test_name",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            {
+                "type": "2D bounding box",
+                "name": "test_name",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            {
+                "version": {"major": 1, "minor": 0},
+                "name": "test_name",
+                "boxes": [
+                    {
+                        "corners": [
+                            [0, 0, 0],
+                            [10, 0, 0],
+                            [10, 10, 0],
+                            [0, 0, 0],
+                        ]
+                    }
+                ],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple 2D bounding boxes",
+                "name": "test_name",
+                "boxes": [
+                    {
+                        "corners": [
+                            [0, 0, 0],
+                            [10, 0, 0],
+                            [10, 10, 0],
+                            [0, 0, 0],
+                        ]
+                    }
+                ],
+            },
+            201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Multiple 2D bounding boxes",
+                "name": "test_name",
+                "boxes": [
+                    {
+                        "corners": [
+                            [0, 0, 0],
+                            [10, 0, 0],
+                            [10, 10, 0],
+                            [0, 0, 0],
+                        ]
+                    },
+                    {
+                        "corners": [
+                            [0, 0, 0],
+                            [10, 0, 0],
+                            [10, 10, 0],
+                            [0, 0, 0],
+                        ]
+                    },
+                ],
+            },
+            201,
+        ),
         (
             Question.ANSWER_TYPE_DISTANCE_MEASUREMENT,
             {
