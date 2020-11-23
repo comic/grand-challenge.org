@@ -1,7 +1,12 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
-from guardian.shortcuts import assign_perm, get_group_perms, get_perms
+from guardian.shortcuts import (
+    assign_perm,
+    get_group_perms,
+    get_perms,
+    remove_perm,
+)
 
 from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import (
@@ -526,3 +531,40 @@ def test_public_job_group_permissions():
 
     assert "view_job" not in get_perms(g_reg, algorithm_job)
     assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
+
+
+@pytest.mark.django_db
+class TestObjectPermissionRequiredViews:
+    def test_permission_required_views(self, client):
+        j = AlgorithmJobFactory()
+        u = UserFactory()
+
+        for view_name, kwargs, permission, obj in [
+            (
+                "job-detail",
+                {"slug": j.algorithm_image.algorithm.slug, "pk": j.pk},
+                "view_job",
+                j,
+            ),
+        ]:
+            response = get_view_for_user(
+                client=client,
+                viewname=f"algorithms:{view_name}",
+                reverse_kwargs=kwargs,
+                user=u,
+            )
+
+            assert response.status_code == 403
+
+            assign_perm(permission, u, obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"algorithms:{view_name}",
+                reverse_kwargs=kwargs,
+                user=u,
+            )
+
+            assert response.status_code == 200
+
+            remove_perm(permission, u, obj)

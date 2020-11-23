@@ -4,6 +4,7 @@ import pytest
 from django.contrib.auth.models import Group
 from django.utils import timezone
 from django.utils.text import slugify
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -424,3 +425,36 @@ def test_algorithm_jobs_list_view(client):
     assert resp["recordsTotal"] == 50
     assert resp["recordsFiltered"] == 1
     assert len(resp["data"]) == 1
+
+
+@pytest.mark.django_db
+class TestJobDetailView:
+    def test_guarded_content_visibility(self, client):
+        j = AlgorithmJobFactory()
+        u = UserFactory()
+        assign_perm("view_job", u, j)
+
+        for content, permission, permission_object in [
+            ("<h2>Viewers</h2>", "change_job", j),
+            ("<h2>Logs</h2>", "change_algorithm", j.algorithm_image.algorithm),
+        ]:
+            view_kwargs = {
+                "client": client,
+                "viewname": "algorithms:job-detail",
+                "reverse_kwargs": {
+                    "slug": j.algorithm_image.algorithm.slug,
+                    "pk": j.pk,
+                },
+                "user": u,
+            }
+            response = get_view_for_user(**view_kwargs)
+            assert response.status_code == 200
+            assert content not in response.rendered_content
+
+            assign_perm(permission, u, permission_object)
+
+            response = get_view_for_user(**view_kwargs)
+            assert response.status_code == 200
+            assert content in response.rendered_content
+
+            remove_perm(permission, u, permission_object)
