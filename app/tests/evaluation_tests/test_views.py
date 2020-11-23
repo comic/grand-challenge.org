@@ -23,6 +23,7 @@ class TestLoginViews:
         e = EvaluationFactory()
 
         for view_name, kwargs in [
+            ("phase-create", {}),
             ("phase-update", {"slug": e.submission.phase.slug}),
             ("method-create", {}),
             ("method-list", {}),
@@ -77,6 +78,12 @@ class TestObjectPermissionRequiredViews:
         u = UserFactory()
 
         for view_name, kwargs, permission, obj in [
+            (
+                "phase-create",
+                {},
+                "change_challenge",
+                e.submission.phase.challenge,
+            ),
             (
                 "phase-update",
                 {"slug": e.submission.phase.slug},

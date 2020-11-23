@@ -11,6 +11,7 @@ from grandchallenge.evaluation.views import (
     MethodDetail,
     MethodList,
     ObservableDetail,
+    PhaseCreate,
     PhaseUpdate,
     SubmissionCreate,
     SubmissionDetail,
@@ -24,6 +25,7 @@ urlpatterns = [
     path("<uuid:pk>/", EvaluationDetail.as_view(), name="detail"),
     # UUID should be matched before slugs
     path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
+    path("phase/create/", PhaseCreate.as_view(), name="phase-create"),
     path(
         "<slug>/leaderboard/", LeaderboardDetail.as_view(), name="leaderboard"
     ),
