@@ -439,6 +439,15 @@ class Job(UUIDModel, ComponentJob):
     def executor_cls(self):
         return AlgorithmExecutor
 
+    @property
+    def duration(self):
+        try:
+            duration = self.completed_at - self.started_at
+        except TypeError:
+            duration = None
+
+        return duration
+
     def create_result(self, *, result: dict):
         interface = ComponentInterface.objects.get(slug="results-json-file")
 
@@ -476,8 +485,11 @@ class Job(UUIDModel, ComponentJob):
 
     def get_absolute_url(self):
         return reverse(
-            "algorithms:jobs-list",
-            kwargs={"slug": self.algorithm_image.algorithm.slug},
+            "algorithms:job-detail",
+            kwargs={
+                "slug": self.algorithm_image.algorithm.slug,
+                "pk": self.pk,
+            },
         )
 
     @property

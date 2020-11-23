@@ -423,7 +423,7 @@ class AlgorithmExecutionSessionDetail(
         return context
 
 
-class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
+class JobsList(PermissionListMixin, PaginatedTableListView):
     model = Job
     permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
     row_template = "algorithms/data_tables/job_list.html"
@@ -483,21 +483,17 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
         return context
 
 
-class AlgorithmJobUpdate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
-):
+class JobDetail(DetailView):
+    model = Job
+
+
+class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     model = Job
     form_class = JobForm
     permission_required = (
         f"{Job._meta.app_label}.change_{Job._meta.model_name}"
     )
     raise_exception = True
-
-    def get_success_url(self):
-        return reverse(
-            "algorithms:jobs-list",
-            kwargs={"slug": self.object.algorithm_image.algorithm.slug},
-        )
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):

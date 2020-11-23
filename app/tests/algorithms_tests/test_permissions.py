@@ -181,7 +181,7 @@ def test_algorithm_jobs_list_view(client):
 
     for test in tests:
         response = get_view_for_user(
-            viewname="algorithms:jobs-list",
+            viewname="algorithms:job-list",
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],

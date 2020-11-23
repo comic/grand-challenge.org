@@ -352,7 +352,7 @@ def test_algorithm_jobs_list_view(client):
         job.save()
 
     response = get_view_for_user(
-        viewname="algorithms:jobs-list",
+        viewname="algorithms:job-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -363,7 +363,7 @@ def test_algorithm_jobs_list_view(client):
     assert response.status_code == 200
 
     response = get_view_for_user(
-        viewname="algorithms:jobs-list",
+        viewname="algorithms:job-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -378,7 +378,7 @@ def test_algorithm_jobs_list_view(client):
     assert len(resp["data"]) == 10
 
     response = get_view_for_user(
-        viewname="algorithms:jobs-list",
+        viewname="algorithms:job-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -393,7 +393,7 @@ def test_algorithm_jobs_list_view(client):
     assert len(resp["data"]) == 50
 
     response = get_view_for_user(
-        viewname="algorithms:jobs-list",
+        viewname="algorithms:job-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
@@ -410,7 +410,7 @@ def test_algorithm_jobs_list_view(client):
     resp_new["data"] == resp["data"][::-1]
 
     response = get_view_for_user(
-        viewname="algorithms:jobs-list",
+        viewname="algorithms:job-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
