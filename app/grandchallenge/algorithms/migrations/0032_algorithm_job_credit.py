@@ -12,10 +12,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="algorithm",
-            name="job_credit",
+            name="credits_per_job",
             field=models.PositiveIntegerField(
                 default=0,
-                help_text="The credits that it will require an algorithm user to run this algorithm.",
+                help_text="The number of credits that are required for each execution of this algorithm.",
             ),
         ),
     ]

@@ -42,7 +42,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "public",
             "workstation",
             "workstation_config",
-            "job_credit",
+            "credits_per_job",
             "detail_page_markdown",
             "job_create_page_markdown",
             "additional_terms_markdown",

@@ -1,11 +1,7 @@
-from datetime import timedelta
-
 from celery import group, shared_task
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
-from django.db.models import Sum
-from django.utils import timezone
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.cases.models import RawImageUploadSession
@@ -30,18 +26,8 @@ def create_algorithm_jobs(*_, upload_session_pk):
     jobs = []
 
     def remaining_jobs() -> int:
-        now = timezone.now()
-        period = timedelta(days=30)
         user_credit = Credit.objects.get(user=session.creator)
-
-        jobs = (
-            Job.objects.filter(
-                creator=session.creator, created__range=[now - period, now],
-            )
-            .distinct()
-            .select_related("algorithm_image__algorithm")
-            .aggregate(total=Sum("algorithm_image__algorithm__job_credit"))
-        )
+        jobs = Job.credits_set.spent_credits(user=session.creator)
 
         if jobs["total"]:
             total_jobs = user_credit.credits - jobs["total"]
@@ -49,12 +35,16 @@ def create_algorithm_jobs(*_, upload_session_pk):
             total_jobs = user_credit.credits
 
         return int(
-            total_jobs / max(session.algorithm_image.algorithm.job_credit, 1)
+            total_jobs
+            / max(session.algorithm_image.algorithm.credits_per_job, 1)
         )
 
     if session.creator and session.algorithm_image:
         session_images = session.image_set.all()
-        if session.algorithm_image.algorithm.job_credit > 0:
+        if (
+            not session.algorithm_image.algorithm.is_editor(session.creator)
+            and session.algorithm_image.algorithm.credits_per_job > 0
+        ):
             session_images = session_images[: remaining_jobs()]
 
         for image in session_images:
@@ -88,16 +78,9 @@ def create_algorithm_jobs(*_, upload_session_pk):
 def send_failed_jobs_email(*_, upload_session_pk):
     session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
-    excluded_images_count = len(
-        list(
-            image
-            for image in session.image_set.all()
-            if not Job.objects.filter(
-                inputs__image__origin_id=upload_session_pk,
-                inputs__image=image,
-            ).exists()
-        )
-    )
+    excluded_images_count = session.image_set.filter(
+        componentinterfacevalue__algorithms_jobs_as_input__isnull=True
+    ).count()
 
     failed_jobs = Job.objects.filter(
         inputs__image__origin_id=upload_session_pk, status=Job.FAILURE

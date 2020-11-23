@@ -32,10 +32,10 @@
     {% if "change_algorithm" in algorithm_perms %}
         <p>
             As an editor of this algorithm you can try this algorithm as many times as you like.
-            {% if algorithm.job_credit  == 0 %}
+            {% if algorithm.credits_per_job  == 0 %}
                 It will not cost an algorithm user any credits to try this algorithm.
             {% else %}
-                It will require an algorithm user {{ algorithm.job_credit }} credits per image to try
+                It will require an algorithm user {{ algorithm.credits_per_job }} credits per image to try
             this algorithm.
             {%  endif %}
             You can change the amount of credits that it will cost to try this algorithm by changing the Job credits in
@@ -54,9 +54,9 @@
             </p>
         {% else %}
             <p>Select the images that you would like to run the algorithm on.</p>
-            {% if algorithm.job_credit != 0 %}
+            {% if algorithm.credits_per_job != 0 %}
                 <p>
-                    Trying this algorithm requires {{ algorithm.job_credit }} credit{{ algorithm.job_credit|pluralize }}
+                    Trying this algorithm requires {{ algorithm.credits_per_job }} credit{{ algorithm.credits_per_job|pluralize }}
                     per image. You have {{ user_credits }} credit{{ user_credits|pluralize }} left for this month,
                     allowing you to upload {{ remaining_jobs }} image{{ remaining_jobs|pluralize }}.
                 </p>

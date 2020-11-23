@@ -123,7 +123,7 @@ def test_algorithm_create(client):
                 "title": "foo bar",
                 "logo": get_temporary_image(),
                 "workstation": ws.pk,
-                "job_credit": 1,
+                "credits_per_job": 1,
             },
             follow=True,
             user=creator,

@@ -15,7 +15,6 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.db.models import Min, Sum
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -394,7 +393,9 @@ class AlgorithmExecutionSessionCreate(
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
         context.update(
-            self.get_remaining_jobs(job_credit=self.algorithm.job_credit)
+            self.get_remaining_jobs(
+                credits_per_job=self.algorithm.credits_per_job
+            )
         )
         return context
 
@@ -404,7 +405,7 @@ class AlgorithmExecutionSessionCreate(
             kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
 
-    def get_remaining_jobs(self, *, job_credit: int,) -> Dict:
+    def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
         """
         Determines the number of jobs left for the user and when the next job can be started
 
@@ -415,25 +416,14 @@ class AlgorithmExecutionSessionCreate(
         period = timedelta(days=30)
         user_credit = Credit.objects.get(user=self.request.user)
 
-        if job_credit == 0:
+        if credits_per_job == 0:
             return {
                 "remaining_jobs": 1,
                 "next_job_at": now,
                 "user_credits": user_credit.credits,
             }
 
-        jobs = (
-            Job.objects.filter(
-                creator=self.request.user, created__range=[now - period, now],
-            )
-            .distinct()
-            .order_by("created")
-            .select_related("algorithm_image__algorithm")
-            .aggregate(
-                total=Sum("algorithm_image__algorithm__job_credit"),
-                oldest=Min("created"),
-            )
-        )
+        jobs = Job.credits_set.spent_credits(user=self.request.user)
 
         if jobs["oldest"]:
             next_job_at = jobs["oldest"] + period
@@ -446,7 +436,7 @@ class AlgorithmExecutionSessionCreate(
             total_jobs = user_credit.credits
 
         return {
-            "remaining_jobs": int(total_jobs / max(job_credit, 1)),
+            "remaining_jobs": int(total_jobs / max(credits_per_job, 1)),
             "next_job_at": next_job_at,
             "user_credits": total_jobs,
         }

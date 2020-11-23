@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -6,8 +7,10 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import Min, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.utils import timezone
 from django.utils._os import safe_join
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
@@ -34,6 +37,7 @@ from grandchallenge.components.models import (
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.utils import get
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
@@ -111,10 +115,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         to=ComponentInterface, related_name="algorithm_outputs"
     )
 
-    job_credit = models.PositiveIntegerField(
+    credits_per_job = models.PositiveIntegerField(
         default=0,
         help_text=(
-            "The credits that it will require an algorithm user to run this algorithm."
+            "The number of credits that are required for each execution of this algorithm."
         ),
     )
 
@@ -392,6 +396,25 @@ class AlgorithmExecutor(Executor):
             job.outputs.add(civ)
 
 
+class JobQuerySet(models.QuerySet):
+    def spent_credits(self, user):
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_groups = Group.objects.filter(user=user)
+
+        return (
+            self.filter(creator=user, created__range=[now - period, now],)
+            .distinct()
+            .order_by("created")
+            .select_related("algorithm_image__algorithm")
+            .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
+            .aggregate(
+                total=Sum("algorithm_image__algorithm__credits_per_job"),
+                oldest=Min("created"),
+            )
+        )
+
+
 class Job(UUIDModel, ComponentJob):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
@@ -419,6 +442,7 @@ class Job(UUIDModel, ComponentJob):
         on_delete=models.CASCADE,
         related_name="viewers_of_algorithm_job",
     )
+    credits_set = JobQuerySet.as_manager()
 
     class Meta:
         ordering = ("created",)
