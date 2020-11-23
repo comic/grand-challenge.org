@@ -73,7 +73,7 @@ django-haystack = "3.0b1"
 citeproc-py = "*"
 django-ipware = "*"
 pyswot = "*"
-django-redis = "^4.12.1"
+django-redis = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
