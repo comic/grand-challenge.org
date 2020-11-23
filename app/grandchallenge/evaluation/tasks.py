@@ -35,7 +35,7 @@ def set_evaluation_inputs(evaluation_pk):
     if unsuccessful_jobs:
         evaluation.update_status(
             status=evaluation.FAILURE,
-            output=(
+            error_message=(
                 f"The algorithm failed to execute on {unsuccessful_jobs} "
                 f"images."
             ),

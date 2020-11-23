@@ -38,28 +38,6 @@ def get_key(obj: dict, key):
 
 
 @register.filter
-def user_error(obj: [str, bytes]):
-    """
-    Filter an error message to just return the last, none-empty line. Used
-    to return the last line of a traceback to a user.
-
-    :param obj: A string with newlines
-    :return: The last, none-empty line of obj
-    """
-    try:
-        # Sometimes bytes gets passed to this function, so try to decode it
-        obj = obj.decode()
-    except AttributeError:
-        pass
-
-    try:
-        lines = list(filter(None, obj.split("\n")))
-        return lines[-1]
-    except IndexError:
-        return obj
-
-
-@register.filter
 def json_dumps(obj: dict):
     """
     Dumps a json object

@@ -128,6 +128,10 @@
                                 {% endfor %}
                                 <hr>
                                 <a class="dropdown-item"
+                                   href="{% url 'evaluation:phase-create' challenge_short_name=challenge.short_name %}">
+                                   <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase
+                                </a>
+                                <a class="dropdown-item"
                                    href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
                                     Methods
                                 </a>

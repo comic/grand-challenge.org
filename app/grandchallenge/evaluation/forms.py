@@ -23,6 +23,8 @@ from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.subdomains.utils import reverse_lazy
 
+phase_options = ("title",)
+
 submission_options = (
     "submission_page_html",
     "daily_submission_limit",
@@ -58,12 +60,35 @@ result_detail_options = (
 )
 
 
-class PhaseForm(forms.ModelForm):
+class PhaseTitleMixin:
+    def __init__(self, *args, challenge, **kwargs):
+        self.challenge = challenge
+        super().__init__(*args, **kwargs)
+
+    def clean_title(self):
+        title = self.cleaned_data["title"]
+
+        if self.challenge.phase_set.filter(title=title).exists():
+            raise ValidationError(
+                "This challenge already has a phase with this title"
+            )
+
+        return title
+
+
+class PhaseCreateForm(PhaseTitleMixin, SaveFormInitMixin, forms.ModelForm):
+    class Meta:
+        model = Phase
+        fields = ("title",)
+
+
+class PhaseUpdateForm(PhaseTitleMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
+                Tab("Phase", *phase_options),
                 Tab("Submission", *submission_options),
                 Tab("Scoring", *scoring_options),
                 Tab("Leaderboard", *leaderboard_options),
@@ -75,6 +100,7 @@ class PhaseForm(forms.ModelForm):
     class Meta:
         model = Phase
         fields = (
+            *phase_options,
             *submission_options,
             *scoring_options,
             *leaderboard_options,

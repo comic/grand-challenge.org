@@ -93,3 +93,10 @@ dl.inline dt:after {
 .breadcrumb-item > a {
     color: var(--secondary);
 }
+
+/* Fix display of select2 dropdowns when used in collapsible bootstrap elements */
+.select2-container,
+.select2-container li:only-child,
+.select2-container input:placeholder-shown {
+  width: 100% !important;
+}
