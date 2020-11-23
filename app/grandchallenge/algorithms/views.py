@@ -32,6 +32,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from guardian.shortcuts import get_perms
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -484,14 +485,38 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
 
 
 class JobDetail(DetailView):
-    queryset = Job.objects.with_duration()
+    queryset = (
+        Job.objects.with_duration()
+        .prefetch_related(
+            "outputs__image__files",
+            "outputs__interface",
+            "inputs__image__files",
+            "viewers__user_set__user_profile",
+            "viewers__user_set__verification",
+            "viewer_groups",
+        )
+        .select_related(
+            "creator__user_profile",
+            "creator__verification",
+            "algorithm_image__algorithm__workstation",
+        )
+    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         viewers_form = ViewersForm()
         viewers_form.fields["action"].initial = ViewersForm.REMOVE
-        context.update({"viewers_form": viewers_form})
+
+        context.update(
+            {
+                "viewers_form": viewers_form,
+                "job_perms": get_perms(self.request.user, self.object),
+                "algorithm_perms": get_perms(
+                    self.request.user, self.object.algorithm_image.algorithm
+                ),
+            }
+        )
 
         return context
 
