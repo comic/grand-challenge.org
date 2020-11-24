@@ -18,9 +18,9 @@ from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
-from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
 

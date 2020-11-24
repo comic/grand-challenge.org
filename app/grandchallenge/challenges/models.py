@@ -30,6 +30,7 @@ from grandchallenge.challenges.emails import (
 )
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.task_categories.models import TaskType
@@ -59,29 +60,6 @@ def get_logo_path(instance, filename):
 
 def get_banner_path(instance, filename):
     return f"b/{instance.pk}/{get_valid_filename(filename)}"
-
-
-class ImagingModality(models.Model):
-    """Store the modality options, eg, MR, CT, PET, XR."""
-
-    modality = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("modality",)
-
-    def __str__(self):
-        return self.modality
-
-    @property
-    def badge(self):
-        return format_html(
-            (
-                '<span class="badge badge-secondary above-stretched-link" '
-                'title="Uses {0} data"><i class="fas fa-microscope fa-fw">'
-                "</i> {0}</span>"
-            ),
-            self.modality,
-        )
 
 
 class ChallengeSeries(models.Model):

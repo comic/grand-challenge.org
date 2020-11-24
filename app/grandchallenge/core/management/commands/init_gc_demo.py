@@ -22,7 +22,6 @@ from grandchallenge.challenges.models import (
     Challenge,
     ChallengeSeries,
     ExternalChallenge,
-    ImagingModality,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -35,6 +34,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.overview_pages.models import OverviewPage
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy

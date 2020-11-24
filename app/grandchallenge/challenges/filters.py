@@ -14,8 +14,8 @@ from grandchallenge.challenges.forms import ChallengeFilterForm
 from grandchallenge.challenges.models import (
     Challenge,
     ChallengeSeries,
-    ImagingModality,
 )
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.task_categories.models import TaskType
 
 
