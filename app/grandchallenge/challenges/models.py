@@ -23,6 +23,7 @@ from machina.apps.forum_permission.models import (
 )
 from tldextract import extract
 
+from grandchallenge.anatomy.models import BodyRegion
 from grandchallenge.challenges.emails import (
     send_challenge_created_email,
     send_external_challenge_created_email,
@@ -103,18 +104,6 @@ class ImagingModality(models.Model):
             ),
             self.modality,
         )
-
-
-class BodyRegion(models.Model):
-    """Store the anatomy options, eg, Head, Neck, Thorax, etc."""
-
-    region = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("region",)
-
-    def __str__(self):
-        return self.region
 
 
 class BodyStructure(models.Model):
