@@ -6,7 +6,7 @@ from django.http import Http404
 from rest_framework import serializers
 
 from grandchallenge.archives.models import Archive
-from grandchallenge.challenges.serializers import ImagingModalitySerializer
+from grandchallenge.modalities.serializers import ImagingModalitySerializer
 from grandchallenge.patients.serializers import PatientSerializer
 from grandchallenge.studies.models import Study
 

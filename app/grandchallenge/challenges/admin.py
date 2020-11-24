@@ -5,7 +5,6 @@ from grandchallenge.challenges.models import (
     Challenge,
     ChallengeSeries,
     ExternalChallenge,
-    ImagingModality,
 )
 
 
@@ -22,4 +21,3 @@ class ExternalChallengeAdmin(ModelAdmin):
 admin.site.register(Challenge, ChallengeAdmin)
 admin.site.register(ExternalChallenge, ExternalChallengeAdmin)
 admin.site.register(ChallengeSeries)
-admin.site.register(ImagingModality)

@@ -51,8 +51,8 @@ from grandchallenge.annotations.serializers import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image
-from grandchallenge.challenges.models import ImagingModality
 from grandchallenge.core.serializers import UserSerializer
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.patients.models import Patient
 from grandchallenge.registrations.serializers import (
     OctObsRegistrationSerializer,
@@ -116,7 +116,8 @@ class ImageView(RetinaAPIPermissionMixin, View):
         if patient_identifier == settings.RETINA_EXCEPTION_ARCHIVE:
             # BMES data contains no study name, switched up parameters
             image = Image.objects.filter(
-                study__patient__name=study_identifier,  # this argument contains patient identifier
+                study__patient__name=study_identifier,
+                # this argument contains patient identifier
                 name=image_identifier,
             )
         elif (
@@ -424,7 +425,8 @@ class DataView(APIView):
                         )
                         result_data.update(
                             {
-                                opposing_type: []  # Add opposing GA type to object to prevent front-end error
+                                opposing_type: []
+                                # Add opposing GA type to object to prevent front-end error
                             }
                         )
                     series_name = image_name
