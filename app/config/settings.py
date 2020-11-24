@@ -426,7 +426,6 @@ LOCAL_APPS = [
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
     "grandchallenge.products",
-    "grandchallenge.overview_pages",
     "grandchallenge.serving",
     "grandchallenge.blogs",
     "grandchallenge.publications",

@@ -13,7 +13,6 @@ from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
 from grandchallenge.core.views import HomeTemplate
-from grandchallenge.overview_pages.sitemaps import OverviewPagesSitemap
 from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
 from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
@@ -36,7 +35,6 @@ sitemaps = {
     "companies": CompaniesSitemap,
     "core": CoreSitemap,
     "flatpages": FlatPagesSitemap,
-    "overview-pages": OverviewPagesSitemap,
     "pages": PagesSitemap,
     "policies": PoliciesSitemap,
     "products": ProductsSitemap,
@@ -128,12 +126,6 @@ urlpatterns = [
     ),
     path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs"),),
     path("forums/", include(machina_urls)),
-    path(
-        "",
-        include(
-            "grandchallenge.overview_pages.urls", namespace="overview-pages"
-        ),
-    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

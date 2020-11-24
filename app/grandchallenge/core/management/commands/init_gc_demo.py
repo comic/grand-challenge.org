@@ -35,7 +35,6 @@ from grandchallenge.evaluation.models import (
     Submission,
 )
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.overview_pages.models import OverviewPage
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.task_categories.models import TaskType
@@ -101,7 +100,6 @@ class Command(BaseCommand):
         self._create_workstation()
         self._create_algorithm_demo()
         self._create_reader_studies()
-        self._create_overview_page()
         self._log_tokens()
         self._setup_public_storage()
 
@@ -374,12 +372,6 @@ class Command(BaseCommand):
         )
         answer.images.add(grandchallenge.cases.models.Image.objects.first())
         answer.save()
-
-    @staticmethod
-    def _create_overview_page():
-        o = OverviewPage.objects.create(title="Overview")
-        o.challenges.add(Challenge.objects.get(short_name="demo"))
-        o.reader_studies.add(*ReaderStudy.objects.all())
 
     @staticmethod
     def _log_tokens():
