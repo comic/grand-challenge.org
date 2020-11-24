@@ -397,6 +397,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "grandchallenge.admins",
+    "grandchallenge.anatomy",
     "grandchallenge.api",
     "grandchallenge.challenges",
     "grandchallenge.core",
