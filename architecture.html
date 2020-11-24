@@ -305,7 +305,7 @@ Grand-challenge.org is a Django monolith, but several components can be deployed
 <h3>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h3>
 <p>The API layer provides the HTML views and REST services to the user.</p>
 <p class="plantuml">
-<img src="_images/plantuml-a2a9003915480675b5c499361ccc7cc3fb863ea6.svg" alt="&#64;startuml
+<img src="_images/plantuml-7b5f3246c87d876e5e6ef05ce50099c4bb948cee.svg" alt="&#64;startuml
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
 LAYOUT_TOP_DOWN
@@ -318,7 +318,7 @@ Person(users, &quot;Users&quot;, &quot;&quot;)
 Container_Boundary(s1, &quot;API&quot;) {
     Component(gc_web_app, &quot;Web Application&quot;, &quot;Django&quot;, &quot;Provides the grand challenge functionality via HTML and a REST API.&quot;)
     Component(nginx, &quot;Reverse Proxy&quot;, &quot;Nginx&quot;, &quot;SSL termination and routing&quot;)
-    Component(memcached, &quot;Cache&quot;, &quot;Memcached&quot;, &quot;Local in-memory cache of expensive data.&quot;)
+    Component(redis, &quot;Cache&quot;, &quot;Redis&quot;, &quot;Local in-memory cache of expensive data.&quot;)
 }
 
 ContainerDb(postgres, &quot;Database&quot;, &quot;RDS/PostgreSQL&quot;, &quot;Stores user information, medical imaging metadata, job results etc.&quot;)
@@ -338,7 +338,7 @@ Rel(gc_web_app, postgres, &quot;Reads and writes to&quot;, &quot;SSL, SQL&quot;)
 Rel(gc_web_app, protected_s3, &quot;Stores objects in, and proxies access to&quot;, &quot;HTTPS, S3&quot;)
 Rel(gc_web_app, private_s3, &quot;Stores objects in&quot;, &quot;HTTPS, S3&quot;)
 Rel(gc_web_app, message_queue, &quot;Puts messages on&quot;, &quot;SSL, SQS/Redis, Celery&quot;)
-Rel_Neighbor(gc_web_app, memcached, &quot;Uses&quot;, &quot;HTTP&quot;)
+Rel_Neighbor(gc_web_app, redis, &quot;Uses&quot;, &quot;HTTP&quot;)
 
 Rel(nginx, gc_web_app, &quot;Proxies&quot;, &quot;HTTP, HTML, JSON&quot;)
 
