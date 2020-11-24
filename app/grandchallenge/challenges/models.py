@@ -32,6 +32,7 @@ from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.task_categories.models import TaskType
 
 logger = logging.getLogger(__name__)
 
@@ -58,29 +59,6 @@ def get_logo_path(instance, filename):
 
 def get_banner_path(instance, filename):
     return f"b/{instance.pk}/{get_valid_filename(filename)}"
-
-
-class TaskType(models.Model):
-    """Stores the task type options, eg, Segmentation, Regression, etc."""
-
-    type = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("type",)
-
-    def __str__(self):
-        return self.type
-
-    @property
-    def badge(self):
-        return format_html(
-            (
-                '<span class="badge badge-light above-stretched-link" '
-                'title="{0} challenge"><i class="fas fa-tasks fa-fw">'
-                "</i> {0}</span>"
-            ),
-            self.type,
-        )
 
 
 class ImagingModality(models.Model):

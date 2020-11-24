@@ -23,7 +23,6 @@ from grandchallenge.challenges.models import (
     ChallengeSeries,
     ExternalChallenge,
     ImagingModality,
-    TaskType,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -39,6 +38,7 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.overview_pages.models import OverviewPage
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.task_categories.models import TaskType
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)

@@ -15,8 +15,8 @@ from grandchallenge.challenges.models import (
     Challenge,
     ChallengeSeries,
     ImagingModality,
-    TaskType,
 )
+from grandchallenge.task_categories.models import TaskType
 
 
 class ChallengeFilter(FilterSet):
