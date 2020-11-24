@@ -94,8 +94,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      memcached:
-        condition: service_started
       minio-private:
         condition: service_started
       minio-protected:
@@ -137,10 +135,6 @@ services:
         condition: service_started
       workstation-proxy:
         condition: service_started
-
-  memcached:
-    image: memcached:1.6
-    restart: always
 
   redis:
     image: redis:5.0

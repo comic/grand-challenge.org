@@ -205,8 +205,9 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
-        "LOCATION": "memcached:11211",
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     },
     "machina_attachments": {
         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
