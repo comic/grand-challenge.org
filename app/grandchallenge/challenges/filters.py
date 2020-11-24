@@ -9,10 +9,9 @@ from django_filters import (
 )
 from django_select2.forms import Select2MultipleWidget
 
-from grandchallenge.anatomy.models import BodyRegion
+from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.challenges.forms import ChallengeFilterForm
 from grandchallenge.challenges.models import (
-    BodyStructure,
     Challenge,
     ChallengeSeries,
     ImagingModality,

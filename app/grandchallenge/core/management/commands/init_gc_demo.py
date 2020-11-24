@@ -17,9 +17,8 @@ from userena.models import UserenaSignup
 
 import grandchallenge.cases.models
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
-from grandchallenge.anatomy.models import BodyRegion
+from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.challenges.models import (
-    BodyStructure,
     Challenge,
     ChallengeSeries,
     ExternalChallenge,
