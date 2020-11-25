@@ -9,15 +9,14 @@ from django_filters import (
 )
 from django_select2.forms import Select2MultipleWidget
 
+from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.challenges.forms import ChallengeFilterForm
 from grandchallenge.challenges.models import (
-    BodyRegion,
-    BodyStructure,
     Challenge,
     ChallengeSeries,
-    ImagingModality,
-    TaskType,
 )
+from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.task_categories.models import TaskType
 
 
 class ChallengeFilter(FilterSet):

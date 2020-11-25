@@ -43,14 +43,6 @@
                         Products
                     </a>
                 </li>
-                {% for overview_page in overview_pages %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.view_name == 'overview-pages:detail' and request.resolver_match.kwargs.slug == overview_page.slug %}active{% endif %}"
-                           href="{{ overview_page.get_absolute_url }}">
-                            {{ overview_page.title }}
-                        </a>
-                    </li>
-                {% endfor %}
             </ul>
             <ul class="navbar-nav">
                 {% if not hide_userlinks %}
