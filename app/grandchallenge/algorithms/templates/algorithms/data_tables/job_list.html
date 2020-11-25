@@ -6,10 +6,19 @@
 {% load humanize %}
 {% load remove_whitespace %}
 
+<a class="badge badge-primary"
+   href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=job.pk %}"
+   title="View result details">
+    <i class="fa fa-info-circle"></i>
+</a>
+<split/>
+
 {{ job.created|naturaltime }}
 <split/>
+
 {{ job.creator|user_profile_link }}
 <split/>
+
 <a href="#resultInfoModal"
    class="badge
 {% if job.status == job.FAILURE or job.status == object.CANCELLED %}
@@ -17,7 +26,11 @@
 {% elif job.status == job.RETRY %}
     badge-warning
 {% elif job.status == job.SUCCESS %}
-    badge-success
+    {% if job.stderr %}
+        badge-warning
+    {% else %}
+        badge-success
+    {% endif %}
 {% else %}
     badge-info
 {% endif %}"
@@ -36,91 +49,35 @@
     {% for input in job.inputs.all %}
         {{ input.image.name }}
     {% endfor %}
-    ({{ job.get_status_display }})
+    ({{ job.get_status_display }}{% if job.status == job.SUCCESS and job.stderr %}, with Warnings{% endif %})
 </a>
 {% if job.rendered_result_text %}
     {{ job.rendered_result_text|json_script:job.pk }}
 {% endif %}
 <split/>
+
+{{ job.comment }}
+<split/>
+
 {% if job.public %}
     <i class="fa fa-eye text-success"
-       title="Job and images are public"></i>
+       title="Result and images are public"></i>
 {% else %}
     {% if job.viewers.user_set.all|length > 1 %}
         {# TODO: Hack, we need to exclude the creator rather than checking the length is > 1 #}
         <i class="fa fa-eye text-warning"
-           title="Job and images are visible by {{ job.viewers.user_set.all|oxford_comma }}"></i>
+           title="Result and images are visible by {{ job.viewers.user_set.all|oxford_comma }}"></i>
     {% else %}
         <i class="fa fa-eye-slash text-danger"
-           title="Job and images are private"></i>
+           title="Result and images are private"></i>
     {% endif %}
 {% endif %}
 <split/>
+
 {% if job.status == job.SUCCESS %}
-    <ul class="list-unstyled">
-        <li>
-            <a href="{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_job=job config=algorithm.workstation_config %}">
-            <span class="badge badge-primary"
-                  title="View algorithm result">
-                <i class="fa fa-eye"></i> View Result
-            </span>
-            </a>
-        </li>
-        {% for output in job.outputs.all %}
-            {% for file in output.image.files.all %}
-                <li>
-                    <a href="{{ file.file.url }}">
-                    <span class="badge badge-primary"
-                          title="Download Output {{ forloop.parentloop.counter }} ({{ file.image.name }})">
-                        <i class="fa fa-download"></i> Output {{ forloop.parentloop.counter }} ({{ file.file|suffix }})
-                    </span>
-                    </a>
-                </li>
-            {% endfor %}
-        {% empty %}
-            <li>
-            <span class="badge badge-warning"
-                  title="No output images were found">
-                <i class="fa fa-eye-slash"></i>
-            </span>
-            </li>
-        {% endfor %}
-        {% for input in job.inputs.all %}
-            {% for file in input.image.files.all %}
-                <li>
-                    <a href="{{ file.file.url }}">
-                    <span class="badge badge-primary"
-                          title="Download Input {{ input.image.name|stem }} ({{ file.file|suffix }})">
-                        <i class="fa fa-download"></i> Input ({{ file.file|suffix }})
-                    </span>
-                    </a>
-                </li>
-            {% endfor %}
-        {% endfor %}
-    </ul>
-{% endif %}
-<split/>
-{% if job.comment %}
-    <a href="#commentInfoModal"
-       class="badge badge-primary"
-       data-toggle="modal"
-       data-target="#commentInfoModal"
-       data-title="Result Comment"
-       data-comment="{{ job.comment }}"
-       data-pk="{{ job.pk }}"
-       title="Result Comment">
-        <i class="fa fa-file"></i>
-    </a>
-{% endif %}
-{% if change_job %}
     <a class="badge badge-primary"
-       href="{% url 'algorithms:job-update' slug=algorithm.slug pk=job.pk %}"
-       title="Edit job">
-        <i class="fa fa-edit"></i>
-    </a>
-    <a class="badge badge-primary"
-       href="{% url 'algorithms:job-viewers-update' slug=algorithm.slug pk=job.pk %}"
-       title="Share this job with another user">
-        <i class="fa fa-user-plus"></i>
+       title="View algorithm result"
+       href="{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_job=job config=algorithm.workstation_config %}">
+        <i class="fa fa-eye"></i> Open Result in Viewer
     </a>
 {% endif %}

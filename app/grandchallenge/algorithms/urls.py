@@ -8,8 +8,6 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageCreate,
     AlgorithmImageDetail,
     AlgorithmImageUpdate,
-    AlgorithmJobUpdate,
-    AlgorithmJobsList,
     AlgorithmList,
     AlgorithmPermissionRequestCreate,
     AlgorithmPermissionRequestList,
@@ -17,7 +15,10 @@ from grandchallenge.algorithms.views import (
     AlgorithmUpdate,
     AlgorithmUserAutocomplete,
     EditorsUpdate,
+    JobDetail,
+    JobUpdate,
     JobViewersUpdate,
+    JobsList,
     UsersUpdate,
 )
 
@@ -58,10 +59,11 @@ urlpatterns = [
         AlgorithmExecutionSessionDetail.as_view(),
         name="execution-session-detail",
     ),
-    path("<slug>/jobs/", AlgorithmJobsList.as_view(), name="jobs-list"),
+    path("<slug>/jobs/", JobsList.as_view(), name="job-list"),
+    path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail",),
     path(
         "<slug>/jobs/<uuid:pk>/update/",
-        AlgorithmJobUpdate.as_view(),
+        JobUpdate.as_view(),
         name="job-update",
     ),
     path(

@@ -29,12 +29,12 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from guardian.shortcuts import get_perms
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -468,7 +468,7 @@ class AlgorithmExecutionSessionDetail(
         return context
 
 
-class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
+class JobsList(PermissionListMixin, PaginatedTableListView):
     model = Job
     permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
     row_template = "algorithms/data_tables/job_list.html"
@@ -479,26 +479,21 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
         "comment",
     ]
     columns = [
+        Column(title="Details", sort_field="created"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="creator__username"),
         Column(title="Result", sort_field="inputs__image__name"),
+        Column(title="Comment", sort_field="comment"),
         Column(title="Visibility", sort_field="public"),
-        Column(title="Output", sort_field="inputs__image__files__file"),
-        Column(title="Settings", sort_field="comment"),
+        Column(title="Viewer", sort_field="inputs__image__files__file"),
     ]
     order_by = "created"
 
-    def get_row_context(self, job, *args, checker, **kwargs):
+    def get_row_context(self, job, *args, **kwargs):
         return {
             "job": job,
             "algorithm": self.algorithm,
-            "change_job": checker.has_perm("change_job", job),
         }
-
-    def get_data(self, jobs, *args, **kwargs):
-        checker = ObjectPermissionChecker(self.request.user)
-        checker.prefetch_perms(jobs.object_list)
-        return [self.render_row_data(job, checker=checker) for job in jobs]
 
     @cached_property
     def algorithm(self):
@@ -528,21 +523,52 @@ class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
         return context
 
 
-class AlgorithmJobUpdate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
-):
+class JobDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    raise_exception = True
+    queryset = (
+        Job.objects.with_duration()
+        .prefetch_related(
+            "outputs__image__files",
+            "outputs__interface",
+            "inputs__image__files",
+            "viewers__user_set__user_profile",
+            "viewers__user_set__verification",
+            "viewer_groups",
+        )
+        .select_related(
+            "creator__user_profile",
+            "creator__verification",
+            "algorithm_image__algorithm__workstation",
+        )
+    )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        viewers_form = ViewersForm()
+        viewers_form.fields["action"].initial = ViewersForm.REMOVE
+
+        context.update(
+            {
+                "viewers_form": viewers_form,
+                "job_perms": get_perms(self.request.user, self.object),
+                "algorithm_perms": get_perms(
+                    self.request.user, self.object.algorithm_image.algorithm
+                ),
+            }
+        )
+
+        return context
+
+
+class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     model = Job
     form_class = JobForm
     permission_required = (
         f"{Job._meta.app_label}.change_{Job._meta.model_name}"
     )
     raise_exception = True
-
-    def get_success_url(self):
-        return reverse(
-            "algorithms:jobs-list",
-            kwargs={"slug": self.object.algorithm_image.algorithm.slug},
-        )
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):
