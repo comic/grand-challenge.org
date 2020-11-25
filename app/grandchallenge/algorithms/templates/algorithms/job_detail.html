@@ -99,8 +99,8 @@
                         {% else %}
                             badge-info
                         {% endif %}">
-                        {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %}, with
-                            Warnings{% endif %}
+                        {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
+                            with warnings{% endif %}
                     </span>
                 </dd>
 

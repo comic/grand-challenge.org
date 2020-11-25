@@ -49,7 +49,7 @@
     {% for input in job.inputs.all %}
         {{ input.image.name }}
     {% endfor %}
-    ({{ job.get_status_display }}{% if job.status == job.SUCCESS and job.stderr %}, with Warnings{% endif %})
+    ({{ job.get_status_display }}{% if job.status == job.SUCCESS and job.stderr %}, with warnings{% endif %})
 </a>
 {% if job.rendered_result_text %}
     {{ job.rendered_result_text|json_script:job.pk }}
