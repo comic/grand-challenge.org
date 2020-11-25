@@ -407,8 +407,6 @@ def test_algorithm_jobs_list_view(client):
     assert resp_new["recordsTotal"] == 50
     assert resp_new["data"] == resp["data"][::-1]
 
-    resp_new["data"] == resp["data"][::-1]
-
     response = get_view_for_user(
         viewname="algorithms:jobs-list",
         reverse_kwargs={"slug": slugify(alg.slug)},
