@@ -32,7 +32,7 @@ class ChallengeFilter(FilterSet):
         label="Task Type",
     )
     structures = ModelMultipleChoiceFilter(
-        queryset=BodyStructure.objects.all(),
+        queryset=BodyStructure.objects.select_related("region").all(),
         widget=Select2MultipleWidget,
         label="Anatomical Structure",
     )
