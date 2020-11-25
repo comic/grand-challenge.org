@@ -1013,7 +1013,9 @@ ANSWER_TYPE_SCHEMA = {
                 "boxes": {
                     "type": "array",
                     "items": {
-                        "allOf": [{"$ref": "#/definitions/2D-bounding-box-object"}]
+                        "allOf": [
+                            {"$ref": "#/definitions/2D-bounding-box-object"}
+                        ]
                     },
                 },
             },
