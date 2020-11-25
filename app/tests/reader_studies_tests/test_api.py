@@ -301,43 +301,6 @@ def test_answer_creator_is_reader(client):
             Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "version": {"major": 1, "minor": 0},
-                "type": "2D bounding box",
-                "name": "test_name",
-                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
-            },
-            201,
-        ),
-        (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
-            {
-                "type": "2D bounding box",
-                "name": "test_name",
-                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
-            },
-            400,
-        ),
-        (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
-            {
-                "version": {"major": 1, "minor": 0},
-                "name": "test_name",
-                "boxes": [
-                    {
-                        "corners": [
-                            [0, 0, 0],
-                            [10, 0, 0],
-                            [10, 10, 0],
-                            [0, 0, 0],
-                        ]
-                    }
-                ],
-            },
-            400,
-        ),
-        (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
-            {
-                "version": {"major": 1, "minor": 0},
                 "type": "Multiple 2D bounding boxes",
                 "name": "test_name",
                 "boxes": [
@@ -352,6 +315,33 @@ def test_answer_creator_is_reader(client):
                 ],
             },
             201,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
+            {
+                "type": "2D bounding box",
+                "name": "test_name",
+                "boxes": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+            },
+            400,
+        ),
+        (
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
+            {
+                "version": {"major": 1, "minor": 0},
+                "name": "test_name",
+                "boxes": [
+                    {
+                        "corners": [
+                            [0, 0, 0],
+                            [10, 0, 0],
+                            [10, 10, 0],
+                            [0, 0, 0],
+                        ]
+                    }
+                ],
+            },
+            400,
         ),
         (
             Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
@@ -615,6 +605,7 @@ def test_answer_creator_is_reader(client):
         (Question.ANSWER_TYPE_BOOL, None, 400),
         (Question.ANSWER_TYPE_HEADING, None, 400),
         (Question.ANSWER_TYPE_2D_BOUNDING_BOX, None, 201),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, None, 201),
         (Question.ANSWER_TYPE_DISTANCE_MEASUREMENT, None, 201),
         (Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS, None, 201),
         (Question.ANSWER_TYPE_POINT, None, 201),
