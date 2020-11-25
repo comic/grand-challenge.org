@@ -9,12 +9,15 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.credits.models import Credit
 from grandchallenge.subdomains.utils import reverse
 
 
 @shared_task
 def create_algorithm_jobs(*_, upload_session_pk):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    session = RawImageUploadSession.objects.select_related(
+        "algorithm_image__algorithm"
+    ).get(pk=upload_session_pk)
 
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
@@ -22,8 +25,29 @@ def create_algorithm_jobs(*_, upload_session_pk):
 
     jobs = []
 
+    def remaining_jobs() -> int:
+        user_credit = Credit.objects.get(user=session.creator)
+        jobs = Job.credits_set.spent_credits(user=session.creator)
+
+        if jobs["total"]:
+            total_jobs = user_credit.credits - jobs["total"]
+        else:
+            total_jobs = user_credit.credits
+
+        return int(
+            total_jobs
+            / max(session.algorithm_image.algorithm.credits_per_job, 1)
+        )
+
     if session.creator and session.algorithm_image:
-        for image in session.image_set.all():
+        session_images = session.image_set.all()
+        if (
+            not session.algorithm_image.algorithm.is_editor(session.creator)
+            and session.algorithm_image.algorithm.credits_per_job > 0
+        ):
+            session_images = session_images[: remaining_jobs()]
+
+        for image in session_images:
             if not ComponentInterfaceValue.objects.filter(
                 interface=default_input_interface,
                 image=image,
@@ -52,27 +76,47 @@ def create_algorithm_jobs(*_, upload_session_pk):
 
 @shared_task
 def send_failed_jobs_email(*_, upload_session_pk):
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+
+    excluded_images_count = session.image_set.filter(
+        componentinterfacevalue__algorithms_jobs_as_input__isnull=True
+    ).count()
+
     failed_jobs = Job.objects.filter(
         inputs__image__origin_id=upload_session_pk, status=Job.FAILURE
     ).distinct()
 
-    if failed_jobs.exists():
+    if failed_jobs.exists() or excluded_images_count > 0:
         # Note: this would not work if you could route jobs to different
         # algorithms from 1 upload session, but that is not supported right now
-        algorithm = failed_jobs.first().algorithm_image.algorithm
-        creator = failed_jobs.first().creator
+        algorithm = session.algorithm_image.algorithm
+        creator = session.creator
 
         experiment_url = reverse(
             "algorithms:execution-session-detail",
             kwargs={"slug": algorithm.slug, "pk": upload_session_pk},
         )
 
+        message = ""
+        if failed_jobs.count() > 0:
+            message = (
+                f"Unfortunately {failed_jobs.count()} of your jobs for algorithm "
+                f"'{algorithm.title}' failed with an error. "
+            )
+
+        if excluded_images_count > 0:
+            message = (
+                f"{message}"
+                f"{excluded_images_count} of your jobs for algorithm "
+                f"'{algorithm.title}' were not started because the number of allowed "
+                f"jobs was reached. "
+            )
+
         message = (
-            f"Unfortunately {failed_jobs.count()} of your jobs for algorithm "
-            f"'{algorithm.title}' failed with an error. "
-            f"You can inspect the output and error messages at "
+            f"{message}"
+            f"You can inspect the output and any error messages at "
             f"{experiment_url}.\n\n"
-            f"You may wish to try and correct these errors and try again, "
+            f"You may wish to try and correct any errors and try again, "
             f"or contact the algorithm editors. "
             f"The following information may help them:\n"
             f"User: {creator.username}\n"

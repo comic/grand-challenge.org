@@ -430,6 +430,7 @@ LOCAL_APPS = [
     "grandchallenge.blogs",
     "grandchallenge.publications",
     "grandchallenge.verifications",
+    "grandchallenge.credits",
     "grandchallenge.task_categories",
     "grandchallenge.modalities",
 ]

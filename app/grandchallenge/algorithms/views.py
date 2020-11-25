@@ -1,4 +1,6 @@
 import logging
+from datetime import timedelta
+from typing import Dict
 
 from dal import autocomplete
 from django.conf import settings
@@ -16,6 +18,7 @@ from django.core.exceptions import (
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import (
@@ -68,6 +71,7 @@ from grandchallenge.core.views import (
     PaginatedTableListView,
     PermissionRequestUpdate,
 )
+from grandchallenge.credits.models import Credit
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -388,6 +392,11 @@ class AlgorithmExecutionSessionCreate(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
+        context.update(
+            self.get_remaining_jobs(
+                credits_per_job=self.algorithm.credits_per_job
+            )
+        )
         return context
 
     def get_success_url(self):
@@ -395,6 +404,42 @@ class AlgorithmExecutionSessionCreate(
             "algorithms:execution-session-detail",
             kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
+
+    def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
+        """
+        Determines the number of jobs left for the user and when the next job can be started
+
+        :return: A dictionary containing remaining_jobs (int) and
+        next_job_at (datetime)
+        """
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_credit = Credit.objects.get(user=self.request.user)
+
+        if credits_per_job == 0:
+            return {
+                "remaining_jobs": 1,
+                "next_job_at": now,
+                "user_credits": user_credit.credits,
+            }
+
+        jobs = Job.credits_set.spent_credits(user=self.request.user)
+
+        if jobs["oldest"]:
+            next_job_at = jobs["oldest"] + period
+        else:
+            next_job_at = now
+
+        if jobs["total"]:
+            total_jobs = user_credit.credits - jobs["total"]
+        else:
+            total_jobs = user_credit.credits
+
+        return {
+            "remaining_jobs": int(total_jobs / max(credits_per_job, 1)),
+            "next_job_at": next_job_at,
+            "user_credits": total_jobs,
+        }
 
 
 class AlgorithmExecutionSessionDetail(
