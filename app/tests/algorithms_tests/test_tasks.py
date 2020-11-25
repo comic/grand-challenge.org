@@ -1,9 +1,11 @@
+import re
+
 import pytest
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
-    add_job_viewer_groups,
     create_algorithm_jobs,
+    create_jobs_workflow,
 )
 from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
@@ -40,14 +42,15 @@ class TestCreateAlgorithmJobs:
         )
         j.inputs.set([civ])
         assert Job.objects.count() == 1
-        create_algorithm_jobs(algorithm_image=ai, images=[image])
+        jobs = create_algorithm_jobs(algorithm_image=ai, images=[image])
         assert Job.objects.count() == 1
+        assert len(jobs) == 0
 
     def test_creates_job_correctly(self):
         ai = AlgorithmImageFactory()
         image = ImageFactory()
         assert Job.objects.count() == 0
-        create_algorithm_jobs(algorithm_image=ai, images=[image])
+        jobs = create_algorithm_jobs(algorithm_image=ai, images=[image])
         assert Job.objects.count() == 1
         j = Job.objects.first()
         assert j.algorithm_image == ai
@@ -56,6 +59,7 @@ class TestCreateAlgorithmJobs:
             j.inputs.get(interface__slug=DEFAULT_INPUT_INTERFACE_SLUG).image
             == image
         )
+        assert j.pk == jobs[0].pk
 
     def test_is_idempotent(self):
         ai = AlgorithmImageFactory()
@@ -63,8 +67,9 @@ class TestCreateAlgorithmJobs:
         assert Job.objects.count() == 0
         create_algorithm_jobs(algorithm_image=ai, images=[image])
         assert Job.objects.count() == 1
-        create_algorithm_jobs(algorithm_image=ai, images=[image])
+        jobs = create_algorithm_jobs(algorithm_image=ai, images=[image])
         assert Job.objects.count() == 1
+        assert len(jobs) == 0
 
     def test_gets_creator_from_session(self):
         ai = AlgorithmImageFactory()
@@ -78,16 +83,32 @@ class TestCreateAlgorithmJobs:
         j = Job.objects.first()
         assert j.creator == user
 
+    def test_extra_viewer_groups(self):
+        ai = AlgorithmImageFactory()
+        image = ImageFactory()
+        groups = (GroupFactory(), GroupFactory(), GroupFactory())
+        jobs = create_algorithm_jobs(
+            algorithm_image=ai, images=[image], extra_viewer_groups=groups
+        )
+        for g in groups:
+            assert jobs[0].viewer_groups.filter(pk=g.pk).exists()
+
 
 @pytest.mark.django_db
-def test_add_viewer_groups():
-    job = AlgorithmJobFactory()
-    groups = [GroupFactory(), GroupFactory(), GroupFactory()]
+class TestCreateJobsWorkflow:
+    def test_no_jobs_workflow(self):
+        workflow = create_jobs_workflow([])
+        assert (
+            str(workflow)
+            == "%grandchallenge.algorithms.tasks.send_failed_jobs_email((), job_pks=[], session_pk=None)"
+        )
 
-    group_pks = [g.pk for g in groups]
-    add_job_viewer_groups(job.pk, group_pks)
-    for g_pk in group_pks:
-        assert job.viewer_groups.filter(pk=g_pk).exists()
-
-    add_job_viewer_groups(job.pk, [group_pks[0]])
-    assert job.viewer_groups.filter(pk=group_pks[0]).count() == 1
+    def test_jobs_workflow(self):
+        ai = AlgorithmImageFactory()
+        images = [ImageFactory(), ImageFactory()]
+        jobs = create_algorithm_jobs(algorithm_image=ai, images=images)
+        workflow = create_jobs_workflow(jobs)
+        pattern = re.compile(
+            r"^%grandchallenge\.algorithms\.tasks\.send_failed_jobs_email\(\(grandchallenge\.components\.tasks\.execute_job\(job_pk=UUID\('[^']*'\), job_app_label='algorithms', job_model_name='job'\), grandchallenge\.components\.tasks\.execute_job\(job_pk=UUID\('[^']*'\), job_app_label='algorithms', job_model_name='job'\)\), job_pks=\[UUID\('[^']*'\), UUID\('[^']*'\)], session_pk=None\)$"
+        )
+        assert pattern.match(str(workflow))
