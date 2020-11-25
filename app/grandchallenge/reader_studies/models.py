@@ -987,6 +987,40 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["type", "version", "polygons"],
         },
+        "2D-bounding-box-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "corners": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 4,
+                    "maxItems": 4,
+                },
+            },
+            "required": ["corners"],
+        },
+        "M2DB": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Multiple 2D bounding boxes"]},
+                "boxes": {
+                    "type": "array",
+                    "items": {
+                        "allOf": [
+                            {"$ref": "#/definitions/2D-bounding-box-object"}
+                        ]
+                    },
+                },
+            },
+            "required": ["version", "type", "boxes"],
+        },
     },
     "properties": {
         "version": {
@@ -1012,6 +1046,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
         {"$ref": "#/definitions/MCHD"},
+        {"$ref": "#/definitions/M2DB"},
     ],
 }
 
@@ -1022,6 +1057,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_BOOL = "BOOL"
     ANSWER_TYPE_HEADING = "HEAD"
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
+    ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES = "M2DB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
     ANSWER_TYPE_POINT = "POIN"
@@ -1038,6 +1074,7 @@ class Question(UUIDModel):
         (ANSWER_TYPE_BOOL, "Bool"),
         (ANSWER_TYPE_HEADING, "Heading"),
         (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
+        (ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "Multiple 2D bounding boxes"),
         (ANSWER_TYPE_DISTANCE_MEASUREMENT, "Distance measurement"),
         (
             ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
@@ -1230,6 +1267,7 @@ class Question(UUIDModel):
     def annotation_types(self):
         return [
             self.ANSWER_TYPE_2D_BOUNDING_BOX,
+            self.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
             self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
             self.ANSWER_TYPE_POINT,
