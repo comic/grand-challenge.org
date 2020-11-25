@@ -1,6 +1,5 @@
 from celery import group, shared_task
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
@@ -89,31 +88,35 @@ def create_algorithm_jobs(
                         )
                     ]
                 )
+                if extra_viewer_groups is not None:
+                    j.viewer_groups.add(*extra_viewer_groups)
                 jobs.append(j)
+    return jobs
 
-    if jobs:
-        job_signatures = [j.signature for j in jobs]
-        job_pks = [j.pk for j in jobs]
-        # TODO decision - who should be failed jobs email receivers?
-        permission_jobs = []
-        if extra_viewer_groups is not None:
-            group_pks = [g.pk for g in extra_viewer_groups]
-            for job in jobs:
-                permission_jobs.append(
-                    add_job_viewer_groups.signature(
-                        kwargs={"job_pk": job.pk, "group_pks": group_pks}
-                    )
-                )
-        workflow = (
-            group(*job_signatures)
-            | send_failed_jobs_email.signature(
-                kwargs={
-                    "job_pks": job_pks,
-                    "session_pk": None if session is None else session.pk,
-                }
-            )
-            | group(*permission_jobs)
-        )
+
+def create_jobs_workflow(jobs, session=None):
+    job_signatures = [j.signature for j in jobs]
+    job_pks = [j.pk for j in jobs]
+    workflow = group(*job_signatures) | send_failed_jobs_email.signature(
+        kwargs={
+            "job_pks": job_pks,
+            "session_pk": None if session is None else session.pk,
+        }
+    )
+    return workflow
+
+
+def execute_jobs(
+    algorithm_image, images, session=None, extra_viewer_groups=None
+):
+    jobs = create_algorithm_jobs(
+        algorithm_image,
+        images,
+        session=session,
+        extra_viewer_groups=extra_viewer_groups,
+    )
+    if len(jobs) > 0:
+        workflow = create_jobs_workflow(jobs, session=session)
         workflow.apply_async()
 
 
@@ -129,7 +132,9 @@ def send_failed_jobs_email(*_, job_pks, session_pk=None):
         algorithm = failed_jobs.first().algorithm_image.algorithm
         creator = failed_jobs.first().creator
 
-        experiment_url = reverse("algorithms:jobs-list")
+        experiment_url = reverse(
+            "algorithms:jobs-list", kwargs={"slug": algorithm.slug}
+        )
         if session_pk is not None:
             experiment_url = reverse(
                 "algorithms:execution-session-detail",
@@ -144,16 +149,17 @@ def send_failed_jobs_email(*_, job_pks, session_pk=None):
             f"You may wish to try and correct these errors and try again, "
             f"or contact the algorithm editors. "
             f"The following information may help them:\n"
-            f"User: {creator.username}\n"
         )
-        message += (
-            f"Experiment ID: {session_pk}\n" if session_pk is not None else ""
-        )
+        if creator is not None:
+            message += f"User: {creator.username}\n"
+        if session_pk is not None:
+            message += f"Experiment ID: {session_pk}\n"
 
-        for email in {
-            creator.email,
-            *[o.email for o in algorithm.editors_group.user_set.all()],
-        }:
+        receivers = {o.email for o in algorithm.editors_group.user_set.all()}
+        if creator is not None:
+            receivers.add(creator.email)
+
+        for email in receivers:
             send_mail(
                 subject=(
                     f"[{Site.objects.get_current().domain.lower()}] "
@@ -164,10 +170,3 @@ def send_failed_jobs_email(*_, job_pks, session_pk=None):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
             )
-
-
-@shared_task
-def add_job_viewer_groups(job_pk, group_pks):
-    job = Job.objects.get(pk=job_pk)
-    groups = Group.objects.filter(pk__in=group_pks)
-    job.viewer_groups.add(*groups)
