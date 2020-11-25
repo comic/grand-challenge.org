@@ -46,7 +46,7 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
         mugshot = mark_safe('<i class="fas fa-user fa-lg"></i>')
 
     return format_html(
-        '<a class="text-nowrap" href="{0}">{1}</a>&nbsp;<a href="{0}">{2}</a>&nbsp;{3}',
+        '<span class="text-nowrap"><a href="{0}">{1}</a>&nbsp;<a href="{0}">{2}</a>&nbsp;{3}</span>',
         profile_url,
         mugshot,
         username,
