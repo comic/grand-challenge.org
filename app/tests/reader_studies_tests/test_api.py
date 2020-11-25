@@ -291,14 +291,14 @@ def test_answer_creator_is_reader(client):
             '{"version": {"major": 1, "minor": 0}, "type": "2D bounding box", "name": "test_name", "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]]}',
             400,
         ),  # Valid json, but a string
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, "", 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, True, 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, False, 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, 134, 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, "dsfuag", 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, {}, 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "", 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, True, 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, False, 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, 134, 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "dsfuag", 400),
+        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, {}, 400),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "2D bounding box",
@@ -308,7 +308,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "type": "2D bounding box",
                 "name": "test_name",
@@ -317,7 +317,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "version": {"major": 1, "minor": 0},
                 "name": "test_name",
@@ -335,7 +335,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple 2D bounding boxes",
@@ -354,7 +354,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple 2D bounding boxes",

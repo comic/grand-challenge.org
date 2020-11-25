@@ -1055,7 +1055,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_BOOL = "BOOL"
     ANSWER_TYPE_HEADING = "HEAD"
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
-    ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX = "M2DB"
+    ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES = "M2DB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
     ANSWER_TYPE_POINT = "POIN"
@@ -1072,7 +1072,7 @@ class Question(UUIDModel):
         (ANSWER_TYPE_BOOL, "Bool"),
         (ANSWER_TYPE_HEADING, "Heading"),
         (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
-        (ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX, "Multiple 2D bounding boxes"),
+        (ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "Multiple 2D bounding boxes"),
         (ANSWER_TYPE_DISTANCE_MEASUREMENT, "Distance measurement"),
         (
             ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
@@ -1265,7 +1265,7 @@ class Question(UUIDModel):
     def annotation_types(self):
         return [
             self.ANSWER_TYPE_2D_BOUNDING_BOX,
-            self.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOX,
+            self.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
             self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
             self.ANSWER_TYPE_POINT,
