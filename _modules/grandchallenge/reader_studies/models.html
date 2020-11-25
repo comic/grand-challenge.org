@@ -1142,6 +1142,40 @@
             <span class="p">},</span>
             <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="s2">&quot;polygons&quot;</span><span class="p">],</span>
         <span class="p">},</span>
+        <span class="s2">&quot;2D-bounding-box-object&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">},</span>
+                <span class="s2">&quot;corners&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;number&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;minItems&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                        <span class="s2">&quot;maxItems&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="s2">&quot;minItems&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                    <span class="s2">&quot;maxItems&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;corners&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;M2DB&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">},</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">]},</span>
+                <span class="s2">&quot;boxes&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;allOf&quot;</span><span class="p">:</span> <span class="p">[</span>
+                            <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/2D-bounding-box-object&quot;</span><span class="p">}</span>
+                        <span class="p">]</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;boxes&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
     <span class="p">},</span>
     <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -1167,6 +1201,7 @@
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/CHOI&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MCHO&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MCHD&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/M2DB&quot;</span><span class="p">},</span>
     <span class="p">],</span>
 <span class="p">}</span>
 
@@ -1177,6 +1212,7 @@
     <span class="n">ANSWER_TYPE_BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span>
     <span class="n">ANSWER_TYPE_HEADING</span> <span class="o">=</span> <span class="s2">&quot;HEAD&quot;</span>
     <span class="n">ANSWER_TYPE_2D_BOUNDING_BOX</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span>
+    <span class="n">ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES</span> <span class="o">=</span> <span class="s2">&quot;M2DB&quot;</span>
     <span class="n">ANSWER_TYPE_DISTANCE_MEASUREMENT</span> <span class="o">=</span> <span class="s2">&quot;DIST&quot;</span>
     <span class="n">ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="s2">&quot;MDIS&quot;</span>
     <span class="n">ANSWER_TYPE_POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span>
@@ -1193,6 +1229,7 @@
         <span class="p">(</span><span class="n">ANSWER_TYPE_BOOL</span><span class="p">,</span> <span class="s2">&quot;Bool&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_HEADING</span><span class="p">,</span> <span class="s2">&quot;Heading&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_2D_BOUNDING_BOX</span><span class="p">,</span> <span class="s2">&quot;2D bounding box&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">,</span> <span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_DISTANCE_MEASUREMENT</span><span class="p">,</span> <span class="s2">&quot;Distance measurement&quot;</span><span class="p">),</span>
         <span class="p">(</span>
             <span class="n">ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
@@ -1385,6 +1422,7 @@
     <span class="k">def</span> <span class="nf">annotation_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_2D_BOUNDING_BOX</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_DISTANCE_MEASUREMENT</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_POINT</span><span class="p">,</span>
