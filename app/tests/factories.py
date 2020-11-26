@@ -12,9 +12,9 @@ from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import (
     Challenge,
     ExternalChallenge,
-    ImagingModality,
 )
 from grandchallenge.jqfileupload.models import StagedFile
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy

@@ -3,10 +3,6 @@
 from django.db import migrations
 
 
-def consolidate_info_reverse(*_, **__):
-    pass
-
-
 def consolidate_info_forward(apps, schema_editor):
     Algorithm = apps.get_model("algorithms", "Algorithm")  # noqa: N806
 
@@ -26,13 +22,10 @@ def consolidate_info_forward(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("algorithms", "0021_auto_20200221_1034"),
     ]
 
     operations = [
-        migrations.RunPython(
-            consolidate_info_forward, consolidate_info_reverse,
-        )
+        migrations.RunPython(consolidate_info_forward, elidable=True)
     ]

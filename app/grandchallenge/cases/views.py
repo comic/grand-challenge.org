@@ -62,7 +62,6 @@ class ImageViewSet(ReadOnlyModelViewSet):
         ObjectPermissionsFilter,
     )
     filterset_fields = (
-        "worklist",
         "study",
         "origin",
         "archive",

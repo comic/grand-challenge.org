@@ -205,8 +205,9 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
-        "LOCATION": "memcached:11211",
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     },
     "machina_attachments": {
         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
@@ -397,6 +398,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "grandchallenge.admins",
+    "grandchallenge.anatomy",
     "grandchallenge.api",
     "grandchallenge.challenges",
     "grandchallenge.core",
@@ -419,17 +421,18 @@ LOCAL_APPS = [
     "grandchallenge.retina_core",
     "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
-    "grandchallenge.worklists",
     "grandchallenge.workstations",
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
     "grandchallenge.products",
-    "grandchallenge.overview_pages",
     "grandchallenge.serving",
     "grandchallenge.blogs",
     "grandchallenge.publications",
     "grandchallenge.verifications",
+    "grandchallenge.credits",
+    "grandchallenge.task_categories",
+    "grandchallenge.modalities",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS

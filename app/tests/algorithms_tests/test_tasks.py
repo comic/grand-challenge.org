@@ -12,6 +12,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import GroupFactory, ImageFactory, UserFactory
 
@@ -92,6 +93,58 @@ class TestCreateAlgorithmJobs:
         )
         for g in groups:
             assert jobs[0].viewer_groups.filter(pk=g.pk).exists()
+
+    def test_create_jobs_is_limited(self):
+        user, editor = UserFactory(), UserFactory()
+
+        def create_upload(upload_creator):
+            riu = RawImageUploadSessionFactory()
+            riu.algorithm_image.algorithm.credits_per_job = 400
+            riu.algorithm_image.algorithm.add_editor(editor)
+            riu.algorithm_image.algorithm.save()
+            riu.creator = upload_creator
+
+            for _ in range(3):
+                ImageFactory(origin=riu),
+            riu.save()
+            return riu
+
+        assert Job.objects.count() == 0
+
+        # Create an upload session as editor; should not be limited
+        upload = create_upload(editor)
+        create_algorithm_jobs(
+            algorithm_image=upload.algorithm_image,
+            images=upload.image_set.all(),
+            session=upload,
+        )
+
+        assert Job.objects.count() == 3
+
+        # Create an upload session as user; should be limited
+        upload_2 = create_upload(user)
+        create_algorithm_jobs(
+            algorithm_image=upload_2.algorithm_image,
+            images=upload_2.image_set.all(),
+            session=upload_2,
+        )
+
+        # An additional 2 jobs should be created (standard nr of credits is 1000
+        # per user per month).
+        assert Job.objects.count() == 5
+
+        # As an editor you should not be limited
+        upload_2.algorithm_image.algorithm.add_editor(user)
+        upload_2.algorithm_image.algorithm.save()
+        upload_2.save()
+
+        # The job that was skipped on the previous run should now be accepted
+        create_algorithm_jobs(
+            algorithm_image=upload_2.algorithm_image,
+            images=upload_2.image_set.all(),
+            session=upload_2,
+        )
+        assert Job.objects.count() == 6
 
 
 @pytest.mark.django_db

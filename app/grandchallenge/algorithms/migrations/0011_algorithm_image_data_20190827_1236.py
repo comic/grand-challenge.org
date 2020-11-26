@@ -4,28 +4,6 @@ from uuid import uuid4
 from django.db import migrations
 
 
-def algorithm_container_images_to_algorithms_reverse(apps, schema_editor):
-    # Reverse, create AlgorithmImage from Algorithm
-    Algorithm = apps.get_model("algorithms", "Algorithm")  # noqa: N806
-    AlgorithmImage = apps.get_model(  # noqa: N806
-        "algorithms", "AlgorithmImage"
-    )
-
-    for a in Algorithm.objects.all():
-        for im in a.algorithm_container_images.all():
-            AlgorithmImage.objects.create(
-                title=a.title,
-                logo=a.logo,
-                creator=im.creator,
-                image=im.image,
-                requires_gpu=im.requires_gpu,
-                requires_gpu_memory_gb=im.requires_gpu_memory_gb,
-                requires_memory_gb=im.requires_memory_gb,
-                requires_cpu_cores=im.requires_cpu_cores,
-                status=im.status,
-            )
-
-
 def create_algorithm_workstation(apps):
     Group = apps.get_model("auth", "Group")  # noqa: N806
     Workstation = apps.get_model("workstations", "Workstation")  # noqa: N806
@@ -88,12 +66,10 @@ def algorithm_container_images_to_algorithms_forward(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("algorithms", "0010_auto_20190827_1159")]
 
     operations = [
         migrations.RunPython(
-            algorithm_container_images_to_algorithms_forward,
-            algorithm_container_images_to_algorithms_reverse,
+            algorithm_container_images_to_algorithms_forward, elidable=True,
         )
     ]

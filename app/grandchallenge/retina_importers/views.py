@@ -13,7 +13,7 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.cases.serializers import HyperlinkedImageSerializer
-from grandchallenge.challenges.models import ImagingModality
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializers import PatientSerializer
 from grandchallenge.retina_importers.mixins import RetinaImportPermission

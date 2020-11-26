@@ -98,12 +98,15 @@ def test_outputs_are_set():
 
     assert job.rendered_result_text == ""
     job.create_result(result={"foo": 13.37})
+    del job.rendered_result_text
     assert job.rendered_result_text == "<p>foo score: 13.37</p>"
 
     job.algorithm_image.algorithm.result_template = "{% for key, value in dict.metrics.items() -%}{{ key }}  {{ value }}{% endfor %}"
+    del job.rendered_result_text
     assert job.rendered_result_text == "Jinja template is invalid"
 
     job.algorithm_image.algorithm.result_template = "{{ str.__add__('test')}}"
+    del job.rendered_result_text
     assert job.rendered_result_text == "Jinja template is invalid"
 
 

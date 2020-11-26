@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% load naturaldelta %}
+{% load remove_whitespace %}
+{% load profiles %}
+{% load pathlib %}
+{% load workstations %}
+
+{% block title %}
+    Algorithm Result - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
+        </a>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.pk }}</li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    <div class="col-12 col-md-4 col-lg-3 mb-3">
+        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+             aria-orientation="vertical">
+            <a class="nav-link active" id="v-pills-info-tab" data-toggle="pill"
+               href="#v-pills-info" role="tab" aria-controls="v-pills-info"
+               aria-selected="true"><i
+                    class="fas fa-info fa-fw"></i>&nbsp;Information
+            </a>
+
+            {% if "change_job" in job_perms %}
+                <a class="nav-link" id="v-pills-viewers-tab" data-toggle="pill"
+                   href="#v-pills-viewers" role="tab" aria-controls="v-pulls-viewers"
+                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Viewers
+                </a>
+            {% endif %}
+
+            {% if "change_algorithm" in algorithm_perms %}
+                <a class="nav-link" id="v-pills-logs-tab" data-toggle="pill"
+                   href="#v-pills-logs" role="tab" aria-controls="v-pills-logs"
+                   aria-selected="false"><i class="fas fa-terminal fa-fw"></i>&nbsp;Logs
+                </a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="tab-content" id="v-pills-tabContent">
+        <div class="tab-pane fade show active" id="v-pills-info" role="tabpanel"
+             aria-labelledby="v-pills-info-tab">
+            <h2>Algorithm Result</h2>
+
+            {{ object.rendered_result_text }}
+
+            {% if object.status == object.SUCCESS %}
+                <a class="btn btn-primary mb-3"
+                   href="{% url 'workstations:workstation-session-create' slug=object.algorithm_image.algorithm.workstation.slug %}?{% workstation_query algorithm_job=object config=object.algorithm_image.algorithm.workstation_config %}">
+                    <i class="fa fa-eye"></i> Open Result in Viewer
+                </a>
+            {% endif %}
+
+            <dl class="row">
+                <dt class="col-sm-3">Result ID</dt>
+                <dd class="col-sm-9">{{ object.pk }}</dd>
+
+                <dt class="col-sm-3">Algorithm</dt>
+                <dd class="col-sm-9"><a
+                        href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm }}</a>
+                </dd>
+
+                <dt class="col-sm-3">Algorithm Version</dt>
+                <dd class="col-sm-9">{{ object.algorithm_image.pk }}</dd>
+
+                <dt class="col-sm-3">Creator</dt>
+                <dd class="col-sm-9">{{ object.creator|user_profile_link }}</dd>
+
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">{{ object.created }}</dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">
+                    <span class="badge
+                        {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
+                            badge-danger
+                        {% elif object.status == object.RETRY %}
+                            badge-warning
+                        {% elif object.status == object.SUCCESS %}
+                            {% if object.stderr %}
+                                badge-warning
+                            {% else %}
+                                badge-success
+                            {% endif %}
+                        {% else %}
+                            badge-info
+                        {% endif %}">
+                        {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
+                            with warnings{% endif %}
+                    </span>
+                </dd>
+
+                {% if object.error_message %}
+                    <dt class="col-sm-3">Error Message</dt>
+                    <dd class="col-sm-9">{{ object.error_message }}</dd>
+                {% endif %}
+
+                {% if object.duration %}
+                    <dt class="col-sm-3">Duration</dt>
+                    <dd class="col-sm-9">{{ object.duration|naturaldelta }}</dd>
+                {% endif %}
+
+                {% if object.comment %}
+                    <dt class="col-sm-3">Comment</dt>
+                    <dd class="col-sm-9">{{ object.comment }}</dd>
+                {% endif %}
+
+                <dt class="col-sm-3">Visibility</dt>
+                <dd class="col-sm-9">
+                    {% if object.public %}
+                        <i class="fa fa-eye text-success"></i> Result and images are public
+                    {% else %}
+                        {% if object.viewers.user_set.all|length > 1 %}
+                            {# TODO: Hack, we need to exclude the creator rather than checking the length is > 1 #}
+                            <i class="fa fa-eye text-warning"></i>
+                            Result and images are visible by {{ object.viewers.user_set.all|oxford_comma }}
+                        {% else %}
+                            <i class="fa fa-eye-slash text-danger"></i> Result and images are private
+                        {% endif %}
+                    {% endif %}
+                </dd>
+
+                <dt class="col-sm-3">Inputs</dt>
+                <dd class="col-sm-9">
+                    <ul class="list-unstyled mb-0">
+                        {% for input in object.inputs.all %}
+                            {% for file in input.image.files.all %}
+                                <li>
+                                    <a class="badge badge-primary"
+                                       href="{{ file.file.url }}">
+                                        <i class="fa fa-download"></i>
+                                        Input {{ forloop.parentloop.counter }} {{ input.image.name|stem }}
+                                        ({{ file.file|suffix }})
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </dd>
+
+                {% if object.status == object.SUCCESS %}
+                    <dt class="col-sm-3">Outputs</dt>
+                    <dd class="col-sm-9">
+                        <ul class="list-unstyled mb-0">
+                            {% for output in object.outputs.all %}
+                                {% for file in output.image.files.all %}
+                                    <li>
+                                        <a class="badge badge-primary"
+                                           href="{{ file.file.url }}">
+                                            <i class="fa fa-download"></i>
+                                            Output {{ forloop.parentloop.counter }} {{ file.image.name|stem }}
+                                            ({{ file.file|suffix }})
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            {% empty %}
+                                <li>
+                                    <i class="fa fa-eye-slash text-warning"></i> No output images were found
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </dd>
+                {% endif %}
+            </dl>
+
+            {% if "change_job" in job_perms %}
+                <a class="btn btn-primary"
+                   href="{% url 'algorithms:job-update' slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
+                    <i class="fa fa-edit"></i> Edit this Result
+                </a>
+            {% endif %}
+        </div>
+
+        {% if "change_job" in job_perms %}
+            <div class="tab-pane fade" id="v-pills-viewers" role="tabpanel"
+                 aria-labelledby="v-pills-viewers-tab">
+                <h2>Viewers</h2>
+
+                <p>
+                    Members of the {{ object.viewer_groups.all|oxford_comma }} groups are able to view this result.
+                </p>
+
+                {% if object.viewers in object.viewer_groups.all %}
+
+                    <p>
+                        The following users are members of this results viewers group:
+                    </p>
+
+                    <ul class="list-group list-group-flush mb-3">
+                        {% for user in object.viewers.user_set.all %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>{{ user|user_profile_link }}</div>
+                                    <div>
+                                        {% if user != request.user %}
+                                            <form action="{% url 'algorithms:job-viewers-update' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
+                                                  method="POST">
+                                                {% for field in viewers_form %}
+                                                    {% csrf_token %}
+                                                    {% if field.name == "user" %}
+                                                        <input type="hidden" name="user" value="{{ user.id }}"/>
+                                                    {% else %}
+                                                        {{ field }}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <button type="submit" class="btn btn-danger">Revoke access</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item">There are no users in this results viewers group.</li>
+                        {% endfor %}
+                    </ul>
+
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:job-viewers-update' slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
+                        <i class="fa fa-user-plus"></i> Add users
+                    </a>
+
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if "change_algorithm" in algorithm_perms %}
+            <div class="tab-pane fade" id="v-pills-logs" role="tabpanel"
+                 aria-labelledby="v-pills-logs-tab">
+                <h2>Logs</h2>
+
+                <h3>Stdout</h3>
+                {# @formatter:off #}
+                <pre class="console">{% if object.stdout %}{{ object.stdout }}{% else %}No logs found on stdout{% endif %}</pre>
+                {# @formatter:on #}
+
+                <h3>Stderr</h3>
+                {# @formatter:off #}
+                <pre class="console">{% if object.stderr %}{{ object.stderr }}{% else %}No logs found on stderr{% endif %}</pre>
+                {# @formatter:on #}
+
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

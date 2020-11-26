@@ -1,7 +1,5 @@
 import datetime
 import logging
-import re
-from collections import namedtuple
 from itertools import chain, product
 
 from django.conf import settings
@@ -25,14 +23,17 @@ from machina.apps.forum_permission.models import (
 )
 from tldextract import extract
 
+from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_created_email,
     send_external_challenge_created_email,
 )
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.task_categories.models import TaskType
 
 logger = logging.getLogger(__name__)
 
@@ -61,110 +62,6 @@ def get_banner_path(instance, filename):
     return f"b/{instance.pk}/{get_valid_filename(filename)}"
 
 
-class TaskType(models.Model):
-    """Stores the task type options, eg, Segmentation, Regression, etc."""
-
-    type = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("type",)
-
-    def __str__(self):
-        return self.type
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.type)
-        return f"task-{cls}"
-
-    @property
-    def badge(self):
-        return format_html(
-            (
-                '<span class="badge badge-light above-stretched-link" '
-                'title="{0} challenge"><i class="fas fa-tasks fa-fw">'
-                "</i> {0}</span>"
-            ),
-            self.type,
-        )
-
-
-class ImagingModality(models.Model):
-    """Store the modality options, eg, MR, CT, PET, XR."""
-
-    modality = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("modality",)
-
-    def __str__(self):
-        return self.modality
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.modality)
-        return f"modality-{cls}"
-
-    @property
-    def badge(self):
-        return format_html(
-            (
-                '<span class="badge badge-secondary above-stretched-link" '
-                'title="Uses {0} data"><i class="fas fa-microscope fa-fw">'
-                "</i> {0}</span>"
-            ),
-            self.modality,
-        )
-
-
-class BodyRegion(models.Model):
-    """Store the anatomy options, eg, Head, Neck, Thorax, etc."""
-
-    region = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("region",)
-
-    def __str__(self):
-        return self.region
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.region)
-        return f"region-{cls}"
-
-
-class BodyStructure(models.Model):
-    """Store the organ name and what region it belongs to."""
-
-    structure = CICharField(max_length=16, blank=False, unique=True)
-    region = models.ForeignKey(
-        to=BodyRegion, on_delete=models.CASCADE, blank=False
-    )
-
-    class Meta:
-        ordering = ("region", "structure")
-
-    def __str__(self):
-        return f"{self.structure} ({self.region})"
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.structure)
-        return f"structure-{cls}"
-
-    @property
-    def badge(self):
-        return format_html(
-            (
-                '<span class="badge badge-dark above-stretched-link" '
-                'title="Uses {0} data"><i class="fas fa-child fa-fw">'
-                "</i> {0}</span>"
-            ),
-            self.structure,
-        )
-
-
 class ChallengeSeries(models.Model):
     name = CICharField(max_length=64, blank=False, unique=True)
     url = models.URLField(blank=True)
@@ -175,11 +72,6 @@ class ChallengeSeries(models.Model):
 
     def __str__(self):
         return f"{self.name}"
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.name)
-        return f"series-{cls}"
 
     @property
     def badge(self):
@@ -328,12 +220,6 @@ class ChallengeBase(models.Model):
     def upcoming_workshop_date(self):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
-
-    @property
-    def host_filter(self):
-        host_filter = namedtuple("host_filter", ["host", "filter_tag"])
-        domain = self.registered_domain
-        return host_filter(domain, re.sub(r"\W+", "", domain))
 
     @property
     def registered_domain(self):
