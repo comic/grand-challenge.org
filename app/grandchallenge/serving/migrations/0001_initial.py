@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("cases", "0023_auto_20200521_1052"),
-        ("evaluation", "0001_squashed_0033_auto_20200816_1357"),
+        ("evaluation", "0001_squashed_0010_auto_20201121_1348"),
     ]
 
     operations = [

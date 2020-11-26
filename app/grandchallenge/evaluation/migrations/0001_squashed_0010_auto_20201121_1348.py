@@ -16,19 +16,6 @@ import grandchallenge.evaluation.models
 
 
 class Migration(migrations.Migration):
-    replaces = [
-        ("evaluation", "0001_squashed_0033_auto_20200816_1357"),
-        ("evaluation", "0002_auto_20200825_0800"),
-        ("evaluation", "0003_auto_20200827_1001"),
-        ("evaluation", "0004_auto_20200901_1502"),
-        ("evaluation", "0005_auto_20200904_1015"),
-        ("evaluation", "0006_auto_20200925_1516"),
-        ("evaluation", "0007_auto_20201001_0758"),
-        ("evaluation", "0008_auto_20201103_1007"),
-        ("evaluation", "0009_auto_20201106_1014"),
-        ("evaluation", "0010_auto_20201121_1348"),
-    ]
-
     initial = True
 
     dependencies = [
