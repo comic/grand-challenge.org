@@ -1,10 +1,4 @@
-from django.conf import settings
-from django.contrib.auth.models import Group
 from django.db import migrations
-
-
-def create_dicom_group(apps, schema_editor):
-    Group.objects.create(name=settings.DICOM_DATA_CREATORS_GROUP_NAME)
 
 
 class Migration(migrations.Migration):
@@ -13,9 +7,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            # TODO - move this to a post_migrate signal
-            create_dicom_group,
-            elidable=False,
-        )
+        # Non-elidable migration moved to post_migrate signal
     ]
