@@ -14,21 +14,14 @@ def create_retina_groups_forward(apps, schema_editor):
     Group.objects.create(name=settings.RETINA_ADMINS_GROUP_NAME)
 
 
-def create_retina_groups_backward(apps, schema_editor):
-    # You would want to get the historical models for Group, but this does not seem to work
-    # User = apps.get_model("auth", "User")
-
-    # Remove retina admin and grader groups
-    Group.objects.get(name=settings.RETINA_GRADERS_GROUP_NAME).delete()
-    Group.objects.get(name=settings.RETINA_ADMINS_GROUP_NAME).delete()
-
-
 class Migration(migrations.Migration):
 
     dependencies = []
 
     operations = [
         migrations.RunPython(
-            create_retina_groups_forward, create_retina_groups_backward
+            # TODO - move this to a post_migrate signal
+            create_retina_groups_forward,
+            elidable=False,
         )
     ]

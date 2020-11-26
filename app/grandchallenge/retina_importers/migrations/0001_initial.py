@@ -10,18 +10,14 @@ def create_retina_import_user_forward(apps, schema_editor):
     User.objects.create_user(settings.RETINA_IMPORT_USER_NAME)
 
 
-def create_retina_import_user_backward(apps, schema_editor):
-    # Remove retina import user
-    User.objects.get(username=settings.RETINA_IMPORT_USER_NAME).delete()
-
-
 class Migration(migrations.Migration):
 
     dependencies = []
 
     operations = [
         migrations.RunPython(
+            # TODO - move this to a post_migrate signal
             create_retina_import_user_forward,
-            create_retina_import_user_backward,
+            elidable=False,
         )
     ]

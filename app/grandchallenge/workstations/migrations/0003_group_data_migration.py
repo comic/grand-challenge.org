@@ -3,19 +3,6 @@
 from django.db import migrations
 
 
-def delete_workstation_groups(apps, schema_editor):
-    Workstation = apps.get_model("workstations", "Workstation")  # noqa: N806
-
-    for ws in Workstation.objects.all():
-        ws.editors_group.delete(keep_parents=True)
-        ws.users_group.delete(keep_parents=True)
-
-        ws.editors_group = None
-        ws.users_group = None
-
-        ws.save()
-
-
 def create_workstation_groups(apps, schema_editor):
     Workstation = apps.get_model("workstations", "Workstation")  # noqa: N806
     Group = apps.get_model("auth", "Group")  # noqa: N806
@@ -31,11 +18,8 @@ def create_workstation_groups(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("workstations", "0002_auto_20190809_0839")]
 
     operations = [
-        migrations.RunPython(
-            create_workstation_groups, delete_workstation_groups
-        )
+        migrations.RunPython(create_workstation_groups, elidable=True)
     ]
