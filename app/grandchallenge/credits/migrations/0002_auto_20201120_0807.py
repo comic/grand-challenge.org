@@ -3,13 +3,6 @@ from django.contrib.auth import get_user_model
 from django.db import migrations
 
 
-def delete_credits(apps, schema_editor):
-    Credit = apps.get_model("credits", "Credit")  # noqa: N806
-
-    for user in get_user_model().objects.all():
-        Credit.objects.get(user_id=user.id).delete()
-
-
 def create_credits(apps, schema_editor):
     Credit = apps.get_model("credits", "Credit")  # noqa: N806
 
@@ -18,9 +11,8 @@ def create_credits(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("credits", "0001_initial"),
     ]
 
-    operations = [migrations.RunPython(create_credits, delete_credits)]
+    operations = [migrations.RunPython(create_credits, elidable=True)]

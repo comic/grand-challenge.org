@@ -3,21 +3,6 @@
 from django.db import migrations
 
 
-def delete_archive_groups(apps, schema_editor):
-    Archive = apps.get_model("archives", "Archive")  # noqa: N806
-
-    for archive in Archive.objects.all():
-        archive.editors_group.delete(keep_parents=True)
-        archive.uploaders_group.delete(keep_parents=True)
-        archive.users_group.delete(keep_parents=True)
-
-        archive.editors_group = None
-        archive.uploaders_group = None
-        archive.users_group = None
-
-        archive.save()
-
-
 def create_archive_groups(apps, schema_editor):
     Archive = apps.get_model("archives", "Archive")  # noqa: N806
     Group = apps.get_model("auth", "Group")  # noqa: N806
@@ -40,6 +25,4 @@ class Migration(migrations.Migration):
         ("archives", "0003_auto_20200322_0921"),
     ]
 
-    operations = [
-        migrations.RunPython(create_archive_groups, delete_archive_groups)
-    ]
+    operations = [migrations.RunPython(create_archive_groups, elidable=True)]
