@@ -18,20 +18,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-    replaces = [
-        ("workstations", "0001_initial"),
-        ("workstations", "0002_auto_20190809_0839"),
-        ("workstations", "0003_group_data_migration"),
-        ("workstations", "0004_auto_20190814_1402"),
-        ("workstations", "0005_auto_20191015_1005"),
-        ("workstations", "0006_session_logs"),
-        ("workstations", "0007_auto_20200121_1554"),
-        ("workstations", "0008_workstation_public"),
-        ("workstations", "0009_auto_20200507_0758"),
-        ("workstations", "0010_session_ping_times"),
-        ("workstations", "0011_auto_20201001_0758"),
-    ]
-
     initial = True
 
     dependencies = [

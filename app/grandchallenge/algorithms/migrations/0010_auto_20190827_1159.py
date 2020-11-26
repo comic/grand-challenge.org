@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("auth", "0011_update_proxy_permissions"),
-        ("workstations", "0004_auto_20190814_1402"),
+        ("workstations", "0001_squashed_0011_auto_20201001_0758"),
         ("algorithms", "0009_auto_20190826_0951"),
     ]
 
