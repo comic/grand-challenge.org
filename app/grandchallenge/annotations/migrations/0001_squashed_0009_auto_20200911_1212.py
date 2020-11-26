@@ -9,21 +9,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    replaces = [
-        ("annotations", "0001_initial"),
-        ("annotations", "0002_auto_20190510_1046"),
-        ("annotations", "0003_auto_20190603_1208"),
-        (
-            "annotations",
-            "0004_imagepathologyannotation_imagequalityannotation_retinaimagepathologyannotation",
-        ),
-        ("annotations", "0005_imagetextannotation"),
-        ("annotations", "0006_auto_20190730_1234"),
-        ("annotations", "0007_auto_20200317_1054"),
-        ("annotations", "0008_auto_20200805_1603"),
-        ("annotations", "0009_auto_20200911_1212"),
-    ]
-
     initial = True
 
     dependencies = [
