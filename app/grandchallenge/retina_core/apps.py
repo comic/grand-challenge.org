@@ -14,4 +14,4 @@ class RetinaCoreConfig(AppConfig):
     name = "grandchallenge.retina_core"
 
     def ready(self):
-        post_migrate.connect(init_retina_groups, sender=self)
+        post_migrate.connect(init_retina_groups)

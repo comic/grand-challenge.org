@@ -15,4 +15,4 @@ class RetinaImportersConfig(AppConfig):
     name = "grandchallenge.retina_importers"
 
     def ready(self):
-        post_migrate.connect(init_retina_import_user, sender=self)
+        post_migrate.connect(init_retina_import_user)
