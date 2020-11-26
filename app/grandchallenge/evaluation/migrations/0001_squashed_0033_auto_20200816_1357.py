@@ -5,7 +5,6 @@ from decimal import Decimal
 
 import django.contrib.postgres.fields.jsonb
 import django.db.models.deletion
-import social_django.fields
 from django.conf import settings
 from django.db import migrations, models
 
@@ -26,55 +25,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name="Job",
-            fields=[
-                (
-                    "id",
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("modified", models.DateTimeField(auto_now=True)),
-                (
-                    "status",
-                    models.PositiveSmallIntegerField(
-                        choices=[
-                            (0, "The task is waiting for execution"),
-                            (1, "The task has been started"),
-                            (
-                                2,
-                                "The task is to be retried, possibly because of failure",
-                            ),
-                            (
-                                3,
-                                "The task raised an exception, or has exceeded the retry limit",
-                            ),
-                            (4, "The task executed successfully"),
-                            (5, "The task was cancelled"),
-                        ],
-                        default=0,
-                    ),
-                ),
-                (
-                    "status_history",
-                    social_django.fields.JSONField(default=dict),
-                ),
-                ("output", models.TextField()),
-                (
-                    "challenge",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="challenges.Challenge",
-                    ),
-                ),
-            ],
-            options={"abstract": False},
-        ),
         migrations.CreateModel(
             name="Method",
             fields=[
@@ -101,11 +51,13 @@ class Migration(migrations.Migration):
                 (
                     "image",
                     models.FileField(
-                        help_text="Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/",
+                        blank=True,
+                        help_text=".tar.gz archive of the container image produced from the command 'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See https://docs.docker.com/engine/reference/commandline/save/",
+                        storage=grandchallenge.core.storage.PrivateS3Storage(),
                         upload_to=grandchallenge.components.models.docker_image_path,
                         validators=[
                             grandchallenge.core.validators.ExtensionValidator(
-                                allowed_extensions=(".tar",)
+                                allowed_extensions=(".tar", ".tar.gz")
                             )
                         ],
                     ),
@@ -118,7 +70,7 @@ class Migration(migrations.Migration):
                     "challenge",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="challenges.Challenge",
+                        to="challenges.challenge",
                     ),
                 ),
                 (
@@ -129,53 +81,22 @@ class Migration(migrations.Migration):
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
-            ],
-            options={"abstract": False},
-        ),
-        migrations.CreateModel(
-            name="Result",
-            fields=[
                 (
-                    "id",
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("modified", models.DateTimeField(auto_now=True)),
-                (
-                    "metrics",
-                    django.contrib.postgres.fields.jsonb.JSONField(
-                        default=dict
-                    ),
-                ),
-                ("public", models.BooleanField(default=True)),
-                (
-                    "rank",
-                    models.PositiveIntegerField(
-                        default=0,
-                        help_text="The position of this result on the leaderboard. If the value is zero, then the result is unranked.",
-                    ),
-                ),
-                ("absolute_url", models.TextField(blank=True, editable=False)),
-                (
-                    "challenge",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="challenges.Challenge",
-                    ),
+                    "staged_image_uuid",
+                    models.UUIDField(blank=True, editable=False, null=True),
                 ),
                 (
-                    "job",
-                    models.OneToOneField(
-                        null=True,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="evaluation.Job",
+                    "requires_cpu_cores",
+                    models.DecimalField(
+                        decimal_places=2, default=Decimal("1.0"), max_digits=4
                     ),
                 ),
+                ("requires_gpu", models.BooleanField(default=False)),
+                (
+                    "requires_gpu_memory_gb",
+                    models.PositiveIntegerField(default=4),
+                ),
+                ("requires_memory_gb", models.PositiveIntegerField(default=4)),
             ],
             options={"abstract": False},
         ),
@@ -194,8 +115,10 @@ class Migration(migrations.Migration):
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("modified", models.DateTimeField(auto_now=True)),
                 (
-                    "file",
+                    "predictions_file",
                     models.FileField(
+                        blank=True,
+                        storage=grandchallenge.core.storage.ProtectedS3Storage(),
                         upload_to=grandchallenge.evaluation.models.submission_file_path,
                         validators=[
                             grandchallenge.core.validators.MimeTypeValidator(
@@ -211,6 +134,7 @@ class Migration(migrations.Migration):
                     "supplementary_file",
                     models.FileField(
                         blank=True,
+                        storage=grandchallenge.core.storage.PublicS3Storage(),
                         upload_to=grandchallenge.evaluation.models.submission_supplementary_file_path,
                         validators=[
                             grandchallenge.core.validators.MimeTypeValidator(
@@ -232,7 +156,7 @@ class Migration(migrations.Migration):
                     "challenge",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="challenges.Challenge",
+                        to="challenges.challenge",
                     ),
                 ),
                 (
@@ -250,26 +174,99 @@ class Migration(migrations.Migration):
                         help_text="A URL for the publication associated with this submission.",
                     ),
                 ),
+                (
+                    "algorithm_image",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="algorithms.algorithmimage",
+                    ),
+                ),
+            ],
+            options={
+                "abstract": False,
+                "unique_together": {
+                    ("challenge", "predictions_file", "algorithm_image")
+                },
+            },
+        ),
+        migrations.CreateModel(
+            name="Evaluation",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "status",
+                    models.PositiveSmallIntegerField(
+                        choices=[
+                            (0, "Queued"),
+                            (1, "Started"),
+                            (2, "Re-Queued"),
+                            (3, "Failed"),
+                            (4, "Succeeded"),
+                            (5, "Cancelled"),
+                        ],
+                        default=0,
+                    ),
+                ),
+                ("output", models.TextField()),
+                (
+                    "method",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="evaluation.method",
+                    ),
+                ),
+                (
+                    "submission",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="evaluation.submission",
+                    ),
+                ),
+                ("completed_at", models.DateTimeField(null=True)),
+                ("started_at", models.DateTimeField(null=True)),
+                (
+                    "inputs",
+                    models.ManyToManyField(
+                        related_name="evaluation_evaluations_as_input",
+                        to="components.ComponentInterfaceValue",
+                    ),
+                ),
+                (
+                    "outputs",
+                    models.ManyToManyField(
+                        related_name="evaluation_evaluations_as_output",
+                        to="components.ComponentInterfaceValue",
+                    ),
+                ),
+                ("published", models.BooleanField(default=True)),
+                (
+                    "rank",
+                    models.PositiveIntegerField(
+                        default=0,
+                        help_text="The position of this result on the leaderboard. If the value is zero, then the result is unranked.",
+                    ),
+                ),
+                (
+                    "rank_per_metric",
+                    django.contrib.postgres.fields.jsonb.JSONField(
+                        default=dict
+                    ),
+                ),
+                ("rank_score", models.FloatField(default=0.0)),
             ],
             options={"abstract": False},
         ),
-        migrations.AddField(
-            model_name="job",
-            name="method",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                to="evaluation.Method",
-            ),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="submission",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE,
-                to="evaluation.Submission",
-            ),
-        ),
-        migrations.RemoveField(model_name="job", name="status_history",),
         migrations.CreateModel(
             name="Config",
             fields=[
@@ -295,7 +292,7 @@ class Migration(migrations.Migration):
                     "score_jsonpath",
                     models.CharField(
                         blank=True,
-                        help_text="The jsonpath of the field in metrics.json that will be used for the overall scores on the results page. See http://goessner.net/articles/JsonPath/ for syntax. For example:\n\ndice.mean",
+                        help_text="The jsonpath of the field in metrics.json that will be used for the overall scores on the results page. See http://goessner.net/articles/JsonPath/ for syntax. For example: dice.mean",
                         max_length=255,
                     ),
                 ),
@@ -303,7 +300,7 @@ class Migration(migrations.Migration):
                     "score_title",
                     models.CharField(
                         default="Score",
-                        help_text="The name that will be displayed for the scores column, for instance:\n\nScore (log-loss)",
+                        help_text="The name that will be displayed for the scores column, for instance: Score (log-loss)",
                         max_length=32,
                     ),
                 ),
@@ -320,8 +317,64 @@ class Migration(migrations.Migration):
                     "extra_results_columns",
                     django.contrib.postgres.fields.jsonb.JSONField(
                         blank=True,
-                        default=dict,
-                        help_text='A JSON object that contains the extra columns from metrics.json that will be displayed on the results page. Where the KEYS contain the titles of the columns, and the VALUES contain the JsonPath to the corresponding metric in metrics.json. For example:\n\n{"Accuracy": "aggregates.acc","Dice": "dice.mean"}',
+                        default=list,
+                        help_text="A JSON object that contains the extra columns from metrics.json that will be displayed on the results page. ",
+                        validators=[
+                            grandchallenge.core.validators.JSONSchemaValidator(
+                                schema={
+                                    "$schema": "http://json-schema.org/draft-06/schema#",
+                                    "definitions": {},
+                                    "items": {
+                                        "$id": "#/items",
+                                        "additionalProperties": False,
+                                        "properties": {
+                                            "error_path": {
+                                                "$id": "#/items/properties/error_path",
+                                                "default": "",
+                                                "examples": [
+                                                    "aggregates.dice.std"
+                                                ],
+                                                "pattern": "^(.*)$",
+                                                "title": "The Error Path Schema",
+                                                "type": "string",
+                                            },
+                                            "order": {
+                                                "$id": "#/items/properties/order",
+                                                "default": "",
+                                                "enum": ["asc", "desc"],
+                                                "examples": ["asc"],
+                                                "pattern": "^(asc|desc)$",
+                                                "title": "The Order Schema",
+                                                "type": "string",
+                                            },
+                                            "path": {
+                                                "$id": "#/items/properties/path",
+                                                "default": "",
+                                                "examples": [
+                                                    "aggregates.dice.mean"
+                                                ],
+                                                "pattern": "^(.*)$",
+                                                "title": "The Path Schema",
+                                                "type": "string",
+                                            },
+                                            "title": {
+                                                "$id": "#/items/properties/title",
+                                                "default": "",
+                                                "examples": ["Mean Dice"],
+                                                "pattern": "^(.*)$",
+                                                "title": "The Title Schema",
+                                                "type": "string",
+                                            },
+                                        },
+                                        "required": ["title", "path", "order"],
+                                        "title": "The Items Schema",
+                                        "type": "object",
+                                    },
+                                    "title": "The Extra Results Columns Schema",
+                                    "type": "array",
+                                }
+                            )
+                        ],
                     ),
                 ),
                 (
@@ -329,20 +382,6 @@ class Migration(migrations.Migration):
                     models.BooleanField(
                         default=False,
                         help_text="Allow users to submit comments as part of their submission.",
-                    ),
-                ),
-                (
-                    "allow_supplementary_file",
-                    models.BooleanField(
-                        default=False,
-                        help_text="Show a supplementary file field on the submissions page so that users can upload an additional file along with their predictions file as part of their submission (eg, include a pdf description of their method).",
-                    ),
-                ),
-                (
-                    "require_supplementary_file",
-                    models.BooleanField(
-                        default=False,
-                        help_text="Force users to upload a supplementary file with their predictions file.",
                     ),
                 ),
                 (
@@ -383,7 +422,7 @@ class Migration(migrations.Migration):
                         editable=False,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="evaluation_config",
-                        to="challenges.Challenge",
+                        to="challenges.challenge",
                     ),
                 ),
                 (
@@ -394,7 +433,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "new_results_are_public",
+                    "auto_publish_new_results",
                     models.BooleanField(
                         default=True,
                         help_text="If true, new results are automatically made public. If false, the challenge administrator must manually publish each new result.",
@@ -456,480 +495,83 @@ class Migration(migrations.Migration):
                         max_length=3,
                     ),
                 ),
+                (
+                    "result_display_choice",
+                    models.CharField(
+                        choices=[
+                            ("all", "Display all results"),
+                            (
+                                "rec",
+                                "Only display each users most recent result",
+                            ),
+                            ("bst", "Only display each users best result"),
+                        ],
+                        default="all",
+                        help_text="Which results should be displayed on the leaderboard?",
+                        max_length=3,
+                    ),
+                ),
+                (
+                    "score_error_jsonpath",
+                    models.CharField(
+                        blank=True,
+                        help_text="The jsonpath for the field in metrics.json that contains the error of the score, eg: dice.std",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "scoring_method_choice",
+                    models.CharField(
+                        choices=[
+                            (
+                                "abs",
+                                "Use the absolute value of the score column",
+                            ),
+                            (
+                                "avg",
+                                "Use the mean of the relative ranks of the score and extra result columns",
+                            ),
+                            (
+                                "med",
+                                "Use the median of the relative ranks of the score and extra result columns",
+                            ),
+                        ],
+                        default="abs",
+                        help_text="How should the rank of each result be calculated?",
+                        max_length=3,
+                    ),
+                ),
+                (
+                    "display_all_metrics",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Should all of the metrics be displayed on the Result detail page?",
+                    ),
+                ),
+                (
+                    "inputs",
+                    models.ManyToManyField(
+                        related_name="evaluation_inputs",
+                        to="components.ComponentInterface",
+                    ),
+                ),
+                (
+                    "outputs",
+                    models.ManyToManyField(
+                        related_name="evaluation_outputs",
+                        to="components.ComponentInterface",
+                    ),
+                ),
+                (
+                    "submission_kind",
+                    models.PositiveSmallIntegerField(
+                        choices=[(1, "CSV"), (2, "ZIP"), (3, "Algorithm")],
+                        default=1,
+                        help_text="Should participants submit a .csv/.zip file of predictions, or an algorithm?",
+                    ),
+                ),
             ],
             options={"abstract": False},
-        ),
-        migrations.RemoveField(
-            model_name="config", name="allow_supplementary_file",
-        ),
-        migrations.RemoveField(
-            model_name="config", name="require_supplementary_file",
-        ),
-        migrations.RenameField(
-            model_name="config",
-            old_name="new_results_are_public",
-            new_name="auto_publish_new_results",
-        ),
-        migrations.RenameField(
-            model_name="result", old_name="public", new_name="published",
-        ),
-        migrations.AddField(
-            model_name="config",
-            name="result_display_choice",
-            field=models.CharField(
-                choices=[
-                    ("all", "Display all results"),
-                    ("rec", "Only display each users most recent result"),
-                    ("bst", "Only display each users best result"),
-                ],
-                default="all",
-                help_text="Which results should be displayed on the leaderboard?",
-                max_length=3,
-            ),
-        ),
-        migrations.AlterField(
-            model_name="job",
-            name="status",
-            field=models.PositiveSmallIntegerField(
-                choices=[
-                    (0, "Queued"),
-                    (1, "Started"),
-                    (2, "Re-Queued"),
-                    (3, "Failed"),
-                    (4, "Succeeded"),
-                    (5, "Cancelled"),
-                ],
-                default=0,
-            ),
-        ),
-        migrations.AddField(
-            model_name="method",
-            name="staged_image_uuid",
-            field=models.UUIDField(blank=True, editable=False, null=True),
-        ),
-        migrations.AlterField(
-            model_name="method",
-            name="image",
-            field=models.FileField(
-                blank=True,
-                help_text="Tar archive of the container image produced from the command `docker save IMAGE > IMAGE.tar`. See https://docs.docker.com/engine/reference/commandline/save/",
-                upload_to=grandchallenge.components.models.docker_image_path,
-                validators=[
-                    grandchallenge.core.validators.ExtensionValidator(
-                        allowed_extensions=(".tar",)
-                    )
-                ],
-            ),
-        ),
-        migrations.AlterField(
-            model_name="config",
-            name="extra_results_columns",
-            field=django.contrib.postgres.fields.jsonb.JSONField(
-                blank=True,
-                default=list,
-                help_text="A JSON object that contains the extra columns from metrics.json that will be displayed on the results page. ",
-            ),
-        ),
-        migrations.AddField(
-            model_name="config",
-            name="score_error_jsonpath",
-            field=models.CharField(
-                blank=True,
-                help_text="The jsonpath for the field in metrics.json that contains the error of the score, eg: dice.std",
-                max_length=255,
-            ),
-        ),
-        migrations.AlterField(
-            model_name="config",
-            name="extra_results_columns",
-            field=django.contrib.postgres.fields.jsonb.JSONField(
-                blank=True,
-                default=list,
-                help_text="A JSON object that contains the extra columns from metrics.json that will be displayed on the results page. ",
-                validators=[
-                    grandchallenge.core.validators.JSONSchemaValidator(
-                        schema={
-                            "$id": "http://json-schema.org/draft-06/schema#",
-                            "$schema": "http://json-schema.org/draft-06/schema#",
-                            "definitions": {},
-                            "items": {
-                                "$id": "#/items",
-                                "properties": {
-                                    "error_path": {
-                                        "$id": "#/items/properties/error_path",
-                                        "default": "",
-                                        "examples": ["aggregates.dice.std"],
-                                        "pattern": "^(.*)$",
-                                        "title": "The Error Path Schema",
-                                        "type": "string",
-                                    },
-                                    "path": {
-                                        "$id": "#/items/properties/path",
-                                        "default": "",
-                                        "examples": ["aggregates.dice.mean"],
-                                        "pattern": "^(.*)$",
-                                        "title": "The Path Schema",
-                                        "type": "string",
-                                    },
-                                    "title": {
-                                        "$id": "#/items/properties/title",
-                                        "default": "",
-                                        "examples": ["Mean Dice"],
-                                        "pattern": "^(.*)$",
-                                        "title": "The Title Schema",
-                                        "type": "string",
-                                    },
-                                },
-                                "required": ["title", "path"],
-                                "title": "The Items Schema",
-                                "type": "object",
-                            },
-                            "title": "The Extra Results Columns Schema",
-                            "type": "array",
-                        }
-                    )
-                ],
-            ),
-        ),
-        migrations.AlterField(
-            model_name="config",
-            name="score_jsonpath",
-            field=models.CharField(
-                blank=True,
-                help_text="The jsonpath of the field in metrics.json that will be used for the overall scores on the results page. See http://goessner.net/articles/JsonPath/ for syntax. For example: dice.mean",
-                max_length=255,
-            ),
-        ),
-        migrations.AlterField(
-            model_name="config",
-            name="score_title",
-            field=models.CharField(
-                default="Score",
-                help_text="The name that will be displayed for the scores column, for instance: Score (log-loss)",
-                max_length=32,
-            ),
-        ),
-        migrations.RemoveField(model_name="result", name="absolute_url",),
-        migrations.AddField(
-            model_name="config",
-            name="scoring_method_choice",
-            field=models.CharField(
-                choices=[
-                    ("abs", "Use the absolute value of the score column"),
-                    (
-                        "avg",
-                        "Use the mean of the relative ranks of the score and extra result columns",
-                    ),
-                    (
-                        "med",
-                        "Use the median of the relative ranks of the score and extra result columns",
-                    ),
-                ],
-                default="abs",
-                help_text="How should the rank of each result be calculated?",
-                max_length=3,
-            ),
-        ),
-        migrations.AddField(
-            model_name="result",
-            name="rank_per_metric",
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
-        ),
-        migrations.AddField(
-            model_name="result",
-            name="rank_score",
-            field=models.FloatField(default=0.0),
-        ),
-        migrations.AlterField(
-            model_name="config",
-            name="extra_results_columns",
-            field=django.contrib.postgres.fields.jsonb.JSONField(
-                blank=True,
-                default=list,
-                help_text="A JSON object that contains the extra columns from metrics.json that will be displayed on the results page. ",
-                validators=[
-                    grandchallenge.core.validators.JSONSchemaValidator(
-                        schema={
-                            "$schema": "http://json-schema.org/draft-06/schema#",
-                            "definitions": {},
-                            "items": {
-                                "$id": "#/items",
-                                "additionalProperties": False,
-                                "properties": {
-                                    "error_path": {
-                                        "$id": "#/items/properties/error_path",
-                                        "default": "",
-                                        "examples": ["aggregates.dice.std"],
-                                        "pattern": "^(.*)$",
-                                        "title": "The Error Path Schema",
-                                        "type": "string",
-                                    },
-                                    "order": {
-                                        "$id": "#/items/properties/order",
-                                        "default": "",
-                                        "enum": ["asc", "desc"],
-                                        "examples": ["asc"],
-                                        "pattern": "^(asc|desc)$",
-                                        "title": "The Order Schema",
-                                        "type": "string",
-                                    },
-                                    "path": {
-                                        "$id": "#/items/properties/path",
-                                        "default": "",
-                                        "examples": ["aggregates.dice.mean"],
-                                        "pattern": "^(.*)$",
-                                        "title": "The Path Schema",
-                                        "type": "string",
-                                    },
-                                    "title": {
-                                        "$id": "#/items/properties/title",
-                                        "default": "",
-                                        "examples": ["Mean Dice"],
-                                        "pattern": "^(.*)$",
-                                        "title": "The Title Schema",
-                                        "type": "string",
-                                    },
-                                },
-                                "required": ["title", "path", "order"],
-                                "title": "The Items Schema",
-                                "type": "object",
-                            },
-                            "title": "The Extra Results Columns Schema",
-                            "type": "array",
-                        }
-                    )
-                ],
-            ),
-        ),
-        migrations.AddField(
-            model_name="method",
-            name="requires_cpu_cores",
-            field=models.DecimalField(
-                decimal_places=2, default=Decimal("1.0"), max_digits=4
-            ),
-        ),
-        migrations.AddField(
-            model_name="method",
-            name="requires_gpu",
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name="method",
-            name="requires_gpu_memory_gb",
-            field=models.PositiveIntegerField(default=4),
-        ),
-        migrations.AddField(
-            model_name="method",
-            name="requires_memory_gb",
-            field=models.PositiveIntegerField(default=4),
-        ),
-        migrations.AlterField(
-            model_name="method",
-            name="image",
-            field=models.FileField(
-                blank=True,
-                help_text=".tar.gz archive of the container image produced from the command 'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See https://docs.docker.com/engine/reference/commandline/save/",
-                upload_to=grandchallenge.components.models.docker_image_path,
-                validators=[
-                    grandchallenge.core.validators.ExtensionValidator(
-                        allowed_extensions=(".tar", ".tar.gz")
-                    )
-                ],
-            ),
-        ),
-        migrations.AlterField(
-            model_name="method",
-            name="image",
-            field=models.FileField(
-                blank=True,
-                help_text=".tar.gz archive of the container image produced from the command 'docker save IMAGE | gzip -c > IMAGE.tar.gz'. See https://docs.docker.com/engine/reference/commandline/save/",
-                storage=grandchallenge.core.storage.PrivateS3Storage(),
-                upload_to=grandchallenge.components.models.docker_image_path,
-                validators=[
-                    grandchallenge.core.validators.ExtensionValidator(
-                        allowed_extensions=(".tar", ".tar.gz")
-                    )
-                ],
-            ),
-        ),
-        migrations.RenameField(
-            model_name="submission",
-            old_name="file",
-            new_name="predictions_file",
-        ),
-        migrations.AlterField(
-            model_name="submission",
-            name="predictions_file",
-            field=models.FileField(
-                storage=grandchallenge.core.storage.PrivateS3Storage(),
-                upload_to=grandchallenge.evaluation.models.submission_file_path,
-                validators=[
-                    grandchallenge.core.validators.MimeTypeValidator(
-                        allowed_types=("application/zip", "text/plain")
-                    ),
-                    grandchallenge.core.validators.ExtensionValidator(
-                        allowed_extensions=(".zip", ".csv")
-                    ),
-                ],
-            ),
-        ),
-        migrations.AlterField(
-            model_name="submission",
-            name="predictions_file",
-            field=models.FileField(
-                storage=grandchallenge.core.storage.ProtectedS3Storage(),
-                upload_to=grandchallenge.evaluation.models.submission_file_path,
-                validators=[
-                    grandchallenge.core.validators.MimeTypeValidator(
-                        allowed_types=("application/zip", "text/plain")
-                    ),
-                    grandchallenge.core.validators.ExtensionValidator(
-                        allowed_extensions=(".zip", ".csv")
-                    ),
-                ],
-            ),
-        ),
-        migrations.RemoveField(model_name="job", name="challenge",),
-        migrations.RemoveField(model_name="result", name="challenge",),
-        migrations.AddField(
-            model_name="config",
-            name="display_all_metrics",
-            field=models.BooleanField(
-                default=True,
-                help_text="Should all of the metrics be displayed on the Result detail page?",
-            ),
-        ),
-        migrations.AlterField(
-            model_name="submission",
-            name="supplementary_file",
-            field=models.FileField(
-                blank=True,
-                storage=grandchallenge.core.storage.PublicS3Storage(),
-                upload_to=grandchallenge.evaluation.models.submission_supplementary_file_path,
-                validators=[
-                    grandchallenge.core.validators.MimeTypeValidator(
-                        allowed_types=("text/plain", "application/pdf")
-                    )
-                ],
-            ),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="completed_at",
-            field=models.DateTimeField(null=True),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="started_at",
-            field=models.DateTimeField(null=True),
-        ),
-        migrations.AddField(
-            model_name="config",
-            name="inputs",
-            field=models.ManyToManyField(
-                related_name="evaluation_inputs",
-                to="components.ComponentInterface",
-            ),
-        ),
-        migrations.AddField(
-            model_name="config",
-            name="outputs",
-            field=models.ManyToManyField(
-                related_name="evaluation_outputs",
-                to="components.ComponentInterface",
-            ),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="inputs",
-            field=models.ManyToManyField(
-                related_name="evaluation_jobs_as_input",
-                to="components.ComponentInterfaceValue",
-            ),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="outputs",
-            field=models.ManyToManyField(
-                related_name="evaluation_jobs_as_output",
-                to="components.ComponentInterfaceValue",
-            ),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="published",
-            field=models.BooleanField(default=True),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="rank",
-            field=models.PositiveIntegerField(
-                default=0,
-                help_text="The position of this result on the leaderboard. If the value is zero, then the result is unranked.",
-            ),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="rank_per_metric",
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
-        ),
-        migrations.AddField(
-            model_name="job",
-            name="rank_score",
-            field=models.FloatField(default=0.0),
-        ),
-        migrations.DeleteModel(name="Result",),
-        migrations.RenameModel(old_name="Job", new_name="Evaluation",),
-        migrations.AlterField(
-            model_name="evaluation",
-            name="inputs",
-            field=models.ManyToManyField(
-                related_name="evaluation_evaluations_as_input",
-                to="components.ComponentInterfaceValue",
-            ),
-        ),
-        migrations.AlterField(
-            model_name="evaluation",
-            name="outputs",
-            field=models.ManyToManyField(
-                related_name="evaluation_evaluations_as_output",
-                to="components.ComponentInterfaceValue",
-            ),
-        ),
-        migrations.AlterField(
-            model_name="submission",
-            name="predictions_file",
-            field=models.FileField(
-                blank=True,
-                storage=grandchallenge.core.storage.ProtectedS3Storage(),
-                upload_to=grandchallenge.evaluation.models.submission_file_path,
-                validators=[
-                    grandchallenge.core.validators.MimeTypeValidator(
-                        allowed_types=("application/zip", "text/plain")
-                    ),
-                    grandchallenge.core.validators.ExtensionValidator(
-                        allowed_extensions=(".zip", ".csv")
-                    ),
-                ],
-            ),
-        ),
-        migrations.AddField(
-            model_name="config",
-            name="submission_kind",
-            field=models.PositiveSmallIntegerField(
-                choices=[(1, "CSV"), (2, "ZIP"), (3, "Algorithm")],
-                default=1,
-                help_text="Should participants submit a .csv/.zip file of predictions, or an algorithm?",
-            ),
-        ),
-        migrations.AddField(
-            model_name="submission",
-            name="algorithm_image",
-            field=models.ForeignKey(
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="algorithms.AlgorithmImage",
-            ),
         ),
         migrations.CreateModel(
             name="AlgorithmEvaluation",
@@ -972,16 +614,10 @@ class Migration(migrations.Migration):
                     "submission",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="evaluation.Submission",
+                        to="evaluation.submission",
                     ),
                 ),
             ],
             options={"abstract": False},
-        ),
-        migrations.AlterUniqueTogether(
-            name="submission",
-            unique_together={
-                ("challenge", "predictions_file", "algorithm_image")
-            },
         ),
     ]
