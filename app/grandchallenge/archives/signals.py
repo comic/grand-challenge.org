@@ -67,7 +67,6 @@ def on_archive_algorithms_changed(
         archive_pks = [instance.pk]
         algorithm_pks = pk_set
 
-    if "add" in action:
-        create_algorithm_jobs_for_archive_algorithms.apply_async(
-            args=(list(archive_pks), list(algorithm_pks))
-        )
+    create_algorithm_jobs_for_archive_algorithms.apply_async(
+        args=(list(archive_pks), list(algorithm_pks))
+    )
