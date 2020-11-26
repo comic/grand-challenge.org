@@ -12,17 +12,6 @@ import grandchallenge.core.validators
 
 
 class Migration(migrations.Migration):
-    replaces = [
-        ("workstation_configs", "0001_initial"),
-        ("workstation_configs", "0002_auto_20191025_0743"),
-        ("workstation_configs", "0003_auto_20200110_1358"),
-        ("workstation_configs", "0004_auto_20200403_1243"),
-        ("workstation_configs", "0005_workstationconfig_overlay_segments"),
-        ("workstation_configs", "0006_auto_20200430_1414"),
-        ("workstation_configs", "0007_workstationconfig_key_bindings"),
-        ("workstation_configs", "0008_auto_20201001_0758"),
-    ]
-
     initial = True
 
     dependencies = [

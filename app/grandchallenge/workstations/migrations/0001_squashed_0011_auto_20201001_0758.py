@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("auth", "0011_update_proxy_permissions"),
-        ("workstation_configs", "0001_initial"),
+        ("workstation_configs", "0001_squashed_0008_auto_20201001_0758"),
     ]
 
     operations = [
