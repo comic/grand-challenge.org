@@ -73,16 +73,15 @@ class TestCreateAlgorithmJobs:
         assert len(jobs) == 0
 
     def test_gets_creator_from_session(self):
-        ai = AlgorithmImageFactory()
-        image = ImageFactory()
-        user = UserFactory()
-        image.origin.creator = user
-        image.origin.save()
+        riu = RawImageUploadSessionFactory()
+        riu.image_set.add(ImageFactory(), ImageFactory())
         create_algorithm_jobs(
-            algorithm_image=ai, images=[image], session=image.origin
+            algorithm_image=riu.algorithm_image,
+            images=riu.image_set.all(),
+            session=riu,
         )
         j = Job.objects.first()
-        assert j.creator == user
+        assert j.creator == riu.creator
 
     def test_extra_viewer_groups(self):
         ai = AlgorithmImageFactory()
