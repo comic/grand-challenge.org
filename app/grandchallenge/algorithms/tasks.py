@@ -161,7 +161,7 @@ def send_failed_jobs_email(*_, job_pks, session_pk=None):
         creator = failed_jobs.first().creator
 
         experiment_url = reverse(
-            "algorithms:jobs-list", kwargs={"slug": algorithm.slug}
+            "algorithms:job-list", kwargs={"slug": algorithm.slug}
         )
         if session_pk is not None:
             experiment_url = reverse(
