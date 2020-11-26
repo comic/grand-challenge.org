@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workstation_configs", "0001_initial"),
+        ("workstation_configs", "0001_squashed_0008_auto_20201001_0758"),
         ("algorithms", "0013_algorithm_visible_to_public"),
     ]
 
