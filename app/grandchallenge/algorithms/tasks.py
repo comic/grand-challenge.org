@@ -24,7 +24,7 @@ def create_algorithm_jobs_for_session(*_, upload_session_pk):
         "algorithm_image__algorithm"
     ).get(pk=upload_session_pk)
 
-    create_algorithm_jobs(
+    execute_jobs(
         algorithm_image=session.algorithm_image,
         images=session.image_set.all(),
         session=session,
@@ -40,7 +40,7 @@ def create_algorithm_jobs_for_archive_images(archive_pks, image_pks):
             archive.users_group,
         ]
         for algorithm in archive.algorithms.all():
-            create_algorithm_jobs(
+            execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
                 images=Image.objects.filter(pk__in=image_pks).all(),
                 extra_viewer_groups=groups,
@@ -56,7 +56,7 @@ def create_algorithm_jobs_for_archive_algorithms(archive_pks, algorithm_pks):
                 archive.uploaders_group,
                 archive.users_group,
             ]
-            create_algorithm_jobs(
+            execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
                 images=archive.images.all(),
                 extra_viewer_groups=groups,
