@@ -21,7 +21,7 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_csv.renderers import PaginatedCSVRenderer
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.algorithms.tasks import create_algorithm_jobs
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import (
     Image,
@@ -153,7 +153,7 @@ class RawImageUploadSessionViewSet(
         upload_session = self.get_object()
 
         if upload_session.algorithm_image:
-            return create_algorithm_jobs
+            return create_algorithm_jobs_for_session
         elif upload_session.archive:
             return add_images_to_archive
         elif upload_session.reader_study:

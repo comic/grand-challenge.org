@@ -13,12 +13,12 @@ def test_add_images_is_idempotent():
     image.origin.archive = archive
     image.origin.save()
 
+    assert archive.images.count() == 0
+
+    add_images_to_archive(upload_session_pk=image.origin.pk)
+
     assert archive.images.count() == 1
 
     add_images_to_archive(upload_session_pk=image.origin.pk)
 
-    assert archive.images.count() == 2
-
-    add_images_to_archive(upload_session_pk=image.origin.pk)
-
-    assert archive.images.count() == 2
+    assert archive.images.count() == 1

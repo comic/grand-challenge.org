@@ -455,7 +455,10 @@ class ArchiveCasesList(
         qs = super().get_queryset(*args, **kwargs)
         return (
             qs.filter(archive=self.archive)
-            .prefetch_related("files")
+            .prefetch_related(
+                "files",
+                "componentinterfacevalue_set__algorithms_jobs_as_input__algorithm_image__algorithm",
+            )
             .select_related(
                 "origin__creator__user_profile",
                 "origin__creator__verification",

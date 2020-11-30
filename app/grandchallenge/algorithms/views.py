@@ -60,7 +60,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
     JobSerializer,
 )
-from grandchallenge.algorithms.tasks import create_algorithm_jobs
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -373,7 +373,7 @@ class AlgorithmExecutionSessionCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"linked_task": create_algorithm_jobs})
+        kwargs.update({"linked_task": create_algorithm_jobs_for_session})
         return kwargs
 
     def get_permission_object(self):

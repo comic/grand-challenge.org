@@ -53,6 +53,8 @@ class GroupFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Group
 
+    name = factory.Sequence(lambda n: f"Group {n}")
+
 
 class ChallengeFactory(factory.django.DjangoModelFactory):
     class Meta:
