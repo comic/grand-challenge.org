@@ -180,11 +180,6 @@ class ArchiveUpdate(
     )
     raise_exception = True
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
 
 class ArchiveUsersAutocomplete(
     LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
@@ -462,7 +457,7 @@ class ArchiveCasesList(
             qs.filter(archive=self.archive)
             .prefetch_related(
                 "files",
-                "componentinterfacevalue_set__algorithms_jobs_as_input__outputs__image__files",
+                "componentinterfacevalue_set__algorithms_jobs_as_input__algorithm_image__algorithm",
             )
             .select_related(
                 "origin__creator__user_profile",
