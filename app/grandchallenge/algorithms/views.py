@@ -377,8 +377,7 @@ class AlgorithmExecutionSessionCreate(
             {
                 "linked_task": create_algorithm_jobs_for_session.signature(
                     kwargs={
-                        "algorithm_image_pk",
-                        self.algorithm.latest_ready_image.pk,
+                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
                     },
                     immutable=True,
                 )

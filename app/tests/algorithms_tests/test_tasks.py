@@ -22,7 +22,7 @@ class TestCreateAlgorithmJobs:
     def test_no_algorithm_image_does_nothing(self):
         image = ImageFactory()
         create_algorithm_jobs(
-            algorithm_image=None, images=[image], session=image.origin.pk
+            algorithm_image=None, images=[image],
         )
         assert Job.objects.count() == 0
 
@@ -76,9 +76,9 @@ class TestCreateAlgorithmJobs:
         riu = RawImageUploadSessionFactory()
         riu.image_set.add(ImageFactory(), ImageFactory())
         create_algorithm_jobs(
-            algorithm_image=riu.algorithm_image,
+            algorithm_image=AlgorithmImageFactory(),
             images=riu.image_set.all(),
-            session=riu,
+            creator=riu.creator,
         )
         j = Job.objects.first()
         assert j.creator == riu.creator
@@ -96,15 +96,19 @@ class TestCreateAlgorithmJobs:
     def test_create_jobs_is_limited(self):
         user, editor = UserFactory(), UserFactory()
 
+        algorithm_image = AlgorithmImageFactory()
+
+        algorithm_image.algorithm.credits_per_job = 400
+        algorithm_image.algorithm.save()
+
+        algorithm_image.algorithm.add_editor(editor)
+
         def create_upload(upload_creator):
-            riu = RawImageUploadSessionFactory()
-            riu.algorithm_image.algorithm.credits_per_job = 400
-            riu.algorithm_image.algorithm.add_editor(editor)
-            riu.algorithm_image.algorithm.save()
-            riu.creator = upload_creator
+            riu = RawImageUploadSessionFactory(creator=upload_creator)
 
             for _ in range(3):
                 ImageFactory(origin=riu),
+
             riu.save()
             return riu
 
@@ -113,9 +117,9 @@ class TestCreateAlgorithmJobs:
         # Create an upload session as editor; should not be limited
         upload = create_upload(editor)
         create_algorithm_jobs(
-            algorithm_image=upload.algorithm_image,
+            algorithm_image=algorithm_image,
             images=upload.image_set.all(),
-            session=upload,
+            creator=upload.creator,
         )
 
         assert Job.objects.count() == 3
@@ -123,9 +127,9 @@ class TestCreateAlgorithmJobs:
         # Create an upload session as user; should be limited
         upload_2 = create_upload(user)
         create_algorithm_jobs(
-            algorithm_image=upload_2.algorithm_image,
+            algorithm_image=algorithm_image,
             images=upload_2.image_set.all(),
-            session=upload_2,
+            creator=upload_2.creator,
         )
 
         # An additional 2 jobs should be created (standard nr of credits is 1000
@@ -133,15 +137,13 @@ class TestCreateAlgorithmJobs:
         assert Job.objects.count() == 5
 
         # As an editor you should not be limited
-        upload_2.algorithm_image.algorithm.add_editor(user)
-        upload_2.algorithm_image.algorithm.save()
-        upload_2.save()
+        algorithm_image.algorithm.add_editor(user)
 
         # The job that was skipped on the previous run should now be accepted
         create_algorithm_jobs(
-            algorithm_image=upload_2.algorithm_image,
+            algorithm_image=algorithm_image,
             images=upload_2.image_set.all(),
-            session=upload_2,
+            creator=upload_2.creator,
         )
         assert Job.objects.count() == 6
 
