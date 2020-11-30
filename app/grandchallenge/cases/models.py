@@ -63,27 +63,6 @@ class RawImageUploadSession(UUIDModel):
 
     error_message = models.TextField(blank=False, null=True, default=None)
 
-    algorithm_image = models.ForeignKey(
-        to="algorithms.AlgorithmImage",
-        null=True,
-        default=None,
-        on_delete=models.CASCADE,
-    )
-
-    reader_study = models.ForeignKey(
-        to="reader_studies.ReaderStudy",
-        null=True,
-        default=None,
-        on_delete=models.SET_NULL,
-    )
-
-    archive = models.ForeignKey(
-        to="archives.Archive",
-        null=True,
-        default=None,
-        on_delete=models.SET_NULL,
-    )
-
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
@@ -105,27 +84,6 @@ class RawImageUploadSession(UUIDModel):
                 assign_perm(
                     f"change_{self._meta.model_name}", self.creator, self
                 )
-            if self.algorithm_image and self.algorithm_image.algorithm:
-                # If an algorithm image is assigned, the algorithm editor
-                # can view this
-                assign_perm(
-                    f"view_{self._meta.model_name}",
-                    self.algorithm_image.algorithm.editors_group,
-                    self,
-                )
-            if self.archive:
-                # If an archive is assigned, then the editors and uploaders
-                # groups can view this
-                assign_perm(
-                    f"view_{self._meta.model_name}",
-                    self.archive.editors_group,
-                    self,
-                )
-                assign_perm(
-                    f"view_{self._meta.model_name}",
-                    self.archive.uploaders_group,
-                    self,
-                )
 
     def process_images(self, linked_task=None):
         """
@@ -145,18 +103,14 @@ class RawImageUploadSession(UUIDModel):
             status=RawImageUploadSession.REQUEUED
         )
 
-        kwargs = {"args": (self.pk,)}
+        kwargs = {"upload_session_pk": self.pk}
+        workflow = build_images.signature(kwargs=kwargs)
 
         if linked_task is not None:
-            kwargs.update(
-                {
-                    "link": linked_task.signature(
-                        kwargs={"upload_session_pk": self.pk}
-                    )
-                }
-            )
+            linked_task.kwargs.update(kwargs)
+            workflow |= linked_task
 
-        build_images.apply_async(**kwargs)
+        workflow.apply_async()
 
     def get_absolute_url(self):
         return reverse(

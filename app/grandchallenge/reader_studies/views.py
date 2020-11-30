@@ -550,7 +550,10 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
         kwargs.update(
             {
                 "user": self.request.user,
-                "linked_task": add_images_to_reader_study,
+                "linked_task": add_images_to_reader_study.signature(
+                    kwargs={"reader_study_pk": self.reader_study.pk},
+                    immutable=True,
+                ),
             }
         )
         return kwargs

@@ -358,7 +358,13 @@ class ArchiveUploadSessionCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"linked_task": add_images_to_archive})
+        kwargs.update(
+            {
+                "linked_task": add_images_to_archive.signature(
+                    kwargs={"archive_pk": self.archive.pk}, immutable=True
+                )
+            }
+        )
         return kwargs
 
     @cached_property
@@ -370,7 +376,6 @@ class ArchiveUploadSessionCreate(
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.archive = self.archive
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):

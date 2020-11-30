@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmImage,
     DEFAULT_INPUT_INTERFACE_SLUG,
     Job,
 )
@@ -19,13 +20,14 @@ from grandchallenge.subdomains.utils import reverse
 
 
 @shared_task
-def create_algorithm_jobs_for_session(*_, upload_session_pk):
-    session = RawImageUploadSession.objects.select_related(
-        "algorithm_image__algorithm"
-    ).get(pk=upload_session_pk)
+def create_algorithm_jobs_for_session(
+    *, upload_session_pk, algorithm_image_pk
+):
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
     execute_jobs(
-        algorithm_image=session.algorithm_image,
+        algorithm_image=algorithm_image,
         images=session.image_set.all(),
         session=session,
     )
@@ -66,7 +68,7 @@ def create_algorithm_jobs_for_archive_algorithms(
 
 
 def create_algorithm_jobs(
-    *, algorithm_image, images, session=None, extra_viewer_groups=None
+    *, algorithm_image, images, creator=None, extra_viewer_groups=None
 ):
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
@@ -75,8 +77,8 @@ def create_algorithm_jobs(
     jobs = []
 
     def remaining_jobs() -> int:
-        user_credit = Credit.objects.get(user=session.creator)
-        jobs = Job.credits_set.spent_credits(user=session.creator)
+        user_credit = Credit.objects.get(user=creator)
+        jobs = Job.credits_set.spent_credits(user=creator)
 
         if jobs["total"]:
             total_jobs = user_credit.credits - jobs["total"]
@@ -88,13 +90,13 @@ def create_algorithm_jobs(
         )
 
     if algorithm_image:
-        creator = None if session is None else session.creator
         if creator:
             if (
-                not session.algorithm_image.algorithm.is_editor(creator)
-                and session.algorithm_image.algorithm.credits_per_job > 0
+                not algorithm_image.algorithm.is_editor(creator)
+                and algorithm_image.algorithm.credits_per_job > 0
             ):
                 images = images[: remaining_jobs()]
+
         for image in images:
             if not ComponentInterfaceValue.objects.filter(
                 interface=default_input_interface,
@@ -115,6 +117,7 @@ def create_algorithm_jobs(
                 if extra_viewer_groups is not None:
                     j.viewer_groups.add(*extra_viewer_groups)
                 jobs.append(j)
+
     return jobs
 
 
@@ -125,7 +128,8 @@ def create_jobs_workflow(*, jobs, session=None):
         kwargs={
             "job_pks": job_pks,
             "session_pk": None if session is None else session.pk,
-        }
+        },
+        immutable=True,
     )
     return workflow
 
@@ -136,7 +140,7 @@ def execute_jobs(
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
         images=images,
-        session=session,
+        creator=None if session is None else session.creator,
         extra_viewer_groups=extra_viewer_groups,
     )
     if len(jobs) > 0:
@@ -145,13 +149,15 @@ def execute_jobs(
 
 
 @shared_task
-def send_failed_jobs_email(*_, job_pks, session_pk=None):
+def send_failed_jobs_email(*, job_pks, session_pk=None):
     excluded_images_count = 0
+
     if session_pk:
         session = RawImageUploadSession.objects.get(pk=session_pk)
         excluded_images_count = session.image_set.filter(
             componentinterfacevalue__algorithms_jobs_as_input__isnull=True
         ).count()
+
     failed_jobs = Job.objects.filter(
         status=Job.FAILURE, pk__in=job_pks
     ).distinct()

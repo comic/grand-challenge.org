@@ -373,7 +373,17 @@ class AlgorithmExecutionSessionCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"linked_task": create_algorithm_jobs_for_session})
+        kwargs.update(
+            {
+                "linked_task": create_algorithm_jobs_for_session.signature(
+                    kwargs={
+                        "algorithm_image_pk",
+                        self.algorithm.latest_ready_image.pk,
+                    },
+                    immutable=True,
+                )
+            }
+        )
         return kwargs
 
     def get_permission_object(self):
@@ -386,7 +396,6 @@ class AlgorithmExecutionSessionCreate(
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.algorithm_image = self.algorithm.latest_ready_image
         return super().form_valid(form)
 
     def get_context_data(self, *args, **kwargs):

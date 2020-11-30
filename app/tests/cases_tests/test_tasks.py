@@ -25,6 +25,6 @@ def test_linked_task_called_with_session_pk(settings):
     session.status = session.REQUEUED
     session.save()
 
-    session.process_images(linked_task=local_linked_task)
+    session.process_images(linked_task=local_linked_task.signature())
 
-    assert called == {"upload_session_pk": str(session.pk)}
+    assert called == {"upload_session_pk": session.pk}

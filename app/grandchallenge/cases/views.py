@@ -32,6 +32,7 @@ from grandchallenge.cases.models import (
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageFileSerializer,
+    RawImageUploadSessionPutSerializer,
     RawImageUploadSessionSerializer,
 )
 from grandchallenge.core.permissions.rest_framework import (
@@ -92,7 +93,6 @@ def show_image(request, *, pk):
 class RawImageUploadSessionViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
-    serializer_class = RawImageUploadSessionSerializer
     queryset = RawImageUploadSession.objects.all()
     permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
     filter_backends = [ObjectPermissionsFilter]
@@ -100,12 +100,14 @@ class RawImageUploadSessionViewSet(
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
-    def validate_staged_files(self):
-        upload_session: RawImageUploadSession = self.get_object()
+    def get_serializer_class(self):
+        if self.request.method == "PUT":
+            return RawImageUploadSessionPutSerializer
+        else:
+            return RawImageUploadSessionSerializer
 
-        file_ids = [
-            f.staged_file_id for f in upload_session.rawimagefile_set.all()
-        ]
+    def validate_staged_files(self, *, staged_files):
+        file_ids = [f.staged_file_id for f in staged_files]
 
         if any(f_id is None for f_id in file_ids):
             raise ValidationError("File has not been staged")
@@ -123,43 +125,68 @@ class RawImageUploadSessionViewSet(
                 "Total size of all files exceeds the upload limit"
             )
 
-    @action(detail=True, methods=["patch"])
+    @action(detail=True, methods=["put"])
     def process_images(self, request, pk=None):
         upload_session: RawImageUploadSession = self.get_object()
 
-        try:
-            self.validate_staged_files()
-        except ValidationError as e:
-            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(
+            upload_session, data=request.data, partial=True
+        )
 
-        if (
-            upload_session.status == upload_session.PENDING
-            and not upload_session.rawimagefile_set.filter(
-                consumed=True
-            ).exists()
-        ):
-            upload_session.process_images(linked_task=self._linked_task)
-            return Response(
-                "Image processing job queued.", status=status.HTTP_200_OK
-            )
+        if serializer.is_valid():
+            try:
+                self.validate_staged_files(
+                    staged_files=upload_session.rawimagefile_set.all()
+                )
+            except ValidationError as e:
+                return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+            if (
+                upload_session.status == upload_session.PENDING
+                and not upload_session.rawimagefile_set.filter(
+                    consumed=True
+                ).exists()
+            ):
+                upload_session.process_images(
+                    linked_task=self.get_linked_task(
+                        validated_data=serializer.validated_data
+                    )
+                )
+                return Response(
+                    "Image processing job queued.", status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    "Image processing job could not be queued.",
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             return Response(
-                "Image processing job could not be queued.",
-                status=status.HTTP_400_BAD_REQUEST,
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST
             )
 
-    @property
-    def _linked_task(self):
-        upload_session = self.get_object()
-
-        if upload_session.algorithm_image:
-            return create_algorithm_jobs_for_session
-        elif upload_session.archive:
-            return add_images_to_archive
-        elif upload_session.reader_study:
-            return add_images_to_reader_study
+    def get_linked_task(self, *, validated_data):
+        if "algorithm_image" in validated_data:
+            return create_algorithm_jobs_for_session.signature(
+                kwargs={
+                    "algorithm_image_pk": validated_data["algorithm_image"].pk
+                },
+                immutable=True,
+            )
+        elif "archive" in validated_data:
+            return add_images_to_archive.signature(
+                kwargs={"archive_pk": validated_data["archive"].pk},
+                immutable=True,
+            )
+        elif "reader_study" in validated_data:
+            return add_images_to_reader_study.signature(
+                kwargs={"reader_study_pk": validated_data["reader_study"].pk},
+                immutable=True,
+            )
         else:
-            return None
+            raise RuntimeError(
+                "Algorithm image, archive or reader study must be set"
+            )
 
 
 class RawImageFileViewSet(

@@ -83,34 +83,17 @@ class RawImageUploadSessionAdmin(GuardedModelAdmin):
         "creator",
         "status",
         "error_message",
-        "algorithm",
-        "reader_study",
-        "archive",
     )
     readonly_fields = (
         "creator",
-        "algorithm_image",
-        "reader_study",
-        "archive",
         "status",
-    )
-    list_select_related = (
-        "algorithm_image__algorithm",
-        "archive",
     )
     list_filter = ("status",)
     search_fields = (
         "creator__username",
-        "algorithm_image__algorithm__slug",
-        "reader_study__slug",
-        "archive__slug",
         "pk",
         "error_message",
     )
-
-    def algorithm(self, obj):
-        if obj.algorithm_image:
-            return obj.algorithm_image.algorithm
 
 
 class DownloadableFilter(admin.SimpleListFilter):
@@ -129,7 +112,7 @@ class DownloadableFilter(admin.SimpleListFilter):
 
 
 class RawImageFileAdmin(GuardedModelAdmin):
-    list_filter = (DownloadableFilter, "upload_session__archive__slug")
+    list_filter = (DownloadableFilter,)
     list_display = ("filename", "upload_session", "download")
     list_select_related = ("upload_session__archive",)
     readonly_fields = (

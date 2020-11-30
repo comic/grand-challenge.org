@@ -62,6 +62,27 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
 
 
 class RawImageUploadSessionSerializer(serializers.ModelSerializer):
+    image_set = HyperlinkedRelatedField(
+        read_only=True, many=True, view_name="api:image-detail"
+    )
+    status = CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = RawImageUploadSession
+        fields = (
+            "pk",
+            "creator",
+            "status",
+            "error_message",
+            "image_set",
+            "api_url",
+        )
+        swagger_schema_fields = swagger_schema_fields_for_charfield(
+            status=model._meta.get_field("status")
+        )
+
+
+class RawImageUploadSessionPutSerializer(RawImageUploadSessionSerializer):
     algorithm_image = HyperlinkedRelatedField(
         queryset=AlgorithmImage.objects.all(),
         view_name="api:algorithms-image-detail",
@@ -73,10 +94,14 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     reader_study = SlugRelatedField(
         slug_field="slug", queryset=ReaderStudy.objects.all(), required=False
     )
-    image_set = HyperlinkedRelatedField(
-        read_only=True, many=True, view_name="api:image-detail"
-    )
-    status = CharField(source="get_status_display", read_only=True)
+
+    class Meta(RawImageUploadSessionSerializer.Meta):
+        fields = (
+            *RawImageUploadSessionSerializer.Meta.fields,
+            "algorithm_image",
+            "archive",
+            "reader_study",
+        )
 
     def validate(self, attrs):
         if (
@@ -120,23 +145,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             )
 
         return value
-
-    class Meta:
-        model = RawImageUploadSession
-        fields = [
-            "pk",
-            "creator",
-            "status",
-            "error_message",
-            "image_set",
-            "algorithm_image",
-            "archive",
-            "reader_study",
-            "api_url",
-        ]
-        swagger_schema_fields = swagger_schema_fields_for_charfield(
-            status=model._meta.get_field("status")
-        )
 
 
 class RawImageFileSerializer(serializers.ModelSerializer):

@@ -79,7 +79,7 @@ def test_algorithm_create_page(client, settings):
 def test_algorithm_execution_session_detail(client):
     u1, u2 = UserFactory(), UserFactory()
     a = AlgorithmImageFactory()
-    s = RawImageUploadSessionFactory(algorithm_image=a, creator=u1)
+    s = RawImageUploadSessionFactory(creator=u1)
 
     response = get_view_for_user(
         client=client,
