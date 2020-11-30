@@ -11,7 +11,6 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.db.models import Count
 from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -47,7 +46,6 @@ from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.cases.views import RawImageUploadSessionDetail
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.permissions.rest_framework import (
@@ -382,56 +380,6 @@ class ArchiveUploadSessionCreate(
         context = super().get_context_data(**kwargs)
         context.update({"archive": self.archive})
         return context
-
-    def get_success_url(self):
-        return reverse(
-            "archives:uploads-detail",
-            kwargs={"slug": self.archive.slug, "pk": self.object.pk},
-        )
-
-
-class ArchiveUploadSessionDetail(RawImageUploadSessionDetail):
-    template_name = "archives/archive_upload_session_detail.html"
-
-    @cached_property
-    def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive})
-        return context
-
-
-class ArchiveUploadSessionList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
-):
-    model = RawImageUploadSession
-    permission_required = (
-        f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
-    )
-    raise_exception = True
-    template_name = "archives/archive_upload_session_list.html"
-
-    @cached_property
-    def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.archive
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive})
-        return context
-
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset(*args, **kwargs)
-        return (
-            qs.filter(archive=self.archive)
-            .select_related("creator__user_profile", "creator__verification")
-            .annotate(Count("image", distinct=True),)
-        )
 
 
 class ArchiveCasesList(

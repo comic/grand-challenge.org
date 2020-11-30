@@ -54,10 +54,6 @@
 
             {% if "upload_archive" in object_perms %}
                 <a class="nav-link"
-                   href="{% url 'archives:uploads-list' slug=object.slug %}"
-                ><i class="fa fa-upload fa-fw"></i>&nbsp;Uploads
-                </a>
-                <a class="nav-link"
                    href="{% url 'archives:cases-create' slug=object.slug %}"
                 ><i class="fas fa-file-import fa-fw"></i>&nbsp;Add Cases
                 </a>
