@@ -81,13 +81,7 @@ def test_user_can_download_images(client, reverse):  # noqa: C901
         content_type="application/json",
     )
     assert response.status_code == 200
-
-    if reverse:
-        # An image is automatically created for the archive in the factory
-        # and not removed here
-        assert response.json()["count"] == 1
-    else:
-        assert response.json()["count"] == 0
+    assert response.json()["count"] == 0
 
 
 @pytest.mark.django_db
@@ -99,6 +93,9 @@ def test_adding_images_triggers_task(reverse, mocker):
     create_algorithm_jobs_for_archive_images.apply_async.assert_not_called()
 
     arch_set = TwoArchives()
+
+    arch_set.arch1.images.add(ImageFactory())
+    arch_set.arch2.images.add(ImageFactory())
 
     create_algorithm_jobs_for_archive_images.apply_async.assert_has_calls(
         [
@@ -159,6 +156,10 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
     create_algorithm_jobs_for_archive_algorithms.apply_async.assert_not_called()
 
     arch_set = TwoArchives()
+
+    arch_set.arch1.algorithms.add(AlgorithmFactory())
+    arch_set.arch2.algorithms.add(AlgorithmFactory())
+
     create_algorithm_jobs_for_archive_algorithms.apply_async.assert_has_calls(
         [
             call(
