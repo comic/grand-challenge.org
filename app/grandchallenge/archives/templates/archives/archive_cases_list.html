@@ -42,7 +42,7 @@
                 <th>Created</th>
                 <th>Creator</th>
                 <th>View</th>
-                <th>Algorithm results</th>
+                <th>Algorithm Results</th>
                 <th>Download</th>
             </tr>
             </thead>
@@ -62,18 +62,21 @@
                         </a>
                     </td>
                     <td>
-                        {% for civ in object.componentinterfacevalue_set.all %}
-                            {% for job in civ.algorithms_jobs_as_input.all %}
-                                <a href="{%  url 'algorithms:job-detail' slug=job.algorithm_image.algorithm.slug pk=job.pk %}">
-                                    <span class="badge badge-primary">
-                                        <i class="fa fa-eye"></i> {{ job.algorithm_image.algorithm.title }}
-                                    </span>
-                                </a>
+                        <ul class="list-unstyled mb-0">
+                            {% for civ in object.componentinterfacevalue_set.all %}
+                                {% for job in civ.algorithms_jobs_as_input.all %}
+                                    <li>
+                                        <a class="badge btn-primary"
+                                           href="{% url 'algorithms:job-detail' slug=job.algorithm_image.algorithm.slug pk=job.pk %}">
+                                            <i class="fa fa-eye"></i> {{ job.algorithm_image.algorithm.title }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
                             {% endfor %}
-                        {% endfor %}
+                        </ul>
                     </td>
                     <td>
-                        <ul class="list-unstyled">
+                        <ul class="list-unstyled mb-0">
                             {% for file in object.files.all %}
                                 <li>
                                     <a href="{{ file.file.url }}">
