@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Upload Sessions - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"
+            aria-current="page">Uploads</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Upload Sessions</h2>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm">
+            <thead class="thead-light">
+            <tr>
+                <th>ID</th>
+                <th>Created</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for object in object_list %}
+                <tr>
+                    <td><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></td>
+                    <td data-order="{{ object.created|date:'U' }}">
+                        {{ object.created|naturaltime }}
+                    </td>
+                    <td>
+                        <span class="badge
+                            {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
+                                badge-danger
+                            {% elif object.status == object.RETRY %}
+                                badge-warning
+                            {% elif object.status == object.SUCCESS %}
+                                badge-success
+                            {% else %}
+                                badge-info
+                            {% endif %}">
+                            {{ object.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').DataTable({
+                order: [[1, "desc"]],
+                "pageLength": 50,
+                ordering: true
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,9 +1,9 @@
 from django.conf import settings
-from django.http import Http404
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
     LoginRequiredMixin,
+    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework import status
@@ -25,7 +25,6 @@ from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import (
     Image,
-    ImageFile,
     RawImageFile,
     RawImageUploadSession,
 )
@@ -40,6 +39,15 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.reader_studies.tasks import add_images_to_reader_study
+from grandchallenge.subdomains.utils import reverse_lazy
+
+
+class RawImageUploadSessionList(
+    LoginRequiredMixin, PermissionListMixin, ListView,
+):
+    model = RawImageUploadSession
+    permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
+    login_url = reverse_lazy("userena_signin")
 
 
 class RawImageUploadSessionDetail(
@@ -48,6 +56,7 @@ class RawImageUploadSessionDetail(
     model = RawImageUploadSession
     permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
     raise_exception = True
+    login_url = reverse_lazy("userena_signin")
 
 
 class ImageViewSet(ReadOnlyModelViewSet):
@@ -70,23 +79,6 @@ class ImageViewSet(ReadOnlyModelViewSet):
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
-    )
-
-
-def show_image(request, *, pk):
-    from django.shortcuts import render
-
-    try:
-        image_file = ImageFile.objects.select_related("image").get(
-            image=pk, image_type="DZI"
-        )
-    except Image.DoesNotExist:
-        raise Http404("File not found.")
-
-    return render(
-        request,
-        "cases/show_image.html",
-        {"image_file": image_file, "url": image_file.file.url},
     )
 
 

@@ -2,16 +2,20 @@ from django.urls import path
 
 from grandchallenge.cases.views import (
     RawImageUploadSessionDetail,
-    show_image,
+    RawImageUploadSessionList,
 )
 
 app_name = "cases"
 
 urlpatterns = [
     path(
+        "uploads/",
+        RawImageUploadSessionList.as_view(),
+        name="raw-image-upload-session-list",
+    ),
+    path(
         "uploads/<uuid:pk>/",
         RawImageUploadSessionDetail.as_view(),
-        name="raw-files-session-detail",
+        name="raw-image-upload-session-detail",
     ),
-    path("uploads/show-image/<uuid:pk>/", show_image, name="show-image"),
 ]

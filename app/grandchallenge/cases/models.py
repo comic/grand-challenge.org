@@ -114,7 +114,7 @@ class RawImageUploadSession(UUIDModel):
 
     def get_absolute_url(self):
         return reverse(
-            "cases:raw-files-session-detail", kwargs={"pk": self.pk}
+            "cases:raw-image-upload-session-detail", kwargs={"pk": self.pk}
         )
 
     @property
