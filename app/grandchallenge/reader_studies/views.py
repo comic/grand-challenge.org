@@ -558,6 +558,9 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
         )
         return kwargs
 
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
 
 class AddQuestionToReaderStudy(
     QuestionOptionMixin, AddObjectToReaderStudyMixin
