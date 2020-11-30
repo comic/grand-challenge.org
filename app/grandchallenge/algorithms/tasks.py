@@ -32,7 +32,7 @@ def create_algorithm_jobs_for_session(*_, upload_session_pk):
 
 
 @shared_task
-def create_algorithm_jobs_for_archive_images(archive_pks, image_pks):
+def create_algorithm_jobs_for_archive_images(*, archive_pks, image_pks):
     for archive in Archive.objects.filter(pk__in=archive_pks).all():
         groups = [
             archive.editors_group,
@@ -48,7 +48,9 @@ def create_algorithm_jobs_for_archive_images(archive_pks, image_pks):
 
 
 @shared_task
-def create_algorithm_jobs_for_archive_algorithms(archive_pks, algorithm_pks):
+def create_algorithm_jobs_for_archive_algorithms(
+    *, archive_pks, algorithm_pks
+):
     for algorithm in Algorithm.objects.filter(pk__in=algorithm_pks).all():
         for archive in Archive.objects.filter(pk__in=archive_pks).all():
             groups = [
@@ -64,7 +66,7 @@ def create_algorithm_jobs_for_archive_algorithms(archive_pks, algorithm_pks):
 
 
 def create_algorithm_jobs(
-    algorithm_image, images, session=None, extra_viewer_groups=None
+    *, algorithm_image, images, session=None, extra_viewer_groups=None
 ):
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
@@ -116,7 +118,7 @@ def create_algorithm_jobs(
     return jobs
 
 
-def create_jobs_workflow(jobs, session=None):
+def create_jobs_workflow(*, jobs, session=None):
     job_signatures = [j.signature for j in jobs]
     job_pks = [j.pk for j in jobs]
     workflow = group(*job_signatures) | send_failed_jobs_email.signature(
@@ -129,16 +131,16 @@ def create_jobs_workflow(jobs, session=None):
 
 
 def execute_jobs(
-    algorithm_image, images, session=None, extra_viewer_groups=None
+    *, algorithm_image, images, session=None, extra_viewer_groups=None
 ):
     jobs = create_algorithm_jobs(
-        algorithm_image,
-        images,
+        algorithm_image=algorithm_image,
+        images=images,
         session=session,
         extra_viewer_groups=extra_viewer_groups,
     )
     if len(jobs) > 0:
-        workflow = create_jobs_workflow(jobs, session=session)
+        workflow = create_jobs_workflow(jobs=jobs, session=session)
         workflow.apply_async()
 
 

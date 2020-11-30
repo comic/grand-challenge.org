@@ -48,7 +48,10 @@ def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
 
     if "add" in action:
         create_algorithm_jobs_for_archive_images.apply_async(
-            args=(list(archive_pks), list(image_pks))
+            kwargs={
+                "archive_pks": list(archive_pks),
+                "image_pks": list(image_pks),
+            },
         )
 
 
@@ -68,5 +71,8 @@ def on_archive_algorithms_changed(
         algorithm_pks = pk_set
 
     create_algorithm_jobs_for_archive_algorithms.apply_async(
-        args=(list(archive_pks), list(algorithm_pks))
+        kwargs={
+            "archive_pks": list(archive_pks),
+            "algorithm_pks": list(algorithm_pks),
+        },
     )

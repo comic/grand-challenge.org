@@ -100,10 +100,16 @@ def test_adding_images_triggers_task(reverse, mocker):
     create_algorithm_jobs_for_archive_images.apply_async.assert_has_calls(
         [
             call(
-                args=([arch_set.arch1.pk], [arch_set.arch1.images.first().pk])
+                kwargs={
+                    "archive_pks": [arch_set.arch1.pk],
+                    "image_pks": [arch_set.arch1.images.first().pk],
+                }
             ),
             call(
-                args=([arch_set.arch2.pk], [arch_set.arch2.images.first().pk])
+                kwargs={
+                    "archive_pks": [arch_set.arch2.pk],
+                    "image_pks": [arch_set.arch2.images.first().pk],
+                }
             ),
         ]
     )
@@ -118,12 +124,12 @@ def test_adding_images_triggers_task(reverse, mocker):
 
     if not reverse:
         arch_set.arch1.images.add(im1, im2, im3, im4)
-        args = create_algorithm_jobs_for_archive_images.apply_async.call_args.kwargs[
-            "args"
+        kwargs = create_algorithm_jobs_for_archive_images.apply_async.call_args.kwargs[
+            "kwargs"
         ]
         create_algorithm_jobs_for_archive_images.apply_async.assert_called_once()
-        assert args[0] == [arch_set.arch1.pk]
-        assert set(args[1]) == {im1.pk, im2.pk, im3.pk, im4.pk}
+        assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
+        assert {*kwargs["image_pks"]} == {im1.pk, im2.pk, im3.pk, im4.pk}
         create_algorithm_jobs_for_archive_images.apply_async.reset_mock()
 
         arch_set.arch1.images.remove(im3, im4)
@@ -132,12 +138,15 @@ def test_adding_images_triggers_task(reverse, mocker):
     else:
         for im in [im1, im2, im3, im4]:
             im.archive_set.add(arch_set.arch1, arch_set.arch2)
-            args = create_algorithm_jobs_for_archive_images.apply_async.call_args.kwargs[
-                "args"
+            kwargs = create_algorithm_jobs_for_archive_images.apply_async.call_args.kwargs[
+                "kwargs"
             ]
             create_algorithm_jobs_for_archive_images.apply_async.assert_called_once()
-            assert set(args[0]) == {arch_set.arch1.pk, arch_set.arch2.pk}
-            assert args[1] == [im.pk]
+            assert {*kwargs["archive_pks"]} == {
+                arch_set.arch1.pk,
+                arch_set.arch2.pk,
+            }
+            assert {*kwargs["image_pks"]} == {im.pk}
             create_algorithm_jobs_for_archive_images.apply_async.reset_mock()
         for im in [im3, im4]:
             im.archive_set.remove(arch_set.arch1, arch_set.arch2)
@@ -163,16 +172,16 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
     create_algorithm_jobs_for_archive_algorithms.apply_async.assert_has_calls(
         [
             call(
-                args=(
-                    [arch_set.arch1.pk],
-                    [arch_set.arch1.algorithms.first().pk],
-                )
+                kwargs={
+                    "archive_pks": [arch_set.arch1.pk],
+                    "algorithm_pks": [arch_set.arch1.algorithms.first().pk],
+                }
             ),
             call(
-                args=(
-                    [arch_set.arch2.pk],
-                    [arch_set.arch2.algorithms.first().pk],
-                )
+                kwargs={
+                    "archive_pks": [arch_set.arch2.pk],
+                    "algorithm_pks": [arch_set.arch2.algorithms.first().pk],
+                }
             ),
         ]
     )
@@ -186,12 +195,12 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
 
     if not reverse:
         arch_set.arch1.algorithms.add(*algorithms)
-        args = create_algorithm_jobs_for_archive_algorithms.apply_async.call_args.kwargs[
-            "args"
+        kwargs = create_algorithm_jobs_for_archive_algorithms.apply_async.call_args.kwargs[
+            "kwargs"
         ]
         create_algorithm_jobs_for_archive_algorithms.apply_async.assert_called_once()
-        assert args[0] == [arch_set.arch1.pk]
-        assert set(args[1]) == {a.pk for a in algorithms}
+        assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
+        assert {*kwargs["algorithm_pks"]} == {a.pk for a in algorithms}
         create_algorithm_jobs_for_archive_algorithms.apply_async.reset_mock()
 
         arch_set.arch1.algorithms.remove(algorithms[0], algorithms[1])
@@ -200,12 +209,15 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
     else:
         for alg in algorithms:
             alg.archive_set.add(arch_set.arch1, arch_set.arch2)
-            args = create_algorithm_jobs_for_archive_algorithms.apply_async.call_args.kwargs[
-                "args"
+            kwargs = create_algorithm_jobs_for_archive_algorithms.apply_async.call_args.kwargs[
+                "kwargs"
             ]
             create_algorithm_jobs_for_archive_algorithms.apply_async.assert_called_once()
-            assert set(args[0]) == {arch_set.arch1.pk, arch_set.arch2.pk}
-            assert args[1] == [alg.pk]
+            assert {*kwargs["archive_pks"]} == {
+                arch_set.arch1.pk,
+                arch_set.arch2.pk,
+            }
+            assert {*kwargs["algorithm_pks"]} == {alg.pk}
             create_algorithm_jobs_for_archive_algorithms.apply_async.reset_mock()
         for im in algorithms[-2:]:
             im.archive_set.remove(arch_set.arch1, arch_set.arch2)
