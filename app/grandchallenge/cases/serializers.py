@@ -27,6 +27,12 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
     archive_set = HyperlinkedRelatedField(
         read_only=True, many=True, view_name="api:archive-detail"
     )
+    reader_study_set = HyperlinkedRelatedField(
+        source="readerstudies",
+        read_only=True,
+        many=True,
+        view_name="api:reader-study-detail",
+    )
 
     def get_job_set(self, obj):
         return [
@@ -42,6 +48,7 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "name",
             "study",
             "files",
+            "reader_study_set",
             "archive_set",
             "job_set",
             "width",

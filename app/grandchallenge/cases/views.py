@@ -65,6 +65,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
         "files",
         "archive_set",
         "componentinterfacevalue_set__algorithms_jobs_as_input",
+        "readerstudies",
     )
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (
