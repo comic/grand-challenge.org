@@ -158,10 +158,12 @@ class RawImageUploadSessionViewSet(
             )
 
     def get_linked_task(self, *, validated_data):
-        if "algorithm_image" in validated_data:
+        if "algorithm" in validated_data:
             return create_algorithm_jobs_for_session.signature(
                 kwargs={
-                    "algorithm_image_pk": validated_data["algorithm_image"].pk
+                    "algorithm_image_pk": validated_data[
+                        "algorithm"
+                    ].latest_ready_image.pk
                 },
                 immutable=True,
             )

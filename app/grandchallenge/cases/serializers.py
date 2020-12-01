@@ -3,7 +3,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 
-from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import (
@@ -83,10 +83,8 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
 
 
 class RawImageUploadSessionPutSerializer(RawImageUploadSessionSerializer):
-    algorithm_image = HyperlinkedRelatedField(
-        queryset=AlgorithmImage.objects.all(),
-        view_name="api:algorithms-image-detail",
-        required=False,
+    algorithm = SlugRelatedField(
+        slug_field="slug", queryset=Algorithm.objects.all(), required=False
     )
     archive = SlugRelatedField(
         slug_field="slug", queryset=Archive.objects.all(), required=False
@@ -98,31 +96,31 @@ class RawImageUploadSessionPutSerializer(RawImageUploadSessionSerializer):
     class Meta(RawImageUploadSessionSerializer.Meta):
         fields = (
             *RawImageUploadSessionSerializer.Meta.fields,
-            "algorithm_image",
+            "algorithm",
             "archive",
             "reader_study",
         )
 
     def validate(self, attrs):
         if (
-            sum(
-                f in attrs
-                for f in ["algorithm_image", "archive", "reader_study"]
-            )
+            sum(f in attrs for f in ["algorithm", "archive", "reader_study"])
             != 1
         ):
             raise ValidationError(
-                "1 of algorithm image, archive or reader study must be set"
+                "1 of algorithm, archive or reader study must be set"
             )
         return attrs
 
-    def validate_algorithm_image(self, value):
+    def validate_algorithm(self, value):
         user = self.context.get("request").user
 
-        if not user.has_perm("execute_algorithm", value.algorithm):
+        if not user.has_perm("execute_algorithm", value):
             raise ValidationError(
                 "User does not have permission to execute this algorithm"
             )
+
+        if not value.latest_ready_image:
+            raise ValidationError("This algorithm is not ready to be used")
 
         return value
 
