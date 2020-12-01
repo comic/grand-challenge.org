@@ -361,6 +361,7 @@ class Command(BaseCommand):
             title="Reader Study",
             workstation=Workstation.objects.last(),
             logo=get_temporary_image(),
+            description="Test reader study",
         )
         reader_study.editors_group.user_set.add(self.users["readerstudy"])
         reader_study.readers_group.user_set.add(self.users["demo"])
