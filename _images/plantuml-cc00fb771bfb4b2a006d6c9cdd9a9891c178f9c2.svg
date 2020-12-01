@@ -1,4 +1,16 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="516px" preserveAspectRatio="none" style="width:377px;height:516px;background:#000000;" version="1.1" viewBox="0 0 377 516" width="377px" zoomAndPan="magnify"><defs/><g><rect fill="#20110C" height="1" style="stroke: #20110C; stroke-width: 1.0;" width="1" x="0" y="0"/><rect fill="#33FF02" height="21.2969" style="stroke: #33FF02; stroke-width: 1.0;" width="370" x="5" y="5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="168" x="6" y="20">[From string (line 4) ]</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="40.2969"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="79" x="5" y="56.5938">@startuml</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="72.8906"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="89.1875"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="105.4844"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="121.7813"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="15" x="5" y="138.0781">...</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="185" x="5" y="154.375">... ( skipping 219 lines )</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="15" x="5" y="170.6719">...</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="313" x="5" y="186.9688">skinparam rectangle&lt;&lt;component&gt;&gt; {</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="350" x="25" y="203.2656">StereotypeFontColor ELEMENT_FONT_COLOR</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="154" x="25" y="219.5625">FontColor #000000</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="212" x="25" y="235.8594">BackgroundColor #85BBF0</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="175" x="25" y="252.1563">BorderColor #78A8D8</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="10" x="5" y="268.4531">}</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="284.75"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="310" x="5" y="301.0469">skinparam database&lt;&lt;component&gt;&gt; {</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="350" x="25" y="317.3438">StereotypeFontColor ELEMENT_FONT_COLOR</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="154" x="25" y="333.6406">FontColor #000000</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="212" x="25" y="349.9375">BackgroundColor #85BBF0</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="175" x="25" y="366.2344">BorderColor #78A8D8</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="10" x="5" y="382.5313">}</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="398.8281"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="415.125"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="431.4219"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="447.7188"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="464.0156"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="480.3125"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="158" x="5" y="496.6094">LAYOUT_TOP_DOWN</text><text fill="#FF0000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="106" x="10" y="512.9063">Syntax Error?</text><!--MD5=[c0bc8533e05b2669b09acca23ebf6181]
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="749px" preserveAspectRatio="none" style="width:1169px;height:749px;" version="1.1" viewBox="0 0 1169 749" width="1169px" zoomAndPan="magnify"><defs/><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="794" x="186.5" y="16.708">Component diagram for grand-challenge.org - Images, Evaluation and Algorithm Workers</text><!--MD5=[c26638a81821cf585a88e29a60357529]
+cluster s1--><rect fill="#FFFFFF" height="547" style="stroke: #444444; stroke-width: 1.0; stroke-dasharray: 7.0,7.0;" width="236" x="14" y="36.9531"/><text fill="#444444" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="129" x="67.5" y="53.8047">Celery Worker</text><text fill="#444444" font-family="sans-serif" font-size="12" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="80" x="92" y="68.7168">[Container]</text><!--MD5=[9f7ebba9369c1114423fee7bbf727ad7]
+entity gc_algorithm_worker--><rect fill="#85BBF0" height="101.4844" style="stroke: #78A8D8; stroke-width: 1.5;" width="214" x="28" y="79.9531"/><text fill="#000000" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="142" x="64" y="104.8047">Web Application</text><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="101" x="84.5" y="119.7168">[Django, Celery]</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="137" y="135.542"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="190" x="38" y="151.8389">Manages container lifecycle</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="181" x="44.5" y="168.1357">and generates job results.</text><!--MD5=[7c0f197cad09c4d86c8b8989e1030b9e]
+entity docker--><rect fill="#85BBF0" height="101.4844" style="stroke: #78A8D8; stroke-width: 1.5;" width="219" x="22.5" y="474.9531"/><text fill="#000000" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="124" x="70" y="499.8047">Compute Pool</text><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="54" x="105" y="514.7168">[Docker]</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="134" y="530.542"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="199" x="32.5" y="546.8389">Provides compute resources</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="145" x="59.5" y="563.1357">for container images.</text><!--MD5=[0e1fecc31e3549f2a1667c6349b56d9e]
+entity postgres--><path d="M258,296.9531 C258,286.9531 362,286.9531 362,286.9531 C362,286.9531 466,286.9531 466,296.9531 L466,403.7344 C466,413.7344 362,413.7344 362,413.7344 C362,413.7344 258,413.7344 258,403.7344 L258,296.9531 " fill="#438DD5" style="stroke: #3C7FC0; stroke-width: 1.5;"/><path d="M258,296.9531 C258,306.9531 362,306.9531 362,306.9531 C362,306.9531 466,306.9531 466,296.9531 " fill="none" style="stroke: #3C7FC0; stroke-width: 1.5;"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="83" x="320.5" y="325.8047">Database</text><text fill="#FFFFFF" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="109" x="307.5" y="340.7168">[RDS/PostgreSQL]</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="364" y="356.542"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="165" x="277.5" y="372.8389">Stores user information,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="184" x="268" y="389.1357">medical imaging metadata,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="102" x="311" y="405.4326">job results etc.</text><!--MD5=[a513f3882380e818dc123dc3fdc6a4a9]
+entity protected_s3--><rect fill="#438DD5" height="101.4844" style="stroke: #3C7FC0; stroke-width: 1.5;" width="212" x="501" y="299.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="192" x="511" y="324.8047">Protected Data Store</text><text fill="#FFFFFF" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="62" x="576" y="339.7168">[S3/Minio]</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="609" y="355.542"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="174" x="518" y="371.8389">Stores protected medical</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="113" x="550.5" y="388.1357">imaging objects.</text><!--MD5=[eafe8fea6c5d5a360f2eb7027e2ff3b9]
+entity private_s3--><rect fill="#438DD5" height="101.4844" style="stroke: #3C7FC0; stroke-width: 1.5;" width="185" x="748.5" y="299.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="165" x="758.5" y="324.8047">Private Data Store</text><text fill="#FFFFFF" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="62" x="810" y="339.7168">[S3/Minio]</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="843" y="355.542"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="154" x="762" y="371.8389">Stores private objects,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="149" x="766.5" y="388.1357">container images etc.</text><!--MD5=[28c910e737dccacd09c95ffccfd81d7d]
+entity message_queue--><rect fill="#438DD5" height="101.4844" style="stroke: #3C7FC0; stroke-width: 1.5;" width="180" x="969" y="299.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="143" x="987.5" y="324.8047">Message Queue</text><text fill="#FFFFFF" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="71" x="1023.5" y="339.7168">[SQS/Redis]</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="1061" y="355.542"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="156" x="979" y="371.8389">Queue of units of work</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="123" x="997.5" y="388.1357">Celery messages.</text><!--MD5=[226ac0e6b34e57bc0d27f2bdcc9fff09]
+link gc_algorithm_worker to message_queue--><path d="M242.3156,135.1384 C418.75,144.0052 761.7436,166.4679 874,210.9531 C922.5132,230.178 969.3649,265.7409 1003.7814,296.1466 " fill="none" id="gc_algorithm_worker-&gt;message_queue" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="1007.9162,299.8276,1003.8538,290.8556,1004.1817,296.503,998.5343,296.8308,1007.9162,299.8276" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="138" x="955" y="224.02">Fetches messages</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="35" x="1009" y="239.1528">from</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="149" x="952" y="253.3574">[SSL, SQS/Redis, Celery]</text><!--MD5=[dbd8485b514621e62597ee8f1ca34996]
+link gc_algorithm_worker to postgres--><path d="M187.3634,181.2018 C218.5673,211.4434 258.5586,250.2015 292.3964,282.9959 " fill="none" id="gc_algorithm_worker-&gt;postgres" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="296.07,286.5562,292.3912,277.4202,292.4796,283.0764,286.8235,283.1649,296.07,286.5562" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="149" x="264" y="231.52">Reads and writes to</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="64" x="306.5" y="245.7246">[SSL, SQL]</text><!--MD5=[1afca29d41bd2858501bb17af5bb5c84]
+link gc_algorithm_worker to private_s3--><path d="M242.1357,141.3201 C370.2808,155.3488 576.4695,181.4868 648,210.9531 C697.2387,231.2365 745.7884,266.4246 781.8772,296.3838 " fill="none" id="gc_algorithm_worker-&gt;private_s3" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="785.7719,299.6369,781.4287,290.7974,781.9344,296.4316,776.3002,296.9373,785.7719,299.6369" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="132" x="728" y="224.02">Fetches container</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="94" x="749.5" y="239.1528">images from</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="72" x="760.5" y="253.3574">[HTTPS, S3]</text><!--MD5=[335845a35f701e09a526ba690b965bc4]
+link gc_algorithm_worker to protected_s3--><path d="M242.0778,150.5034 C297.589,163.3418 365.4222,182.9375 422,210.9531 C467.3788,233.4233 512.8621,267.5258 547.3745,296.3875 " fill="none" id="gc_algorithm_worker-&gt;protected_s3" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="551.5282,299.8801,547.2141,291.0264,547.7013,296.6622,542.0655,297.1494,551.5282,299.8801" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="145" x="494" y="231.52">Reads objects from</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="72" x="530.5" y="245.7246">[HTTPS, S3]</text><!--MD5=[50d5ac5ef586a8cf5704cfe39bf1e998]
+link gc_algorithm_worker to docker--><path d="M116.1119,181.0885 C105.8438,211.3373 94.2041,250.7935 89,286.9531 C80.9593,342.8219 78.6706,358.4618 89,413.9531 C92.4878,432.6904 99.0095,452.3377 105.9385,469.8293 " fill="none" id="gc_algorithm_worker-&gt;docker" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="107.9015,474.7031,108.2494,464.8604,106.0335,470.0652,100.8287,467.8493,107.9015,474.7031" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="146" x="91.5" y="325.52">Provisions volumes,</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="87" x="118.5" y="340.6528">instantiates</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="149" x="90" y="355.7856">containers with GPU</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="73" x="128" y="370.9185">access on</text><text fill="#666666" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacingAndGlyphs" textLength="85" x="122" y="385.123">[HTTPS, JSON]</text><rect fill="#DDDDDD" height="128.0781" rx="5" ry="5" style="stroke: #000000; stroke-width: 1.0;" width="199" x="959" y="609.9531"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="1035" y="629.9482"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="39" x="1040" y="629.9482">Type</text><rect fill="#08427B" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="965" y="633.25"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="989" y="646.2451"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="49" x="1039" y="646.2451">person</text><rect fill="#686868" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="965" y="649.5469"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="989" y="662.542"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="108" x="1039" y="662.542">external person</text><rect fill="#1168BD" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="965" y="665.8438"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="977" y="678.8389"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="50" x="1039" y="678.8389">system</text><rect fill="#999999" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="965" y="682.1406"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="989" y="695.1357"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="109" x="1039" y="695.1357">external system</text><rect fill="#438DD5" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="965" y="698.4375"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="977" y="711.4326"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="65" x="1039" y="711.4326">container</text><rect fill="#85BBF0" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="965" y="714.7344"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="977" y="727.7295"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="80" x="1039" y="727.7295">component</text><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="1152" y1="616.9531" y2="616.9531"/><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="1152" y1="633.25" y2="633.25"/><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="1152" y1="649.5469" y2="649.5469"/><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="1152" y1="665.8438" y2="665.8438"/><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="1152" y1="682.1406" y2="682.1406"/><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="1152" y1="698.4375" y2="698.4375"/><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="1152" y1="714.7344" y2="714.7344"/><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="1152" y1="731.0313" y2="731.0313"/><line style="stroke: #000000; stroke-width: 1.0;" x1="965" x2="965" y1="616.9531" y2="731.0313"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1035" x2="1035" y1="616.9531" y2="731.0313"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1152" x2="1152" y1="616.9531" y2="731.0313"/><!--MD5=[5a04fa21e7ef44f98a7ac70bc6fc326f]
 @startuml
 
 
@@ -10,21 +22,12 @@ skinparam defaultTextAlignment center
 skinparam wrapWidth 200
 skinparam maxMessageSize 150
 
-skinparam LegendBorderColor transparent
-skinparam LegendBackgroundColor transparent
-skinparam LegendFontColor #FFFFFF
-
 skinparam rectangle {
     StereotypeFontSize 12
     shadowing false
 }
 
 skinparam database {
-    StereotypeFontSize 12
-    shadowing false
-}
-
-skinparam queue {
     StereotypeFontSize 12
     shadowing false
 }
@@ -42,13 +45,6 @@ skinparam rectangle<<boundary>> {
     BorderColor #444444
     BorderStyle dashed
 }
-
-
-
-
-
-
-
 
 
 
@@ -99,55 +95,18 @@ skinparam rectangle<<external_system>> {
     BorderColor #8A8A8A
 }
 
-sprite $person [48x48/16] {
-000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000
-0000000000000000000049BCCA7200000000000000000000
-0000000000000000006EFFFFFFFFB3000000000000000000
-00000000000000001CFFFFFFFFFFFF700000000000000000
-0000000000000001EFFFFFFFFFFFFFF80000000000000000
-000000000000000CFFFFFFFFFFFFFFFF6000000000000000
-000000000000007FFFFFFFFFFFFFFFFFF100000000000000
-00000000000001FFFFFFFFFFFFFFFFFFF900000000000000
-00000000000006FFFFFFFFFFFFFFFFFFFF00000000000000
-0000000000000BFFFFFFFFFFFFFFFFFFFF40000000000000
-0000000000000EFFFFFFFFFFFFFFFFFFFF70000000000000
-0000000000000FFFFFFFFFFFFFFFFFFFFF80000000000000
-0000000000000FFFFFFFFFFFFFFFFFFFFF80000000000000
-0000000000000DFFFFFFFFFFFFFFFFFFFF60000000000000
-0000000000000AFFFFFFFFFFFFFFFFFFFF40000000000000
-00000000000006FFFFFFFFFFFFFFFFFFFE00000000000000
-00000000000000EFFFFFFFFFFFFFFFFFF800000000000000
-000000000000007FFFFFFFFFFFFFFFFFF100000000000000
-000000000000000BFFFFFFFFFFFFFFFF5000000000000000
-0000000000000001DFFFFFFFFFFFFFF70000000000000000
-00000000000000000BFFFFFFFFFFFF500000000000000000
-0000000000000000005DFFFFFFFFA1000000000000000000
-0000000000000000000037ABB96100000000000000000000
-000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000
-000000000000025788300000000005886410000000000000
-000000000007DFFFFFFD9643347BFFFFFFFB400000000000
-0000000004EFFFFFFFFFFFFFFFFFFFFFFFFFFB1000000000
-000000007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFD200000000
-00000006FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE10000000
-0000003FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB0000000
-000000BFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5000000
-000003FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD000000
-000009FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF200000
-00000DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF600000
-00000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF800000
-00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA00000
-00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB00000
-00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB00000
-00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB00000
-00001FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA00000
-00000EFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF700000
-000006FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE100000
-0000008FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD3000000
-000000014555555555555555555555555555555300000000
-000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000
+skinparam database<<system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #1168BD
+    BorderColor #3C7FC0
+}
+
+skinparam database<<external_system>> {
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
+    BackgroundColor #999999
+    BorderColor #8A8A8A
 }
 
 
@@ -179,39 +138,6 @@ skinparam database<<container>> {
     BorderColor #3C7FC0
 }
 
-skinparam queue<<container>> {
-    StereotypeFontColor #FFFFFF
-    FontColor #FFFFFF
-    BackgroundColor #438DD5
-    BorderColor #3C7FC0
-}
-
-skinparam rectangle<<external_container>> {
-    StereotypeFontColor #FFFFFF
-    FontColor #FFFFFF
-    BackgroundColor #B3B3B3
-    BorderColor #A6A6A6
-}
-
-skinparam database<<external_container>> {
-    StereotypeFontColor #FFFFFF
-    FontColor #FFFFFF
-    BackgroundColor #B3B3B3
-    BorderColor #A6A6A6
-}
-
-skinparam queue<<external_container>> {
-    StereotypeFontColor #FFFFFF
-    FontColor #FFFFFF
-    BackgroundColor #B3B3B3
-    BorderColor #A6A6A6
-}
-
-
-
-
-
-
 
 
 
@@ -224,14 +150,14 @@ skinparam queue<<external_container>> {
 
 
 skinparam rectangle<<component>> {
-    StereotypeFontColor ELEMENT_FONT_COLOR
+    StereotypeFontColor #FFFFFF
     FontColor #000000
     BackgroundColor #85BBF0
     BorderColor #78A8D8
 }
 
 skinparam database<<component>> {
-    StereotypeFontColor ELEMENT_FONT_COLOR
+    StereotypeFontColor #FFFFFF
     FontColor #000000
     BackgroundColor #85BBF0
     BorderColor #78A8D8
@@ -242,23 +168,23 @@ skinparam database<<component>> {
 
 
 
-LAYOUT_TOP_DOWN
+top to bottom direction
 hide stereotype
 legend right
 |=              |= Type |
-|<PERSON_BG_COLOR>      | person |
-|<EXTERNAL_PERSON_BG_COLOR>      | external person |
-|<SYSTEM_BG_COLOR>   | system |
-|<EXTERNAL_SYSTEM_BG_COLOR>      | external system |
-|<CONTAINER_BG_COLOR>   | container |
+|<#08427B>      | person |
+|<#686868>      | external person |
+|<#1168BD>   | system |
+|<#999999>      | external system |
+|<#438DD5>   | container |
 |<#85BBF0>   | component |
 endlegend
 
 title Component diagram for grand-challenge.org - Images, Evaluation and Algorithm Workers
 
 rectangle "==Celery Worker\n<size:12>[Container]</size>" <<boundary>> as s1 {
-    rectangle "==Web Application\n//<size:TECHN_FONT_SIZE>[Django, Celery]</size>//\n\n Manages container lifecycle and generates job results." <<component>> as gc_algorithm_worker
-    rectangle "==Compute Pool\n//<size:TECHN_FONT_SIZE>[Docker]</size>//\n\n Provides compute resources for container images." <<component>> as docker
+    rectangle "==Web Application\n//<size:12>[Django, Celery]</size>//\n\n Manages container lifecycle and generates job results." <<component>> as gc_algorithm_worker
+    rectangle "==Compute Pool\n//<size:12>[Docker]</size>//\n\n Provides compute resources for container images." <<component>> as docker
 }
 
 database "==Database\n//<size:12>[RDS/PostgreSQL]</size>//\n\n Stores user information, medical imaging metadata, job results etc." <<container>> as postgres
@@ -266,13 +192,13 @@ rectangle "==Protected Data Store\n//<size:12>[S3/Minio]</size>//\n\n Stores pro
 rectangle "==Private Data Store\n//<size:12>[S3/Minio]</size>//\n\n Stores private objects, container images etc." <<container>> as private_s3
 rectangle "==Message Queue\n//<size:12>[SQS/Redis]</size>//\n\n Queue of units of work Celery messages." <<container>> as message_queue
 
-gc_algorithm_worker - ->> message_queue : **Fetches messages from**\n//<size:12>[SSL, SQS/Redis, Celery]</size>//
+gc_algorithm_worker - -> message_queue : "===Fetches messages from\n//<size:12>[SSL, SQS/Redis, Celery]</size>//"
 
-gc_algorithm_worker - ->> postgres : **Reads and writes to**\n//<size:12>[SSL, SQL]</size>//
-gc_algorithm_worker - ->> private_s3 : **Fetches container images from**\n//<size:12>[HTTPS, S3]</size>//
-gc_algorithm_worker - ->> protected_s3 : **Reads objects from**\n//<size:12>[HTTPS, S3]</size>//
+gc_algorithm_worker - -> postgres : "===Reads and writes to\n//<size:12>[SSL, SQL]</size>//"
+gc_algorithm_worker - -> private_s3 : "===Fetches container images from\n//<size:12>[HTTPS, S3]</size>//"
+gc_algorithm_worker - -> protected_s3 : "===Reads objects from\n//<size:12>[HTTPS, S3]</size>//"
 
-gc_algorithm_worker - ->> docker : **Provisions volumes, instantiates containers with GPU access on**\n//<size:12>[HTTPS, JSON]</size>//
+gc_algorithm_worker - -> docker : "===Provisions volumes, instantiates containers with GPU access on\n//<size:12>[HTTPS, JSON]</size>//"
 
 @enduml
 

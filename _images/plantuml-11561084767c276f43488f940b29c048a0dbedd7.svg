@@ -1,4 +1,22 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="516px" preserveAspectRatio="none" style="width:377px;height:516px;background:#000000;" version="1.1" viewBox="0 0 377 516" width="377px" zoomAndPan="magnify"><defs/><g><rect fill="#101703" height="1" style="stroke: #101703; stroke-width: 1.0;" width="1" x="0" y="0"/><rect fill="#33FF02" height="21.2969" style="stroke: #33FF02; stroke-width: 1.0;" width="370" x="5" y="5"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="168" x="6" y="20">[From string (line 4) ]</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="40.2969"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="79" x="5" y="56.5938">@startuml</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="72.8906"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="89.1875"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="105.4844"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="121.7813"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="15" x="5" y="138.0781">...</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="185" x="5" y="154.375">... ( skipping 101 lines )</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="15" x="5" y="170.6719">...</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="186.9688"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="350" x="5" y="203.2656">skinparam database&lt;&lt;external_system&gt;&gt; {</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="350" x="25" y="219.5625">StereotypeFontColor ELEMENT_FONT_COLOR</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="262" x="25" y="235.8594">FontColor ELEMENT_FONT_COLOR</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="213" x="25" y="252.1563">BackgroundColor #999999</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="176" x="25" y="268.4531">BorderColor #8A8A8A</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="10" x="5" y="284.75">}</text><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="301.0469"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="317.3438"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="333.6406"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="349.9375"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="366.2344"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="382.5313"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="398.8281"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="415.125"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="431.4219"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="447.7188"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="464.0156"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="10" y="480.3125"/><text fill="#33FF02" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="158" x="5" y="496.6094">LAYOUT_TOP_DOWN</text><text fill="#FF0000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="106" x="10" y="512.9063">Syntax Error?</text><!--MD5=[8aa0af9549b553ce1154191ed06346fd]
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="930px" preserveAspectRatio="none" style="width:1029px;height:930px;" version="1.1" viewBox="0 0 1029 930" width="1029px" zoomAndPan="magnify"><defs/><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="435" x="296" y="16.708">System Context diagram for grand-challenge.org</text><!--MD5=[c5b25f79762c0bb80d94f4cebfc0a7b6]
+entity clinicians--><rect fill="#08427B" height="103.8125" style="stroke: #073B6F; stroke-width: 1.5;" width="219" x="71" y="28.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="70" x="145.5" y="53.8047">Clinician</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="182.5" y="70.5732"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="195" x="81" y="86.8701">User who annotates data, or</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="163" x="97" y="103.167">has new clinical data for</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="136" x="112.5" y="119.4639">algorithm validation.</text><!--MD5=[7d7eaab3729f10eac02641dc710c6861]
+entity challenge_orgs--><rect fill="#08427B" height="103.8125" style="stroke: #073B6F; stroke-width: 1.5;" width="215" x="468" y="250.4531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="102" x="524.5" y="275.3047">Researcher</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="577.5" y="292.0732"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="191" x="478" y="308.3701">User who poses challenges</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="182" x="482.5" y="324.667">and compares state of the</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="98" x="526.5" y="340.9639">art algorithms.</text><!--MD5=[67a52210be3cc8dbe84ebe91ef112b48]
+entity data_scientists--><rect fill="#08427B" height="87.5156" style="stroke: #073B6F; stroke-width: 1.5;" width="219" x="718" y="258.4531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="124" x="765.5" y="283.3047">Data Scientist</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="829.5" y="300.0732"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="195" x="728" y="316.3701">User who develops machine</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="135" x="760" y="332.667">learning algorithms.</text><!--MD5=[0f654f1fa9bad790a913cfc6e996d2dd]
+entity grand_challenge--><rect fill="#1168BD" height="152.7031" style="stroke: #3C7FC0; stroke-width: 1.5;" width="215" x="387" y="456.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="177" x="406" y="481.8047">grand-challenge.org</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="496.5" y="498.5732"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="191" x="397" y="514.8701">Allows users to gather data,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="153" x="416" y="531.167">run workstations, train</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="170" x="407.5" y="547.4639">clinicians, annotate data,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="184" x="400.5" y="563.7607">pose a challenge, evaluate</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="143" x="421" y="580.0576">solutions and deploy</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="76" x="456.5" y="596.3545">algorithms.</text><!--MD5=[34a5b63b2cc630735a10a7046813bcc0]
+entity grand_challenge_bridge--><rect fill="#999999" height="155.0313" style="stroke: #8A8A8A; stroke-width: 1.5;" width="209" x="224" y="224.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="144" x="253.5" y="249.8047">Grand Challenge</text><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="57" x="300" y="268.4297">Bridge</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="330.5" y="285.1982"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="143" x="255" y="301.4951">Connects to hospital</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="185" x="234" y="317.792">systems, de-itentifies data,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="179" x="237" y="334.0889">uploads data for algorithm</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="152" x="250.5" y="350.3857">execution and returns</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="119" x="269" y="366.6826">algorithm results.</text><!--MD5=[734ea825ff1e68e5efe5e73f1ecb4f5b]
+entity oauth--><rect fill="#999999" height="103.8125" style="stroke: #8A8A8A; stroke-width: 1.5;" width="218" x="259.5" y="701.9531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="130" x="303.5" y="726.8047">Authentication</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="370.5" y="743.5732"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="198" x="269.5" y="759.8701">Authenticates users through</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="186" x="273.5" y="776.167">external providers (Google,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="56" x="340.5" y="792.4639">GitHub).</text><!--MD5=[0899a72d608834086b56170fb6645824]
+entity monitoring--><rect fill="#999999" height="122.4375" style="stroke: #8A8A8A; stroke-width: 1.5;" width="195" x="6" y="472.4531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="133" x="34" y="497.3047">Monitoring and</text><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="69" x="69" y="515.9297">Alerting</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="105.5" y="532.6982"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="171" x="16" y="548.9951">Monitors the system and</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="142" x="30.5" y="565.292">sends alerts (Sentry,</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="94" x="56.5" y="581.5889">Prometheus).</text><!--MD5=[8fb4f905147ca31c25b1e567ee08a5b2]
+entity cdn--><rect fill="#999999" height="106.1406" style="stroke: #8A8A8A; stroke-width: 1.5;" width="220" x="788.5" y="480.4531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="149" x="821" y="505.3047">Content Delivery</text><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="77" x="860" y="523.9297">Network</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="900.5" y="540.6982"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="200" x="798.5" y="556.9951">Stores and serves static data</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="116" x="840.5" y="573.292">(S3, CloudFront).</text><!--MD5=[d214511de4cf5d41d91ac0d6a862c909]
+entity mail--><rect fill="#999999" height="71.2188" style="stroke: #8A8A8A; stroke-width: 1.5;" width="218" x="512.5" y="718.4531"/><text fill="#FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="51" x="596" y="743.3047">E-mail</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="623.5" y="760.0732"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="198" x="522.5" y="776.3701">Sends emails to users (SES).</text><!--MD5=[4266fbbe8508486154d0477054a252e9]
+link challenge_orgs to grand_challenge--><path d="M557.221,354.582 C547.1701,383.2458 534.4746,419.4514 523.1388,451.7794 " fill="none" id="challenge_orgs-&gt;grand_challenge" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="521.4767,456.5197,528.2296,449.3504,523.1313,451.8014,520.6803,446.7031,521.4767,456.5197" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="35" x="537.5" y="423.02">Uses</text><!--MD5=[58181e4fe428b8fc740ffb290d2f8d59]
+link data_scientists to grand_challenge--><path d="M763.6883,346.7189 C719.3276,377.4916 659.0117,419.3324 606.7175,455.6085 " fill="none" id="data_scientists-&gt;grand_challenge" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="602.3267,458.6544,612.0016,456.8113,606.435,455.8046,607.4418,450.238,602.3267,458.6544" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="35" x="671.5" y="423.02">Uses</text><!--MD5=[e79cadfea9d124d42dc87377aab001e7]
+link clinicians to grand_challenge--><path d="M161.9436,133.1374 C142.8374,196.7187 121.9583,304.9212 169.5,379.9531 C215.9066,453.1936 307.6818,492.1496 381.9048,512.4617 " fill="none" id="clinicians-&gt;grand_challenge" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="386.7677,513.7728,379.1194,507.5677,381.9401,512.4711,377.0367,515.2919,386.7677,513.7728" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="35" x="170.5" y="307.02">Uses</text><!--MD5=[9ffc2887f850a822a2bcc8de95d5d0d3]
+link clinicians to grand_challenge_bridge--><path d="M215.3865,133.165 C232.7361,159.1308 254.1112,191.1211 273.5915,220.2759 " fill="none" id="clinicians-&gt;grand_challenge_bridge" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="276.4512,224.5558,274.7769,214.8503,273.6733,220.3985,268.1251,219.2949,276.4512,224.5558" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="124" x="255.5" y="176.02">Sends data from</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="59" x="290.5" y="191.1528">PACS to</text><!--MD5=[6e05b6429f7b95fae8c759a9c47a0e9d]
+link grand_challenge_bridge to grand_challenge--><path d="M372.573,380.1078 C382.2943,395.9197 392.8753,412.2155 403.5,426.9531 C409.6112,435.4299 416.2345,444.0615 423.026,452.557 " fill="none" id="grand_challenge_bridge-&gt;grand_challenge" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="426.372,456.7154,423.8465,447.1959,423.2376,452.8199,417.6136,452.211,426.372,456.7154" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="119" x="404.5" y="423.02">Uploads data to</text><!--MD5=[7aa38c23fda66ffca67f0557caebe8cb]
+link grand_challenge to oauth--><path d="M446.9382,610.2202 C440.9809,620.173 435.0396,630.2702 429.5,639.9531 C418.9673,658.3637 407.8993,678.7149 398.1261,697.0657 " fill="none" id="grand_challenge-&gt;oauth" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="395.6704,701.6857,403.4267,695.6162,398.0173,697.2707,396.3627,691.8612,395.6704,701.6857" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="147" x="430.5" y="653.02">Authenticates users</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="55" x="476.5" y="668.1528">against</text><!--MD5=[2b9db60d896ec02fd51e20cd7cade9e7]
+link grand_challenge to mail--><path d="M563.2462,610.2267 C570.2718,619.8823 576.8788,629.906 582.5,639.9531 C595.366,662.9493 605.0134,690.9179 611.4944,713.3968 " fill="none" id="grand_challenge-&gt;mail" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="612.9105,718.3984,614.3071,708.6491,611.5482,713.5876,606.6097,710.8287,612.9105,718.3984" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="98" x="597.5" y="653.02">Sends emails</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="58" x="620" y="668.1528">through</text><!--MD5=[9864dfcf077647940e7b65f133f3ac38]
+link grand_challenge to cdn--><path d="M602.2339,533.4531 C658.0513,533.4531 726.2475,533.4531 783.1342,533.4531 " fill="none" id="grand_challenge-&gt;cdn" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="788.2533,533.4531,779.2533,529.4531,783.2533,533.4531,779.2533,537.4531,788.2533,533.4531" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="150" x="620.25" y="526.52">Sends static data to</text><!--MD5=[58194c82fe45ec6bec671b68b61ecb64]
+link monitoring to grand_challenge--><path d="M201.1572,533.4531 C255.9393,533.4531 324.5315,533.4531 381.611,533.4531 " fill="none" id="monitoring-&gt;grand_challenge" style="stroke: #666666; stroke-width: 1.0;"/><polygon fill="#666666" points="386.747,533.4531,377.747,529.4531,381.747,533.4531,377.747,537.4531,386.747,533.4531" style="stroke: #666666; stroke-width: 1.0;"/><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="144" x="219.5" y="511.52">Scrapes monitoring</text><text fill="#666666" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="94" x="247" y="526.6528">endpoints of</text><rect fill="#DDDDDD" height="95.4844" rx="5" ry="5" style="stroke: #000000; stroke-width: 1.0;" width="199" x="819" y="823.9531"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="0" x="895" y="843.9482"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="39" x="900" y="843.9482">Type</text><rect fill="#08427B" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="825" y="847.25"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="849" y="860.2451"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="49" x="899" y="860.2451">person</text><rect fill="#686868" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="825" y="863.5469"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="849" y="876.542"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="108" x="899" y="876.542">external person</text><rect fill="#1168BD" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="825" y="879.8438"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="837" y="892.8389"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="50" x="899" y="892.8389">system</text><rect fill="#999999" height="16.2969" style="stroke: none; stroke-width: 1.0;" width="70" x="825" y="896.1406"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="0" x="849" y="909.1357"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="109" x="899" y="909.1357">external system</text><line style="stroke: #000000; stroke-width: 1.0;" x1="825" x2="1012" y1="830.9531" y2="830.9531"/><line style="stroke: #000000; stroke-width: 1.0;" x1="825" x2="1012" y1="847.25" y2="847.25"/><line style="stroke: #000000; stroke-width: 1.0;" x1="825" x2="1012" y1="863.5469" y2="863.5469"/><line style="stroke: #000000; stroke-width: 1.0;" x1="825" x2="1012" y1="879.8438" y2="879.8438"/><line style="stroke: #000000; stroke-width: 1.0;" x1="825" x2="1012" y1="896.1406" y2="896.1406"/><line style="stroke: #000000; stroke-width: 1.0;" x1="825" x2="1012" y1="912.4375" y2="912.4375"/><line style="stroke: #000000; stroke-width: 1.0;" x1="825" x2="825" y1="830.9531" y2="912.4375"/><line style="stroke: #000000; stroke-width: 1.0;" x1="895" x2="895" y1="830.9531" y2="912.4375"/><line style="stroke: #000000; stroke-width: 1.0;" x1="1012" x2="1012" y1="830.9531" y2="912.4375"/><!--MD5=[de4df016648f862b515c0be7dd1fcd5e]
 @startuml
 
 
@@ -10,21 +28,12 @@ skinparam defaultTextAlignment center
 skinparam wrapWidth 200
 skinparam maxMessageSize 150
 
-skinparam LegendBorderColor transparent
-skinparam LegendBackgroundColor transparent
-skinparam LegendFontColor #FFFFFF
-
 skinparam rectangle {
     StereotypeFontSize 12
     shadowing false
 }
 
 skinparam database {
-    StereotypeFontSize 12
-    shadowing false
-}
-
-skinparam queue {
     StereotypeFontSize 12
     shadowing false
 }
@@ -64,51 +73,44 @@ skinparam rectangle<<boundary>> {
 
 
 
-
-
-
-
-
-
-
 skinparam rectangle<<person>> {
-    StereotypeFontColor ELEMENT_FONT_COLOR
-    FontColor ELEMENT_FONT_COLOR
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
     BackgroundColor #08427B
     BorderColor #073B6F
 }
 
 skinparam rectangle<<external_person>> {
-    StereotypeFontColor ELEMENT_FONT_COLOR
-    FontColor ELEMENT_FONT_COLOR
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
     BackgroundColor #686868
     BorderColor #8A8A8A
 }
 
 skinparam rectangle<<system>> {
-    StereotypeFontColor ELEMENT_FONT_COLOR
-    FontColor ELEMENT_FONT_COLOR
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
     BackgroundColor #1168BD
     BorderColor #3C7FC0
 }
 
 skinparam rectangle<<external_system>> {
-    StereotypeFontColor ELEMENT_FONT_COLOR
-    FontColor ELEMENT_FONT_COLOR
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
     BackgroundColor #999999
     BorderColor #8A8A8A
 }
 
 skinparam database<<system>> {
-    StereotypeFontColor ELEMENT_FONT_COLOR
-    FontColor ELEMENT_FONT_COLOR
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
     BackgroundColor #1168BD
     BorderColor #3C7FC0
 }
 
 skinparam database<<external_system>> {
-    StereotypeFontColor ELEMENT_FONT_COLOR
-    FontColor ELEMENT_FONT_COLOR
+    StereotypeFontColor #FFFFFF
+    FontColor #FFFFFF
     BackgroundColor #999999
     BorderColor #8A8A8A
 }
@@ -124,7 +126,7 @@ skinparam database<<external_system>> {
 
 
 
-LAYOUT_TOP_DOWN
+top to bottom direction
 hide stereotype
 legend right
 |=              |= Type |
@@ -148,18 +150,18 @@ rectangle "==Monitoring and Alerting\n\n Monitors the system and sends alerts (S
 rectangle "==Content Delivery Network\n\n Stores and serves static data (S3, CloudFront)." <<external_system>> as cdn
 rectangle "==E-mail\n\n Sends emails to users (SES)." <<external_system>> as mail
 
-challenge_orgs - ->> grand_challenge : **Uses**
-data_scientists - ->> grand_challenge : **Uses**
+challenge_orgs - -> grand_challenge : "===Uses"
+data_scientists - -> grand_challenge : "===Uses"
 
-clinicians - ->> grand_challenge : **Uses**
-clinicians - ->> grand_challenge_bridge : **Sends data from PACS to**
-grand_challenge_bridge - ->> grand_challenge : **Uploads data to**
+clinicians - -> grand_challenge : "===Uses"
+clinicians - -> grand_challenge_bridge : "===Sends data from PACS to"
+grand_challenge_bridge - -> grand_challenge : "===Uploads data to"
 
-grand_challenge - ->> oauth : **Authenticates users against**
-grand_challenge - ->> mail : **Sends emails through**
+grand_challenge - -> oauth : "===Authenticates users against"
+grand_challenge - -> mail : "===Sends emails through"
 
-grand_challenge ->> cdn : **Sends static data to**
-monitoring ->> grand_challenge : **Scrapes monitoring endpoints of**
+grand_challenge -> cdn : "===Sends static data to"
+monitoring -> grand_challenge : "===Scrapes monitoring endpoints of"
 @enduml
 
 PlantUML version 1.2020.09(Sun May 10 10:51:06 UTC 2020)
