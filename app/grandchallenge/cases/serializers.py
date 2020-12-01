@@ -82,7 +82,7 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         )
 
 
-class RawImageUploadSessionPutSerializer(RawImageUploadSessionSerializer):
+class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
     algorithm = SlugRelatedField(
         slug_field="slug", queryset=Algorithm.objects.all(), required=False
     )

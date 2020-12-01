@@ -31,7 +31,7 @@ from grandchallenge.cases.models import (
 from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageFileSerializer,
-    RawImageUploadSessionPutSerializer,
+    RawImageUploadSessionPatchSerializer,
     RawImageUploadSessionSerializer,
 )
 from grandchallenge.core.permissions.rest_framework import (
@@ -93,8 +93,8 @@ class RawImageUploadSessionViewSet(
         serializer.save(creator=self.request.user)
 
     def get_serializer_class(self):
-        if self.request.method == "PUT":
-            return RawImageUploadSessionPutSerializer
+        if self.request.method == "PATCH":
+            return RawImageUploadSessionPatchSerializer
         else:
             return RawImageUploadSessionSerializer
 
@@ -117,7 +117,7 @@ class RawImageUploadSessionViewSet(
                 "Total size of all files exceeds the upload limit"
             )
 
-    @action(detail=True, methods=["put"])
+    @action(detail=True, methods=["patch"])
     def process_images(self, request, pk=None):
         upload_session: RawImageUploadSession = self.get_object()
 

@@ -103,7 +103,7 @@ def test_invalid_upload_sessions(client):
         reverse_kwargs={"pk": response.json()["pk"]},
         user=user,
         client=client,
-        method=client.put,
+        method=client.patch,
         data={"algorithm": None},
         content_type="application/json",
     )
@@ -129,7 +129,7 @@ def test_empty_data_upload_sessions(client):
         reverse_kwargs={"pk": response.json()["pk"]},
         user=user,
         client=client,
-        method=client.put,
+        method=client.patch,
         content_type="application/json",
     )
     assert response.status_code == 400
@@ -343,7 +343,7 @@ def test_process_images_api_view(client, settings):
             reverse_kwargs={"pk": us.pk},
             user=user,
             client=client,
-            method=client.put,
+            method=client.patch,
             data={"algorithm": algorithm_image.algorithm.slug},
             content_type="application/json",
         )
@@ -420,7 +420,7 @@ def test_archive_upload_session_create(client, obj, factory):
         reverse_kwargs={"pk": upload_session["pk"]},
         user=u,
         client=client,
-        method=client.put,
+        method=client.patch,
         content_type="application/json",
         data={obj: o.slug},
     )
@@ -438,7 +438,7 @@ def test_archive_upload_session_create(client, obj, factory):
         reverse_kwargs={"pk": upload_session["pk"]},
         user=u,
         client=client,
-        method=client.put,
+        method=client.patch,
         content_type="application/json",
         data={obj: o.slug},
     )
