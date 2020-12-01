@@ -272,18 +272,6 @@
                     reader study.
                 </p>
 
-                <h2>Upload Sessions</h2>
-
-                <ul>
-                    {% for session in object.rawimageuploadsession_set.all %}
-                        <li>
-                            <a href="{{ session.get_absolute_url }}">{{ session }}</a>
-                        </li>
-                    {% empty %}
-                        <li>There are no upload sessions for this reader study.</li>
-                    {% endfor %}
-                </ul>
-
                 <p class="mt-3">
                     <a class="btn btn-primary"
                        href="{% url 'reader-studies:add-images' slug=object.slug %}">

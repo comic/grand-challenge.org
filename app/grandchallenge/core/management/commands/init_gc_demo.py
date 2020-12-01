@@ -173,6 +173,10 @@ class Command(BaseCommand):
             user=self.users["algorithmuser"],
             key="dc3526c2008609b429514b6361a33f8516541464",
         )
+        Token.objects.get_or_create(
+            user=self.users["readerstudy"],
+            key="01614a77b1c0b4ecd402be50a8ff96188d5b011d",
+        )
 
     def _create_demo_challenge(self):
         demo = Challenge.objects.create(
@@ -357,6 +361,7 @@ class Command(BaseCommand):
             title="Reader Study",
             workstation=Workstation.objects.last(),
             logo=get_temporary_image(),
+            description="Test reader study",
         )
         reader_study.editors_group.user_set.add(self.users["readerstudy"])
         reader_study.readers_group.user_set.add(self.users["demo"])

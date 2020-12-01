@@ -7,7 +7,6 @@ from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Callable, Dict, Iterable, List, Sequence, Set, Tuple
-from uuid import UUID
 
 from celery import shared_task
 from django.conf import settings
@@ -259,7 +258,7 @@ def extract_files(source_path: Path):
 
 
 @shared_task
-def build_images(upload_session_uuid: UUID):
+def build_images(*, upload_session_pk):
     """
     Task which analyzes an upload session and attempts to extract and store
     detected images assembled from files uploaded in the image session.
@@ -290,7 +289,7 @@ def build_images(upload_session_uuid: UUID):
         The uuid of the upload sessions that should be analyzed.
     """
     upload_session = RawImageUploadSession.objects.get(
-        pk=upload_session_uuid
+        pk=upload_session_pk
     )  # type: RawImageUploadSession
 
     if (
@@ -355,9 +354,7 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         upload_session=upload_session,
     )
 
-    _delete_session_files(
-        session_files=session_files, upload_session=upload_session
-    )
+    _delete_session_files(session_files=session_files,)
 
 
 def import_images(
@@ -474,7 +471,7 @@ def _handle_raw_files(
             send_failed_file_import(n_errors, upload_session)
 
 
-def _delete_session_files(*, session_files, upload_session):
+def _delete_session_files(*, session_files):
     dicom_group = Group.objects.get(
         name=settings.DICOM_DATA_CREATORS_GROUP_NAME
     )
@@ -483,13 +480,6 @@ def _delete_session_files(*, session_files, upload_session):
         try:
             if file.staged_file_id:
                 saf = StagedAjaxFile(file.staged_file_id)
-
-                if not file.consumed and upload_session.archive:
-                    # Keep unconsumed archive files
-                    saf.staged_files.update(
-                        timeout=timezone.now() + timedelta(days=90)
-                    )
-                    continue
 
                 if (
                     not file.consumed

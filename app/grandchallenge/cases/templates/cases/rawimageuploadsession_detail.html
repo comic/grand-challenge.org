@@ -4,9 +4,21 @@
 {% load workstations %}
 {% load pathlib %}
 
+{% block title %}Upload Session {{ object.pk }} - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'cases:raw-image-upload-session-list' %}">Uploads</a>
+        </li>
+        <li class="breadcrumb-item active"
+            aria-current="page">{{ object.pk }}</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
 
-    <h2>Session state</h2>
+    <h2>Upload Session</h2>
 
     {% if object.error_message %}
         <div class="alert alert-danger">
@@ -18,11 +30,24 @@
         <dt>Created</dt>
         <dd>{{ object.created }}</dd>
 
-        <dt>Job</dt>
+        <dt>ID</dt>
         <dd>{{ object.pk }}</dd>
 
         <dt>Status</dt>
-        <dd>{{ object.get_status_display }}</dd>
+        <dd>
+            <span class="badge
+                {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
+                    badge-danger
+                {% elif object.status == object.RETRY %}
+                    badge-warning
+                {% elif object.status == object.SUCCESS %}
+                    badge-success
+                {% else %}
+                    badge-info
+                {% endif %}">
+                {{ object.get_status_display }}
+            </span>
+        </dd>
     </dl>
 
     <h2>Uploaded Files</h2>
@@ -47,8 +72,6 @@
                             {% else %}
                                 succeeded
                             {% endif %}
-                        {% else %}
-                            {{ object.get_status_display }}
                         {% endif %}
                     </td>
                 </tr>
@@ -88,17 +111,6 @@
                                     <i class="fa fa-eye"></i> View Image
                                 </span>
                             </a>
-                        </td>
-                        <td>
-                            {% for file in image.files.all %}
-                                {% if file.image_type == file.IMAGE_TYPE_DZI %}
-                                    <a href="{% url 'cases:show-image' pk=image.pk %}">
-                                    <span class="badge badge-primary">
-                                        <i class="fa fa-eye"></i> View with OpenSeaDragon
-                                    </span>
-                                    </a>
-                                {% endif %}
-                            {% endfor %}
                         </td>
                     </tr>
                 {% endfor %}
