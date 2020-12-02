@@ -33,9 +33,15 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
 
         try:
             if user.verification.is_verified:
-                verified = mark_safe(
+                email = (
+                    user.verification.email
+                    if user.verification.email
+                    else user.email
+                )
+                verified = format_html(
                     '<i class="fas fa-user-check text-success" '
-                    'title="Verified User"></i>'
+                    'title="Verified email address at {}"></i>',
+                    email.split("@")[1],
                 )
         except ObjectDoesNotExist:
             # No verification request
