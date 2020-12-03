@@ -1,5 +1,6 @@
 import pytest
 from django.db import models
+from rest_framework.exceptions import ErrorDetail
 
 
 def check_if_field_in_serializer(fields, serializer_fields):
@@ -54,15 +55,11 @@ def check_if_valid_unique(model_or_factory, serializer, request=None):
 
     model_serializer = serializer(data=serializer(model, context=context).data)
     valid = model_serializer.is_valid()
-    if not valid and "non_field_errors" in model_serializer.errors:
-        for error in model_serializer.errors["non_field_errors"]:
-            if (
-                error.code == "unique"
-                and len(model_serializer.errors["non_field_errors"]) == 1
-                and len(model_serializer.errors) == 1
-            ):
-                # if the unique error is the only error in model_serializer.errors, return True
-                valid = True
+    if not valid:
+        filtered_errors = exclude_unique_errors(model_serializer.errors)
+        if not filtered_errors:
+            # if the unique error is the only error in model_serializer.errors, return True
+            valid = True
     return valid
 
 
@@ -94,3 +91,29 @@ def do_test_serializer_fields(serializer_data, request=None):
                 serializer_data["factory"](), context=context
             ).data.keys(),
         )
+
+
+def exclude_unique_errors(errors_object):
+    """Helper function that recursively excludes all unique errors"""
+    filtered_error_object = {}
+    for field_key, errors_list in errors_object.items():
+        filtered_errors_list = []
+        errors_list = (
+            errors_list if isinstance(errors_list, list) else [errors_list]
+        )
+        for error in errors_list:
+            if isinstance(error, dict):
+                # nested object
+                nested_errors = exclude_unique_errors(error)
+                if nested_errors:
+                    filtered_errors_list.append(nested_errors)
+            elif isinstance(error, ErrorDetail):
+                if error.code != "unique":
+                    filtered_errors_list.append(error)
+            else:
+                raise TypeError(
+                    f"Expected dict or ErrorDetail for {error} got {type(error)}"
+                )
+        if len(filtered_errors_list) > 0:
+            filtered_error_object[field_key] = filtered_errors_list
+    return filtered_error_object
