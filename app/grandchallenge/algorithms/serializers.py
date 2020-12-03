@@ -58,6 +58,9 @@ class JobSerializer(serializers.ModelSerializer):
     status = CharField(source="get_status_display", read_only=True)
     inputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
     outputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
+    algorithm_title = CharField(
+        source="algorithm_image.algorithm.title", read_only=True
+    )
 
     class Meta:
         model = Job
@@ -69,6 +72,7 @@ class JobSerializer(serializers.ModelSerializer):
             "outputs",
             "status",
             "rendered_result_text",
+            "algorithm_title",
         ]
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             status=model._meta.get_field("status")
