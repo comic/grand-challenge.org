@@ -484,7 +484,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
         "comment",
     ]
     columns = [
-        Column(title="Details", sort_field="created"),
+        Column(title="Details", sort_field="pk"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="creator__username"),
         Column(title="Result", sort_field="inputs__image__name"),
@@ -492,7 +492,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
         Column(title="Visibility", sort_field="public"),
         Column(title="Viewer", sort_field="inputs__image__files__file"),
     ]
-    order_by = "created"
+    default_sort_column = 1
 
     def get_row_context(self, obj, *args, **kwargs):
         return {

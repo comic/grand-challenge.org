@@ -12,17 +12,24 @@ from django.views.generic import ListView
 
 class PaginatedTableListView(ListView):
     columns = []
+    search_fields = []
+    default_sort_column = 0
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
-        context.update({"columns": self.columns})
+        context.update(
+            {
+                "columns": self.columns,
+                "default_sort_column": self.default_sort_column,
+            }
+        )
         return context
 
     def get_paginator(self, *, data, page_size):
         return Paginator(data, page_size)
 
     def get_row_context(self, obj, *args, **kwargs):
-        pass
+        return {"object": obj}
 
     def render_row_data(self, obj, *args, **kwargs):
         return render_to_string(
