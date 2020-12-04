@@ -4,7 +4,7 @@ import pytest
 from django.http import HttpRequest
 
 from grandchallenge.algorithms.models import Algorithm
-from grandchallenge.core.views import PaginatedTableListView
+from grandchallenge.datatables.views import PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
 
 

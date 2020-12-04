@@ -11,7 +11,7 @@ const displayLeaderboardDateButton = JSON.parse(document.getElementById("display
 const observableDetailEditURL = JSON.parse(document.getElementById("observableDetailEditURL").textContent)
 const observableComparisonEditURL = JSON.parse(document.getElementById("observableComparisonEditURL").textContent)
 
-let resultsTable = $('#resultsTable')
+let resultsTable = $('#ajaxDataTable')
 let selectedResults = {}
 
 

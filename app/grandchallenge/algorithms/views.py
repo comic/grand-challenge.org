@@ -66,12 +66,9 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.views import (
-    Column,
-    PaginatedTableListView,
-    PermissionRequestUpdate,
-)
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -479,7 +476,7 @@ class AlgorithmExecutionSessionDetail(
 class JobsList(PermissionListMixin, PaginatedTableListView):
     model = Job
     permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
-    row_template = "algorithms/data_tables/job_list.html"
+    row_template = "algorithms/job_list_row.html"
     search_fields = [
         "creator__username",
         "inputs__image__name",

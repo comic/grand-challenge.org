@@ -1,8 +1,5 @@
 from dataclasses import dataclass
-from functools import reduce
-from operator import or_
 from random import choice
-from typing import Tuple
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
@@ -11,14 +8,10 @@ from django.core.exceptions import (
     NON_FIELD_ERRORS,
     ValidationError,
 )
-from django.core.paginator import Paginator
-from django.db.models import Q
 from django.forms.utils import ErrorList
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.templatetags.static import static
-from django.views.generic import ListView, TemplateView, UpdateView
+from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
@@ -210,77 +203,3 @@ class PermissionRequestUpdate(
             f"{self.redirect_namespace}:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
-
-
-class PaginatedTableListView(ListView):
-    columns = []
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(object_list=object_list, **kwargs)
-        context.update({"columns": self.columns})
-        return context
-
-    def get_paginator(self, *, data, page_size):
-        return Paginator(data, page_size)
-
-    def get_row_context(self, job, *args, **kwargs):
-        pass
-
-    def render_row_data(self, job, *args, **kwargs):
-        return render_to_string(
-            self.row_template,
-            context=self.get_row_context(job, *args, **kwargs),
-        ).split("<split/>")
-
-    def get_data(self, jobs, *args, **kwargs):
-        return [self.render_row_data(job, *args, **kwargs) for job in jobs]
-
-    def get(self, request, *args, **kwargs):
-        response = super().get(request, *args, **kwargs)
-        if request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
-            start = int(request.GET.get("start", 0))
-            page_size = int(request.GET.get("length"))
-            search = request.GET.get("search[value]")
-            page = start // page_size + 1
-            order_by = request.GET.get("order[0][column]")
-            order_by = (
-                self.columns[int(order_by)].sort_field
-                if order_by
-                else self.order_by
-            )
-            order_dir = request.GET.get("order[0][dir]", "desc")
-            order_by = f"{'-' if order_dir == 'desc' else ''}{order_by}"
-            qs = self.get_unfiltered_queryset()
-            data = self.get_filtered_queryset(qs, search, order_by)
-            paginator = self.get_paginator(data=data, page_size=page_size)
-            jobs = paginator.page(page)
-            return JsonResponse(
-                {
-                    "draw": int(request.GET.get("draw")),
-                    "recordsTotal": qs.count(),
-                    "recordsFiltered": paginator.count,
-                    "data": self.get_data(jobs),
-                }
-            )
-        return response
-
-    def get_unfiltered_queryset(self):
-        return self.object_list
-
-    def get_filtered_queryset(self, queryset, search, order_by):
-        if search:
-            q = reduce(
-                or_,
-                [Q(**{f"{f}__icontains": search}) for f in self.search_fields],
-                Q(),
-            )
-            queryset = queryset.filter(q)
-        return queryset.order_by(order_by)
-
-
-@dataclass
-class Column:
-    title: str
-    sort_field: str
-    classes: Tuple[str, ...] = ()
-    identifier: str = ""

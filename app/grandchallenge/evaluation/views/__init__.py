@@ -27,7 +27,7 @@ from guardian.mixins import (
 )
 from ipware import get_client_ip
 
-from grandchallenge.core.views import Column, PaginatedTableListView
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,
     MethodForm,
