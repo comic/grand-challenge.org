@@ -521,9 +521,9 @@ class LeaderboardDetail(
 
         return columns
 
-    def get_row_context(self, job, *args, **kwargs):
+    def get_row_context(self, obj, *args, **kwargs):
         return {
-            "object": job,
+            "object": obj,
             "user_teams": self.user_teams,
         }
 

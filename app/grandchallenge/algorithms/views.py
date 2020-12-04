@@ -494,9 +494,9 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     ]
     order_by = "created"
 
-    def get_row_context(self, job, *args, **kwargs):
+    def get_row_context(self, obj, *args, **kwargs):
         return {
-            "job": job,
+            "job": obj,
             "algorithm": self.algorithm,
         }
 
