@@ -141,6 +141,7 @@
                             {% for file in input.image.files.all %}
                                 <li>
                                     <a class="badge badge-primary"
+                                       download="{{ file.image.name|stem }}{{ file.file|suffix }}"
                                        href="{{ file.file.url }}">
                                         <i class="fa fa-download"></i>
                                         Input {{ forloop.parentloop.counter }} {{ input.image.name|stem }}
@@ -160,6 +161,7 @@
                                 {% for file in output.image.files.all %}
                                     <li>
                                         <a class="badge badge-primary"
+                                           download="{{ file.image.name|stem }}{{ file.file|suffix }}"
                                            href="{{ file.file.url }}">
                                             <i class="fa fa-download"></i>
                                             Output {{ forloop.parentloop.counter }} {{ file.image.name|stem }}
