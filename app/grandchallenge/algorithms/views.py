@@ -504,8 +504,8 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_unfiltered_queryset(self):
-        queryset = self.object_list
+    def get_queryset(self):
+        queryset = super().get_queryset()
         return (
             queryset.filter(algorithm_image__algorithm=self.algorithm,)
             .prefetch_related(

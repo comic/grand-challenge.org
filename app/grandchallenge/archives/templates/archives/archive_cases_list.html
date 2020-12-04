@@ -1,22 +1,11 @@
-{% extends "base.html" %}
-{% load crispy_forms_tags %}
-{% load static %}
-{% load humanize %}
-{% load profiles %}
+{% extends "datatables/list_base.html" %}
 {% load guardian_tags %}
-{% load workstations %}
-{% load pathlib %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a>
-        </li>
-        <li class="breadcrumb-item"><a
-                href="{{ archive.get_absolute_url }}">{{ archive.title }}</a>
-        </li>
-        <li class="breadcrumb-item active"
-            aria-current="page">Cases
-        </li>
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a></li>
+        <li class="breadcrumb-item"><a href="{{ archive.get_absolute_url }}">{{ archive.title }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Cases</li>
     </ol>
 {% endblock %}
 
@@ -34,78 +23,5 @@
         </p>
     {% endif %}
 
-    <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm">
-            <thead class="thead-light">
-            <tr>
-                <th>Name</th>
-                <th>Created</th>
-                <th>Creator</th>
-                <th>View</th>
-                <th>Algorithm Results</th>
-                <th>Download</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for object in object_list %}
-                <tr>
-                    <td>{{ object.name }}</td>
-                    <td data-order="{{ object.created|date:'U' }}">
-                        {{ object.created|naturaltime }}
-                    </td>
-                    <td>{{ object.origin.creator|user_profile_link }}</td>
-                    <td>
-                        <a href="{% url 'workstations:workstation-session-create' slug=archive.workstation.slug %}?{% workstation_query image=object config=archive.workstation_config %}">
-                            <span class="badge badge-primary">
-                                <i class="fa fa-eye"></i> View Case
-                            </span>
-                        </a>
-                    </td>
-                    <td>
-                        <ul class="list-unstyled mb-0">
-                            {% for civ in object.componentinterfacevalue_set.all %}
-                                {% for job in civ.algorithms_jobs_as_input.all %}
-                                    <li>
-                                        <a class="badge btn-primary"
-                                           href="{% url 'algorithms:job-detail' slug=job.algorithm_image.algorithm.slug pk=job.pk %}">
-                                            <i class="fa fa-eye"></i> {{ job.algorithm_image.algorithm.title }}
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    </td>
-                    <td>
-                        <ul class="list-unstyled mb-0">
-                            {% for file in object.files.all %}
-                                <li>
-                                    <a href="{{ file.file.url }}">
-                                        <span class="badge badge-primary">
-                                            <i class="fa fa-download"></i> {{ file.file|suffix }}
-                                        </span>
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% endblock %}
-
-
-{% block script %}
     {{ block.super }}
-
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('.table').DataTable({
-                order: [[0, "desc"]],
-                "pageLength": 50,
-                ordering: true
-            });
-        });
-    </script>
 {% endblock %}

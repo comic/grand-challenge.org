@@ -521,11 +521,10 @@ class LeaderboardDetail(
 
         return columns
 
-    def get_row_context(self, obj, *args, **kwargs):
-        return {
-            "object": obj,
-            "user_teams": self.user_teams,
-        }
+    def get_row_context(self, *args, **kwargs):
+        context = super().get_row_context(*args, **kwargs)
+        context.update({"user_teams": self.user_teams})
+        return context
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

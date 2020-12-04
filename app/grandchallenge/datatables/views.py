@@ -55,24 +55,20 @@ class PaginatedTableListView(ListView):
             )
             order_dir = request.GET.get("order[0][dir]", "desc")
             order_by = f"{'-' if order_dir == 'desc' else ''}{order_by}"
-            qs = self.get_unfiltered_queryset()
-            data = self.get_filtered_queryset(qs, search, order_by)
+            data = self.filter_queryset(self.object_list, search, order_by)
             paginator = self.get_paginator(data=data, page_size=page_size)
             objects = paginator.page(page)
             return JsonResponse(
                 {
                     "draw": int(request.GET.get("draw")),
-                    "recordsTotal": qs.count(),
+                    "recordsTotal": self.object_list.count(),
                     "recordsFiltered": paginator.count,
                     "data": self.get_data(objects),
                 }
             )
         return response
 
-    def get_unfiltered_queryset(self):
-        return self.object_list
-
-    def get_filtered_queryset(self, queryset, search, order_by):
+    def filter_queryset(self, queryset, search, order_by):
         if search:
             q = reduce(
                 or_,
