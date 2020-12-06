@@ -7,26 +7,26 @@
 {% load remove_whitespace %}
 
 <a class="badge badge-primary"
-   href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=job.pk %}"
+   href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}"
    title="View result details">
     <i class="fa fa-info-circle"></i>
 </a>
 <split/>
 
-{{ job.created|naturaltime }}
+{{ object.created|naturaltime }}
 <split/>
 
-{{ job.creator|user_profile_link }}
+{{ object.creator|user_profile_link }}
 <split/>
 
 <a href="#resultInfoModal"
    class="badge
-{% if job.status == job.FAILURE or job.status == object.CANCELLED %}
+{% if object.status == object.FAILURE or object.status == object.CANCELLED %}
     badge-danger
-{% elif job.status == job.RETRY %}
+{% elif object.status == object.RETRY %}
     badge-warning
-{% elif job.status == job.SUCCESS %}
-    {% if job.stderr %}
+{% elif object.status == object.SUCCESS %}
+    {% if object.stderr %}
         badge-warning
     {% else %}
         badge-success
@@ -38,35 +38,35 @@
    data-target="#resultInfoModal"
    data-title="Result Info"
    data-output="
-   {% if job.status == job.SUCCESS %}
-        {% for output in job.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
+   {% if object.status == object.SUCCESS %}
+        {% for output in object.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
    {% else %}
-        {% firstof job.error_message job.get_status_display %}
+        {% firstof object.error_message object.get_status_display %}
    {% endif %}"
-   data-pk="{{ job.pk }}"
+   data-pk="{{ object.pk }}"
    title="Result Info">
     <i class="fa fa-file"></i>
-    {% for input in job.inputs.all %}
+    {% for input in object.inputs.all %}
         {{ input.image.name }}
     {% endfor %}
-    ({{ job.get_status_display }}{% if job.status == job.SUCCESS and job.stderr %}, with warnings{% endif %})
+    ({{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %}, with warnings{% endif %})
 </a>
-{% if job.rendered_result_text %}
-    {{ job.rendered_result_text|json_script:job.pk }}
+{% if object.rendered_result_text %}
+    {{ object.rendered_result_text|json_script:object.pk }}
 {% endif %}
 <split/>
 
-{{ job.comment }}
+{{ object.comment }}
 <split/>
 
-{% if job.public %}
+{% if object.public %}
     <i class="fa fa-eye text-success"
        title="Result and images are public"></i>
 {% else %}
-    {% if job.viewers.user_set.all|length > 1 %}
+    {% if object.viewers.user_set.all|length > 1 %}
         {# TODO: Hack, we need to exclude the creator rather than checking the length is > 1 #}
         <i class="fa fa-eye text-warning"
-           title="Result and images are visible by {{ job.viewers.user_set.all|oxford_comma }}"></i>
+           title="Result and images are visible by {{ object.viewers.user_set.all|oxford_comma }}"></i>
     {% else %}
         <i class="fa fa-eye-slash text-danger"
            title="Result and images are private"></i>
@@ -74,10 +74,10 @@
 {% endif %}
 <split/>
 
-{% if job.status == job.SUCCESS %}
+{% if object.status == object.SUCCESS %}
     <a class="badge badge-primary"
        title="View algorithm result"
-       href="{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_job=job config=algorithm.workstation_config %}">
+       href="{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_job=object config=algorithm.workstation_config %}">
         <i class="fa fa-eye"></i> Open Result in Viewer
     </a>
 {% endif %}

@@ -494,11 +494,10 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     ]
     default_sort_column = 1
 
-    def get_row_context(self, obj, *args, **kwargs):
-        return {
-            "job": obj,
-            "algorithm": self.algorithm,
-        }
+    def get_row_context(self, *args, **kwargs):
+        context = super().get_row_context(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        return context
 
     @cached_property
     def algorithm(self):
@@ -524,7 +523,6 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
-
         return context
 
 
