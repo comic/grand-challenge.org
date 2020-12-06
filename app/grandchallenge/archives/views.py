@@ -418,11 +418,6 @@ class ArchiveCasesList(
         context.update({"archive": self.archive})
         return context
 
-    def get_row_context(self, *args, **kwargs):
-        context = super().get_row_context(*args, **kwargs)
-        context.update({"archive": self.archive})
-        return context
-
     def get_queryset(self):
         qs = super().get_queryset()
         return (

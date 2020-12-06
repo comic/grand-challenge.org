@@ -3,7 +3,6 @@ from functools import reduce
 from operator import or_
 from typing import Tuple
 
-from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -25,20 +24,19 @@ class PaginatedTableListView(ListView):
         )
         return context
 
-    def get_paginator(self, *, data, page_size):
-        return Paginator(data, page_size)
-
-    def get_row_context(self, obj, *args, **kwargs):
-        return {"object": obj}
-
-    def render_row_data(self, obj, *args, **kwargs):
+    def render_row(self, *, object_, page_context):
         return render_to_string(
-            self.row_template,
-            context=self.get_row_context(obj, *args, **kwargs),
+            self.row_template, context={**page_context, "object": object_},
         ).split("<split/>")
 
-    def get_data(self, objects, *args, **kwargs):
-        return [self.render_row_data(o, *args, **kwargs) for o in objects]
+    def render_rows(self, *, object_list):
+        return [
+            self.render_row(
+                object_=o,
+                page_context=self.get_context_data(object_list=object_list),
+            )
+            for o in object_list
+        ]
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -56,14 +54,14 @@ class PaginatedTableListView(ListView):
             order_dir = request.GET.get("order[0][dir]", "desc")
             order_by = f"{'-' if order_dir == 'desc' else ''}{order_by}"
             data = self.filter_queryset(self.object_list, search, order_by)
-            paginator = self.get_paginator(data=data, page_size=page_size)
+            paginator = self.get_paginator(queryset=data, per_page=page_size)
             objects = paginator.page(page)
             return JsonResponse(
                 {
                     "draw": int(request.GET.get("draw")),
                     "recordsTotal": self.object_list.count(),
                     "recordsFiltered": paginator.count,
-                    "data": self.get_data(objects),
+                    "data": self.render_rows(object_list=objects),
                 }
             )
         return response

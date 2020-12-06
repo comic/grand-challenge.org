@@ -478,6 +478,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
     row_template = "algorithms/job_list_row.html"
     search_fields = [
+        "pk",
         "creator__username",
         "inputs__image__name",
         "inputs__image__files__file",
@@ -493,11 +494,6 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
         Column(title="Viewer", sort_field="inputs__image__files__file"),
     ]
     default_sort_column = 1
-
-    def get_row_context(self, *args, **kwargs):
-        context = super().get_row_context(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
-        return context
 
     @cached_property
     def algorithm(self):
