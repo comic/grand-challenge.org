@@ -39,6 +39,7 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.algorithms.filters import JobViewsetFilter
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
@@ -595,7 +596,7 @@ class JobViewSet(ReadOnlyModelViewSet):
     serializer_class = JobSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
-    filterset_fields = ["algorithm_image__algorithm"]
+    filterset_class = JobViewsetFilter
 
 
 class AlgorithmPermissionRequestCreate(
