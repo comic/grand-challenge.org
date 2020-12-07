@@ -66,12 +66,9 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.views import (
-    Column,
-    PaginatedTableListView,
-    PermissionRequestUpdate,
-)
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -479,15 +476,16 @@ class AlgorithmExecutionSessionDetail(
 class JobsList(PermissionListMixin, PaginatedTableListView):
     model = Job
     permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
-    row_template = "algorithms/data_tables/job_list.html"
+    row_template = "algorithms/job_list_row.html"
     search_fields = [
+        "pk",
         "creator__username",
         "inputs__image__name",
         "inputs__image__files__file",
         "comment",
     ]
     columns = [
-        Column(title="Details", sort_field="created"),
+        Column(title="Details", sort_field="pk"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="creator__username"),
         Column(title="Result", sort_field="inputs__image__name"),
@@ -495,20 +493,14 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
         Column(title="Visibility", sort_field="public"),
         Column(title="Viewer", sort_field="inputs__image__files__file"),
     ]
-    order_by = "created"
-
-    def get_row_context(self, job, *args, **kwargs):
-        return {
-            "job": job,
-            "algorithm": self.algorithm,
-        }
+    default_sort_column = 1
 
     @cached_property
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_unfiltered_queryset(self):
-        queryset = self.object_list
+    def get_queryset(self):
+        queryset = super().get_queryset()
         return (
             queryset.filter(algorithm_image__algorithm=self.algorithm,)
             .prefetch_related(
@@ -527,7 +519,6 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
-
         return context
 
 

@@ -27,7 +27,7 @@ from guardian.mixins import (
 )
 from ipware import get_client_ip
 
-from grandchallenge.core.views import Column, PaginatedTableListView
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     LegacySubmissionForm,
     MethodForm,
@@ -521,12 +521,6 @@ class LeaderboardDetail(
 
         return columns
 
-    def get_row_context(self, job, *args, **kwargs):
-        return {
-            "object": job,
-            "user_teams": self.user_teams,
-        }
-
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         limit = 1000
@@ -535,7 +529,8 @@ class LeaderboardDetail(
                 "phase": self.phase,
                 "now": now().isoformat(),
                 "limit": limit,
-                "offsets": range(0, context["object_list"].count(), limit),
+                "offsets": range(0, self.object_list.count(), limit),
+                "user_teams": self.user_teams,
             }
         )
         return context

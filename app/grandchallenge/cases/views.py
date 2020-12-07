@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -37,17 +37,28 @@ from grandchallenge.cases.serializers import (
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyWithCustomPostPermissions,
 )
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.reader_studies.tasks import add_images_to_reader_study
 from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class RawImageUploadSessionList(
-    LoginRequiredMixin, PermissionListMixin, ListView,
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView,
 ):
     model = RawImageUploadSession
     permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
     login_url = reverse_lazy("userena_signin")
+    row_template = "cases/rawimageuploadsession_row.html"
+    search_fields = [
+        "pk",
+    ]
+    columns = [
+        Column(title="ID", sort_field="pk"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Status", sort_field="status"),
+    ]
+    default_sort_column = 1
 
 
 class RawImageUploadSessionDetail(

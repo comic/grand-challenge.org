@@ -190,7 +190,7 @@ def test_algorithm_jobs_list_view(client):
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],
-            data={"length": 50, "draw": 1},
+            data={"length": 50, "draw": 1, "order[0][column]": 0},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
         assert response.status_code == test[2]

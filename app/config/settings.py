@@ -433,6 +433,7 @@ LOCAL_APPS = [
     "grandchallenge.credits",
     "grandchallenge.task_categories",
     "grandchallenge.modalities",
+    "grandchallenge.datatables",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS

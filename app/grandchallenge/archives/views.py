@@ -54,6 +54,7 @@ from grandchallenge.core.permissions.rest_framework import (
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
@@ -383,7 +384,7 @@ class ArchiveUploadSessionCreate(
 
 
 class ArchiveCasesList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView,
 ):
     model = Image
     permission_required = (
@@ -391,6 +392,19 @@ class ArchiveCasesList(
     )
     raise_exception = True
     template_name = "archives/archive_cases_list.html"
+    row_template = "archives/archive_cases_row.html"
+    search_fields = [
+        "pk",
+        "name",
+    ]
+    columns = [
+        Column(title="Name", sort_field="name"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Creator", sort_field="origin__creator__username"),
+        Column(title="View", sort_field="pk"),
+        Column(title="Algorithm Results", sort_field="pk"),
+        Column(title="Download", sort_field="pk"),
+    ]
 
     @cached_property
     def archive(self):
@@ -404,8 +418,8 @@ class ArchiveCasesList(
         context.update({"archive": self.archive})
         return context
 
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset(*args, **kwargs)
+    def get_queryset(self):
+        qs = super().get_queryset()
         return (
             qs.filter(archive=self.archive)
             .prefetch_related(

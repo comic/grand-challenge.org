@@ -370,7 +370,12 @@ def test_algorithm_jobs_list_view(client):
         user=editor,
         method=client.get,
         follow=True,
-        data={"length": 10, "draw": 1, "order[0][dir]": "desc"},
+        data={
+            "length": 10,
+            "draw": 1,
+            "order[0][dir]": "desc",
+            "order[0][column]": 0,
+        },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
 
@@ -385,7 +390,12 @@ def test_algorithm_jobs_list_view(client):
         user=editor,
         method=client.get,
         follow=True,
-        data={"length": 50, "draw": 1, "order[0][dir]": "desc"},
+        data={
+            "length": 50,
+            "draw": 1,
+            "order[0][dir]": "desc",
+            "order[0][column]": 0,
+        },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
 
@@ -400,7 +410,12 @@ def test_algorithm_jobs_list_view(client):
         user=editor,
         method=client.get,
         follow=True,
-        data={"length": 50, "draw": 1, "order[0][dir]": "asc"},
+        data={
+            "length": 50,
+            "draw": 1,
+            "order[0][dir]": "asc",
+            "order[0][column]": 0,
+        },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
 
@@ -415,7 +430,12 @@ def test_algorithm_jobs_list_view(client):
         user=editor,
         method=client.get,
         follow=True,
-        data={"length": 50, "draw": 1, "search[value]": job.creator.username},
+        data={
+            "length": 50,
+            "draw": 1,
+            "search[value]": job.creator.username,
+            "order[0][column]": 0,
+        },
         **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
 
