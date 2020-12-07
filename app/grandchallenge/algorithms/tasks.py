@@ -31,11 +31,17 @@ def create_algorithm_jobs_for_session(
     # Editors group should be able to view session jobs for debugging
     groups = [algorithm_image.algorithm.editors_group]
 
+    # Send an email to the algorithm editors and creator on job failure
+    linked_task = send_failed_jobs_email.signature(
+        kwargs={"session_pk": session.pk}, immutable=True,
+    )
+
     execute_jobs(
         algorithm_image=algorithm_image,
         images=session.image_set.all(),
-        session=session,
+        creator=session.creator,
         extra_viewer_groups=groups,
+        linked_task=linked_task,
     )
 
 
@@ -43,6 +49,9 @@ def create_algorithm_jobs_for_session(
 def create_algorithm_jobs_for_archive(
     *, archive_pks, image_pks=None, algorithm_pks=None
 ):
+    # Send an email to the algorithm editors on job failure
+    linked_task = send_failed_jobs_email.signature(kwargs={}, immutable=True)
+
     for archive in Archive.objects.filter(pk__in=archive_pks).all():
         archive_groups = [
             archive.editors_group,
@@ -67,7 +76,9 @@ def create_algorithm_jobs_for_archive(
             execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
                 images=images,
+                creator=None,
                 extra_viewer_groups=groups,
+                linked_task=linked_task,
             )
 
 
@@ -76,51 +87,51 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-
     evaluation = Evaluation.objects.get(pk=evaluation_pk)
 
-    jobs = create_algorithm_jobs(
-        algorithm_image=evaluation.submission.algorithm_image,
-        images=evaluation.submission.phase.archive.images.all(),
-        extra_viewer_groups=[
-            evaluation.submission.phase.challenge.admins_group
-        ],
+    # Only the challenge admins should be able to view these jobs, never
+    # the algorithm editors as these are participants - they must never
+    # be able to see the test data.
+    groups = [evaluation.submission.phase.challenge.admins_group]
+
+    # Once the algorithm has been run, score the submission. No emails as
+    # algorithm editors should not have access to the underlying images.
+    linked_task = set_evaluation_inputs.signature(
+        kwargs={"evaluation_pk": evaluation.pk}, immutable=True,
     )
 
-    if jobs:
-        return (
-            group(j.signature for j in jobs)
-            | set_evaluation_inputs.signature(
-                kwargs={
-                    "evaluation_pk": evaluation.pk,
-                    "job_pks": [j.pk for j in jobs],
-                },
-                immutable=True,
-            )
-        ).apply_async()
+    execute_jobs(
+        algorithm_image=evaluation.submission.algorithm_image,
+        images=evaluation.submission.phase.archive.images.all(),
+        creator=None,
+        extra_viewer_groups=groups,
+        linked_task=linked_task,
+    )
 
 
 def execute_jobs(
-    *, algorithm_image, images, session=None, extra_viewer_groups=None,
+    *,
+    algorithm_image,
+    images,
+    creator=None,
+    extra_viewer_groups=None,
+    linked_task=None,
 ):
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
         images=images,
-        creator=None if session is None else session.creator,
+        creator=creator,
         extra_viewer_groups=extra_viewer_groups,
     )
 
     if jobs:
-        return (
-            group(j.signature for j in jobs)
-            | send_failed_jobs_email.signature(
-                kwargs={
-                    "session_pk": None if session is None else session.pk,
-                    "job_pks": [j.pk for j in jobs],
-                },
-                immutable=True,
-            )
-        ).apply_async()
+        workflow = group(j.signature for j in jobs)
+
+        if linked_task is not None:
+            linked_task.kwargs.update({"job_pks": [j.pk for j in jobs]})
+            workflow |= linked_task
+
+        return workflow.apply_async()
 
 
 def create_algorithm_jobs(
