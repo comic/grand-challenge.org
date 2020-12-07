@@ -59,7 +59,7 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
-    JobSerializer,
+    HyperlinkedJobSerializer,
 )
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
@@ -593,7 +593,7 @@ class JobViewSet(ReadOnlyModelViewSet):
         .prefetch_related("outputs__interface", "inputs__interface")
         .select_related("algorithm_image__algorithm")
     )
-    serializer_class = JobSerializer
+    serializer_class = HyperlinkedJobSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_class = JobViewsetFilter

@@ -13,11 +13,8 @@ from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import (
-    AlgorithmExecutor,
-    AlgorithmImage,
-    DEFAULT_INPUT_INTERFACE_SLUG,
-)
+from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
@@ -597,33 +594,19 @@ class Submission(UUIDModel):
         evaluation = Evaluation.objects.create(submission=self, method=method)
 
         if self.algorithm_image:
-            default_input_interface = ComponentInterface.objects.get(
-                slug=DEFAULT_INPUT_INTERFACE_SLUG
+            jobs = create_algorithm_jobs(
+                algorithm_image=self.algorithm_image,
+                images=self.phase.archive.images.all(),
             )
-
-            jobs = []
-
-            for image in self.phase.archive.images.all():
-                if not ComponentInterfaceValue.objects.filter(
-                    interface=default_input_interface,
-                    image=image,
-                    evaluation_algorithmevaluations_as_input__submission=self,
-                ).exists():
-                    j = AlgorithmEvaluation.objects.create(submission=self)
-                    j.inputs.set(
-                        [
-                            ComponentInterfaceValue.objects.create(
-                                interface=default_input_interface, image=image
-                            )
-                        ]
-                    )
-                    jobs.append(j.signature)
 
             if jobs:
                 (
-                    group(*jobs)
+                    group(j.signature for j in jobs)
                     | set_evaluation_inputs.signature(
-                        kwargs={"evaluation_pk": evaluation.pk},
+                        kwargs={
+                            "evaluation_pk": evaluation.pk,
+                            "job_pks": [j.pk for j in jobs],
+                        },
                         immutable=True,
                     )
                 ).apply_async()
@@ -669,57 +652,6 @@ class Submission(UUIDModel):
                 "challenge_short_name": self.phase.challenge.short_name,
             },
         )
-
-
-class AlgorithmEvaluation(ComponentJob):
-    id = models.BigAutoField(primary_key=True)
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
-    submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
-
-    def assign_permissions(self):
-        assign_perm(
-            "view_algorithmevaluation",
-            self.submission.phase.challenge.admins_group,
-            self,
-        )
-
-    @property
-    def container(self):
-        return self.submission.algorithm_image
-
-    @property
-    def input_files(self):
-        return [
-            im.file
-            for inpt in self.inputs.all()
-            for im in inpt.image.files.all()
-        ]
-
-    @property
-    def executor_cls(self):
-        return AlgorithmExecutor
-
-    def create_result(self, *, result: dict):
-        interface = ComponentInterface.objects.get(slug="results-json-file")
-
-        try:
-            output_civ = self.outputs.get(interface=interface)
-            output_civ.value = result
-            output_civ.save()
-        except ObjectDoesNotExist:
-            output_civ = ComponentInterfaceValue.objects.create(
-                interface=interface, value=result
-            )
-            self.outputs.add(output_civ)
 
 
 class SubmissionEvaluator(Executor):

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from grandchallenge.evaluation.models import AlgorithmEvaluation
+from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.evaluation_tests.factories import MethodFactory, SubmissionFactory
@@ -22,11 +22,9 @@ class TestSubmission(TestCase):
             phase=self.method.phase, algorithm_image=self.algorithm_image,
         )
 
-        assert AlgorithmEvaluation.objects.count() == 2
+        assert Job.objects.count() == 2
         assert [
-            inpt.image
-            for ae in AlgorithmEvaluation.objects.all()
-            for inpt in ae.inputs.all()
+            inpt.image for ae in Job.objects.all() for inpt in ae.inputs.all()
         ] == self.images[:2]
 
     def test_create_evaluation_is_idempotent(self):
@@ -35,4 +33,4 @@ class TestSubmission(TestCase):
         )
         s.create_evaluation()
 
-        assert AlgorithmEvaluation.objects.count() == 2
+        assert Job.objects.count() == 2

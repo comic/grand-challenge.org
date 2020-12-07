@@ -5,14 +5,13 @@ from django.test import TestCase
 from guardian.shortcuts import get_groups_with_perms, get_users_with_perms
 
 from grandchallenge.evaluation.models import (
-    AlgorithmEvaluation,
     Evaluation,
     Method,
     Phase,
     Submission,
 )
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.evaluation_tests.factories import (
-    AlgorithmEvaluationFactory,
     EvaluationFactory,
     MethodFactory,
     PhaseFactory,
@@ -80,14 +79,17 @@ class TestAlgorithmEvaluationPermissions(TestCase):
         The submission creator, algorithm groups and participants should not
         have view permissions
         """
-        ae: AlgorithmEvaluation = AlgorithmEvaluationFactory()
+        j = AlgorithmJobFactory()
 
-        assert get_groups_with_set_perms(ae) == {
-            ae.submission.phase.challenge.admins_group: {
-                "view_algorithmevaluation"
-            }
+        assert get_groups_with_set_perms(j) == {
+            # TODO - Fix permissions
+            j.viewers: {"view_job"},
+            j.algorithm_image.algorithm.editors_group: {
+                "view_job",
+                "change_job",
+            },
         }
-        assert get_users_with_perms(ae, with_group_users=False).count() == 0
+        assert get_users_with_perms(j, with_group_users=False).count() == 0
 
 
 @pytest.mark.django_db

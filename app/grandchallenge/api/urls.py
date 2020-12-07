@@ -16,10 +16,7 @@ from grandchallenge.cases.views import (
     RawImageFileViewSet,
     RawImageUploadSessionViewSet,
 )
-from grandchallenge.evaluation.views.api import (
-    AlgorithmEvaluationViewSet,
-    EvaluationViewSet,
-)
+from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
@@ -76,11 +73,6 @@ router.register(
 router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
 # Evaluations
-router.register(
-    r"evaluations/algorithms",
-    AlgorithmEvaluationViewSet,
-    basename="evaluations-algorithm-evaluation",
-)
 router.register(
     r"evaluations", EvaluationViewSet, basename="evaluation",
 )

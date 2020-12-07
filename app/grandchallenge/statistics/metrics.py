@@ -13,14 +13,6 @@ ALGORITHM_JOBS_ACTIVE = prometheus_client.Gauge(
     "grandchallenge_algorithm_jobs_active_total",
     "The number of active algorithm jobs",
 )
-ALGORITHM_EVALUATION_JOBS_PENDING = prometheus_client.Gauge(
-    "grandchallenge_algorithm_evaluation_jobs_pending_total",
-    "The number of pending algorithm evaluation jobs",
-)
-ALGORITHM_EVALUATION_JOBS_ACTIVE = prometheus_client.Gauge(
-    "grandchallenge_algorithm_evaluation_jobs_active_total",
-    "The number of active algorithm evaluation jobs",
-)
 EVALUATION_JOBS_PENDING = prometheus_client.Gauge(
     "grandchallenge_evaluation_jobs_pending_total",
     "The number of pending evaluation jobs",

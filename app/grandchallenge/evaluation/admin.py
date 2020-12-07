@@ -1,7 +1,6 @@
 from django.contrib import admin
 
 from grandchallenge.evaluation.models import (
-    AlgorithmEvaluation,
     Evaluation,
     Method,
     Phase,
@@ -42,25 +41,6 @@ class SubmissionAdmin(admin.ModelAdmin):
     )
 
 
-class AlgorithmEvaluationAdmin(admin.ModelAdmin):
-    list_display = ("pk", "created", "submission", "status", "error_message")
-    list_filter = ("submission__phase__challenge__short_name",)
-    search_fields = (
-        "pk",
-        "submission__pk",
-        "submission__phase__challenge__short_name",
-        "submission__creator__username",
-    )
-    readonly_fields = (
-        "inputs",
-        "outputs",
-        "submission",
-        "stdout",
-        "stderr",
-        "error_message",
-    )
-
-
 class EvaluationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "submission", "status", "error_message")
@@ -91,4 +71,3 @@ admin.site.register(Phase, PhaseAdmin)
 admin.site.register(Method, MethodAdmin)
 admin.site.register(Submission, SubmissionAdmin)
 admin.site.register(Evaluation, EvaluationAdmin)
-admin.site.register(AlgorithmEvaluation, AlgorithmEvaluationAdmin)
