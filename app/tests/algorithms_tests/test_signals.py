@@ -28,6 +28,9 @@ def test_user_can_download_images(client, reverse):
         algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
     )
 
+    alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
+    alg2_job.viewer_groups.add(alg_set.alg2.editors_group)
+
     iv1, iv2, iv3, iv4 = (
         ComponentInterfaceValueFactory(image=ImageFactory()),
         ComponentInterfaceValueFactory(image=ImageFactory()),
@@ -120,6 +123,9 @@ def test_user_can_download_input_images(client, reverse):
     alg2_job = AlgorithmJobFactory(
         algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
     )
+
+    alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
+    alg2_job.viewer_groups.add(alg_set.alg2.editors_group)
 
     iv1, iv2, iv3, iv4 = (
         ComponentInterfaceValueFactory(image=ImageFactory()),
@@ -231,7 +237,6 @@ class TestAlgorithmJobViewersGroup:
 
         assert viewer_groups == {
             job.viewers,
-            job.algorithm_image.algorithm.editors_group,
         }
         for group in viewer_groups:
             assert "view_job" in get_perms(group, job)

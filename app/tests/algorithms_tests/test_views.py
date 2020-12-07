@@ -351,6 +351,7 @@ def test_algorithm_jobs_list_view(client):
         job = AlgorithmJobFactory(algorithm_image=im, status=Job.SUCCESS)
         job.created = created
         job.save()
+        job.viewer_groups.add(alg.editors_group)
 
     response = get_view_for_user(
         viewname="algorithms:job-list",

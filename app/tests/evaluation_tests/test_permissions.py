@@ -81,15 +81,10 @@ class TestAlgorithmEvaluationPermissions(TestCase):
         """
         j = AlgorithmJobFactory()
 
-        assert get_groups_with_set_perms(j) == {
-            # TODO - Fix permissions
-            j.viewers: {"view_job"},
-            j.algorithm_image.algorithm.editors_group: {
-                "view_job",
-                "change_job",
-            },
-        }
-        assert get_users_with_perms(j, with_group_users=False).count() == 0
+        assert get_groups_with_set_perms(j) == {j.viewers: {"view_job"}}
+        assert get_users_with_perms(
+            j, attach_perms=True, with_group_users=False
+        ) == {j.creator: ["change_job"]}
 
 
 @pytest.mark.django_db
