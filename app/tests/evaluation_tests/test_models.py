@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import AlgorithmImageFactory
@@ -17,6 +17,7 @@ class TestSubmission(TestCase):
         self.images = ImageFactory.create_batch(3)
         self.method.phase.archive.images.set(self.images[:2])
 
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_algorithm_submission_creates_one_job_per_test_set_image(self):
         SubmissionFactory(
             phase=self.method.phase, algorithm_image=self.algorithm_image,
@@ -27,6 +28,7 @@ class TestSubmission(TestCase):
             inpt.image for ae in Job.objects.all() for inpt in ae.inputs.all()
         ] == self.images[:2]
 
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_create_evaluation_is_idempotent(self):
         s = SubmissionFactory(
             phase=self.method.phase, algorithm_image=self.algorithm_image,

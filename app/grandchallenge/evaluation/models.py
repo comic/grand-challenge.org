@@ -2,7 +2,6 @@ from json import dumps
 from pathlib import Path
 from urllib.parse import parse_qs, urljoin, urlparse
 
-from celery import group
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -14,7 +13,9 @@ from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.algorithms.tasks import create_algorithm_jobs
+from grandchallenge.algorithms.tasks import (
+    create_algorithm_jobs_for_evaluation,
+)
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import Executor, put_file
@@ -36,10 +37,7 @@ from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
     send_successful_evaluation_email,
 )
-from grandchallenge.evaluation.tasks import (
-    calculate_ranks,
-    set_evaluation_inputs,
-)
+from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
 
 EXTRA_RESULT_COLUMNS_SCHEMA = {
@@ -594,23 +592,9 @@ class Submission(UUIDModel):
         evaluation = Evaluation.objects.create(submission=self, method=method)
 
         if self.algorithm_image:
-            jobs = create_algorithm_jobs(
-                algorithm_image=self.algorithm_image,
-                images=self.phase.archive.images.all(),
+            create_algorithm_jobs_for_evaluation.apply_async(
+                kwargs={"evaluation_pk": evaluation.pk}
             )
-
-            if jobs:
-                (
-                    group(j.signature for j in jobs)
-                    | set_evaluation_inputs.signature(
-                        kwargs={
-                            "evaluation_pk": evaluation.pk,
-                            "job_pks": [j.pk for j in jobs],
-                        },
-                        immutable=True,
-                    )
-                ).apply_async()
-
         else:
             mimetype = get_file_mimetype(self.predictions_file)
 

@@ -1,4 +1,5 @@
 from celery import group, shared_task
+from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
@@ -16,6 +17,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.credits.models import Credit
+from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -69,6 +71,35 @@ def create_algorithm_jobs_for_archive(
             )
 
 
+@shared_task
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    jobs = create_algorithm_jobs(
+        algorithm_image=evaluation.submission.algorithm_image,
+        images=evaluation.submission.phase.archive.images.all(),
+        extra_viewer_groups=[
+            evaluation.submission.phase.challenge.admins_group
+        ],
+    )
+
+    if jobs:
+        return (
+            group(j.signature for j in jobs)
+            | set_evaluation_inputs.signature(
+                kwargs={
+                    "evaluation_pk": evaluation.pk,
+                    "job_pks": [j.pk for j in jobs],
+                },
+                immutable=True,
+            )
+        ).apply_async()
+
+
 def execute_jobs(
     *, algorithm_image, images, session=None, extra_viewer_groups=None,
 ):
@@ -78,9 +109,18 @@ def execute_jobs(
         creator=None if session is None else session.creator,
         extra_viewer_groups=extra_viewer_groups,
     )
-    if len(jobs) > 0:
-        workflow = create_jobs_workflow(jobs=jobs, session=session)
-        workflow.apply_async()
+
+    if jobs:
+        return (
+            group(j.signature for j in jobs)
+            | send_failed_jobs_email.signature(
+                kwargs={
+                    "session_pk": None if session is None else session.pk,
+                    "job_pks": [j.pk for j in jobs],
+                },
+                immutable=True,
+            )
+        ).apply_async()
 
 
 def create_algorithm_jobs(
@@ -137,19 +177,6 @@ def create_algorithm_jobs(
                 jobs.append(j)
 
     return jobs
-
-
-def create_jobs_workflow(*, jobs, session=None):
-    job_signatures = [j.signature for j in jobs]
-    job_pks = [j.pk for j in jobs]
-    workflow = group(*job_signatures) | send_failed_jobs_email.signature(
-        kwargs={
-            "job_pks": job_pks,
-            "session_pk": None if session is None else session.pk,
-        },
-        immutable=True,
-    )
-    return workflow
 
 
 @shared_task
