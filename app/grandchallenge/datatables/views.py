@@ -30,11 +30,9 @@ class PaginatedTableListView(ListView):
         ).split("<split/>")
 
     def render_rows(self, *, object_list):
+        page_context = self.get_context_data(object_list=object_list)
         return [
-            self.render_row(
-                object_=o,
-                page_context=self.get_context_data(object_list=object_list),
-            )
+            self.render_row(object_=o, page_context=page_context)
             for o in object_list
         ]
 
