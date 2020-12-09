@@ -3,7 +3,7 @@ import pytest
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
-    JobSerializer,
+    HyperlinkedJobSerializer,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -55,7 +55,9 @@ class TestSerializers:
 @pytest.mark.django_db
 def test_algorithm_title_on_job_serializer(rf):
     job = AlgorithmJobFactory()
-    serializer = JobSerializer(job, context={"request": rf.get("/foo")})
+    serializer = HyperlinkedJobSerializer(
+        job, context={"request": rf.get("/foo")}
+    )
     assert (
         serializer.data["algorithm_title"]
         == job.algorithm_image.algorithm.title

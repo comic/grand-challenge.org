@@ -161,6 +161,9 @@ def test_algorithm_jobs_list_view(client):
         ),
     )
 
+    j1.viewer_groups.add(alg_set.alg1.editors_group)
+    j2.viewer_groups.add(alg_set.alg2.editors_group)
+
     all_jobs = {j1, j2}
 
     tests = (
@@ -313,16 +316,20 @@ def test_job_update_permissions(client, view_name):
         (None, j2, 302),
         (alg_set.creator, j1, 403),
         (alg_set.creator, j2, 403),
-        (alg_set.editor1, j1, 200),
+        (alg_set.editor1, j1, 403),
         (alg_set.editor1, j2, 403),
         (alg_set.user1, j1, 403),
         (alg_set.user1, j2, 403),
         (alg_set.editor2, j1, 403),
-        (alg_set.editor2, j2, 200),
+        (alg_set.editor2, j2, 403),
         (alg_set.user2, j1, 403),
         (alg_set.user2, j2, 403),
         (alg_set.u, j1, 403),
         (alg_set.u, j2, 403),
+        (j1.creator, j1, 200),
+        (j1.creator, j2, 403),
+        (j2.creator, j1, 403),
+        (j2.creator, j2, 200),
     )
 
     for test in tests:
@@ -411,6 +418,9 @@ def test_api_job_list_permissions(client):
     alg2_job = AlgorithmJobFactory(
         algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
     )
+
+    alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
+    alg2_job.viewer_groups.add(alg_set.alg2.editors_group)
 
     tests = (
         (None, 200, []),

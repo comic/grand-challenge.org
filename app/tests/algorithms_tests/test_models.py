@@ -143,5 +143,4 @@ class TestAlgorithmJobGroups(TestCase):
         j = AlgorithmJobFactory()
         assert {*j.viewer_groups.all()} == {
             j.viewers,
-            j.algorithm_image.algorithm.editors_group,
         }

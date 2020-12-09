@@ -1,7 +1,6 @@
 import factory
 
 from grandchallenge.evaluation.models import (
-    AlgorithmEvaluation,
     Evaluation,
     Method,
     Phase,
@@ -35,13 +34,6 @@ class SubmissionFactory(factory.django.DjangoModelFactory):
     phase = factory.SubFactory(PhaseFactory)
     predictions_file = factory.django.FileField()
     creator = factory.SubFactory(UserFactory)
-
-
-class AlgorithmEvaluationFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = AlgorithmEvaluation
-
-    submission = factory.SubFactory(SubmissionFactory)
 
 
 class EvaluationFactory(factory.django.DjangoModelFactory):

@@ -5,25 +5,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_csv.renderers import PaginatedCSVRenderer
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.evaluation.models import (
-    AlgorithmEvaluation,
-    Evaluation,
-)
-from grandchallenge.evaluation.serializers import (
-    AlgorithmEvaluationSerializer,
-    EvaluationSerializer,
-)
-
-
-class AlgorithmEvaluationViewSet(ReadOnlyModelViewSet):
-    queryset = AlgorithmEvaluation.objects.all()
-    serializer_class = AlgorithmEvaluationSerializer
-    permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (
-        DjangoFilterBackend,
-        ObjectPermissionsFilter,
-    )
-    filterset_fields = ["submission"]
+from grandchallenge.evaluation.models import Evaluation
+from grandchallenge.evaluation.serializers import EvaluationSerializer
 
 
 class EvaluationViewSet(ReadOnlyModelViewSet):

@@ -8,7 +8,6 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
 from grandchallenge.evaluation.models import (
-    AlgorithmEvaluation,
     Evaluation,
     Phase,
     Submission,
@@ -57,19 +56,6 @@ class SubmissionSerializer(ModelSerializer):
             "predictions_file",
             "supplementary_file",
             "publication_url",
-        )
-
-
-class AlgorithmEvaluationSerializer(ModelSerializer):
-    inputs = ComponentInterfaceValueSerializer(many=True)
-    outputs = ComponentInterfaceValueSerializer(many=True)
-
-    class Meta:
-        model = AlgorithmEvaluation
-        fields = (
-            "pk",
-            "inputs",
-            "outputs",
         )
 
 

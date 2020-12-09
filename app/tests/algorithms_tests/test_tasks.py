@@ -1,11 +1,9 @@
-import re
-
 import pytest
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
-    create_jobs_workflow,
+    execute_jobs,
 )
 from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
@@ -151,18 +149,12 @@ class TestCreateAlgorithmJobs:
 @pytest.mark.django_db
 class TestCreateJobsWorkflow:
     def test_no_jobs_workflow(self):
-        workflow = create_jobs_workflow(jobs=[])
-        assert (
-            str(workflow)
-            == "%grandchallenge.algorithms.tasks.send_failed_jobs_email((), job_pks=[], session_pk=None)"
-        )
+        ai = AlgorithmImageFactory()
+        workflow = execute_jobs(algorithm_image=ai, images=[])
+        assert workflow is None
 
     def test_jobs_workflow(self):
         ai = AlgorithmImageFactory()
         images = [ImageFactory(), ImageFactory()]
-        jobs = create_algorithm_jobs(algorithm_image=ai, images=images)
-        workflow = create_jobs_workflow(jobs=jobs)
-        pattern = re.compile(
-            r"^%grandchallenge\.algorithms\.tasks\.send_failed_jobs_email\(\(grandchallenge\.components\.tasks\.execute_job\(job_pk=UUID\('[^']*'\), job_app_label='algorithms', job_model_name='job'\), grandchallenge\.components\.tasks\.execute_job\(job_pk=UUID\('[^']*'\), job_app_label='algorithms', job_model_name='job'\)\), job_pks=\[UUID\('[^']*'\), UUID\('[^']*'\)], session_pk=None\)$"
-        )
-        assert pattern.match(str(workflow))
+        workflow = execute_jobs(algorithm_image=ai, images=images)
+        assert workflow is not None

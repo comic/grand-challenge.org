@@ -8,13 +8,13 @@ from grandchallenge.evaluation.utils import Metric, rank_results
 
 
 @shared_task
-def set_evaluation_inputs(evaluation_pk):
+def set_evaluation_inputs(evaluation_pk, job_pks):
     """
     Sets the inputs to the Evaluation for a algorithm submission.
 
-    If all of the `AlgorithmEvaluation`s for this algorithm `Submission` are
+    If all of the `Job`s for this algorithm `Submission` are
     successful this will set the inputs to the `Evaluation` job and schedule
-    it. If any of the `AlgorithmEvaluation`s are unsuccessful then the
+    it. If any of the `Job`s are unsuccessful then the
     `Evaluation` will be marked as Failed.
 
     Parameters
@@ -25,12 +25,15 @@ def set_evaluation_inputs(evaluation_pk):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
+    Job = apps.get_model(  # noqa: N806
+        app_label="algorithms", model_name="Job"
+    )
 
     evaluation = Evaluation.objects.get(pk=evaluation_pk)
 
-    unsuccessful_jobs = evaluation.submission.algorithmevaluation_set.exclude(
-        status=Evaluation.SUCCESS
-    ).count()
+    unsuccessful_jobs = (
+        Job.objects.filter(pk__in=job_pks).exclude(status=Job.SUCCESS).count()
+    )
 
     if unsuccessful_jobs:
         evaluation.update_status(
@@ -41,16 +44,14 @@ def set_evaluation_inputs(evaluation_pk):
             ),
         )
     else:
-        from grandchallenge.evaluation.serializers import (
-            AlgorithmEvaluationSerializer,
-        )
+        from grandchallenge.algorithms.serializers import JobSerializer
         from grandchallenge.components.models import (
             ComponentInterface,
             ComponentInterfaceValue,
         )
 
-        serializer = AlgorithmEvaluationSerializer(
-            evaluation.submission.algorithmevaluation_set.all(), many=True
+        serializer = JobSerializer(
+            Job.objects.filter(pk__in=job_pks).all(), many=True
         )
         interface = ComponentInterface.objects.get(
             title="Predictions JSON File"

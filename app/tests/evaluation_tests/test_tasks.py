@@ -4,12 +4,13 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.components.tasks import validate_docker_image
-from grandchallenge.evaluation.models import AlgorithmEvaluation, Method
+from grandchallenge.evaluation.models import Method
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.factories import (
-    AlgorithmEvaluationFactory,
     EvaluationFactory,
     MethodFactory,
     SubmissionFactory,
@@ -150,14 +151,14 @@ class TestSetEvaluationInputs(TestCase):
     def test_unsuccessful_jobs_fail_evaluation(self):
         submission = SubmissionFactory()
         evaluation = EvaluationFactory(submission=submission)
-        AlgorithmEvaluationFactory(
-            status=AlgorithmEvaluation.SUCCESS, submission=submission
-        )
-        AlgorithmEvaluationFactory(
-            status=AlgorithmEvaluation.FAILURE, submission=submission
+        jobs = (
+            AlgorithmJobFactory(status=Job.SUCCESS),
+            AlgorithmJobFactory(status=Job.FAILURE),
         )
 
-        set_evaluation_inputs(evaluation_pk=evaluation.pk)
+        set_evaluation_inputs(
+            evaluation_pk=evaluation.pk, job_pks=[j.pk for j in jobs]
+        )
 
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.FAILURE
@@ -169,15 +170,15 @@ class TestSetEvaluationInputs(TestCase):
     def test_set_evaluation_inputs(self):
         submission = SubmissionFactory()
         evaluation = EvaluationFactory(submission=submission)
-        algorithms = AlgorithmEvaluationFactory.create_batch(
-            2, status=AlgorithmEvaluation.SUCCESS, submission=submission
-        )
+        jobs = AlgorithmJobFactory.create_batch(2, status=Job.SUCCESS)
         civs = ComponentInterfaceValueFactory.create_batch(2)
 
-        for alg, civ in zip(algorithms, civs):
+        for alg, civ in zip(jobs, civs):
             alg.outputs.set([civ])
 
-        set_evaluation_inputs(evaluation_pk=evaluation.pk)
+        set_evaluation_inputs(
+            evaluation_pk=evaluation.pk, job_pks=[j.pk for j in jobs]
+        )
 
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.PENDING

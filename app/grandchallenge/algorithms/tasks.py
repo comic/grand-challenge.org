@@ -1,4 +1,5 @@
 from celery import group, shared_task
+from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
@@ -16,6 +17,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.credits.models import Credit
+from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -26,49 +28,114 @@ def create_algorithm_jobs_for_session(
     session = RawImageUploadSession.objects.get(pk=upload_session_pk)
     algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
+    # Editors group should be able to view session jobs for debugging
+    groups = [algorithm_image.algorithm.editors_group]
+
+    # Send an email to the algorithm editors and creator on job failure
+    linked_task = send_failed_jobs_email.signature(
+        kwargs={"session_pk": session.pk}, immutable=True,
+    )
+
     execute_jobs(
         algorithm_image=algorithm_image,
         images=session.image_set.all(),
-        session=session,
+        creator=session.creator,
+        extra_viewer_groups=groups,
+        linked_task=linked_task,
     )
 
 
 @shared_task
-def create_algorithm_jobs_for_archive_images(*, archive_pks, image_pks):
+def create_algorithm_jobs_for_archive(
+    *, archive_pks, image_pks=None, algorithm_pks=None
+):
+    # Send an email to the algorithm editors on job failure
+    linked_task = send_failed_jobs_email.signature(kwargs={}, immutable=True)
+
     for archive in Archive.objects.filter(pk__in=archive_pks).all():
-        groups = [
+        archive_groups = [
             archive.editors_group,
             archive.uploaders_group,
             archive.users_group,
         ]
-        for algorithm in archive.algorithms.all():
+
+        if algorithm_pks is not None:
+            algorithms = Algorithm.objects.filter(pk__in=algorithm_pks).all()
+        else:
+            algorithms = archive.algorithms.all()
+
+        if image_pks is not None:
+            images = Image.objects.filter(pk__in=image_pks).all()
+        else:
+            images = archive.images.all()
+
+        for algorithm in algorithms:
+            # Editors group should be able to view archive jobs for debugging
+            groups = [*archive_groups, algorithm.editors_group]
+
             execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
-                images=Image.objects.filter(pk__in=image_pks).all(),
+                images=images,
+                creator=None,
                 extra_viewer_groups=groups,
+                linked_task=linked_task,
             )
 
 
 @shared_task
-def create_algorithm_jobs_for_archive_algorithms(
-    *, archive_pks, algorithm_pks
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    # Only the challenge admins should be able to view these jobs, never
+    # the algorithm editors as these are participants - they must never
+    # be able to see the test data.
+    groups = [evaluation.submission.phase.challenge.admins_group]
+
+    # Once the algorithm has been run, score the submission. No emails as
+    # algorithm editors should not have access to the underlying images.
+    linked_task = set_evaluation_inputs.signature(
+        kwargs={"evaluation_pk": evaluation.pk}, immutable=True,
+    )
+
+    execute_jobs(
+        algorithm_image=evaluation.submission.algorithm_image,
+        images=evaluation.submission.phase.archive.images.all(),
+        creator=None,
+        extra_viewer_groups=groups,
+        linked_task=linked_task,
+    )
+
+
+def execute_jobs(
+    *,
+    algorithm_image,
+    images,
+    creator=None,
+    extra_viewer_groups=None,
+    linked_task=None,
 ):
-    for algorithm in Algorithm.objects.filter(pk__in=algorithm_pks).all():
-        for archive in Archive.objects.filter(pk__in=archive_pks).all():
-            groups = [
-                archive.editors_group,
-                archive.uploaders_group,
-                archive.users_group,
-            ]
-            execute_jobs(
-                algorithm_image=algorithm.latest_ready_image,
-                images=archive.images.all(),
-                extra_viewer_groups=groups,
-            )
+    jobs = create_algorithm_jobs(
+        algorithm_image=algorithm_image,
+        images=images,
+        creator=creator,
+        extra_viewer_groups=extra_viewer_groups,
+    )
+
+    if jobs:
+        workflow = group(j.signature for j in jobs)
+
+        if linked_task is not None:
+            linked_task.kwargs.update({"job_pks": [j.pk for j in jobs]})
+            workflow |= linked_task
+
+        return workflow.apply_async()
 
 
 def create_algorithm_jobs(
-    *, algorithm_image, images, creator=None, extra_viewer_groups=None
+    *, algorithm_image, images, creator=None, extra_viewer_groups=None,
 ):
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
@@ -114,38 +181,13 @@ def create_algorithm_jobs(
                         )
                     ]
                 )
+
                 if extra_viewer_groups is not None:
                     j.viewer_groups.add(*extra_viewer_groups)
+
                 jobs.append(j)
 
     return jobs
-
-
-def create_jobs_workflow(*, jobs, session=None):
-    job_signatures = [j.signature for j in jobs]
-    job_pks = [j.pk for j in jobs]
-    workflow = group(*job_signatures) | send_failed_jobs_email.signature(
-        kwargs={
-            "job_pks": job_pks,
-            "session_pk": None if session is None else session.pk,
-        },
-        immutable=True,
-    )
-    return workflow
-
-
-def execute_jobs(
-    *, algorithm_image, images, session=None, extra_viewer_groups=None
-):
-    jobs = create_algorithm_jobs(
-        algorithm_image=algorithm_image,
-        images=images,
-        creator=None if session is None else session.creator,
-        extra_viewer_groups=extra_viewer_groups,
-    )
-    if len(jobs) > 0:
-        workflow = create_jobs_workflow(jobs=jobs, session=session)
-        workflow.apply_async()
 
 
 @shared_task

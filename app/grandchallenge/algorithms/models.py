@@ -539,19 +539,15 @@ class Job(UUIDModel, ComponentJob):
         )
 
     def init_permissions(self):
-        # By default, editors and viewers can view this algorithm
-        self.viewer_groups.set(
-            [self.algorithm_image.algorithm.editors_group, self.viewers]
-        )
-        # By default, the creator can view this algorithm
+        # By default, only the viewers can view this job
+        self.viewer_groups.set([self.viewers])
+
+        # If there is a creator they can view and change this job
         if self.creator:
             self.viewers.user_set.add(self.creator)
-        # Algorithm editors can change this job
-        assign_perm(
-            f"change_{self._meta.model_name}",
-            self.algorithm_image.algorithm.editors_group,
-            self,
-        )
+            assign_perm(
+                f"change_{self._meta.model_name}", self.creator, self,
+            )
 
     def update_viewer_groups_for_public(self):
         g = Group.objects.get(

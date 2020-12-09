@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from rest_framework.fields import CharField, SerializerMethodField
-from rest_framework.relations import HyperlinkedRelatedField
+from rest_framework.relations import (
+    HyperlinkedRelatedField,
+    StringRelatedField,
+)
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -9,6 +12,7 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.components.serializers import (
+    ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
 )
 
@@ -51,13 +55,13 @@ class AlgorithmImageSerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
-    algorithm_image = HyperlinkedRelatedField(
-        queryset=AlgorithmImage.objects.all(),
-        view_name="api:algorithms-image-detail",
-    )
+    """Serializer without hyperlinks for internal use"""
+
+    algorithm_image = StringRelatedField()
+    inputs = ComponentInterfaceValueSerializer(many=True)
+    outputs = ComponentInterfaceValueSerializer(many=True)
+
     status = CharField(source="get_status_display", read_only=True)
-    inputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
-    outputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
     algorithm_title = CharField(
         source="algorithm_image.algorithm.title", read_only=True
     )
@@ -77,3 +81,17 @@ class JobSerializer(serializers.ModelSerializer):
         swagger_schema_fields = swagger_schema_fields_for_charfield(
             status=model._meta.get_field("status")
         )
+
+
+class HyperlinkedJobSerializer(JobSerializer):
+    """Serializer with hyperlinks for use in public API"""
+
+    algorithm_image = HyperlinkedRelatedField(
+        queryset=AlgorithmImage.objects.all(),
+        view_name="api:algorithms-image-detail",
+    )
+    inputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
+    outputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
+
+    class Meta(JobSerializer.Meta):
+        pass
