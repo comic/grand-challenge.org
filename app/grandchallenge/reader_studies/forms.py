@@ -26,6 +26,7 @@ from django.forms import (
     ModelChoiceField,
     ModelForm,
     TextInput,
+    Textarea,
 )
 from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
@@ -159,6 +160,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
 
 class ReaderStudyCopyForm(Form):
     title = CharField(required=True)
+    description = CharField(required=False, widget=Textarea())
     copy_images = BooleanField(required=False, initial=True)
     copy_hanging_list = BooleanField(required=False, initial=True)
     copy_case_text = BooleanField(required=False, initial=True)

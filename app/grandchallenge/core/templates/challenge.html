@@ -50,6 +50,15 @@
                     {% endif %}
                 {% endfor %}
 
+                {% if challenge.display_forum_link %}
+                   <li class="nav-item">
+                        <a class="nav-link"
+                           href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
+                            Forum
+                        </a>
+                    </li>
+                {% endif %}
+
                 {% if challenge.use_registration_page %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.view_name == 'participants:registration-create' %}active{% endif %}"
@@ -118,6 +127,10 @@
                                     </a>
                                 {% endfor %}
                                 <hr>
+                                <a class="dropdown-item"
+                                   href="{% url 'evaluation:phase-create' challenge_short_name=challenge.short_name %}">
+                                   <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase
+                                </a>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
                                     Methods

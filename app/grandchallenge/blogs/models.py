@@ -17,7 +17,9 @@ class Post(models.Model):
     description = models.TextField()
     content = models.TextField()
 
-    authors = models.ManyToManyField(to=get_user_model())
+    authors = models.ManyToManyField(
+        to=get_user_model(), related_name="blog_authors"
+    )
 
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage,

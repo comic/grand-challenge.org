@@ -1,0 +1,16 @@
+{% extends "datatables/list_base.html" %}
+{% load humanize %}
+
+{% block title %}Upload Sessions - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">Uploads</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Upload Sessions</h2>
+
+    {{ block.super }}
+{% endblock %}

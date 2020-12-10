@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import tarfile
 from contextlib import contextmanager
 from json import JSONDecodeError
@@ -16,12 +17,36 @@ from django.conf import settings
 from django.core.files import File
 from django.db.models import Model
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, ContainerError, NotFound
+from docker.errors import APIError, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
 
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
+LOGLINES = 2000  # The number of loglines to keep
+
+# Docker logline error message with optional RFC3339 timestamp
+LOGLINE_REGEX = r"^(?P<timestamp>([\d]+)-(0[1-9]|1[012])-(0[1-9]|[12][\d]|3[01])[Tt]([01][\d]|2[0-3]):([0-5][\d]):([0-5][\d]|60)(\.[\d]+)?(([Zz])|([\+|\-]([01][\d]|2[0-3]):[0-5][\d])))?(?P<error_message>.*)$"
+
+
+def user_error(obj: str):
+    """
+    Filter an error message to just return the last, none-empty line. Used
+    to return the last line of a traceback to a user.
+
+    :param obj: A string with newlines
+    :return: The last, none-empty line of obj
+    """
+    pattern = re.compile(LOGLINE_REGEX, re.MULTILINE)
+
+    error_message = "No errors were reported in the logs."
+
+    for m in re.finditer(pattern, obj):
+        e = m.group("error_message").strip()
+        if e:
+            error_message = e
+
+    return error_message
 
 
 class ComponentException(Exception):
@@ -177,14 +202,29 @@ class Executor(DockerConnection):
         self._input_volume = f"{self._job_label}-input"
         self._output_volume = f"{self._job_label}-output"
 
-    def execute(self) -> Tuple[dict, str]:
+        self._stdout = ""
+        self._stderr = ""
+        self._result = {}
+
+    def execute(self):
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
         self._chmod_volumes()
-        logs = self._execute_container()
-        result = self._get_result()
-        return result, logs
+        self._execute_container()
+        self._get_result()
+
+    @property
+    def stdout(self):
+        return self._stdout
+
+    @property
+    def stderr(self):
+        return self._stderr
+
+    @property
+    def result(self):
+        return self._result
 
     def _pull_images(self):
         self._client.images.pull(repository=self._io_image)
@@ -233,30 +273,43 @@ class Executor(DockerConnection):
             **self._run_kwargs,
         )
 
-    def _execute_container(self) -> str:
-        try:
-            logs = self._client.containers.run(
+    def _execute_container(self) -> None:
+        with cleanup(
+            self._client.containers.run(
                 image=self._exec_image_sha256,
                 volumes={
                     self._input_volume: {"bind": "/input/", "mode": "ro"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
                 name=f"{self._job_label}-executor",
-                remove=True,
+                detach=True,
                 labels=self._labels,
                 environment={
                     "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
                 },
-                stdout=True,
-                stderr=True,
                 **self._run_kwargs,
             )
-        except ContainerError as e:
-            raise ComponentException(e.stderr.decode())
+        ) as c:
+            try:
+                container_state = c.wait()
+            finally:
+                self._stdout = c.logs(
+                    stdout=True, stderr=False, timestamps=True, tail=LOGLINES
+                ).decode()
+                self._stderr = c.logs(
+                    stdout=False, stderr=True, timestamps=True, tail=LOGLINES
+                ).decode()
 
-        return logs.decode()
+        exit_code = int(container_state["StatusCode"])
+        if exit_code == 137:
+            raise ComponentException(
+                "The container was killed as it exceeded the memory limit "
+                f"of {settings.COMPONENTS_MEMORY_LIMIT}."
+            )
+        elif exit_code != 0:
+            raise ComponentException(user_error(self._stderr))
 
-    def _get_result(self) -> dict:
+    def _get_result(self):
         """
         Read and parse the created results file. Due to a bug in the docker
         client, copy the file to memory first rather than cat and read
@@ -295,7 +348,7 @@ class Executor(DockerConnection):
         except JSONDecodeError as e:
             raise ComponentException(f"Could not decode results file: {e.msg}")
 
-        return result
+        self._result = result
 
 
 class Service(DockerConnection):

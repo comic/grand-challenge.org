@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+    {% include "datatables/partials/datatable.html" with columns=columns %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    {{ default_sort_column|json_script:"defaultSortColumn" }}
+
+    <script type="text/javascript" src="{% static 'js/datatables/list.js' %}"></script>
+{% endblock %}

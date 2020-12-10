@@ -3,7 +3,7 @@ import factory
 from grandchallenge.patients.models import Patient
 
 
-class PatientFactory(factory.DjangoModelFactory):
+class PatientFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Patient
 

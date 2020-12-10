@@ -1,7 +1,12 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
-from guardian.shortcuts import assign_perm, get_group_perms, get_perms
+from guardian.shortcuts import (
+    assign_perm,
+    get_group_perms,
+    get_perms,
+    remove_perm,
+)
 
 from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import (
@@ -74,7 +79,7 @@ def test_algorithm_create_page(client, settings):
 def test_algorithm_execution_session_detail(client):
     u1, u2 = UserFactory(), UserFactory()
     a = AlgorithmImageFactory()
-    s = RawImageUploadSessionFactory(algorithm_image=a, creator=u1)
+    s = RawImageUploadSessionFactory(creator=u1)
 
     response = get_view_for_user(
         client=client,
@@ -156,6 +161,9 @@ def test_algorithm_jobs_list_view(client):
         ),
     )
 
+    j1.viewer_groups.add(alg_set.alg1.editors_group)
+    j2.viewer_groups.add(alg_set.alg2.editors_group)
+
     all_jobs = {j1, j2}
 
     tests = (
@@ -181,11 +189,11 @@ def test_algorithm_jobs_list_view(client):
 
     for test in tests:
         response = get_view_for_user(
-            viewname="algorithms:jobs-list",
+            viewname="algorithms:job-list",
             reverse_kwargs={"slug": test[1].slug},
             client=client,
             user=test[0],
-            data={"length": 50, "draw": 1},
+            data={"length": 50, "draw": 1, "order[0][column]": 0},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
         assert response.status_code == test[2]
@@ -308,16 +316,20 @@ def test_job_update_permissions(client, view_name):
         (None, j2, 302),
         (alg_set.creator, j1, 403),
         (alg_set.creator, j2, 403),
-        (alg_set.editor1, j1, 200),
+        (alg_set.editor1, j1, 403),
         (alg_set.editor1, j2, 403),
         (alg_set.user1, j1, 403),
         (alg_set.user1, j2, 403),
         (alg_set.editor2, j1, 403),
-        (alg_set.editor2, j2, 200),
+        (alg_set.editor2, j2, 403),
         (alg_set.user2, j1, 403),
         (alg_set.user2, j2, 403),
         (alg_set.u, j1, 403),
         (alg_set.u, j2, 403),
+        (j1.creator, j1, 200),
+        (j1.creator, j2, 403),
+        (j2.creator, j1, 403),
+        (j2.creator, j2, 200),
     )
 
     for test in tests:
@@ -338,7 +350,7 @@ def test_api_algorithm_list_permissions(client):
     alg_set = TwoAlgorithms()
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (alg_set.creator, 200, []),
         (alg_set.editor1, 200, [alg_set.alg1.pk]),
         (alg_set.user1, 200, [alg_set.alg1.pk]),
@@ -356,14 +368,10 @@ def test_api_algorithm_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
 
 @pytest.mark.django_db
@@ -374,7 +382,7 @@ def test_api_algorithm_image_list_permissions(client):
     alg2_image_pk = AlgorithmImageFactory(algorithm=alg_set.alg2).pk
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (alg_set.creator, 200, []),
         (alg_set.editor1, 200, [alg1_image_pk]),
         (alg_set.user1, 200, []),
@@ -392,14 +400,10 @@ def test_api_algorithm_image_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
 
 @pytest.mark.django_db
@@ -415,8 +419,11 @@ def test_api_job_list_permissions(client):
         algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
     )
 
+    alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
+    alg2_job.viewer_groups.add(alg_set.alg2.editors_group)
+
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (alg_set.creator, 200, []),
         (alg_set.editor1, 200, [alg1_job]),
         (alg_set.user1, 200, []),
@@ -436,26 +443,24 @@ def test_api_job_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            job_pks = {obj["pk"] for obj in response.json()["results"]}
-            assert job_pks == {str(j.pk) for j in test[2]}
+        job_pks = {obj["pk"] for obj in response.json()["results"]}
+        assert job_pks == {str(j.pk) for j in test[2]}
 
-            # Ensure that the images are downloadable
-            response = get_view_for_user(
-                viewname="api:image-list",
-                client=client,
-                user=test[0],
-                content_type="application/json",
-            )
-            assert response.status_code == 200
+        # Ensure that the images are downloadable
+        response = get_view_for_user(
+            viewname="api:image-list",
+            client=client,
+            user=test[0],
+            content_type="application/json",
+        )
+        assert response.status_code == 200
 
-            image_pks = {obj["pk"] for obj in response.json()["results"]}
-            assert image_pks == {
-                str(i.image.pk) for j in test[2] for i in j.inputs.all()
-            }
+        image_pks = {obj["pk"] for obj in response.json()["results"]}
+        assert image_pks == {
+            str(i.image.pk) for j in test[2] for i in j.inputs.all()
+        }
 
 
 @pytest.mark.django_db
@@ -536,3 +541,40 @@ def test_public_job_group_permissions():
 
     assert "view_job" not in get_perms(g_reg, algorithm_job)
     assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
+
+
+@pytest.mark.django_db
+class TestObjectPermissionRequiredViews:
+    def test_permission_required_views(self, client):
+        j = AlgorithmJobFactory()
+        u = UserFactory()
+
+        for view_name, kwargs, permission, obj in [
+            (
+                "job-detail",
+                {"slug": j.algorithm_image.algorithm.slug, "pk": j.pk},
+                "view_job",
+                j,
+            ),
+        ]:
+            response = get_view_for_user(
+                client=client,
+                viewname=f"algorithms:{view_name}",
+                reverse_kwargs=kwargs,
+                user=u,
+            )
+
+            assert response.status_code == 403
+
+            assign_perm(permission, u, obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"algorithms:{view_name}",
+                reverse_kwargs=kwargs,
+                user=u,
+            )
+
+            assert response.status_code == 200
+
+            remove_perm(permission, u, obj)

@@ -7,7 +7,7 @@ from grandchallenge.studies.models import Study
 from tests.patients_tests.factories import PatientFactory
 
 
-class StudyFactory(factory.DjangoModelFactory):
+class StudyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Study
 

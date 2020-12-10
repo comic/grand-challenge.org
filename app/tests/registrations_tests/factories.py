@@ -5,7 +5,7 @@ from tests.cases_tests.factories import ImageFactory
 from tests.factories import FuzzyFloatCoordinatesList
 
 
-class OctObsRegistrationFactory(factory.DjangoModelFactory):
+class OctObsRegistrationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = OctObsRegistration
 

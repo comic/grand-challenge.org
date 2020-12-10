@@ -108,6 +108,7 @@ class StatisticsDetail(TemplateView):
                     rank__gt=0,
                     status=EvaluationJob.SUCCESS,
                 )
+                .select_related("submission__phase__challenge")
                 .order_by("-created")
                 .first()
             ),
@@ -177,10 +178,10 @@ class MetricsAPIView(APIView):
             AlgorithmJob.objects.filter(status=AlgorithmJob.STARTED).count()
         )
         metrics.EVALUATION_JOBS_PENDING.set(
-            EvaluationJob.objects.filter(status=AlgorithmJob.PENDING).count()
+            EvaluationJob.objects.filter(status=EvaluationJob.PENDING).count()
         )
         metrics.EVALUATION_JOBS_ACTIVE.set(
-            EvaluationJob.objects.filter(status=AlgorithmJob.STARTED).count()
+            EvaluationJob.objects.filter(status=EvaluationJob.STARTED).count()
         )
         metrics.UPLOAD_SESSIONS_PENDING.set(
             RawImageUploadSession.objects.filter(

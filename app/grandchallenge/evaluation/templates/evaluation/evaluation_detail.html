@@ -11,7 +11,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item">
-            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }} Leaderboard</a>
+            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }}
+                Leaderboard</a>
         </li>
         <li class="breadcrumb-item active"
             aria-current="page">{{ object.pk }}</li>
@@ -23,36 +24,59 @@
     <h2>Evaluation</h2>
 
     <dl>
-        <dt>ID</dt>
-        <dd>{{ object.pk }}</dd>
 
-        <dt>Status</dt>
-        <dd>{{ object.get_status_display }}</dd>
+        {% if object.status == object.SUCCESS and object.submission.phase.evaluation_detail_observable_url %}
+            <iframe id="observableNotebook"
+                    class="border-0"
+                    style="height: 75vh; min-width: 100%;"
+                    sandbox="allow-scripts"
+                    src="{% url 'evaluation:observable-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug kind='detail' %}?pk={{ object.pk }}">
+            </iframe>
 
-        <dt>User</dt>
-        <dd>
-            {{ object.submission.creator|user_profile_link }}
-        </dd>
+            {% if "change_challenge" in challenge_perms %}
+                <p>
+                    <a id="observableEditLink"
+                       class="btn btn-primary"
+                       title="Edit notebook in observable"
+                       target="_blank"
+                       href="{{ object.submission.phase.observable_detail_edit_url }}?pk={{ object.pk }}">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                </p>
+            {% endif %}
+        {% else %}
+            <dt>ID</dt>
+            <dd>{{ object.pk }}</dd>
 
-        <dt>Challenge</dt>
-        <dd><a href="{{ object.submission.phase.challenge.get_absolute_url }}">
-            {{ object.submission.phase.challenge.short_name }}</a></dd>
+            <dt>Status</dt>
+            <dd>{{ object.get_status_display }}</dd>
 
-        <dt>Phase</dt>
-        <dd><a href="{% url 'evaluation:leaderboard' challenge_short_name=object.submission.phase.challenge.short_name slug=object.submission.phase.slug %}">
-            {{ object.submission.phase.title }}</a></dd>
-
-        <dt>Submission created</dt>
-        <dd>{{ object.submission.created }}</dd>
-
-        <dt>Result created</dt>
-        <dd>{{ object.created }}</dd>
-
-        {% if object.published and object.rank > 0 %}
-            <dt>Position on leaderboard</dt>
+            <dt>User</dt>
             <dd>
-                {{ object.rank }}
+                {{ object.submission.creator|user_profile_link }}
             </dd>
+
+            <dt>Challenge</dt>
+            <dd><a href="{{ object.submission.phase.challenge.get_absolute_url }}">
+                {{ object.submission.phase.challenge.short_name }}</a></dd>
+
+            <dt>Phase</dt>
+            <dd>
+                <a href="{% url 'evaluation:leaderboard' challenge_short_name=object.submission.phase.challenge.short_name slug=object.submission.phase.slug %}">
+                    {{ object.submission.phase.title }}</a></dd>
+
+            <dt>Submission created</dt>
+            <dd>{{ object.submission.created }}</dd>
+
+            <dt>Result created</dt>
+            <dd>{{ object.created }}</dd>
+
+            {% if object.published and object.rank > 0 %}
+                <dt>Position on leaderboard</dt>
+                <dd>
+                    {{ object.rank }}
+                </dd>
+            {% endif %}
         {% endif %}
 
         <dt>Visibility</dt>
@@ -134,11 +158,9 @@
                     <i class="fa fa-eye"></i> View Predictions</a>
             </dd>
         {% endif %}
-
     </dl>
 
     {% if object.status == object.SUCCESS %}
-
         <h3>Metrics</h3>
         {% if object.submission.phase.display_all_metrics %}
             <pre>{{ metrics|json_dumps }}</pre>

@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.urls import path
 from django.utils.html import format_html
+from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.cases.models import (
     Image,
@@ -23,7 +24,7 @@ class ImageFileInline(admin.StackedInline):
     extra = 0
 
 
-class ImageAdmin(admin.ModelAdmin):
+class ImageAdmin(GuardedModelAdmin):
     search_fields = (
         "pk",
         "name",
@@ -68,12 +69,13 @@ class MhdOrRawFilter(admin.SimpleListFilter):
             return queryset.filter(file__endswith="raw")
 
 
-class ImageFileAdmin(admin.ModelAdmin):
+class ImageFileAdmin(GuardedModelAdmin):
     search_fields = ("pk", "file", "image__name")
     list_filter = (MhdOrRawFilter,)
+    readonly_fields = ("image",)
 
 
-class RawImageUploadSessionAdmin(admin.ModelAdmin):
+class RawImageUploadSessionAdmin(GuardedModelAdmin):
     ordering = ("-created",)
     list_display = (
         "pk",
@@ -81,34 +83,17 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
         "creator",
         "status",
         "error_message",
-        "algorithm",
-        "reader_study",
-        "archive",
     )
     readonly_fields = (
         "creator",
-        "algorithm_image",
-        "reader_study",
-        "archive",
         "status",
-    )
-    list_select_related = (
-        "algorithm_image__algorithm",
-        "archive",
     )
     list_filter = ("status",)
     search_fields = (
         "creator__username",
-        "algorithm_image__algorithm__slug",
-        "reader_study__slug",
-        "archive__slug",
         "pk",
         "error_message",
     )
-
-    def algorithm(self, obj):
-        if obj.algorithm_image:
-            return obj.algorithm_image.algorithm
 
 
 class DownloadableFilter(admin.SimpleListFilter):
@@ -126,8 +111,8 @@ class DownloadableFilter(admin.SimpleListFilter):
         return queryset
 
 
-class RawImageFileAdmin(admin.ModelAdmin):
-    list_filter = (DownloadableFilter, "upload_session__archive__slug")
+class RawImageFileAdmin(GuardedModelAdmin):
+    list_filter = (DownloadableFilter,)
     list_display = ("filename", "upload_session", "download")
     list_select_related = ("upload_session__archive",)
     readonly_fields = (

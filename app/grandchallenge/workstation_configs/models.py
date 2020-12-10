@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.validators import (
     MaxValueValidator,
@@ -68,6 +67,56 @@ OVERLAY_SEGMENTS_SCHEMA = {
                 "description": "The jinja template to determine which property from the results.json should be used as the label text.",
                 "default": "",
                 "examples": ["{{metrics.volumes[0]}} mm³"],
+            },
+        },
+    },
+}
+
+KEY_BINDINGS_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-06/schema",
+    "$id": "http://example.com/example.json",
+    "type": "array",
+    "title": "The Key Bindings Schema",
+    "description": "Define the key bindings for the workstation.",
+    "items": {
+        "$id": "#/items",
+        "type": "object",
+        "title": "The Key Binding Schema",
+        "description": "Defines a key binding for a command.",
+        "default": {},
+        "examples": [
+            {
+                "key": "ctrl+shift+k",
+                "command": "editor.action.deleteLines",
+                "when": "editorTextFocus",
+            }
+        ],
+        "required": ["key", "command"],
+        "additionalProperties": False,
+        "properties": {
+            "key": {
+                "$id": "#/items/properties/key",
+                "type": "string",
+                "title": "The Key Schema",
+                "description": "The keys used for this binding.",
+                "default": "",
+                "examples": ["ctrl+shift+k"],
+            },
+            "command": {
+                "$id": "#/items/properties/command",
+                "type": "string",
+                "title": "The Command Schema",
+                "description": "The command called by this binding.",
+                "default": "",
+                "examples": ["editor.action.deleteLines"],
+            },
+            "when": {
+                "$id": "#/items/properties/when",
+                "type": "string",
+                "title": "The When Schema",
+                "description": "The condition that must be met for this command to be called.",
+                "default": "",
+                "examples": ["editorTextFocus"],
             },
         },
     },
@@ -156,10 +205,16 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         ],
     )
 
-    overlay_segments = JSONField(
+    overlay_segments = models.JSONField(
         default=list,
         blank=True,
         validators=[JSONSchemaValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+    )
+
+    key_bindings = models.JSONField(
+        default=list,
+        blank=True,
+        validators=[JSONSchemaValidator(schema=KEY_BINDINGS_SCHEMA)],
     )
 
     # 4 digits, 2 decimal places, 0.01 min, 99.99 max

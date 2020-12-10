@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from guardian.shortcuts import get_perms
 
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from tests.algorithms_tests.factories import (
@@ -9,7 +10,7 @@ from tests.algorithms_tests.factories import (
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -26,6 +27,9 @@ def test_user_can_download_images(client, reverse):
     alg2_job = AlgorithmJobFactory(
         algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
     )
+
+    alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
+    alg2_job.viewer_groups.add(alg_set.alg2.editors_group)
 
     iv1, iv2, iv3, iv4 = (
         ComponentInterfaceValueFactory(image=ImageFactory()),
@@ -48,7 +52,7 @@ def test_user_can_download_images(client, reverse):
         alg1_job.outputs.remove(iv3, iv4)
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (alg_set.creator, 200, []),
         (
             alg_set.editor1,
@@ -84,14 +88,10 @@ def test_user_can_download_images(client, reverse):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
     # Test clearing
     if reverse:
@@ -124,6 +124,9 @@ def test_user_can_download_input_images(client, reverse):
         algorithm_image__algorithm=alg_set.alg2, creator=j2_creator
     )
 
+    alg1_job.viewer_groups.add(alg_set.alg1.editors_group)
+    alg2_job.viewer_groups.add(alg_set.alg2.editors_group)
+
     iv1, iv2, iv3, iv4 = (
         ComponentInterfaceValueFactory(image=ImageFactory()),
         ComponentInterfaceValueFactory(image=ImageFactory()),
@@ -148,7 +151,7 @@ def test_user_can_download_input_images(client, reverse):
         alg1_job.inputs.remove(iv3, iv4)
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (alg_set.creator, 200, []),
         (
             alg_set.editor1,
@@ -172,14 +175,10 @@ def test_user_can_download_input_images(client, reverse):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
     # Test clearing
     if reverse:
@@ -228,3 +227,91 @@ def test_process_algorithm_permission_request():
         pr.save()
         send_email.assert_called_once()
         assert pr.algorithm.is_user(pr.user)
+
+
+@pytest.mark.django_db
+class TestAlgorithmJobViewersGroup:
+    def test_view_permissions_are_assigned(self):
+        job = AlgorithmJobFactory()
+        viewer_groups = {*job.viewer_groups.all()}
+
+        assert viewer_groups == {
+            job.viewers,
+        }
+        for group in viewer_groups:
+            assert "view_job" in get_perms(group, job)
+
+    @pytest.mark.parametrize("reverse", [True, False])
+    def test_group_addition(self, reverse):
+        job = AlgorithmJobFactory()
+        group = GroupFactory()
+        civ_in, civ_out = (
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+        )
+        job.inputs.add(civ_in)
+        job.outputs.add(civ_out)
+        assert "view_job" not in get_perms(group, job)
+        assert "view_image" not in get_perms(group, civ_in.image)
+        assert "view_image" not in get_perms(group, civ_out.image)
+
+        if reverse:
+            group.job_set.add(job)
+        else:
+            job.viewer_groups.add(group)
+
+        assert "view_job" in get_perms(group, job)
+        assert "view_image" in get_perms(group, civ_in.image)
+        assert "view_image" in get_perms(group, civ_out.image)
+
+    @pytest.mark.parametrize("reverse", [True, False])
+    def test_group_removal(self, reverse):
+        job = AlgorithmJobFactory()
+        civ_in, civ_out = (
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+        )
+        job.inputs.add(civ_in)
+        job.outputs.add(civ_out)
+        group = job.viewer_groups.first()
+
+        assert "view_job" in get_perms(group, job)
+        assert "view_image" in get_perms(group, civ_in.image)
+        assert "view_image" in get_perms(group, civ_out.image)
+
+        if reverse:
+            group.job_set.remove(job)
+        else:
+            job.viewer_groups.remove(group)
+
+        assert "view_job" not in get_perms(group, job)
+        assert "view_image" not in get_perms(group, civ_in.image)
+        assert "view_image" not in get_perms(group, civ_out.image)
+
+    @pytest.mark.parametrize("reverse", [True, False])
+    def test_group_clearing(self, reverse):
+        job = AlgorithmJobFactory()
+        civ_in, civ_out = (
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+            ComponentInterfaceValueFactory(image=ImageFactory()),
+        )
+        job.inputs.add(civ_in)
+        job.outputs.add(civ_out)
+        groups = job.viewer_groups.all()
+
+        assert len(groups) > 0
+        for group in groups:
+            assert "view_job" in get_perms(group, job)
+            assert "view_image" in get_perms(group, civ_in.image)
+            assert "view_image" in get_perms(group, civ_out.image)
+
+        if reverse:
+            for group in groups:
+                group.job_set.clear()
+        else:
+            job.viewer_groups.clear()
+
+        for group in groups:
+            assert "view_job" not in get_perms(group, job)
+            assert "view_image" not in get_perms(group, civ_in.image)
+            assert "view_image" not in get_perms(group, civ_out.image)

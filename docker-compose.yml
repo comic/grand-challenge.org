@@ -94,8 +94,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      memcached:
-        condition: service_started
       minio-private:
         condition: service_started
       minio-protected:
@@ -114,7 +112,7 @@ services:
         source: /var/run/docker.sock
         target: /var/run/docker.sock
     group_add:
-      - ${DOCKER_GID-999} # The docker group is only needed for testing
+      - ${DOCKER_GID-1001} # The docker group is only needed for testing
 
   http:
     image: grandchallenge/http:latest
@@ -137,10 +135,6 @@ services:
         condition: service_started
       workstation-proxy:
         condition: service_started
-
-  memcached:
-    image: memcached:1.6
-    restart: always
 
   redis:
     image: redis:5.0

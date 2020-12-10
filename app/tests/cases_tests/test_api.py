@@ -68,15 +68,12 @@ def test_upload_session_detail(client):
 @pytest.mark.django_db
 def test_upload_sessions_create(client):
     user = UserFactory()
-    ai = AlgorithmImageFactory()
-    ai.algorithm.add_user(user)
 
     response = get_view_for_user(
         viewname="api:upload-session-list",
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm_image": ai.api_url},
         content_type="application/json",
     )
     assert response.status_code == 201
@@ -84,7 +81,7 @@ def test_upload_sessions_create(client):
     upload_session = RawImageUploadSession.objects.get(
         pk=response.data.get("pk")
     )
-    assert upload_session.algorithm_image == ai
+    assert upload_session.creator == user
 
 
 @pytest.mark.django_db
@@ -96,13 +93,22 @@ def test_invalid_upload_sessions(client):
         user=user,
         client=client,
         method=client.post,
-        data={"algorithm_image": None},
+        data={"algorithm": None},
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": response.json()["pk"]},
+        user=user,
+        client=client,
+        method=client.patch,
+        data={"algorithm": None},
         content_type="application/json",
     )
     assert response.status_code == 400
-    assert response.json() == {
-        "algorithm_image": ["This field may not be null."]
-    }
+    assert response.json() == {"algorithm": ["This field may not be null."]}
 
 
 @pytest.mark.django_db
@@ -114,13 +120,22 @@ def test_empty_data_upload_sessions(client):
         user=user,
         client=client,
         method=client.post,
-        data={},
+        content_type="application/json",
+    )
+    assert response.status_code == 201
+
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": response.json()["pk"]},
+        user=user,
+        client=client,
+        method=client.patch,
         content_type="application/json",
     )
     assert response.status_code == 400
     assert response.json() == {
         "non_field_errors": [
-            "1 of algorithm image, archive or reader study must be set"
+            "1 of algorithm, archive or reader study must be set"
         ]
     }
 
@@ -198,9 +213,7 @@ def test_image_file_create(client):
     user = UserFactory()
     ai = AlgorithmImageFactory()
     ai.algorithm.add_user(user)
-    upload_session = RawImageUploadSessionFactory(
-        creator=user, algorithm_image=ai
-    )
+    upload_session = RawImageUploadSessionFactory(creator=user)
 
     response = get_view_for_user(
         viewname="api:upload-session-file-list",
@@ -289,10 +302,7 @@ def test_empty_data_image_files(client):
 )
 def test_image_file_post_permissions(client, is_active, expected_response):
     user = UserFactory(is_active=is_active)
-    algo = AlgorithmImageFactory(creator=user)
-    upload_session = RawImageUploadSessionFactory(
-        creator=user, algorithm_image=algo
-    )
+    upload_session = RawImageUploadSessionFactory(creator=user)
     response = get_view_for_user(
         viewname="api:upload-session-file-list",
         user=user,
@@ -316,6 +326,9 @@ def test_process_images_api_view(client, settings):
     user = UserFactory()
     us = RawImageUploadSessionFactory(creator=user)
 
+    algorithm_image = AlgorithmImageFactory(ready=True)
+    algorithm_image.algorithm.add_user(user)
+
     f = StagedFileFactory(
         file__from_path=Path(__file__).parent
         / "resources"
@@ -331,6 +344,7 @@ def test_process_images_api_view(client, settings):
             user=user,
             client=client,
             method=client.patch,
+            data={"algorithm": algorithm_image.algorithm.slug},
             content_type="application/json",
         )
 
@@ -385,29 +399,49 @@ def test_filter_images_api_view(client):
 )
 def test_archive_upload_session_create(client, obj, factory):
     u = UserFactory()
-
     o = factory()
 
+    # Create the upload session
     response = get_view_for_user(
         viewname="api:upload-session-list",
         user=u,
         client=client,
         method=client.post,
-        data={obj: o.slug},
         content_type="application/json",
     )
 
-    assert response.status_code == 400
+    upload_session = response.json()
 
+    assert response.status_code == 201
+
+    # Try to process the images
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": upload_session["pk"]},
+        user=u,
+        client=client,
+        method=client.patch,
+        content_type="application/json",
+        data={obj: o.slug},
+    )
+
+    errors = response.json()
+
+    assert response.status_code == 400
+    assert "User does not have permission" in errors[obj][0]
+
+    # Assign permissions
     o.add_editor(u)
 
     response = get_view_for_user(
-        viewname="api:upload-session-list",
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": upload_session["pk"]},
         user=u,
         client=client,
-        method=client.post,
-        data={obj: o.slug},
+        method=client.patch,
         content_type="application/json",
+        data={obj: o.slug},
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 200
+    assert response.json() == "Image processing job queued."

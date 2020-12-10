@@ -1,6 +1,6 @@
 from django.conf import settings
-from django.conf.urls import include, url
-from django.urls import path
+from django.conf.urls import include
+from django.urls import path, re_path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
@@ -16,8 +16,9 @@ from grandchallenge.cases.views import (
     RawImageFileViewSet,
     RawImageUploadSessionViewSet,
 )
-from grandchallenge.evaluation.views.api import AlgorithmEvaluationViewSet
+from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.jqfileupload.views import StagedFileViewSet
+from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
     QuestionViewSet,
@@ -25,6 +26,7 @@ from grandchallenge.reader_studies.views import (
 )
 from grandchallenge.retina_api.views import (
     BooleanClassificationAnnotationViewSet,
+    ETDRSGridAnnotationViewSet,
     ImageLevelAnnotationsForImageViewSet,
     LandmarkAnnotationSetViewSet,
     OctRetinaPathologyAnnotationViewSet,
@@ -72,9 +74,12 @@ router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
 # Evaluations
 router.register(
-    r"evaluations/algorithms",
-    AlgorithmEvaluationViewSet,
-    basename="evaluations-algorithm-evaluation",
+    r"evaluations", EvaluationViewSet, basename="evaluation",
+)
+
+# Profiles
+router.register(
+    r"profiles/users", UserProfileViewSet, basename="profiles-user"
 )
 
 # Reader studies
@@ -139,6 +144,11 @@ router.register(
     BooleanClassificationAnnotationViewSet,
     basename="retina-boolean-classification-annotation",
 )
+router.register(
+    r"retina/etdrs-grid-annotation",
+    ETDRSGridAnnotationViewSet,
+    basename="retina-etdrs-grid-annotation",
+)
 
 # Workstations
 router.register(
@@ -167,7 +177,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    url(
+    re_path(
         r"^swagger(?P<format>\.json|\.yaml)$",
         schema_view.without_ui(),
         name="schema-json",

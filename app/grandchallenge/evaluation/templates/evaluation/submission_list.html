@@ -1,5 +1,6 @@
 {% extends "challenge.html" %}
 {% load url %}
+{% load profiles %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -8,8 +9,7 @@
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
-        <li class="breadcrumb-item active"
-            aria-current="page">Submissions</li>
+        <li class="breadcrumb-item active" aria-current="page">Submissions</li>
     </ol>
 {% endblock %}
 
@@ -17,39 +17,51 @@
 
     <h2>Submissions</h2>
 
-    {% if "change_challenge" in challenge_perms %}
-    <p>
-
-    </p>
-    {% endif %}
-
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm" id="submissionsTable">
             <thead class="thead-light">
             <tr>
-                <th>ID</th>
                 <th>Created</th>
                 <th>Phase</th>
                 <th>User</th>
                 <th>Comment</th>
+                <th>Evaluations</th>
             </tr>
             </thead>
             <tbody>
             {% for submission in object_list %}
                 <tr>
-                    <td>
-                        {% if "change_challenge" in challenge_perms %}
-                            <a href="{{ submission.get_absolute_url }}">{{ submission.pk }}</a>
-                        {% else %}
-                            {{ submission.pk }}
-                        {% endif %}
-                    </td>
                     <td data-order="{{ submission.created|date:"U" }}">{{ submission.created }}</td>
                     <td>{{ submission.phase.title }}</td>
-                    <td><a
-                            href="{% url 'userena_profile_detail' submission.creator.username %}">{{ submission.creator }}</a>
+                    <td>
+                        {{ submission.creator|user_profile_link }}
                     </td>
                     <td>{{ submission.comment }}</td>
+                    <td>
+                        {% for evaluation in submission.evaluation_set.all %}
+                            <span class="badge
+                                {% if evaluation.status == evaluation.FAILURE or evaluation.status == evaluation.CANCELLED %}
+                                    badge-danger
+                                {% elif evaluation.status == evaluation.RETRY %}
+                                    badge-warning
+                                {% elif evaluation.status == evaluation.SUCCESS %}
+                                    badge-success
+                                {% else %}
+                                    badge-info
+                                {% endif %}">
+                                {{ evaluation.get_status_display }}
+                            </span>
+                            {% if evaluation.status == evaluation.SUCCESS %}
+                                {% if evaluation.published %}
+                                    <a href="{{ evaluation.get_absolute_url }}">Result</a>
+                                {% else %}
+                                    Evaluation is under review by the challenge admins.
+                                {% endif %}
+                            {% elif evaluation.FAILURE %}
+                                {% firstof evaluation.error_message evaluation.get_status_display %}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -61,7 +73,11 @@
     {{ block.super }}
     <script type="text/javascript">
         $(document).ready(function () {
-            $('#submissionsTable').DataTable();
+            $('#submissionsTable').DataTable(
+                {
+                    order: [[0, "desc"]]
+                }
+            );
         });
     </script>
 {% endblock %}

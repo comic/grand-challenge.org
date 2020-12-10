@@ -1,7 +1,6 @@
 import datetime
 import logging
-import re
-from collections import namedtuple
+from itertools import chain, product
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -16,16 +15,25 @@ from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
+from machina.apps.forum.models import Forum
+from machina.apps.forum_permission.models import (
+    ForumPermission,
+    GroupForumPermission,
+    UserForumPermission,
+)
 from tldextract import extract
 
+from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_created_email,
     send_external_challenge_created_email,
 )
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.task_categories.models import TaskType
 
 logger = logging.getLogger(__name__)
 
@@ -54,110 +62,6 @@ def get_banner_path(instance, filename):
     return f"b/{instance.pk}/{get_valid_filename(filename)}"
 
 
-class TaskType(models.Model):
-    """Stores the task type options, eg, Segmentation, Regression, etc."""
-
-    type = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("type",)
-
-    def __str__(self):
-        return self.type
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.type)
-        return f"task-{cls}"
-
-    @property
-    def badge(self):
-        return format_html(
-            (
-                '<span class="badge badge-light above-stretched-link" '
-                'title="{0} challenge"><i class="fas fa-tasks fa-fw">'
-                "</i> {0}</span>"
-            ),
-            self.type,
-        )
-
-
-class ImagingModality(models.Model):
-    """Store the modality options, eg, MR, CT, PET, XR."""
-
-    modality = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("modality",)
-
-    def __str__(self):
-        return self.modality
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.modality)
-        return f"modality-{cls}"
-
-    @property
-    def badge(self):
-        return format_html(
-            (
-                '<span class="badge badge-secondary above-stretched-link" '
-                'title="Uses {0} data"><i class="fas fa-microscope fa-fw">'
-                "</i> {0}</span>"
-            ),
-            self.modality,
-        )
-
-
-class BodyRegion(models.Model):
-    """Store the anatomy options, eg, Head, Neck, Thorax, etc."""
-
-    region = CICharField(max_length=16, blank=False, unique=True)
-
-    class Meta:
-        ordering = ("region",)
-
-    def __str__(self):
-        return self.region
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.region)
-        return f"region-{cls}"
-
-
-class BodyStructure(models.Model):
-    """Store the organ name and what region it belongs to."""
-
-    structure = CICharField(max_length=16, blank=False, unique=True)
-    region = models.ForeignKey(
-        to=BodyRegion, on_delete=models.CASCADE, blank=False
-    )
-
-    class Meta:
-        ordering = ("region", "structure")
-
-    def __str__(self):
-        return f"{self.structure} ({self.region})"
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.structure)
-        return f"structure-{cls}"
-
-    @property
-    def badge(self):
-        return format_html(
-            (
-                '<span class="badge badge-dark above-stretched-link" '
-                'title="Uses {0} data"><i class="fas fa-child fa-fw">'
-                "</i> {0}</span>"
-            ),
-            self.structure,
-        )
-
-
 class ChallengeSeries(models.Model):
     name = CICharField(max_length=64, blank=False, unique=True)
     url = models.URLField(blank=True)
@@ -168,11 +72,6 @@ class ChallengeSeries(models.Model):
 
     def __str__(self):
         return f"{self.name}"
-
-    @property
-    def filter_tag(self):
-        cls = re.sub(r"\W+", "", self.name)
-        return f"series-{cls}"
 
     @property
     def badge(self):
@@ -258,36 +157,10 @@ class ChallengeBase(models.Model):
         null=True,
         help_text="Website of the event which will host the workshop",
     )
-    publication_url = models.URLField(
+    publications = models.ManyToManyField(
+        "publications.Publication",
         blank=True,
-        null=True,
-        help_text="URL of a publication describing this project",
-    )
-    publication_journal_name = models.CharField(
-        max_length=225,
-        blank=True,
-        null=True,
-        help_text=(
-            "If publication was in a journal, please list the journal name "
-            "here We use <a target='new' "
-            "href='https://www.ncbi.nlm.nih.gov/nlmcatalog/journals'>PubMed "
-            "journal abbreviations</a> format"
-        ),
-    )
-    publication_citation_count = models.PositiveIntegerField(
-        blank=True,
-        default=0,
-        help_text="The number of citations for the publication",
-    )
-    publication_google_scholar_id = models.BigIntegerField(
-        blank=True,
-        null=True,
-        help_text=(
-            "The ID of the article in google scholar. For instance, setting "
-            "this to 5362332738201102290, which the ID for LeCun et al. "
-            "in Nature 2015, and corresponds to the url"
-            "https://scholar.google.com/scholar?cluster=5362332738201102290"
-        ),
+        help_text="Which publications are associated with this challenge?",
     )
     data_license_agreement = models.TextField(
         blank=True,
@@ -347,12 +220,6 @@ class ChallengeBase(models.Model):
     def upcoming_workshop_date(self):
         if self.workshop_date and self.workshop_date > datetime.date.today():
             return self.workshop_date
-
-    @property
-    def host_filter(self):
-        host_filter = namedtuple("host_filter", ["host", "filter_tag"])
-        domain = self.registered_domain
-        return host_filter(domain, re.sub(r"\W+", "", domain))
 
     @property
     def registered_domain(self):
@@ -425,17 +292,22 @@ class Challenge(ChallengeBase):
     )
     admins_group = models.OneToOneField(
         Group,
-        null=True,
         editable=False,
         on_delete=models.CASCADE,
         related_name="admins_of_challenge",
     )
     participants_group = models.OneToOneField(
         Group,
-        null=True,
         editable=False,
         on_delete=models.CASCADE,
         related_name="participants_of_challenge",
+    )
+    forum = models.OneToOneField(
+        Forum, editable=False, on_delete=models.CASCADE
+    )
+    display_forum_link = models.BooleanField(
+        default=False,
+        help_text="Display a link to the challenge forum in the nav bar.",
     )
 
     cached_num_participants = models.PositiveIntegerField(
@@ -453,38 +325,144 @@ class Challenge(ChallengeBase):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
+        if adding:
+            self.create_groups()
+            self.create_forum()
+
         super().save(*args, **kwargs)
 
         if adding:
-            # Create the groups only on first save
-            admins_group = Group.objects.create(name=self.admin_group_name())
-            participants_group = Group.objects.create(
-                name=self.participants_group_name()
-            )
-            self.admins_group = admins_group
-            self.participants_group = participants_group
-            self.save()
-
-            # Create the evaluation config
-            self.phase_set.create(challenge=self)
-
+            self.update_permissions()
+            self.create_forum_permissions()
             self.create_default_pages()
-
-            assign_perm("change_challenge", admins_group, self)
-
-            # add current user to admins for this challenge
-            try:
-                self.creator.groups.add(admins_group)
-            except AttributeError:
-                # No creator set
-                pass
-
+            self.create_default_phases()
             send_challenge_created_email(self)
 
-        if self.hidden != self._hidden_orig:
+        if adding or self.hidden != self._hidden_orig:
             assign_evaluation_permissions.apply_async(
                 kwargs={"challenge_pk": self.pk}
             )
+            self.update_user_forum_permissions()
+
+    def update_permissions(self):
+        assign_perm("change_challenge", self.admins_group, self)
+
+    def create_forum_permissions(self):
+        participant_group_perms = {
+            "can_see_forum",
+            "can_read_forum",
+            "can_start_new_topics",
+            "can_reply_to_topics",
+            "can_delete_own_posts",
+            "can_edit_own_posts",
+            "can_post_without_approval",
+            "can_create_polls",
+            "can_vote_in_polls",
+        }
+        admin_group_perms = {
+            "can_lock_topics",
+            "can_edit_posts",
+            "can_delete_posts",
+            "can_approve_posts",
+            "can_reply_to_locked_topics",
+            "can_post_announcements",
+            "can_post_stickies",
+            *participant_group_perms,
+        }
+
+        permissions = ForumPermission.objects.filter(
+            codename__in=admin_group_perms
+        ).values_list("codename", "pk")
+        permissions = {codename: pk for codename, pk in permissions}
+
+        GroupForumPermission.objects.bulk_create(
+            chain(
+                (
+                    GroupForumPermission(
+                        permission_id=permissions[codename],
+                        group=self.participants_group,
+                        forum=self.forum,
+                        has_perm=True,
+                    )
+                    for codename in participant_group_perms
+                ),
+                (
+                    GroupForumPermission(
+                        permission_id=permissions[codename],
+                        group=self.admins_group,
+                        forum=self.forum,
+                        has_perm=True,
+                    )
+                    for codename in admin_group_perms
+                ),
+            )
+        )
+
+        UserForumPermission.objects.bulk_create(
+            UserForumPermission(
+                permission_id=permissions[codename],
+                **{user: True},
+                forum=self.forum,
+                has_perm=not self.hidden,
+            )
+            for codename, user in product(
+                ["can_see_forum", "can_read_forum"],
+                ["anonymous_user", "authenticated_user"],
+            )
+        )
+
+    def update_user_forum_permissions(self):
+        perms = UserForumPermission.objects.filter(
+            permission__codename__in=["can_see_forum", "can_read_forum"],
+            forum=self.forum,
+        )
+
+        for p in perms:
+            p.has_perm = not self.hidden
+
+        UserForumPermission.objects.bulk_update(perms, ["has_perm"])
+
+    def create_groups(self):
+        # Create the groups only on first save
+        admins_group = Group.objects.create(name=f"{self.short_name}_admins")
+        participants_group = Group.objects.create(
+            name=f"{self.short_name}_participants"
+        )
+        self.admins_group = admins_group
+        self.participants_group = participants_group
+
+        try:
+            self.creator.groups.add(admins_group)
+        except AttributeError:
+            # No creator set
+            pass
+
+    def create_forum(self):
+        f, created = Forum.objects.get_or_create(
+            name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT,
+        )
+
+        if created:
+            UserForumPermission.objects.bulk_create(
+                UserForumPermission(
+                    permission_id=perm_id,
+                    **{user: True},
+                    forum=f,
+                    has_perm=True,
+                )
+                for perm_id, user in product(
+                    ForumPermission.objects.filter(
+                        codename__in=["can_see_forum", "can_read_forum"]
+                    ).values_list("pk", flat=True),
+                    ["anonymous_user", "authenticated_user"],
+                )
+            )
+
+        self.forum = Forum.objects.create(
+            name=self.title if self.title else self.short_name,
+            parent=f,
+            type=Forum.FORUM_POST,
+        )
 
     def create_default_pages(self):
         Page.objects.create(
@@ -504,13 +482,8 @@ class Challenge(ChallengeBase):
             permission_level=Page.REGISTERED_ONLY,
         )
 
-    def admin_group_name(self):
-        """Return the name of this challenges admin group."""
-        return self.short_name + "_admins"
-
-    def participants_group_name(self):
-        """Return the name of the participants group."""
-        return self.short_name + "_participants"
+    def create_default_phases(self):
+        self.phase_set.create(challenge=self)
 
     def is_admin(self, user) -> bool:
         """Determines if this user is an admin of this challenge."""

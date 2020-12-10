@@ -6,7 +6,6 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
-from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import (
     ImageFactory,
@@ -222,14 +221,12 @@ class ImageFactoryWithImageFile3DLarge4Slices(ImageFactoryWithImageFile3D):
             ImageFileFactoryWithRAWFile3DLarge4Slices(image=self)
 
 
-class RawImageUploadSessionFactory(factory.DjangoModelFactory):
+class RawImageUploadSessionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RawImageUploadSession
 
-    algorithm_image = factory.SubFactory(AlgorithmImageFactory)
 
-
-class RawImageFileFactory(factory.DjangoModelFactory):
+class RawImageFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RawImageFile
 

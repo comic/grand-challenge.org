@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -6,11 +7,16 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import Min, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.utils import timezone
 from django.utils._os import safe_join
+from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
+from jinja2 import sandbox
+from jinja2.exceptions import TemplateError
 
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
@@ -31,6 +37,8 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.evaluation.utils import get
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -38,6 +46,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_INPUT_INTERFACE_SLUG = "generic-medical-image"
 DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
+
+JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):
@@ -84,12 +94,32 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "terms of usage, define them here."
         ),
     )
+    result_template = models.TextField(
+        blank=True,
+        default="<pre>{{ result_dict|tojson(indent=2) }}</pre>",
+        help_text=(
+            "Define the jinja template to render the content of the "
+            "result.json to html. For example, the following template will print "
+            "out all the keys and values of the result.json. Use result-dict to access"
+            "the json root."
+            "{% for key, value in result_dict.metrics.items() -%}"
+            "{{ key }}  {{ value }}"
+            "{% endfor %}"
+        ),
+    )
 
     inputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_inputs"
     )
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_outputs"
+    )
+
+    credits_per_job = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            "The number of credits that are required for each execution of this algorithm."
+        ),
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
@@ -366,12 +396,28 @@ class AlgorithmExecutor(Executor):
             job.outputs.add(civ)
 
 
+class JobQuerySet(models.QuerySet):
+    def spent_credits(self, user):
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_groups = Group.objects.filter(user=user)
+
+        return (
+            self.filter(creator=user, created__range=[now - period, now],)
+            .distinct()
+            .order_by("created")
+            .select_related("algorithm_image__algorithm")
+            .exclude(algorithm_image__algorithm__editors_group__in=user_groups)
+            .aggregate(
+                total=Sum("algorithm_image__algorithm__credits_per_job"),
+                oldest=Min("created"),
+            )
+        )
+
+
 class Job(UUIDModel, ComponentJob):
     algorithm_image = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
-    )
-    image = models.ForeignKey(
-        "cases.Image", null=True, on_delete=models.SET_NULL
     )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -387,8 +433,26 @@ class Job(UUIDModel, ComponentJob):
     )
     comment = models.TextField(blank=True, default="")
 
+    viewer_groups = models.ManyToManyField(
+        Group,
+        help_text="Which groups should have permission to view this job?",
+    )
+    viewers = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        related_name="viewers_of_algorithm_job",
+    )
+    credits_set = JobQuerySet.as_manager()
+
     class Meta:
         ordering = ("created",)
+
+    def __str__(self):
+        return f"Job {self.pk}"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._public_orig = self.public
 
     @property
     def container(self):
@@ -419,52 +483,101 @@ class Job(UUIDModel, ComponentJob):
             )
             self.outputs.add(output_civ)
 
+    @cached_property
+    def rendered_result_text(self):
+        try:
+            result_dict = get(
+                [
+                    o.value
+                    for o in self.outputs.all()
+                    if o.interface.slug == "results-json-file"
+                ]
+            )
+        except ObjectDoesNotExist:
+            return ""
+
+        try:
+            template_output = JINJA_ENGINE.from_string(
+                self.algorithm_image.algorithm.result_template
+            ).render(result_dict=result_dict)
+        except (TemplateError, TypeError, ValueError):
+            return "Jinja template is invalid"
+
+        return md2html(template_output)
+
     def get_absolute_url(self):
-        return reverse("algorithms:jobs-detail", kwargs={"pk": self.pk})
+        return reverse(
+            "algorithms:job-detail",
+            kwargs={
+                "slug": self.algorithm_image.algorithm.slug,
+                "pk": self.pk,
+            },
+        )
 
     @property
     def api_url(self):
         return reverse("api:algorithms-job-detail", kwargs={"pk": self.pk})
 
     def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self.init_viewers_group()
+
         super().save(*args, **kwargs)
 
-        self.assign_permissions()
-        self.assign_public_permissions()
-        self.update_interface_image_permissions()
+        if adding:
+            self.init_permissions()
 
-    def assign_permissions(self):
-        # Editors and creators can view this job
-        assign_perm(
-            f"view_{self._meta.model_name}",
-            self.algorithm_image.algorithm.editors_group,
-            self,
+        if adding or self._public_orig != self.public:
+            self.update_viewer_groups_for_public()
+            self._public_orig = self.public
+
+    def init_viewers_group(self):
+        self.viewers = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_viewers"
         )
 
+    def init_permissions(self):
+        # By default, only the viewers can view this job
+        self.viewer_groups.set([self.viewers])
+
+        # If there is a creator they can view and change this job
         if self.creator:
-            assign_perm(f"view_{self._meta.model_name}", self.creator, self)
+            self.viewers.user_set.add(self.creator)
+            assign_perm(
+                f"change_{self._meta.model_name}", self.creator, self,
+            )
 
-        # Algorithm editors can change this job
-        assign_perm(
-            f"change_{self._meta.model_name}",
-            self.algorithm_image.algorithm.editors_group,
-            self,
-        )
-
-    def assign_public_permissions(self):
+    def update_viewer_groups_for_public(self):
         g = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
 
         if self.public:
-            assign_perm(f"view_{self._meta.model_name}", g, self)
+            self.viewer_groups.add(g)
         else:
-            remove_perm(f"view_{self._meta.model_name}", g, self)
+            self.viewer_groups.remove(g)
 
-    def update_interface_image_permissions(self):
-        for interface_value in [*self.inputs.all(), *self.outputs.all()]:
-            if interface_value.image:
-                interface_value.image.update_public_group_permissions()
+    def add_viewer(self, user):
+        return user.groups.add(self.viewers)
+
+    def remove_viewer(self, user):
+        return user.groups.remove(self.viewers)
+
+
+@receiver(post_delete, sender=Job)
+def delete_job_groups_hook(*_, instance: Job, using, **__):
+    """
+    Deletes the related group.
+
+    We use a signal rather than overriding delete() to catch usages of
+    bulk_delete.
+    """
+    try:
+        instance.viewers.delete(using=using)
+    except ObjectDoesNotExist:
+        pass
 
 
 class AlgorithmPermissionRequest(RequestBase):

@@ -34,7 +34,7 @@
 
             <p>
                 As an admin for this challenge you can make as many submissions as
-                you like. Challenge participants will be allow to make
+                you like. Challenge participants will be allowed to make
                 {{ phase.daily_submission_limit }}
                 submission{{ phase.daily_submission_limit|pluralize }}
                 per day to this phase. You can change the Daily Submission Limit in <a
@@ -56,7 +56,7 @@
             <p>
                 You need to wait until all of your existing submissions have
                 been evaluated before you can make another submission.
-                <a href="{% url 'evaluation:list' challenge_short_name=challenge.short_name %}">
+                <a href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
                     Click here
                 </a>
                 to see their status.
@@ -88,7 +88,7 @@
     <h3>View your submissions</h3>
 
     <p>
-        <a href="{% url 'evaluation:list' challenge_short_name=challenge.short_name %}">Click
+        <a href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Click
             here</a>
         to view your current submissions to this challenge.</p>
 

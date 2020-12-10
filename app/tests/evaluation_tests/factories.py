@@ -1,8 +1,6 @@
-import factory.django
-from factory import DjangoModelFactory, SubFactory
+import factory
 
 from grandchallenge.evaluation.models import (
-    AlgorithmEvaluation,
     Evaluation,
     Method,
     Phase,
@@ -11,7 +9,7 @@ from grandchallenge.evaluation.models import (
 from tests.factories import ChallengeFactory, UserFactory, hash_sha256
 
 
-class PhaseFactory(factory.DjangoModelFactory):
+class PhaseFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Phase
 
@@ -19,16 +17,17 @@ class PhaseFactory(factory.DjangoModelFactory):
     title = factory.sequence(lambda n: f"Phase {n}")
 
 
-class MethodFactory(factory.DjangoModelFactory):
+class MethodFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Method
 
+    creator = factory.SubFactory(UserFactory)
     phase = factory.SubFactory(PhaseFactory)
     image = factory.django.FileField()
     image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
 
 
-class SubmissionFactory(factory.DjangoModelFactory):
+class SubmissionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Submission
 
@@ -37,14 +36,7 @@ class SubmissionFactory(factory.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
 
 
-class AlgorithmEvaluationFactory(DjangoModelFactory):
-    class Meta:
-        model = AlgorithmEvaluation
-
-    submission = SubFactory(SubmissionFactory)
-
-
-class EvaluationFactory(factory.DjangoModelFactory):
+class EvaluationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Evaluation
 

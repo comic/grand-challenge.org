@@ -3,9 +3,9 @@ import json
 from collections import Counter
 
 import numpy as np
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Avg, Count, OuterRef, Subquery, Sum
@@ -219,7 +219,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     # A hanging_list is a list of dictionaries where the keys are the
     # view names, and the values are the filenames to place there.
-    hanging_list = JSONField(
+    hanging_list = models.JSONField(
         default=list,
         blank=True,
         validators=[JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)],
@@ -234,7 +234,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "the readers."
         ),
     )
-    case_text = JSONField(
+    case_text = models.JSONField(
         default=dict,
         blank=True,
         validators=[JSONSchemaValidator(schema=CASE_TEXT_SCHEMA)],
@@ -261,10 +261,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "for a case."
         ),
     )
+    validate_hanging_list = models.BooleanField(default=True)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
         ordering = ("created",)
+        permissions = [("read_readerstudy", "Can read reader study")]
 
     copy_fields = (
         "workstation",
@@ -337,30 +339,53 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         assign_perm(
             f"change_{self._meta.model_name}", self.editors_group, self
         )
-        # Allow the editors and readers groups to view this study
-        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
-        assign_perm(f"view_{self._meta.model_name}", self.readers_group, self)
-        # Allow readers to add answers (globally), adding them to this reader
-        # study is checked in the serializers as there is no
-        # get_permission_object in django rest framework.
+
+        # Allow the editors and readers groups to read this study
+        assign_perm(f"read_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(f"read_{self._meta.model_name}", self.readers_group, self)
+
+        # Allow readers and editors to add answers (globally)
+        # adding them to this reader study is checked in the serializers as
+        # there is no get_permission_object in django rest framework.
+        assign_perm(
+            f"{Answer._meta.app_label}.add_{Answer._meta.model_name}",
+            self.editors_group,
+        )
         assign_perm(
             f"{Answer._meta.app_label}.add_{Answer._meta.model_name}",
             self.readers_group,
         )
 
-    def assign_workstation_permissions(self):
-        perm = f"view_{Workstation._meta.model_name}"
-        group = self.readers_group
+        # Allow the editors and readers groups to view this study
+        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(f"view_{self._meta.model_name}", self.readers_group, self)
 
-        workstations = get_objects_for_group(
-            group=group, perms=perm, klass=Workstation
+        reg_and_anon = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
 
-        if (self.workstation not in workstations) or workstations.count() > 1:
-            remove_perm(perm=perm, user_or_group=group, obj=workstations)
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
 
-            # Allow readers to view the workstation used for this reader study
-            assign_perm(perm=perm, user_or_group=group, obj=self.workstation)
+    def assign_workstation_permissions(self):
+        perm = f"view_{Workstation._meta.model_name}"
+
+        for group in (self.editors_group, self.readers_group):
+            workstations = get_objects_for_group(
+                group=group, perms=perm, klass=Workstation
+            )
+
+            if (
+                self.workstation not in workstations
+            ) or workstations.count() > 1:
+                remove_perm(perm=perm, user_or_group=group, obj=workstations)
+
+                # Allow readers to view the workstation used for this study
+                assign_perm(
+                    perm=perm, user_or_group=group, obj=self.workstation
+                )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -370,9 +395,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         super().save(*args, **kwargs)
 
-        if adding:
-            self.assign_permissions()
-
+        self.assign_permissions()
         self.assign_workstation_permissions()
 
     def is_editor(self, user):
@@ -431,9 +454,9 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         Tests that all of the study images are included in the hanging list
         exactly once.
         """
-        return sorted(self.study_image_names) == sorted(
-            self.hanging_image_names
-        )
+        return not self.validate_hanging_list or sorted(
+            self.study_image_names
+        ) == sorted(self.hanging_image_names)
 
     def hanging_list_diff(self, provided=None):
         """
@@ -964,6 +987,40 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["type", "version", "polygons"],
         },
+        "2D-bounding-box-object": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "corners": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 3,
+                        "maxItems": 3,
+                    },
+                    "minItems": 4,
+                    "maxItems": 4,
+                },
+            },
+            "required": ["corners"],
+        },
+        "M2DB": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "type": {"enum": ["Multiple 2D bounding boxes"]},
+                "boxes": {
+                    "type": "array",
+                    "items": {
+                        "allOf": [
+                            {"$ref": "#/definitions/2D-bounding-box-object"}
+                        ]
+                    },
+                },
+            },
+            "required": ["version", "type", "boxes"],
+        },
     },
     "properties": {
         "version": {
@@ -989,6 +1046,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
         {"$ref": "#/definitions/MCHD"},
+        {"$ref": "#/definitions/M2DB"},
     ],
 }
 
@@ -999,6 +1057,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_BOOL = "BOOL"
     ANSWER_TYPE_HEADING = "HEAD"
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
+    ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES = "M2DB"
     ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
     ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
     ANSWER_TYPE_POINT = "POIN"
@@ -1015,6 +1074,7 @@ class Question(UUIDModel):
         (ANSWER_TYPE_BOOL, "Bool"),
         (ANSWER_TYPE_HEADING, "Heading"),
         (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
+        (ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "Multiple 2D bounding boxes"),
         (ANSWER_TYPE_DISTANCE_MEASUREMENT, "Distance measurement"),
         (
             ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
@@ -1207,6 +1267,7 @@ class Question(UUIDModel):
     def annotation_types(self):
         return [
             self.ANSWER_TYPE_2D_BOUNDING_BOX,
+            self.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
             self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
             self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
             self.ANSWER_TYPE_POINT,
@@ -1261,7 +1322,7 @@ class Answer(UUIDModel):
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     images = models.ManyToManyField("cases.Image", related_name="answers")
-    answer = JSONField(
+    answer = models.JSONField(
         null=True, validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
     is_ground_truth = models.BooleanField(default=False)
@@ -1364,23 +1425,24 @@ class Answer(UUIDModel):
 
         if not is_ground_truth:
             if (
-                Answer.objects.filter(
+                Answer.objects.exclude(pk=getattr(instance, "pk", None))
+                .filter(
                     creator=creator,
                     question=question,
-                    images__in=images,
                     is_ground_truth=False,
+                    images__in=images,
                 )
-                .exclude(pk=getattr(instance, "pk", None))
+                .annotate(count_images=Count("images", distinct=True))
+                .filter(count_images=len(images))
                 .exists()
             ):
                 raise ValidationError(
                     f"User {creator} has already answered this question "
-                    f"for at least 1 of these images."
+                    f"for this set of images."
                 )
-            if not question.reader_study.is_reader(user=creator):
-                raise ValidationError(
-                    "This user is not a reader for this study."
-                )
+
+        if not creator.has_perm("read_readerstudy", question.reader_study):
+            raise ValidationError("This user is not a reader for this study.")
 
         if (
             question.answer_type == Question.ANSWER_TYPE_CHOICE

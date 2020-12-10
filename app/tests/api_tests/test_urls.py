@@ -62,6 +62,7 @@ def extract_all_api_exposed_model_serializers():
     modules = {
         klass.serializer_class
         for _, klass, _ in grandchallenge.api.urls.router.registry
+        if klass.serializer_class is not None
     }
     serializers = []
     for module in modules:

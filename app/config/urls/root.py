@@ -5,6 +5,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.views.generic import TemplateView
+from machina import urls as machina_urls
 
 from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
 from grandchallenge.archives.sitemaps import ArchivesSitemap
@@ -12,7 +13,6 @@ from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
 from grandchallenge.core.views import HomeTemplate
-from grandchallenge.overview_pages.sitemaps import OverviewPagesSitemap
 from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
 from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
@@ -35,7 +35,6 @@ sitemaps = {
     "companies": CompaniesSitemap,
     "core": CoreSitemap,
     "flatpages": FlatPagesSitemap,
-    "overview-pages": OverviewPagesSitemap,
     "pages": PagesSitemap,
     "policies": PoliciesSitemap,
     "products": ProductsSitemap,
@@ -64,10 +63,13 @@ urlpatterns = [
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/", include("grandchallenge.api.urls", namespace="api")),
-    # Used for logging in and managing grandchallenge.profiles. This is done on
-    # the framework level because it is too hard to get this all under each
-    # project
     path("users/", include("grandchallenge.profiles.urls")),
+    path(
+        "verifications/",
+        include(
+            "grandchallenge.verifications.urls", namespace="verifications",
+        ),
+    ),
     path("socialauth/", include("social_django.urls", namespace="social")),
     path(
         "challenges/",
@@ -123,12 +125,7 @@ urlpatterns = [
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
     path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs"),),
-    path(
-        "",
-        include(
-            "grandchallenge.overview_pages.urls", namespace="overview-pages"
-        ),
-    ),
+    path("forums/", include(machina_urls)),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

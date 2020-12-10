@@ -1,22 +1,20 @@
 from json import dumps
 from pathlib import Path
+from urllib.parse import parse_qs, urljoin, urlparse
 
-from celery import group
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import BooleanField
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import (
-    AlgorithmExecutor,
-    AlgorithmImage,
-    DEFAULT_INPUT_INTERFACE_SLUG,
+from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.tasks import (
+    create_algorithm_jobs_for_evaluation,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
@@ -39,10 +37,7 @@ from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
     send_successful_evaluation_email,
 )
-from grandchallenge.evaluation.tasks import (
-    calculate_ranks,
-    set_evaluation_inputs,
-)
+from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
 
 EXTRA_RESULT_COLUMNS_SCHEMA = {
@@ -93,6 +88,11 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         },
     },
 }
+
+OBSERVABLE_URL_VALIDATOR = RegexValidator(
+    r"^https\:\/\/observablehq\.com\/embed\/\@[^\/]+\/[^\?\.]+\?cell\=.*$",
+    "URL must be of the form https://observablehq.com/embed/@user/notebook?cell=*",
+)
 
 
 class Phase(UUIDModel):
@@ -202,7 +202,7 @@ class Phase(UUIDModel):
         default=4,
         help_text=("The number of decimal places to display for the score"),
     )
-    extra_results_columns = JSONField(
+    extra_results_columns = models.JSONField(
         default=list,
         blank=True,
         help_text=(
@@ -326,7 +326,7 @@ class Phase(UUIDModel):
         ),
         blank=True,
     )
-    auto_publish_new_results = BooleanField(
+    auto_publish_new_results = models.BooleanField(
         default=True,
         help_text=(
             "If true, new results are automatically made public. If false, "
@@ -340,13 +340,25 @@ class Phase(UUIDModel):
             "Should all of the metrics be displayed on the Result detail page?"
         ),
     )
-    submission_join_key = models.CharField(
+
+    evaluation_detail_observable_url = models.URLField(
         blank=True,
-        default="",
-        max_length=32,
+        validators=[OBSERVABLE_URL_VALIDATOR],
+        max_length=2000,
         help_text=(
-            "If predictions are submitted as csv files, which column should "
-            "be used to join the data? eg. case_id"
+            "The URL of the embeddable observable notebook for viewing "
+            "individual results. Must be of the form "
+            "https://observablehq.com/embed/@user/notebook?cell=..."
+        ),
+    )
+    evaluation_comparison_observable_url = models.URLField(
+        blank=True,
+        validators=[OBSERVABLE_URL_VALIDATOR],
+        max_length=2000,
+        help_text=(
+            "The URL of the embeddable observable notebook for comparing"
+            "results. Must be of the form "
+            "https://observablehq.com/embed/@user/notebook?cell=..."
         ),
     )
 
@@ -363,6 +375,7 @@ class Phase(UUIDModel):
             ("challenge", "slug"),
         )
         ordering = ("challenge", "submissions_open", "created")
+        permissions = (("create_phase_submission", "Create Phase Submission"),)
 
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
@@ -389,12 +402,60 @@ class Phase(UUIDModel):
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)
         assign_perm("change_phase", self.challenge.admins_group, self)
+        assign_perm(
+            "create_phase_submission", self.challenge.admins_group, self
+        )
+        assign_perm(
+            "create_phase_submission", self.challenge.participants_group, self
+        )
 
     def get_absolute_url(self):
         return reverse(
             "pages:home",
             kwargs={"challenge_short_name": self.challenge.short_name},
         )
+
+    def get_observable_url(self, view_kind, url_kind):
+        if view_kind == "detail":
+            url = self.evaluation_detail_observable_url
+        elif view_kind == "comparison":
+            url = self.evaluation_comparison_observable_url
+        else:
+            raise ValueError("View or notebook not found")
+
+        if not url:
+            return "", []
+
+        parsed_url = urlparse(url)
+        cells = parse_qs(parsed_url.query)["cell"]
+        url = f"{urljoin(url, parsed_url.path)}"
+
+        if url_kind == "js":
+            url = url.replace(
+                "https://observablehq.com/embed/",
+                "https://api.observablehq.com/",
+            )
+            url += ".js?v=3"
+        elif url_kind == "edit":
+            url = url.replace(
+                "https://observablehq.com/embed/", "https://observablehq.com/"
+            )
+        else:
+            raise ValueError("URL kind must be one of edit or js")
+
+        return url, cells
+
+    @property
+    def observable_detail_edit_url(self):
+        url, _ = self.get_observable_url(view_kind="detail", url_kind="edit")
+        return url
+
+    @property
+    def observable_comparison_edit_url(self):
+        url, _ = self.get_observable_url(
+            view_kind="comparison", url_kind="edit"
+        )
+        return url
 
 
 def method_image_path(instance, filename):
@@ -461,6 +522,13 @@ class Submission(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    creators_ip = models.GenericIPAddressField(
+        null=True, default=None, editable=False
+    )
+    creators_user_agent = models.TextField(
+        blank=True, default="", editable=False
+    )
+
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.SET_NULL
@@ -524,36 +592,9 @@ class Submission(UUIDModel):
         evaluation = Evaluation.objects.create(submission=self, method=method)
 
         if self.algorithm_image:
-            default_input_interface = ComponentInterface.objects.get(
-                slug=DEFAULT_INPUT_INTERFACE_SLUG
+            create_algorithm_jobs_for_evaluation.apply_async(
+                kwargs={"evaluation_pk": evaluation.pk}
             )
-
-            jobs = []
-
-            for image in self.phase.archive.images.all():
-                if not ComponentInterfaceValue.objects.filter(
-                    interface=default_input_interface,
-                    image=image,
-                    evaluation_algorithmevaluations_as_input__submission=self,
-                ).exists():
-                    j = AlgorithmEvaluation.objects.create(submission=self)
-                    j.inputs.set(
-                        [
-                            ComponentInterfaceValue.objects.create(
-                                interface=default_input_interface, image=image
-                            )
-                        ]
-                    )
-                    jobs.append(j.signature)
-
-            if jobs:
-                (
-                    group(*jobs)
-                    | set_evaluation_inputs.signature(
-                        kwargs={"evaluation_pk": evaluation.pk}
-                    )
-                ).apply_async()
-
         else:
             mimetype = get_file_mimetype(self.predictions_file)
 
@@ -595,57 +636,6 @@ class Submission(UUIDModel):
                 "challenge_short_name": self.phase.challenge.short_name,
             },
         )
-
-
-class AlgorithmEvaluation(ComponentJob):
-    id = models.BigAutoField(primary_key=True)
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True)
-    submission = models.ForeignKey(Submission, on_delete=models.CASCADE)
-
-    def save(self, *args, **kwargs):
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
-            self.assign_permissions()
-
-    def assign_permissions(self):
-        assign_perm(
-            "view_algorithmevaluation",
-            self.submission.phase.challenge.admins_group,
-            self,
-        )
-
-    @property
-    def container(self):
-        return self.submission.algorithm_image
-
-    @property
-    def input_files(self):
-        return [
-            im.file
-            for inpt in self.inputs.all()
-            for im in inpt.image.files.all()
-        ]
-
-    @property
-    def executor_cls(self):
-        return AlgorithmExecutor
-
-    def create_result(self, *, result: dict):
-        interface = ComponentInterface.objects.get(slug="results-json-file")
-
-        try:
-            output_civ = self.outputs.get(interface=interface)
-            output_civ.value = result
-            output_civ.save()
-        except ObjectDoesNotExist:
-            output_civ = ComponentInterfaceValue.objects.create(
-                interface=interface, value=result
-            )
-            self.outputs.add(output_civ)
 
 
 class SubmissionEvaluator(Executor):
@@ -714,7 +704,7 @@ class Evaluation(UUIDModel, ComponentJob):
         ),
     )
     rank_score = models.FloatField(default=0.0)
-    rank_per_metric = JSONField(default=dict)
+    rank_per_metric = models.JSONField(default=dict)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -729,6 +719,10 @@ class Evaluation(UUIDModel, ComponentJob):
         calculate_ranks.apply_async(
             kwargs={"phase_pk": self.submission.phase.pk}
         )
+
+    @property
+    def title(self):
+        return f"#{self.rank} {self.submission.creator.username}"
 
     def assign_permissions(self):
         admins_group = self.submission.phase.challenge.admins_group

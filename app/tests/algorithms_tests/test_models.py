@@ -1,7 +1,8 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
+from django.test import TestCase
 
-from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.components.models import InterfaceKindChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -89,3 +90,57 @@ def test_outputs_are_set():
     assert len(outputs) == 1
     assert outputs[0].interface.kind == InterfaceKindChoices.JSON
     assert outputs[0].value == {"dsaf": 35421}
+
+    job = AlgorithmJobFactory()
+    job.algorithm_image.algorithm.result_template = (
+        "foo score: {{result_dict.foo}}"
+    )
+
+    assert job.rendered_result_text == ""
+    job.create_result(result={"foo": 13.37})
+    del job.rendered_result_text
+    assert job.rendered_result_text == "<p>foo score: 13.37</p>"
+
+    job.algorithm_image.algorithm.result_template = "{% for key, value in dict.metrics.items() -%}{{ key }}  {{ value }}{% endfor %}"
+    del job.rendered_result_text
+    assert job.rendered_result_text == "Jinja template is invalid"
+
+    job.algorithm_image.algorithm.result_template = "{{ str.__add__('test')}}"
+    del job.rendered_result_text
+    assert job.rendered_result_text == "Jinja template is invalid"
+
+
+class TestAlgorithmJobGroups(TestCase):
+    def test_job_group_created(self):
+        j = AlgorithmJobFactory()
+        assert j.viewers is not None
+        assert j.viewers.name.startswith("algorithms_job_")
+        assert j.viewers.name.endswith("_viewers")
+
+    def test_job_group_deletion(self):
+        j = AlgorithmJobFactory()
+        g = j.viewers
+
+        Job.objects.filter(pk__in=[j.pk]).delete()
+
+        with pytest.raises(ObjectDoesNotExist):
+            g.refresh_from_db()
+
+    def test_group_deletion_reverse(self):
+        j = AlgorithmJobFactory()
+        g = j.viewers
+
+        g.delete()
+
+        with pytest.raises(ObjectDoesNotExist):
+            j.refresh_from_db()
+
+    def test_creator_in_viewers_group(self):
+        j = AlgorithmJobFactory()
+        assert {*j.viewers.user_set.all()} == {j.creator}
+
+    def test_viewer_group_in_m2m(self):
+        j = AlgorithmJobFactory()
+        assert {*j.viewer_groups.all()} == {
+            j.viewers,
+        }

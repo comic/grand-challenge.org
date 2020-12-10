@@ -9,6 +9,7 @@ import sentry_sdk
 from corsheaders.defaults import default_headers
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
+from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
@@ -53,7 +54,6 @@ IGNORABLE_404_URLS = [
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the config dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-APPS_DIR = os.path.join(SITE_ROOT, "grandchallenge")
 
 DATABASES = {
     "default": {
@@ -90,6 +90,9 @@ REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
 USERENA_DEFAULT_PRIVACY = "open"
+USERENA_MUGSHOT_SIZE = 460
+USERENA_REGISTER_USER = False
+USERENA_REGISTER_PROFILE = False
 LOGIN_URL = "/users/signin/"
 LOGOUT_URL = "/users/signout/"
 
@@ -202,9 +205,14 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
-        "LOCATION": "memcached:11211",
-    }
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+    },
+    "machina_attachments": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": "/tmp",
+    },
 }
 
 ROOT_URLCONF = "config.urls.root"
@@ -235,9 +243,15 @@ SECURE_CONTENT_TYPE_NOSNIFF = strtobool(
 SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
-X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "SAMEORIGIN")
+X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
 SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "same-origin"
+)
+
+IPWARE_META_PRECEDENCE_ORDER = (
+    # Set by nginx
+    "HTTP_X_FORWARDED_FOR",
+    "HTTP_X_REAL_IP",
 )
 
 # Absolute path to the directory static files should be collected to.
@@ -257,7 +271,7 @@ STATICFILES_FINDERS = (
 )
 
 # Vendored static files will be put here
-STATICFILES_DIRS = ["/opt/static/"]
+STATICFILES_DIRS = ["/opt/static/", MACHINA_MAIN_STATIC_DIR]
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
@@ -269,8 +283,12 @@ SECRET_KEY = os.environ.get(
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [str(APPS_DIR)],
-        "APP_DIRS": True,
+        "DIRS": [
+            # Override the machina templates, everything else is found with
+            # django.template.loaders.app_directories.Loader
+            os.path.join(SITE_ROOT, "grandchallenge/forums/templates/"),
+            MACHINA_MAIN_TEMPLATE_DIR,
+        ],
         "OPTIONS": {
             "context_processors": [
                 "django.contrib.auth.context_processors.auth",
@@ -286,7 +304,12 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.debug",
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
-            ]
+                "machina.core.context_processors.metadata",
+            ],
+            "loaders": [
+                "django.template.loaders.filesystem.Loader",
+                "django.template.loaders.app_directories.Loader",
+            ],
         },
     }
 ]
@@ -310,6 +333,7 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
 )
@@ -353,10 +377,28 @@ THIRD_PARTY_APPS = [
     "drf_yasg",
     "markdownx",  # for editing markdown
     "django_filters",
+    # django-machina dependencies:
+    "mptt",
+    "haystack",
+    "widget_tweaks",
+    # djano-machina apps:
+    "machina",
+    "machina.apps.forum",
+    "machina.apps.forum_conversation.forum_attachments",
+    "machina.apps.forum_conversation.forum_polls",
+    "machina.apps.forum_feeds",
+    "machina.apps.forum_moderation",
+    "machina.apps.forum_search",
+    "machina.apps.forum_tracking",
+    "machina.apps.forum_permission",
+    # Overridden apps
+    "grandchallenge.forum_conversation",
+    "grandchallenge.forum_member",
 ]
 
 LOCAL_APPS = [
     "grandchallenge.admins",
+    "grandchallenge.anatomy",
     "grandchallenge.api",
     "grandchallenge.challenges",
     "grandchallenge.core",
@@ -379,15 +421,19 @@ LOCAL_APPS = [
     "grandchallenge.retina_core",
     "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
-    "grandchallenge.worklists",
     "grandchallenge.workstations",
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
     "grandchallenge.products",
-    "grandchallenge.overview_pages",
     "grandchallenge.serving",
     "grandchallenge.blogs",
+    "grandchallenge.publications",
+    "grandchallenge.verifications",
+    "grandchallenge.credits",
+    "grandchallenge.task_categories",
+    "grandchallenge.modalities",
+    "grandchallenge.datatables",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -491,6 +537,7 @@ BLEACH_ALLOWED_TAGS = [
     "tr",
     "u",
     "ul",
+    "video",
 ]
 BLEACH_ALLOWED_ATTRIBUTES = {
     "*": ["class", "data-toggle", "id", "style", "role"],
@@ -501,6 +548,7 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
     "th": ["scope", "colspan"],
     "td": ["colspan"],
+    "video": ["src", "loop", "controls"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
@@ -519,6 +567,15 @@ MARKDOWNX_MARKDOWNIFY_FUNCTION = (
 )
 MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
+
+HAYSTACK_CONNECTIONS = {
+    "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"},
+}
+
+FORUMS_CHALLENGE_CATEGORY_NAME = "Challenges"
+MACHINA_BASE_TEMPLATE_NAME = "base.html"
+MACHINA_PROFILE_AVATARS_ENABLED = False
+MACHINA_FORUM_NAME = "Grand Challenge Forums"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -587,6 +644,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PAGINATION_CLASS": "grandchallenge.api.pagination.MaxLimit1000OffsetPagination",
     "PAGE_SIZE": 100,
+    "UNAUTHENTICATED_USER": "guardian.utils.get_anonymous_user",
 }
 
 SWAGGER_SETTINGS = {
@@ -597,7 +655,8 @@ SWAGGER_SETTINGS = {
 
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
-    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$"
+    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}{re.escape(SESSION_COOKIE_DOMAIN)}$",
+    rf"^https:\/\/{VALID_SUBDOMAIN_REGEX}.static.observableusercontent.com$",
 ]
 CORS_ALLOW_HEADERS = [
     *default_headers,
@@ -611,6 +670,9 @@ CORS_ALLOW_CREDENTIALS = True
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
+CELERY_TASK_ACKS_LATE = strtobool(
+    os.environ.get("CELERY_TASK_ACKS_LATE", "False")
+)
 CELERY_TASK_SOFT_TIME_LIMIT = int(
     os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", "7200")
 )
@@ -820,6 +882,8 @@ DISALLOWED_CHALLENGE_NAMES = {
     "favicon",
     "i",
     "cache",
+    "challenge",
+    "challenges",
     JQFILEUPLOAD_UPLOAD_SUBIDRECTORY,
     *USERNAME_DENYLIST,
     *WORKSTATIONS_RENDERING_SUBDOMAINS,

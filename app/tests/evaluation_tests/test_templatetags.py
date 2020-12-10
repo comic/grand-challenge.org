@@ -1,6 +1,5 @@
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
-    user_error,
 )
 
 
@@ -16,12 +15,3 @@ def test_get_jsonpath():
     assert get_jsonpath(obj=obj, jsonpath="spam.foo") == ""
     assert get_jsonpath(obj=obj, jsonpath="spam") == obj["spam"]
     assert get_jsonpath(obj=obj, jsonpath="") == ""
-
-
-def test_user_error():
-    assert user_error(obj="foo\n") == "foo"
-    assert user_error(obj="foo") == "foo"
-    assert user_error(obj="foo\n\n") == "foo"
-    assert user_error(obj="foo\nbar") == "bar"
-    assert user_error(obj="foo\nbar\n\n") == "bar"
-    assert user_error(obj="") == ""

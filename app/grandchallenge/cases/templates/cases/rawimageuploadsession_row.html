@@ -1,0 +1,21 @@
+{% load humanize %}
+
+<a href="{{ object.get_absolute_url }}">{{ object.pk }}</a>
+<split/>
+
+{{ object.created|naturaltime }}
+<split/>
+
+<span class="badge
+    {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
+        badge-danger
+    {% elif object.status == object.RETRY %}
+        badge-warning
+    {% elif object.status == object.SUCCESS %}
+        badge-success
+    {% else %}
+        badge-info
+    {% endif %}">
+        {{ object.get_status_display }}
+</span>
+<split/>

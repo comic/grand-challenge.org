@@ -1,11 +1,6 @@
-{% extends "base.html" %}
+{% extends "datatables/list_base.html" %}
 {% load url %}
-{% load profiles %}
-{% load workstations %}
 {% load guardian_tags %}
-{% load pathlib %}
-{% load humanize %}
-{% load evaluation_extras %}
 
 {% block title %}
     Algorithm Results - {{ block.super }}
@@ -13,15 +8,9 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:list' %}">Algorithms</a>
-        </li>
-        <li class="breadcrumb-item"><a
-                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
-        </a>
-        <li class="breadcrumb-item active"
-            aria-current="page">Results
-        </li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
+        <li class="breadcrumb-item"><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a>
+        <li class="breadcrumb-item active" aria-current="page">Results</li>
     </ol>
 {% endblock %}
 
@@ -39,19 +28,7 @@
         </p>
     {% endif %}
 
-    <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm">
-            <thead class="thead-light">
-            <tr>
-                {% for column in columns %}
-                    <th {% if column.toggleable %}class="toggleable"{% endif %}>{{ column.title }}</th>
-                {% endfor %}
-            </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
-    </div>
+    {{ block.super }}
 
     <div class="modal fade" id="resultInfoModal" tabindex="-1" role="dialog"
          aria-labelledby="resultInfoModalTitle" aria-hidden="true">
@@ -66,39 +43,32 @@
                 </div>
                 <div class="modal-body">
                     <p class="modal-job-output"></p>
-                    <p id="footerText" class="small text-muted"></p>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary" id="resultDetailLink" href="">
+                        <i class="fa fa-info-circle"></i> View Result Details
+                    </a>
                 </div>
             </div>
         </div>
     </div>
-
 {% endblock %}
 
 {% block script %}
     {{ block.super }}
 
     <script type="text/javascript">
-        $(document).ready(function () {
-            $('.table').DataTable({
-                order: [[0, "desc"]],
-                lengthChange: false,
-                pageLength: 100,
-                serverSide: true,
-                ajax: {
-                    url: "",
-                },
-                ordering: true,
-            });
-        });
-    </script>
-
-    <script type="text/javascript">
         $('#resultInfoModal').on('show.bs.modal', function (event) {
             let button = $(event.relatedTarget);
             let modal = $(this);
+            const json_element = document.getElementById(button.data('pk'));
+            if (json_element) {
+                modal.find('.modal-job-output').html(JSON.parse(json_element.textContent));
+            } else {
+                modal.find('.modal-job-output').text(button.data('output'));
+            }
             modal.find('.modal-title').text(button.data('title'));
-            modal.find('.modal-job-output').text(button.data('output'));
-            modal.find('#footerText').text("ID: " + button.data('pk'));
+            modal.find('#resultDetailLink').attr("href", `${button.data("pk")}/`);
         })
     </script>
 {% endblock %}

@@ -11,7 +11,6 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.db.models import Count
 from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -47,7 +46,6 @@ from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.cases.views import RawImageUploadSessionDetail
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.permissions.rest_framework import (
@@ -56,6 +54,7 @@ from grandchallenge.core.permissions.rest_framework import (
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
@@ -141,12 +140,16 @@ class ArchiveDetail(
         uploader_remove_form = UploadersForm()
         uploader_remove_form.fields["action"].initial = UploadersForm.REMOVE
 
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+
         limit = 1000
 
         context.update(
             {
                 "user_remove_form": user_remove_form,
                 "uploader_remove_form": uploader_remove_form,
+                "editor_remove_form": editor_remove_form,
                 "now": now().isoformat(),
                 "limit": limit,
                 "offsets": range(0, context["object"].images.count(), limit),
@@ -312,7 +315,7 @@ class ArchivePermissionRequestList(ObjectPermissionRequiredMixin, ListView):
         queryset = (
             queryset.filter(archive=self.archive)
             .exclude(status=ArchivePermissionRequest.ACCEPTED)
-            .select_related("user__user_profile")
+            .select_related("user__user_profile", "user__verification")
         )
         return queryset
 
@@ -354,7 +357,13 @@ class ArchiveUploadSessionCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"linked_task": add_images_to_archive})
+        kwargs.update(
+            {
+                "linked_task": add_images_to_archive.signature(
+                    kwargs={"archive_pk": self.archive.pk}, immutable=True
+                )
+            }
+        )
         return kwargs
 
     @cached_property
@@ -366,7 +375,6 @@ class ArchiveUploadSessionCreate(
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.archive = self.archive
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -374,62 +382,9 @@ class ArchiveUploadSessionCreate(
         context.update({"archive": self.archive})
         return context
 
-    def get_success_url(self):
-        return reverse(
-            "archives:uploads-detail",
-            kwargs={"slug": self.archive.slug, "pk": self.object.pk},
-        )
-
-
-class ArchiveUploadSessionDetail(RawImageUploadSessionDetail):
-    template_name = "archives/archive_upload_session_detail.html"
-
-    @cached_property
-    def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive})
-        return context
-
-
-class ArchiveUploadSessionList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
-):
-    model = RawImageUploadSession
-    permission_required = (
-        f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
-    )
-    raise_exception = True
-    template_name = "archives/archive_upload_session_list.html"
-
-    @cached_property
-    def archive(self):
-        return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.archive
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"archive": self.archive})
-        return context
-
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset(*args, **kwargs)
-        return (
-            qs.filter(archive=self.archive)
-            .select_related("creator__user_profile")
-            .annotate(
-                Count("image", distinct=True),
-                Count("rawimagefile", distinct=True),
-            )
-        )
-
 
 class ArchiveCasesList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView,
 ):
     model = Image
     permission_required = (
@@ -437,6 +392,19 @@ class ArchiveCasesList(
     )
     raise_exception = True
     template_name = "archives/archive_cases_list.html"
+    row_template = "archives/archive_cases_row.html"
+    search_fields = [
+        "pk",
+        "name",
+    ]
+    columns = [
+        Column(title="Name", sort_field="name"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Creator", sort_field="origin__creator__username"),
+        Column(title="View", sort_field="pk"),
+        Column(title="Algorithm Results", sort_field="pk"),
+        Column(title="Download", sort_field="pk"),
+    ]
 
     @cached_property
     def archive(self):
@@ -450,12 +418,18 @@ class ArchiveCasesList(
         context.update({"archive": self.archive})
         return context
 
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset(*args, **kwargs)
+    def get_queryset(self):
+        qs = super().get_queryset()
         return (
             qs.filter(archive=self.archive)
-            .prefetch_related("files")
-            .select_related("origin__creator__user_profile")
+            .prefetch_related(
+                "files",
+                "componentinterfacevalue_set__algorithms_jobs_as_input__algorithm_image__algorithm",
+            )
+            .select_related(
+                "origin__creator__user_profile",
+                "origin__creator__verification",
+            )
         )
 
 

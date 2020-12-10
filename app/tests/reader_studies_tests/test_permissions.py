@@ -1,4 +1,6 @@
 import pytest
+from django.conf import settings
+from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_perms
 
 from grandchallenge.subdomains.utils import reverse
@@ -276,7 +278,7 @@ def test_api_rs_question_list_permissions(client):
     )
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (rs_set.creator, 200, []),
         (rs_set.editor1, 200, [q1.pk]),
         (rs_set.reader1, 200, [q1.pk]),
@@ -294,14 +296,10 @@ def test_api_rs_question_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        pks = {obj["pk"] for obj in response.json()["results"]}
+        assert {str(pk) for pk in test[2]} == pks
 
 
 @pytest.mark.django_db
@@ -311,7 +309,7 @@ def test_api_rs_question_detail_permissions(client):
     q1 = QuestionFactory(reader_study=rs_set.rs1)
 
     tests = (
-        (None, 401),
+        (None, 404),
         (rs_set.creator, 404),
         (rs_set.editor1, 200),
         (rs_set.reader1, 200),
@@ -498,3 +496,23 @@ def test_workstation_changes(client):
 
     assert "view_workstation" not in get_perms(reader, ws1)
     assert "view_workstation" in get_perms(reader, ws2)
+
+
+@pytest.mark.django_db
+def test_visible_to_public_group_permissions():
+    g_reg_anon = Group.objects.get(
+        name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+    )
+    rs = ReaderStudyFactory()
+
+    assert "view_readerstudy" not in get_perms(g_reg_anon, rs)
+
+    rs.public = True
+    rs.save()
+
+    assert "view_readerstudy" in get_perms(g_reg_anon, rs)
+
+    rs.public = False
+    rs.save()
+
+    assert "view_readerstudy" not in get_perms(g_reg_anon, rs)

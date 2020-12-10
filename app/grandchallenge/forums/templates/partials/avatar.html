@@ -1,0 +1,7 @@
+{% if profile.user %}
+    <img loading="lazy" class="avatar rounded-circle" src="{{ profile.user.user_profile.get_mugshot_url }}" alt="{{ profile.user.username }}"/>
+{% elif show_placeholder %}
+    <span class="avatar empty">
+      <i class="far fa-user fa-4x"></i>
+    </span>
+{% endif %}

@@ -17,14 +17,15 @@ from userena.models import UserenaSignup
 
 import grandchallenge.cases.models
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
+from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.challenges.models import (
-    BodyRegion,
-    BodyStructure,
     Challenge,
     ChallengeSeries,
     ExternalChallenge,
-    ImagingModality,
-    TaskType,
+)
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
 )
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import (
@@ -33,9 +34,10 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
-from grandchallenge.overview_pages.models import OverviewPage
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
+from grandchallenge.task_categories.models import TaskType
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -98,7 +100,6 @@ class Command(BaseCommand):
         self._create_workstation()
         self._create_algorithm_demo()
         self._create_reader_studies()
-        self._create_overview_page()
         self._log_tokens()
         self._setup_public_storage()
 
@@ -172,6 +173,10 @@ class Command(BaseCommand):
             user=self.users["algorithmuser"],
             key="dc3526c2008609b429514b6361a33f8516541464",
         )
+        Token.objects.get_or_create(
+            user=self.users["readerstudy"],
+            key="01614a77b1c0b4ecd402be50a8ff96188d5b011d",
+        )
 
     def _create_demo_challenge(self):
         demo = Challenge.objects.create(
@@ -180,6 +185,7 @@ class Command(BaseCommand):
             creator=self.users["demo"],
             use_evaluation=True,
             hidden=False,
+            display_forum_link=True,
         )
         demo.add_participant(self.users["demop"])
 
@@ -208,6 +214,9 @@ class Command(BaseCommand):
                 }
             ]
             phase.submission_kind = phase.SubmissionKind.ALGORITHM
+            phase.evaluation_detail_observable_url = (
+                phase.evaluation_comparison_observable_url
+            ) = "https://observablehq.com/embed/@grand-challenge/data-fetch-example?cell=*"
             phase.save()
 
             method = Method(phase=phase, creator=self.users["demo"])
@@ -221,7 +230,9 @@ class Command(BaseCommand):
             submission.save()
 
             e = Evaluation.objects.create(
-                submission=submission, method=method, status=Evaluation.SUCCESS
+                submission=submission,
+                method=method,
+                status=Evaluation.SUCCESS,
             )
             e.create_result(
                 result={
@@ -239,8 +250,6 @@ class Command(BaseCommand):
             description="An example of an external challenge",
             event_name="Example Event",
             event_url="https://www.example.com/2018",
-            publication_journal_name="Nature",
-            publication_url="https://doi.org/10.1038/s41586-018-0367-9",
             hidden=False,
         )
 
@@ -303,7 +312,11 @@ class Command(BaseCommand):
             self.users["algorithm"], self.users["demo"]
         )
         algorithm.users_group.user_set.add(self.users["algorithmuser"])
-
+        algorithm.result_template = (
+            "{% for key, value in result_dict.metrics.items() -%}"
+            "{{ key }}  {{ value }}"
+            "{% endfor %}"
+        )
         algorithm_image = AlgorithmImage(
             creator=self.users["algorithm"], algorithm=algorithm
         )
@@ -311,14 +324,29 @@ class Command(BaseCommand):
         algorithm_image.image.save("test_algorithm.tar", container)
         algorithm_image.save()
 
+        for res in [
+            {"cancer_score": 0.5},
+            {"cancer_score": 0.6},
+            {"cancer_score": 0.7},
+        ]:
+            self.create_job_result(algorithm_image, cases_image, res)
+
+    def create_job_result(self, algorithm_image, cases_image, result):
         algorithms_job = grandchallenge.algorithms.models.Job(
             creator=self.users["algorithm"],
             algorithm_image=algorithm_image,
-            image=cases_image,
             status=Evaluation.SUCCESS,
         )
         algorithms_job.save()
-        algorithms_job.create_result(result={"cancer_score": 0.5})
+        algorithms_job.inputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="generic-medical-image"
+                ),
+                image=cases_image,
+            )
+        )
+        algorithms_job.create_result(result=result)
 
     def _create_workstation(self):
         w = Workstation.objects.create(
@@ -333,6 +361,7 @@ class Command(BaseCommand):
             title="Reader Study",
             workstation=Workstation.objects.last(),
             logo=get_temporary_image(),
+            description="Test reader study",
         )
         reader_study.editors_group.user_set.add(self.users["readerstudy"])
         reader_study.readers_group.user_set.add(self.users["demo"])
@@ -348,12 +377,6 @@ class Command(BaseCommand):
         )
         answer.images.add(grandchallenge.cases.models.Image.objects.first())
         answer.save()
-
-    @staticmethod
-    def _create_overview_page():
-        o = OverviewPage.objects.create(title="Overview")
-        o.challenges.add(Challenge.objects.get(short_name="demo"))
-        o.reader_studies.add(*ReaderStudy.objects.all())
 
     @staticmethod
     def _log_tokens():

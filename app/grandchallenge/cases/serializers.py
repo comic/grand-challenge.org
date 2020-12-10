@@ -3,7 +3,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 
-from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import (
@@ -27,6 +27,12 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
     archive_set = HyperlinkedRelatedField(
         read_only=True, many=True, view_name="api:archive-detail"
     )
+    reader_study_set = HyperlinkedRelatedField(
+        source="readerstudies",
+        read_only=True,
+        many=True,
+        view_name="api:reader-study-detail",
+    )
 
     def get_job_set(self, obj):
         return [
@@ -42,6 +48,7 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "name",
             "study",
             "files",
+            "reader_study_set",
             "archive_set",
             "job_set",
             "width",
@@ -62,10 +69,29 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
 
 
 class RawImageUploadSessionSerializer(serializers.ModelSerializer):
-    algorithm_image = HyperlinkedRelatedField(
-        queryset=AlgorithmImage.objects.all(),
-        view_name="api:algorithms-image-detail",
-        required=False,
+    image_set = HyperlinkedRelatedField(
+        read_only=True, many=True, view_name="api:image-detail"
+    )
+    status = CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = RawImageUploadSession
+        fields = (
+            "pk",
+            "creator",
+            "status",
+            "error_message",
+            "image_set",
+            "api_url",
+        )
+        swagger_schema_fields = swagger_schema_fields_for_charfield(
+            status=model._meta.get_field("status")
+        )
+
+
+class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
+    algorithm = SlugRelatedField(
+        slug_field="slug", queryset=Algorithm.objects.all(), required=False
     )
     archive = SlugRelatedField(
         slug_field="slug", queryset=Archive.objects.all(), required=False
@@ -73,31 +99,35 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
     reader_study = SlugRelatedField(
         slug_field="slug", queryset=ReaderStudy.objects.all(), required=False
     )
-    image_set = HyperlinkedRelatedField(
-        read_only=True, many=True, view_name="api:image-detail"
-    )
-    status = CharField(source="get_status_display", read_only=True)
+
+    class Meta(RawImageUploadSessionSerializer.Meta):
+        fields = (
+            *RawImageUploadSessionSerializer.Meta.fields,
+            "algorithm",
+            "archive",
+            "reader_study",
+        )
 
     def validate(self, attrs):
         if (
-            sum(
-                f in attrs
-                for f in ["algorithm_image", "archive", "reader_study"]
-            )
+            sum(f in attrs for f in ["algorithm", "archive", "reader_study"])
             != 1
         ):
             raise ValidationError(
-                "1 of algorithm image, archive or reader study must be set"
+                "1 of algorithm, archive or reader study must be set"
             )
         return attrs
 
-    def validate_algorithm_image(self, value):
+    def validate_algorithm(self, value):
         user = self.context.get("request").user
 
-        if not user.has_perm("execute_algorithm", value.algorithm):
+        if not user.has_perm("execute_algorithm", value):
             raise ValidationError(
                 "User does not have permission to execute this algorithm"
             )
+
+        if not value.latest_ready_image:
+            raise ValidationError("This algorithm is not ready to be used")
 
         return value
 
@@ -120,23 +150,6 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
             )
 
         return value
-
-    class Meta:
-        model = RawImageUploadSession
-        fields = [
-            "pk",
-            "creator",
-            "status",
-            "error_message",
-            "image_set",
-            "algorithm_image",
-            "archive",
-            "reader_study",
-            "api_url",
-        ]
-        swagger_schema_fields = swagger_schema_fields_for_charfield(
-            status=model._meta.get_field("status")
-        )
 
 
 class RawImageFileSerializer(serializers.ModelSerializer):

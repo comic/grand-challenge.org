@@ -67,7 +67,7 @@
             {% endif %}
 
             <a class="nav-link"
-               href="{% url 'algorithms:jobs-list' slug=object.slug %}">
+               href="{% url 'algorithms:job-list' slug=object.slug %}">
                 <i class="fas fa-file-export fa-fw"></i>&nbsp;Results
             </a>
 
@@ -152,9 +152,36 @@
                     see all of the results:
                 </p>
 
-                <ul class="list-group list-group-flush mb-2">
+                <ul class="list-group list-group-flush mb-3">
                     {% for user in object.editors_group.user_set.all %}
-                        <li class="list-group-item">{{ user|user_profile_link }}</li>
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>{{ user|user_profile_link }}</div>
+                                <div>
+                                    {% if user != request.user %}
+                                        <form
+                                                action="{% url 'algorithms:editors-update' slug=object.slug %}"
+                                                method="POST">
+                                            {% csrf_token %}
+                                            {% for field in editor_remove_form %}
+                                                {% if field.name == "user" %}
+                                                    <input
+                                                            type="hidden"
+                                                            name="user"
+                                                            value="{{ user.id }}"/>
+                                                {% else %}
+                                                    {{ field }}
+                                                {% endif %}
+                                            {% endfor %}
+                                            <button type="submit"
+                                                    class="btn btn-danger">
+                                                Remove
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
                     {% empty %}
                         <li class="list-group-item">There are no editors for this
                             algorithm.
@@ -176,7 +203,7 @@
                 <h2>Users</h2>
                 <p>The following users are able to use this algorithm:</p>
 
-                <ul class="list-group list-group-flush mb-2">
+                <ul class="list-group list-group-flush mb-3">
                     {% for user in object.users_group.user_set.all %}
                         <li class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">

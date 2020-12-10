@@ -327,8 +327,14 @@ def _convert_to_tiff(*, path: Path, pk: UUID, converter) -> Path:
         str(path.absolute()), access="sequential"
     )
 
-    converter.Image.write_to_file(
-        image,
+    # correct xres and yres if they have default value of 1
+    # can be removed once updated to VIPS 8.10
+    if image.get("xres") == 1 and "openslide.mpp-x" in image.get_fields():
+        x_res = 1000.0 / float(image.get("openslide.mpp-x"))
+        y_res = 1000.0 / float(image.get("openslide.mpp-y"))
+        image = image.copy(xres=x_res, yres=y_res)
+
+    image.write_to_file(
         str(new_file_name.absolute()),
         tile=True,
         pyramid=True,

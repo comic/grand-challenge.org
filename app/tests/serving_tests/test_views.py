@@ -97,7 +97,7 @@ def test_submission_download(client, two_challenge_sets):
         # )
         (403, None),
         (403, two_challenge_sets.challenge_set_1.non_participant),
-        (403, two_challenge_sets.challenge_set_1.participant),
+        (302, two_challenge_sets.challenge_set_1.participant),
         (403, two_challenge_sets.challenge_set_1.participant1),
         (302, two_challenge_sets.challenge_set_1.creator),
         (302, two_challenge_sets.challenge_set_1.admin),

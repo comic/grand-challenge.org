@@ -1,9 +1,12 @@
 from celery import shared_task
 
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.archives.models import Archive
+from grandchallenge.cases.models import Image
 
 
 @shared_task
-def add_images_to_archive(*_, upload_session_pk):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    session.archive.images.add(*session.image_set.all())
+def add_images_to_archive(*, upload_session_pk, archive_pk):
+    images = Image.objects.filter(origin_id=upload_session_pk)
+    archive = Archive.objects.get(pk=archive_pk)
+
+    archive.images.add(*images.all())

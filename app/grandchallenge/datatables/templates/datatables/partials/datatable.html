@@ -1,0 +1,22 @@
+<div class="table-responsive mb-3">
+    <table id="ajaxDataTable" class="table table-hover table-borderless table-sm w-100">
+        <thead class="thead-light">
+        <tr>
+            {% for column in columns %}
+                <th {% if column.identifier %}id="{{ column.identifier }}"{% endif %}
+                    {% if column.classes %}class="{% for cls in column.classes %}{{ cls }} {% endfor %}"{% endif %}
+                >{{ column.title }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td colspan="100%" class="text-center">
+                <div class="text-secondary text-center spinner-border" role="status">
+                    <span class="sr-only">Loading Results...</span>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

@@ -1,8 +1,8 @@
 from celery import shared_task
 from django.db import transaction
 
-from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.reader_studies.models import Answer
+from grandchallenge.cases.models import Image
+from grandchallenge.reader_studies.models import Answer, ReaderStudy
 
 
 @transaction.atomic
@@ -32,6 +32,8 @@ def add_scores(*, instance_pk, pk_set):
 
 
 @shared_task
-def add_images_to_reader_study(*_, upload_session_pk):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    session.reader_study.images.add(*session.image_set.all())
+def add_images_to_reader_study(*, upload_session_pk, reader_study_pk):
+    images = Image.objects.filter(origin_id=upload_session_pk)
+    reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
+
+    reader_study.images.add(*images.all())

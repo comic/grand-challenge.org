@@ -1,6 +1,3 @@
-from functools import reduce
-from operator import or_
-
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.paginator import EmptyPage, Paginator
@@ -14,18 +11,15 @@ from django.views.generic import (
     UpdateView,
 )
 
+from grandchallenge.challenges.filters import ChallengeFilter
 from grandchallenge.challenges.forms import (
     ChallengeCreateForm,
     ChallengeUpdateForm,
     ExternalChallengeUpdateForm,
 )
 from grandchallenge.challenges.models import (
-    BodyRegion,
     Challenge,
-    ChallengeSeries,
     ExternalChallenge,
-    ImagingModality,
-    TaskType,
 )
 from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
@@ -52,51 +46,29 @@ class ChallengeList(TemplateView):
     template_name = "challenges/challenge_list.html"
 
     @property
-    def _search_filter(self):
-        search_query = self._current_search
-
-        q = Q()
-
-        if search_query:
-            search_fields = [
-                "title",
-                "short_name",
-                "description",
-                "event_name",
-            ]
-            q = reduce(
-                or_,
-                [
-                    Q(**{f"{f}__icontains": search_query})
-                    for f in search_fields
-                ],
-                Q(),
-            )
-
-        return q
-
-    @property
     def _current_page(self):
         return int(self.request.GET.get("page", 1))
 
     @property
-    def _current_search(self):
-        return self.request.GET.get("search", "")
+    def _filters_applied(self):
+        return any(k for k in self.request.GET if k.lower() != "page")
 
     def _get_page(self):
-        int_paginator = Paginator(
+        self.int_filter = ChallengeFilter(
+            self.request.GET,
             Challenge.objects.filter(hidden=False)
-            .filter(self._search_filter)
-            .prefetch_related("phase_set")
+            .prefetch_related("phase_set", "publications")
             .order_by("-created"),
-            self.paginate_by // 2,
         )
-        ext_paginator = Paginator(
+        self.ext_filter = ChallengeFilter(
+            self.request.GET,
             ExternalChallenge.objects.filter(hidden=False)
-            .filter(self._search_filter)
+            .prefetch_related("publications")
             .order_by("-created"),
-            self.paginate_by // 2,
         )
+
+        int_paginator = Paginator(self.int_filter.qs, self.paginate_by // 2)
+        ext_paginator = Paginator(self.ext_filter.qs, self.paginate_by // 2)
 
         num_pages = max(int_paginator.num_pages, ext_paginator.num_pages)
         num_results = int_paginator.count + ext_paginator.count
@@ -116,26 +88,18 @@ class ChallengeList(TemplateView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        modalities = ImagingModality.objects.all()
-        task_types = TaskType.objects.all()
-        regions = BodyRegion.objects.all().prefetch_related(
-            "bodystructure_set"
-        )
-        challenge_series = ChallengeSeries.objects.all()
-
         page_obj, num_pages, num_results = self._get_page()
 
         context.update(
             {
-                "modalities": modalities,
-                "body_regions": regions,
-                "task_types": task_types,
-                "challenge_series": challenge_series,
+                "int_filter": self.int_filter,
+                "filters_applied": self._filters_applied,
                 "page_obj": page_obj,
                 "num_pages": num_pages,
                 "num_results": num_results,
                 "current_page": self._current_page,
-                "current_search": self._current_search,
+                "next_page": self._current_page + 1,
+                "previous_page": self._current_page - 1,
                 "jumbotron_title": "Challenges",
                 "jumbotron_description": format_html(
                     (

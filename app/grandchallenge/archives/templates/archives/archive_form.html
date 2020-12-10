@@ -10,13 +10,17 @@
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a>
         </li>
+        {% if object %}
+            <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
+        {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">New Archive</li>
+            aria-current="page">{% if object %}Update{% else %}New{% endif %} Archive
+        </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>New Archive</h2>
+    <h2>{% if object %}Update{% else %}New{% endif %} Archive</h2>
 
     {% crispy form %}
 

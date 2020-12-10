@@ -1,4 +1,6 @@
 import logging
+from datetime import timedelta
+from typing import Dict
 
 from dal import autocomplete
 from django.conf import settings
@@ -16,6 +18,7 @@ from django.core.exceptions import (
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import (
@@ -26,16 +29,17 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from guardian.shortcuts import get_perms
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.algorithms.filters import JobViewsetFilter
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
@@ -44,6 +48,7 @@ from grandchallenge.algorithms.forms import (
     EditorsForm,
     JobForm,
     UsersForm,
+    ViewersForm,
 )
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -54,19 +59,17 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
-    JobSerializer,
+    HyperlinkedJobSerializer,
 )
-from grandchallenge.algorithms.tasks import create_algorithm_jobs
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.views import (
-    Column,
-    PaginatedTableListView,
-    PermissionRequestUpdate,
-)
+from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.credits.models import Credit
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -149,7 +152,12 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
 
         form = UsersForm()
         form.fields["action"].initial = UsersForm.REMOVE
-        context.update({"form": form})
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+
+        context.update(
+            {"form": form, "editor_remove_form": editor_remove_form}
+        )
 
         pending_permission_requests = AlgorithmPermissionRequest.objects.filter(
             algorithm=context["object"],
@@ -213,38 +221,53 @@ class AlgorithmUserAutocomplete(
         return qs
 
 
-class AlgorithmUserGroupUpdateMixin(
+class UserGroupUpdateMixin(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     FormView,
 ):
-    template_name = "algorithms/algorithm_user_groups_form.html"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
-    )
+    template_name = "algorithms/user_groups_form.html"
     raise_exception = True
 
     def get_permission_object(self):
-        return self.algorithm
+        return self.obj
 
     @property
-    def algorithm(self):
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+    def obj(self):
+        raise NotImplementedError
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(
-            {"object": self.algorithm, "role": self.get_form().role}
-        )
+        context.update({"object": self.obj, "role": self.get_form().role})
         return context
 
     def get_success_url(self):
-        return self.algorithm.get_absolute_url()
+        return self.obj.get_absolute_url()
 
     def form_valid(self, form):
-        form.add_or_remove_user(algorithm=self.algorithm)
+        form.add_or_remove_user(obj=self.obj)
         return super().form_valid(form)
+
+
+class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
+
+    @property
+    def obj(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+
+class JobUserGroupUpdateMixin(UserGroupUpdateMixin):
+    permission_required = (
+        f"{Job._meta.app_label}.change_{Job._meta.model_name}"
+    )
+
+    @property
+    def obj(self):
+        return get_object_or_404(Job, pk=self.kwargs["pk"])
 
 
 class EditorsUpdate(AlgorithmUserGroupUpdateMixin):
@@ -255,6 +278,20 @@ class EditorsUpdate(AlgorithmUserGroupUpdateMixin):
 class UsersUpdate(AlgorithmUserGroupUpdateMixin):
     form_class = UsersForm
     success_message = "Users successfully updated"
+
+
+class JobViewersUpdate(JobUserGroupUpdateMixin):
+    form_class = ViewersForm
+
+    def get_success_message(self, cleaned_data):
+        return format_html(
+            (
+                "Viewers for {} successfully updated. <br>"
+                "They will be able to see the job by visiting {}"
+            ),
+            self.obj,
+            self.obj.get_absolute_url(),
+        )
 
 
 class AlgorithmImageCreate(
@@ -334,7 +371,16 @@ class AlgorithmExecutionSessionCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"linked_task": create_algorithm_jobs})
+        kwargs.update(
+            {
+                "linked_task": create_algorithm_jobs_for_session.signature(
+                    kwargs={
+                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
+                    },
+                    immutable=True,
+                )
+            }
+        )
         return kwargs
 
     def get_permission_object(self):
@@ -347,12 +393,16 @@ class AlgorithmExecutionSessionCreate(
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        form.instance.algorithm_image = self.algorithm.latest_ready_image
         return super().form_valid(form)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
+        context.update(
+            self.get_remaining_jobs(
+                credits_per_job=self.algorithm.credits_per_job
+            )
+        )
         return context
 
     def get_success_url(self):
@@ -360,6 +410,42 @@ class AlgorithmExecutionSessionCreate(
             "algorithms:execution-session-detail",
             kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
+
+    def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
+        """
+        Determines the number of jobs left for the user and when the next job can be started
+
+        :return: A dictionary containing remaining_jobs (int) and
+        next_job_at (datetime)
+        """
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_credit = Credit.objects.get(user=self.request.user)
+
+        if credits_per_job == 0:
+            return {
+                "remaining_jobs": 1,
+                "next_job_at": now,
+                "user_credits": user_credit.credits,
+            }
+
+        jobs = Job.credits_set.spent_credits(user=self.request.user)
+
+        if jobs["oldest"]:
+            next_job_at = jobs["oldest"] + period
+        else:
+            next_job_at = now
+
+        if jobs["total"]:
+            total_jobs = user_credit.credits - jobs["total"]
+        else:
+            total_jobs = user_credit.credits
+
+        return {
+            "remaining_jobs": int(total_jobs / max(credits_per_job, 1)),
+            "next_job_at": next_job_at,
+            "user_credits": total_jobs,
+        }
 
 
 class AlgorithmExecutionSessionDetail(
@@ -388,60 +474,95 @@ class AlgorithmExecutionSessionDetail(
         return context
 
 
-class AlgorithmJobsList(PermissionListMixin, PaginatedTableListView):
+class JobsList(PermissionListMixin, PaginatedTableListView):
     model = Job
     permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
-    row_template = "algorithms/data_tables/job_list.html"
+    row_template = "algorithms/job_list_row.html"
     search_fields = [
+        "pk",
         "creator__username",
         "inputs__image__name",
         "inputs__image__files__file",
         "comment",
     ]
     columns = [
+        Column(title="Details", sort_field="pk"),
         Column(title="Created", sort_field="created"),
         Column(title="Creator", sort_field="creator__username"),
         Column(title="Result", sort_field="inputs__image__name"),
+        Column(title="Comment", sort_field="comment"),
         Column(title="Visibility", sort_field="public"),
-        Column(title="Output", sort_field="inputs__image__files__file"),
-        Column(title="Edit", sort_field="comment"),
+        Column(title="Viewer", sort_field="inputs__image__files__file"),
     ]
-    order_by = "created"
-
-    def get_row_context(self, job, *args, checker, **kwargs):
-        return {
-            "job": job,
-            "algorithm": self.algorithm,
-            "change_job": checker.has_perm("change_job", job),
-        }
-
-    def get_data(self, jobs, *args, **kwargs):
-        checker = ObjectPermissionChecker(self.request.user)
-        checker.prefetch_perms(jobs.object_list)
-        return [self.render_row_data(job, checker=checker) for job in jobs]
+    default_sort_column = 1
 
     @cached_property
     def algorithm(self):
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_unfiltered_queryset(self):
-        queryset = self.object_list
+    def get_queryset(self):
+        queryset = super().get_queryset()
         return (
             queryset.filter(algorithm_image__algorithm=self.algorithm,)
-            .prefetch_related("outputs__image__files", "inputs__image__files")
-            .select_related("creator__user_profile")
+            .prefetch_related(
+                "outputs__image__files",
+                "outputs__interface",
+                "inputs__image__files",
+                "viewers__user_set",
+            )
+            .select_related(
+                "creator__user_profile",
+                "creator__verification",
+                "algorithm_image__algorithm",
+            )
         )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
+        return context
+
+
+class JobDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    raise_exception = True
+    queryset = (
+        Job.objects.with_duration()
+        .prefetch_related(
+            "outputs__image__files",
+            "outputs__interface",
+            "inputs__image__files",
+            "viewers__user_set__user_profile",
+            "viewers__user_set__verification",
+            "viewer_groups",
+        )
+        .select_related(
+            "creator__user_profile",
+            "creator__verification",
+            "algorithm_image__algorithm__workstation",
+        )
+    )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        viewers_form = ViewersForm()
+        viewers_form.fields["action"].initial = ViewersForm.REMOVE
+
+        context.update(
+            {
+                "viewers_form": viewers_form,
+                "job_perms": get_perms(self.request.user, self.object),
+                "algorithm_perms": get_perms(
+                    self.request.user, self.object.algorithm_image.algorithm
+                ),
+            }
+        )
 
         return context
 
 
-class AlgorithmJobUpdate(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
-):
+class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     model = Job
     form_class = JobForm
     permission_required = (
@@ -449,18 +570,13 @@ class AlgorithmJobUpdate(
     )
     raise_exception = True
 
-    def get_success_url(self):
-        return reverse(
-            "algorithms:jobs-list",
-            kwargs={"slug": self.object.algorithm_image.algorithm.slug},
-        )
-
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all()
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["slug"]
 
 
 class AlgorithmImageViewSet(ReadOnlyModelViewSet):
@@ -472,11 +588,15 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
 
 
 class JobViewSet(ReadOnlyModelViewSet):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
+    queryset = (
+        Job.objects.all()
+        .prefetch_related("outputs__interface", "inputs__interface")
+        .select_related("algorithm_image__algorithm")
+    )
+    serializer_class = HyperlinkedJobSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
-    filterset_fields = ["algorithm_image__algorithm", "image"]
+    filterset_class = JobViewsetFilter
 
 
 class AlgorithmPermissionRequestCreate(
@@ -539,7 +659,7 @@ class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
         queryset = (
             queryset.filter(algorithm=self.algorithm)
             .exclude(status=AlgorithmPermissionRequest.ACCEPTED)
-            .select_related("user__user_profile")
+            .select_related("user__user_profile", "user__verification")
         )
         return queryset
 

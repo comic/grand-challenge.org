@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+from unittest.mock import MagicMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -9,6 +10,7 @@ import tifffile as tiff_lib
 from django.core.exceptions import ValidationError
 from pytest import approx
 from tifffile import tifffile
+
 
 from grandchallenge.cases.image_builders.tiff import (
     GrandChallengeTiffFile,
@@ -24,28 +26,6 @@ from grandchallenge.cases.image_builders.tiff import (
 )
 from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
-
-
-class MockConverter:
-    def __init__(self):
-        pass
-
-    class Image:
-        def __init__(self):
-            pass
-
-        def new_from_file(*args, access):  # noqa B902
-            return None
-
-        def write_to_file(
-            *args,  # noqa B902
-            tile,  # noqa N805
-            pyramid,
-            bigtiff,
-            compression,
-            Q,  # noqa N803
-        ):
-            return None
 
 
 @pytest.mark.parametrize(
@@ -346,7 +326,27 @@ def test_handle_complex_files(tmpdir_factory):
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(RESOURCE_PATH / "complex_tiff", temp_dir)
     files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
-    gc_list, errors = _load_gc_files(files=files, converter=MockConverter)
+
+    # set up mock object to mock pyvips
+    properties = {
+        "xres": 1,
+        "yres": 1,
+        "openslide.mpp-x": 0.2525,
+        "openslide.mpp-y": 0.2525,
+    }
+
+    mock_converter = MagicMock(pyvips)
+    mock_image = mock_converter.Image.new_from_file.return_value
+    mock_image.get = Mock(return_value=1)
+    mock_image.get_fields = Mock(return_value=properties)
+
+    gc_list, errors = _load_gc_files(files=files, converter=mock_converter)
+    mock_image.copy.assert_called()
+    assert "xres" in mock_image.copy.call_args[1]
+    assert (
+        pyvips.base.version(0) == 8 and pyvips.base.version(1) < 10
+    ), "Remove work-around calculation of xres and yres in _convert_to_tiff function."
+
     assert len(gc_list) == 2
     all_associated_files = []
     for gc in gc_list:

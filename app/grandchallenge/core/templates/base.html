@@ -12,19 +12,33 @@
         <title>
             {% block title %}{{ request.site.name }}{% endblock %}
         </title>
+    {% endblock %}
 
-        {% block head_script %}
-            {% include "grandchallenge/partials/head_script.html" %}
-        {% endblock %}
+    {% block head_script %}
+        {% include "grandchallenge/partials/head_script.html" %}
+    {% endblock %}
 
-        {% block style %}
-            {% include "grandchallenge/partials/style.html" %}
-        {% endblock %}
+    {% block css %}
+        {# Block used by django-machina #}
+    {% endblock %}
+
+    {% block extra_css %}
+        {# Block used by django-machina #}
+    {% endblock %}
+
+    {% block style %}
+        {% include "grandchallenge/partials/style.html" %}
     {% endblock %}
 </head>
 
+<body class="d-flex flex-column min-vh-100">
+
+{% block js %}
+    {# Block used by django-machina #}
+{% endblock %}
+
 {% block body %}
-    <body class="d-flex flex-column min-vh-100">
+    {# Block used by django-machina #}
 
     {% block navbar %}
         {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
@@ -64,15 +78,19 @@
         {% block post_content %}
         {% endblock %}
     </main>
-
-    {% block footer %}
-        {% include "grandchallenge/partials/footer.html" %}
-    {% endblock %}
-
-    {% block script %}
-        {% include "grandchallenge/partials/script.html" %}
-    {% endblock %}
-
-    </body>
 {% endblock %}
+
+{% block footer %}
+    {% include "grandchallenge/partials/footer.html" %}
+{% endblock %}
+
+{% block extra_js %}
+    {# Block used by django-machina #}
+{% endblock %}
+
+{% block script %}
+    {% include "grandchallenge/partials/script.html" %}
+{% endblock %}
+
+</body>
 </html>

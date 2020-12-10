@@ -1,0 +1,83 @@
+{% load url %}
+{% load profiles %}
+{% load workstations %}
+{% load guardian_tags %}
+{% load pathlib %}
+{% load humanize %}
+{% load remove_whitespace %}
+
+<a class="badge badge-primary"
+   href="{% url 'algorithms:job-detail' slug=algorithm.slug pk=object.pk %}"
+   title="View result details">
+    <i class="fa fa-info-circle"></i>
+</a>
+<split/>
+
+{{ object.created|naturaltime }}
+<split/>
+
+{{ object.creator|user_profile_link }}
+<split/>
+
+<a href="#resultInfoModal"
+   class="badge
+{% if object.status == object.FAILURE or object.status == object.CANCELLED %}
+    badge-danger
+{% elif object.status == object.RETRY %}
+    badge-warning
+{% elif object.status == object.SUCCESS %}
+    {% if object.stderr %}
+        badge-warning
+    {% else %}
+        badge-success
+    {% endif %}
+{% else %}
+    badge-info
+{% endif %}"
+   data-toggle="modal"
+   data-target="#resultInfoModal"
+   data-title="Result Info"
+   data-output="
+   {% if object.status == object.SUCCESS %}
+        {% for output in object.outputs.all %}{% if output.value %}{{ output.value }}{% endif %}{% empty %}No output produced.{% endfor %}
+   {% else %}
+        {% firstof object.error_message object.get_status_display %}
+   {% endif %}"
+   data-pk="{{ object.pk }}"
+   title="Result Info">
+    <i class="fa fa-file"></i>
+    {% for input in object.inputs.all %}
+        {{ input.image.name }}
+    {% endfor %}
+    ({{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %}, with warnings{% endif %})
+</a>
+{% if object.rendered_result_text %}
+    {{ object.rendered_result_text|json_script:object.pk }}
+{% endif %}
+<split/>
+
+{{ object.comment }}
+<split/>
+
+{% if object.public %}
+    <i class="fa fa-eye text-success"
+       title="Result and images are public"></i>
+{% else %}
+    {% if object.viewers.user_set.all|length > 1 %}
+        {# TODO: Hack, we need to exclude the creator rather than checking the length is > 1 #}
+        <i class="fa fa-eye text-warning"
+           title="Result and images are visible by {{ object.viewers.user_set.all|oxford_comma }}"></i>
+    {% else %}
+        <i class="fa fa-eye-slash text-danger"
+           title="Result and images are private"></i>
+    {% endif %}
+{% endif %}
+<split/>
+
+{% if object.status == object.SUCCESS %}
+    <a class="badge badge-primary"
+       title="View algorithm result"
+       href="{% url 'workstations:workstation-session-create' slug=algorithm.workstation.slug %}?{% workstation_query algorithm_job=object config=algorithm.workstation_config %}">
+        <i class="fa fa-eye"></i> Open Result in Viewer
+    </a>
+{% endif %}

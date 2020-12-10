@@ -67,6 +67,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
         model = ReaderStudy
         fields = (
             "api_url",
+            "slug",
             "description",
             "help_text",
             "hanging_list_images",

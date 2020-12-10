@@ -11,7 +11,7 @@ Person(users, "Users", "")
 Container_Boundary(s1, "API") {
     Component(gc_web_app, "Web Application", "Django", "Provides the grand challenge functionality via HTML and a REST API.")
     Component(nginx, "Reverse Proxy", "Nginx", "SSL termination and routing")
-    Component(memcached, "Cache", "Memcached", "Local in-memory cache of expensive data.")
+    Component(redis, "Cache", "Redis", "Local in-memory cache of expensive data.")
 }
 
 ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
@@ -31,7 +31,7 @@ Rel(gc_web_app, postgres, "Reads and writes to", "SSL, SQL")
 Rel(gc_web_app, protected_s3, "Stores objects in, and proxies access to", "HTTPS, S3")
 Rel(gc_web_app, private_s3, "Stores objects in", "HTTPS, S3")
 Rel(gc_web_app, message_queue, "Puts messages on", "SSL, SQS/Redis, Celery")
-Rel_Neighbor(gc_web_app, memcached, "Uses", "HTTP")
+Rel_Neighbor(gc_web_app, redis, "Uses", "HTTP")
 
 Rel(nginx, gc_web_app, "Proxies", "HTTP, HTML, JSON")
 

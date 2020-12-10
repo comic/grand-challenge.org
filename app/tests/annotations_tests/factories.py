@@ -25,7 +25,7 @@ from tests.cases_tests.factories import ImageFactory
 from tests.factories import FuzzyFloatCoordinatesList, UserFactory
 
 
-class DefaultImageAnnotationModelFactory(factory.DjangoModelFactory):
+class DefaultImageAnnotationModelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = AbstractImageAnnotationModel
         abstract = True
@@ -93,7 +93,7 @@ class PolygonAnnotationSetFactory(DefaultNamedImageAnnotationModelFactory):
         model = PolygonAnnotationSet
 
 
-class SinglePolygonAnnotationFactory(factory.DjangoModelFactory):
+class SinglePolygonAnnotationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SinglePolygonAnnotation
 
@@ -102,7 +102,7 @@ class SinglePolygonAnnotationFactory(factory.DjangoModelFactory):
     value = FuzzyFloatCoordinatesList()
 
 
-class LandmarkAnnotationSetFactory(factory.DjangoModelFactory):
+class LandmarkAnnotationSetFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = LandmarkAnnotationSet
 
@@ -112,7 +112,7 @@ class LandmarkAnnotationSetFactory(factory.DjangoModelFactory):
     )
 
 
-class SingleLandmarkAnnotationFactory(factory.DjangoModelFactory):
+class SingleLandmarkAnnotationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SingleLandmarkAnnotation
 
@@ -149,11 +149,8 @@ class RetinaImagePathologyAnnotationFactory(
     class Meta:
         model = RetinaImagePathologyAnnotation
 
-    amd_present = factory.fuzzy.FuzzyChoice([True, False])
-    dr_present = factory.fuzzy.FuzzyChoice([True, False])
     oda_present = factory.fuzzy.FuzzyChoice([True, False])
     myopia_present = factory.fuzzy.FuzzyChoice([True, False])
-    cysts_present = factory.fuzzy.FuzzyChoice([True, False])
     other_present = factory.fuzzy.FuzzyChoice([True, False])
     rf_present = factory.fuzzy.FuzzyChoice([True, False])
 
