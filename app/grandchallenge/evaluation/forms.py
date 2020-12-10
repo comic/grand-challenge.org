@@ -66,9 +66,14 @@ class PhaseTitleMixin:
         super().__init__(*args, **kwargs)
 
     def clean_title(self):
-        title = self.cleaned_data["title"]
+        title = self.cleaned_data["title"].strip()
 
-        if self.challenge.phase_set.filter(title=title).exists():
+        qs = self.challenge.phase_set.filter(title__iexact=title)
+
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if qs.exists():
             raise ValidationError(
                 "This challenge already has a phase with this title"
             )
