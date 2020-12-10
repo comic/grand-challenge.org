@@ -17,8 +17,10 @@
             Your verification request has been approved.
         {% elif not object.signup_email_is_trusted and not object.email_is_verified %}
             Please check your email for the link to confirm your account.
-        {% else %}
+        {% elif object.is_verified == None %}
             Your verification request is under review by the site administrators.
+        {% else %}
+            Your request for verification was rejected.
         {% endif %}
     </p>
 

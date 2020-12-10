@@ -23,7 +23,7 @@ class Verification(models.Model):
         blank=True, null=True, editable=False
     )
 
-    is_verified = models.BooleanField(default=False, editable=False)
+    is_verified = models.BooleanField(default=None, null=True, editable=False)
     verified_at = models.DateTimeField(blank=True, null=True, editable=False)
 
     def __str__(self):
