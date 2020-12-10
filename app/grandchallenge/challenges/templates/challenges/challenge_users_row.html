@@ -1,0 +1,31 @@
+{% load profiles %}
+
+
+<a href="{{ object.get_absolute_url }}">
+    {% firstof object.title object.short_name %}
+</a>
+{% if object.hidden %}
+    <i class="fa fa-eye-slash text-danger"
+       title="Challenge not listed on the all challenges page"></i>
+{% endif %}
+<split/>
+
+{{ object.created }}
+<split/>
+
+{% for user in object.get_admins %}
+    {{ user|user_profile_link }}<br/>
+{% endfor %}
+<split/>
+
+{{ object.description }}
+<split/>
+
+{% if object.use_evaluation %}
+    <i class="fas fa-check text-success"
+       title="Challenge is using automated evaluation"></i>
+{% else %}
+    <i class="fas fa-times text-danger"
+       title="Challenge is not using automated evaluation"></i>
+{% endif %}
+<split/>
