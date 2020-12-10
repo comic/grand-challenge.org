@@ -1,14 +1,10 @@
-{% extends 'base.html' %}
+{% extends 'datatables/list_base.html' %}
 {% load url %}
-{% load user_profile_link from profiles %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a
-                href="{% url 'challenges:list' %}">Challenges</a>
-        </li>
-        <li class="breadcrumb-item active"
-            aria-current="page">Your Challenges</li>
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Your Challenges</li>
     </ol>
 {% endblock %}
 
@@ -20,66 +16,5 @@
 
     <p>This is a list of the challenges that you are participating in.</p>
 
-    <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm" id="challengesTable">
-            <thead class="thead-light">
-            <tr>
-                <th>Name</th>
-                <th>Created</th>
-                <th>Admins</th>
-                <th>Description</th>
-                <th>Automated Evaluation</th>
-            </tr>
-            </thead>
-            <tbody>
-
-            {% for challenge in object_list %}
-                <tr>
-                    <td>
-                        <a href="{{ challenge.get_absolute_url }}">
-                            {% firstof challenge.title challenge.short_name %}
-                        </a>
-                        {% if challenge.hidden %}
-                            <i class="fa fa-eye-slash text-danger"
-                               title="Challenge not listed on the all challenges page"></i>
-                        {% endif %}
-                    </td>
-                    <td data-order="{{ challenge.created|date:"U" }}">
-                        {{ challenge.created }}
-                    </td>
-                    <td>
-                        {% for user in challenge.get_admins %}
-                            {{ user|user_profile_link }}<br/>
-                        {% endfor %}
-                    </td>
-                    <td>{{ challenge.description }}</td>
-                    {% if challenge.use_evaluation and challenge.method_set.all %}
-                        <td data-order="true">
-                            <i class="fas fa-check text-success"
-                               title="Challenge is using automated evaluation"></i>
-                            Submissions: {{ challenge.submission_set.all|length }}
-                            {% else %}
-                        <td data-order="false">
-                        <i class="fas fa-times text-danger"
-                           title="Challenge is not using automated evaluation"></i>
-                    {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-
-            </tbody>
-        </table>
-    </div>
-{% endblock %}
-
-{% block script %}
     {{ block.super }}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('#challengesTable').DataTable({
-                "pageLength": 10,
-                "order": [[1, "desc"]]
-            });
-        });
-    </script>
 {% endblock %}

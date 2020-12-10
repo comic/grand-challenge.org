@@ -27,6 +27,7 @@ from grandchallenge.core.permissions.mixins import (
     UserIsStaffMixin,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse
 
@@ -117,12 +118,33 @@ class ChallengeList(TemplateView):
         return context
 
 
-class UsersChallengeList(UserIsNotAnonMixin, ListView):
+class UsersChallengeList(UserIsNotAnonMixin, PaginatedTableListView):
     model = Challenge
     template_name = "challenges/challenge_users_list.html"
+    row_template = "challenges/challenge_users_row.html"
+    search_fields = [
+        "title",
+        "short_name",
+        "description",
+    ]
+    columns = [
+        Column(title="Name", sort_field="short_name"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Admins", sort_field="created"),
+        Column(title="Description", sort_field="description"),
+        Column(title="Automated Evaluation", sort_field="use_evaluation"),
+    ]
+    default_sort_column = 1
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                "admins_group__user_set__user_profile",
+                "admins_group__user_set__verification",
+            )
+        )
         if not self.request.user.is_superuser:
             queryset = queryset.filter(
                 Q(participants_group__in=self.request.user.groups.all())
