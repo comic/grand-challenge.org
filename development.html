@@ -87,7 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Development</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#windows">Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-development-site">The Development Site</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#running-the-tests">Running the Tests</a></li>
@@ -98,10 +98,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#creating-migrations">Creating Migrations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#building-the-documentation">Building the documentation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#using-docker">Using docker</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#building-the-documentation">Building the documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#adding-new-dependencies">Adding new dependencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#going-to-production">Going to Production</a></li>
 </ul>
@@ -186,10 +183,16 @@ To develop the platform you need to have docker and docker-compose running on yo
 <li><p>Download and install Docker</p>
 <blockquote>
 <div><p><em>Linux</em>: <a class="reference external" href="https://docs.docker.com/install/">Docker</a> and <a class="reference external" href="https://docs.docker.com/compose/install/">Docker Compose</a></p>
-<p><em>Windows 10 Pro (Build 15063 or later)</em>: <a class="reference external" href="https://docs.docker.com/docker-for-windows/install/">Docker for Windows</a></p>
-<p><em>Older Windows versions</em>: <a class="reference external" href="https://docs.docker.com/toolbox/toolbox_install_windows/">Docker Toolbox</a></p>
+<p><em>Windows</em>: <a class="reference external" href="https://docs.microsoft.com/en-us/windows/wsl/install-win10/">WSL2</a>, <a class="reference external" href="https://docs.docker.com/docker-for-windows/install/">Docker Desktop for Windows</a> with the <a class="reference external" href="https://docs.docker.com/docker-for-windows/wsl/">Docker Desktop WSL2 Backend</a> and <a class="reference external" href="https://docs.docker.com/compose/install/">Docker Compose</a></p>
 </div></blockquote>
 </li>
+</ol>
+<p><em>Note for Windows Users</em>: we <strong>only</strong> support development using Windows 10 and WSL2.
+Please ensure that the correct backend is enabled in your docker settings, and run all of the following commands in the <code class="docutils literal notranslate"><span class="pre">wsl</span></code> shell.
+At the time of writing, we use <code class="docutils literal notranslate"><span class="pre">Ubuntu</span> <span class="pre">20.04</span></code> from the Microsoft store as the default distro.
+As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within <code class="docutils literal notranslate"><span class="pre">wsl</span></code> itself.
+For the same reason, we currently recommend running PyCharm from wsl rather than from windows (see <a class="reference external" href="https://techcommunity.microsoft.com/t5/windows-dev-appconsult/running-wsl-gui-apps-on-windows-10/ba-p/1493242">Running WSL GUI Apps on Windows 10</a>), but improved support for this should follow from JetBrains in 2021.</p>
+<ol class="arabic simple" start="2">
 <li><p>Clone the repo</p></li>
 </ol>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> git clone https://github.com/comic/grand-challenge.org
@@ -197,77 +200,44 @@ To develop the platform you need to have docker and docker-compose running on yo
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Add the following to your <code class="docutils literal notranslate"><span class="pre">/etc/hosts</span></code> file:</p></li>
+<li><p>Add the following to your hosts file (<code class="docutils literal notranslate"><span class="pre">/etc/hosts</span></code> on Linux, <code class="docutils literal notranslate"><span class="pre">C:\Windows\System32\drivers\etc\hosts</span></code> on Windows):</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">127.0.0.1 minio-protected</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">127.0.0.1 gc.localhost</span>
+<span class="go">127.0.0.1 demo.gc.localhost</span>
+<span class="go">127.0.0.1 minio-public</span>
+<span class="go">127.0.0.1 minio-protected</span>
 </pre></div>
 </div>
-<ol class="arabic simple" start="3">
-<li><p>You can then start the site by invoking</p></li>
+<ol class="arabic simple" start="4">
+<li><p>You can then start the development site by invoking</p></li>
 </ol>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ./cycle_docker_compose.sh
 </pre></div>
 </div>
-<p>You can then navigate to <a class="reference external" href="https://gc.localhost">https://gc.localhost</a> in your browser to see the development site,
-this is using a self-signed certificate so you will need to accept the security warning.
-The <code class="docutils literal notranslate"><span class="pre">app/</span></code> directory is mounted in the containers,
+<p>The <code class="docutils literal notranslate"><span class="pre">app/</span></code> directory is mounted in the containers,
 <code class="docutils literal notranslate"><span class="pre">werkzeug</span></code> handles the file monitoring and will restart the process if any changes are detected.
 If you need to manually restart the process you can do this when running <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> by pressing  <code class="docutils literal notranslate"><span class="pre">CTRL+D</span></code> in the console window,
 you can also kill the server with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code>.</p>
-<div class="section" id="windows">
-<h3>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h3>
-<p>Running Grand-Challenge within a Windows environment requires additional steps before invoking the <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> script.</p>
-<ol class="arabic simple">
-<li><p>Install <code class="docutils literal notranslate"><span class="pre">Make</span></code> for an available <code class="docutils literal notranslate"><span class="pre">bash</span></code> console</p></li>
-<li><p>Set an environment variable to enable Windows path conversions for Docker</p></li>
-</ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nb">export</span> <span class="nv">COMPOSE_CONVERT_WINDOWS_PATHS</span><span class="o">=</span><span class="m">1</span>
+<div class="section" id="the-development-site">
+<h3>The Development Site<a class="headerlink" href="#the-development-site" title="Permalink to this headline">¶</a></h3>
+<p>If you follow the installation instructions above you will be able to go to <a class="reference external" href="https://gc.localhost">https://gc.localhost</a> to see the development site,
+this is using a self-signed certificate so you will need to accept the security warning.</p>
+<p>The development site will apply all migrations and add a set of fixtures to help you with developing grand-challenge.org.
+These fixtures include Archives, Reader Studies, Challenges, Algorithms and Workstations.
+Some default users are created with specific permissions, each user has the same username and password.
+These users include <code class="docutils literal notranslate"><span class="pre">archive</span></code>, <code class="docutils literal notranslate"><span class="pre">readerstudy</span></code>, <code class="docutils literal notranslate"><span class="pre">demo</span></code>, <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> and <code class="docutils literal notranslate"><span class="pre">workstation</span></code>,
+who have permission to administer the existing fixtures and create new ones.</p>
+<p>If you would like to test out the algorithms you can download an <a class="reference external" href="https://hub.docker.com/r/grandchallenge/otsu">Example Algorithm Image</a> from Docker Hub.
+Save it locally with</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker pull grandchallenge/otsu
+<span class="gp">$</span> docker save grandchallenge/otsu &gt; otsu.tar
 </pre></div>
 </div>
-<ol class="arabic simple" start="3">
-<li><p>Add the following line to your hosts file (<code class="docutils literal notranslate"><span class="pre">C:\Windows\System32\drivers\etc\hosts</span></code>)</p></li>
-</ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span> Using Docker <span class="k">for</span> Windows:
-<span class="go">127.0.0.1 gc.localhost</span>
-<span class="go">127.0.0.1 minio-protected</span>
-
-<span class="gp">#</span> Using Docker Toolbox:
-<span class="go">192.168.99.100 gc.localhost</span>
-<span class="go">192.168.99.100 minio-protected</span>
-</pre></div>
-</div>
-<ol class="arabic" start="4">
-<li><p>Share the drive where this repository is located with Docker</p>
-<blockquote>
-<div><p><em>Docker for Windows</em></p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>Right-click Docker icon in taskbar and click “Settings”</p></li>
-<li><p>Go to “Shared drives” tab</p></li>
-<li><p>Mark the checkbox of the drive where this repository is located</p></li>
-</ol>
-</div></blockquote>
-<p><em>Docker Toolbox</em></p>
-<blockquote>
-<div><ol class="arabic simple">
-<li><p>Open VirtualBox</p></li>
-<li><p>Go to the virtual machine that belongs to docker</p></li>
-<li><p>Double click “Shared folders”</p></li>
-<li><p>Click on the “Add New Shared Folder” button on the right</p></li>
-<li><p>In the Folder Path box, type the drive letter where this repository is located (eg. <code class="docutils literal notranslate"><span class="pre">C:\</span></code>)</p></li>
-<li><p>In the Folder Name box, type the drive letter lowercased (eg. <code class="docutils literal notranslate"><span class="pre">c</span></code>)</p></li>
-<li><p>Restart the docker machine by typing <code class="docutils literal notranslate"><span class="pre">docker-machine</span> <span class="pre">restart</span></code> in your console</p></li>
-<li><p>SSH into the docker VM with <code class="docutils literal notranslate"><span class="pre">docker-machine</span> <span class="pre">ssh</span></code></p></li>
-<li><p>Append the following lines to the file <code class="docutils literal notranslate"><span class="pre">/mnt/sda1/var/lib/boot2docker/profile</span></code></p></li>
-</ol>
-</div></blockquote>
-</div></blockquote>
-</li>
-</ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">mkdir /home/docker/c # Change the &#39;c&#39; to your drive letter</span>
-<span class="go">sudo mount -t vboxsf -o uid=1000,gid=50 c /home/docker/c # Again, change both &#39;c&#39;s to your drive letter</span>
-</pre></div>
-</div>
+<p>You can then upload <code class="docutils literal notranslate"><span class="pre">otsu.tar</span></code> as a container image to the local site.</p>
+<p>If you would like to generate your own Algorithm or Evaluation containers you can do this using <a class="reference external" href="https://pypi.org/project/evalutils/">Evalutils</a>,
+please see the <a class="reference external" href="https://evalutils.readthedocs.io/en/latest/usage.html#getting-started">Getting Started with Evalutils</a> documentation.</p>
+<p>There is an interactive debugger from <code class="docutils literal notranslate"><span class="pre">django-extensions</span></code> which will halt on exceptions (see the <a class="reference external" href="https://django-extensions.readthedocs.io/en/latest/runserver_plus.html">RunServerPlus</a> documentation),
+it’s really handy for interactive debugging to place <code class="docutils literal notranslate"><span class="pre">1/0</span></code> in your code as a breakpoint.</p>
 </div>
 </div>
 <div class="section" id="running-the-tests">
@@ -404,14 +374,11 @@ You can do this with</p>
 </div>
 <div class="section" id="building-the-documentation">
 <h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="using-docker">
-<h3>Using docker<a class="headerlink" href="#using-docker" title="Permalink to this headline">¶</a></h3>
 <p>Having built the web container with <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> you can use this to generate the docs with</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> make docs
 </pre></div>
 </div>
 <p>This will create the docs in the <code class="docutils literal notranslate"><span class="pre">docs/_build/html</span></code> directory.</p>
-</div>
 </div>
 <div class="section" id="adding-new-dependencies">
 <h2>Adding new dependencies<a class="headerlink" href="#adding-new-dependencies" title="Permalink to this headline">¶</a></h2>
