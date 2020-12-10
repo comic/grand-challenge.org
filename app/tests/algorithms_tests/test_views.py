@@ -589,13 +589,12 @@ class TestObjectPermissionRequiredViews:
         j = AlgorithmJobFactory(algorithm_image=ai)
 
         for view_name, kwargs, permission, objs in [
-            ("list", {}, "view_algorithm", {ai.algorithm}, None),
+            ("list", {}, "view_algorithm", {ai.algorithm}),
             (
                 "job-list",
                 {"slug": j.algorithm_image.algorithm.slug},
                 "view_job",
                 {j},
-                None,
             ),
         ]:
 
