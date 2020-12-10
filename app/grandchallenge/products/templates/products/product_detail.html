@@ -1,5 +1,6 @@
 {% extends 'products/base.html' %}
 {% load bleach %}
+{% load static %}
 
 {% block title %}
     {{product.product_name}} - {{product.company.company_name}}
@@ -138,13 +139,29 @@
             </tr>
           </thead>
           <tr>
-            <td class="text-muted">CE</td>
             <td>
-              {{product.get_ce_status_display}}{% if product.ce_class %}, {{product.ce_class}}{% endif %}
+                <div class="d-flex flex-row">
+                    <div class="text-muted pr-1">CE</div>
+                    <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_CE.html" %}></i>
+                </div>
+            </td>
+            <td>
+                <div class="d-flex flex-row">
+                    {{product.get_ce_status_display}},
+                    {% if product.ce_class %}
+                        {{product.ce_class}}
+                        <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_CE_class.html" %}></i>
+                    {% endif %}
+                </div>
             </td>
           </tr>
           <tr>
-            <td class="text-muted">FDA</td>
+            <td>
+                <div class="d-flex flex-row">
+                    <div class="text-muted pr-1">FDA</div>
+                    <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_FDA.html" %}></i>
+                </div>
+            </td>
             <td>
               {{product.get_fda_status_display}}{% if product.fda_class %}, {{product.fda_class}}{% endif %}
             </td>
