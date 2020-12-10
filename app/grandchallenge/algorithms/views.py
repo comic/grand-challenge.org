@@ -34,7 +34,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_perms
+from guardian.shortcuts import get_objects_for_user, get_perms
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -197,15 +197,9 @@ class AlgorithmUserAutocomplete(
     LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
 ):
     def test_func(self):
-        group_pks = (
-            Algorithm.objects.all()
-            .select_related("editors_group")
-            .values_list("editors_group__pk", flat=True)
-        )
-        return (
-            self.request.user.is_superuser
-            or self.request.user.groups.filter(pk__in=group_pks).exists()
-        )
+        return get_objects_for_user(
+            user=self.request.user, perms="change_algorithm", klass=Algorithm
+        ).exists()
 
     def get_queryset(self):
         qs = (

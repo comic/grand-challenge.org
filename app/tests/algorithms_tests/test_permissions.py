@@ -5,7 +5,6 @@ from guardian.shortcuts import (
     assign_perm,
     get_group_perms,
     get_perms,
-    remove_perm,
 )
 
 from grandchallenge.algorithms.models import Job
@@ -15,7 +14,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
-from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.factories import UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
 
@@ -50,90 +48,6 @@ def test_algorithm_image_group_permissions_are_assigned():
     perms = get_group_perms(ai.algorithm.editors_group, ai)
     assert "view_algorithmimage" in perms
     assert "change_algorithmimage" in perms
-
-
-@pytest.mark.django_db
-def test_algorithm_create_page(client, settings):
-    response = get_view_for_user(viewname="algorithms:create", client=client)
-    assert response.status_code == 302
-    assert response.url.startswith(settings.LOGIN_URL)
-
-    user = UserFactory()
-
-    response = get_view_for_user(
-        viewname="algorithms:create", client=client, user=user
-    )
-    assert response.status_code == 403
-
-    Group.objects.get(
-        name=settings.ALGORITHMS_CREATORS_GROUP_NAME
-    ).user_set.add(user)
-
-    response = get_view_for_user(
-        viewname="algorithms:create", client=client, user=user
-    )
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
-def test_algorithm_execution_session_detail(client):
-    u1, u2 = UserFactory(), UserFactory()
-    a = AlgorithmImageFactory()
-    s = RawImageUploadSessionFactory(creator=u1)
-
-    response = get_view_for_user(
-        client=client,
-        viewname="algorithms:execution-session-detail",
-        reverse_kwargs={"slug": a.algorithm.slug, "pk": s.pk},
-        user=u1,
-    )
-    assert response.status_code == 200
-
-    response = get_view_for_user(
-        client=client,
-        viewname="algorithms:execution-session-detail",
-        reverse_kwargs={"slug": a.algorithm.slug, "pk": s.pk},
-        user=u2,
-    )
-    assert response.status_code == 403
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "view_name,index", (("detail", 2), ("execution-session-create", 3))
-)
-def test_algorithm_detail_view_permissions(client, view_name, index):
-    alg_set = TwoAlgorithms()
-
-    # We need to fake some images to use
-    AlgorithmImageFactory(ready=True, algorithm=alg_set.alg1)
-    AlgorithmImageFactory(ready=True, algorithm=alg_set.alg2)
-
-    tests = (
-        (None, alg_set.alg1, 302, 302),
-        (None, alg_set.alg2, 302, 302),
-        (alg_set.creator, alg_set.alg1, 302, 403),
-        (alg_set.creator, alg_set.alg2, 302, 403),
-        (alg_set.editor1, alg_set.alg1, 200, 200),
-        (alg_set.editor1, alg_set.alg2, 302, 403),
-        (alg_set.user1, alg_set.alg1, 200, 200),
-        (alg_set.user1, alg_set.alg2, 302, 403),
-        (alg_set.editor2, alg_set.alg1, 302, 403),
-        (alg_set.editor2, alg_set.alg2, 200, 200),
-        (alg_set.user2, alg_set.alg1, 302, 403),
-        (alg_set.user2, alg_set.alg2, 200, 200),
-        (alg_set.u, alg_set.alg1, 302, 403),
-        (alg_set.u, alg_set.alg2, 302, 403),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname=f"algorithms:{view_name}",
-            reverse_kwargs={"slug": test[1].slug},
-            client=client,
-            user=test[0],
-        )
-        assert response.status_code == test[index]
 
 
 @pytest.mark.django_db
@@ -205,144 +119,6 @@ def test_algorithm_jobs_list_view(client):
             data = response.json()["data"]
             assert all(str(j.pk) in str(data) for j in expected_jobs)
             assert all(str(j.pk) not in str(data) for j in excluded_jobs)
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "view_name", ["update", "image-create", "users-update", "editors-update"]
-)
-def test_algorithm_edit_view_permissions(client, view_name):
-    alg_set = TwoAlgorithms()
-
-    tests = (
-        (None, alg_set.alg1, 302),
-        (None, alg_set.alg2, 302),
-        (alg_set.creator, alg_set.alg1, 403),
-        (alg_set.creator, alg_set.alg2, 403),
-        (alg_set.editor1, alg_set.alg1, 200),
-        (alg_set.editor1, alg_set.alg2, 403),
-        (alg_set.user1, alg_set.alg1, 403),
-        (alg_set.user1, alg_set.alg2, 403),
-        (alg_set.editor2, alg_set.alg1, 403),
-        (alg_set.editor2, alg_set.alg2, 200),
-        (alg_set.user2, alg_set.alg1, 403),
-        (alg_set.user2, alg_set.alg2, 403),
-        (alg_set.u, alg_set.alg1, 403),
-        (alg_set.u, alg_set.alg2, 403),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname=f"algorithms:{view_name}",
-            client=client,
-            user=test[0],
-            reverse_kwargs={"slug": test[1].slug},
-        )
-        assert response.status_code == test[2]
-
-
-@pytest.mark.django_db
-def test_user_autocomplete_permissions(client):
-    alg_set = TwoAlgorithms()
-
-    tests = (
-        (None, 302),
-        (alg_set.creator, 403),
-        (alg_set.editor1, 200),
-        (alg_set.user1, 403),
-        (alg_set.editor2, 200),
-        (alg_set.user2, 403),
-        (alg_set.u, 403),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname="algorithms:users-autocomplete",
-            client=client,
-            user=test[0],
-        )
-        assert response.status_code == test[1]
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("view_name", ["image-detail", "image-update"])
-def test_algorithm_image_edit_view_permissions(client, view_name):
-    alg_set = TwoAlgorithms()
-
-    im1, im2 = (
-        AlgorithmImageFactory(algorithm=alg_set.alg1),
-        AlgorithmImageFactory(algorithm=alg_set.alg2),
-    )
-
-    tests = (
-        (None, im1, 302),
-        (None, im2, 302),
-        (alg_set.creator, im1, 403),
-        (alg_set.creator, im2, 403),
-        (alg_set.editor1, im1, 200),
-        (alg_set.editor1, im2, 403),
-        (alg_set.user1, im1, 403),
-        (alg_set.user1, im2, 403),
-        (alg_set.editor2, im1, 403),
-        (alg_set.editor2, im2, 200),
-        (alg_set.user2, im1, 403),
-        (alg_set.user2, im2, 403),
-        (alg_set.u, im1, 403),
-        (alg_set.u, im2, 403),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname=f"algorithms:{view_name}",
-            client=client,
-            user=test[0],
-            reverse_kwargs={"slug": test[1].algorithm.slug, "pk": test[1].pk},
-        )
-        assert response.status_code == test[2]
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("view_name", ["job-update"])
-def test_job_update_permissions(client, view_name):
-    alg_set = TwoAlgorithms()
-
-    j1, j2 = (
-        AlgorithmJobFactory(algorithm_image__algorithm=alg_set.alg1),
-        AlgorithmJobFactory(algorithm_image__algorithm=alg_set.alg2),
-    )
-
-    tests = (
-        (None, j1, 302),
-        (None, j2, 302),
-        (alg_set.creator, j1, 403),
-        (alg_set.creator, j2, 403),
-        (alg_set.editor1, j1, 403),
-        (alg_set.editor1, j2, 403),
-        (alg_set.user1, j1, 403),
-        (alg_set.user1, j2, 403),
-        (alg_set.editor2, j1, 403),
-        (alg_set.editor2, j2, 403),
-        (alg_set.user2, j1, 403),
-        (alg_set.user2, j2, 403),
-        (alg_set.u, j1, 403),
-        (alg_set.u, j2, 403),
-        (j1.creator, j1, 200),
-        (j1.creator, j2, 403),
-        (j2.creator, j1, 403),
-        (j2.creator, j2, 200),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname=f"algorithms:{view_name}",
-            client=client,
-            user=test[0],
-            reverse_kwargs={
-                "slug": test[1].algorithm_image.algorithm.slug,
-                "pk": test[1].pk,
-            },
-        )
-        assert response.status_code == test[2]
 
 
 @pytest.mark.django_db
@@ -541,40 +317,3 @@ def test_public_job_group_permissions():
 
     assert "view_job" not in get_perms(g_reg, algorithm_job)
     assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
-
-
-@pytest.mark.django_db
-class TestObjectPermissionRequiredViews:
-    def test_permission_required_views(self, client):
-        j = AlgorithmJobFactory()
-        u = UserFactory()
-
-        for view_name, kwargs, permission, obj in [
-            (
-                "job-detail",
-                {"slug": j.algorithm_image.algorithm.slug, "pk": j.pk},
-                "view_job",
-                j,
-            ),
-        ]:
-            response = get_view_for_user(
-                client=client,
-                viewname=f"algorithms:{view_name}",
-                reverse_kwargs=kwargs,
-                user=u,
-            )
-
-            assert response.status_code == 403
-
-            assign_perm(permission, u, obj)
-
-            response = get_view_for_user(
-                client=client,
-                viewname=f"algorithms:{view_name}",
-                reverse_kwargs=kwargs,
-                user=u,
-            )
-
-            assert response.status_code == 200
-
-            remove_perm(permission, u, obj)
