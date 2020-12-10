@@ -12,9 +12,13 @@ Installation
 
     *Linux*: Docker_ and `Docker Compose`_
 
-    *Windows 10 Pro (Build 15063 or later)*: `Docker for Windows`_
+    *Windows*: `WSL2`_, `Docker Desktop for Windows`_ with the `Docker Desktop WSL2 Backend`_ and `Docker Compose`_
 
-    *Older Windows versions*: `Docker Toolbox`_
+*Note for Windows Users*: we **only** support development using Windows 10 and WSL2.
+Please ensure that the correct backend is enabled in your docker settings, and run all of the following commands in the ``wsl`` shell.
+At the time of writing, we use ``Ubuntu 20.04`` from the Microsoft store as the default distro.
+As WSL2 is slow at syncing files between Windows and WSL2 filesystems it is best to checkout the codebase within ``wsl`` itself.
+For the same reason, we currently recommend running PyCharm from wsl rather than from windows (see `Running WSL GUI Apps on Windows 10`_), but improved support for this should follow from JetBrains in 2021.
 
 2. Clone the repo
 
@@ -23,76 +27,53 @@ Installation
     $ git clone https://github.com/comic/grand-challenge.org
     $ cd grand-challenge.org
 
-3. Add the following to your ``/etc/hosts`` file:
+3. Add the following to your hosts file (``/etc/hosts`` on Linux, ``C:\Windows\System32\drivers\etc\hosts`` on Windows):
 
 .. code-block:: console
 
+    127.0.0.1 gc.localhost
+    127.0.0.1 demo.gc.localhost
+    127.0.0.1 minio-public
     127.0.0.1 minio-protected
 
-3. You can then start the site by invoking
+4. You can then start the development site by invoking
 
 .. code-block:: console
 
     $ ./cycle_docker_compose.sh
 
-You can then navigate to https://gc.localhost in your browser to see the development site,
-this is using a self-signed certificate so you will need to accept the security warning.
 The ``app/`` directory is mounted in the containers,
 ``werkzeug`` handles the file monitoring and will restart the process if any changes are detected.
 If you need to manually restart the process you can do this when running ``cycle_docker_compose.sh`` by pressing  ``CTRL+D`` in the console window,
 you can also kill the server with ``CTRL+C``.
 
-Windows
-~~~~~~~
+The Development Site
+~~~~~~~~~~~~~~~~~~~~
 
-Running Grand-Challenge within a Windows environment requires additional steps before invoking the ``cycle_docker_compose.sh`` script.
+If you follow the installation instructions above you will be able to go to https://gc.localhost to see the development site,
+this is using a self-signed certificate so you will need to accept the security warning.
 
-1. Install ``Make`` for an available ``bash`` console
-2. Set an environment variable to enable Windows path conversions for Docker
+The development site will apply all migrations and add a set of fixtures to help you with developing grand-challenge.org.
+These fixtures include Archives, Reader Studies, Challenges, Algorithms and Workstations. 
+Some default users are created with specific permissions, each user has the same username and password.
+These users include ``archive``, ``readerstudy``, ``demo``, ``algorithm`` and ``workstation``, 
+who have permission to administer the existing fixtures and create new ones.
 
-.. code-block:: console 
-
-    $ export COMPOSE_CONVERT_WINDOWS_PATHS=1
-
-3. Add the following line to your hosts file (``C:\Windows\System32\drivers\etc\hosts``)
-
-.. code-block:: console
-
-    # Using Docker for Windows:
-    127.0.0.1 gc.localhost
-    127.0.0.1 minio-protected
-
-    # Using Docker Toolbox:
-    192.168.99.100 gc.localhost
-    192.168.99.100 minio-protected
-
-
-4. Share the drive where this repository is located with Docker
-
-    *Docker for Windows*
-
-        1. Right-click Docker icon in taskbar and click "Settings"
-        2. Go to "Shared drives" tab
-        3. Mark the checkbox of the drive where this repository is located
-
-    *Docker Toolbox*
-
-        1. Open VirtualBox
-        2. Go to the virtual machine that belongs to docker
-        3. Double click "Shared folders"
-        4. Click on the "Add New Shared Folder" button on the right
-        5. In the Folder Path box, type the drive letter where this repository is located (eg. ``C:\``)
-        6. In the Folder Name box, type the drive letter lowercased (eg. ``c``)
-        7. Restart the docker machine by typing ``docker-machine restart`` in your console
-        8. SSH into the docker VM with ``docker-machine ssh``
-        9. Append the following lines to the file ``/mnt/sda1/var/lib/boot2docker/profile``
+If you would like to test out the algorithms you can download an `Example Algorithm Image`_ from Docker Hub.
+Save it locally with
 
 .. code-block:: console
 
-    mkdir /home/docker/c # Change the 'c' to your drive letter
-    sudo mount -t vboxsf -o uid=1000,gid=50 c /home/docker/c # Again, change both 'c's to your drive letter
+    $ docker pull grandchallenge/otsu
+    $ docker save grandchallenge/otsu > otsu.tar
 
+You can then upload ``otsu.tar`` as a container image to the local site.
 
+If you would like to generate your own Algorithm or Evaluation containers you can do this using `Evalutils`_, 
+please see the `Getting Started with Evalutils`_ documentation.
+
+There is an interactive debugger from ``django-extensions`` which will halt on exceptions (see the `RunServerPlus`_ documentation), 
+it's really handy for interactive debugging to place ``1/0`` in your code as a breakpoint.
 
 Running the Tests
 -----------------
@@ -121,7 +102,6 @@ If you only want to run the tests for a particular app, eg. for ``teams``, you c
 .. code-block:: console
 
     $ docker-compose run --rm web pytest -k teams_tests
-
 
 Development
 -----------
@@ -221,7 +201,6 @@ with the service running in the docker container.
       Choose the same python interpreter here, and make sure to load the environmental variables
       (the .env plugin cannot be used here, the variables can only be pasted).
 
-
 Creating Migrations
 -------------------
 
@@ -241,12 +220,8 @@ or, more explicitly
 
 add these to git and commit.
 
-
 Building the documentation
 --------------------------
-
-Using docker
-~~~~~~~~~~~~
 
 Having built the web container with ``cycle_docker_compose.sh`` you can use this to generate the docs with
 
@@ -291,5 +266,11 @@ If you want to run this in a production environment you will need to make severa
 
 .. _Docker: https://docs.docker.com/install/
 .. _`Docker Compose`: https://docs.docker.com/compose/install/
-.. _`Docker for Windows`: https://docs.docker.com/docker-for-windows/install/
-.. _`Docker Toolbox`: https://docs.docker.com/toolbox/toolbox_install_windows/
+.. _`WSL2`: https://docs.microsoft.com/en-us/windows/wsl/install-win10/
+.. _`Docker Desktop for Windows`: https://docs.docker.com/docker-for-windows/install/
+.. _`Docker Desktop WSL2 Backend`: https://docs.docker.com/docker-for-windows/wsl/
+.. _`RunServerPlus`: https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
+.. _`Running WSL GUI Apps on Windows 10`: https://techcommunity.microsoft.com/t5/windows-dev-appconsult/running-wsl-gui-apps-on-windows-10/ba-p/1493242
+.. _`Example Algorithm Image`: https://hub.docker.com/r/grandchallenge/otsu
+.. _`Evalutils`: https://pypi.org/project/evalutils/
+.. _`Getting Started with Evalutils`: https://evalutils.readthedocs.io/en/latest/usage.html#getting-started
