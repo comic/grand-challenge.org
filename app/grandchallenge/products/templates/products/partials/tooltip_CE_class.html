@@ -8,4 +8,6 @@
     "Class IIb applies to software that intends to impact diagnosis or monitor vital physiological processes, with a higher risk of harm than IIa when the software falls short. Class IIb certificates are issued by a Notified Body which assesses validation, conformity and clinical evaluation for the product."
 {% elif product.ce_class == "Class III" %}
     "Class III applies to medical devices that can cause severe disability or death when falling short. Class III certificates are issued by a Notified Body which assesses validation, conformity and clinical evaluation for the product."
+{% elif product.ce_class == "Class unknown" %}
+    "The certification class is unknown."
 {% endif %}

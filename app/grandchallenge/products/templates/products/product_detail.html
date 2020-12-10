@@ -142,7 +142,7 @@
             <td>
                 <div class="d-flex flex-row">
                     <div class="text-muted pr-1">CE</div>
-                    <img data-toggle="tooltip" title={% include "products/partials/tooltip_CE.html" %} src="{% static 'products/images/icon_info.png' %}" alt="info" style="width:4%; height:4%">
+                    <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_CE.html" %}></i>
                 </div>
             </td>
             <td>
@@ -150,7 +150,7 @@
                     {{product.get_ce_status_display}},
                     {% if product.ce_class %}
                         {{product.ce_class}}
-                        <img data-toggle="tooltip" title={% include "products/partials/tooltip_CE_class.html" %} src="{% static 'products/images/icon_info.png' %}" alt="info" style="height:2.5%; width:2.5%">
+                        <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_CE_class.html" %}></i>
                     {% endif %}
                 </div>
             </td>
@@ -159,7 +159,7 @@
             <td>
                 <div class="d-flex flex-row">
                     <div class="text-muted pr-1">FDA</div>
-                    <img data-toggle="tooltip" title={% include "products/partials/tooltip_FDA.html" %} src="{% static 'products/images/icon_info.png' %}" alt="info" style="width:4%; height:4%">
+                    <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_FDA.html" %}></i>
                 </div>
             </td>
             <td>
