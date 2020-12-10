@@ -7,7 +7,6 @@ from guardian.shortcuts import (
     get_perms,
 )
 
-from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -48,77 +47,6 @@ def test_algorithm_image_group_permissions_are_assigned():
     perms = get_group_perms(ai.algorithm.editors_group, ai)
     assert "view_algorithmimage" in perms
     assert "change_algorithmimage" in perms
-
-
-@pytest.mark.django_db
-def test_algorithm_jobs_list_view(client):
-    # This view is a bit special, everyone should be able to
-    # view it, but the results should be filtered
-
-    alg_set = TwoAlgorithms()
-
-    extra_user1, extra_user2 = UserFactory(), UserFactory()
-
-    alg_set.alg1.add_user(extra_user1)
-    alg_set.alg2.add_user(extra_user2)
-
-    j1, j2 = (
-        AlgorithmJobFactory(
-            algorithm_image__algorithm=alg_set.alg1,
-            creator=extra_user1,
-            status=Job.SUCCESS,
-        ),
-        AlgorithmJobFactory(
-            algorithm_image__algorithm=alg_set.alg2,
-            creator=extra_user2,
-            status=Job.SUCCESS,
-        ),
-    )
-
-    j1.viewer_groups.add(alg_set.alg1.editors_group)
-    j2.viewer_groups.add(alg_set.alg2.editors_group)
-
-    all_jobs = {j1, j2}
-
-    tests = (
-        (None, alg_set.alg1, 200, set()),
-        (None, alg_set.alg2, 200, set()),
-        (alg_set.creator, alg_set.alg1, 200, set()),
-        (alg_set.creator, alg_set.alg2, 200, set()),
-        (alg_set.editor1, alg_set.alg1, 200, {j1}),
-        (alg_set.editor1, alg_set.alg2, 200, set()),
-        (alg_set.user1, alg_set.alg1, 200, set()),
-        (alg_set.user1, alg_set.alg2, 200, set()),
-        (alg_set.editor2, alg_set.alg1, 200, set()),
-        (alg_set.editor2, alg_set.alg2, 200, {j2}),
-        (alg_set.user2, alg_set.alg1, 200, set()),
-        (alg_set.user2, alg_set.alg2, 200, set()),
-        (alg_set.u, alg_set.alg1, 200, set()),
-        (alg_set.u, alg_set.alg2, 200, set()),
-        (extra_user1, alg_set.alg1, 200, {j1}),
-        (extra_user1, alg_set.alg2, 200, set()),
-        (extra_user2, alg_set.alg1, 200, set()),
-        (extra_user2, alg_set.alg2, 200, {j2}),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname="algorithms:job-list",
-            reverse_kwargs={"slug": test[1].slug},
-            client=client,
-            user=test[0],
-            data={"length": 50, "draw": 1, "order[0][column]": 0},
-            **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
-        )
-        assert response.status_code == test[2]
-
-        # Check that the results are filtered
-        if response.status_code == 200:
-            expected_jobs = test[3]
-            excluded_jobs = all_jobs - expected_jobs
-            data = response.json()["data"]
-            assert all(str(j.pk) in str(data) for j in expected_jobs)
-            assert all(str(j.pk) not in str(data) for j in excluded_jobs)
 
 
 @pytest.mark.django_db

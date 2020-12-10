@@ -583,6 +583,43 @@ class TestObjectPermissionRequiredViews:
 
             remove_perm(permission, u, obj)
 
+    def test_permission_required_list_views(self, client):
+        ai = AlgorithmImageFactory(ready=True)
+        u = UserFactory()
+        j = AlgorithmJobFactory(algorithm_image=ai)
+
+        for view_name, kwargs, permission, objs in [
+            ("list", {}, "view_algorithm", {ai.algorithm}, None),
+            (
+                "job-list",
+                {"slug": j.algorithm_image.algorithm.slug},
+                "view_job",
+                {j},
+                None,
+            ),
+        ]:
+
+            def _get_view():
+                return get_view_for_user(
+                    client=client,
+                    viewname=f"algorithms:{view_name}",
+                    reverse_kwargs=kwargs,
+                    user=u,
+                )
+
+            response = _get_view()
+            assert response.status_code == 200
+            assert set() == {*response.context[-1]["object_list"]}
+
+            assign_perm(permission, u, list(objs))
+
+            response = _get_view()
+            assert response.status_code == 200
+            assert objs == {*response.context[-1]["object_list"]}
+
+            for obj in objs:
+                remove_perm(permission, u, obj)
+
 
 @pytest.mark.django_db
 class TestJobDetailView:
