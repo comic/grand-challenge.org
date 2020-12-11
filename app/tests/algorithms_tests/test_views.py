@@ -18,6 +18,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmPermissionRequestFactory,
 )
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.factories import StagedFileFactory, UserFactory
 from tests.utils import get_view_for_user
 
@@ -444,6 +445,179 @@ def test_algorithm_jobs_list_view(client):
     assert resp["recordsTotal"] == 50
     assert resp["recordsFiltered"] == 1
     assert len(resp["data"]) == 1
+
+
+@pytest.mark.django_db
+class TestObjectPermissionRequiredViews:
+    def test_permission_required_views(self, client):
+        ai = AlgorithmImageFactory(ready=True)
+        s = RawImageUploadSessionFactory()
+        u = UserFactory()
+        j = AlgorithmJobFactory(algorithm_image=ai)
+        p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
+
+        for view_name, kwargs, permission, obj, redirect in [
+            ("create", {}, "algorithms.add_algorithm", None, None),
+            (
+                "users-autocomplete",
+                {},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
+                "detail",
+                {"slug": ai.algorithm.slug},
+                "view_algorithm",
+                ai.algorithm,
+                reverse(
+                    "algorithms:permission-request-create",
+                    kwargs={"slug": ai.algorithm.slug},
+                ),
+            ),
+            (
+                "update",
+                {"slug": ai.algorithm.slug},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
+                "image-create",
+                {"slug": ai.algorithm.slug},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
+                "image-detail",
+                {"slug": ai.algorithm.slug, "pk": ai.pk},
+                "view_algorithmimage",
+                ai,
+                None,
+            ),
+            (
+                "image-update",
+                {"slug": ai.algorithm.slug, "pk": ai.pk},
+                "change_algorithmimage",
+                ai,
+                None,
+            ),
+            (
+                "execution-session-create",
+                {"slug": ai.algorithm.slug},
+                "execute_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
+                "execution-session-detail",
+                {"slug": ai.algorithm.slug, "pk": s.pk},
+                "view_rawimageuploadsession",
+                s,
+                None,
+            ),
+            (
+                "job-detail",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "view_job",
+                j,
+                None,
+            ),
+            (
+                "job-update",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "change_job",
+                j,
+                None,
+            ),
+            (
+                "job-viewers-update",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "change_job",
+                j,
+                None,
+            ),
+            (
+                "editors-update",
+                {"slug": ai.algorithm.slug},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
+                "users-update",
+                {"slug": ai.algorithm.slug},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
+                "permission-request-update",
+                {"slug": ai.algorithm.slug, "pk": p.pk},
+                "change_algorithm",
+                ai.algorithm,
+                None,
+            ),
+        ]:
+
+            def _get_view():
+                return get_view_for_user(
+                    client=client,
+                    viewname=f"algorithms:{view_name}",
+                    reverse_kwargs=kwargs,
+                    user=u,
+                )
+
+            response = _get_view()
+            if redirect is not None:
+                assert response.status_code == 302
+                assert response.url == redirect
+            else:
+                assert response.status_code == 403
+
+            assign_perm(permission, u, obj)
+
+            response = _get_view()
+            assert response.status_code == 200
+
+            remove_perm(permission, u, obj)
+
+    def test_permission_required_list_views(self, client):
+        ai = AlgorithmImageFactory(ready=True)
+        u = UserFactory()
+        j = AlgorithmJobFactory(algorithm_image=ai)
+
+        for view_name, kwargs, permission, objs in [
+            ("list", {}, "view_algorithm", {ai.algorithm}),
+            (
+                "job-list",
+                {"slug": j.algorithm_image.algorithm.slug},
+                "view_job",
+                {j},
+            ),
+        ]:
+
+            def _get_view():
+                return get_view_for_user(
+                    client=client,
+                    viewname=f"algorithms:{view_name}",
+                    reverse_kwargs=kwargs,
+                    user=u,
+                )
+
+            response = _get_view()
+            assert response.status_code == 200
+            assert set() == {*response.context[-1]["object_list"]}
+
+            assign_perm(permission, u, list(objs))
+
+            response = _get_view()
+            assert response.status_code == 200
+            assert objs == {*response.context[-1]["object_list"]}
+
+            for obj in objs:
+                remove_perm(permission, u, obj)
 
 
 @pytest.mark.django_db
