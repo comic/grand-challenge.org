@@ -1,7 +1,8 @@
 from django_filters import FilterSet, filters
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.cases.models import Image
+from grandchallenge.core.filters import TitleDescriptionModalityStructureFilter
 
 
 class JobViewsetFilter(FilterSet):
@@ -15,3 +16,8 @@ class JobViewsetFilter(FilterSet):
     class Meta:
         model = Job
         fields = ["algorithm_image__algorithm", "input_image", "output_image"]
+
+
+class AlgorithmFilter(TitleDescriptionModalityStructureFilter):
+    class Meta(TitleDescriptionModalityStructureFilter.Meta):
+        model = Algorithm

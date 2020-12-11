@@ -17,6 +17,8 @@
         </p>
     {% endif %}
 
+    {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
+
     <div class="row equal-height mx-n2">
         {% for object in object_list %}
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">
@@ -44,9 +46,9 @@
     </div>
 
     {% if not object_list %}
-        <h3>
-            You do not have permission to view any of the algorithms
-        </h3>
+        <p class="text-muted">
+            No {{ object_list.model|meta_attr:"verbose_name_plural" }} found.
+        </p>
     {% endif %}
 
 {% endblock %}

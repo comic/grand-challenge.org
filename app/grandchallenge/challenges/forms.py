@@ -2,7 +2,6 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
-from django.forms import Form
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
@@ -132,11 +131,3 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             "series": Select2MultipleWidget,
             "publications": Select2MultipleWidget,
         }
-
-
-class ChallengeFilterForm(Form):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_method = "GET"
-        self.helper.layout.append(Submit("submit", "Apply Filters"))

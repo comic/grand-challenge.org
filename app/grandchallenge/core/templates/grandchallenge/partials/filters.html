@@ -1,0 +1,23 @@
+{% load crispy_forms_tags %}
+{% load meta_attr %}
+
+<p>
+    <a class="btn btn-primary"
+       role="button"
+       data-toggle="collapse"
+       data-target="#filterForm"
+       aria-expanded="false"
+       aria-controls="filterForm">
+        <i class="fas fa-filter"></i>&nbsp;Filter {{ filter.Meta.model|meta_attr:'verbose_name_plural'|title }}
+    </a>
+    {% if filters_applied %}
+        <a class="btn btn-danger" href="?">
+            <i class="fas fa-times"></i>&nbsp;Remove Filters
+        </a>
+    {% endif %}
+</p>
+<div class="collapse" id="filterForm">
+    <div class="card card-body mb-3">
+        {% crispy filter.form %}
+    </div>
+</div>

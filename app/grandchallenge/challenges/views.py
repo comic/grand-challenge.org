@@ -93,7 +93,7 @@ class ChallengeList(TemplateView):
 
         context.update(
             {
-                "int_filter": self.int_filter,
+                "filter": self.int_filter,
                 "filters_applied": self._filters_applied,
                 "page_obj": page_obj,
                 "num_pages": num_pages,

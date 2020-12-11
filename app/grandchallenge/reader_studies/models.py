@@ -19,12 +19,14 @@ from numpy.random.mtrand import RandomState
 from simple_history.models import HistoricalRecords
 from sklearn.metrics import accuracy_score
 
+from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -262,6 +264,16 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         ),
     )
     validate_hanging_list = models.BooleanField(default=True)
+    modalities = models.ManyToManyField(
+        ImagingModality,
+        blank=True,
+        help_text="The imaging modalities contained in this reader study",
+    )
+    structures = models.ManyToManyField(
+        BodyStructure,
+        blank=True,
+        help_text="The structures contained in this reader study",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"

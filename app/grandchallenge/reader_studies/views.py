@@ -53,6 +53,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.permissions.rest_framework import (
@@ -61,6 +62,7 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.reader_studies.filters import ReaderStudyFilter
 from grandchallenge.reader_studies.forms import (
     AnswersRemoveForm,
     CategoricalOptionFormSet,
@@ -89,12 +91,13 @@ from grandchallenge.reader_studies.tasks import add_images_to_reader_study
 from grandchallenge.subdomains.utils import reverse
 
 
-class ReaderStudyList(PermissionListMixin, ListView):
+class ReaderStudyList(PermissionListMixin, FilterMixin, ListView):
     model = ReaderStudy
     permission_required = (
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
     )
     ordering = "-created"
+    filter_class = ReaderStudyFilter
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
