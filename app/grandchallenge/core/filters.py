@@ -74,7 +74,9 @@ class FilterMixin:
             {
                 "filter": self.filter_class(self.request.GET),
                 "filters_applied": any(
-                    k for k in self.request.GET if k.lower() != "page"
+                    k
+                    for k, v in self.request.GET.items()
+                    if v and k.lower() not in ["page", "submit"]
                 ),
             }
         )
