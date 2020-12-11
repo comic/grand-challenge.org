@@ -223,6 +223,13 @@ class Phase(UUIDModel):
         default=ALL,
         help_text=("Which results should be displayed on the leaderboard?"),
     )
+    creator_must_be_verified = models.BooleanField(
+        default=False,
+        help_text=(
+            "If True, only participants with verified accounts can make "
+            "submissions to this phase"
+        ),
+    )
     submission_kind = models.PositiveSmallIntegerField(
         default=SubmissionKind.CSV,
         choices=SubmissionKind.choices,

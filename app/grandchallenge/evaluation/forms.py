@@ -2,10 +2,13 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
-from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
 from django.forms import ModelChoiceField
+from django.utils.html import format_html
 from django.utils.text import format_lazy
+from django_select2.forms import Select2Widget
 from django_summernote.widgets import SummernoteInplaceWidget
 from guardian.shortcuts import get_objects_for_user
 
@@ -21,12 +24,13 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
-from grandchallenge.subdomains.utils import reverse_lazy
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 phase_options = ("title",)
 
 submission_options = (
     "submission_page_html",
+    "creator_must_be_verified",
     "daily_submission_limit",
     "allow_submission_comments",
     "supplementary_file_choice",
@@ -148,6 +152,7 @@ class MethodForm(SaveFormInitMixin, forms.ModelForm):
 
 
 submission_fields = (
+    "creator",
     "comment",
     "supplementary_file",
     "publication_url",
@@ -175,6 +180,7 @@ class SubmissionForm(forms.ModelForm):
         self,
         *args,
         user,
+        creator_must_be_verified=False,
         algorithm_submission=False,
         display_comment_field=False,
         supplementary_file_choice=Phase.OFF,
@@ -188,6 +194,8 @@ class SubmissionForm(forms.ModelForm):
         display_comment_field kwarg
         """
         super().__init__(*args, **kwargs)
+
+        self.creator_must_be_verified = creator_must_be_verified
 
         if not display_comment_field:
             del self.fields["comment"]
@@ -223,6 +231,11 @@ class SubmissionForm(forms.ModelForm):
 
             self.fields["chunked_upload"].widget.user = user
 
+        self.fields["creator"].queryset = get_user_model().objects.filter(
+            pk=user.pk
+        )
+        self.fields["creator"].initial = user
+
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
 
@@ -237,20 +250,48 @@ class SubmissionForm(forms.ModelForm):
 
         return algorithm
 
+    def clean_creator(self):
+        creator = self.cleaned_data["creator"]
+
+        try:
+            user_is_verified = creator.verification.is_verified
+        except ObjectDoesNotExist:
+            user_is_verified = False
+
+        if self.creator_must_be_verified and not user_is_verified:
+            error_message = format_html(
+                "You must verify your account before you can make a "
+                "submission to this phase. Please "
+                '<a href="{}"> request verification here</a>.',
+                reverse("verifications:create"),
+            )
+
+            # Add this to the non-field errors as we use a HiddenInput
+            self.add_error(None, error_message)
+
+            raise ValidationError(error_message)
+
+        return creator
+
     class Meta:
         model = Submission
         fields = submission_fields
+        widgets = {"creator": forms.HiddenInput}
 
 
 class LegacySubmissionForm(SubmissionForm):
     def __init__(self, *args, challenge, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields[
             "creator"
         ].queryset = challenge.participants_group.user_set.all().order_by(
             Lower("username")
         )
 
-    class Meta:
-        model = Submission
-        fields = ("creator", *submission_fields)
+        # For legacy submissions an admin is able to create submissions
+        # for any participant
+        self.creator_must_be_verified = False
+
+    class Meta(SubmissionForm.Meta):
+        widgets = {"creator": Select2Widget}

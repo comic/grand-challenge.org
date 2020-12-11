@@ -177,6 +177,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         kwargs.update(
             {
                 "user": self.request.user,
+                "creator_must_be_verified": self.phase.creator_must_be_verified,
                 "display_comment_field": self.phase.allow_submission_comments,
                 "supplementary_file_choice": self.phase.supplementary_file_choice,
                 "supplementary_file_label": self.phase.supplementary_file_label,
@@ -248,9 +249,6 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         }
 
     def form_valid(self, form):
-        if form.instance.creator is None:
-            form.instance.creator = self.request.user
-
         client_ip, _ = get_client_ip(self.request)
         form.instance.creators_ip = client_ip
         form.instance.creators_user_agent = self.request.META.get(
