@@ -378,6 +378,13 @@
         <span class="n">default</span><span class="o">=</span><span class="n">ALL</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Which results should be displayed on the leaderboard?&quot;</span><span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">creator_must_be_verified</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If True, only participants with verified accounts can make &quot;</span>
+            <span class="s2">&quot;submissions to this phase&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">submission_kind</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">SubmissionKind</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">SubmissionKind</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
