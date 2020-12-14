@@ -15,6 +15,15 @@ class UserProfileAdmin(UserAdmin):
     inlines = [UserProfileInline]
     autocomplete_fields = ("groups",)
     readonly_fields = ("user_permissions",)
+    list_display = (
+        "username",
+        "date_joined",
+        "email",
+        "first_name",
+        "last_name",
+        "is_staff",
+    )
+    list_filter = ("is_staff", "is_superuser", "is_active")
 
 
 User = get_user_model()
