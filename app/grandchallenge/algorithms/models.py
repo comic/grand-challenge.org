@@ -41,6 +41,7 @@ from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -114,6 +115,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     )
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_outputs"
+    )
+    publications = models.ManyToManyField(
+        Publication,
+        blank=True,
+        help_text="The publications associated with this algorithm",
     )
     modalities = models.ManyToManyField(
         ImagingModality,

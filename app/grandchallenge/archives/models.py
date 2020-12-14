@@ -12,6 +12,7 @@ from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.patients.models import Patient
+from grandchallenge.publications.models import Publication
 from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
 
@@ -59,6 +60,11 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         Algorithm,
         blank=True,
         help_text="Algorithms that will be executed on all images in this archive",
+    )
+    publications = models.ManyToManyField(
+        Publication,
+        blank=True,
+        help_text="The publications associated with this archive",
     )
     modalities = models.ManyToManyField(
         ImagingModality,

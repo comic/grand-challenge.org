@@ -39,6 +39,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         fields = (
             "title",
             "description",
+            "publications",
             "modalities",
             "structures",
             "logo",
@@ -57,6 +58,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "job_create_page_markdown": MarkdownEditorWidget,
             "additional_terms_markdown": MarkdownEditorWidget,
             "result_template": MarkdownEditorWidget,
+            "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
         }

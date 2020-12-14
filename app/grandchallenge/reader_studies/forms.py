@@ -121,6 +121,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "title",
             "logo",
             "description",
+            "publications",
             "modalities",
             "structures",
             "workstation",
@@ -140,6 +141,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
             "help_text_markdown": MarkdownEditorWidget,
             "description": TextInput,
+            "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
         }

@@ -27,6 +27,7 @@ from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -264,6 +265,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         ),
     )
     validate_hanging_list = models.BooleanField(default=True)
+    publications = models.ManyToManyField(
+        Publication,
+        blank=True,
+        help_text="The publications associated with this reader study",
+    )
     modalities = models.ManyToManyField(
         ImagingModality,
         blank=True,
