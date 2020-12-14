@@ -86,6 +86,7 @@ class ReaderStudyCreateForm(
             "title",
             "logo",
             "description",
+            "publications",
             "modalities",
             "structures",
             "workstation",
@@ -99,6 +100,7 @@ class ReaderStudyCreateForm(
         help_texts = READER_STUDY_HELP_TEXTS
         widgets = {
             "description": TextInput,
+            "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
         }
