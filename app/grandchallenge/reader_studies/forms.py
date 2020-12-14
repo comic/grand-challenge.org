@@ -30,6 +30,7 @@ from django.forms import (
 )
 from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
+from django_select2.forms import Select2MultipleWidget
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.forms import (
@@ -85,6 +86,9 @@ class ReaderStudyCreateForm(
             "title",
             "logo",
             "description",
+            "publications",
+            "modalities",
+            "structures",
             "workstation",
             "workstation_config",
             "is_educational",
@@ -96,6 +100,9 @@ class ReaderStudyCreateForm(
         help_texts = READER_STUDY_HELP_TEXTS
         widgets = {
             "description": TextInput,
+            "publications": Select2MultipleWidget,
+            "modalities": Select2MultipleWidget,
+            "structures": Select2MultipleWidget,
         }
 
     def clean(self):
@@ -116,6 +123,9 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "title",
             "logo",
             "description",
+            "publications",
+            "modalities",
+            "structures",
             "workstation",
             "workstation_config",
             "help_text_markdown",
@@ -133,6 +143,9 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
             "help_text_markdown": MarkdownEditorWidget,
             "description": TextInput,
+            "publications": Select2MultipleWidget,
+            "modalities": Select2MultipleWidget,
+            "structures": Select2MultipleWidget,
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,

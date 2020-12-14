@@ -39,7 +39,7 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.algorithms.filters import JobViewsetFilter
+from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
@@ -64,6 +64,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
@@ -90,12 +91,13 @@ class AlgorithmCreate(
         return response
 
 
-class AlgorithmList(PermissionListMixin, ListView):
+class AlgorithmList(PermissionListMixin, FilterMixin, ListView):
     model = Algorithm
     permission_required = {
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     }
     ordering = "-created"
+    filter_class = AlgorithmFilter
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

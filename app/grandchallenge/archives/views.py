@@ -33,6 +33,7 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
     ArchiveCasesToReaderStudyForm,
     ArchiveForm,
@@ -46,6 +47,7 @@ from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.permissions.rest_framework import (
@@ -59,16 +61,21 @@ from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
-class ArchiveList(PermissionListMixin, ListView):
+class ArchiveList(PermissionListMixin, FilterMixin, ListView):
     model = Archive
     permission_required = (
         f"{model._meta.app_label}.view_{model._meta.model_name}"
     )
     ordering = "-created"
+    filter_class = ArchiveFilter
 
     def get_queryset(self, *args, **kwargs):
         queryset = super().get_queryset()
-        queryset = (queryset | Archive.objects.filter(public=True)).distinct()
+        queryset = (
+            # Ensure both qs are distinct so that they can be combined
+            queryset.distinct()
+            | Archive.objects.filter(public=True).distinct()
+        ).distinct()
         return queryset
 
     def get_context_data(self, *args, **kwargs):

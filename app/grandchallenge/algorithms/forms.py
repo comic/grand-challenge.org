@@ -12,6 +12,7 @@ from django.forms import (
     TextInput,
 )
 from django.utils.text import format_lazy
+from django_select2.forms import Select2MultipleWidget
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.algorithms.models import (
@@ -38,6 +39,9 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         fields = (
             "title",
             "description",
+            "publications",
+            "modalities",
+            "structures",
             "logo",
             "public",
             "workstation",
@@ -54,6 +58,9 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "job_create_page_markdown": MarkdownEditorWidget,
             "additional_terms_markdown": MarkdownEditorWidget,
             "result_template": MarkdownEditorWidget,
+            "publications": Select2MultipleWidget,
+            "modalities": Select2MultipleWidget,
+            "structures": Select2MultipleWidget,
         }
         help_texts = {
             "workstation_config": format_lazy(

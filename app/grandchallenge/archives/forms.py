@@ -45,6 +45,9 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         fields = (
             "title",
             "description",
+            "publications",
+            "modalities",
+            "structures",
             "logo",
             "workstation",
             "workstation_config",
@@ -56,6 +59,9 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "description": TextInput,
             "detail_page_markdown": MarkdownEditorWidget,
             "algorithms": Select2MultipleWidget,
+            "publications": Select2MultipleWidget,
+            "modalities": Select2MultipleWidget,
+            "structures": Select2MultipleWidget,
         }
         help_texts = {
             "workstation_config": format_lazy(

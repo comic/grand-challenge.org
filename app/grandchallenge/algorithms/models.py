@@ -18,6 +18,7 @@ from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
 
+from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
@@ -39,6 +40,8 @@ from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.utils import get
+from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
@@ -107,14 +110,27 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "{% endfor %}"
         ),
     )
-
     inputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_inputs"
     )
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="algorithm_outputs"
     )
-
+    publications = models.ManyToManyField(
+        Publication,
+        blank=True,
+        help_text="The publications associated with this algorithm",
+    )
+    modalities = models.ManyToManyField(
+        ImagingModality,
+        blank=True,
+        help_text="The imaging modalities supported by this algorithm",
+    )
+    structures = models.ManyToManyField(
+        BodyStructure,
+        blank=True,
+        help_text="The structures supported by this algorithm",
+    )
     credits_per_job = models.PositiveIntegerField(
         default=0,
         help_text=(

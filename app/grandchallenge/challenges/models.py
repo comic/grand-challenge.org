@@ -32,6 +32,7 @@ from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
+from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.task_categories.models import TaskType
 
@@ -158,7 +159,7 @@ class ChallengeBase(models.Model):
         help_text="Website of the event which will host the workshop",
     )
     publications = models.ManyToManyField(
-        "publications.Publication",
+        Publication,
         blank=True,
         help_text="Which publications are associated with this challenge?",
     )

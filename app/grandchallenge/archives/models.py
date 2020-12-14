@@ -5,11 +5,14 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.patients.models import Patient
+from grandchallenge.publications.models import Publication
 from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
 
@@ -57,6 +60,21 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         Algorithm,
         blank=True,
         help_text="Algorithms that will be executed on all images in this archive",
+    )
+    publications = models.ManyToManyField(
+        Publication,
+        blank=True,
+        help_text="The publications associated with this archive",
+    )
+    modalities = models.ManyToManyField(
+        ImagingModality,
+        blank=True,
+        help_text="The imaging modalities contained in this archive",
+    )
+    structures = models.ManyToManyField(
+        BodyStructure,
+        blank=True,
+        help_text="The structures contained in this archive",
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
