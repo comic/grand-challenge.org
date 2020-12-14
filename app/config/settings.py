@@ -892,6 +892,7 @@ DISALLOWED_CHALLENGE_NAMES = {
 # Disallow registration from certain domains
 DISALLOWED_EMAIL_DOMAINS = {
     "qq.com",
+    "gm.uit.edu.vn",
     *blocklist,
 }
 
