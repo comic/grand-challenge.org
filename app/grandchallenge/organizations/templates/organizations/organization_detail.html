@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load url %}
+{% load bleach %}
+
+{% block title %}
+    {{ object.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'organizations:list' %}">Organizations</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    <div class="col-12 col-md-4 col-lg-3 mb-3">
+        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+             aria-orientation="vertical">
+            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
+               href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+               aria-selected="true"><i
+                    class="fas fa-info fa-fw"></i>&nbsp;Information
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="tab-content" id="v-pills-tabContent">
+        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
+             aria-labelledby="v-pills-home-tab">
+
+            <h2>{{ object.title }}</h2>
+
+            {{ object.detail_page_markdown|md2html }}
+
+            <dl class="row">
+                <dt class="col-sm-3"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;Location</dt>
+                <dd class="col-sm-9">{{ object.location.name}}</dd>
+
+                <dt class="col-sm-3"><i class="fa fa-fw fa-link"></i>&nbsp;Website</dt>
+                <dd class="col-sm-9"><a href="{{ object.website }}">{{ object.website }}</a></dd>
+            </dl>
+        </div>
+    </div>
+{% endblock %}

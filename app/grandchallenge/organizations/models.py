@@ -8,6 +8,7 @@ from grandchallenge.core.models import (
     UUIDModel,
 )
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
+from grandchallenge.subdomains.utils import reverse
 
 
 class Organization(TitleSlugDescriptionModel, UUIDModel):
@@ -37,6 +38,9 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
 
     def __str__(self):
         return f"{self.title}"
+
+    def get_absolute_url(self):
+        return reverse("organizations:detail", kwargs={"slug": self.slug})
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
