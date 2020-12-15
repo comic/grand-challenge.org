@@ -1,15 +1,16 @@
 from django.contrib.auth.models import Group
 from django.db import models
 from django_countries.fields import CountryField
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import (
-    TimeStampedModel,
     TitleSlugDescriptionModel,
+    UUIDModel,
 )
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
 
 
-class Organization(TitleSlugDescriptionModel, TimeStampedModel):
+class Organization(TitleSlugDescriptionModel, UUIDModel):
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
     )
@@ -31,5 +32,32 @@ class Organization(TitleSlugDescriptionModel, TimeStampedModel):
         related_name="members_of_organization",
     )
 
-    class Meta(TitleSlugDescriptionModel.Meta, TimeStampedModel.Meta):
-        pass
+    class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
+        ordering = ("created",)
+
+    def __str__(self):
+        return f"{self.title}"
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            self._create_groups()
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            self._assign_permissions()
+
+    def _create_groups(self):
+        self.editors_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
+        )
+        self.members_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_members"
+        )
+
+    def _assign_permissions(self):
+        assign_perm(
+            f"change_{self._meta.model_name}", self.editors_group, self
+        )
