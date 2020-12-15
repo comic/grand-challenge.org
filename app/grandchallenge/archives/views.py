@@ -29,6 +29,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from guardian.shortcuts import get_objects_for_user
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -68,15 +69,6 @@ class ArchiveList(PermissionListMixin, FilterMixin, ListView):
     )
     ordering = "-created"
     filter_class = ArchiveFilter
-
-    def get_queryset(self, *args, **kwargs):
-        queryset = super().get_queryset()
-        queryset = (
-            # Ensure both qs are distinct so that they can be combined
-            queryset.distinct()
-            | Archive.objects.filter(public=True).distinct()
-        ).distinct()
-        return queryset
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -119,7 +111,7 @@ class ArchiveDetail(
 ):
     model = Archive
     permission_required = (
-        f"{model._meta.app_label}.view_{model._meta.model_name}"
+        f"{model._meta.app_label}.use_{model._meta.model_name}"
     )
     raise_exception = True
 
@@ -191,15 +183,9 @@ class ArchiveUsersAutocomplete(
     LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
 ):
     def test_func(self):
-        group_pks = (
-            Archive.objects.all()
-            .select_related("editors_group")
-            .values_list("editors_group__pk", flat=True)
-        )
-        return (
-            self.request.user.is_superuser
-            or self.request.user.groups.filter(pk__in=group_pks).exists()
-        )
+        return get_objects_for_user(
+            user=self.request.user, perms="change_archive", klass=Archive
+        ).exists()
 
     def get_queryset(self):
         qs = (
@@ -395,7 +381,7 @@ class ArchiveCasesList(
 ):
     model = Image
     permission_required = (
-        f"{Archive._meta.app_label}.view_{Archive._meta.model_name}"
+        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
     )
     raise_exception = True
     template_name = "archives/archive_cases_list.html"
@@ -448,7 +434,7 @@ class ArchiveCasesToReaderStudyUpdate(
 ):
     form_class = ArchiveCasesToReaderStudyForm
     permission_required = (
-        f"{Archive._meta.app_label}.view_{Archive._meta.model_name}"
+        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
     )
     raise_exception = True
     template_name = "archives/archive_cases_to_reader_study_form.html"

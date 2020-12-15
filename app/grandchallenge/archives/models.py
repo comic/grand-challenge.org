@@ -1,8 +1,9 @@
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models, transaction
 from django.db.models import Count
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
@@ -79,7 +80,16 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
-        permissions = [("upload_archive", "Can upload to archive")]
+        permissions = [
+            (
+                "use_archive",
+                (
+                    "Can view the objects in the archive and use them as "
+                    "inputs to algorithms, reader studies and challenges."
+                ),
+            ),
+            ("upload_archive", "Can upload to archive"),
+        ]
 
     def __str__(self):
         return f"<{self.__class__.__name__} {self.title}>"
@@ -117,6 +127,12 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
             f"view_{self._meta.model_name}", self.uploaders_group, self
         )
         assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+
+        # Allow the editors, uploaders and users group to use the archive
+        assign_perm(f"use_{self._meta.model_name}", self.editors_group, self)
+        assign_perm(f"use_{self._meta.model_name}", self.uploaders_group, self)
+        assign_perm(f"use_{self._meta.model_name}", self.users_group, self)
+
         # Allow editors and uploaders to upload to this
         assign_perm(
             f"upload_{self._meta.model_name}", self.editors_group, self
@@ -129,7 +145,14 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
             f"change_{self._meta.model_name}", self.editors_group, self
         )
 
-        # TODO: Handle public permissions
+        reg_and_anon = Group.objects.get(
+            name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+        )
+
+        if self.public:
+            assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+        else:
+            remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
 
     def delete(self, *args, **kwargs):
         """
