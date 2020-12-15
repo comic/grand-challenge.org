@@ -24,7 +24,6 @@ from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
     DetailView,
-    FormView,
     ListView,
     UpdateView,
 )
@@ -45,7 +44,6 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmPermissionRequestUpdateForm,
-    EditorsForm,
     JobForm,
     UsersForm,
     ViewersForm,
@@ -71,6 +69,8 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.groups.forms import EditorsForm
+from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -217,36 +217,8 @@ class AlgorithmUserAutocomplete(
         return qs
 
 
-class UserGroupUpdateMixin(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    FormView,
-):
-    template_name = "algorithms/user_groups_form.html"
-    raise_exception = True
-
-    def get_permission_object(self):
-        return self.obj
-
-    @property
-    def obj(self):
-        raise NotImplementedError
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"object": self.obj, "role": self.get_form().role})
-        return context
-
-    def get_success_url(self):
-        return self.obj.get_absolute_url()
-
-    def form_valid(self, form):
-        form.add_or_remove_user(obj=self.obj)
-        return super().form_valid(form)
-
-
 class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
+    template_name = "algorithms/user_groups_form.html"
     permission_required = (
         f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
@@ -257,6 +229,7 @@ class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
 
 
 class JobUserGroupUpdateMixin(UserGroupUpdateMixin):
+    template_name = "algorithms/user_groups_form.html"
     permission_required = (
         f"{Job._meta.app_label}.change_{Job._meta.model_name}"
     )

@@ -257,8 +257,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
     def add_editor(self, user):
-        # using .pk is required here as it is called from a data migration
-        return user.groups.add(self.editors_group.pk)
+        return user.groups.add(self.editors_group)
 
     def remove_editor(self, user):
         return user.groups.remove(self.editors_group)

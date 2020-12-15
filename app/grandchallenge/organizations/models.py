@@ -65,3 +65,21 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
         assign_perm(
             f"change_{self._meta.model_name}", self.editors_group, self
         )
+
+    def is_editor(self, user):
+        return user.groups.filter(pk=self.editors_group.pk).exists()
+
+    def add_editor(self, user):
+        return user.groups.add(self.editors_group)
+
+    def remove_editor(self, user):
+        return user.groups.remove(self.editors_group)
+
+    def is_member(self, user):
+        return user.groups.filter(pk=self.members_group.pk).exists()
+
+    def add_member(self, user):
+        return user.groups.add(self.members_group)
+
+    def remove_member(self, user):
+        return user.groups.remove(self.members_group)
