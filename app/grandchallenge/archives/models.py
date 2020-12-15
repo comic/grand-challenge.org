@@ -84,8 +84,8 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
             (
                 "use_archive",
                 (
-                    "Can view the objects in the archive and use them as "
-                    "inputs to algorithms, reader studies and challenges."
+                    "Can use the objects in the archive as inputs to "
+                    "algorithms, reader studies and challenges."
                 ),
             ),
             ("upload_archive", "Can upload to archive"),
