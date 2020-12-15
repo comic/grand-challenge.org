@@ -465,17 +465,6 @@ class Phase(UUIDModel):
         return url
 
 
-def method_image_path(instance, filename):
-    """Deprecated: only used in a migration."""
-    return (
-        f"{settings.EVALUATION_FILES_SUBDIRECTORY}/"
-        f"{instance.phase.challenge.pk}/"
-        f"methods/"
-        f"{instance.pk}/"
-        f"{filename}"
-    )
-
-
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 

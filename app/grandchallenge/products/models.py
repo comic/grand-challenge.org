@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from grandchallenge.challenges.models import get_logo_path
+from grandchallenge.core.storage import get_logo_path
 from grandchallenge.subdomains.utils import reverse
 
 

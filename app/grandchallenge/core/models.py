@@ -2,6 +2,26 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+from django_extensions.db.models import (
+    TitleSlugDescriptionModel as BaseTitleSlugDescriptionModel,
+)
+
+
+class TimeStampedModel(models.Model):
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    modified = models.DateTimeField(auto_now=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+
+class TitleSlugDescriptionModel(BaseTitleSlugDescriptionModel):
+    # Fix issue in upstream where description can be null
+    description = models.TextField(_("description"), blank=True)
+
+    class Meta(BaseTitleSlugDescriptionModel.Meta):
+        abstract = True
 
 
 class UUIDModel(models.Model):

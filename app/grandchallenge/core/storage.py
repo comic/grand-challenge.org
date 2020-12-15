@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.deconstruct import deconstructible
 from django.utils.encoding import filepath_to_uri
+from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from storages.backends.s3boto3 import S3Boto3Storage
 
@@ -123,3 +124,11 @@ storages = [private_s3_storage, protected_s3_storage, public_s3_storage]
 
 if len({s.bucket_name for s in storages}) != len(storages):
     raise ImproperlyConfigured("Storage bucket names are not unique")
+
+
+def get_logo_path(instance, filename):
+    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
+
+
+def get_banner_path(instance, filename):
+    return f"b/{instance.pk}/{get_valid_filename(filename)}"

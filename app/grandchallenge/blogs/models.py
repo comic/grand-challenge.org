@@ -3,8 +3,7 @@ from django.db import models
 from django_extensions.db.fields import AutoSlugField
 from simple_history.models import HistoricalRecords
 
-from grandchallenge.challenges.models import get_logo_path
-from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 
 
