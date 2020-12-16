@@ -17,7 +17,7 @@ class UserGroupForm(SaveFormInitMixin, Form):
         help_text="Select a user that will be added to the group",
         required=True,
         widget=autocomplete.ModelSelect2(
-            url="algorithms:users-autocomplete",
+            url="users-autocomplete",
             attrs={
                 "data-placeholder": "Search for a user ...",
                 "data-minimum-input-length": 3,

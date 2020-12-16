@@ -459,13 +459,6 @@ class TestObjectPermissionRequiredViews:
         for view_name, kwargs, permission, obj, redirect in [
             ("create", {}, "algorithms.add_algorithm", None, None),
             (
-                "users-autocomplete",
-                {},
-                "change_algorithm",
-                ai.algorithm,
-                None,
-            ),
-            (
                 "detail",
                 {"slug": ai.algorithm.slug},
                 "view_algorithm",

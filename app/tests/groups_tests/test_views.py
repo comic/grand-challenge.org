@@ -24,11 +24,32 @@ class TestGroupManagementViews:
         group = getattr(o, group_attr)
 
         admin = UserFactory()
-        o.add_editor(admin)
-
         u = UserFactory()
 
         assert not group.user_set.filter(pk=u.pk).exists()
+
+        def get_user_autocomplete():
+            return get_view_for_user(
+                client=client,
+                viewname="users-autocomplete",
+                user=admin,
+                data={"q": u.username.lower()},
+            )
+
+        response = get_user_autocomplete()
+        assert response.status_code == 403
+
+        o.add_editor(admin)
+
+        response = get_user_autocomplete()
+        assert response.status_code == 200
+        assert response.json()["results"] == [
+            {
+                "id": str(u.pk),
+                "text": str(u.username),
+                "selected_text": str(u.username),
+            }
+        ]
 
         response = get_view_for_user(
             client=client,

@@ -2,13 +2,7 @@ import logging
 from datetime import timedelta
 from typing import Dict
 
-from dal import autocomplete
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
@@ -33,7 +27,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_objects_for_user, get_perms
+from guardian.shortcuts import get_perms
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -193,28 +187,6 @@ class AlgorithmUpdate(
         f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
     raise_exception = True
-
-
-class AlgorithmUserAutocomplete(
-    LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
-):
-    def test_func(self):
-        return get_objects_for_user(
-            user=self.request.user, perms="change_algorithm", klass=Algorithm
-        ).exists()
-
-    def get_queryset(self):
-        qs = (
-            get_user_model()
-            .objects.all()
-            .order_by("username")
-            .exclude(username=settings.ANONYMOUS_USER_NAME)
-        )
-
-        if self.q:
-            qs = qs.filter(username__istartswith=self.q)
-
-        return qs
 
 
 class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):

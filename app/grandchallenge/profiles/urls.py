@@ -1,6 +1,7 @@
 from django.conf.urls import include
 from django.urls import path, re_path
 
+from grandchallenge.groups.views import UserAutocomplete
 from grandchallenge.profiles.forms import SignupFormExtra
 from grandchallenge.profiles.views import (
     PreSocialView,
@@ -27,6 +28,11 @@ urlpatterns = [
     path("login-redirect/", login_redirect, name="login_redirect"),
     path("profile/edit/", profile_edit_redirect, name="profile_redirect_edit"),
     path("profile/", profile, name="profile_redirect"),
+    path(
+        "user-autocomplete/",
+        UserAutocomplete.as_view(),
+        name="users-autocomplete",
+    ),
     re_path(
         r"^(?P<username>[\@\.\+\w-]+)/edit/$",
         profile_edit,

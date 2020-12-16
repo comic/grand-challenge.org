@@ -6,18 +6,12 @@ from grandchallenge.organizations.views import (
     OrganizationList,
     OrganizationMembersUpdate,
     OrganizationUpdate,
-    OrganizationUserAutocomplete,
 )
 
 app_name = "organizations"
 
 urlpatterns = [
     path("", OrganizationList.as_view(), name="list"),
-    path(
-        "users-autocomplete/",
-        OrganizationUserAutocomplete.as_view(),
-        name="users-autocomplete",
-    ),
     path("<slug>/", OrganizationDetail.as_view(), name="detail"),
     path("<slug>/update/", OrganizationUpdate.as_view(), name="update"),
     path(
