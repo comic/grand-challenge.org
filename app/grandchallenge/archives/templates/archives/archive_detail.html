@@ -59,20 +59,20 @@
                 </a>
             {% endif %}
 
-            <a class="nav-link"
-               href="{% url 'archives:cases-list' slug=object.slug %}"
-            ><i class="fas fa-eye fa-fw"></i>&nbsp;View Cases
-            </a>
-
-            <a class="nav-link"
-               href="{% url 'archives:cases-reader-study-update' slug=object.slug %}"
-            ><i class="fas fa-plus fa-fw"></i>&nbsp;Add to Reader Study
-            </a>
-
-            <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
-               href="#v-pills-export" role="tab" aria-controls="v-pills-export"
-               aria-selected="false"><i class="fas fa-file-download fa-fw"></i>&nbsp;Export
-            </a>
+            {% if "use_archive" in object_perms %}
+                <a class="nav-link"
+                   href="{% url 'archives:cases-list' slug=object.slug %}"
+                ><i class="fas fa-eye fa-fw"></i>&nbsp;View Cases
+                </a>
+                <a class="nav-link"
+                   href="{% url 'archives:cases-reader-study-update' slug=object.slug %}"
+                ><i class="fas fa-plus fa-fw"></i>&nbsp;Add to Reader Study
+                </a>
+                <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
+                   href="#v-pills-export" role="tab" aria-controls="v-pills-export"
+                   aria-selected="false"><i class="fas fa-file-download fa-fw"></i>&nbsp;Export
+                </a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
@@ -136,7 +136,7 @@
                     {% for user in object.editors_group.user_set.all %}
                         <li class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">
-                            <div>{{ user|user_profile_link }}</div>
+                                <div>{{ user|user_profile_link }}</div>
                                 <div>
                                     {% if user != request.user %}
                                         <form
@@ -270,31 +270,33 @@
             </div>
         {% endif %}
 
-        <div class="tab-pane fade" id="v-pills-export" role="tabpanel"
-             aria-labelledby="v-pills-export-tab">
+        {% if "use_archive" in object_perms %}
+            <div class="tab-pane fade" id="v-pills-export" role="tabpanel"
+                 aria-labelledby="v-pills-export-tab">
 
-            <h2>Export</h2>
+                <h2>Export</h2>
 
-            <p>Download CSV snapshots of the archive here.</p>
+                <p>Download CSV snapshots of the archive here.</p>
 
-            <p>
-                <a class="btn btn-primary"
-                   href="{{ object.api_url }}?format=csv"
-                   download="archive_{{ object.slug }}_{{ now }}.csv">
-                    <i class="fas fa-file-csv"></i> Archive
-                </a>
-            </p>
-
-            {% for offset in offsets %}
                 <p>
                     <a class="btn btn-primary"
-                       href="{% url 'api:image-list' %}?format=csv&archive={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
-                       download="archive_{{ object.slug }}_images_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
-                        <i class="fas fa-file-csv"></i> Archive Images ({{ offset|add:1 }} to {{ offset|add:limit }})
+                       href="{{ object.api_url }}?format=csv"
+                       download="archive_{{ object.slug }}_{{ now }}.csv">
+                        <i class="fas fa-file-csv"></i> Archive
                     </a>
                 </p>
-            {% endfor %}
-        </div>
+
+                {% for offset in offsets %}
+                    <p>
+                        <a class="btn btn-primary"
+                           href="{% url 'api:image-list' %}?format=csv&archive={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
+                           download="archive_{{ object.slug }}_images_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
+                            <i class="fas fa-file-csv"></i> Archive Images ({{ offset|add:1 }} to {{ offset|add:limit }})
+                        </a>
+                    </p>
+                {% endfor %}
+            </div>
+        {% endif %}
 
     </div>
 {% endblock %}
