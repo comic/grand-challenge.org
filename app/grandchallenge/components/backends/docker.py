@@ -17,7 +17,7 @@ from django.conf import settings
 from django.core.files import File
 from django.db.models import Model
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, NotFound
+from docker.errors import APIError, ImageNotFound, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
@@ -168,10 +168,9 @@ class DockerConnection:
         self.stop_and_cleanup()
 
     def _pull_images(self):
-        if self._exec_image_sha256 not in [
-            *[img.id for img in self._client.images.list()],
-            None,
-        ]:
+        try:
+            self._client.images.get(name=self._exec_image_sha256)
+        except ImageNotFound:
             # This can take a long time so increase the default timeout #1330
             old_timeout = self._client.api.timeout
             self._client.api.timeout = 600  # 10 minutes
@@ -227,7 +226,11 @@ class Executor(DockerConnection):
         return self._result
 
     def _pull_images(self):
-        self._client.images.pull(repository=self._io_image)
+        try:
+            self._client.images.get(name=self._io_image)
+        except ImageNotFound:
+            self._client.images.pull(repository=self._io_image)
+
         super()._pull_images()
 
     def _create_io_volumes(self):

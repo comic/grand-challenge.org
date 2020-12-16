@@ -195,7 +195,7 @@ services:
         source: ./app
         target: /app/
     group_add:
-      - ${DOCKER_GID-999}
+      - ${DOCKER_GID-1001}
 
   celery_worker_gpu:
     image: grandchallenge/web-test:latest

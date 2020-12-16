@@ -198,8 +198,8 @@ def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
 
 @pytest.fixture(scope="session")
 def alpine_images(tmpdir_factory, docker_client, docker_api_client):
-    docker_client.images.pull("alpine:3.7")
-    docker_client.images.pull("alpine:3.8")
+    docker_client.images.pull("alpine:3.12")
+    docker_client.images.pull("alpine:3.11")
 
     # get all images and put them in a tar archive
     image = docker_api_client.get_image("alpine")
