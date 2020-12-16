@@ -42,6 +42,21 @@ class OrganizationList(ListView):
 class OrganizationDetail(DetailView):
     model = Organization
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        editors_form = EditorsForm()
+        editors_form.fields["action"].initial = EditorsForm.REMOVE
+
+        members_form = MembersForm()
+        members_form.fields["action"].initial = MembersForm.REMOVE
+
+        context.update(
+            {"editors_form": editors_form, "members_form": members_form}
+        )
+
+        return context
+
 
 class OrganizationUserAutocomplete(
     LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView

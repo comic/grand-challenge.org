@@ -152,42 +152,8 @@
                     see all of the results:
                 </p>
 
-                <ul class="list-group list-group-flush mb-3">
-                    {% for user in object.editors_group.user_set.all %}
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>{{ user|user_profile_link }}</div>
-                                <div>
-                                    {% if user != request.user %}
-                                        <form
-                                                action="{% url 'algorithms:editors-update' slug=object.slug %}"
-                                                method="POST">
-                                            {% csrf_token %}
-                                            {% for field in editor_remove_form %}
-                                                {% if field.name == "user" %}
-                                                    <input
-                                                            type="hidden"
-                                                            name="user"
-                                                            value="{{ user.id }}"/>
-                                                {% else %}
-                                                    {{ field }}
-                                                {% endif %}
-                                            {% endfor %}
-                                            <button type="submit"
-                                                    class="btn btn-danger">
-                                                Remove
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">There are no editors for this
-                            algorithm.
-                        </li>
-                    {% endfor %}
-                </ul>
+                {% url 'algorithms:editors-update' slug=object.slug as edit_url %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=editor_remove_form users=object.editors_group.user_set.all %}
 
                 <p>
                     <a class="btn btn-primary"
@@ -203,40 +169,8 @@
                 <h2>Users</h2>
                 <p>The following users are able to use this algorithm:</p>
 
-                <ul class="list-group list-group-flush mb-3">
-                    {% for user in object.users_group.user_set.all %}
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>{{ user|user_profile_link }}</div>
-                                <div>
-                                    <form
-                                            action="{% url 'algorithms:users-update' slug=object.slug %}"
-                                            method="POST">
-                                        {% for field in form %}
-                                            {% csrf_token %}
-                                            {% if field.name == "user" %}
-                                                <input
-                                                        type="hidden"
-                                                        name="user"
-                                                        value="{{ user.id }}"/>
-                                            {% else %}
-                                                {{ field }}
-                                            {% endif %}
-                                        {% endfor %}
-                                        <button type="submit" class="btn btn-danger">
-                                            Revoke
-                                            access
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">There are no users for this
-                            algorithm.
-                        </li>
-                    {% endfor %}
-                </ul>
+                {% url 'algorithms:users-update' slug=object.slug as edit_url %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=form users=object.users_group.user_set.all %}
 
                 <p>
                     <a class="btn btn-primary"

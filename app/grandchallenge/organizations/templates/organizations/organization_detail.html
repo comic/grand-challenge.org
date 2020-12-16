@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load bleach %}
+{% load guardian_tags %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -14,6 +15,8 @@
 {% endblock %}
 
 {% block sidebar %}
+    {% get_obj_perms request.user for object as "object_perms" %}
+
     <div class="col-12 col-md-4 col-lg-3 mb-3">
         <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
              aria-orientation="vertical">
@@ -22,11 +25,24 @@
                aria-selected="true"><i
                     class="fas fa-info fa-fw"></i>&nbsp;Information
             </a>
+
+            {% if "change_organization" in object_perms %}
+                <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
+                   href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
+                   aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
+                </a>
+                <a class="nav-link" id="v-pills-members-tab" data-toggle="pill"
+                   href="#v-pills-members" role="tab" aria-controls="v-pills-members"
+                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Members
+                </a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
 
 {% block content %}
+    {% get_obj_perms request.user for object as "object_perms" %}
+
     <div class="tab-content" id="v-pills-tabContent">
         <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
              aria-labelledby="v-pills-home-tab">
@@ -37,11 +53,50 @@
 
             <dl class="row">
                 <dt class="col-sm-3"><i class="fa fa-fw fa-map-marker-alt"></i>&nbsp;Location</dt>
-                <dd class="col-sm-9">{{ object.location.name}}</dd>
+                <dd class="col-sm-9">{{ object.location.name }}</dd>
 
                 <dt class="col-sm-3"><i class="fa fa-fw fa-link"></i>&nbsp;Website</dt>
                 <dd class="col-sm-9"><a href="{{ object.website }}">{{ object.website }}</a></dd>
             </dl>
         </div>
+
+        {% if "change_organization" in object_perms %}
+            <div class="tab-pane fade" id="v-pills-editors" role="tabpanel"
+                 aria-labelledby="v-pills-editors-tab">
+
+                <h2>Editors</h2>
+                <p>
+                    The following users are members of, and are able to edit, this organization:
+                </p>
+
+                {% url 'organizations:editors-update' slug=object.slug as edit_url %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=editors_form users=object.editors_group.user_set.all %}
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'organizations:editors-update' slug=object.slug %}">
+                        <i class="fa fa-plus"></i> Add Editors
+                    </a>
+                </p>
+            </div>
+
+            <div class="tab-pane fade" id="v-pills-members" role="tabpanel"
+                 aria-labelledby="v-pills-members-tab">
+
+                <h2>Members</h2>
+                <p>The following users are members of this organization:</p>
+
+                {% url 'organizations:members-update' slug=object.slug as edit_url %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=members_form users=object.members_group.user_set.all %}
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'organizations:members-update' slug=object.slug %}">
+                        <i class="fa fa-plus"></i> Add Members
+                    </a>
+                </p>
+            </div>
+        {% endif %}
+
     </div>
 {% endblock %}
