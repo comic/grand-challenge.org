@@ -4,13 +4,17 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
-from django.views.generic import DetailView, ListView
-from guardian.mixins import LoginRequiredMixin
+from django.views.generic import DetailView, ListView, UpdateView
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.groups.forms import EditorsForm, MembersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
+from grandchallenge.organizations.forms import OrganizationForm
 from grandchallenge.organizations.models import Organization
 
 
@@ -58,13 +62,22 @@ class OrganizationDetail(DetailView):
         return context
 
 
+class OrganizationUpdate(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
+):
+    model = Organization
+    form_class = OrganizationForm
+    permission_required = f"{Organization._meta.app_label}.change_{Organization._meta.model_name}"
+    raise_exception = True
+
+
 class OrganizationUserAutocomplete(
     LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
 ):
     def test_func(self):
         return get_objects_for_user(
             user=self.request.user,
-            perms="change_organization",
+            perms=f"{Organization._meta.app_label}.change_{Organization._meta.model_name}",
             klass=Organization,
         ).exists()
 

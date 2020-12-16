@@ -58,6 +58,15 @@
                 <dt class="col-sm-3"><i class="fa fa-fw fa-link"></i>&nbsp;Website</dt>
                 <dd class="col-sm-9"><a href="{{ object.website }}">{{ object.website }}</a></dd>
             </dl>
+
+            {% if "change_organization" in object_perms %}
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'organizations:update' slug=object.slug %}">
+                        <i class="fa fa-edit"></i> Edit Organization
+                    </a>
+                </p>
+            {% endif %}
         </div>
 
         {% if "change_organization" in object_perms %}

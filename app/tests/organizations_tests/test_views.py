@@ -26,6 +26,7 @@ class TestObjectPermissionRequiredViews:
 
         for view_name, kwargs, permission, obj, redirect in [
             ("users-autocomplete", {}, "change_organization", o, None,),
+            ("update", {"slug": o.slug}, "change_organization", o, None,),
             (
                 "editors-update",
                 {"slug": o.slug},

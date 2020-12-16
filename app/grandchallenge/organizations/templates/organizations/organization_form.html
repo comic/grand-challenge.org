@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Organization {{ object|yesno:"Update,Create" }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'organizations:list' %}">Organizations</a></li>
+        {% if object %}
+            <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active" aria-current="page">{{ object|yesno:"Update,Create" }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Organization {{ object|yesno:"Update,Create" }}</h2>
+
+    {% crispy form %}
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript"
+            src="{% static "js/unsavedform.js" %}"></script>
+{% endblock %}
