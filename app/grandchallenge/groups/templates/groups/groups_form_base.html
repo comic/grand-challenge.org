@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block content %}
+    <h2>Add a user to the {{ role }}s group for {{ object }}</h2>
+
+    {% crispy form %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ form.media }}
+    <link rel="stylesheet" href="{% static 'css/select2-bootstrap4-theme/select2-bootstrap4.css' %}">
+{% endblock %}

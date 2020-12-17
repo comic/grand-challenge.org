@@ -14,7 +14,6 @@ from guardian.shortcuts import assign_perm, remove_perm
 from rest_framework.authtoken.models import Token
 from simple_history.models import HistoricalRecords
 
-from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.components.backends.docker import (
     ComponentException,
     Service,
@@ -22,7 +21,7 @@ from grandchallenge.components.backends.docker import (
 from grandchallenge.components.models import ComponentImage
 from grandchallenge.components.tasks import start_service, stop_service
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 
 __doc__ = """

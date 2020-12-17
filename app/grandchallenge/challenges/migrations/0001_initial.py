@@ -107,7 +107,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
                         storage=grandchallenge.core.storage.PublicS3Storage(),
-                        upload_to=grandchallenge.challenges.models.get_logo_path,
+                        upload_to=grandchallenge.core.storage.get_logo_path,
                     ),
                 ),
                 (
@@ -295,7 +295,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
                         storage=grandchallenge.core.storage.PublicS3Storage(),
-                        upload_to=grandchallenge.challenges.models.get_logo_path,
+                        upload_to=grandchallenge.core.storage.get_logo_path,
                     ),
                 ),
                 (
@@ -370,7 +370,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         help_text="Image that gets displayed at the top of each page. Recommended resolution 2200x440 px.",
                         storage=grandchallenge.core.storage.PublicS3Storage(),
-                        upload_to=grandchallenge.challenges.models.get_banner_path,
+                        upload_to=grandchallenge.core.storage.get_banner_path,
                     ),
                 ),
                 (

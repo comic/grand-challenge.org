@@ -3,7 +3,7 @@
 import django.db.models.deletion
 from django.db import migrations, models
 
-import grandchallenge.challenges.models
+import grandchallenge.core.storage
 
 
 class Migration(migrations.Migration):
@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                     "logo",
                     models.ImageField(
                         null=True,
-                        upload_to=grandchallenge.challenges.models.get_logo_path,
+                        upload_to=grandchallenge.core.storage.get_logo_path,
                     ),
                 ),
                 (
@@ -71,7 +71,7 @@ class Migration(migrations.Migration):
                 (
                     "img",
                     models.ImageField(
-                        upload_to=grandchallenge.challenges.models.get_logo_path
+                        upload_to=grandchallenge.core.storage.get_logo_path
                     ),
                 ),
             ],

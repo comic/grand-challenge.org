@@ -12,7 +12,6 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import format_html
-from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -28,7 +27,11 @@ from grandchallenge.challenges.emails import (
     send_challenge_created_email,
     send_external_challenge_created_email,
 )
-from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.storage import (
+    get_banner_path,
+    get_logo_path,
+    public_s3_storage,
+)
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
@@ -53,14 +56,6 @@ def validate_nounderscores(value):
 def validate_short_name(value):
     if value.lower() in settings.DISALLOWED_CHALLENGE_NAMES:
         raise ValidationError("That name is not allowed.")
-
-
-def get_logo_path(instance, filename):
-    return f"logos/{instance.__class__.__name__.lower()}/{instance.pk}/{get_valid_filename(filename)}"
-
-
-def get_banner_path(instance, filename):
-    return f"b/{instance.pk}/{get_valid_filename(filename)}"
 
 
 class ChallengeSeries(models.Model):

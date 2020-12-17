@@ -6,7 +6,6 @@ import simple_history.models
 from django.conf import settings
 from django.db import migrations, models
 
-import grandchallenge.challenges.models
 import grandchallenge.core.storage
 
 
@@ -48,7 +47,7 @@ class Migration(migrations.Migration):
                     "logo",
                     models.ImageField(
                         storage=grandchallenge.core.storage.PublicS3Storage(),
-                        upload_to=grandchallenge.challenges.models.get_logo_path,
+                        upload_to=grandchallenge.core.storage.get_logo_path,
                     ),
                 ),
                 ("published", models.BooleanField(default=False)),

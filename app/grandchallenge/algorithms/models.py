@@ -24,7 +24,6 @@ from grandchallenge.cases.image_builders.metaio_mhd_mha import (
 )
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.tasks import import_images
-from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.components.backends.docker import (
     Executor,
     cleanup,
@@ -37,7 +36,7 @@ from grandchallenge.components.models import (
     ComponentJob,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
-from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
@@ -258,8 +257,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
     def add_editor(self, user):
-        # using .pk is required here as it is called from a data migration
-        return user.groups.add(self.editors_group.pk)
+        return user.groups.add(self.editors_group)
 
     def remove_editor(self, user):
         return user.groups.remove(self.editors_group)

@@ -8,9 +8,8 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
-from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import RequestBase, UUIDModel
-from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.patients.models import Patient
 from grandchallenge.publications.models import Publication

@@ -2,13 +2,7 @@ import logging
 from datetime import timedelta
 from typing import Dict
 
-from dal import autocomplete
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
@@ -24,7 +18,6 @@ from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
     DetailView,
-    FormView,
     ListView,
     UpdateView,
 )
@@ -34,7 +27,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_objects_for_user, get_perms
+from guardian.shortcuts import get_perms
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -45,7 +38,6 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmPermissionRequestUpdateForm,
-    EditorsForm,
     JobForm,
     UsersForm,
     ViewersForm,
@@ -71,6 +63,8 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.groups.forms import EditorsForm
+from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -195,58 +189,8 @@ class AlgorithmUpdate(
     raise_exception = True
 
 
-class AlgorithmUserAutocomplete(
-    LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
-):
-    def test_func(self):
-        return get_objects_for_user(
-            user=self.request.user, perms="change_algorithm", klass=Algorithm
-        ).exists()
-
-    def get_queryset(self):
-        qs = (
-            get_user_model()
-            .objects.all()
-            .order_by("username")
-            .exclude(username=settings.ANONYMOUS_USER_NAME)
-        )
-
-        if self.q:
-            qs = qs.filter(username__istartswith=self.q)
-
-        return qs
-
-
-class UserGroupUpdateMixin(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    FormView,
-):
-    template_name = "algorithms/user_groups_form.html"
-    raise_exception = True
-
-    def get_permission_object(self):
-        return self.obj
-
-    @property
-    def obj(self):
-        raise NotImplementedError
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"object": self.obj, "role": self.get_form().role})
-        return context
-
-    def get_success_url(self):
-        return self.obj.get_absolute_url()
-
-    def form_valid(self, form):
-        form.add_or_remove_user(obj=self.obj)
-        return super().form_valid(form)
-
-
 class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
+    template_name = "algorithms/user_groups_form.html"
     permission_required = (
         f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
     )
@@ -257,6 +201,7 @@ class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
 
 
 class JobUserGroupUpdateMixin(UserGroupUpdateMixin):
+    template_name = "algorithms/user_groups_form.html"
     permission_required = (
         f"{Job._meta.app_label}.change_{Job._meta.model_name}"
     )

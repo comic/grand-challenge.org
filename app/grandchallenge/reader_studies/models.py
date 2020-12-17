@@ -21,9 +21,8 @@ from sklearn.metrics import accuracy_score
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
-from grandchallenge.challenges.models import get_logo_path
 from grandchallenge.core.models import RequestBase, UUIDModel
-from grandchallenge.core.storage import public_s3_storage
+from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.modalities.models import ImagingModality

@@ -125,6 +125,12 @@ urlpatterns = [
         "media/", include("grandchallenge.serving.urls", namespace="serving"),
     ),
     path("blogs/", include("grandchallenge.blogs.urls", namespace="blogs"),),
+    path(
+        "organizations/",
+        include(
+            "grandchallenge.organizations.urls", namespace="organizations"
+        ),
+    ),
     path("forums/", include(machina_urls)),
 ]
 
