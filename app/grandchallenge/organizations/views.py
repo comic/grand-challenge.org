@@ -1,5 +1,3 @@
-from itertools import chain
-
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
 from django.views.generic import DetailView, ListView, UpdateView
@@ -109,13 +107,13 @@ class OrganizationDetail(DetailView):
             .distinct()
         )
 
-        object_list = chain(
-            archives,
-            reader_studies,
-            challenges,
-            external_challenges,
-            algorithms,
-        )
+        object_list = [
+            *archives,
+            *reader_studies,
+            *challenges,
+            *external_challenges,
+            *algorithms,
+        ]
 
         return object_list
 

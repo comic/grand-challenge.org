@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    Organization {{ object|yesno:"Update,Create" }} - {{ block.super }}
+    {{ object|yesno:"Update,Create" }} Organization - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Organization {{ object|yesno:"Update,Create" }}</h2>
+    <h2>{{ object|yesno:"Update,Create" }} Organization</h2>
 
     {% crispy form %}
 

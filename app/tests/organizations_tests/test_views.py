@@ -1,8 +1,11 @@
 import pytest
 from guardian.shortcuts import assign_perm, remove_perm
 
+from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.archives_tests.factories import ArchiveFactory
 from tests.factories import UserFactory
 from tests.organizations_tests.factories import OrganizationFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
 
@@ -63,3 +66,34 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
 
             remove_perm(permission, u, obj)
+
+
+@pytest.mark.django_db
+class TestOrganizationFilterViews:
+    @pytest.mark.parametrize(
+        # TODO: Challenge and External challenge tests
+        "factory",
+        (AlgorithmFactory, ArchiveFactory, ReaderStudyFactory),
+    )
+    def test_organization_filter_views(self, client, factory):
+        org = OrganizationFactory()
+
+        obj = factory(public=True)
+        obj.organizations.set([OrganizationFactory()])
+
+        def _get_org_detail():
+            return get_view_for_user(
+                client=client,
+                viewname="organizations:detail",
+                reverse_kwargs={"slug": org.slug},
+            )
+
+        response = _get_org_detail()
+        assert response.status_code == 200
+        assert {*response.context[-1]["object_list"]} == set()
+
+        obj.organizations.add(org)
+
+        response = _get_org_detail()
+        assert response.status_code == 200
+        assert {*response.context[-1]["object_list"]} == {obj}

@@ -37,6 +37,10 @@
                    href="#v-pills-members" role="tab" aria-controls="v-pills-members"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Members
                 </a>
+                <a class="nav-link"
+                   href="{% url 'organizations:update' slug=object.slug %}">
+                    <i class="fa fa-edit fa-fw"></i>&nbsp;Edit Organization
+                </a>
             {% endif %}
         </div>
     </div>
@@ -79,7 +83,7 @@
                             <div class="card-body">
                                 <h5 class="card-title mb-0">
                                     {% firstof object.title object.short_name %}
-                                    {% if not object.public %}
+                                    {% if not object.public or object.hidden %}
                                         <i class="fas fa-lock above-stretched-link"
                                            title="{{ object|meta_attr:'verbose_name'|title }} is private"></i>
                                     {% endif %}
@@ -96,15 +100,6 @@
                     </div>
                 {% endfor %}
             </div>
-
-            {% if "change_organization" in object_perms %}
-                <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'organizations:update' slug=object.slug %}">
-                        <i class="fa fa-edit"></i> Edit Organization
-                    </a>
-                </p>
-            {% endif %}
         </div>
 
         {% if "change_organization" in object_perms %}
