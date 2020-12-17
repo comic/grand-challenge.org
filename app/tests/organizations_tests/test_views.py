@@ -3,7 +3,11 @@ from guardian.shortcuts import assign_perm, remove_perm
 
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.factories import UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    ExternalChallengeFactory,
+    UserFactory,
+)
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
@@ -71,14 +75,26 @@ class TestObjectPermissionRequiredViews:
 @pytest.mark.django_db
 class TestOrganizationFilterViews:
     @pytest.mark.parametrize(
-        # TODO: Challenge and External challenge tests
         "factory",
-        (AlgorithmFactory, ArchiveFactory, ReaderStudyFactory),
+        (
+            AlgorithmFactory,
+            ArchiveFactory,
+            ReaderStudyFactory,
+            ChallengeFactory,
+            ExternalChallengeFactory,
+        ),
     )
     def test_organization_filter_views(self, client, factory):
         org = OrganizationFactory()
+        u = UserFactory()
+        org.add_member(u)
 
-        obj = factory(public=True)
+        try:
+            obj = factory(public=True)
+        except TypeError:
+            # TODO For challenges, hidden needs to be refactored to public
+            obj = factory(hidden=False)
+
         obj.organizations.set([OrganizationFactory()])
 
         def _get_org_detail():
@@ -86,6 +102,7 @@ class TestOrganizationFilterViews:
                 client=client,
                 viewname="organizations:detail",
                 reverse_kwargs={"slug": org.slug},
+                user=u,
             )
 
         response = _get_org_detail()
