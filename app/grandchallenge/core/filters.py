@@ -10,6 +10,7 @@ from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.organizations.models import Organization
 
 
 class FilterForm(Form):
@@ -37,6 +38,13 @@ class TitleDescriptionModalityStructureFilter(FilterSet):
         widget=Select2MultipleWidget,
         label="Anatomical Region",
     )
+    organizations = ModelMultipleChoiceFilter(
+        queryset=Organization.objects.all(),
+        widget=Select2MultipleWidget,
+        label="Organization",
+        field_name="organizations__slug",
+        to_field_name="slug",
+    )
 
     class Meta:
         fields = (
@@ -44,6 +52,7 @@ class TitleDescriptionModalityStructureFilter(FilterSet):
             "modalities",
             "structures",
             "structures__region",
+            "organizations",
         )
         form = FilterForm
         search_fields = ("title", "description")

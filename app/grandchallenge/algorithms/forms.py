@@ -35,6 +35,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "publications",
             "modalities",
             "structures",
+            "organizations",
             "logo",
             "public",
             "workstation",
@@ -54,6 +55,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
+            "organizations": Select2MultipleWidget,
         }
         help_texts = {
             "workstation_config": format_lazy(
