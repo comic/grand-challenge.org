@@ -34,6 +34,7 @@ from grandchallenge.core.storage import (
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
@@ -180,6 +181,12 @@ class ChallengeBase(models.Model):
         ChallengeSeries,
         blank=True,
         help_text="Which challenge series is this associated with?",
+    )
+    organizations = models.ManyToManyField(
+        Organization,
+        blank=True,
+        help_text="The organizations associated with this challenge",
+        related_name="%(class)ss",
     )
 
     number_of_training_cases = models.IntegerField(blank=True, null=True)

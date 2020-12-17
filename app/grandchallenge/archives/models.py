@@ -11,6 +11,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.organizations.models import Organization
 from grandchallenge.patients.models import Patient
 from grandchallenge.publications.models import Publication
 from grandchallenge.studies.models import Study
@@ -75,6 +76,12 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         BodyStructure,
         blank=True,
         help_text="The structures contained in this archive",
+    )
+    organizations = models.ManyToManyField(
+        Organization,
+        blank=True,
+        help_text="The organizations associated with this archive",
+        related_name="archives",
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):

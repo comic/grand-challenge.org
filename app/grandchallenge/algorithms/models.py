@@ -40,6 +40,7 @@ from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
@@ -129,6 +130,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         BodyStructure,
         blank=True,
         help_text="The structures supported by this algorithm",
+    )
+    organizations = models.ManyToManyField(
+        Organization,
+        blank=True,
+        help_text="The organizations associated with this algorithm",
+        related_name="algorithms",
     )
     credits_per_job = models.PositiveIntegerField(
         default=0,

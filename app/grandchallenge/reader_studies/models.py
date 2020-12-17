@@ -26,6 +26,7 @@ from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
@@ -278,6 +279,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         BodyStructure,
         blank=True,
         help_text="The structures contained in this reader study",
+    )
+    organizations = models.ManyToManyField(
+        Organization,
+        blank=True,
+        help_text="The organizations associated with this reader study",
+        related_name="readerstudies",
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):

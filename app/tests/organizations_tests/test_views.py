@@ -1,8 +1,15 @@
 import pytest
 from guardian.shortcuts import assign_perm, remove_perm
 
-from tests.factories import UserFactory
+from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.archives_tests.factories import ArchiveFactory
+from tests.factories import (
+    ChallengeFactory,
+    ExternalChallengeFactory,
+    UserFactory,
+)
 from tests.organizations_tests.factories import OrganizationFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
 
@@ -63,3 +70,47 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
 
             remove_perm(permission, u, obj)
+
+
+@pytest.mark.django_db
+class TestOrganizationFilterViews:
+    @pytest.mark.parametrize(
+        "factory",
+        (
+            AlgorithmFactory,
+            ArchiveFactory,
+            ReaderStudyFactory,
+            ChallengeFactory,
+            ExternalChallengeFactory,
+        ),
+    )
+    def test_organization_filter_views(self, client, factory):
+        org = OrganizationFactory()
+        u = UserFactory()
+        org.add_member(u)
+
+        try:
+            obj = factory(public=True)
+        except TypeError:
+            # TODO For challenges, hidden needs to be refactored to public
+            obj = factory(hidden=False)
+
+        obj.organizations.set([OrganizationFactory()])
+
+        def _get_org_detail():
+            return get_view_for_user(
+                client=client,
+                viewname="organizations:detail",
+                reverse_kwargs={"slug": org.slug},
+                user=u,
+            )
+
+        response = _get_org_detail()
+        assert response.status_code == 200
+        assert {*response.context[-1]["object_list"]} == set()
+
+        obj.organizations.add(org)
+
+        response = _get_org_detail()
+        assert response.status_code == 200
+        assert {*response.context[-1]["object_list"]} == {obj}

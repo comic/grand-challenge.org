@@ -89,6 +89,7 @@ class ReaderStudyCreateForm(
             "publications",
             "modalities",
             "structures",
+            "organizations",
             "workstation",
             "workstation_config",
             "is_educational",
@@ -103,6 +104,7 @@ class ReaderStudyCreateForm(
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
+            "organizations": Select2MultipleWidget,
         }
 
     def clean(self):
@@ -126,6 +128,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "publications",
             "modalities",
             "structures",
+            "organizations",
             "workstation",
             "workstation_config",
             "help_text_markdown",
@@ -146,6 +149,7 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
+            "organizations": Select2MultipleWidget,
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
