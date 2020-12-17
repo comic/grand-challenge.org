@@ -135,7 +135,7 @@ def test_empty_data_upload_sessions(client):
     assert response.status_code == 400
     assert response.json() == {
         "non_field_errors": [
-            "1 of algorithm, archive or reader study must be set"
+            "1 of algorithm, archive, answer or reader study must be set"
         ]
     }
 
