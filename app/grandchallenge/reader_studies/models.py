@@ -999,6 +999,11 @@ ANSWER_TYPE_SCHEMA = {
                 "version",
             ],
         },
+        "PIMG": {
+            "type": "object",
+            "properties": {"upload_session_pk": {"type": "string"}},
+            "required": ["upload_session_pk"],
+        },
         "MPOL": {
             "type": "object",
             "properties": {
@@ -1066,6 +1071,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/POIN"},
         {"$ref": "#/definitions/MPOI"},
         {"$ref": "#/definitions/POLY"},
+        {"$ref": "#/definitions/PIMG"},
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
@@ -1087,6 +1093,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_POINT = "POIN"
     ANSWER_TYPE_MULTIPLE_POINTS = "MPOI"
     ANSWER_TYPE_POLYGON = "POLY"
+    ANSWER_TYPE_POLYGON_IMAGE = "PIMG"
     ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
     ANSWER_TYPE_CHOICE = "CHOI"
     ANSWER_TYPE_MULTIPLE_CHOICE = "MCHO"
@@ -1107,6 +1114,7 @@ class Question(UUIDModel):
         (ANSWER_TYPE_POINT, "Point"),
         (ANSWER_TYPE_MULTIPLE_POINTS, "Multiple points"),
         (ANSWER_TYPE_POLYGON, "Polygon"),
+        (ANSWER_TYPE_POLYGON_IMAGE, "Polygon (saved as mask)"),
         (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
         (ANSWER_TYPE_CHOICE, "Choice"),
         (ANSWER_TYPE_MULTIPLE_CHOICE, "Multiple choice"),
@@ -1297,6 +1305,7 @@ class Question(UUIDModel):
             self.ANSWER_TYPE_POINT,
             self.ANSWER_TYPE_MULTIPLE_POINTS,
             self.ANSWER_TYPE_POLYGON,
+            self.ANSWER_TYPE_POLYGON_IMAGE,
             self.ANSWER_TYPE_MULTIPLE_POLYGONS,
         ]
 
@@ -1348,6 +1357,9 @@ class Answer(UUIDModel):
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = models.JSONField(
         null=True, validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
+    )
+    answer_image = models.ForeignKey(
+        "cases.Image", null=True, on_delete=models.SET_NULL
     )
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
