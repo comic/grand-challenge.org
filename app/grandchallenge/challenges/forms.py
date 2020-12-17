@@ -130,6 +130,7 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             "task_types": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
+            "organizations": Select2MultipleWidget,
             "series": Select2MultipleWidget,
             "publications": Select2MultipleWidget,
         }
