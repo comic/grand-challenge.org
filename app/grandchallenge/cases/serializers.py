@@ -1,7 +1,11 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, SerializerMethodField
-from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
+from rest_framework.relations import (
+    HyperlinkedRelatedField,
+    PrimaryKeyRelatedField,
+    SlugRelatedField,
+)
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
@@ -12,7 +16,7 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
-from grandchallenge.reader_studies.models import ReaderStudy
+from grandchallenge.reader_studies.models import Answer, ReaderStudy
 
 
 class ImageFileSerializer(serializers.ModelSerializer):
@@ -99,6 +103,9 @@ class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
     reader_study = SlugRelatedField(
         slug_field="slug", queryset=ReaderStudy.objects.all(), required=False
     )
+    answer = PrimaryKeyRelatedField(
+        queryset=Answer.objects.all(), required=False
+    )
 
     class Meta(RawImageUploadSessionSerializer.Meta):
         fields = (
@@ -106,15 +113,19 @@ class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
             "algorithm",
             "archive",
             "reader_study",
+            "answer",
         )
 
     def validate(self, attrs):
         if (
-            sum(f in attrs for f in ["algorithm", "archive", "reader_study"])
+            sum(
+                f in attrs
+                for f in ["algorithm", "archive", "reader_study", "answer"]
+            )
             != 1
         ):
             raise ValidationError(
-                "1 of algorithm, archive or reader study must be set"
+                "1 of algorithm, archive, answer or reader study must be set"
             )
         return attrs
 

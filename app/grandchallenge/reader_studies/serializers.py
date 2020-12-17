@@ -99,6 +99,9 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     images = HyperlinkedRelatedField(
         many=True, queryset=Image.objects.all(), view_name="api:image-detail"
     )
+    answer_image = HyperlinkedRelatedField(
+        read_only=True, view_name="api:image-detail"
+    )
 
     def validate(self, attrs):
         answer = attrs.get("answer")
@@ -118,7 +121,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             question = attrs.get("question")
             images = attrs.get("images")
             creator = self.context.get("request").user
-
         Answer.validate(
             creator=creator,
             question=question,
@@ -149,6 +151,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "pk",
             "question",
             "modified",
+            "answer_image",
         )
         swagger_schema_fields = {
             "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}
