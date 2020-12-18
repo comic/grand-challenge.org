@@ -123,7 +123,7 @@ class ProductList(ListView):
                 "selected_fda_class": fda_class_query,
                 "products_selected_page": True,
                 "product_total": context["object_list"].count(),
-                "product_total_all": Product.objects.filter(ce_status=Status.CERTIFIED).count(),
+                "product_total_all": self.product_total_all,
             }
         )
         print(context)
