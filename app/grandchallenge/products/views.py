@@ -18,7 +18,6 @@ class ProductList(ListView):
     queryset = Product.objects.filter(ce_status=Status.CERTIFIED).order_by(
         "-verified", "-ce_verified", "product_name"
     )
-    product_total_all = queryset.count()
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("company")
