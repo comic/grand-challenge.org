@@ -27,7 +27,7 @@ class ProductList(ListView):
         ce_class_query = self.request.GET.get("ce_class")
         fda_class_query = self.request.GET.get("fda_class")
         search_query = self.request.GET.get("search")
-        product_total_all = queryset.count()
+        self.product_total_all = queryset.count()
 
         if search_query:
             search_fields = [
