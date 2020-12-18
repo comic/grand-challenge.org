@@ -126,7 +126,6 @@ class ProductList(ListView):
                 "product_total_all": self.product_total_all,
             }
         )
-        print(context)
         return context
 
 
