@@ -16,8 +16,9 @@ class ProductList(ListView):
     model = Product
     context_object_name = "products"
     queryset = Product.objects.filter(ce_status=Status.CERTIFIED).order_by(
-        "-verified", "-ce_verified", "company__company_name"
+        "-verified", "-ce_verified", "product_name"
     )
+    product_total_all = queryset.count()
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("company")
@@ -26,6 +27,7 @@ class ProductList(ListView):
         ce_class_query = self.request.GET.get("ce_class")
         fda_class_query = self.request.GET.get("fda_class")
         search_query = self.request.GET.get("search")
+        product_total_all = queryset.count()
 
         if search_query:
             search_fields = [
@@ -35,6 +37,7 @@ class ProductList(ListView):
                 "description",
                 "key_features",
                 "diseases",
+                "distribution"
                 "company__company_name",
             ]
             q = reduce(
@@ -120,8 +123,10 @@ class ProductList(ListView):
                 "selected_fda_class": fda_class_query,
                 "products_selected_page": True,
                 "product_total": context["object_list"].count(),
+                "product_total_all": Product.objects.filter(ce_status=Status.CERTIFIED).count(),
             }
         )
+        print(context)
         return context
 
 
