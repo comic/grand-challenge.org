@@ -1,6 +1,6 @@
 import logging
-from decimal import Decimal
 import json
+from decimal import Decimal
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import TemporaryDirectory
