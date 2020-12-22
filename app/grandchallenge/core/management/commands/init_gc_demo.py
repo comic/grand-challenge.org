@@ -237,7 +237,9 @@ class Command(BaseCommand):
             )
 
             def create_result(evaluation, result: dict):
-                interface = ComponentInterface.objects.get(slug="metrics-json-file")
+                interface = ComponentInterface.objects.get(
+                    slug="metrics-json-file"
+                )
 
                 try:
                     output_civ = evaluation.outputs.get(interface=interface)
@@ -249,9 +251,13 @@ class Command(BaseCommand):
                     )
                     evaluation.outputs.add(output_civ)
 
-            create_result(e, {
-                "acc": {"mean": 0.1 * phase_num, "std": 0.1},
-                "dice": {"mean": 0.71, "std": 0.05}})
+            create_result(
+                e,
+                {
+                    "acc": {"mean": 0.1 * phase_num, "std": 0.1},
+                    "dice": {"mean": 0.71, "std": 0.05},
+                },
+            )
 
     def _create_external_challenge(self):
         ex_challenge = ExternalChallenge.objects.create(

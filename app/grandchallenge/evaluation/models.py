@@ -409,8 +409,10 @@ class Phase(UUIDModel):
             [ComponentInterface.objects.get(slug="predictions-csv-file")]
         )
         self.outputs.set(
-            [ComponentInterface.objects.get(slug="metrics-json-file"),
-            ComponentInterface.objects.get(slug="generic-overlay")]
+            [
+                ComponentInterface.objects.get(slug="metrics-json-file"),
+                ComponentInterface.objects.get(slug="generic-overlay"),
+            ]
         )
 
     def assign_permissions(self):
@@ -693,17 +695,17 @@ class SubmissionEvaluator(Executor):
         """Read all of the images in /output/ & convert to an UploadSession."""
         job = self._job_class.objects.get(pk=self._job_id)
         with cleanup(
-                self._client.containers.run(
-                    image=self._io_image,
-                    volumes={
-                        self._output_volume: {"bind": "/output/", "mode": "ro"}
-                    },
-                    name=f"{self._job_label}-reader",
-                    detach=True,
-                    tty=True,
-                    labels=self._labels,
-                    **self._run_kwargs,
-                )
+            self._client.containers.run(
+                image=self._io_image,
+                volumes={
+                    self._output_volume: {"bind": "/output/", "mode": "ro"}
+                },
+                name=f"{self._job_label}-reader",
+                detach=True,
+                tty=True,
+                labels=self._labels,
+                **self._run_kwargs,
+            )
         ) as reader:
             for output in job.submission.phase.outputs.all():
                 output.create_component_interface_values(

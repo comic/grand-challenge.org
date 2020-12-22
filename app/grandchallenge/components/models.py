@@ -1,11 +1,11 @@
 import logging
 from decimal import Decimal
+import json
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Tuple, Type
 
-import json
 from django.conf import settings
 from django.core.files import File
 from django.db import models
@@ -23,8 +23,11 @@ from grandchallenge.cases.image_builders.metaio_mhd_mha import (
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.models import Image
 from grandchallenge.cases.tasks import import_images
-from grandchallenge.components.backends.docker import ComponentException, Executor, \
-    get_file
+from grandchallenge.components.backends.docker import (
+    ComponentException,
+    Executor,
+    get_file,
+)
 from grandchallenge.components.tasks import execute_job, validate_docker_image
 from grandchallenge.components.validators import validate_safe_path
 from grandchallenge.core.storage import (

@@ -23,7 +23,6 @@ from grandchallenge.components.backends.docker import (
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
-    ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel

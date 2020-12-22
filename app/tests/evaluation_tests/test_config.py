@@ -1,7 +1,10 @@
 import pytest
 
-from grandchallenge.components.models import ComponentInterface, \
-    ComponentInterfaceValue, InterfaceKindChoices
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKindChoices,
+)
 from grandchallenge.evaluation.models import Evaluation
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.utils import get_view_for_user
@@ -51,9 +54,7 @@ def test_setting_display_all_metrics(client, challenge_set):
 
     e.outputs.add(
         ComponentInterfaceValue.objects.create(
-            interface=ComponentInterface.objects.get(
-                slug="metrics-json-file"
-            ),
+            interface=ComponentInterface.objects.get(slug="metrics-json-file"),
             value=metrics,
         )
     )

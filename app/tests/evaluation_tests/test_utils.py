@@ -1,7 +1,9 @@
 import pytest
 
-from grandchallenge.components.models import ComponentInterface, \
-    ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.evaluation.models import Evaluation, Phase
 from grandchallenge.evaluation.tasks import calculate_ranks
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
