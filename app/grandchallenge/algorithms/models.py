@@ -1,7 +1,5 @@
 import logging
 from datetime import timedelta
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -11,7 +9,6 @@ from django.db.models import Min, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
@@ -19,15 +16,9 @@ from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
 
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.cases.image_builders.metaio_mhd_mha import (
-    image_builder_mhd,
-)
-from grandchallenge.cases.image_builders.tiff import image_builder_tiff
-from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.docker import (
     Executor,
     cleanup,
-    get_file,
 )
 from grandchallenge.components.models import (
     ComponentImage,
@@ -188,7 +179,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             [ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)]
         )
         self.outputs.set(
-            [ComponentInterface.objects.get(slug="results-json-file")]
+            [
+                ComponentInterface.objects.get(slug="results-json-file"),
+                ComponentInterface.objects.get(
+                    slug=DEFAULT_OUTPUT_INTERFACE_SLUG
+                ),
+            ]
         )
 
     def assign_permissions(self):
@@ -342,13 +338,11 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
 class AlgorithmExecutor(Executor):
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args, results_file=Path("/output/results.json"), **kwargs
-        )
-        self.output_images_dir = Path("/output/images/")
+        super().__init__(*args, **kwargs)
 
     def _get_result(self):
         """Read all of the images in /output/ & convert to an UploadSession."""
+        job = self._job_class.objects.get(pk=self._job_id)
         with cleanup(
             self._client.containers.run(
                 image=self._io_image,
@@ -362,59 +356,10 @@ class AlgorithmExecutor(Executor):
                 **self._run_kwargs,
             )
         ) as reader:
-            self._copy_output_files(
-                container=reader, base_dir=Path(self.output_images_dir)
-            )
-
-        return super()._get_result()
-
-    def _copy_output_files(self, *, container, base_dir: Path):
-        found_files = container.exec_run(f"find {base_dir} -type f")
-
-        if found_files.exit_code != 0:
-            logger.warning(f"Error listing {base_dir}")
-            return
-
-        output_files = [
-            base_dir / Path(f)
-            for f in found_files.output.decode().splitlines()
-        ]
-
-        if not output_files:
-            logger.warning("Output directory is empty")
-            return
-
-        with TemporaryDirectory() as tmpdir:
-            input_files = set()
-
-            for file in output_files:
-                tmpfile = Path(safe_join(tmpdir, file.relative_to(base_dir)))
-                tmpfile.parent.mkdir(parents=True, exist_ok=True)
-
-                with open(tmpfile, "wb") as outfile:
-                    infile = get_file(container=container, src=file)
-                    buffer = True
-                    while buffer:
-                        buffer = infile.read(1024)
-                        outfile.write(buffer)
-
-                input_files.add(tmpfile)
-
-            importer_result = import_images(
-                files=input_files,
-                builders=[image_builder_mhd, image_builder_tiff],
-            )
-
-        default_output_interface = ComponentInterface.objects.get(
-            slug=DEFAULT_OUTPUT_INTERFACE_SLUG
-        )
-        job = self._job_class.objects.get(pk=self._job_id)
-
-        for image in importer_result.new_images:
-            civ = ComponentInterfaceValue.objects.create(
-                interface=default_output_interface, image=image
-            )
-            job.outputs.add(civ)
+            for output in job.algorithm_image.algorithm.outputs.all():
+                output.create_component_interface_values(
+                    reader=reader, job=job
+                )
 
 
 class JobQuerySet(models.QuerySet):
@@ -490,19 +435,6 @@ class Job(UUIDModel, ComponentJob):
     @property
     def executor_cls(self):
         return AlgorithmExecutor
-
-    def create_result(self, *, result: dict):
-        interface = ComponentInterface.objects.get(slug="results-json-file")
-
-        try:
-            output_civ = self.outputs.get(interface=interface)
-            output_civ.value = result
-            output_civ.save()
-        except ObjectDoesNotExist:
-            output_civ = ComponentInterfaceValue.objects.create(
-                interface=interface, value=result
-            )
-            self.outputs.add(output_civ)
 
     @cached_property
     def rendered_result_text(self):

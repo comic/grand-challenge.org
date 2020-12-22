@@ -190,7 +190,7 @@ class Executor(DockerConnection):
         self,
         *args,
         input_files: Tuple[File, ...],
-        results_file: Path,
+        results_file=Path("/output/metrics.json"),
         **kwargs,
     ):
         super().__init__(*args, **kwargs)

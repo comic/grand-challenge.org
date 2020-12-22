@@ -3,7 +3,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
 from grandchallenge.algorithms.models import Algorithm, Job
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKindChoices,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmJobFactory,
@@ -55,13 +59,30 @@ def test_default_interfaces_created():
     a = AlgorithmFactory()
 
     assert {i.kind for i in a.inputs.all()} == {InterfaceKindChoices.IMAGE}
-    assert {o.kind for o in a.outputs.all()} == {InterfaceKindChoices.JSON}
+    assert {o.kind for o in a.outputs.all()} == {
+        InterfaceKindChoices.JSON,
+        InterfaceKindChoices.HEAT_MAP,
+    }
 
 
 @pytest.mark.django_db
 def test_outputs_are_set():
     j = AlgorithmJobFactory()
-    j.create_result(result={"dsaf": 35421})
+
+    def create_result(jb, result: dict):
+        interface = ComponentInterface.objects.get(slug="results-json-file")
+
+        try:
+            output_civ = jb.outputs.get(interface=interface)
+            output_civ.value = result
+            output_civ.save()
+        except ObjectDoesNotExist:
+            output_civ = ComponentInterfaceValue.objects.create(
+                interface=interface, value=result
+            )
+            jb.outputs.add(output_civ)
+
+    create_result(j, {"dsaf": 35421})
 
     outputs = j.outputs.all()
     assert len(outputs) == 1
@@ -69,14 +90,14 @@ def test_outputs_are_set():
     assert outputs[0].value == {"dsaf": 35421}
 
     job = AlgorithmJobFactory()
-    job.create_result(result={"foo": 13.37})
+    create_result(job, {"foo": 13.37})
 
     outputs = job.outputs.all()
     assert len(outputs) == 1
     assert outputs[0].interface.kind == InterfaceKindChoices.JSON
     assert outputs[0].value == {"foo": 13.37}
 
-    job.create_result(result={"bar": 13.37})
+    create_result(job, {"bar": 13.37})
     job.refresh_from_db()
 
     outputs = job.outputs.all()
@@ -97,7 +118,7 @@ def test_outputs_are_set():
     )
 
     assert job.rendered_result_text == ""
-    job.create_result(result={"foo": 13.37})
+    create_result(job, {"foo": 13.37})
     del job.rendered_result_text
     assert job.rendered_result_text == "<p>foo score: 13.37</p>"
 

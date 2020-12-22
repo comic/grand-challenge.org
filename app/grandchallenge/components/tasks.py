@@ -200,7 +200,6 @@ def execute_job(
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.create_result(result=ev.result)
         job.update_status(
             status=job.SUCCESS, stdout=ev.stdout, stderr=ev.stderr
         )
