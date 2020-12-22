@@ -190,12 +190,12 @@ class Executor(DockerConnection):
         self,
         *args,
         input_files: Tuple[File, ...],
-        results_file=Path("/output/metrics.json"),
+        results_file="/output/metrics.json",
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self._input_files = input_files
-        self._results_file = results_file
+        self._results_file = Path(results_file)
         self._io_image = settings.COMPONENTS_IO_IMAGE
 
         self._input_volume = f"{self._job_label}-input"
