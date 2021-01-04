@@ -114,7 +114,6 @@ class DownloadableFilter(admin.SimpleListFilter):
 class RawImageFileAdmin(GuardedModelAdmin):
     list_filter = (DownloadableFilter,)
     list_display = ("filename", "upload_session", "download")
-    list_select_related = ("upload_session__archive",)
     readonly_fields = (
         "download",
         "upload_session",
