@@ -35,6 +35,7 @@ $(document).ready(function () {
             {
                 targets: 'toggleable',
                 visible: false,
+                orderable: false,
             }
         ],
         ordering: true,
