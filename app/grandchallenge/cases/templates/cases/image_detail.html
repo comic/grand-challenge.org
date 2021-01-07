@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenSeaDragon Image Detail</title>
+</head>
+<body style="margin: 0;">
+
+<div id="openseadragonview" style="height: 100vh;"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.1/openseadragon.min.js"
+        integrity="sha256-qIiBj8XqCj196KLyEX8fBJ0HiHUZmXYmYFciVQZ7nls="
+        crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+    let viewer = OpenSeadragon({
+        id: "openseadragonview",
+        prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.1/images/",
+        tileSources: "{{ dzi_url }}",
+        debugMode: false,
+    });
+</script>
+
+</body>
+</html>

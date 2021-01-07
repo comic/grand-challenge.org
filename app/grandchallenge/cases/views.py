@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
 from django.views.generic import DetailView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
@@ -25,6 +27,7 @@ from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import (
     Image,
+    ImageFile,
     RawImageFile,
     RawImageUploadSession,
 )
@@ -68,6 +71,29 @@ class RawImageUploadSessionDetail(
     permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
     raise_exception = True
     login_url = reverse_lazy("userena_signin")
+
+
+class OSDImageDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = Image
+    permission_required = (
+        f"{Image._meta.app_label}.view_{Image._meta.model_name}"
+    )
+    raise_exception = True
+    login_url = reverse_lazy("userena_signin")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        try:
+            dzi = self.object.files.get(image_type=ImageFile.IMAGE_TYPE_DZI)
+        except ObjectDoesNotExist:
+            raise Http404
+
+        context.update({"dzi_url": dzi.file.url})
+
+        return context
 
 
 class ImageViewSet(ReadOnlyModelViewSet):
