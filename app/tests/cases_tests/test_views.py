@@ -2,7 +2,7 @@ import pytest
 from guardian.shortcuts import assign_perm, remove_perm
 
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import ImageFileFactory, UserFactory
 from tests.utils import get_view_for_user
 
 
@@ -10,7 +10,7 @@ from tests.utils import get_view_for_user
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         rius = RawImageUploadSessionFactory()
-        im = ImageFactory()
+        image_file = ImageFileFactory(image_type="DZI")
         u = UserFactory()
 
         for view_name, kwargs, permission, obj in [
@@ -20,7 +20,12 @@ class TestObjectPermissionRequiredViews:
                 "view_rawimageuploadsession",
                 rius,
             ),
-            ("osd-image-detail", {"pk": im.pk}, "view_image", im),
+            (
+                "osd-image-detail",
+                {"pk": image_file.image.pk},
+                "view_image",
+                image_file.image,
+            ),
         ]:
             response = get_view_for_user(
                 client=client,
