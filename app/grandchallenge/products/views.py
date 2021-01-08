@@ -36,7 +36,7 @@ class ProductList(ListView):
                 "description",
                 "key_features",
                 "diseases",
-                "distribution"
+                "distribution",
                 "company__company_name",
             ]
             q = reduce(
