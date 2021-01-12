@@ -15,7 +15,7 @@ def add_score(obj, answer):
 def add_image(obj, image):
     obj.answer_image = image
     obj.save()
-    image.update_answer_image_viewer_permissions()
+    image.update_viewer_groups_permissions()
 
 
 @shared_task
