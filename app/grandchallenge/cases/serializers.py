@@ -162,6 +162,16 @@ class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
 
         return value
 
+    def validate_answer(self, value):
+        user = self.context.get("request").user
+
+        if not user.has_perm("change_answer", value):
+            raise ValidationError(
+                "User does not have permission add an image to this answer"
+            )
+
+        return value
+
 
 class RawImageFileSerializer(serializers.ModelSerializer):
     upload_session = HyperlinkedRelatedField(
