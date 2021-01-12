@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import os
 from io import BytesIO
 
 import boto3
@@ -9,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
 from rest_framework.authtoken.models import Token
@@ -320,8 +321,14 @@ class Command(BaseCommand):
         algorithm_image = AlgorithmImage(
             creator=self.users["algorithm"], algorithm=algorithm
         )
-        container = ContentFile(base64.b64decode(b""))
-        algorithm_image.image.save("test_algorithm.tar", container)
+        if os.path.isfile(settings.DEMO_ALGORITHM_IMAGE_PATH):
+            with open(settings.DEMO_ALGORITHM_IMAGE_PATH, "rb") as f:
+                container = File(f)
+                algorithm_image.image.save("test_algorithm.tar", container)
+        else:
+            container = ContentFile(base64.b64decode(b""))
+            algorithm_image.image.save("test_algorithm.tar", container)
+
         algorithm_image.save()
 
         for res in [

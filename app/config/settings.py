@@ -958,6 +958,7 @@ if DEBUG:
             "endpoint_url": "http://minio-public:9000",
         }
     )
+    DEMO_ALGORITHM_IMAGE_PATH = os.path.join(SITE_ROOT, "algorithm.tar.gz")
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
