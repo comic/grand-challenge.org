@@ -48,7 +48,7 @@ def add_images_to_reader_study(*, upload_session_pk, reader_study_pk):
 
 @shared_task
 def add_image_to_answer(*, upload_session_pk, answer_pk):
-    image = Image.objects.filter(origin_id=upload_session_pk).first()
+    image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
 
     add_image(answer, image)
