@@ -27,16 +27,7 @@ For the same reason, we currently recommend running PyCharm from wsl rather than
     $ git clone https://github.com/comic/grand-challenge.org
     $ cd grand-challenge.org
 
-3. Add the following to your hosts file (``/etc/hosts`` on Linux, ``C:\Windows\System32\drivers\etc\hosts`` on Windows):
-
-.. code-block:: console
-
-    127.0.0.1 gc.localhost
-    127.0.0.1 demo.gc.localhost
-    127.0.0.1 minio-public
-    127.0.0.1 minio-protected
-
-4. You can then start the development site by invoking
+3. You can then start the development site by invoking
 
 .. code-block:: console
 
