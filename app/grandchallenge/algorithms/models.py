@@ -336,9 +336,6 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
 
 class AlgorithmExecutor(Executor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def _get_result(self):
         """Read all of the images in /output/ & convert to an UploadSession."""
         job = self._job_class.objects.get(pk=self._job_id)

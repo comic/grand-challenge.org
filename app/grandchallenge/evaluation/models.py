@@ -644,9 +644,6 @@ class Submission(UUIDModel):
 
 
 class SubmissionEvaluator(Executor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def _copy_input_files(self, writer):
         for file in self._input_files:
             dest_file = "/tmp/submission-src"

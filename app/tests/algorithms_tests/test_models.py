@@ -66,9 +66,7 @@ def test_default_interfaces_created():
 
 
 @pytest.mark.django_db
-def test_outputs_are_set():
-    j = AlgorithmJobFactory()
-
+def test_rendered_result_text():
     def create_result(jb, result: dict):
         interface = ComponentInterface.objects.get(slug="results-json-file")
 
@@ -81,36 +79,6 @@ def test_outputs_are_set():
                 interface=interface, value=result
             )
             jb.outputs.add(output_civ)
-
-    create_result(j, {"dsaf": 35421})
-
-    outputs = j.outputs.all()
-    assert len(outputs) == 1
-    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
-    assert outputs[0].value == {"dsaf": 35421}
-
-    job = AlgorithmJobFactory()
-    create_result(job, {"foo": 13.37})
-
-    outputs = job.outputs.all()
-    assert len(outputs) == 1
-    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
-    assert outputs[0].value == {"foo": 13.37}
-
-    create_result(job, {"bar": 13.37})
-    job.refresh_from_db()
-
-    outputs = job.outputs.all()
-    assert len(outputs) == 1
-    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
-    assert outputs[0].value == {"bar": 13.37}
-
-    # the original job should not be modified
-    j.refresh_from_db()
-    outputs = j.outputs.all()
-    assert len(outputs) == 1
-    assert outputs[0].interface.kind == InterfaceKindChoices.JSON
-    assert outputs[0].value == {"dsaf": 35421}
 
     job = AlgorithmJobFactory()
     job.algorithm_image.algorithm.result_template = (
