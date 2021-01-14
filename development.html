@@ -200,15 +200,6 @@ For the same reason, we currently recommend running PyCharm from wsl rather than
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Add the following to your hosts file (<code class="docutils literal notranslate"><span class="pre">/etc/hosts</span></code> on Linux, <code class="docutils literal notranslate"><span class="pre">C:\Windows\System32\drivers\etc\hosts</span></code> on Windows):</p></li>
-</ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">127.0.0.1 gc.localhost</span>
-<span class="go">127.0.0.1 demo.gc.localhost</span>
-<span class="go">127.0.0.1 minio-public</span>
-<span class="go">127.0.0.1 minio-protected</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="4">
 <li><p>You can then start the development site by invoking</p></li>
 </ol>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ./cycle_docker_compose.sh
