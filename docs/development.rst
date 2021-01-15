@@ -117,8 +117,10 @@ To set up the environment in Pycharm Professional 2018.1:
 3. Set the service to ``web``
 4. Click ``OK``
 5. Set the path mappings:
- * Local path: ``<Project root>/app``
- * Remote path: ``/app``
+
+   1. Local path: ``<Project root>/app``
+   2. Remote path: ``/app``
+
 6. Click ``OK``
 
 Pycharm will then spend some time indexing the packages within the container to help with code completion and inspections.
@@ -144,11 +146,15 @@ It is recommended to setup django integration to ensure that the code completion
 13. On the ``Imports`` tab enable ``Sort Import Statements``, ``Sort imported names in "from" imports``, and ``Sort plain and "from" imports separately in the same group``
 14. Click ``OK``
 15. Install the ``Flake8 Support`` plugin so that PyCharm will understand ``noqa`` comments. At the time of writing, the plugin is not compatible with PyCharm 2020. You can still install Flake8 as an external tool though. To do so, follow these steps:
- * Install flake8 ``pip install flake8``
- * In PyCharm, in the settings window navigate to ``Tools`` -> ``External Tools`` and add a new one with the following configuration:
-  * Program: file path to ``flake8.exe`` you just installed
-  * Arguments: ``$FilePath$``
-  * Working directory: ``$ProjectFileDir$``16. In the main window at the top right click the drop down box and then click ``Edit Configurations...``
+
+    1. Install flake8 ``pip install flake8``
+    2. In PyCharm, in the settings window navigate to ``Tools`` -> ``External Tools`` and add a new one with the following configuration:
+
+       1. Program: file path to ``flake8.exe`` you just installed
+       2. Arguments: ``$FilePath$``
+       3. Working directory: ``$ProjectFileDir$``
+
+16. In the main window at the top right click the drop down box and then click ``Edit Configurations...``
 17. Click on ``templates`` -> ``Python Tests`` -> ``pytest``, and enter ``--reuse-db`` in the ``Additional Arguments`` box and ``run --rm`` in the ``Command and options`` box under ``Docker Compose``
 
 It is also recommended to install the black extension (version ``19.10b0``) for code formatting. You can add it as an external tool, following the same instructions as for ``Flake8`` above.
