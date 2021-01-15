@@ -187,7 +187,7 @@ def test_algorithm(client, algorithm_image, settings):
 
     # Run the algorithm, it will create a results.json and an output.tif
     image_file = ImageFileFactory(
-        file__from_path=Path("resources") / "input_file.tif"
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
     )
     execute_jobs(algorithm_image=alg, images=[image_file.image])
     jobs = Job.objects.filter(algorithm_image=alg).all()
