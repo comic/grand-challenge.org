@@ -168,21 +168,19 @@ def challenge_set_with_evaluation(challenge_set):
     return eval_challenge_set(challenge_set, method)
 
 
-@pytest.fixture(scope="session")
-def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
-    """Create the example evaluation container."""
+def docker_image(
+    tmpdir_factory, docker_client, docker_api_client, path, label
+):
+    """Create the docker container."""
     im, _ = docker_client.images.build(
         path=os.path.join(
-            os.path.split(__file__)[0],
-            "evaluation_tests",
-            "resources",
-            "docker",
+            os.path.split(__file__)[0], path, "resources", "docker",
         ),
-        tag="test_evaluation:latest",
+        tag=f"test-{label}:latest",
     )
     assert im.id in [x.id for x in docker_client.images.list()]
-    image = docker_api_client.get_image("test_evaluation:latest")
-    outfile = tmpdir_factory.mktemp("docker").join("evaluation-latest.tar")
+    image = docker_api_client.get_image(f"test-{label}:latest")
+    outfile = tmpdir_factory.mktemp("docker").join(f"{label}-latest.tar")
 
     with outfile.open(mode="wb") as f:
         for chunk in image:
@@ -194,6 +192,30 @@ def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
 
     assert im.id not in [x.id for x in docker_client.images.list()]
     return f"{outfile}.gz", im.id
+
+
+@pytest.fixture(scope="session")
+def evaluation_image(tmpdir_factory, docker_client, docker_api_client):
+    """Create the example evaluation container."""
+    return docker_image(
+        tmpdir_factory,
+        docker_client,
+        docker_api_client,
+        path="evaluation_tests",
+        label="evaluation",
+    )
+
+
+@pytest.fixture(scope="session")
+def algorithm_image(tmpdir_factory, docker_client, docker_api_client):
+    """Create the example algorithm container."""
+    return docker_image(
+        tmpdir_factory,
+        docker_client,
+        docker_api_client,
+        path="algorithms_tests",
+        label="algorithm",
+    )
 
 
 @pytest.fixture(scope="session")

@@ -155,10 +155,10 @@ class ComponentInterface(models.Model):
         with TemporaryDirectory() as tmpdir:
             input_files = set()
             for file in output_files:
-                tmpfile = Path(safe_join(tmpdir, file.relative_to(base_dir)))
-                tmpfile.parent.mkdir(parents=True, exist_ok=True)
+                temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
+                temp_file.parent.mkdir(parents=True, exist_ok=True)
 
-                with open(tmpfile, "wb") as outfile:
+                with open(temp_file, "wb") as outfile:
                     infile = get_file(container=reader, src=file)
 
                     buffer = True
@@ -166,12 +166,12 @@ class ComponentInterface(models.Model):
                         buffer = infile.read(1024)
                         outfile.write(buffer)
 
-                input_files.add(tmpfile)
+                input_files.add(temp_file)
 
-        importer_result = import_images(
-            files=input_files,
-            builders=[image_builder_mhd, image_builder_tiff],
-        )
+            importer_result = import_images(
+                files=input_files,
+                builders=[image_builder_mhd, image_builder_tiff],
+            )
 
         for image in importer_result.new_images:
             civ = ComponentInterfaceValue.objects.create(

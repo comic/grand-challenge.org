@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
@@ -12,7 +14,12 @@ from tests.algorithms_tests.factories import (
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.factories import GroupFactory, ImageFactory, UserFactory
+from tests.factories import (
+    GroupFactory,
+    ImageFactory,
+    ImageFileFactory,
+    UserFactory,
+)
 
 
 @pytest.mark.django_db
@@ -158,3 +165,53 @@ class TestCreateJobsWorkflow:
         images = [ImageFactory(), ImageFactory()]
         workflow = execute_jobs(algorithm_image=ai, images=images)
         assert workflow is not None
+
+
+@pytest.mark.django_db
+def test_algorithm(client, algorithm_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    assert Job.objects.count() == 0
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True,
+    )
+
+    # We should not be able to download image
+    with pytest.raises(NotImplementedError):
+        _ = alg.image.url
+
+    # Run the algorithm, it will create a results.json and an output.tif
+    image_file = ImageFileFactory(
+        file__from_path=Path("resources") / "input_file.tif"
+    )
+    execute_jobs(algorithm_image=alg, images=[image_file.image])
+    jobs = Job.objects.filter(algorithm_image=alg).all()
+
+    # There should be a single, successful job
+    assert len(jobs) == 1
+    assert jobs[0].stdout.endswith("Greetings from stdout\n")
+    assert jobs[0].stderr.endswith('("Hello from stderr")\n')
+    assert jobs[0].error_message == ""
+    assert jobs[0].status == jobs[0].SUCCESS
+
+    # The job should have two ComponentInterfaceValues,
+    # one for the results.json and one for output.tif
+    assert len(jobs[0].outputs.all()) == 2
+    json_result_interface = ComponentInterface.objects.get(
+        slug="results-json-file"
+    )
+    json_result_civ = jobs[0].outputs.get(interface=json_result_interface)
+    assert json_result_civ.value == {
+        "entity": "out.tif",
+        "metrics": {"abnormal": 0.19, "normal": 0.81},
+    }
+
+    heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
+    heatmap_civ = jobs[0].outputs.get(interface=heatmap_interface)
+
+    assert heatmap_civ.image.name == "output.tif"

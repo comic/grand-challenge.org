@@ -7,7 +7,12 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.factories import ImageFactory, UserFactory, WorkstationFactory
+from tests.factories import (
+    ImageFactory,
+    UserFactory,
+    WorkstationFactory,
+    hash_sha256,
+)
 
 
 class AlgorithmFactory(factory.django.DjangoModelFactory):
@@ -25,6 +30,8 @@ class AlgorithmImageFactory(factory.django.DjangoModelFactory):
 
     algorithm = factory.SubFactory(AlgorithmFactory)
     creator = factory.SubFactory(UserFactory)
+    image = factory.django.FileField()
+    image_sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
 
 
 class AlgorithmJobFactory(factory.django.DjangoModelFactory):
