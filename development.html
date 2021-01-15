@@ -269,10 +269,18 @@ If you only want to run the tests for a particular app, eg. for <code class="doc
 To set up the environment in Pycharm Professional 2018.1:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">File</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Settings</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project:</span> <span class="pre">grand-challenge.org</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">Interpreter</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Cog</span></code> wheel (top right) -&gt; <code class="docutils literal notranslate"><span class="pre">Add</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Docker</span> <span class="pre">Compose</span></code></p></li>
-<li><p>Then select the docker server (usually the unix socket)</p></li>
+<li><p>Then select the docker server (usually the unix socket, or Docker for Windows)</p></li>
 <li><p>Set the service to <code class="docutils literal notranslate"><span class="pre">web</span></code></p></li>
 <li><p>Click <code class="docutils literal notranslate"><span class="pre">OK</span></code></p></li>
-<li><p>Set the path mappings from <code class="docutils literal notranslate"><span class="pre">&lt;Project</span> <span class="pre">root&gt;/app-&gt;/app</span></code></p></li>
+<li><p>Set the path mappings:</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>Local path: <code class="docutils literal notranslate"><span class="pre">&lt;Project</span> <span class="pre">root&gt;/app</span></code></p></li>
+<li><p>Remote path: <code class="docutils literal notranslate"><span class="pre">/app</span></code></p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="6">
 <li><p>Click <code class="docutils literal notranslate"><span class="pre">OK</span></code></p></li>
 </ol>
 <p>Pycharm will then spend some time indexing the packages within the container to help with code completion and inspections.
@@ -296,11 +304,25 @@ If you edit any files these will be updated on the fly by werkzeug.</p>
 <li><p>On the <code class="docutils literal notranslate"><span class="pre">Wrapping</span> <span class="pre">and</span> <span class="pre">Braces</span></code> tab set <code class="docutils literal notranslate"><span class="pre">Hard</span> <span class="pre">wrap</span> <span class="pre">at</span></code> to <code class="docutils literal notranslate"><span class="pre">86</span></code> and <code class="docutils literal notranslate"><span class="pre">Visual</span> <span class="pre">guide</span></code> to <code class="docutils literal notranslate"><span class="pre">79</span></code></p></li>
 <li><p>On the <code class="docutils literal notranslate"><span class="pre">Imports</span></code> tab enable <code class="docutils literal notranslate"><span class="pre">Sort</span> <span class="pre">Import</span> <span class="pre">Statements</span></code>, <code class="docutils literal notranslate"><span class="pre">Sort</span> <span class="pre">imported</span> <span class="pre">names</span> <span class="pre">in</span> <span class="pre">&quot;from&quot;</span> <span class="pre">imports</span></code>, and <code class="docutils literal notranslate"><span class="pre">Sort</span> <span class="pre">plain</span> <span class="pre">and</span> <span class="pre">&quot;from&quot;</span> <span class="pre">imports</span> <span class="pre">separately</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">same</span> <span class="pre">group</span></code></p></li>
 <li><p>Click <code class="docutils literal notranslate"><span class="pre">OK</span></code></p></li>
-<li><p>Install the <code class="docutils literal notranslate"><span class="pre">Flake8</span> <span class="pre">Support</span></code> plugin so that PyCharm will understand <code class="docutils literal notranslate"><span class="pre">noqa</span></code> comments</p></li>
-<li><p>In the main window at the top right click the drop down box and then click <code class="docutils literal notranslate"><span class="pre">Edit</span> <span class="pre">Configurations...</span></code></p></li>
+<li><p>Install the <code class="docutils literal notranslate"><span class="pre">Flake8</span> <span class="pre">Support</span></code> plugin so that PyCharm will understand <code class="docutils literal notranslate"><span class="pre">noqa</span></code> comments. At the time of writing, the plugin is not compatible with PyCharm 2020. You can still install Flake8 as an external tool though. To do so, follow these steps:</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>Install flake8 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">flake8</span></code></p></li>
+<li><p>In PyCharm, in the settings window navigate to <code class="docutils literal notranslate"><span class="pre">Tools</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">External</span> <span class="pre">Tools</span></code> and add a new one with the following configuration:</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Program: file path to <code class="docutils literal notranslate"><span class="pre">flake8.exe</span></code> you just installed</p></li>
+<li><p>Arguments: <code class="docutils literal notranslate"><span class="pre">$FilePath$</span></code></p></li>
+<li><p>Working directory: <code class="docutils literal notranslate"><span class="pre">$ProjectFileDir$``16.</span> <span class="pre">In</span> <span class="pre">the</span> <span class="pre">main</span> <span class="pre">window</span> <span class="pre">at</span> <span class="pre">the</span> <span class="pre">top</span> <span class="pre">right</span> <span class="pre">click</span> <span class="pre">the</span> <span class="pre">drop</span> <span class="pre">down</span> <span class="pre">box</span> <span class="pre">and</span> <span class="pre">then</span> <span class="pre">click</span> <span class="pre">``Edit</span> <span class="pre">Configurations...</span></code></p></li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+<ol class="arabic simple" start="17">
 <li><p>Click on <code class="docutils literal notranslate"><span class="pre">templates</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Python</span> <span class="pre">Tests</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, and enter <code class="docutils literal notranslate"><span class="pre">--reuse-db</span></code> in the <code class="docutils literal notranslate"><span class="pre">Additional</span> <span class="pre">Arguments</span></code> box and <code class="docutils literal notranslate"><span class="pre">run</span> <span class="pre">--rm</span></code> in the <code class="docutils literal notranslate"><span class="pre">Command</span> <span class="pre">and</span> <span class="pre">options</span></code> box under <code class="docutils literal notranslate"><span class="pre">Docker</span> <span class="pre">Compose</span></code></p></li>
 </ol>
-<p>It is also recommended to install the black extension (version <code class="docutils literal notranslate"><span class="pre">19.10b0</span></code>) for code formatting.</p>
+<p>It is also recommended to install the black extension (version <code class="docutils literal notranslate"><span class="pre">19.10b0</span></code>) for code formatting. You can add it as an external tool, following the same instructions as for <code class="docutils literal notranslate"><span class="pre">Flake8</span></code> above.</p>
 </div>
 <div class="section" id="running-locally">
 <h3>Running locally<a class="headerlink" href="#running-locally" title="Permalink to this headline">¶</a></h3>
