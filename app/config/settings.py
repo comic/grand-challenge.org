@@ -905,10 +905,14 @@ MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
 MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
-MAX_SITK_FILE_SIZE = 268_435_456  # == 256 mb
+MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 
 # The maximum size of all the files in an upload session in bytes
-UPLOAD_SESSION_MAX_BYTES = 15_000_000_000
+UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
+
+# Some forms have a lot of data, such as a reader study update view
+# that can contain reports about the medical images
+DATA_UPLOAD_MAX_MEMORY_SIZE = 16_777_216  # 16 mb
 
 # Internal format to use for metaimages
 ITK_INTERNAL_FILE_FORMAT = os.environ.get(
@@ -954,6 +958,7 @@ if DEBUG:
             "endpoint_url": "http://minio-public:9000",
         }
     )
+    DEMO_ALGORITHM_IMAGE_PATH = os.path.join(SITE_ROOT, "algorithm.tar.gz")
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)

@@ -27,16 +27,7 @@ For the same reason, we currently recommend running PyCharm from wsl rather than
     $ git clone https://github.com/comic/grand-challenge.org
     $ cd grand-challenge.org
 
-3. Add the following to your hosts file (``/etc/hosts`` on Linux, ``C:\Windows\System32\drivers\etc\hosts`` on Windows):
-
-.. code-block:: console
-
-    127.0.0.1 gc.localhost
-    127.0.0.1 demo.gc.localhost
-    127.0.0.1 minio-public
-    127.0.0.1 minio-protected
-
-4. You can then start the development site by invoking
+3. You can then start the development site by invoking
 
 .. code-block:: console
 
@@ -122,10 +113,12 @@ You will need the Professional edition to use the docker-compose integration.
 To set up the environment in Pycharm Professional 2018.1:
 
 1. ``File`` -> ``Settings`` -> ``Project: grand-challenge.org`` -> ``Project Interpreter`` -> ``Cog`` wheel (top right) -> ``Add`` -> ``Docker Compose``
-2. Then select the docker server (usually the unix socket)
+2. Then select the docker server (usually the unix socket, or Docker for Windows)
 3. Set the service to ``web``
 4. Click ``OK``
-5. Set the path mappings from ``<Project root>/app->/app``
+5. Set the path mappings:
+ * Local path: ``<Project root>/app``
+ * Remote path: ``/app``
 6. Click ``OK``
 
 Pycharm will then spend some time indexing the packages within the container to help with code completion and inspections.
@@ -150,11 +143,15 @@ It is recommended to setup django integration to ensure that the code completion
 12. On the ``Wrapping and Braces`` tab set ``Hard wrap at`` to ``86`` and ``Visual guide`` to ``79``
 13. On the ``Imports`` tab enable ``Sort Import Statements``, ``Sort imported names in "from" imports``, and ``Sort plain and "from" imports separately in the same group``
 14. Click ``OK``
-15. Install the ``Flake8 Support`` plugin so that PyCharm will understand ``noqa`` comments
-16. In the main window at the top right click the drop down box and then click ``Edit Configurations...``
+15. Install the ``Flake8 Support`` plugin so that PyCharm will understand ``noqa`` comments. At the time of writing, the plugin is not compatible with PyCharm 2020. You can still install Flake8 as an external tool though. To do so, follow these steps:
+ * Install flake8 ``pip install flake8``
+ * In PyCharm, in the settings window navigate to ``Tools`` -> ``External Tools`` and add a new one with the following configuration:
+  * Program: file path to ``flake8.exe`` you just installed
+  * Arguments: ``$FilePath$``
+  * Working directory: ``$ProjectFileDir$``16. In the main window at the top right click the drop down box and then click ``Edit Configurations...``
 17. Click on ``templates`` -> ``Python Tests`` -> ``pytest``, and enter ``--reuse-db`` in the ``Additional Arguments`` box and ``run --rm`` in the ``Command and options`` box under ``Docker Compose``
 
-It is also recommended to install the black extension (version ``19.10b0``) for code formatting.
+It is also recommended to install the black extension (version ``19.10b0``) for code formatting. You can add it as an external tool, following the same instructions as for ``Flake8`` above.
 
 Running locally
 ~~~~~~~~~~~~~~~
