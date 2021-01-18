@@ -55,18 +55,26 @@ class ChallengeList(TemplateView):
         return any(k for k in self.request.GET if k.lower() != "page")
 
     def _get_page(self):
-        self.int_filter = ChallengeFilter(
-            self.request.GET,
+        int_qs = (
             Challenge.objects.filter(hidden=False)
             .prefetch_related("phase_set", "publications")
-            .order_by("-created"),
+            .order_by("-created")
+        )
+        self.int_filter = ChallengeFilter(
+            self.request.GET,
+            int_qs,
+        )
+        ext_qs = (
+            ExternalChallenge.objects.filter(hidden=False)
+            .prefetch_related("publications")
+            .order_by("-created")
         )
         self.ext_filter = ChallengeFilter(
             self.request.GET,
-            ExternalChallenge.objects.filter(hidden=False)
-            .prefetch_related("publications")
-            .order_by("-created"),
+            ext_qs,
         )
+
+        total_count = int_qs.count() + ext_qs.count()
 
         int_paginator = Paginator(self.int_filter.qs, self.paginate_by // 2)
         ext_paginator = Paginator(self.ext_filter.qs, self.paginate_by // 2)
@@ -84,12 +92,12 @@ class ChallengeList(TemplateView):
         except EmptyPage:
             ext_page = []
 
-        return [*int_page, *ext_page], num_pages, num_results
+        return [*int_page, *ext_page], num_pages, num_results, total_count
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        page_obj, num_pages, num_results = self._get_page()
+        page_obj, num_pages, num_results, total_count = self._get_page()
 
         context.update(
             {
@@ -98,6 +106,7 @@ class ChallengeList(TemplateView):
                 "page_obj": page_obj,
                 "num_pages": num_pages,
                 "num_results": num_results,
+                "total_count": total_count,
                 "current_page": self._current_page,
                 "next_page": self._current_page + 1,
                 "previous_page": self._current_page - 1,
