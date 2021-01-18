@@ -92,9 +92,7 @@ class ArchiveList(FilterMixin, PermissionListMixin, ListView):
 
 
 class ArchiveCreate(
-    PermissionRequiredMixin,
-    UserFormKwargsMixin,
-    CreateView,
+    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
 ):
     model = Archive
     form_class = ArchiveForm
@@ -158,8 +156,7 @@ class ArchiveDetail(
         )
 
         pending_permission_requests = ArchivePermissionRequest.objects.filter(
-            archive=context["object"],
-            status=ArchivePermissionRequest.PENDING,
+            archive=context["object"], status=ArchivePermissionRequest.PENDING,
         ).count()
         context.update(
             {"pending_permission_requests": pending_permission_requests}
@@ -380,9 +377,7 @@ class ArchiveUploadSessionCreate(
 
 
 class ArchiveCasesList(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    PaginatedTableListView,
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView,
 ):
     model = Image
     permission_required = (

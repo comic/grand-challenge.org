@@ -60,19 +60,13 @@ class ChallengeList(TemplateView):
             .prefetch_related("phase_set", "publications")
             .order_by("-created")
         )
-        self.int_filter = ChallengeFilter(
-            self.request.GET,
-            int_qs,
-        )
+        self.int_filter = ChallengeFilter(self.request.GET, int_qs,)
         ext_qs = (
             ExternalChallenge.objects.filter(hidden=False)
             .prefetch_related("publications")
             .order_by("-created")
         )
-        self.ext_filter = ChallengeFilter(
-            self.request.GET,
-            ext_qs,
-        )
+        self.ext_filter = ChallengeFilter(self.request.GET, ext_qs,)
 
         total_count = int_qs.count() + ext_qs.count()
 
