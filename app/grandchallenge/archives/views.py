@@ -62,7 +62,7 @@ from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
-class ArchiveList(PermissionListMixin, FilterMixin, ListView):
+class ArchiveList(FilterMixin, PermissionListMixin, ListView):
     model = Archive
     permission_required = (
         f"{model._meta.app_label}.view_{model._meta.model_name}"
@@ -92,7 +92,9 @@ class ArchiveList(PermissionListMixin, FilterMixin, ListView):
 
 
 class ArchiveCreate(
-    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
+    PermissionRequiredMixin,
+    UserFormKwargsMixin,
+    CreateView,
 ):
     model = Archive
     form_class = ArchiveForm
@@ -156,7 +158,8 @@ class ArchiveDetail(
         )
 
         pending_permission_requests = ArchivePermissionRequest.objects.filter(
-            archive=context["object"], status=ArchivePermissionRequest.PENDING,
+            archive=context["object"],
+            status=ArchivePermissionRequest.PENDING,
         ).count()
         context.update(
             {"pending_permission_requests": pending_permission_requests}
@@ -377,7 +380,9 @@ class ArchiveUploadSessionCreate(
 
 
 class ArchiveCasesList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    PaginatedTableListView,
 ):
     model = Image
     permission_required = (

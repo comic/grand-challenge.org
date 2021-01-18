@@ -91,7 +91,7 @@ from grandchallenge.reader_studies.tasks import add_images_to_reader_study
 from grandchallenge.subdomains.utils import reverse
 
 
-class ReaderStudyList(PermissionListMixin, FilterMixin, ListView):
+class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
     model = ReaderStudy
     permission_required = (
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
@@ -121,7 +121,9 @@ class ReaderStudyList(PermissionListMixin, FilterMixin, ListView):
 
 
 class ReaderStudyCreate(
-    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
+    PermissionRequiredMixin,
+    UserFormKwargsMixin,
+    CreateView,
 ):
     model = ReaderStudy
     form_class = ReaderStudyCreateForm
@@ -204,10 +206,12 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
             editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
             answers_remove_form = AnswersRemoveForm()
 
-            pending_permission_requests = ReaderStudyPermissionRequest.objects.filter(
-                reader_study=context["object"],
-                status=ReaderStudyPermissionRequest.PENDING,
-            ).count()
+            pending_permission_requests = (
+                ReaderStudyPermissionRequest.objects.filter(
+                    reader_study=context["object"],
+                    status=ReaderStudyPermissionRequest.PENDING,
+                ).count()
+            )
 
             context.update(
                 {
@@ -448,7 +452,8 @@ class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
     def form_valid(self, form):
         try:
             self.reader_study.add_ground_truth(
-                data=form.cleaned_data["ground_truth"], user=self.request.user,
+                data=form.cleaned_data["ground_truth"],
+                user=self.request.user,
             )
             return super().form_valid(form)
         except ValidationError as e:
@@ -848,7 +853,9 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
         messages.add_message(
             request, messages.SUCCESS, "Hanging list re-generated."
         )
-        return Response({"status": "Hanging list generated."},)
+        return Response(
+            {"status": "Hanging list generated."},
+        )
 
     @action(detail=True, methods=["patch"])
     def remove_image(self, request, pk=None):
@@ -859,7 +866,9 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
             messages.add_message(
                 request, messages.SUCCESS, "Image removed from reader study."
             )
-            return Response({"status": "Image removed from reader study."},)
+            return Response(
+                {"status": "Image removed from reader study."},
+            )
         except Image.DoesNotExist:
             messages.add_message(
                 request,
