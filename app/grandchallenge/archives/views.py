@@ -62,7 +62,7 @@ from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
-class ArchiveList(PermissionListMixin, FilterMixin, ListView):
+class ArchiveList(FilterMixin, PermissionListMixin, ListView):
     model = Archive
     permission_required = (
         f"{model._meta.app_label}.view_{model._meta.model_name}"

@@ -91,7 +91,7 @@ from grandchallenge.reader_studies.tasks import add_images_to_reader_study
 from grandchallenge.subdomains.utils import reverse
 
 
-class ReaderStudyList(PermissionListMixin, FilterMixin, ListView):
+class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
     model = ReaderStudy
     permission_required = (
         f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
