@@ -44,11 +44,4 @@
             </div>
         {% endfor %}
     </div>
-
-    {% if not object_list %}
-        <p class="text-muted">
-            No {{ object_list.model|meta_attr:"verbose_name_plural" }} found.
-        </p>
-    {% endif %}
-
 {% endblock %}

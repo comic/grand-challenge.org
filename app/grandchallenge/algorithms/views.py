@@ -71,7 +71,9 @@ logger = logging.getLogger(__name__)
 
 
 class AlgorithmCreate(
-    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
+    PermissionRequiredMixin,
+    UserFormKwargsMixin,
+    CreateView,
 ):
     model = Algorithm
     form_class = AlgorithmForm
@@ -111,7 +113,6 @@ class AlgorithmList(PermissionListMixin, FilterMixin, ListView):
                 ),
             }
         )
-
         return context
 
 
@@ -155,10 +156,12 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             {"form": form, "editor_remove_form": editor_remove_form}
         )
 
-        pending_permission_requests = AlgorithmPermissionRequest.objects.filter(
-            algorithm=context["object"],
-            status=AlgorithmPermissionRequest.PENDING,
-        ).count()
+        pending_permission_requests = (
+            AlgorithmPermissionRequest.objects.filter(
+                algorithm=context["object"],
+                status=AlgorithmPermissionRequest.PENDING,
+            ).count()
+        )
         context.update(
             {"pending_permission_requests": pending_permission_requests}
         )
@@ -352,7 +355,11 @@ class AlgorithmExecutionSessionCreate(
             kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
 
-    def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
+    def get_remaining_jobs(
+        self,
+        *,
+        credits_per_job: int,
+    ) -> Dict:
         """
         Determines the number of jobs left for the user and when the next job can be started
 
@@ -444,7 +451,9 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         return (
-            queryset.filter(algorithm_image__algorithm=self.algorithm,)
+            queryset.filter(
+                algorithm_image__algorithm=self.algorithm,
+            )
             .prefetch_related(
                 "outputs__image__files",
                 "outputs__interface",

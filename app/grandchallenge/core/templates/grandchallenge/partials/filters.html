@@ -21,3 +21,17 @@
         {% crispy filter.form %}
     </div>
 </div>
+
+<p class="text-muted">
+{% if total_count == 0 %}
+        No {{ filter.Meta.model|meta_attr:'verbose_name_plural' }} found.
+{% elif filters_applied %}
+        Filters included {{ num_results }} of {{ total_count }} total {{ filter.Meta.model|meta_attr:'verbose_name_plural' }}
+{% else %}
+        {% if total_count == 1 %}
+            {{ total_count }} {{ filter.Meta.model|meta_attr:'verbose_name' }} found
+        {% else %}
+            {{ total_count }} {{ filter.Meta.model|meta_attr:'verbose_name_plural' }} found
+        {% endif %}
+{% endif %}
+ </p>
