@@ -72,10 +72,6 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         }
 
 
-class EditorsForm(UserGroupForm):
-    role = "editor"
-
-
 class UploadersForm(UserGroupForm):
     role = "uploader"
 
