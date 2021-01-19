@@ -18,7 +18,6 @@ class TestObjectPermissionRequiredViews:
         p = ArchivePermissionRequestFactory(archive=a)
 
         for view_name, kwargs, permission, obj, redirect in [
-            ("users-autocomplete", {}, "change_archive", a, None,),
             ("create", {}, "archives.add_archive", None, None),
             (
                 "detail",

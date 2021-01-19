@@ -46,6 +46,7 @@ class UserAutocomplete(
         allowed_perms = [
             "algorithms.change_algorithm",
             "organizations.change_organization",
+            "archives.change_archive",
         ]
         return any(
             get_objects_for_user(user=self.request.user, perms=perm,).exists()
