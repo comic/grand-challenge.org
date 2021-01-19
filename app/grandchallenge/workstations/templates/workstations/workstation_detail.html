@@ -35,13 +35,8 @@
         <h4>Editors</h4>
         <p>The following users are able to edit and use this viewer:</p>
 
-        <ul>
-            {% for user in object.editors_group.user_set.all %}
-                <li>{{ user|user_profile_link }}</li>
-            {% empty %}
-                <li>There are no editors for this viewer</li>
-            {% endfor %}
-        </ul>
+        {% url 'workstations:editors-update' slug=object.slug as edit_url %}
+        {% include "groups/partials/user_list.html" with edit_url=edit_url form=editor_remove_form users=object.editors_group.user_set.all %}
 
         <p>
             <a class="btn btn-primary"
@@ -61,13 +56,8 @@
             <h4>Viewer Users Group</h4>
             <p>The following users are able to use this viewer:</p>
 
-            <ul>
-                {% for user in object.users_group.user_set.all %}
-                    <li>{{ user|user_profile_link }}</li>
-                {% empty %}
-                    <li>There are no users in this viewers user group.</li>
-                {% endfor %}
-            </ul>
+            {% url 'workstations:users-update' slug=object.slug as edit_url %}
+            {% include "groups/partials/user_list.html" with edit_url=edit_url form=user_remove_form users=object.users_group.user_set.all %}
 
             <p>
                 <a class="btn btn-primary"

@@ -48,6 +48,7 @@ class UserAutocomplete(
             "organizations.change_organization",
             "archives.change_archive",
             "reader_studies.change_readerstudy",
+            "workstations.change_workstation",
         ]
         return any(
             get_objects_for_user(user=self.request.user, perms=perm,).exists()

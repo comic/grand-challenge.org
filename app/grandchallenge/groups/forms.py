@@ -48,3 +48,7 @@ class EditorsForm(UserGroupForm):
 
 class MembersForm(UserGroupForm):
     role = "member"
+
+
+class UsersForm(UserGroupForm):
+    role = "user"
