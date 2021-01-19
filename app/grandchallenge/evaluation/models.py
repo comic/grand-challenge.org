@@ -20,7 +20,6 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.backends.docker import (
     Executor,
-    cleanup,
     put_file,
 )
 from grandchallenge.components.models import (
@@ -688,27 +687,6 @@ class SubmissionEvaluator(Executor):
                 # Not a zip file, so must be a csv
                 writer.exec_run(f"mv {dest_file} /input/submission.csv")
 
-    def _get_result(self):
-        """Read all of the images in /output/ & convert to an UploadSession."""
-        job = self._job_class.objects.get(pk=self._job_id)
-        with cleanup(
-            self._client.containers.run(
-                image=self._io_image,
-                volumes={
-                    self._output_volume: {"bind": "/output/", "mode": "ro"}
-                },
-                name=f"{self._job_label}-reader",
-                detach=True,
-                tty=True,
-                labels=self._labels,
-                **self._run_kwargs,
-            )
-        ) as reader:
-            for output in job.submission.phase.outputs.all():
-                output.create_component_interface_values(
-                    reader=reader, job=job
-                )
-
 
 class Evaluation(UUIDModel, ComponentJob):
     """Stores information about a evaluation for a given submission."""
@@ -791,6 +769,10 @@ class Evaluation(UUIDModel, ComponentJob):
             ]
         except ObjectDoesNotExist:
             return [inpt.file for inpt in self.inputs.all()]
+
+    @property
+    def output_interfaces(self):
+        return self.submission.phase.outputs
 
     @property
     def executor_cls(self):

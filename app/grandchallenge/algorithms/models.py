@@ -16,10 +16,6 @@ from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
 
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.components.backends.docker import (
-    Executor,
-    cleanup,
-)
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
@@ -335,29 +331,6 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         )
 
 
-class AlgorithmExecutor(Executor):
-    def _get_result(self):
-        """Read all of the images in /output/ & convert to an UploadSession."""
-        job = self._job_class.objects.get(pk=self._job_id)
-        with cleanup(
-            self._client.containers.run(
-                image=self._io_image,
-                volumes={
-                    self._output_volume: {"bind": "/output/", "mode": "ro"}
-                },
-                name=f"{self._job_label}-reader",
-                detach=True,
-                tty=True,
-                labels=self._labels,
-                **self._run_kwargs,
-            )
-        ) as reader:
-            for output in job.algorithm_image.algorithm.outputs.all():
-                output.create_component_interface_values(
-                    reader=reader, job=job
-                )
-
-
 class JobQuerySet(models.QuerySet):
     def spent_credits(self, user):
         now = timezone.now()
@@ -429,8 +402,8 @@ class Job(UUIDModel, ComponentJob):
         ]
 
     @property
-    def executor_cls(self):
-        return AlgorithmExecutor
+    def output_interfaces(self):
+        return self.algorithm_image.algorithm.outputs
 
     @cached_property
     def rendered_result_text(self):
