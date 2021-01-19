@@ -49,6 +49,7 @@ class UserAutocomplete(
             "archives.change_archive",
             "reader_studies.change_readerstudy",
             "workstations.change_workstation",
+            "algorithms.change_job",
         ]
         return any(
             get_objects_for_user(user=self.request.user, perms=perm,).exists()
@@ -58,8 +59,7 @@ class UserAutocomplete(
     def get_queryset(self):
         qs = (
             get_user_model()
-            .objects.all()
-            .order_by("username")
+            .objects.order_by("username")
             .exclude(username=settings.ANONYMOUS_USER_NAME)
         )
 
