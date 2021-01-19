@@ -9,7 +9,7 @@ from typing import Tuple, Type
 from django.conf import settings
 from django.core.files import File
 from django.db import models
-from django.db.models import Avg, F
+from django.db.models import Avg, F, QuerySet
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
@@ -126,6 +126,7 @@ class ComponentInterface(models.Model):
         ordering = ("pk",)
 
     def create_component_interface_values(self, *, reader, job):
+        # TODO JM These functions rely on docker specific code (reader)
         if self.kind in (
             InterfaceKindChoices.HEAT_MAP,
             InterfaceKindChoices.IMAGE,
@@ -136,6 +137,7 @@ class ComponentInterface(models.Model):
             self._create_json_result(reader=reader, job=job)
 
     def _create_images_result(self, *, reader, job):
+        # TODO JM in the future this will be a file, not a directory
         base_dir = Path(self.output_path)
         found_files = reader.exec_run(f"find {base_dir} -type f")
 
@@ -338,13 +340,18 @@ class ComponentJob(models.Model):
         raise NotImplementedError
 
     @property
+    def output_interfaces(self) -> QuerySet:
+        """Returns an unevaluated QuerySet for the output interfaces"""
+        raise NotImplementedError
+
+    @property
     def executor_cls(self) -> Type[Executor]:
         """
         Return the executor class for this job.
 
         The executor class must be a subclass of ``Executor``.
         """
-        raise NotImplementedError
+        return Executor
 
     @property
     def signature(self):
