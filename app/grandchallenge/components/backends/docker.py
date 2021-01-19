@@ -1,10 +1,8 @@
 import io
-import json
 import os
 import re
 import tarfile
 from contextlib import contextmanager
-from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from shutil import copyfileobj
@@ -15,9 +13,9 @@ from typing import Tuple
 import docker
 from django.conf import settings
 from django.core.files import File
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, ImageNotFound, NotFound
+from docker.errors import APIError, ImageNotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from requests import HTTPError
@@ -190,12 +188,12 @@ class Executor(DockerConnection):
         self,
         *args,
         input_files: Tuple[File, ...],
-        results_file: Path,
+        output_interfaces: QuerySet,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self._input_files = input_files
-        self._results_file = results_file
+        self._output_interfaces = output_interfaces
         self._io_image = settings.COMPONENTS_IO_IMAGE
 
         self._input_volume = f"{self._job_label}-input"
@@ -211,7 +209,7 @@ class Executor(DockerConnection):
         self._provision_input_volume()
         self._chmod_volumes()
         self._execute_container()
-        self._get_result()
+        self._get_outputs()
 
     @property
     def stdout(self):
@@ -312,46 +310,28 @@ class Executor(DockerConnection):
         elif exit_code != 0:
             raise ComponentException(user_error(self._stderr))
 
-    def _get_result(self):
-        """
-        Read and parse the created results file. Due to a bug in the docker
-        client, copy the file to memory first rather than cat and read
-        stdout.
-        """
-        try:
-            with cleanup(
-                self._client.containers.run(
-                    image=self._io_image,
-                    volumes={
-                        self._output_volume: {"bind": "/output/", "mode": "ro"}
-                    },
-                    name=f"{self._job_label}-reader",
-                    detach=True,
-                    tty=True,
-                    labels=self._labels,
-                    **self._run_kwargs,
+    def _get_outputs(self):
+        """Create ComponentInterfaceValues from the output interfaces"""
+        job = self._job_class.objects.get(pk=self._job_id)
+        output_interfaces = self._output_interfaces.all()
+
+        with cleanup(
+            self._client.containers.run(
+                image=self._io_image,
+                volumes={
+                    self._output_volume: {"bind": "/output/", "mode": "ro"}
+                },
+                name=f"{self._job_label}-reader",
+                detach=True,
+                tty=True,
+                labels=self._labels,
+                **self._run_kwargs,
+            )
+        ) as reader:
+            for output in output_interfaces:
+                output.create_component_interface_values(
+                    reader=reader, job=job
                 )
-            ) as reader:
-                result = get_file(container=reader, src=self._results_file)
-        except NotFound:
-            # The container exited without error, but no results file was
-            # produced. This shouldn't happen, but does with poorly programmed
-            # evaluation containers.
-            raise ComponentException(
-                "The evaluation failed for an unknown reason as no results "
-                "file was produced. Please contact the organisers for "
-                "assistance."
-            )
-
-        try:
-            result = json.loads(
-                result.read().decode(),
-                parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-            )
-        except JSONDecodeError as e:
-            raise ComponentException(f"Could not decode results file: {e.msg}")
-
-        self._result = result
 
 
 class Service(DockerConnection):

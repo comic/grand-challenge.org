@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile, File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
@@ -235,11 +236,28 @@ class Command(BaseCommand):
                 method=method,
                 status=Evaluation.SUCCESS,
             )
-            e.create_result(
-                result={
+
+            def create_result(evaluation, result: dict):
+                interface = ComponentInterface.objects.get(
+                    slug="metrics-json-file"
+                )
+
+                try:
+                    output_civ = evaluation.outputs.get(interface=interface)
+                    output_civ.value = result
+                    output_civ.save()
+                except ObjectDoesNotExist:
+                    output_civ = ComponentInterfaceValue.objects.create(
+                        interface=interface, value=result
+                    )
+                    evaluation.outputs.add(output_civ)
+
+            create_result(
+                e,
+                {
                     "acc": {"mean": 0.1 * phase_num, "std": 0.1},
                     "dice": {"mean": 0.71, "std": 0.05},
-                }
+                },
             )
 
     def _create_external_challenge(self):
@@ -353,7 +371,14 @@ class Command(BaseCommand):
                 image=cases_image,
             )
         )
-        algorithms_job.create_result(result=result)
+        algorithms_job.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="results-json-file"
+                ),
+                value=result,
+            )
+        )
 
     def _create_workstation(self):
         w = Workstation.objects.create(

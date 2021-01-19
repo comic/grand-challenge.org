@@ -1,6 +1,10 @@
 import pytest
 
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKindChoices,
+)
 from grandchallenge.evaluation.models import Evaluation
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.utils import get_view_for_user
@@ -47,7 +51,13 @@ def test_setting_display_all_metrics(client, challenge_set):
     phase = challenge_set.challenge.phase_set.get()
 
     e = EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS,)
-    e.create_result(result=metrics)
+
+    e.outputs.add(
+        ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(slug="metrics-json-file"),
+            value=metrics,
+        )
+    )
 
     phase.score_jsonpath = "public"
     phase.extra_results_columns = [
@@ -91,6 +101,4 @@ def test_default_interfaces_created():
     p = PhaseFactory()
 
     assert {i.kind for i in p.inputs.all()} == {InterfaceKindChoices.CSV}
-    assert {o.kind for o in p.outputs.all()} == {
-        InterfaceKindChoices.JSON,
-    }
+    assert {o.kind for o in p.outputs.all()} == {InterfaceKindChoices.JSON}

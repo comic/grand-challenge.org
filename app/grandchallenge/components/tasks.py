@@ -160,6 +160,7 @@ def execute_job(
             job_id=str(job.pk),
             job_class=Job,
             input_files=job.input_files,
+            output_interfaces=job.output_interfaces,
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
         ) as ev:
@@ -200,7 +201,6 @@ def execute_job(
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        job.create_result(result=ev.result)
         job.update_status(
             status=job.SUCCESS, stdout=ev.stdout, stderr=ev.stderr
         )
