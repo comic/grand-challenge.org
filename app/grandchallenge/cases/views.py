@@ -42,7 +42,10 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
-from grandchallenge.reader_studies.tasks import add_images_to_reader_study
+from grandchallenge.reader_studies.tasks import (
+    add_image_to_answer,
+    add_images_to_reader_study,
+)
 from grandchallenge.subdomains.utils import reverse_lazy
 
 
@@ -213,6 +216,11 @@ class RawImageUploadSessionViewSet(
         elif "reader_study" in validated_data:
             return add_images_to_reader_study.signature(
                 kwargs={"reader_study_pk": validated_data["reader_study"].pk},
+                immutable=True,
+            )
+        elif "answer" in validated_data:
+            return add_image_to_answer.signature(
+                kwargs={"answer_pk": validated_data["answer"].pk},
                 immutable=True,
             )
         else:
