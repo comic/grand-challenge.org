@@ -1001,7 +1001,9 @@ ANSWER_TYPE_SCHEMA = {
         },
         "PIMG": {
             "type": "object",
-            "properties": {"upload_session_pk": {"type": "string", "format": "uuid"}},
+            "properties": {
+                "upload_session_pk": {"type": "string", "format": "uuid"}
+            },
             "required": ["upload_session_pk"],
         },
         "MPOL": {
