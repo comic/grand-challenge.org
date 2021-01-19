@@ -4,6 +4,7 @@ from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.factories import UserFactory
 from tests.organizations_tests.factories import OrganizationFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.utils import get_view_for_user
 
 
@@ -19,6 +20,8 @@ class TestGroupManagementViews:
             (ArchiveFactory, "archives", "users", "users_group"),
             (ArchiveFactory, "archives", "uploaders", "uploaders_group"),
             (ArchiveFactory, "archives", "editors", "editors_group"),
+            (ReaderStudyFactory, "reader-studies", "readers", "readers_group"),
+            (ReaderStudyFactory, "reader-studies", "editors", "editors_group"),
         ),
     )
     def test_group_management(

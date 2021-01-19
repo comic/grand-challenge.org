@@ -157,29 +157,6 @@ def test_rs_edit_view_permissions(client, view_name):
 
 
 @pytest.mark.django_db
-def test_user_autocomplete_permissions(client):
-    rs_set = TwoReaderStudies()
-
-    tests = (
-        (None, 302),
-        (rs_set.creator, 403),
-        (rs_set.editor1, 200),
-        (rs_set.reader1, 403),
-        (rs_set.editor2, 200),
-        (rs_set.reader2, 403),
-        (rs_set.u, 403),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname="reader-studies:users-autocomplete",
-            client=client,
-            user=test[0],
-        )
-        assert response.status_code == test[1]
-
-
-@pytest.mark.django_db
 def test_api_rs_list_permissions(client):
     rs_set = TwoReaderStudies()
 

@@ -1,14 +1,8 @@
 import csv
 import re
 
-from dal import autocomplete
-from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
@@ -62,11 +56,12 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.groups.forms import EditorsForm
+from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.filters import ReaderStudyFilter
 from grandchallenge.reader_studies.forms import (
     AnswersRemoveForm,
     CategoricalOptionFormSet,
-    EditorsForm,
     GroundTruthForm,
     QuestionForm,
     ReaderStudyCopyForm,
@@ -200,8 +195,10 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
 
             reader_remove_form = ReadersForm()
             reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
+
             editor_remove_form = EditorsForm()
             editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+
             answers_remove_form = AnswersRemoveForm()
 
             pending_permission_requests = ReaderStudyPermissionRequest.objects.filter(
@@ -588,66 +585,15 @@ class AddQuestionToReaderStudy(
         return self.validate_options(form, super())
 
 
-class ReaderStudyUserAutocomplete(
-    LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
-):
-    def test_func(self):
-        group_pks = (
-            ReaderStudy.objects.all()
-            .select_related("editors_group")
-            .values_list("editors_group__pk", flat=True)
-        )
-        return (
-            self.request.user.is_superuser
-            or self.request.user.groups.filter(pk__in=group_pks).exists()
-        )
-
-    def get_queryset(self):
-        qs = (
-            get_user_model()
-            .objects.all()
-            .order_by("username")
-            .exclude(username=settings.ANONYMOUS_USER_NAME)
-        )
-
-        if self.q:
-            qs = qs.filter(username__istartswith=self.q)
-
-        return qs
-
-
-class ReaderStudyUserGroupUpdateMixin(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    FormView,
-):
+class ReaderStudyUserGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "reader_studies/readerstudy_user_groups_form.html"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
-    raise_exception = True
-
-    def get_permission_object(self):
-        return self.reader_study
 
     @property
-    def reader_study(self):
+    def obj(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {"object": self.reader_study, "role": self.get_form().role}
-        )
-        return context
-
-    def get_success_url(self):
-        return self.reader_study.get_absolute_url()
-
-    def form_valid(self, form):
-        form.add_or_remove_user(reader_study=self.reader_study)
-        return super().form_valid(form)
 
 
 class EditorsUpdate(ReaderStudyUserGroupUpdateMixin):
