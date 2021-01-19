@@ -1154,6 +1154,13 @@
                 <span class="s2">&quot;version&quot;</span><span class="p">,</span>
             <span class="p">],</span>
         <span class="p">},</span>
+        <span class="s2">&quot;PIMG&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;upload_session_pk&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;uuid&quot;</span><span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;upload_session_pk&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
         <span class="s2">&quot;MPOL&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
             <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -1221,6 +1228,7 @@
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/POIN&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MPOI&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/POLY&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/PIMG&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MPOL&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/CHOI&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MCHO&quot;</span><span class="p">},</span>
@@ -1242,6 +1250,7 @@
     <span class="n">ANSWER_TYPE_POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span>
     <span class="n">ANSWER_TYPE_MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span>
     <span class="n">ANSWER_TYPE_POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span>
+    <span class="n">ANSWER_TYPE_POLYGON_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;PIMG&quot;</span>
     <span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span>
     <span class="n">ANSWER_TYPE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span>
     <span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span>
@@ -1262,6 +1271,7 @@
         <span class="p">(</span><span class="n">ANSWER_TYPE_POINT</span><span class="p">,</span> <span class="s2">&quot;Point&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_POINTS</span><span class="p">,</span> <span class="s2">&quot;Multiple points&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_POLYGON</span><span class="p">,</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">ANSWER_TYPE_POLYGON_IMAGE</span><span class="p">,</span> <span class="s2">&quot;Polygon (saved as mask)&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_CHOICE</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span><span class="p">),</span>
@@ -1452,6 +1462,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_POINT</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_POINTS</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_POLYGON</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_POLYGON_IMAGE</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS</span><span class="p">,</span>
         <span class="p">]</span>
 
@@ -1503,6 +1514,9 @@
     <span class="n">images</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;answers&quot;</span><span class="p">)</span>
     <span class="n">answer</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONSchemaValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">ANSWER_TYPE_SCHEMA</span><span class="p">)],</span>
+    <span class="p">)</span>
+    <span class="n">answer_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="s2">&quot;cases.Image&quot;</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
     <span class="p">)</span>
     <span class="n">is_ground_truth</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">score</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FloatField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
