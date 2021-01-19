@@ -408,10 +408,7 @@ class Phase(UUIDModel):
             [ComponentInterface.objects.get(slug="predictions-csv-file")]
         )
         self.outputs.set(
-            [
-                ComponentInterface.objects.get(slug="metrics-json-file"),
-                ComponentInterface.objects.get(slug="generic-overlay"),
-            ]
+            [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
 
     def assign_permissions(self):
