@@ -15,6 +15,7 @@ def add_score(obj, answer):
 def add_image(obj, image):
     obj.answer_image = image
     obj.save()
+    image.assign_view_perm_to_creator()
     image.update_viewer_groups_permissions()
 
 

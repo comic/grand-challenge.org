@@ -508,6 +508,10 @@ class Image(UUIDModel):
         for g in groups_with_extra_perms:
             remove_perm("view_image", g, self)
 
+    def assign_view_perm_to_creator(self):
+        for answer in self.answer_set.all():
+            assign_perm("view_image", answer.creator, self)
+
     @property
     def api_url(self):
         return reverse("api:image-detail", kwargs={"pk": self.pk})
