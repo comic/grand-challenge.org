@@ -132,42 +132,8 @@
                     this {{ object|meta_attr:'verbose_name' }}:
                 </p>
 
-                <ul class="list-group list-group-flush mb-2">
-                    {% for user in object.editors_group.user_set.all %}
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>{{ user|user_profile_link }}</div>
-                                <div>
-                                    {% if user != request.user %}
-                                        <form
-                                                action="{% url 'archives:editors-update' slug=object.slug %}"
-                                                method="POST">
-                                            {% csrf_token %}
-                                            {% for field in editor_remove_form %}
-                                                {% if field.name == "user" %}
-                                                    <input
-                                                            type="hidden"
-                                                            name="user"
-                                                            value="{{ user.id }}"/>
-                                                {% else %}
-                                                    {{ field }}
-                                                {% endif %}
-                                            {% endfor %}
-                                            <button type="submit"
-                                                    class="btn btn-danger">
-                                                Remove
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">
-                            There are no editors for this {{ object|meta_attr:'verbose_name' }}.
-                        </li>
-                    {% endfor %}
-                </ul>
+                {% url 'archives:editors-update' slug=object.slug as edit_url %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=editor_remove_form users=object.editors_group.user_set.all %}
 
                 <p>
                     <a class="btn btn-primary"
@@ -186,34 +152,8 @@
                     this {{ object|meta_attr:'verbose_name' }}:
                 </p>
 
-                <ul class="list-group list-group-flush mb-2">
-                    {% for user in object.uploaders_group.user_set.all %}
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>{{ user|user_profile_link }}</div>
-                                <div>
-                                    <form action="{% url 'archives:uploaders-update' slug=object.slug %}" method="POST">
-                                        {% for field in uploader_remove_form %}
-                                            {% csrf_token %}
-                                            {% if field.name == "user" %}
-                                                <input type="hidden" name="user" value="{{ user.id }}"/>
-                                            {% else %}
-                                                {{ field }}
-                                            {% endif %}
-                                        {% endfor %}
-                                        <button type="submit" class="btn btn-danger">
-                                            Remove Uploader
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">
-                            There are no uploaders for this {{ object|meta_attr:'verbose_name' }}.
-                        </li>
-                    {% endfor %}
-                </ul>
+                {% url 'archives:uploaders-update' slug=object.slug as edit_url %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=uploader_remove_form users=object.uploaders_group.user_set.all %}
 
                 <p>
                     <a class="btn btn-primary"
@@ -232,34 +172,8 @@
                     {{ object|meta_attr:'verbose_name' }}:
                 </p>
 
-                <ul class="list-group list-group-flush mb-2">
-                    {% for user in object.users_group.user_set.all %}
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>{{ user|user_profile_link }}</div>
-                                <div>
-                                    <form action="{% url 'archives:users-update' slug=object.slug %}" method="POST">
-                                        {% for field in user_remove_form %}
-                                            {% csrf_token %}
-                                            {% if field.name == "user" %}
-                                                <input type="hidden" name="user" value="{{ user.id }}"/>
-                                            {% else %}
-                                                {{ field }}
-                                            {% endif %}
-                                        {% endfor %}
-                                        <button type="submit" class="btn btn-danger">
-                                            Revoke access
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">
-                            There are no users for this {{ object|meta_attr:'verbose_name' }}.
-                        </li>
-                    {% endfor %}
-                </ul>
+                {% url 'archives:users-update' slug=object.slug as edit_url %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=user_remove_form users=object.users_group.user_set.all %}
 
                 <p>
                     <a class="btn btn-primary"

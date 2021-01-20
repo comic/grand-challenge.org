@@ -1,13 +1,7 @@
 from datetime import timedelta
 
-from dal import autocomplete
 from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
-from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -17,7 +11,6 @@ from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
     DetailView,
-    FormView,
     ListView,
     UpdateView,
 )
@@ -36,10 +29,10 @@ from ua_parser.user_agent_parser import ParseUserAgent
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
+from grandchallenge.groups.forms import EditorsForm, UsersForm
+from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.workstations.forms import (
-    EditorsForm,
     SessionForm,
-    UsersForm,
     WorkstationForm,
     WorkstationImageForm,
 )
@@ -120,6 +113,23 @@ class WorkstationDetail(
     )
     raise_exception = True
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        user_remove_form = UsersForm()
+        user_remove_form.fields["action"].initial = UsersForm.REMOVE
+
+        editor_remove_form = EditorsForm()
+        editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
+
+        context.update(
+            {
+                "user_remove_form": user_remove_form,
+                "editor_remove_form": editor_remove_form,
+            }
+        )
+        return context
+
 
 class WorkstationUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
@@ -132,66 +142,15 @@ class WorkstationUpdate(
     raise_exception = True
 
 
-class WorkstationUsersAutocomplete(
-    LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
-):
-    def test_func(self):
-        group_pks = (
-            Workstation.objects.all()
-            .select_related("editors_group")
-            .values_list("editors_group__pk", flat=True)
-        )
-        return (
-            self.request.user.is_superuser
-            or self.request.user.groups.filter(pk__in=group_pks).exists()
-        )
-
-    def get_queryset(self):
-        qs = (
-            get_user_model()
-            .objects.all()
-            .order_by("username")
-            .exclude(username=settings.ANONYMOUS_USER_NAME)
-        )
-
-        if self.q:
-            qs = qs.filter(username__istartswith=self.q)
-
-        return qs
-
-
-class WorkstationGroupUpdateMixin(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    FormView,
-):
+class WorkstationGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "workstations/workstation_user_groups_form.html"
     permission_required = (
         f"{Workstation._meta.app_label}.change_{Workstation._meta.model_name}"
     )
-    raise_exception = True
-
-    def get_permission_object(self):
-        return self.workstation
 
     @property
-    def workstation(self):
+    def obj(self):
         return get_object_or_404(Workstation, slug=self.kwargs["slug"])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {"object": self.workstation, "role": self.get_form().role}
-        )
-        return context
-
-    def get_success_url(self):
-        return self.workstation.get_absolute_url()
-
-    def form_valid(self, form):
-        form.add_or_remove_user(workstation=self.workstation)
-        return super().form_valid(form)
 
 
 class WorkstationEditorsUpdate(WorkstationGroupUpdateMixin):

@@ -34,27 +34,6 @@ def test_create_view_permission(client):
 
 
 @pytest.mark.django_db
-def test_user_autocomplete_permissions(client, two_workstation_sets):
-    tests = (
-        (two_workstation_sets.ws1.editor, 200),
-        (two_workstation_sets.ws1.user, 403),
-        (two_workstation_sets.ws2.editor, 200),
-        (two_workstation_sets.ws2.user, 403),
-        (UserFactory(), 403),
-        (UserFactory(is_staff=True), 403),
-        (None, 302),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname="workstations:users-autocomplete",
-            client=client,
-            user=test[0],
-        )
-        assert response.status_code == test[1]
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "viewname",
     [

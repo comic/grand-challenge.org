@@ -12,17 +12,13 @@ from crispy_forms.layout import (
     Layout,
     Submit,
 )
-from dal import autocomplete
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     BooleanField,
     CharField,
-    ChoiceField,
     FileField,
     Form,
-    HiddenInput,
     ModelChoiceField,
     ModelForm,
     TextInput,
@@ -31,7 +27,6 @@ from django.forms import (
 from django.forms.models import inlineformset_factory
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
-from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -40,6 +35,7 @@ from grandchallenge.core.forms import (
 )
 from grandchallenge.core.layout import Formset
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
+from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.reader_studies.models import (
     Answer,
     CASE_TEXT_SCHEMA,
@@ -305,59 +301,17 @@ CategoricalOptionFormSet = inlineformset_factory(
 )
 
 
-class UserGroupForm(SaveFormInitMixin, Form):
-    ADD = "ADD"
-    REMOVE = "REMOVE"
-    CHOICES = ((ADD, "Add"), (REMOVE, "Remove"))
-    user = ModelChoiceField(
-        queryset=get_user_model().objects.all().order_by("username"),
-        help_text="Select a user that will be added to the group",
-        required=True,
-        widget=autocomplete.ModelSelect2(
-            url="reader-studies:users-autocomplete",
-            attrs={
-                "data-placeholder": "Search for a user ...",
-                "data-minimum-input-length": 3,
-                "data-theme": settings.CRISPY_TEMPLATE_PACK,
-            },
-        ),
-    )
-    action = ChoiceField(
-        choices=CHOICES, required=True, widget=HiddenInput(), initial=ADD
-    )
-
-    def clean_user(self):
-        user = self.cleaned_data["user"]
-        if user == get_anonymous_user():
-            raise ValidationError("You cannot add this user!")
-        return user
-
-    def add_or_remove_user(self, *, reader_study):
-        if self.cleaned_data["action"] == self.ADD:
-            getattr(reader_study, f"add_{self.role}")(
-                self.cleaned_data["user"]
-            )
-        elif self.cleaned_data["action"] == self.REMOVE:
-            getattr(reader_study, f"remove_{self.role}")(
-                self.cleaned_data["user"]
-            )
-
-
-class EditorsForm(UserGroupForm):
-    role = "editor"
-
-
 class ReadersForm(UserGroupForm):
     role = "reader"
 
-    def add_or_remove_user(self, *, reader_study):
-        super().add_or_remove_user(reader_study=reader_study)
+    def add_or_remove_user(self, *, obj):
+        super().add_or_remove_user(obj=obj)
 
         user = self.cleaned_data["user"]
 
         try:
             permission_request = ReaderStudyPermissionRequest.objects.get(
-                user=user, reader_study=reader_study
+                user=user, reader_study=obj
             )
         except ObjectDoesNotExist:
             return

@@ -13,7 +13,6 @@ from grandchallenge.archives.views import (
     ArchiveUpdate,
     ArchiveUploadSessionCreate,
     ArchiveUploadersUpdate,
-    ArchiveUsersAutocomplete,
     ArchiveUsersUpdate,
 )
 
@@ -21,11 +20,6 @@ app_name = "archives"
 
 urlpatterns = [
     path("", ArchiveList.as_view(), name="list"),
-    path(
-        "users-autocomplete/",
-        ArchiveUsersAutocomplete.as_view(),
-        name="users-autocomplete",
-    ),
     path("create/", ArchiveCreate.as_view(), name="create"),
     path("<slug>/", ArchiveDetail.as_view(), name="detail"),
     path("<slug>/update/", ArchiveUpdate.as_view(), name="update"),
