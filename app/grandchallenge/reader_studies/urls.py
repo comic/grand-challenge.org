@@ -12,7 +12,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyDelete,
     ReaderStudyDetail,
     ReaderStudyExampleGroundTruth,
-    ReaderStudyImages,
+    ReaderStudyImagesList,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
     ReaderStudyPermissionRequestCreate,
@@ -36,7 +36,7 @@ urlpatterns = [
         ReaderStudyLeaderBoard.as_view(),
         name="leaderboard",
     ),
-    path("<slug>/images/", ReaderStudyImages.as_view(), name="images",),
+    path("<slug>/cases/", ReaderStudyImagesList.as_view(), name="images",),
     path(
         "<slug>/statistics/",
         ReaderStudyStatistics.as_view(),
