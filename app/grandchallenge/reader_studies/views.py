@@ -9,7 +9,6 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.core.paginator import Paginator
 from django.db import transaction
 from django.forms.utils import ErrorList
 from django.http import (
@@ -20,6 +19,7 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
@@ -56,6 +56,7 @@ from grandchallenge.core.permissions.rest_framework import (
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.filters import ReaderStudyFilter
@@ -295,23 +296,48 @@ class ReaderStudyStatistics(
     # If the permission is changed to 'read', we need to filter these values out.
 
 
-class ReaderStudyImages(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+class ReaderStudyImagesList(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
-    model = ReaderStudy
+    model = Image
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
     raise_exception = True
-    template_name = "reader_studies/readerstudy_images.html"
+    template_name = "reader_studies/readerstudy_images_list.html"
+    row_template = "reader_studies/readerstudy_images_row.html"
+    search_fields = ["pk", "name"]
+    columns = [
+        Column(title="Name", sort_field="name"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Creator", sort_field="origin__creator__username"),
+        Column(title="View", sort_field="pk"),
+        Column(title="Download", sort_field="pk"),
+        Column(title="Remove from Study", sort_field="pk"),
+    ]
 
-    def get_context_data(self, **kwarsg):
-        context = super().get_context_data(**kwarsg)
-        paginator = Paginator(self.object.images.all(), 15)
-        page_number = self.request.GET.get("page", 1)
-        page_obj = paginator.get_page(page_number)
-        context.update({"page_obj": page_obj})
+    @cached_property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({"reader_study": self.reader_study})
         return context
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return (
+            qs.filter(readerstudies=self.reader_study)
+            .prefetch_related("files",)
+            .select_related(
+                "origin__creator__user_profile",
+                "origin__creator__verification",
+            )
+        )
 
 
 class QuestionOptionMixin(object):
