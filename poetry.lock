@@ -2055,6 +2055,11 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "1.0.1"
 
+[package.dependencies]
+[package.dependencies.watchdog]
+optional = true
+version = "*"
+
 [package.extras]
 dev = ["pytest", "pytest-timeout", "coverage", "tox", "sphinx", "pallets-sphinx-themes", "sphinx-issues"]
 watchdog = ["watchdog"]
@@ -2079,7 +2084,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "db9f037e9beee471c636d0aea9fea2f6b3c619cd47484cceb70ab38e436042f5"
+content-hash = "501ef3f162a99ded8d17aed08b5e3f36ae3cf3d95cf57495f3481902a7521878"
 lock-version = "1.0"
 python-versions = "^3.8"
 
