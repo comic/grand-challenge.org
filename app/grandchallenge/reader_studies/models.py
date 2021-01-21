@@ -821,6 +821,7 @@ ANSWER_TYPE_SCHEMA = {
         "STXT": {"type": "string"},
         "MTXT": {"type": "string"},
         "BOOL": {"type": "boolean"},
+        "NUMB": {"type": "number"},
         "HEAD": {"type": "null"},
         "CHOI": {"type": "number"},
         "MCHO": {"type": "array", "items": {"type": "number"}},
@@ -1066,6 +1067,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/STXT"},
         {"$ref": "#/definitions/MTXT"},
         {"$ref": "#/definitions/BOOL"},
+        {"$ref": "#/definitions/NUMB"},
         {"$ref": "#/definitions/HEAD"},
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/DIST"},
@@ -1087,6 +1089,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_SINGLE_LINE_TEXT = "STXT"
     ANSWER_TYPE_MULTI_LINE_TEXT = "MTXT"
     ANSWER_TYPE_BOOL = "BOOL"
+    ANSWER_TYPE_NUMBER = "NUMB"
     ANSWER_TYPE_HEADING = "HEAD"
     ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
     ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES = "M2DB"
@@ -1105,6 +1108,7 @@ class Question(UUIDModel):
         (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
         (ANSWER_TYPE_MULTI_LINE_TEXT, "Multi line text"),
         (ANSWER_TYPE_BOOL, "Bool"),
+        (ANSWER_TYPE_NUMBER, "Number"),
         (ANSWER_TYPE_HEADING, "Heading"),
         (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
         (ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "Multiple 2D bounding boxes"),
