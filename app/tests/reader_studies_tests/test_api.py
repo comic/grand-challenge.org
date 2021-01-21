@@ -245,10 +245,16 @@ def test_answer_creator_is_reader(client):
     (
         (Question.ANSWER_TYPE_BOOL, True, 201),
         (Question.ANSWER_TYPE_BOOL, "True", 400),
+        (Question.ANSWER_TYPE_BOOL, 12, 400),
+        (Question.ANSWER_TYPE_NUMBER, 12, 201),
+        (Question.ANSWER_TYPE_NUMBER, "12", 400),
+        (Question.ANSWER_TYPE_NUMBER, True, 400),
         (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, "dgfsgfds", 201),
         (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, True, 400),
+        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, 12, 400),
         (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfsgfds", 201),
         (Question.ANSWER_TYPE_MULTI_LINE_TEXT, True, 400),
+        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, 12, 400),
         (Question.ANSWER_TYPE_HEADING, True, 400),
         (Question.ANSWER_TYPE_HEADING, "null", 400),
         (Question.ANSWER_TYPE_HEADING, None, 400),
@@ -603,6 +609,7 @@ def test_answer_creator_is_reader(client):
         (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, None, 400),
         (Question.ANSWER_TYPE_MULTI_LINE_TEXT, None, 400),
         (Question.ANSWER_TYPE_BOOL, None, 400),
+        (Question.ANSWER_TYPE_NUMBER, None, 400),
         (Question.ANSWER_TYPE_HEADING, None, 400),
         (Question.ANSWER_TYPE_2D_BOUNDING_BOX, None, 201),
         (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, None, 201),
@@ -738,6 +745,7 @@ def test_ground_truth_is_excluded(client):
     "answer_type,answer",
     (
         (Question.ANSWER_TYPE_BOOL, True),
+        (Question.ANSWER_TYPE_NUMBER, 12),
         (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, "dgfsgfds"),
         (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfsgfds\ndgfsgfds"),
         (

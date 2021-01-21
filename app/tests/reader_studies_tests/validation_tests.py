@@ -145,6 +145,7 @@ def test_hanging_list_shuffle_per_user(client):
 ANSWER_TYPE_NAMES_AND_ANSWERS = {
     "STXT": "string test",
     "MTXT": "multiline string\ntest",
+    "NUMB": 12,
     "BOOL": True,
     "2DBB": {
         "version": {"major": 1, "minor": 0},
