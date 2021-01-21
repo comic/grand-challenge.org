@@ -1,10 +1,4 @@
-from dal import autocomplete
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     NON_FIELD_ERRORS,
@@ -29,7 +23,6 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_objects_for_user
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -39,7 +32,6 @@ from grandchallenge.archives.forms import (
     ArchiveCasesToReaderStudyForm,
     ArchiveForm,
     ArchivePermissionRequestUpdateForm,
-    EditorsForm,
     UploadersForm,
     UsersForm,
 )
@@ -58,11 +50,13 @@ from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.groups.forms import EditorsForm
+from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
-class ArchiveList(PermissionListMixin, FilterMixin, ListView):
+class ArchiveList(FilterMixin, PermissionListMixin, ListView):
     model = Archive
     permission_required = (
         f"{model._meta.app_label}.view_{model._meta.model_name}"
@@ -179,58 +173,15 @@ class ArchiveUpdate(
     raise_exception = True
 
 
-class ArchiveUsersAutocomplete(
-    LoginRequiredMixin, UserPassesTestMixin, autocomplete.Select2QuerySetView
-):
-    def test_func(self):
-        return get_objects_for_user(
-            user=self.request.user, perms="change_archive", klass=Archive
-        ).exists()
-
-    def get_queryset(self):
-        qs = (
-            get_user_model()
-            .objects.all()
-            .order_by("username")
-            .exclude(username=settings.ANONYMOUS_USER_NAME)
-        )
-
-        if self.q:
-            qs = qs.filter(username__istartswith=self.q)
-
-        return qs
-
-
-class ArchiveGroupUpdateMixin(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    FormView,
-):
+class ArchiveGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "archives/archive_user_groups_form.html"
     permission_required = (
         f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
     )
-    raise_exception = True
 
-    def get_permission_object(self):
-        return self.archive
-
-    @cached_property
-    def archive(self):
+    @property
+    def obj(self):
         return get_object_or_404(Archive, slug=self.kwargs["slug"])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({"object": self.archive, "role": self.get_form().role})
-        return context
-
-    def get_success_url(self):
-        return self.archive.get_absolute_url()
-
-    def form_valid(self, form):
-        form.add_or_remove_user(archive=self.archive)
-        return super().form_valid(form)
 
 
 class ArchiveEditorsUpdate(ArchiveGroupUpdateMixin):

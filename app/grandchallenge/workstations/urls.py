@@ -10,7 +10,6 @@ from grandchallenge.workstations.views import (
     WorkstationImageUpdate,
     WorkstationList,
     WorkstationUpdate,
-    WorkstationUsersAutocomplete,
     WorkstationUsersUpdate,
 )
 
@@ -18,11 +17,6 @@ app_name = "workstations"
 
 urlpatterns = [
     path("", WorkstationList.as_view(), name="list"),
-    path(
-        "users-autocomplete/",
-        WorkstationUsersAutocomplete.as_view(),
-        name="users-autocomplete",
-    ),
     path("create/", WorkstationCreate.as_view(), name="create"),
     # TODO - add region
     path(

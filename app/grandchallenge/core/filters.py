@@ -72,15 +72,22 @@ class TitleDescriptionModalityStructureFilter(FilterSet):
 
 class FilterMixin:
     filter_class = None
+    total_count = 0
+    num_results = 0
 
     def get_queryset(self):
         qs = super().get_queryset()
-        return self.filter_class(data=self.request.GET, queryset=qs).qs
+        self.total_count = qs.count()
+        filtered_qs = self.filter_class(data=self.request.GET, queryset=qs).qs
+        self.num_results = filtered_qs.count()
+        return filtered_qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(
             {
+                "num_results": self.num_results,
+                "total_count": self.total_count,
                 "filter": self.filter_class(self.request.GET),
                 "filters_applied": any(
                     k

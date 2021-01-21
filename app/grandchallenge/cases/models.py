@@ -487,6 +487,11 @@ class Image(UUIDModel):
             ).distinct()
         }
 
+        # Reader study editors for reader studies that have answers that
+        # include this image.
+        for answer in self.answer_set.all():
+            expected_groups.add(answer.question.reader_study.editors_group)
+
         current_groups = get_groups_with_perms(self, attach_perms=True)
         current_groups = {
             group
@@ -502,6 +507,10 @@ class Image(UUIDModel):
 
         for g in groups_with_extra_perms:
             remove_perm("view_image", g, self)
+
+    def assign_view_perm_to_creator(self):
+        for answer in self.answer_set.all():
+            assign_perm("view_image", answer.creator, self)
 
     @property
     def api_url(self):

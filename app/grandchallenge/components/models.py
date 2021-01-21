@@ -1,18 +1,33 @@
+import json
+import logging
 from decimal import Decimal
+from json import JSONDecodeError
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Tuple, Type
 
 from django.conf import settings
 from django.core.files import File
 from django.db import models
-from django.db.models import Avg, F
+from django.db.models import Avg, F, QuerySet
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
+from docker.errors import NotFound
 
+from grandchallenge.cases.image_builders.metaio_mhd_mha import (
+    image_builder_mhd,
+)
+from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.models import Image
-from grandchallenge.components.backends.docker import Executor
+from grandchallenge.cases.tasks import import_images
+from grandchallenge.components.backends.docker import (
+    ComponentException,
+    Executor,
+    get_file,
+)
 from grandchallenge.components.tasks import execute_job, validate_docker_image
 from grandchallenge.components.validators import validate_safe_path
 from grandchallenge.core.storage import (
@@ -20,6 +35,10 @@ from grandchallenge.core.storage import (
     protected_s3_storage,
 )
 from grandchallenge.core.validators import ExtensionValidator
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
 class InterfaceKindChoices(models.TextChoices):
@@ -105,6 +124,88 @@ class ComponentInterface(models.Model):
 
     class Meta:
         ordering = ("pk",)
+
+    def create_component_interface_values(self, *, reader, job):
+        # TODO JM These functions rely on docker specific code (reader)
+        if self.kind in (
+            InterfaceKindChoices.HEAT_MAP,
+            InterfaceKindChoices.IMAGE,
+        ):
+            self._create_images_result(reader=reader, job=job)
+
+        if self.kind == InterfaceKindChoices.JSON:
+            self._create_json_result(reader=reader, job=job)
+
+    def _create_images_result(self, *, reader, job):
+        # TODO JM in the future this will be a file, not a directory
+        base_dir = Path(self.output_path)
+        found_files = reader.exec_run(f"find {base_dir} -type f")
+
+        if found_files.exit_code != 0:
+            logger.warning(f"Error listing {base_dir}")
+            return
+
+        output_files = [
+            base_dir / Path(f)
+            for f in found_files.output.decode().splitlines()
+        ]
+
+        if not output_files:
+            logger.warning("Output directory is empty")
+            return
+
+        with TemporaryDirectory() as tmpdir:
+            input_files = set()
+            for file in output_files:
+                temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
+                temp_file.parent.mkdir(parents=True, exist_ok=True)
+
+                with open(temp_file, "wb") as outfile:
+                    infile = get_file(container=reader, src=file)
+
+                    buffer = True
+                    while buffer:
+                        buffer = infile.read(1024)
+                        outfile.write(buffer)
+
+                input_files.add(temp_file)
+
+            importer_result = import_images(
+                files=input_files,
+                builders=[image_builder_mhd, image_builder_tiff],
+            )
+
+        for image in importer_result.new_images:
+            civ = ComponentInterfaceValue.objects.create(
+                interface=self, image=image
+            )
+            job.outputs.add(civ)
+
+    def _create_json_result(self, reader, job):
+        try:
+            result = get_file(container=reader, src=Path(self.output_path))
+        except NotFound:
+            # The container exited without error, but no results file was
+            # produced. This shouldn't happen, but does with poorly programmed
+            # evaluation containers.
+            raise ComponentException(
+                "The evaluation failed for an unknown reason as no results "
+                "file was produced. Please contact the organisers for "
+                "assistance."
+            )
+
+        try:
+            result = json.loads(
+                result.read().decode(),
+                parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+            )
+        except JSONDecodeError as e:
+            raise ComponentException(f"Could not decode results file: {e.msg}")
+
+        civ = ComponentInterfaceValue.objects.create(
+            interface=self, value=result
+        )
+        job.outputs.add(civ)
 
 
 def component_interface_value_path(instance, filename):
@@ -239,21 +340,18 @@ class ComponentJob(models.Model):
         raise NotImplementedError
 
     @property
+    def output_interfaces(self) -> QuerySet:
+        """Returns an unevaluated QuerySet for the output interfaces"""
+        raise NotImplementedError
+
+    @property
     def executor_cls(self) -> Type[Executor]:
         """
         Return the executor class for this job.
 
         The executor class must be a subclass of ``Executor``.
         """
-        raise NotImplementedError
-
-    def create_result(self, *, result: dict):
-        """
-        The result object for this job must be created here..
-
-        Called once the container has finished its execution.
-        """
-        raise NotImplementedError
+        return Executor
 
     @property
     def signature(self):

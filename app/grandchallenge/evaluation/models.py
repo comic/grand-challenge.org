@@ -1,5 +1,5 @@
+import logging
 from json import dumps
-from pathlib import Path
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from django.conf import settings
@@ -18,7 +18,10 @@ from grandchallenge.algorithms.tasks import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.components.backends.docker import Executor, put_file
+from grandchallenge.components.backends.docker import (
+    Executor,
+    put_file,
+)
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
@@ -39,6 +42,8 @@ from grandchallenge.evaluation.emails import (
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
 from grandchallenge.subdomains.utils import reverse
+
+logger = logging.getLogger(__name__)
 
 EXTRA_RESULT_COLUMNS_SCHEMA = {
     "definitions": {},
@@ -635,11 +640,6 @@ class Submission(UUIDModel):
 
 
 class SubmissionEvaluator(Executor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args, results_file=Path("/output/metrics.json"), **kwargs
-        )
-
     def _copy_input_files(self, writer):
         for file in self._input_files:
             dest_file = "/tmp/submission-src"
@@ -768,22 +768,12 @@ class Evaluation(UUIDModel, ComponentJob):
             return [inpt.file for inpt in self.inputs.all()]
 
     @property
+    def output_interfaces(self):
+        return self.submission.phase.outputs
+
+    @property
     def executor_cls(self):
         return SubmissionEvaluator
-
-    def create_result(self, *, result: dict):
-        interface = ComponentInterface.objects.get(slug="metrics-json-file")
-
-        try:
-            output_civ = self.outputs.get(interface=interface)
-            output_civ.value = result
-            output_civ.save()
-        except ObjectDoesNotExist:
-            output_civ = ComponentInterfaceValue.objects.create(
-                interface=interface, value=result
-            )
-            self.outputs.add(output_civ)
-            send_successful_evaluation_email(self)
 
     def clean(self):
         if self.submission.phase != self.method.phase:
@@ -801,6 +791,9 @@ class Evaluation(UUIDModel, ComponentJob):
 
         if self.status == self.FAILURE:
             send_failed_evaluation_email(self)
+
+        if self.status == self.SUCCESS:
+            send_successful_evaluation_email(self)
 
         return res
 

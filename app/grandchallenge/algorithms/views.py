@@ -85,7 +85,7 @@ class AlgorithmCreate(
         return response
 
 
-class AlgorithmList(PermissionListMixin, FilterMixin, ListView):
+class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     model = Algorithm
     permission_required = {
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
@@ -111,7 +111,6 @@ class AlgorithmList(PermissionListMixin, FilterMixin, ListView):
                 ),
             }
         )
-
         return context
 
 

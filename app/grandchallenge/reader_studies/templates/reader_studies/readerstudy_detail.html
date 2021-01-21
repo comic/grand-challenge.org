@@ -214,42 +214,8 @@
 
                 <h2>Editors</h2>
 
-                <ul class="list-group list-group-flush mb-2">
-                    {% for user in object.editors_group.user_set.all %}
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>{{ user|user_profile_link }}</div>
-                                <div>
-                                    {% if user != request.user %}
-                                        <form
-                                                action="{% url 'reader-studies:editors-update' slug=object.slug %}"
-                                                method="POST">
-                                            {% csrf_token %}
-                                            {% for field in editor_remove_form %}
-                                                {% if field.name == "user" %}
-                                                    <input
-                                                            type="hidden"
-                                                            name="user"
-                                                            value="{{ user.id }}"/>
-                                                {% else %}
-                                                    {{ field }}
-                                                {% endif %}
-                                            {% endfor %}
-                                            <button type="submit"
-                                                    class="btn btn-danger">
-                                                Remove
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">
-                            There are no editors for this reader study.
-                        </li>
-                    {% endfor %}
-                </ul>
+                {% url 'reader-studies:editors-update' slug=object.slug as edit_url %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=editor_remove_form users=object.editors_group.user_set.all %}
 
                 <p class="mt-3">
                     <a class="btn btn-primary"
@@ -318,6 +284,8 @@
                  aria-labelledby="v-pills-readers-tab">
 
                 <h2>Readers</h2>
+
+                {# TODO: Use the common user group management templates, decouple the progress view #}
 
                 <ul class="list-group list-group-flush">
                     {% for reader in readers %}
@@ -453,10 +421,14 @@
                     alternatively, you can download the current data in CSV format:
                 </p>
                 <p class="mt-3">
+                    {# TODO JM #}
+                    CSV export is temporarily disabled, please use the REST API.
+                    {% comment %}
                     <a class="btn btn-primary"
                        href="{% url 'api:reader-study-export-answers' pk=object.pk %}">
                         <i class="fas fa-file-csv"></i> Export as CSV
                     </a>
+                    {% endcomment %}
                 </p>
             </div>
 

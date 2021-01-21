@@ -1,5 +1,9 @@
 import pytest
 
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.evaluation.models import Evaluation, Phase
 from grandchallenge.evaluation.tasks import calculate_ranks
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
@@ -31,7 +35,14 @@ def test_calculate_ranks(django_assert_max_num_queries):
     ]
 
     for e, r in zip(queryset, results):
-        e.create_result(result=r)
+        e.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="metrics-json-file"
+                ),
+                value=r,
+            )
+        )
 
     # Unpublish the result
     queryset[-1].published = False
@@ -155,7 +166,14 @@ def test_results_display():
     ]
 
     for e, r in zip(queryset, results):
-        e.create_result(result=r[metrics])
+        e.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="metrics-json-file"
+                ),
+                value=r[metrics],
+            )
+        )
 
     phase.score_jsonpath = "a"
     phase.result_display_choice = Phase.ALL
@@ -212,7 +230,14 @@ def test_null_results():
     ]
 
     for e, r in zip(queryset, results):
-        e.create_result(result=r)
+        e.outputs.add(
+            ComponentInterfaceValue.objects.create(
+                interface=ComponentInterface.objects.get(
+                    slug="metrics-json-file"
+                ),
+                value=r,
+            )
+        )
 
     phase.score_jsonpath = "a"
     phase.result_display_choice = Phase.ALL

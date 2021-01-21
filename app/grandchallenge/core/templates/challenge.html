@@ -51,7 +51,7 @@
                 {% endfor %}
 
                 {% if challenge.display_forum_link %}
-                   <li class="nav-item">
+                    <li class="nav-item">
                         <a class="nav-link"
                            href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
                             Forum
@@ -81,14 +81,21 @@
                         {% if "change_challenge" in challenge_perms or user_is_participant %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
-                                   href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">Create {{ phase.title }} Submission</a>
+                                   href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">Create {{ phase.title }}
+                                    Submission</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}
+                                    Leaderboard</a>
+                            </li>
+                        {% elif not challenge.hidden %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}
+                                    Leaderboard</a>
                             </li>
                         {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
-                               href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}
-                                Leaderboard</a>
-                        </li>
                     {% endfor %}
                 {% endif %}
 
@@ -129,7 +136,7 @@
                                 <hr>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:phase-create' challenge_short_name=challenge.short_name %}">
-                                   <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase
+                                    <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase
                                 </a>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">

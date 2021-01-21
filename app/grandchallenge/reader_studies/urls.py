@@ -12,7 +12,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyDelete,
     ReaderStudyDetail,
     ReaderStudyExampleGroundTruth,
-    ReaderStudyImages,
+    ReaderStudyImagesList,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
     ReaderStudyPermissionRequestCreate,
@@ -20,7 +20,6 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyPermissionRequestUpdate,
     ReaderStudyStatistics,
     ReaderStudyUpdate,
-    ReaderStudyUserAutocomplete,
     ReadersUpdate,
 )
 
@@ -29,11 +28,6 @@ app_name = "reader-studies"
 urlpatterns = [
     path("", ReaderStudyList.as_view(), name="list"),
     path("create/", ReaderStudyCreate.as_view(), name="create"),
-    path(
-        "users-autocomplete/",
-        ReaderStudyUserAutocomplete.as_view(),
-        name="users-autocomplete",
-    ),
     path("<slug>/", ReaderStudyDetail.as_view(), name="detail"),
     path("<slug>/update/", ReaderStudyUpdate.as_view(), name="update"),
     path("<slug>/delete/", ReaderStudyDelete.as_view(), name="delete"),
@@ -42,7 +36,7 @@ urlpatterns = [
         ReaderStudyLeaderBoard.as_view(),
         name="leaderboard",
     ),
-    path("<slug>/images/", ReaderStudyImages.as_view(), name="images",),
+    path("<slug>/cases/", ReaderStudyImagesList.as_view(), name="images",),
     path(
         "<slug>/statistics/",
         ReaderStudyStatistics.as_view(),

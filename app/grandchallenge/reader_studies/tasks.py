@@ -11,6 +11,14 @@ def add_score(obj, answer):
     obj.save()
 
 
+@transaction.atomic
+def add_image(obj, image):
+    obj.answer_image = image
+    obj.save()
+    image.assign_view_perm_to_creator()
+    image.update_viewer_groups_permissions()
+
+
 @shared_task
 def add_scores(*, instance_pk, pk_set):
     instance = Answer.objects.get(pk=instance_pk)
@@ -37,3 +45,11 @@ def add_images_to_reader_study(*, upload_session_pk, reader_study_pk):
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
 
     reader_study.images.add(*images.all())
+
+
+@shared_task
+def add_image_to_answer(*, upload_session_pk, answer_pk):
+    image = Image.objects.get(origin_id=upload_session_pk)
+    answer = Answer.objects.get(pk=answer_pk)
+
+    add_image(answer, image)
