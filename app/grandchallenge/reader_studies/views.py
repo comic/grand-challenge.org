@@ -792,7 +792,7 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
 
-    @action(detail=True)
+    # TODO JM @action(detail=True)
     def export_answers(self, request, pk=None):
         reader_study = self.get_object()
         self._check_change_perms(request.user, reader_study)

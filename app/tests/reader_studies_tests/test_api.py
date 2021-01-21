@@ -738,6 +738,7 @@ def test_ground_truth_is_excluded(client):
     assert results[0]["pk"] == str(a2.pk)
 
 
+@pytest.mark.skip("Temporarily disabled")  # TODO JM
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "answer_type,answer",

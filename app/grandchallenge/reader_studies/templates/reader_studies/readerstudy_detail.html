@@ -421,10 +421,14 @@
                     alternatively, you can download the current data in CSV format:
                 </p>
                 <p class="mt-3">
+                    {# TODO JM #}
+                    CSV export is temporarily disabled, please use the REST API.
+                    {% comment %}
                     <a class="btn btn-primary"
                        href="{% url 'api:reader-study-export-answers' pk=object.pk %}">
                         <i class="fas fa-file-csv"></i> Export as CSV
                     </a>
+                    {% endcomment %}
                 </p>
             </div>
 
