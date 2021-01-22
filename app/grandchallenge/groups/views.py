@@ -3,15 +3,16 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import CharField, Q, Value
+from django.db.models.functions import Concat
+from django.utils.html import format_html
 from django.views.generic import FormView
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_objects_for_user
-from django.db.models import Q, Value, CharField
-from django.db.models.functions import Concat
-from django.utils.html import format_html
+
 from grandchallenge.verifications.models import Verification
 
 
@@ -94,7 +95,7 @@ class UserAutocomplete(
         if is_verified:
             return format_html(
                 '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
-                '&nbsp; <b>{}</b> &nbsp; {} &nbsp; Verified at {} &nbsp; '
+                "&nbsp; <b>{}</b> &nbsp; {} &nbsp; Verified at {} &nbsp; "
                 '<i class="fas fa-user-check text-success">',
                 result.user_profile.get_mugshot_url(),
                 result.get_username(),
@@ -104,7 +105,7 @@ class UserAutocomplete(
         else:
             return format_html(
                 '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
-                '&nbsp; <b>{}</b> &nbsp; {} &nbsp; not verified',
+                "&nbsp; <b>{}</b> &nbsp; {} &nbsp; not verified",
                 result.user_profile.get_mugshot_url(),
                 result.get_username(),
                 result.get_full_name().title(),
