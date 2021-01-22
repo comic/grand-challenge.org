@@ -9,6 +9,10 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_objects_for_user
+from django.db.models import Q, Value, CharField
+from django.db.models.functions import Concat
+from django.utils.html import format_html
+from grandchallenge.verifications.models import Verification
 
 
 class UserGroupUpdateMixin(
@@ -62,8 +66,46 @@ class UserAutocomplete(
             .objects.order_by("username")
             .exclude(username=settings.ANONYMOUS_USER_NAME)
         )
+        qs = qs.annotate(
+            full_name=Concat(
+                "first_name", Value(" "), "last_name", output_field=CharField()
+            )
+        )
 
         if self.q:
-            qs = qs.filter(username__istartswith=self.q)
+            qs = qs.filter(
+                Q(username__icontains=self.q)
+                | Q(email__icontains=self.q)
+                | Q(last_name__icontains=self.q)
+                | Q(first_name__icontains=self.q)
+                | Q(full_name__icontains=self.q)
+                | Q(verification__email=self.q)
+            )
 
         return qs
+
+    def get_result_label(self, result):
+
+        try:
+            is_verified = result.verification.is_verified
+        except Verification.DoesNotExist:
+            is_verified = False
+
+        if is_verified:
+            return format_html(
+                '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
+                '&nbsp; <b>{}</b> &nbsp; {} &nbsp; Verified at {} &nbsp; '
+                '<i class="fas fa-user-check text-success">',
+                result.user_profile.get_mugshot_url(),
+                result.get_username(),
+                result.get_full_name().title(),
+                result.verification.email.split("@")[1],
+            )
+        else:
+            return format_html(
+                '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
+                '&nbsp; <b>{}</b> &nbsp; {} &nbsp; not verified',
+                result.user_profile.get_mugshot_url(),
+                result.get_username(),
+                result.get_full_name().title(),
+            )
