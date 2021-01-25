@@ -18,7 +18,7 @@
   {% if product.images.all %}
     <meta property="og:image" content= "{{ product.images.first.img.url }}" />
   {% else %}
-    <meta property="og:image" content= "{{ company.logo.url }}" />
+    <meta property="og:image" content= "{{ product.company.logo.url }}" />
 {% endblock %}
 
 {% block content %}
