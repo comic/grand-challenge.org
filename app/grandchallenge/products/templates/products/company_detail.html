@@ -1,6 +1,13 @@
 {% extends 'products/base.html' %}
 {% load static %}
 
+{% block meta %}
+  <meta property="og:title" content="AI in Radiology" />
+  <meta property="og:url" content="{{ request.build_absolute_uri }}"/>
+  <meta property="og:image" content= "{{company.logo.url}}" />
+  <meta property="og:description" content= "Find out more about {{company.company_name}}"/>
+{% endblock %}
+
 {% block title %}
     {{company.company_name}} - {{ block.super }}
 {% endblock %}
