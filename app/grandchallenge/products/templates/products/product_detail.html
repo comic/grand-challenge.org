@@ -12,13 +12,14 @@
 {% endblock %}
 
 {% block meta %}
-  <meta property="og:title" content="AI in Radiology" />
-  <meta property="og:url" content="{{ request.build_absolute_uri }}" />
-  <meta property="og:description" content= "Find out more about {{ product.product_name }} by {{ product.company.company_name }}"/>
+  <meta name="title" content="{{ product.product_name }}, {{ product.company.company_name }}">
+  <meta property="og:title" content="{{ product.product_name }}, {{ product.company.company_name }}" />
+  <meta property="og:description" content= "{{ product.description }}"/>
   {% if product.images.all %}
     <meta property="og:image" content= "{{ product.images.first.img.url }}" />
   {% else %}
     <meta property="og:image" content= "{{ product.company.logo.url }}" />
+  {{ block.super }}
 {% endblock %}
 
 {% block content %}

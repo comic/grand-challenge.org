@@ -2,10 +2,13 @@
 {% load static %}
 
 {% block meta %}
-  <meta property="og:title" content="AI in Radiology" />
-  <meta property="og:url" content="{{ request.build_absolute_uri }}"/>
-  <meta property="og:image" content= "{{company.logo.url}}" />
+  <meta name="title" content="AI for Radiology">
+  <meta property="og:title" content="AI for Radiology" />
+  {% if company.logo %}
+    <meta property="og:image" content= "{{company.logo.url}}" />
+  {% endif %}
   <meta property="og:description" content= "Find out more about {{company.company_name}}"/>
+  {{ block.super }}
 {% endblock %}
 
 {% block title %}
