@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -13,7 +14,10 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import (
     GroupFactory,
     ImageFactory,
@@ -215,3 +219,32 @@ def test_algorithm(client, algorithm_image, settings):
     heatmap_civ = jobs[0].outputs.get(interface=heatmap_interface)
 
     assert heatmap_civ.image.name == "output.tif"
+
+    # We add another ComponentInterface with file value and run the algorithm again
+    detection_interface = ComponentInterfaceFactory(
+        store_in_database=False,
+        relative_path="detection_results.json",
+        slug="detection-json-file",
+        kind=ComponentInterface.Kind.JSON,
+    )
+    assert len(alg.algorithm.outputs.all()) == 2
+    alg.algorithm.outputs.add(detection_interface)
+    alg.save()
+    assert len(alg.algorithm.outputs.all()) == 3
+    image_file = ImageFileFactory(
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+    )
+
+    execute_jobs(algorithm_image=alg, images=[image_file.image])
+    jobs = Job.objects.filter(
+        algorithm_image=alg, inputs__image=image_file.image
+    ).all()
+    # There should be a single, successful job
+    assert len(jobs) == 1
+
+    # The job should have three ComponentInterfaceValues,
+    # one with the detection_results store in the file
+    assert len(jobs[0].outputs.all()) == 3
+    detection_civ = jobs[0].outputs.get(interface=detection_interface)
+    assert not detection_civ.value
+    assert re.search("detection_results.*json$", detection_civ.file.name)

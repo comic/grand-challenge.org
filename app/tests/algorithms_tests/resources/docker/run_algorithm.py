@@ -4,8 +4,8 @@ import shutil
 from warnings import warn
 
 
-def write_results(res: dict):
-    with open("/output/results.json", "w") as f:
+def write_results(path: str, res: dict):
+    with open(path, "w") as f:
         f.write(json.dumps(res, ensure_ascii=True, indent=2))
 
 
@@ -24,8 +24,14 @@ if __name__ == "__main__":
         "entity": "out.tif",
         "metrics": {"abnormal": 0.19, "normal": 0.81},
     }
-    write_results(results)
+    write_results("/output/results.json", results)
 
+    detection_results = {
+        "detected points": [
+            {"type": "Point", "start": [0, 1, 2], "end": [0, 1, 2]}
+        ]
+    }
+    write_results("/output/detection_results.json", detection_results)
     # stdout should be saved
     print("Greetings from stdout")
     # so should stderr

@@ -110,6 +110,14 @@ class ComponentInterface(models.Model):
         unique=True,
         validators=[validate_safe_path],
     )
+    store_in_database = models.BooleanField(
+        default=True,
+        editable=False,
+        help_text=(
+            "Should the value be saved in a database field, "
+            "only valid for outputs."
+        ),
+    )
 
     def __str__(self):
         return f"Component Interface {self.title} ({self.get_kind_display()})"
@@ -182,29 +190,34 @@ class ComponentInterface(models.Model):
             job.outputs.add(civ)
 
     def _create_json_result(self, reader, job):
+        output_file = Path(self.output_path)
         try:
-            result = get_file(container=reader, src=Path(self.output_path))
+            file = get_file(container=reader, src=output_file)
         except NotFound:
-            # The container exited without error, but no results file was
-            # produced. This shouldn't happen, but does with poorly programmed
-            # evaluation containers.
             raise ComponentException(
-                "The evaluation failed for an unknown reason as no results "
-                "file was produced. Please contact the organisers for "
-                "assistance."
+                f"The evaluation or algorithm failed for an unknown reason as "
+                f"file {self.output_path} was not produced. Please contact the "
+                f"organisers for assistance."
             )
 
-        try:
-            result = json.loads(
-                result.read().decode(),
-                parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-            )
-        except JSONDecodeError as e:
-            raise ComponentException(f"Could not decode results file: {e.msg}")
+        if self.store_in_database:
+            try:
+                result = json.loads(
+                    file.read().decode(),
+                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+                )
+            except JSONDecodeError as e:
+                raise ComponentException(
+                    f"Could not decode json file: {e.msg}"
+                )
 
-        civ = ComponentInterfaceValue.objects.create(
-            interface=self, value=result
-        )
+            civ = ComponentInterfaceValue.objects.create(
+                interface=self, value=result
+            )
+        else:
+            civ = ComponentInterfaceValue.objects.create(interface=self,)
+            civ.file.save(str(output_file.name), File(file))
+
         job.outputs.add(civ)
 
 
