@@ -19,6 +19,7 @@
     <meta property="og:image" content= "{{ product.images.first.img.url }}" />
   {% else %}
     <meta property="og:image" content= "{{ product.company.logo.url }}" />
+  {% endif %}
   {{ block.super }}
 {% endblock %}
 
