@@ -9,6 +9,10 @@
             {% include "grandchallenge/partials/meta.html" %}
         {% endblock %}
 
+        {% block meta_social %}
+            {% include "grandchallenge/partials/meta_social.html" %}
+        {% endblock %}
+
         <title>
             {% block title %}{{ request.site.name }}{% endblock %}
         </title>
