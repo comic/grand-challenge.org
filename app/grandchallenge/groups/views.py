@@ -6,6 +6,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import CharField, Q, Value
 from django.db.models.functions import Concat
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.views.generic import FormView
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -56,6 +57,7 @@ class UserAutocomplete(
             "workstations.change_workstation",
             "algorithms.change_job",
         ]
+        # TODO reduce number of queries
         return any(
             get_objects_for_user(user=self.request.user, perms=perm,).exists()
             for perm in allowed_perms
@@ -66,19 +68,21 @@ class UserAutocomplete(
             get_user_model()
             .objects.order_by("username")
             .exclude(username=settings.ANONYMOUS_USER_NAME)
-        )
-        qs = qs.annotate(
-            full_name=Concat(
-                "first_name", Value(" "), "last_name", output_field=CharField()
+            .annotate(
+                full_name=Concat(
+                    "first_name",
+                    Value(" "),
+                    "last_name",
+                    output_field=CharField(),
+                )
             )
+            .select_related("verification", "user_profile")
         )
 
         if self.q:
             qs = qs.filter(
                 Q(username__icontains=self.q)
                 | Q(email__icontains=self.q)
-                | Q(last_name__icontains=self.q)
-                | Q(first_name__icontains=self.q)
                 | Q(full_name__icontains=self.q)
                 | Q(verification__email=self.q)
             )
@@ -95,9 +99,10 @@ class UserAutocomplete(
         if is_verified:
             return format_html(
                 '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
-                "&nbsp; <b>{}</b> &nbsp; {} &nbsp; Verified at {} &nbsp; "
-                '<i class="fas fa-user-check text-success">',
-                result.user_profile.get_mugshot_url(),
+                "&nbsp; <b>{}</b> &nbsp; {} &nbsp;"
+                '<i class="fas fa-user-check text-success" '
+                'title="Verified email address at {}">',
+                mark_safe(result.user_profile.get_mugshot_url()),
                 result.get_username(),
                 result.get_full_name().title(),
                 result.verification.email.split("@")[1],
@@ -105,8 +110,8 @@ class UserAutocomplete(
         else:
             return format_html(
                 '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
-                "&nbsp; <b>{}</b> &nbsp; {} &nbsp; not verified",
-                result.user_profile.get_mugshot_url(),
+                "&nbsp; <b>{}</b> &nbsp; {}",
+                mark_safe(result.user_profile.get_mugshot_url()),
                 result.get_username(),
                 result.get_full_name().title(),
             )
