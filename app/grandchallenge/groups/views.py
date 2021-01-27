@@ -3,12 +3,17 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import CharField, Q, Value
+from django.db.models.functions import Concat
+from django.utils.html import format_html
 from django.views.generic import FormView
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_objects_for_user
+
+from grandchallenge.verifications.models import Verification
 
 
 class UserGroupUpdateMixin(
@@ -51,6 +56,7 @@ class UserAutocomplete(
             "workstations.change_workstation",
             "algorithms.change_job",
         ]
+        # TODO reduce number of queries
         return any(
             get_objects_for_user(user=self.request.user, perms=perm,).exists()
             for perm in allowed_perms
@@ -61,9 +67,50 @@ class UserAutocomplete(
             get_user_model()
             .objects.order_by("username")
             .exclude(username=settings.ANONYMOUS_USER_NAME)
+            .annotate(
+                full_name=Concat(
+                    "first_name",
+                    Value(" "),
+                    "last_name",
+                    output_field=CharField(),
+                )
+            )
+            .select_related("verification", "user_profile")
         )
 
         if self.q:
-            qs = qs.filter(username__istartswith=self.q)
+            qs = qs.filter(
+                Q(username__icontains=self.q)
+                | Q(email__icontains=self.q)
+                | Q(full_name__icontains=self.q)
+                | Q(verification__email__icontains=self.q)
+            )
 
         return qs
+
+    def get_result_label(self, result):
+
+        try:
+            is_verified = result.verification.is_verified
+        except Verification.DoesNotExist:
+            is_verified = False
+
+        if is_verified:
+            return format_html(
+                '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
+                "&nbsp; <b>{}</b> &nbsp; {} &nbsp;"
+                '<i class="fas fa-user-check text-success" '
+                'title="Verified email address at {}">',
+                result.user_profile.get_mugshot_url(),
+                result.get_username(),
+                result.get_full_name().title(),
+                result.verification.email.split("@")[1],
+            )
+        else:
+            return format_html(
+                '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
+                "&nbsp; <b>{}</b> &nbsp; {}",
+                result.user_profile.get_mugshot_url(),
+                result.get_username(),
+                result.get_full_name().title(),
+            )

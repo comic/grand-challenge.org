@@ -1,11 +1,20 @@
 import pytest
+from django.core.management import call_command
+from lxml.html.diff import html_escape
+from userena.models import UserenaSignup
 
+from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
-from tests.factories import UserFactory, WorkstationFactory
+from tests.factories import (
+    SUPER_SECURE_TEST_PASSWORD,
+    UserFactory,
+    WorkstationFactory,
+)
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
-from tests.utils import get_view_for_user
+from tests.utils import get_http_host, get_view_for_user
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -52,13 +61,13 @@ class TestGroupManagementViews:
 
         response = get_user_autocomplete()
         assert response.status_code == 200
-        assert response.json()["results"] == [
-            {
-                "id": str(u.pk),
-                "text": str(u.username),
-                "selected_text": str(u.username),
-            }
-        ]
+        assert str(u.pk) in response.json()["results"][0]["id"]
+        assert (
+            html_escape(str(u.user_profile.get_mugshot_url()))
+            in response.json()["results"][0]["text"]
+        )
+        assert u.username in response.json()["results"][0]["text"]
+        assert u.get_full_name() in response.json()["results"][0]["text"]
 
         response = get_view_for_user(
             client=client,
@@ -81,3 +90,106 @@ class TestGroupManagementViews:
         )
         assert response.status_code == 302
         assert not group.user_set.filter(pk=u.pk).exists()
+
+
+@pytest.mark.django_db
+class TestAutocompleteViews:
+    @pytest.mark.parametrize(
+        "is_verified", (False, True),
+    )
+    @pytest.mark.parametrize(
+        "filter", (("username"), ("email"), ("full_name"),),
+    )
+    def test_autocomplete_filter_options(self, client, filter, is_verified):
+        archive = ArchiveFactory()
+
+        admin = UserFactory()
+        archive.add_editor(admin)
+        first_name = "Jane"
+        last_name = "Doe"
+
+        if is_verified:
+            call_command("check_permissions")
+            u = UserenaSignup.objects.create_user(
+                "userena", "userena@test.com", "testpassword", active=True
+            )
+            VerificationFactory(user=u, is_verified=True)
+            u.first_name = first_name
+            u.last_name = last_name
+            u.save()
+
+        else:
+            u = UserFactory(first_name=first_name, last_name=last_name)
+
+        u.full_name = u.get_full_name().title()
+        filter_criterion = getattr(u, filter)
+
+        def get_user_autocomplete():
+            return get_view_for_user(
+                client=client,
+                viewname="users-autocomplete",
+                user=admin,
+                data={"q": filter_criterion},
+            )
+
+        response = get_user_autocomplete()
+        assert response.status_code == 200
+
+        assert str(u.pk) in response.json()["results"][0]["id"]
+        assert (
+            html_escape(str(u.user_profile.get_mugshot_url()))
+            in response.json()["results"][0]["text"]
+        )
+        assert u.username in response.json()["results"][0]["text"]
+        assert u.get_full_name() in response.json()["results"][0]["text"]
+        if is_verified:
+            assert (
+                u.verification.email.split("@")[1]
+                in response.json()["results"][0]["text"]
+            )
+
+    def test_autocomplete_for_verified_email(self, client):
+        archive = ArchiveFactory()
+        admin = UserFactory()
+        archive.add_editor(admin)
+
+        call_command("check_permissions")
+        user = UserenaSignup.objects.create_user(
+            "userena", "userena@test.com", "testpassword", active=True
+        )
+        VerificationFactory(user=user, is_verified=True)
+
+        response = get_view_for_user(
+            client=client,
+            viewname="users-autocomplete",
+            user=admin,
+            data={"q": user.verification.email},
+        )
+        assert response.status_code == 200
+
+        assert str(user.pk) in response.json()["results"][0]["id"]
+
+    def test_autocomplete_num_queries(self, client, django_assert_num_queries):
+
+        archive = ArchiveFactory()
+        admin = UserFactory()
+        archive.add_editor(admin)
+
+        user = UserFactory()
+
+        url = reverse("users-autocomplete", kwargs={})
+
+        client.login(
+            username=user.username, password=SUPER_SECURE_TEST_PASSWORD
+        )
+
+        method = client.get
+
+        url, kwargs = get_http_host(
+            url=url, kwargs={"data": {"q": user.username}}
+        )
+        try:
+            with django_assert_num_queries(20) as _:
+                method(url, **kwargs)
+        finally:
+            client.logout()
