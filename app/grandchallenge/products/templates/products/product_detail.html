@@ -17,7 +17,7 @@
   <meta property="og:description" content= "{{ product.description }}"/>
   {% if product.images.all %}
     <meta property="og:image" content= "{{ product.images.first.img.url }}" />
-  {% else %}
+  {% elif %}
     <meta property="og:image" content= "{{ product.company.logo.url }}" />
   {% endif %}
   {{ block.super }}
