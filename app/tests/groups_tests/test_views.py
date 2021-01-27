@@ -1,5 +1,6 @@
 import pytest
 from django.core.management import call_command
+from lxml.html.diff import html_escape
 from userena.models import UserenaSignup
 
 from grandchallenge.subdomains.utils import reverse
@@ -62,7 +63,7 @@ class TestGroupManagementViews:
         assert response.status_code == 200
         assert str(u.pk) in response.json()["results"][0]["id"]
         assert (
-            str(u.user_profile.get_mugshot_url())
+            html_escape(str(u.user_profile.get_mugshot_url()))
             in response.json()["results"][0]["text"]
         )
         assert u.username in response.json()["results"][0]["text"]
@@ -136,7 +137,7 @@ class TestAutocompleteViews:
 
         assert str(u.pk) in response.json()["results"][0]["id"]
         assert (
-            str(u.user_profile.get_mugshot_url())
+            html_escape(str(u.user_profile.get_mugshot_url()))
             in response.json()["results"][0]["text"]
         )
         assert u.username in response.json()["results"][0]["text"]

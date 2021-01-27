@@ -6,7 +6,6 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import CharField, Q, Value
 from django.db.models.functions import Concat
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.views.generic import FormView
 from guardian.mixins import (
     LoginRequiredMixin,
@@ -84,7 +83,7 @@ class UserAutocomplete(
                 Q(username__icontains=self.q)
                 | Q(email__icontains=self.q)
                 | Q(full_name__icontains=self.q)
-                | Q(verification__email=self.q)
+                | Q(verification__email__icontains=self.q)
             )
 
         return qs
@@ -102,7 +101,7 @@ class UserAutocomplete(
                 "&nbsp; <b>{}</b> &nbsp; {} &nbsp;"
                 '<i class="fas fa-user-check text-success" '
                 'title="Verified email address at {}">',
-                mark_safe(result.user_profile.get_mugshot_url()),
+                result.user_profile.get_mugshot_url(),
                 result.get_username(),
                 result.get_full_name().title(),
                 result.verification.email.split("@")[1],
@@ -111,7 +110,7 @@ class UserAutocomplete(
             return format_html(
                 '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
                 "&nbsp; <b>{}</b> &nbsp; {}",
-                mark_safe(result.user_profile.get_mugshot_url()),
+                result.user_profile.get_mugshot_url(),
                 result.get_username(),
                 result.get_full_name().title(),
             )
