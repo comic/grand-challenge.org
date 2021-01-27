@@ -969,5 +969,6 @@ if DEBUG:
         )
 
         DEBUG_TOOLBAR_CONFIG = {
-            "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback"
+            "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback",
+            "RESULTS_CACHE_SIZE": 100,
         }
