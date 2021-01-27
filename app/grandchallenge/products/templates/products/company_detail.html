@@ -1,6 +1,15 @@
 {% extends 'products/base.html' %}
 {% load static %}
 
+{% block meta_social %}
+  <meta name="title" content="AI for Radiology">
+  <meta property="og:title" content="AI for Radiology" />
+  {% if company.logo %}
+    <meta property="og:image" content= "{{company.logo.url}}" />
+  {% endif %}
+  <meta property="og:description" content= "Find out more about {{company.company_name}}"/>
+{% endblock %}
+
 {% block title %}
     {{company.company_name}} - {{ block.super }}
 {% endblock %}

@@ -11,6 +11,17 @@
   <li class="breadcrumb-item active" aria-current="page">{{product.product_name}}</li>
 {% endblock %}
 
+{% block meta_social %}
+  <meta name="title" content="{{ product.product_name }}, {{ product.company.company_name }}">
+  <meta property="og:title" content="{{ product.product_name }}, {{ product.company.company_name }}" />
+  <meta property="og:description" content= "{{ product.description }}"/>
+  {% if product.images.all %}
+    <meta property="og:image" content= "{{ product.images.first.img.url }}" />
+  {% elif product.company.logo %}
+    <meta property="og:image" content= "{{ product.company.logo.url }}" />
+  {% endif %}
+{% endblock %}
+
 {% block content %}
 
 
