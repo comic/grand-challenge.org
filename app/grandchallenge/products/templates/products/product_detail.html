@@ -20,7 +20,6 @@
   {% elif product.company.logo %}
     <meta property="og:image" content= "{{ product.company.logo.url }}" />
   {% endif %}
-  {{ block.super }}
 {% endblock %}
 
 {% block content %}
