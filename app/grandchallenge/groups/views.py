@@ -100,7 +100,7 @@ class UserAutocomplete(
                 '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
                 "&nbsp; <b>{}</b> &nbsp; {} &nbsp;"
                 '<i class="fas fa-user-check text-success">'
-                '&nbsp;Verified email address at {}',
+                "&nbsp;Verified email address at {}",
                 result.user_profile.get_mugshot_url(),
                 result.get_username(),
                 result.get_full_name().title(),
