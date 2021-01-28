@@ -99,7 +99,7 @@ class UserAutocomplete(
             return format_html(
                 '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
                 "&nbsp; <b>{}</b> &nbsp; {} &nbsp;"
-                '<i class="fas fa-user-check text-success">'
+                '<i class="fas fa-user-check text-success"></i>'
                 "&nbsp;Verified email address at {}",
                 result.user_profile.get_mugshot_url(),
                 result.get_username(),
