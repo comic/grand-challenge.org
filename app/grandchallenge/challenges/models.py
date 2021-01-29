@@ -30,6 +30,7 @@ from grandchallenge.challenges.emails import (
 from grandchallenge.core.storage import (
     get_banner_path,
     get_logo_path,
+    get_social_image_path,
     public_s3_storage,
 )
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
@@ -127,6 +128,12 @@ class ChallengeBase(models.Model):
         storage=public_s3_storage,
         blank=True,
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
+    )
+    social_image = models.ImageField(
+        upload_to=get_social_image_path,
+        storage=public_s3_storage,
+        blank=True,
+        help_text="An image for this challenge which is displayed when you post the link on social media. Should be square with a resolution of 640x640 px or higher.",
     )
     hidden = models.BooleanField(
         default=True,

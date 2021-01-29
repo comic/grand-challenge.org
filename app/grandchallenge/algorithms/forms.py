@@ -37,6 +37,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "structures",
             "organizations",
             "logo",
+            "social_image",
             "public",
             "workstation",
             "workstation_config",

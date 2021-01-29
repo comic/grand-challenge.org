@@ -22,7 +22,11 @@ from grandchallenge.components.models import (
     ComponentJob,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
-from grandchallenge.core.storage import get_logo_path, public_s3_storage
+from grandchallenge.core.storage import (
+    get_logo_path,
+    get_social_image_path,
+    public_s3_storage,
+)
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
@@ -54,6 +58,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     )
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
+    )
+    social_image = models.ImageField(
+        upload_to=get_social_image_path,
+        storage=public_s3_storage,
+        blank=True,
+        help_text="An image for this algorithm which is displayed when you post the link for this algorithm on social media. Should be square with a resolution of 640x640 px or higher.",
     )
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE
