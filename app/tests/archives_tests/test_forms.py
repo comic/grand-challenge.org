@@ -147,3 +147,36 @@ def test_archive_create(client):
     assert archive.slug == "foo-bar"
     assert archive.is_editor(user=creator)
     assert not archive.is_user(user=creator)
+
+
+@pytest.mark.django_db
+def test_social_image_meta_tag(client):
+    creator = UserFactory()
+    add_archive_perm = Permission.objects.get(
+        codename=f"add_{Archive._meta.model_name}"
+    )
+    creator.user_permissions.add(add_archive_perm)
+
+    ws = WorkstationFactory()
+    ws.add_user(user=creator)
+
+    def create_archive():
+        return get_view_for_user(
+            viewname="archives:create",
+            client=client,
+            method=client.post,
+            data={
+                "title": "foo bar",
+                "logo": get_temporary_image(),
+                "social_image": get_temporary_image(),
+                "workstation": ws.pk,
+            },
+            follow=True,
+            user=creator,
+        )
+
+    response = create_archive()
+    assert response.status_code == 200
+
+    archive = Archive.objects.get(title="foo bar")
+    assert str(archive.social_image.url) in response.content.decode()
