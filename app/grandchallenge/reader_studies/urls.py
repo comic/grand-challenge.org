@@ -20,6 +20,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyPermissionRequestUpdate,
     ReaderStudyStatistics,
     ReaderStudyUpdate,
+    ReadersList,
     ReadersUpdate,
 )
 
@@ -83,6 +84,7 @@ urlpatterns = [
         ReadersUpdate.as_view(),
         name="readers-update",
     ),
+    path("<slug>/readers", ReadersList.as_view(), name="readers-list",),
     path(
         "<slug>/permission-requests/",
         ReaderStudyPermissionRequestList.as_view(),

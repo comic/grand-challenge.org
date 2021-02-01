@@ -124,6 +124,7 @@ def test_rs_detail_view_permissions(client):
         "add-question",
         "editors-update",
         "readers-update",
+        "readers-list",
     ],
 )
 def test_rs_edit_view_permissions(client, view_name):
