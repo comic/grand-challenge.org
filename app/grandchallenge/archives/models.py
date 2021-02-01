@@ -9,7 +9,11 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
 from grandchallenge.core.models import RequestBase, UUIDModel
-from grandchallenge.core.storage import get_logo_path, public_s3_storage
+from grandchallenge.core.storage import (
+    get_logo_path,
+    get_social_image_path,
+    public_s3_storage,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.patients.models import Patient
@@ -24,6 +28,12 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
     detail_page_markdown = models.TextField(blank=True)
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage, null=True
+    )
+    social_image = models.ImageField(
+        upload_to=get_social_image_path,
+        storage=public_s3_storage,
+        blank=True,
+        help_text="An image for this archive which is displayed when you post the link to this archive on social media. Should be square with a resolution of 640x320 px (1280x640 px for best display).",
     )
     editors_group = models.OneToOneField(
         Group,

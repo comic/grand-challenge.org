@@ -37,7 +37,7 @@ common_information_items = (
     "educational",
 )
 
-common_images_items = ("logo",)
+common_images_items = ("logo", "social_image")
 
 event_items = ("event_url", "workshop_date")
 

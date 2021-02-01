@@ -22,7 +22,11 @@ from sklearn.metrics import accuracy_score
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
 from grandchallenge.core.models import RequestBase, UUIDModel
-from grandchallenge.core.storage import get_logo_path, public_s3_storage
+from grandchallenge.core.storage import (
+    get_logo_path,
+    get_social_image_path,
+    public_s3_storage,
+)
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.modalities.models import ImagingModality
@@ -218,6 +222,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     logo = models.ImageField(
         upload_to=get_logo_path, storage=public_s3_storage
     )
+    social_image = models.ImageField(
+        upload_to=get_social_image_path,
+        storage=public_s3_storage,
+        blank=True,
+        help_text="An image for this reader study which is displayed when you post the link on social media. Should be square with a resolution of 640x320 px (1280x640 px for best display).",
+    )
     help_text_markdown = models.TextField(blank=True)
 
     # A hanging_list is a list of dictionaries where the keys are the
@@ -296,6 +306,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "workstation",
         "workstation",
         "logo",
+        "social_image",
         "help_text_markdown",
         "shuffle_hanging_list",
         "is_educational",

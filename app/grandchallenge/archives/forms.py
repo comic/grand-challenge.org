@@ -45,6 +45,7 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "structures",
             "organizations",
             "logo",
+            "social_image",
             "workstation",
             "workstation_config",
             "algorithms",

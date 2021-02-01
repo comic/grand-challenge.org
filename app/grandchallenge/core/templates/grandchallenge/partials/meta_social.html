@@ -13,8 +13,10 @@
     <meta name="description" content="{{ object.description }}">
     <meta property="og:description" content="{{ object.description }}">
 
-    {% if object.logo %}
-        <meta property="og:image" content="{{ request.scheme }}://{{ request.site.domain }}{{ object.logo.url }}">
+    {% if object.social_image %}
+        <meta property="og:image" content="{{ object.social_image.url }}">
+    {% elif object.logo %}
+        <meta property="og:image" content="{{ object.logo.url }}">
     {% endif %}
 {% else %}
     <meta name="title" content="{{ request.site.name }}">
