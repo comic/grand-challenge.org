@@ -63,7 +63,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
-        help_text="An image for this algorithm which is displayed when you post the link for this algorithm on social media. Should be square with a resolution of 640x640 px or higher.",
+        help_text="An image for this algorithm which is displayed when you post the link for this algorithm on social media. Should be square with a resolution of 640x320 px (1280x640 px for best display).",
     )
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE
