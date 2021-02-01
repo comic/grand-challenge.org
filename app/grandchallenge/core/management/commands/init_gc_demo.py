@@ -336,6 +336,15 @@ class Command(BaseCommand):
             "{{ key }}  {{ value }}"
             "{% endfor %}"
         )
+        detection_interface = ComponentInterface(
+            store_in_database=False,
+            relative_path="detection_results.json",
+            slug="detection-json-file",
+            title="Detection JSON File",
+            kind=ComponentInterface.Kind.JSON,
+        )
+        detection_interface.save()
+        algorithm.outputs.add(detection_interface)
         algorithm_image = AlgorithmImage(
             creator=self.users["algorithm"], algorithm=algorithm
         )
@@ -349,14 +358,39 @@ class Command(BaseCommand):
 
         algorithm_image.save()
 
-        for res in [
+        results = [
             {"cancer_score": 0.5},
             {"cancer_score": 0.6},
             {"cancer_score": 0.7},
-        ]:
-            self.create_job_result(algorithm_image, cases_image, res)
+        ]
 
-    def create_job_result(self, algorithm_image, cases_image, result):
+        detections = [
+            {
+                "detected points": [
+                    {"type": "Point", "start": [0, 1, 2], "end": [3, 4, 5]}
+                ]
+            },
+            {
+                "detected points": [
+                    {"type": "Point", "start": [6, 7, 8], "end": [9, 10, 11]}
+                ]
+            },
+            {
+                "detected points": [
+                    {
+                        "type": "Point",
+                        "start": [12, 13, 14],
+                        "end": [15, 16, 17],
+                    }
+                ]
+            },
+        ]
+        for res, det in zip(results, detections):
+            self.create_job_result(algorithm_image, cases_image, res, det)
+
+    def create_job_result(
+        self, algorithm_image, cases_image, result, detection
+    ):
         algorithms_job = grandchallenge.algorithms.models.Job(
             creator=self.users["algorithm"],
             algorithm_image=algorithm_image,
@@ -379,6 +413,21 @@ class Command(BaseCommand):
                 value=result,
             )
         )
+        civ = ComponentInterfaceValue.objects.create(
+            interface=ComponentInterface.objects.get(
+                slug="detection-json-file"
+            ),
+        )
+        civ.file.save(
+            "detection_results.json",
+            ContentFile(
+                bytes(
+                    json.dumps(detection, ensure_ascii=True, indent=2), "utf-8"
+                )
+            ),
+        )
+
+        algorithms_job.outputs.add(civ)
 
     def _create_workstation(self):
         w = Workstation.objects.create(

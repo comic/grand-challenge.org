@@ -8,6 +8,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.serving.tasks import create_download
@@ -72,5 +73,35 @@ def serve_submissions(request, *, submission_pk, **_):
         return protected_storage_redirect(
             name=submission.predictions_file.name
         )
+
+    raise PermissionDenied
+
+
+def serve_component_interface_value(
+    request, *, component_interface_value_pk, **_
+):
+    try:
+        # output should only be connected to a single job; throw error if not?
+        civ = (
+            ComponentInterfaceValue.objects.filter(
+                pk=component_interface_value_pk
+            )
+            .prefetch_related("algorithms_jobs_as_output")
+            .first()
+        )
+
+    except ComponentInterfaceValue.DoesNotExist:
+        raise Http404("No ComponentInterfaceValue found.")
+
+    if request.user.has_perm(
+        "view_job", civ.algorithms_jobs_as_output.first()
+    ):
+        create_download.apply_async(
+            kwargs={
+                "creator_id": request.user.pk,
+                "component_interface_value_id": component_interface_value_pk,
+            }
+        )
+        return protected_storage_redirect(name=civ.file.name)
 
     raise PermissionDenied

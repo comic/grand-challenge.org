@@ -140,6 +140,7 @@ DEFAULT_FILE_STORAGE = "grandchallenge.core.storage.PublicS3Storage"
 JQFILEUPLOAD_UPLOAD_SUBIDRECTORY = "jqfileupload"
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
+COMPONENTS_FILES_SUBDIRECTORY = "components"
 
 AWS_S3_FILE_OVERWRITE = False
 # Note: deprecated in django storages 2.0

@@ -2,6 +2,7 @@ from django.conf import settings
 from django.urls import path, register_converter
 
 from grandchallenge.serving.views import (
+    serve_component_interface_value,
     serve_images,
     serve_submissions,
 )
@@ -40,5 +41,16 @@ urlpatterns = [
             f"<path:path>"
         ),
         serve_submissions,
+    ),
+    path(
+        (
+            f"{settings.COMPONENTS_FILES_SUBDIRECTORY}/"
+            f"componentinterfacevalue/"
+            f"<uuidprefix:pa>/"
+            f"<uuidprefix:pb>/"
+            f"<int:component_interface_value_pk>/"
+            f"<path:path>"
+        ),
+        serve_component_interface_value,
     ),
 ]

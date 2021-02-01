@@ -14,6 +14,7 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
         "kind",
         "default_value",
         "relative_path",
+        "store_in_database",
     )
     readonly_fields = (
         "default_value",
