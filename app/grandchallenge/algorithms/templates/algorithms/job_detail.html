@@ -170,7 +170,7 @@
                                 {% if output.file %}
                                     <li>
                                         <a class="badge badge-primary"
-                                           href="{{ output.file.url }}">
+                                           href="{{ output.file.url }}" download="{{ output.file.name|name }}">
                                             <i class="fa fa-download"></i>
                                             Output {{ forloop.parentloop.counter }} {{ output.file.name|stem }}
                                             ({{ output.file|suffix }})

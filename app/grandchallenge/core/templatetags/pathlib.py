@@ -16,3 +16,9 @@ def suffix(value):
 @stringfilter
 def stem(value):
     return Path(value).stem
+
+
+@register.filter
+@stringfilter
+def name(value):
+    return Path(value).name
