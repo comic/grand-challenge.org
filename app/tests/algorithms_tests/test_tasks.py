@@ -227,10 +227,8 @@ def test_algorithm(client, algorithm_image, settings):
         slug="detection-json-file",
         kind=ComponentInterface.Kind.JSON,
     )
-    assert len(alg.algorithm.outputs.all()) == 2
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
-    assert len(alg.algorithm.outputs.all()) == 3
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
     )
@@ -248,3 +246,23 @@ def test_algorithm(client, algorithm_image, settings):
     detection_civ = jobs[0].outputs.get(interface=detection_interface)
     assert not detection_civ.value
     assert re.search("detection_results.*json$", detection_civ.file.name)
+
+    # Make sure the job fails when trying to upload an invalid file
+    detection_interface = ComponentInterfaceFactory(
+        store_in_database=False,
+        relative_path="some_text.txt",
+        slug="detection-json-file",
+        kind=ComponentInterface.Kind.JSON,
+    )
+    alg.algorithm.outputs.add(detection_interface)
+    alg.save()
+    image_file = ImageFileFactory(
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+    )
+
+    execute_jobs(algorithm_image=alg, images=[image_file.image])
+    jobs = Job.objects.filter(
+        algorithm_image=alg, inputs__image=image_file.image, status=Job.FAILURE
+    ).all()
+    assert len(jobs) == 1
+    assert jobs.first().error_message == "An unexpected error occurred."

@@ -34,7 +34,10 @@ from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
 )
-from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.core.validators import (
+    ExtensionValidator,
+    MimeTypeValidator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -240,14 +243,27 @@ class ComponentInterfaceValue(models.Model):
     interface = models.ForeignKey(
         to=ComponentInterface, on_delete=models.CASCADE
     )
-    value = models.JSONField(null=True, default=None)
+    value = models.JSONField(null=True, blank=True, default=None)
     file = models.FileField(
-        upload_to=component_interface_value_path, storage=protected_s3_storage
+        null=True,
+        blank=True,
+        upload_to=component_interface_value_path,
+        storage=protected_s3_storage,
+        validators=[
+            ExtensionValidator(allowed_extensions=(".json",)),
+            MimeTypeValidator(allowed_types=("application/json",)),
+        ],
     )
-    image = models.ForeignKey(to=Image, null=True, on_delete=models.CASCADE)
+    image = models.ForeignKey(
+        to=Image, null=True, blank=True, on_delete=models.CASCADE
+    )
 
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("pk",)
