@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+{% load url %}
+{% load profiles %}
+{% load humanize %}
+
+{% block title %}
+    Readers - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'reader-studies:list' %}">Reader Studies</a>
+        </li>
+
+        <li class="breadcrumb-item"><a
+                href="{{ reader_study.get_absolute_url }}">{{ reader_study.title }}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Readers Progress
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Readers progress for {{ reader_study.title }}</h2>
+
+    <ul class="list-group list-group-flush">
+    {% for reader in readers %}
+        <li class="list-group-item">
+            <div class="row">
+                <div class="col-3 mb-1">
+                    <div class="h-100 d-flex justify-content-start align-items-center">
+                        {{ reader.obj|user_profile_link }}
+                    </div>
+                </div>
+                <div class="col-5 mb-1">
+                    <div class="h-100 d-flex align-items-center">
+                        <div class="flex-fill progress h-100">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ reader.progress.questions }}%"
+                                 aria-valuenow="{{ reader.progress.questions }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        <div>
+                            &nbsp;Progress: {{ reader.progress.questions|floatformat }}%
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4 mb-1">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <form
+                                action="{% url 'reader-studies:readers-update' slug=object.slug %}"
+                                method="POST">
+                            {% csrf_token %}
+                            {% for field in reader_remove_form %}
+                                {% if field.name == "user" %}
+                                    <input
+                                            type="hidden"
+                                            name="user"
+                                            value="{{ reader.obj.id }}"/>
+                                {% else %}
+                                    {{ field }}
+                                {% endif %}
+                            {% endfor %}
+                            <button type="submit"
+                                    class="btn btn-danger mr-1">
+                                <small>Remove Reader</small>
+                            </button>
+                        </form>
+                        <!-- Answer removal is handled by Modal, see below -->
+                        <button type="button"
+                                class="btn btn-danger"
+                                data-toggle="modal"
+                                data-target="#warningModal"
+                                data-title="Remove answers"
+                                data-warning="This will remove all answers for user '{{ reader.obj }}'. This action cannot be undone."
+                                data-user="{{ reader.obj.id }}"
+                                data-action="Remove Answers">
+                            <small>Remove Answers</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </li>
+    {% empty %}
+        <li class="list-group-item">
+            There are no readers for this reader study.
+        </li>
+    {% endfor %}
+    </ul>
+
+    <!-- Modal -->
+    <div class="modal fade" id="warningModal" tabindex="-1" role="dialog"
+         aria-labelledby="warningModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="warningModalLabel"></h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="warning-text"></p>
+
+                    <p><b>Are you sure that you want to continue?</b></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger"
+                            id="proceed">
+                        <i class="fa fa-trash"></i> <span class="modal-action"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script>
+        window.drf = {
+            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
+
+        let user;
+
+        $(document).ready(() => {
+
+            $('#warningModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const modal = $(this);
+                modal.find(".warning-text").text(button.data("warning"));
+                modal.find(".modal-action").text(button.data("action"));
+                $("#warningModalLabel").text(button.data("title"));
+                user = button.data("user");
+            });
+            $('#proceed').on('click', () => {
+                if (user) {
+                    $.post({
+                        url: "{% url 'reader-studies:answers-remove' slug=object.slug %}",
+                        data: {user: user, csrfmiddlewaretoken: window.drf.csrfToken},
+                        success: () => {
+                            window.location.replace(window.location.href);
+                        }
+                    })
+                } else {
+                    $.ajax({
+                        type: 'PATCH',
+                        url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
+                        data: {},
+                        contentType: 'application/json',
+                        complete: (response) => {
+                            $('#page').prepend(
+                                '<div class="alert alert-success" role="alert">' +
+                                `${response.responseJSON.status}` +
+                                '</div>'
+                            );
+                            window.location.replace(window.location.href);
+                        }
+                    })
+                }
+            });
+        });
+    </script>
+    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+{% endblock %}

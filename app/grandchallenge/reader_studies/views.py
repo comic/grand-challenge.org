@@ -186,33 +186,30 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
         object_perms = get_perms(self.request.user, self.object)
 
         if f"change_{ReaderStudy._meta.model_name}" in object_perms:
-            readers = [
-                {
-                    "obj": reader,
-                    "progress": self.object.get_progress_for_user(reader),
-                }
-                for reader in self.object.readers_group.user_set.all()
-            ]
-
             reader_remove_form = ReadersForm()
             reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
 
             editor_remove_form = EditorsForm()
             editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
 
-            answers_remove_form = AnswersRemoveForm()
-
             pending_permission_requests = ReaderStudyPermissionRequest.objects.filter(
                 reader_study=context["object"],
                 status=ReaderStudyPermissionRequest.PENDING,
             ).count()
 
+            readers = (
+                self.object.readers_group.user_set.select_related(
+                    "user_profile", "verification"
+                )
+                .order_by("username")
+                .all()
+            )
             context.update(
                 {
                     "readers": readers,
-                    "editor_remove_form": editor_remove_form,
+                    "num_readers": self.object.readers_group.user_set.count(),
                     "reader_remove_form": reader_remove_form,
-                    "answers_remove_form": answers_remove_form,
+                    "editor_remove_form": editor_remove_form,
                     "example_ground_truth": self.object.get_example_ground_truth_csv_text(
                         limit=2
                     ),
@@ -630,6 +627,46 @@ class EditorsUpdate(ReaderStudyUserGroupUpdateMixin):
 class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     form_class = ReadersForm
     success_message = "Readers successfully updated"
+
+
+class ReadersProgress(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    template_name = "reader_studies/readers_progress.html"
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        reader_remove_form = ReadersForm()
+        reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
+
+        readers = [
+            {
+                "obj": reader,
+                "progress": self.object.get_progress_for_user(reader),
+            }
+            for reader in self.object.readers_group.user_set.select_related(
+                "user_profile", "verification"
+            )
+            .order_by("username")
+            .all()
+        ]
+
+        context.update(
+            {
+                "reader_study": self.object,
+                "readers": readers,
+                "reader_remove_form": reader_remove_form,
+                "num_readers": self.object.readers_group.user_set.count(),
+            }
+        )
+
+        return context
 
 
 class AnswersRemove(
