@@ -1337,6 +1337,7 @@ class Question(UUIDModel):
             self.ANSWER_TYPE_POLYGON,
             self.ANSWER_TYPE_POLYGON_IMAGE,
             self.ANSWER_TYPE_MULTIPLE_POLYGONS,
+            self.ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE,
         ]
 
     def is_answer_valid(self, *, answer):
