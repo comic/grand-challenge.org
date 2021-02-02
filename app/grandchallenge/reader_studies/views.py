@@ -197,8 +197,16 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 status=ReaderStudyPermissionRequest.PENDING,
             ).count()
 
+            readers = (
+                self.object.readers_group.user_set.select_related(
+                    "user_profile", "verification"
+                )
+                .order_by("username")
+                .all()
+            )
             context.update(
                 {
+                    "readers": readers,
                     "num_readers": self.object.readers_group.user_set.count(),
                     "reader_remove_form": reader_remove_form,
                     "editor_remove_form": editor_remove_form,
@@ -642,7 +650,11 @@ class ReadersProgress(
                 "obj": reader,
                 "progress": self.object.get_progress_for_user(reader),
             }
-            for reader in self.object.readers_group.user_set.all()
+            for reader in self.object.readers_group.user_set.select_related(
+                "user_profile", "verification"
+            )
+            .order_by("username")
+            .all()
         ]
 
         context.update(
