@@ -1185,6 +1185,13 @@
             <span class="p">},</span>
             <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="s2">&quot;polygons&quot;</span><span class="p">],</span>
         <span class="p">},</span>
+        <span class="s2">&quot;MPIM&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;upload_session_pk&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;uuid&quot;</span><span class="p">}</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;upload_session_pk&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
         <span class="s2">&quot;2D-bounding-box-object&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
             <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -1243,6 +1250,7 @@
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/POLY&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/PIMG&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MPOL&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MPIM&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/CHOI&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MCHO&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="s2">&quot;#/definitions/MCHD&quot;</span><span class="p">},</span>
@@ -1266,6 +1274,7 @@
     <span class="n">ANSWER_TYPE_POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span>
     <span class="n">ANSWER_TYPE_POLYGON_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;PIMG&quot;</span>
     <span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span>
+    <span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;MPIM&quot;</span>
     <span class="n">ANSWER_TYPE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span>
     <span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span>
     <span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span>
@@ -1288,6 +1297,10 @@
         <span class="p">(</span><span class="n">ANSWER_TYPE_POLYGON</span><span class="p">,</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_POLYGON_IMAGE</span><span class="p">,</span> <span class="s2">&quot;Polygon (saved as mask)&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons&quot;</span><span class="p">),</span>
+        <span class="p">(</span>
+            <span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE</span><span class="p">,</span>
+            <span class="s2">&quot;Multiple polygons (saved as mask)&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_CHOICE</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span><span class="p">),</span>
