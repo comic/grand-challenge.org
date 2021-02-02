@@ -165,6 +165,6 @@ def test_output_download(client):
 
     for test in tests:
         response = get_view_for_user(
-            url=job.outputs[0].file.url, client=client, user=test[1]
+            url=job.outputs.first().file.url, client=client, user=test[1]
         )
         assert response.status_code == test[0]
