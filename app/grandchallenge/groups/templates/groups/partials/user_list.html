@@ -26,6 +26,6 @@
             </div>
         </li>
     {% empty %}
-        <li class="list-group-item">No users found.</li>
+        <li class="list-group-item">No {{ role_name | default:"users" }} found.</li>
     {% endfor %}
 </ul>
