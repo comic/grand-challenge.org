@@ -1054,7 +1054,8 @@ def test_ground_truth(client):
 
 
 @pytest.mark.django_db
-def test_assign_answer_image(client, settings):
+@pytest.mark.parametrize("answer_type", ("PIMG", "MPIM"))
+def test_assign_answer_image(client, settings, answer_type):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
     rs = ReaderStudyFactory()
@@ -1065,9 +1066,7 @@ def test_assign_answer_image(client, settings):
     rs.add_editor(editor)
     rs.add_reader(reader)
 
-    question = QuestionFactory(
-        reader_study=rs, answer_type=Question.ANSWER_TYPE_POLYGON_IMAGE
-    )
+    question = QuestionFactory(reader_study=rs, answer_type=answer_type)
 
     us = RawImageUploadSessionFactory(creator=reader)
 

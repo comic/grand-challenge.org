@@ -1030,6 +1030,13 @@ ANSWER_TYPE_SCHEMA = {
             },
             "required": ["type", "version", "polygons"],
         },
+        "MPIM": {
+            "type": "object",
+            "properties": {
+                "upload_session_pk": {"type": "string", "format": "uuid"}
+            },
+            "required": ["upload_session_pk"],
+        },
         "2D-bounding-box-object": {
             "type": "object",
             "properties": {
@@ -1088,6 +1095,7 @@ ANSWER_TYPE_SCHEMA = {
         {"$ref": "#/definitions/POLY"},
         {"$ref": "#/definitions/PIMG"},
         {"$ref": "#/definitions/MPOL"},
+        {"$ref": "#/definitions/MPIM"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
         {"$ref": "#/definitions/MCHD"},
@@ -1111,6 +1119,7 @@ class Question(UUIDModel):
     ANSWER_TYPE_POLYGON = "POLY"
     ANSWER_TYPE_POLYGON_IMAGE = "PIMG"
     ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
+    ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE = "MPIM"
     ANSWER_TYPE_CHOICE = "CHOI"
     ANSWER_TYPE_MULTIPLE_CHOICE = "MCHO"
     ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN = "MCHD"
@@ -1133,6 +1142,10 @@ class Question(UUIDModel):
         (ANSWER_TYPE_POLYGON, "Polygon"),
         (ANSWER_TYPE_POLYGON_IMAGE, "Polygon (saved as mask)"),
         (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
+        (
+            ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE,
+            "Multiple polygons (saved as mask)",
+        ),
         (ANSWER_TYPE_CHOICE, "Choice"),
         (ANSWER_TYPE_MULTIPLE_CHOICE, "Multiple choice"),
         (ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN, "Multiple choice dropdown"),
