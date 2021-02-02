@@ -186,6 +186,8 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
         object_perms = get_perms(self.request.user, self.object)
 
         if f"change_{ReaderStudy._meta.model_name}" in object_perms:
+            reader_remove_form = ReadersForm()
+            reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
 
             editor_remove_form = EditorsForm()
             editor_remove_form.fields["action"].initial = EditorsForm.REMOVE
@@ -198,6 +200,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
             context.update(
                 {
                     "num_readers": self.object.readers_group.user_set.count(),
+                    "reader_remove_form": reader_remove_form,
                     "editor_remove_form": editor_remove_form,
                     "example_ground_truth": self.object.get_example_ground_truth_csv_text(
                         limit=2
@@ -618,11 +621,11 @@ class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     success_message = "Readers successfully updated"
 
 
-class ReadersList(
+class ReadersProgress(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = ReaderStudy
-    template_name = "reader_studies/readers_list.html"
+    template_name = "reader_studies/readers_progress.html"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )

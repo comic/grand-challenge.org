@@ -17,22 +17,14 @@
         <li class="breadcrumb-item"><a
                 href="{{ reader_study.get_absolute_url }}">{{ reader_study.title }}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Readers
+            aria-current="page">Readers Progress
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Readers for {{ reader_study.title }}</h2>
+    <h2>Readers progress for {{ reader_study.title }}</h2>
 
-     {# TODO: Use the common user group management templates #}
-
-     <p class="mt-3">
-        <a class="btn btn-primary"
-           href="{% url 'reader-studies:readers-update' slug=object.slug %}">
-            <i class="fas fa-plus"></i> Add Readers
-        </a>
-    </p>
     <ul class="list-group list-group-flush">
     {% for reader in readers %}
         <li class="list-group-item">
@@ -98,15 +90,6 @@
         </li>
     {% endfor %}
     </ul>
-
-    {% if num_readers > 5 %}
-        <p class="mt-3">
-                <a class="btn btn-primary"
-                   href="{% url 'reader-studies:readers-update' slug=object.slug %}">
-                    <i class="fas fa-plus"></i> Add Readers
-                </a>
-        </p>
-    {% endif %}
 
     <!-- Modal -->
     <div class="modal fade" id="warningModal" tabindex="-1" role="dialog"
