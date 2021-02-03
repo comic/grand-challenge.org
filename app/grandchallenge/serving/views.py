@@ -81,6 +81,11 @@ def serve_component_interface_value(
     request, *, component_interface_value_pk, **_
 ):
     try:
+        user, _ = TokenAuthentication().authenticate(request)
+    except (AuthenticationFailed, TypeError):
+        user = request.user
+
+    try:
         # output should only be connected to a single job; throw error if not?
         civ = (
             ComponentInterfaceValue.objects.filter(
@@ -93,15 +98,7 @@ def serve_component_interface_value(
     except ComponentInterfaceValue.DoesNotExist:
         raise Http404("No ComponentInterfaceValue found.")
 
-    if request.user.has_perm(
-        "view_job", civ.algorithms_jobs_as_output.first()
-    ):
-        create_download.apply_async(
-            kwargs={
-                "creator_id": request.user.pk,
-                "component_interface_value_id": component_interface_value_pk,
-            }
-        )
+    if user.has_perm("view_job", civ.algorithms_jobs_as_output.first()):
         return protected_storage_redirect(name=civ.file.name)
 
     raise PermissionDenied
