@@ -2,9 +2,11 @@ import os
 import shutil
 from pathlib import Path
 from typing import Dict, List, Tuple
+from unittest import mock
 
 import SimpleITK
 import pytest
+from billiard.exceptions import SoftTimeLimitExceeded
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 
@@ -478,3 +480,28 @@ def test_failed_dicom_files_are_retained(settings):
     assert Image.objects.count() == 1
     assert all(RawImageFile.objects.values_list("staged_file_id", flat=True))
     RawImageFile.objects.all().delete()
+
+
+@pytest.mark.django_db
+@mock.patch(
+    "grandchallenge.cases.tasks._handle_raw_image_files",
+    side_effect=SoftTimeLimitExceeded(),
+)
+def test_soft_time_limit_exception(mockmethod):
+    # with mock.patch(
+    #     "grandchallenge.cases.tasks._handle_raw_image_files",
+    #     side_effect=SoftTimeLimitExceeded(),
+    # ):
+    images = ["image10x10x10.zraw"]
+    upload_session, uploaded_images = create_raw_upload_image_session(
+        images=images
+    )
+    # upload_session.save()
+    # build_images(upload_session_pk=upload_session.pk)
+
+    # with TemporaryDirectory(prefix="construct_image_volumes-") as tmp_dir:
+    #     tmp_dir = Path(tmp_dir)
+    #     # _handle_raw_image_files(tmp_dir, upload_session)
+    #     mockmethod(tmp_dir, upload_session)
+
+    assert upload_session.error_message == "Time limit exceeded."
