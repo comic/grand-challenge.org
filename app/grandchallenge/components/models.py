@@ -250,8 +250,14 @@ class ComponentInterfaceValue(models.Model):
         upload_to=component_interface_value_path,
         storage=protected_s3_storage,
         validators=[
-            ExtensionValidator(allowed_extensions=(".json",)),
-            MimeTypeValidator(allowed_types=("application/json",)),
+            ExtensionValidator(allowed_extensions=(".json", ".zip", ".csv")),
+            MimeTypeValidator(
+                allowed_types=(
+                    "application/json",
+                    "application/zip",
+                    "text/plain",
+                )
+            ),
         ],
     )
     image = models.ForeignKey(
