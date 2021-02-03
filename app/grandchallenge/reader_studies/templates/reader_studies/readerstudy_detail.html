@@ -441,8 +441,6 @@
             csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
         };
 
-        let user;
-
         $(document).ready(() => {
 
             $('#warningModal').on('show.bs.modal', function (event) {
@@ -451,7 +449,6 @@
                 modal.find(".warning-text").text(button.data("warning"));
                 modal.find(".modal-action").text(button.data("action"));
                 $("#warningModalLabel").text(button.data("title"));
-                user = button.data("user");
             });
             $('#proceed').on('click', () => {
                 $.ajax({
