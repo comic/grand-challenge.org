@@ -85,7 +85,7 @@ urlpatterns = [
         name="readers-update",
     ),
     path(
-        "<slug>/readers/progress",
+        "<slug>/readers/progress/",
         ReadersProgress.as_view(),
         name="readers-progress",
     ),
