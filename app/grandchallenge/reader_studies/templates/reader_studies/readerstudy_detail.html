@@ -441,8 +441,6 @@
             csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
         };
 
-        let user;
-
         $(document).ready(() => {
 
             $('#warningModal').on('show.bs.modal', function (event) {
@@ -451,33 +449,22 @@
                 modal.find(".warning-text").text(button.data("warning"));
                 modal.find(".modal-action").text(button.data("action"));
                 $("#warningModalLabel").text(button.data("title"));
-                user = button.data("user");
             });
             $('#proceed').on('click', () => {
-                if (user) {
-                    $.post({
-                        url: "{% url 'reader-studies:answers-remove' slug=object.slug %}",
-                        data: {user: user, csrfmiddlewaretoken: window.drf.csrfToken},
-                        success: () => {
-                            window.location.replace(window.location.href);
-                        }
-                    })
-                } else {
-                    $.ajax({
-                        type: 'PATCH',
-                        url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
-                        data: {},
-                        contentType: 'application/json',
-                        complete: (response) => {
-                            $('#page').prepend(
-                                '<div class="alert alert-success" role="alert">' +
-                                `${response.responseJSON.status}` +
-                                '</div>'
-                            );
-                            window.location.replace(window.location.href);
-                        }
-                    })
-                }
+                $.ajax({
+                    type: 'PATCH',
+                    url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
+                    data: {},
+                    contentType: 'application/json',
+                    complete: (response) => {
+                        $('#page').prepend(
+                            '<div class="alert alert-success" role="alert">' +
+                            `${response.responseJSON.status}` +
+                            '</div>'
+                        );
+                        window.location.replace(window.location.href);
+                    }
+                })
             });
         });
     </script>
