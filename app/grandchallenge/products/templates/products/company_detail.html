@@ -4,10 +4,13 @@
 {% block meta_social %}
   <meta name="title" content="AI for Radiology">
   <meta property="og:title" content="AI for Radiology" />
+  <meta property= "og:type" content="website"/>
+  <meta property="og:url" content="//www.AIforRadiology.com/" />
   {% if company.logo %}
     <meta property="og:image" content= "{{company.logo.url}}" />
+    <meta property= "og:image:width" content="1200" />
   {% endif %}
-  <meta property="og:description" content= "Find out more about {{company.company_name}}"/>
+  <meta property="og:description" content= "Find out more about {{company.company_name}}. Founded: {{company.founded}}. Head office: {{company.hq}}"/>
 {% endblock %}
 
 {% block title %}
