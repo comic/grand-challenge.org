@@ -441,28 +441,31 @@
             csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
         };
 
-        $('#warningModal').on('show.bs.modal', function (event) {
-            const button = $(event.relatedTarget);
-            const modal = $(this);
-            modal.find(".warning-text").text(button.data("warning"));
-            modal.find(".modal-action").text(button.data("action"));
-            $("#warningModalLabel").text(button.data("title"));
-        });
-        $('#proceed').on('click', () => {
-            $.ajax({
-                type: 'PATCH',
-                url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
-                data: {},
-                contentType: 'application/json',
-                complete: (response) => {
-                    $('#page').prepend(
-                        '<div class="alert alert-success" role="alert">' +
-                        `${response.responseJSON.status}` +
-                        '</div>'
-                    );
-                    window.location.replace(window.location.href);
-                }
-            })
+        $(document).ready(() => {
+
+            $('#warningModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const modal = $(this);
+                modal.find(".warning-text").text(button.data("warning"));
+                modal.find(".modal-action").text(button.data("action"));
+                $("#warningModalLabel").text(button.data("title"));
+            });
+            $('#proceed').on('click', () => {
+                $.ajax({
+                    type: 'PATCH',
+                    url: "{% url 'api:reader-study-generate-hanging-list' pk=object.pk %}",
+                    data: {},
+                    contentType: 'application/json',
+                    complete: (response) => {
+                        $('#page').prepend(
+                            '<div class="alert alert-success" role="alert">' +
+                            `${response.responseJSON.status}` +
+                            '</div>'
+                        );
+                        window.location.replace(window.location.href);
+                    }
+                })
+            });
         });
     </script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
