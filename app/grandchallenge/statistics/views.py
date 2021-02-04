@@ -51,7 +51,7 @@ class StatisticsDetail(TemplateView):
         extra = {
             "days": days,
             "max_num_results": max_num_results,
-            "number_of_users": User.objects.count(),
+            "number_of_users": User.objects.filter(is_active=True).count(),
             "country_data": json.dumps(
                 [["Country", "#Participants"]] + list(country_data)
             ),
