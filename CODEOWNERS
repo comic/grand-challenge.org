@@ -11,6 +11,7 @@
 
 # Owners of specific Django applications
 /app/grandchallenge/algorithms/       @miriam-groeneveld
+/app/grandchallenge/api/              @HarmvZ
 /app/grandchallenge/challenges/       @jmsmkn
 /app/grandchallenge/components/       @miriam-groeneveld
 /app/grandchallenge/evaluation/       @jmsmkn
