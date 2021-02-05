@@ -317,7 +317,6 @@ def build_images(*, upload_session_pk):
             upload_session.error_message = "Time limit exceeded."
             upload_session.status = upload_session.FAILURE
             upload_session.save()
-            raise
         except Exception:
             upload_session.error_message = "An unknown error occurred"
             upload_session.status = upload_session.FAILURE
