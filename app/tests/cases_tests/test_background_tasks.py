@@ -2,9 +2,11 @@ import os
 import shutil
 from pathlib import Path
 from typing import Dict, List, Tuple
+from unittest import mock
 
 import SimpleITK
 import pytest
+from billiard.exceptions import SoftTimeLimitExceeded
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 
@@ -19,10 +21,13 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
-from grandchallenge.cases.tasks import check_compressed_and_extract
+from grandchallenge.cases.tasks import (
+    build_images,
+    check_compressed_and_extract,
+)
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from tests.cases_tests import RESOURCE_PATH
-from tests.factories import UserFactory
+from tests.factories import UploadSessionFactory, UserFactory
 from tests.jqfileupload_tests.external_test_support import (
     create_file_from_filepath,
 )
@@ -478,3 +483,18 @@ def test_failed_dicom_files_are_retained(settings):
     assert Image.objects.count() == 1
     assert all(RawImageFile.objects.values_list("staged_file_id", flat=True))
     RawImageFile.objects.all().delete()
+
+
+@pytest.mark.django_db
+@mock.patch(
+    "grandchallenge.cases.tasks._handle_raw_image_files",
+    side_effect=SoftTimeLimitExceeded(),
+)
+def test_soft_time_limit(_):
+    session = UploadSessionFactory()
+    session.status = session.REQUEUED
+    session.save()
+    build_images(upload_session_pk=session.pk)
+    session.refresh_from_db()
+    assert session.status == session.FAILURE
+    assert session.error_message == "Time limit exceeded."
