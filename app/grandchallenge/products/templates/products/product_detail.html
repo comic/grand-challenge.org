@@ -14,11 +14,14 @@
 {% block meta_social %}
   <meta name="title" content="{{ product.product_name }}, {{ product.company.company_name }}">
   <meta property="og:title" content="{{ product.product_name }}, {{ product.company.company_name }}" />
+  <meta property= "og:type" content="website"/>
+  <meta property="og:url" content="//www.AIforRadiology.com/" />
   <meta property="og:description" content= "{{ product.description }}"/>
   {% if product.images.all %}
     <meta property="og:image" content= "{{ product.images.first.img.url }}" />
   {% elif product.company.logo %}
     <meta property="og:image" content= "{{ product.company.logo.url }}" />
+    <meta property= "og:image:width" content="1200" />
   {% endif %}
 {% endblock %}
 
