@@ -1,0 +1,23 @@
+# The default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @jmsmkn will be requested for review when someone 
+# opens a pull request.
+*       @jmsmkn
+
+# When someone opens a pull request that only
+# modifies JS files, only @js-owner and not the global
+# owner(s) will be requested for a review.
+*.js    @HarmvZ
+
+# Owners of specific Django applications
+/app/grandchallenge/algorithms/       @miriam-groeneveld
+/app/grandchallenge/api/              @HarmvZ
+/app/grandchallenge/challenges/       @jmsmkn
+/app/grandchallenge/components/       @miriam-groeneveld
+/app/grandchallenge/evaluation/       @jmsmkn
+/app/grandchallenge/reader_studies/   @MikeOverkamp-diag
+/app/grandchallenge/retina_api/       @HarmvZ
+/app/grandchallenge/retina_core/      @HarmvZ
+/app/grandchallenge/retina_importers/ @HarmvZ
+/app/grandchallenge/products/         @MikeOverkamp-diag
+/app/grandchallenge/workstations/     @jmsmkn
