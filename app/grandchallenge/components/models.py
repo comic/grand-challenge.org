@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 from typing import Tuple, Type
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
 from django.db.models import Avg, F, QuerySet
@@ -219,7 +220,12 @@ class ComponentInterface(models.Model):
             )
         else:
             civ = ComponentInterfaceValue.objects.create(interface=self,)
-            civ.file.save(str(output_file.name), File(file))
+            try:
+                civ.file = File(file, name=str(output_file.name))
+                civ.full_clean()
+                civ.save()
+            except ValidationError:
+                raise ComponentException("Invalid filetype.")
 
         job.outputs.add(civ)
 
@@ -266,10 +272,6 @@ class ComponentInterfaceValue(models.Model):
 
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("pk",)

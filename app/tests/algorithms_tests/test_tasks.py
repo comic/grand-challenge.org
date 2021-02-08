@@ -247,6 +247,21 @@ def test_algorithm(client, algorithm_image, settings):
     assert not detection_civ.value
     assert re.search("detection_results.*json$", detection_civ.file.name)
 
+
+@pytest.mark.django_db
+def test_algorithm_with_invalid_output(client, algorithm_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    assert Job.objects.count() == 0
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True,
+    )
+
     # Make sure the job fails when trying to upload an invalid file
     detection_interface = ComponentInterfaceFactory(
         store_in_database=False,
@@ -265,4 +280,5 @@ def test_algorithm(client, algorithm_image, settings):
         algorithm_image=alg, inputs__image=image_file.image, status=Job.FAILURE
     ).all()
     assert len(jobs) == 1
-    assert jobs.first().error_message == "An unexpected error occurred."
+    assert jobs.first().error_message == "Invalid filetype."
+    assert len(jobs[0].outputs.all()) == 2

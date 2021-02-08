@@ -1,9 +1,10 @@
 import posixpath
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
+from guardian.shortcuts import get_objects_for_user
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -87,18 +88,17 @@ def serve_component_interface_value(
 
     try:
         # output should only be connected to a single job; throw error if not?
-        civ = (
-            ComponentInterfaceValue.objects.filter(
-                pk=component_interface_value_pk
-            )
-            .prefetch_related("algorithms_jobs_as_output")
-            .first()
+        civ = ComponentInterfaceValue.objects.get(
+            pk=component_interface_value_pk
         )
-
-    except ComponentInterfaceValue.DoesNotExist:
+    except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
         raise Http404("No ComponentInterfaceValue found.")
 
-    if user.has_perm("view_job", civ.algorithms_jobs_as_output.first()):
+    if (
+        get_objects_for_user(user=user, perms="algorithms.view_job")
+        .filter(outputs__pk=component_interface_value_pk)
+        .exists()
+    ):
         return protected_storage_redirect(name=civ.file.name)
 
     raise PermissionDenied
