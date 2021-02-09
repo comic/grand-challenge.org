@@ -187,12 +187,12 @@ def test_question_delete_disabled_for_questions_with_answers(client):
     response = get_view_for_user(
         viewname="reader-studies:question-delete",
         client=client,
-        method=client.get,
+        method=client.post,
         reverse_kwargs={"slug": rs.slug, "pk": q.pk},
         user=editor,
     )
 
-    assert b"Not possible to delete this question" in response.content
+    assert response.status_code == 403
     assert Question.objects.count() == 1
 
     # if answer is deleted, deletion of the question is possible again
@@ -211,9 +211,9 @@ def test_question_delete_disabled_for_questions_with_answers(client):
     response = get_view_for_user(
         viewname="reader-studies:question-delete",
         client=client,
-        method=client.get,
+        method=client.post,
         reverse_kwargs={"slug": rs.slug, "pk": q.pk},
         user=editor,
     )
-
-    assert b"Not possible to delete this question" not in response.content
+    assert response.status_code == 302
+    assert Question.objects.count() == 0

@@ -14,6 +14,7 @@ from django.forms.utils import ErrorList
 from django.http import (
     Http404,
     HttpResponse,
+    HttpResponseForbidden,
     HttpResponseRedirect,
     JsonResponse,
 )
@@ -976,5 +977,10 @@ class QuestionDelete(
         )
 
     def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)
+        question = self.get_object()
+        if question.is_fully_editable:
+            messages.success(self.request, self.success_message)
+            return super().delete(request, *args, **kwargs)
+        return HttpResponseForbidden(
+            reason="This question already has answers associated with it"
+        )
