@@ -1,8 +1,15 @@
+import json
 from textwrap import dedent
 
 import pytest
+from django.core.files.base import ContentFile
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.evaluation_tests.factories import SubmissionFactory
 from tests.factories import (
     ImageFileFactory,
@@ -114,5 +121,50 @@ def test_submission_download(client, two_challenge_sets):
     for test in tests:
         response = get_view_for_user(
             url=submission.predictions_file.url, client=client, user=test[1]
+        )
+        assert response.status_code == test[0]
+
+
+@pytest.mark.django_db
+def test_output_download(client):
+    """Only viewers of the job should be allowed to download result files."""
+    user1, user2 = UserFactory(), UserFactory()
+    job = AlgorithmJobFactory(creator=user1)
+
+    detection_interface = ComponentInterface(
+        store_in_database=False,
+        relative_path="detection_results.json",
+        slug="detection-json-file",
+        title="Detection JSON File",
+        kind=ComponentInterface.Kind.JSON,
+    )
+    detection_interface.save()
+    job.algorithm_image.algorithm.outputs.add(detection_interface)
+
+    output_civ = ComponentInterfaceValue.objects.create(
+        interface=detection_interface
+    )
+    detection = {
+        "detected points": [
+            {"type": "Point", "start": [0, 1, 2], "end": [3, 4, 5]}
+        ]
+    }
+    output_civ.file.save(
+        "detection_results.json",
+        ContentFile(
+            bytes(json.dumps(detection, ensure_ascii=True, indent=2), "utf-8")
+        ),
+    )
+    job.outputs.add(output_civ)
+
+    tests = [
+        (403, None),
+        (302, user1),
+        (403, user2),
+    ]
+
+    for test in tests:
+        response = get_view_for_user(
+            url=job.outputs.first().file.url, client=client, user=test[1]
         )
         assert response.status_code == test[0]

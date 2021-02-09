@@ -1,13 +1,15 @@
 import posixpath
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
+from guardian.shortcuts import get_objects_for_user
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.storage import internal_protected_s3_storage
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.serving.tasks import create_download
@@ -72,5 +74,31 @@ def serve_submissions(request, *, submission_pk, **_):
         return protected_storage_redirect(
             name=submission.predictions_file.name
         )
+
+    raise PermissionDenied
+
+
+def serve_component_interface_value(
+    request, *, component_interface_value_pk, **_
+):
+    try:
+        user, _ = TokenAuthentication().authenticate(request)
+    except (AuthenticationFailed, TypeError):
+        user = request.user
+
+    try:
+        # output should only be connected to a single job; throw error if not?
+        civ = ComponentInterfaceValue.objects.get(
+            pk=component_interface_value_pk
+        )
+    except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
+        raise Http404("No ComponentInterfaceValue found.")
+
+    if (
+        get_objects_for_user(user=user, perms="algorithms.view_job")
+        .filter(outputs__pk=component_interface_value_pk)
+        .exists()
+    ):
+        return protected_storage_redirect(name=civ.file.name)
 
     raise PermissionDenied

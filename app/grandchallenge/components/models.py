@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 from typing import Tuple, Type
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
 from django.db.models import Avg, F, QuerySet
@@ -34,7 +35,10 @@ from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
 )
-from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.core.validators import (
+    ExtensionValidator,
+    MimeTypeValidator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +114,14 @@ class ComponentInterface(models.Model):
         unique=True,
         validators=[validate_safe_path],
     )
+    store_in_database = models.BooleanField(
+        default=True,
+        editable=False,
+        help_text=(
+            "Should the value be saved in a database field, "
+            "only valid for outputs."
+        ),
+    )
 
     def __str__(self):
         return f"Component Interface {self.title} ({self.get_kind_display()})"
@@ -182,29 +194,39 @@ class ComponentInterface(models.Model):
             job.outputs.add(civ)
 
     def _create_json_result(self, reader, job):
+        output_file = Path(self.output_path)
         try:
-            result = get_file(container=reader, src=Path(self.output_path))
+            file = get_file(container=reader, src=output_file)
         except NotFound:
-            # The container exited without error, but no results file was
-            # produced. This shouldn't happen, but does with poorly programmed
-            # evaluation containers.
             raise ComponentException(
-                "The evaluation failed for an unknown reason as no results "
-                "file was produced. Please contact the organisers for "
-                "assistance."
+                f"The evaluation or algorithm failed for an unknown reason as "
+                f"file {self.output_path} was not produced. Please contact the "
+                f"organisers for assistance."
             )
 
-        try:
-            result = json.loads(
-                result.read().decode(),
-                parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-            )
-        except JSONDecodeError as e:
-            raise ComponentException(f"Could not decode results file: {e.msg}")
+        if self.store_in_database:
+            try:
+                result = json.loads(
+                    file.read().decode(),
+                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+                )
+            except JSONDecodeError as e:
+                raise ComponentException(
+                    f"Could not decode json file: {e.msg}"
+                )
 
-        civ = ComponentInterfaceValue.objects.create(
-            interface=self, value=result
-        )
+            civ = ComponentInterfaceValue.objects.create(
+                interface=self, value=result
+            )
+        else:
+            civ = ComponentInterfaceValue.objects.create(interface=self,)
+            try:
+                civ.file = File(file, name=str(output_file.name))
+                civ.full_clean()
+                civ.save()
+            except ValidationError:
+                raise ComponentException("Invalid filetype.")
+
         job.outputs.add(civ)
 
 
@@ -227,11 +249,26 @@ class ComponentInterfaceValue(models.Model):
     interface = models.ForeignKey(
         to=ComponentInterface, on_delete=models.CASCADE
     )
-    value = models.JSONField(null=True, default=None)
+    value = models.JSONField(null=True, blank=True, default=None)
     file = models.FileField(
-        upload_to=component_interface_value_path, storage=protected_s3_storage
+        null=True,
+        blank=True,
+        upload_to=component_interface_value_path,
+        storage=protected_s3_storage,
+        validators=[
+            ExtensionValidator(allowed_extensions=(".json", ".zip", ".csv")),
+            MimeTypeValidator(
+                allowed_types=(
+                    "application/json",
+                    "application/zip",
+                    "text/plain",
+                )
+            ),
+        ],
     )
-    image = models.ForeignKey(to=Image, null=True, on_delete=models.CASCADE)
+    image = models.ForeignKey(
+        to=Image, null=True, blank=True, on_delete=models.CASCADE
+    )
 
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"
