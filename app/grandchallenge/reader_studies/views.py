@@ -949,3 +949,32 @@ class AnswerViewSet(ModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class QuestionDelete(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DeleteView
+):
+    model = Question
+
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+
+    success_message = "Question was successfully deleted"
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    @property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_success_url(self):
+        return reverse(
+            "reader-studies:detail", kwargs={"slug": self.kwargs["slug"]}
+        )
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super().delete(request, *args, **kwargs)

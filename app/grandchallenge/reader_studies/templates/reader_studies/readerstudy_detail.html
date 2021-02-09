@@ -264,12 +264,20 @@
                 <ul class="list-group list-group-flush">
                     {% for question in object.questions.all %}
                         <li class="list-group-item">
-                            <div class="w-100 d-flex justify-content-between">
-                                <div>{{ question }}</div>
-                                <a class="btn btn-primary btn-sm"
-                                   href="{% url 'reader-studies:question-update' slug=object.slug pk=question.pk %}">
-                                    <i class="fa fa-edit"></i>
-                                </a>
+                            <div class="row">
+                                <div class="col justify-content-start">
+                                    <div>{{ question }}</div>
+                                </div>
+                                <div class="col-md-auto justify-content-end">
+                                    <a class="btn btn-primary btn-sm"
+                                       href="{% url 'reader-studies:question-update' slug=object.slug pk=question.pk %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a class="btn btn-danger btn-sm"
+                                       href="{% url 'reader-studies:question-delete' slug=object.slug pk=question.pk %}">
+                                        <i class="fa fa-trash-alt"></i>
+                                    </a>
+                                </div>
                             </div>
                         </li>
                     {% endfor %}

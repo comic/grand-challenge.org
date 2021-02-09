@@ -6,6 +6,7 @@ from grandchallenge.reader_studies.views import (
     AddQuestionToReaderStudy,
     AnswersRemove,
     EditorsUpdate,
+    QuestionDelete,
     QuestionUpdate,
     ReaderStudyCopy,
     ReaderStudyCreate,
@@ -73,6 +74,11 @@ urlpatterns = [
         "<slug>/questions/<pk>/update/",
         QuestionUpdate.as_view(),
         name="question-update",
+    ),
+    path(
+        "<slug>/questions/<pk>/delete/",
+        QuestionDelete.as_view(),
+        name="question-delete",
     ),
     path(
         "<slug>/editors/update/",
