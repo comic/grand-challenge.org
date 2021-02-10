@@ -1,5 +1,6 @@
 from django.conf.urls import include
 from django.urls import path, re_path
+from django.views.defaults import permission_denied
 
 from grandchallenge.groups.views import UserAutocomplete
 from grandchallenge.profiles.forms import SignupFormExtra
@@ -43,5 +44,7 @@ urlpatterns = [
         UserProfileDetail.as_view(),
         name="userena_profile_detail",
     ),
+    re_path(r"^page/(?P<page>[0-9]+)/$", lambda r: permission_denied(r, "")),
+    re_path(r"^$", lambda r: permission_denied(r, "")),
     path("", include("userena.urls")),
 ]
