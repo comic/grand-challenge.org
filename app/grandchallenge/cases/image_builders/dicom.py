@@ -214,6 +214,7 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
     except IndexError:
         z_i = 1.0
 
+    samples_per_pixel = int(getattr(ref_file, "SamplesPerPixel", 1))
     img = _create_itk_from_dcm(
         content_times=content_times,
         dicom_ds=dicom_ds,
@@ -221,6 +222,7 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
         exposures=exposures,
         pixel_dims=pixel_dims,
         z_i=z_i,
+        samples_per_pixel=samples_per_pixel
     )
 
     if origin is None:
@@ -260,7 +262,7 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
 
 
 def _create_itk_from_dcm(
-    *, content_times, dicom_ds, dimensions, exposures, pixel_dims, z_i
+    *, content_times, dicom_ds, dimensions, exposures, pixel_dims, z_i, samples_per_pixel
 ):
     apply_slope = any(
         not isclose(float(getattr(h["data"], "RescaleSlope", 1.0)), 1.0)
@@ -271,7 +273,7 @@ def _create_itk_from_dcm(
         for h in dicom_ds.headers
     )
     apply_scaling = apply_slope or apply_intercept
-
+    is_rgb = samples_per_pixel > 1
     if apply_scaling:
         np_dtype = np.float32
         sitk_dtype = SimpleITK.sitkFloat32
