@@ -134,14 +134,16 @@ def _validate_dicom_files(files: Set[Path]):
         index = studies[key]["index"]
         if not headers:
             continue
-        n_time = getattr(headers[-1]["data"], "TemporalPositionIndex", None)
+        data = headers[-1]["data"]
+        n_time = getattr(data, "TemporalPositionIndex", None)
+        n_slices = max(len(headers), int(getattr(data, "NumberOfFrames", 0)))
         # Not a 4d dicom file
         if n_time is None:
             result.append(
                 dicom_dataset(
                     headers=headers,
                     n_time=n_time,
-                    n_slices=len(headers),
+                    n_slices=n_slices,
                     index=index,
                 )
             )
@@ -152,7 +154,7 @@ def _validate_dicom_files(files: Set[Path]):
                     "Number of slices per time point differs"
                 )
             continue
-        n_slices = len(headers) // n_time
+        n_slices = n_slices // n_time
         result.append(
             dicom_dataset(
                 headers=headers, n_time=n_time, n_slices=n_slices, index=index,
@@ -222,7 +224,7 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
         exposures=exposures,
         pixel_dims=pixel_dims,
         z_i=z_i,
-        samples_per_pixel=samples_per_pixel
+        samples_per_pixel=samples_per_pixel,
     )
 
     if origin is None:
@@ -262,7 +264,14 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
 
 
 def _create_itk_from_dcm(
-    *, content_times, dicom_ds, dimensions, exposures, pixel_dims, z_i, samples_per_pixel
+    *,
+    content_times,
+    dicom_ds,
+    dimensions,
+    exposures,
+    pixel_dims,
+    z_i,
+    samples_per_pixel,
 ):
     apply_slope = any(
         not isclose(float(getattr(h["data"], "RescaleSlope", 1.0)), 1.0)
