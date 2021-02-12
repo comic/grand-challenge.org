@@ -1,4 +1,3 @@
-import tempfile
 from collections import namedtuple
 from math import isclose
 from pathlib import Path
@@ -134,14 +133,16 @@ def _validate_dicom_files(files: Set[Path]):
         index = studies[key]["index"]
         if not headers:
             continue
-        n_time = getattr(headers[-1]["data"], "TemporalPositionIndex", None)
+        data = headers[-1]["data"]
+        n_time = getattr(data, "TemporalPositionIndex", None)
+        n_slices = max(len(headers), int(getattr(data, "NumberOfFrames", 0)))
         # Not a 4d dicom file
         if n_time is None:
             result.append(
                 dicom_dataset(
                     headers=headers,
                     n_time=n_time,
-                    n_slices=len(headers),
+                    n_slices=n_slices,
                     index=index,
                 )
             )
@@ -152,7 +153,7 @@ def _validate_dicom_files(files: Set[Path]):
                     "Number of slices per time point differs"
                 )
             continue
-        n_slices = len(headers) // n_time
+        n_slices = n_slices // n_time
         result.append(
             dicom_dataset(
                 headers=headers, n_time=n_time, n_slices=n_slices, index=index,
@@ -195,7 +196,6 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
     # Additional Meta data Contenttimes and Exposures
     content_times = []
     exposures = []
-
     origin = None
     origin_diff = np.array((0, 0, 0), dtype=float)
     n_diffs = 0
@@ -214,6 +214,7 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
     except IndexError:
         z_i = 1.0
 
+    samples_per_pixel = int(getattr(ref_file, "SamplesPerPixel", 1))
     img = _create_itk_from_dcm(
         content_times=content_times,
         dicom_ds=dicom_ds,
@@ -221,6 +222,7 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
         exposures=exposures,
         pixel_dims=pixel_dims,
         z_i=z_i,
+        samples_per_pixel=samples_per_pixel,
     )
 
     if origin is None:
@@ -260,7 +262,14 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
 
 
 def _create_itk_from_dcm(
-    *, content_times, dicom_ds, dimensions, exposures, pixel_dims, z_i
+    *,
+    content_times,
+    dicom_ds,
+    dimensions,
+    exposures,
+    pixel_dims,
+    z_i,
+    samples_per_pixel,
 ):
     apply_slope = any(
         not isclose(float(getattr(h["data"], "RescaleSlope", 1.0)), 1.0)
@@ -271,15 +280,15 @@ def _create_itk_from_dcm(
         for h in dicom_ds.headers
     )
     apply_scaling = apply_slope or apply_intercept
-
+    is_rgb = samples_per_pixel > 1
     if apply_scaling:
         np_dtype = np.float32
-        sitk_dtype = SimpleITK.sitkFloat32
     else:
         np_dtype = np.short
-        sitk_dtype = SimpleITK.sitkInt16
-
-    dcm_array = np.zeros(pixel_dims, dtype=np_dtype)
+    if samples_per_pixel > 1:
+        pixel_dims += (samples_per_pixel,)
+    dcm_array = None
+    use_pixel_array = False
 
     for index, partial in enumerate(dicom_ds.headers):
         ds = pydicom.dcmread(str(partial["file"]))
@@ -291,11 +300,18 @@ def _create_itk_from_dcm(
         else:
             pixel_array = ds.pixel_array
 
-        if len(ds.pixel_array.shape) == dimensions:
-            dcm_array = pixel_array
+        if (
+            len(pixel_array.shape) == dimensions
+            or pixel_array.shape == pixel_dims
+        ):
+            use_pixel_array = True
+            del ds
             break
+        if dcm_array is None:
+            dcm_array = np.zeros(pixel_dims, dtype=np_dtype)
 
         z_index = index if z_i >= 0 else len(dicom_ds.headers) - index - 1
+
         if dimensions == 4:
             dcm_array[
                 index // dicom_ds.n_slices, z_index % dicom_ds.n_slices, :, :
@@ -307,21 +323,10 @@ def _create_itk_from_dcm(
             dcm_array[z_index % dicom_ds.n_slices, :, :] = pixel_array
 
         del ds
-
-    shape = dcm_array.shape[::-1]
-    # Write the numpy array to a file, so there is no need to keep it in memory
-    # anymore. Then create a SimpleITK image from it.
-    with tempfile.NamedTemporaryFile() as temp:
-        temp.seek(0)
-        temp.write(dcm_array.tobytes())
-        temp.flush()
-        temp.seek(0)
-
-        del dcm_array
-
-        img = SimpleITK.Image(shape, sitk_dtype, 1)
-        SimpleITK._SimpleITK._SetImageFromArray(temp.read(), img)
-
+    if use_pixel_array:
+        img = SimpleITK.GetImageFromArray(pixel_array, isVector=is_rgb)
+    else:
+        img = SimpleITK.GetImageFromArray(dcm_array, isVector=is_rgb)
     return img
 
 
