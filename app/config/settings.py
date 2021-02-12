@@ -87,6 +87,12 @@ ANONYMOUS_USER_NAME = "AnonymousUser"
 REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
 REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 
+##############################################################################
+#
+# django-userena
+#
+##############################################################################
+
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
 USERENA_DEFAULT_PRIVACY = "open"
@@ -378,6 +384,10 @@ THIRD_PARTY_APPS = [
     "drf_yasg",
     "markdownx",  # for editing markdown
     "django_filters",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
     # django-machina dependencies:
     "mptt",
     "haystack",
@@ -443,15 +453,47 @@ INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
-AUTHENTICATION_BACKENDS = (
-    "social_core.backends.google.GoogleOAuth2",
-    "userena.backends.UserenaAuthenticationBackend",
-    "guardian.backends.ObjectPermissionBackend",
+AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-)
+    "allauth.account.auth_backends.AuthenticationBackend",
+    "guardian.backends.ObjectPermissionBackend",
+    "userena.backends.UserenaAuthenticationBackend",
+    "social_core.backends.google.GoogleOAuth2",
+]
 
 GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
+
+##############################################################################
+#
+# django-allauth
+#
+##############################################################################
+
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_SIGNUP_EMAIL_ENTER_TWICE = True
+ACCOUNT_USERNAME_MIN_LENGTH = 4
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_USERNAME_BLACKLIST = USERNAME_DENYLIST
+
+# TODO: Settings untested
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""),
+            "secret": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""),
+        }
+    }
+}
+
+##############################################################################
+#
+# django-social-auth
+#
+##############################################################################
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""

@@ -56,6 +56,7 @@ urlpatterns = [
         name="django.contrib.sitemaps.views.sitemap",
     ),
     path(settings.ADMIN_URL, admin.site.urls),
+    path("accounts/", include("allauth.urls")),
     path(
         "stats/",
         include("grandchallenge.statistics.urls", namespace="statistics"),
