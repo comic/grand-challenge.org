@@ -3,6 +3,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
 from django.conf import settings
+from django.db.models import BLANK_CHOICE_DASH
 from django.utils.translation import gettext_lazy as _
 from django_countries import countries
 from guardian.shortcuts import assign_perm
@@ -33,7 +34,7 @@ class SignupForm(forms.Form):
     )
     location = forms.ChoiceField(
         label=_("Location"),
-        choices=tuple([("00", _("-" * 9))] + list(countries)),
+        choices=(BLANK_CHOICE_DASH[0], *countries),
         required=True,
     )
     website = forms.URLField(
@@ -57,14 +58,6 @@ class SignupForm(forms.Form):
                 ]
             )
         )
-
-    def clean_location(self):
-        location = self.cleaned_data["location"]
-
-        if location == "00":
-            raise forms.ValidationError("Please choose a valid location.")
-
-        return location
 
     def signup(self, request, user):
         user.first_name = self.cleaned_data["first_name"]
