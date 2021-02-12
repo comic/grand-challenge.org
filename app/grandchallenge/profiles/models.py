@@ -4,8 +4,6 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
 from django_countries.fields import CountryField
-from guardian.shortcuts import assign_perm
-from userena.managers import ASSIGNED_PERMISSIONS
 from userena.models import UserenaBaseProfile
 
 from grandchallenge.core.utils import disable_for_loaddata
@@ -35,13 +33,7 @@ class UserProfile(UserenaBaseProfile):
 @disable_for_loaddata
 def create_user_profile(instance, created, *_, **__):
     if created:
-        profile = UserProfile.objects.create(user=instance)
-
-        for perm in ASSIGNED_PERMISSIONS["profile"]:
-            assign_perm(perm[0], instance, profile)
-
-        for perm in ASSIGNED_PERMISSIONS["user"]:
-            assign_perm(perm[0], instance, instance)
+        UserProfile.objects.create(user=instance)
 
 
 post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
