@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.conf.urls import include
 from django.contrib import admin
+from django.contrib.auth.decorators import login_required
 from django.contrib.sitemaps.views import sitemap
 from django.template.response import TemplateResponse
 from django.urls import path
@@ -19,6 +20,7 @@ from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
 from grandchallenge.reader_studies.sitemaps import ReaderStudiesSiteMap
 
 admin.autodiscover()
+admin.site.login = login_required(admin.site.login)
 
 
 def handler500(request):
