@@ -1,15 +1,15 @@
 from datetime import datetime, timedelta
 
 import pytz
-import requests
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
-from allauth.socialaccount.providers.google.provider import GoogleProvider
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 from django.core.paginator import Paginator
 from social_django.models import UserSocialAuth
+
+from grandchallenge.profiles.providers.gmail.provider import GmailProvider
 
 
 class Command(BaseCommand):
@@ -23,11 +23,13 @@ class Command(BaseCommand):
 
         adapter = DefaultSocialAccountAdapter()
 
+        provider = GmailProvider.id
+
         try:
-            app = SocialApp.objects.get(provider=GoogleProvider.id)
+            app = SocialApp.objects.get(provider=provider)
         except ObjectDoesNotExist:
-            app = adapter.get_app(request=None, provider=GoogleProvider.id)
-            app.name = "Google default"
+            app = adapter.get_app(request=None, provider=provider)
+            app.name = "Gmail Default"
             app.key = ""
             app.save()
 
@@ -37,22 +39,8 @@ class Command(BaseCommand):
             page = paginator.page(idx)
 
             for usa in page.object_list:
-                # TODO: we need to fetch the profile id to set the uid to SocialAccount, but dsa uses email
-                resp = requests.get(
-                    "https://www.googleapis.com/oauth2/v1/userinfo",
-                    params={
-                        "access_token": usa.extra_data["access_token"],
-                        "alt": "json",
-                    },
-                )
-                resp.raise_for_status()
-                extra_data = resp.json()
-
                 account = SocialAccount.objects.create(
-                    user=usa.user,
-                    provider=GoogleProvider.id,
-                    uid=extra_data["id"],
-                    extra_data=extra_data,
+                    user=usa.user, provider=provider, uid=usa.uid,
                 )
 
                 SocialToken.objects.create(
@@ -65,11 +53,10 @@ class Command(BaseCommand):
                     + timedelta(seconds=usa.extra_data["expires"]),
                 )
 
-                if extra_data["verified_email"]:
-                    # TODO: migrate verified emails elsewhere
-                    EmailAddress.objects.create(
-                        user=usa.user,
-                        email=extra_data["email"],
-                        verified=True,
-                        primary=True,
-                    )
+                # TODO: migrate verified emails elsewhere
+                EmailAddress.objects.create(
+                    user=usa.user,
+                    email=usa.user.email,
+                    verified=True,
+                    primary=True,
+                )

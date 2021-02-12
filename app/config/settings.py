@@ -387,7 +387,7 @@ THIRD_PARTY_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
+    "grandchallenge.profiles.providers.gmail",
     # django-machina dependencies:
     "mptt",
     "haystack",
@@ -484,7 +484,7 @@ ACCOUNT_USERNAME_BLACKLIST = USERNAME_DENYLIST
 
 SOCIALACCOUNT_AUTO_SIGNUP = False
 SOCIALACCOUNT_PROVIDERS = {
-    "google": {
+    "gmail": {
         "APP": {
             "client_id": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""),
             "secret": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""),
