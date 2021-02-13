@@ -4,13 +4,13 @@ from __future__ import unicode_literals
 import django.db.models.deletion
 import django_countries.fields
 import easy_thumbnails.fields
-import userena.models
 from django.conf import settings
 from django.db import migrations, models
 
+import grandchallenge.core.storage
+
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [migrations.swappable_dependency(settings.AUTH_USER_MODEL)]
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                     easy_thumbnails.fields.ThumbnailerImageField(
                         blank=True,
                         help_text="A personal image displayed in your profile.",
-                        upload_to=userena.models.upload_to_mugshot,
+                        upload_to=grandchallenge.core.storage.get_mugshot_path,
                         verbose_name="mugshot",
                     ),
                 ),

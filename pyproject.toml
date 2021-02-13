@@ -75,6 +75,7 @@ pyswot = "*"
 django-redis = "*"
 django-allauth = "*"
 defusedxml = "*" # Required for django-allauth dependency resolution
+easy_thumbnails = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

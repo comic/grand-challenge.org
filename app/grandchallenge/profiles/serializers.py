@@ -14,7 +14,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = (
             "user",
             "mugshot",
-            "privacy",
             "institution",
             "department",
             "location",

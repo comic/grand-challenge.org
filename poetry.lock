@@ -773,7 +773,7 @@ description = "Easy thumbnails for Django"
 name = "easy-thumbnails"
 optional = false
 python-versions = ">=3.5"
-version = "2.7"
+version = "2.7.1"
 
 [package.dependencies]
 django = ">=1.11,<4.0"
@@ -2057,7 +2057,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "9bfd32f3f9f44bfcdc53e6cbf98ec7768f9c004a2ff933d1b7f58807fbba8300"
+content-hash = "91d65aa5eb35285cf7453848fced82770e5fb4d78f97fbdc0074c325da7e3b13"
 lock-version = "1.0"
 python-versions = "^3.8"
 
@@ -2411,7 +2411,7 @@ drf-yasg = [
     {file = "drf_yasg-1.17.1-py2.py3-none-any.whl", hash = "sha256:7d7af27ad16e18507e9392b2afd6b218fbffc432ec8dbea053099a2241e184ff"},
 ]
 easy-thumbnails = [
-    {file = "easy-thumbnails-2.7.tar.gz", hash = "sha256:e4e7a0dd4001f56bfd4058428f2c91eafe27d33ef3b8b33ac4e013b159b9ff91"},
+    {file = "easy-thumbnails-2.7.1.tar.gz", hash = "sha256:f862949208d9066cd3d84ffcf9c2dbe9c7344ea6152b741e440f861eca46855c"},
 ]
 execnet = [
     {file = "execnet-1.7.1-py2.py3-none-any.whl", hash = "sha256:d4efd397930c46415f62f8a31388d6be4f27a91d7550eb79bc64a756e0056547"},

@@ -87,23 +87,6 @@ ANONYMOUS_USER_NAME = "AnonymousUser"
 REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
 REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 
-##############################################################################
-#
-# django-userena
-#
-##############################################################################
-
-AUTH_PROFILE_MODULE = "profiles.UserProfile"
-USERENA_USE_HTTPS = False
-USERENA_DEFAULT_PRIVACY = "open"
-USERENA_MUGSHOT_SIZE = 460
-USERENA_REGISTER_USER = False
-USERENA_REGISTER_PROFILE = False
-
-# Do not give message popups saying "you have been logged out". Users are expected
-# to know they have been logged out when they click the logout button
-USERENA_USE_MESSAGES = (False,)
-
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -362,9 +345,8 @@ THIRD_PARTY_APPS = [
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
-    "userena",  # user profiles
-    "guardian",  # userena dependency, per object permissions
-    "easy_thumbnails",  # userena dependency
+    "guardian",  # per object permissions
+    "easy_thumbnails",  # for mugshots
     "rest_framework",  # provides REST API
     "rest_framework.authtoken",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
@@ -488,6 +470,8 @@ SOCIALACCOUNT_PROVIDERS = {
 LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/users/profile/"
+
+PROFILES_MUGSHOT_SIZE = 460
 
 ##############################################################################
 #

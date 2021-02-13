@@ -49,7 +49,7 @@
                     {% endif %}
 
                     {% get_obj_perms request.user for profile as "profile_perms" %}
-                    {% if "change_profile" in profile_perms %}
+                    {% if "change_userprofile" in profile_perms %}
                         <ul class="list-group mb-3">
                             {% if not profile.user.verification %}
                                 <a class="list-group-item list-group-item-action"

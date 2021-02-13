@@ -1,5 +1,6 @@
 import copy
 import datetime
+from uuid import uuid4
 
 from botocore.signers import CloudFrontSigner
 from cryptography.hazmat.backends import default_backend
@@ -136,3 +137,9 @@ def get_social_image_path(instance, filename):
 
 def get_banner_path(instance, filename):
     return f"b/{instance.pk}/{get_valid_filename(filename)}"
+
+
+def get_mugshot_path(instance, filename):
+    time_prefix = now().strftime("%Y/%m/%d/")
+    extension = filename.split(".")[-1].lower()
+    return f"mugshots/{time_prefix}/{uuid4()}.{extension}"
