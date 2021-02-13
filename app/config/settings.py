@@ -452,8 +452,6 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
     "guardian.backends.ObjectPermissionBackend",
-    "userena.backends.UserenaAuthenticationBackend",
-    "social_core.backends.google.GoogleOAuth2",
 ]
 
 GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
@@ -505,7 +503,6 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
 )
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
 
-# TODO: JM - Add the profile filling as a partial
 SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_details",
     "social_core.pipeline.social_auth.social_uid",
@@ -514,7 +511,6 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.associate_by_email",
     "social_core.pipeline.user.get_username",
     "social_core.pipeline.user.create_user",
-    "grandchallenge.profiles.social_auth.pipeline.profile.create_profile",
     "social_core.pipeline.social_auth.associate_user",
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",
