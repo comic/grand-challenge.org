@@ -317,11 +317,10 @@ test = ["pytest (>=3.6.0,<3.9.0 || >3.9.0,<3.9.1 || >3.9.1,<3.9.2 || >3.9.2)", "
 [[package]]
 category = "main"
 description = "XML bomb protection for Python stdlib modules"
-marker = "python_version >= \"3.0\""
 name = "defusedxml"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "0.7.0rc1"
+version = "0.6.0"
 
 [[package]]
 category = "main"
@@ -659,20 +658,6 @@ pytz = "*"
 
 [[package]]
 category = "main"
-description = "Complete user management application for Django"
-name = "django-userena-ce"
-optional = false
-python-versions = ">=3.6"
-version = "6.0.1"
-
-[package.dependencies]
-Django = ">=2.2"
-django-guardian = ">=2.0"
-easy-thumbnails = "*"
-html2text = "*"
-
-[[package]]
-category = "main"
 description = "Tweak the form field rendering in templates, not in python-level form definitions."
 name = "django-widget-tweaks"
 optional = false
@@ -774,7 +759,7 @@ description = "Easy thumbnails for Django"
 name = "easy-thumbnails"
 optional = false
 python-versions = ">=3.5"
-version = "2.7"
+version = "2.7.1"
 
 [package.dependencies]
 django = ">=1.11,<4.0"
@@ -845,14 +830,6 @@ name = "h11"
 optional = false
 python-versions = "*"
 version = "0.9.0"
-
-[[package]]
-category = "main"
-description = "Turn HTML into equivalent Markdown-structured text."
-name = "html2text"
-optional = false
-python-versions = ">=3.5"
-version = "2020.1.16"
 
 [[package]]
 category = "main"
@@ -1425,14 +1402,10 @@ description = "OpenID support for modern servers and consumers."
 name = "python3-openid"
 optional = false
 python-versions = "*"
-version = "3.2.0"
+version = "3.1.0"
 
 [package.dependencies]
 defusedxml = "*"
-
-[package.extras]
-mysql = ["mysql-connector-python"]
-postgresql = ["psycopg2"]
 
 [[package]]
 category = "main"
@@ -1658,50 +1631,6 @@ name = "snowballstemmer"
 optional = false
 python-versions = "*"
 version = "2.0.0"
-
-[[package]]
-category = "main"
-description = "Python Social Authentication, Django integration."
-name = "social-auth-app-django"
-optional = false
-python-versions = "*"
-version = "4.0.0"
-
-[package.dependencies]
-six = "*"
-social-auth-core = ">=3.3.0"
-
-[[package]]
-category = "main"
-description = "Python social authentication made simple."
-name = "social-auth-core"
-optional = false
-python-versions = "*"
-version = "3.3.3"
-
-[package.dependencies]
-PyJWT = ">=1.4.0"
-cryptography = ">=1.4"
-oauthlib = ">=1.0.3"
-requests = ">=2.9.1"
-requests-oauthlib = ">=0.6.1"
-six = ">=1.10.0"
-
-[package.dependencies.defusedxml]
-python = ">=3.0"
-version = ">=0.5.0rc1"
-
-[package.dependencies.python3-openid]
-python = ">=3.0"
-version = ">=3.0.10"
-
-[package.extras]
-all = ["python-jose (>=3.0.0)", "pyjwt (>=1.7.1)", "python-saml (>=2.2.0)", "cryptography (>=2.1.1)"]
-allpy2 = ["python-jose (>=3.0.0)", "pyjwt (>=1.7.1)", "python-saml (>=2.2.0)", "cryptography (>=2.1.1)", "python-openid (>=2.2.5)"]
-allpy3 = ["python-jose (>=3.0.0)", "pyjwt (>=1.7.1)", "python-saml (>=2.2.0)", "cryptography (>=2.1.1)", "defusedxml (>=0.5.0rc1)", "python3-openid (>=3.0.10)"]
-azuread = ["cryptography (>=2.1.1)"]
-openidconnect = ["python-jose (>=3.0.0)", "pyjwt (>=1.7.1)"]
-saml = ["python-saml (>=2.2.0)"]
 
 [[package]]
 category = "main"
@@ -2106,7 +2035,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "4db8f77a55fbdf1b233859da8f3fd5bf8715b2c26e5adcbedafc03da6d35173d"
+content-hash = "524fb0ebda64b8849068bc38df274d440bd401c5c66577b5b23078861ebc1536"
 lock-version = "1.0"
 python-versions = "^3.8"
 
@@ -2320,8 +2249,8 @@ cryptography = [
     {file = "cryptography-3.1.tar.gz", hash = "sha256:26409a473cc6278e4c90f782cd5968ebad04d3911ed1c402fc86908c17633e08"},
 ]
 defusedxml = [
-    {file = "defusedxml-0.7.0rc1-py2.py3-none-any.whl", hash = "sha256:8ede8ba04cf5bf7999e1492fa77df545db83717f52c5eab625f97228ebd539bf"},
-    {file = "defusedxml-0.7.0rc1.tar.gz", hash = "sha256:aa621655d72cdd30f57073893b96cd0c3831a85b08b8e4954531bdac47e3e8c8"},
+    {file = "defusedxml-0.6.0-py2.py3-none-any.whl", hash = "sha256:6687150770438374ab581bb7a1b327a847dd9c5749e396102de3fad4e8a3ef93"},
+    {file = "defusedxml-0.6.0.tar.gz", hash = "sha256:f684034d135af4c6cbb949b8a4d2ed61634515257a67299e5f940fbaa34377f5"},
 ]
 disposable-email-domains = [
     {file = "disposable-email-domains-0.0.64.tar.gz", hash = "sha256:da4b9099542af33c854a2f482d825b759a7db43819c535bb3a20e37eb01a2534"},
@@ -2427,10 +2356,6 @@ django-timezone-field = [
     {file = "django-timezone-field-4.0.tar.gz", hash = "sha256:7e3620fe2211c2d372fad54db8f86ff884098d018d56fda4dca5e64929e05ffc"},
     {file = "django_timezone_field-4.0-py3-none-any.whl", hash = "sha256:758b7d41084e9ea2e89e59eb616e9b6326e6fbbf9d14b6ef062d624fe8cc6246"},
 ]
-django-userena-ce = [
-    {file = "django-userena-ce-6.0.1.tar.gz", hash = "sha256:d8bacf315919a12f5e07eaac69834a1408fcf58f17808e2fd275d31555dfa945"},
-    {file = "django_userena_ce-6.0.1-py3-none-any.whl", hash = "sha256:e1f98e3447903d4608a44ddbb2ecb01e2ae356cdfcda6be5226fd7260d2b78e0"},
-]
 django-widget-tweaks = [
     {file = "django-widget-tweaks-1.4.8.tar.gz", hash = "sha256:9f91ca4217199b7671971d3c1f323a2bec71a0c27dec6260b3c006fa541bc489"},
     {file = "django_widget_tweaks-1.4.8-py2.py3-none-any.whl", hash = "sha256:f80bff4a8a59b278bb277a405a76a8b9a884e4bae7a6c70e78a39c626cd1c836"},
@@ -2460,7 +2385,7 @@ drf-yasg = [
     {file = "drf_yasg-1.17.1-py2.py3-none-any.whl", hash = "sha256:7d7af27ad16e18507e9392b2afd6b218fbffc432ec8dbea053099a2241e184ff"},
 ]
 easy-thumbnails = [
-    {file = "easy-thumbnails-2.7.tar.gz", hash = "sha256:e4e7a0dd4001f56bfd4058428f2c91eafe27d33ef3b8b33ac4e013b159b9ff91"},
+    {file = "easy-thumbnails-2.7.1.tar.gz", hash = "sha256:f862949208d9066cd3d84ffcf9c2dbe9c7344ea6152b741e440f861eca46855c"},
 ]
 execnet = [
     {file = "execnet-1.7.1-py2.py3-none-any.whl", hash = "sha256:d4efd397930c46415f62f8a31388d6be4f27a91d7550eb79bc64a756e0056547"},
@@ -2480,10 +2405,6 @@ gunicorn = [
 h11 = [
     {file = "h11-0.9.0-py2.py3-none-any.whl", hash = "sha256:4bc6d6a1238b7615b266ada57e0618568066f57dd6fa967d1290ec9309b2f2f1"},
     {file = "h11-0.9.0.tar.gz", hash = "sha256:33d4bca7be0fa039f4e84d50ab00531047e53d6ee8ffbc83501ea602c169cae1"},
-]
-html2text = [
-    {file = "html2text-2020.1.16-py3-none-any.whl", hash = "sha256:c7c629882da0cf377d66f073329ccf34a12ed2adf0169b9285ae4e63ef54c82b"},
-    {file = "html2text-2020.1.16.tar.gz", hash = "sha256:e296318e16b059ddb97f7a8a1d6a5c1d7af4544049a01e261731d2d5cc277bbb"},
 ]
 httplib2 = [
     {file = "httplib2-0.18.1-py3-none-any.whl", hash = "sha256:ca2914b015b6247791c4866782fa6042f495b94401a0f0bd3e1d6e0ba2236782"},
@@ -2875,8 +2796,8 @@ python-magic = [
     {file = "python_magic-0.4.18-py2.py3-none-any.whl", hash = "sha256:356efa93c8899047d1eb7d3eb91e871ba2f5b1376edbaf4cc305e3c872207355"},
 ]
 python3-openid = [
-    {file = "python3-openid-3.2.0.tar.gz", hash = "sha256:33fbf6928f401e0b790151ed2b5290b02545e8775f982485205a066f874aaeaf"},
-    {file = "python3_openid-3.2.0-py3-none-any.whl", hash = "sha256:6626f771e0417486701e0b4daff762e7212e820ca5b29fcc0d05f6f8736dfa6b"},
+    {file = "python3-openid-3.1.0.tar.gz", hash = "sha256:628d365d687e12da12d02c6691170f4451db28d6d68d050007e4a40065868502"},
+    {file = "python3_openid-3.1.0-py3-none-any.whl", hash = "sha256:0086da6b6ef3161cfe50fb1ee5cceaf2cda1700019fda03c2c5c440ca6abe4fa"},
 ]
 pytz = [
     {file = "pytz-2020.1-py2.py3-none-any.whl", hash = "sha256:a494d53b6d39c3c6e44c3bec237336e14305e4f29bbf800b599253057fbb79ed"},
@@ -3043,16 +2964,6 @@ six = [
 snowballstemmer = [
     {file = "snowballstemmer-2.0.0-py2.py3-none-any.whl", hash = "sha256:209f257d7533fdb3cb73bdbd24f436239ca3b2fa67d56f6ff88e86be08cc5ef0"},
     {file = "snowballstemmer-2.0.0.tar.gz", hash = "sha256:df3bac3df4c2c01363f3dd2cfa78cce2840a79b9f1c2d2de9ce8d31683992f52"},
-]
-social-auth-app-django = [
-    {file = "social-auth-app-django-4.0.0.tar.gz", hash = "sha256:2c69e57df0b30c9c1823519c5f1992cbe4f3f98fdc7d95c840e091a752708840"},
-    {file = "social_auth_app_django-4.0.0-py2-none-any.whl", hash = "sha256:df5212370bd250108987c4748419a1a1d0cec750878856c2644c36aaa0fd3e58"},
-    {file = "social_auth_app_django-4.0.0-py3-none-any.whl", hash = "sha256:567ad0e028311541d7dfed51d3bf2c60440a6fd236d5d4d06c5a618b3d6c57c5"},
-]
-social-auth-core = [
-    {file = "social-auth-core-3.3.3.tar.gz", hash = "sha256:2f6ce1af8ec2b2cc37b86d647f7d4e4292f091ee556941db34b1e0e2dee77fc0"},
-    {file = "social_auth_core-3.3.3-py2-none-any.whl", hash = "sha256:4a3cdf69c449b235cdabd54a1be7ba3722611297e69fded52e3584b1a990af25"},
-    {file = "social_auth_core-3.3.3-py3-none-any.whl", hash = "sha256:21c0639c56befd33ec162c2210d583bb1de8e1136d53b21bafb96afaf2f86c91"},
 ]
 soupsieve = [
     {file = "soupsieve-1.9.6-py2.py3-none-any.whl", hash = "sha256:feb1e937fa26a69e08436aad4a9037cd7e1d4c7212909502ba30701247ff8abd"},

@@ -1,6 +1,5 @@
 from allauth.account.signals import email_confirmed
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.timezone import now
 from pyswot import is_academic
@@ -41,12 +40,9 @@ class Verification(models.Model):
 
     @property
     def signup_email_activated(self):
-        try:
-            return self.user.userena_signup.activation_completed
-        except ObjectDoesNotExist:
-            return self.user.emailaddress_set.filter(
-                verified=True, email=self.signup_email
-            ).exists()
+        return self.user.emailaddress_set.filter(
+            verified=True, email=self.signup_email
+        ).exists()
 
     @property
     def signup_email_is_trusted(self):

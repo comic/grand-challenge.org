@@ -1,16 +1,19 @@
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import DetailView
+from django.views.generic import DetailView, UpdateView
 from guardian.core import ObjectPermissionChecker
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 from guardian.shortcuts import get_objects_for_user
-from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from userena import views as userena_views
+from rest_framework.viewsets import GenericViewSet
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
@@ -19,8 +22,7 @@ from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
 from grandchallenge.evaluation.models import Submission
-from grandchallenge.profiles.filters import UserProfileObjectPermissionsFilter
-from grandchallenge.profiles.forms import EditProfileForm
+from grandchallenge.profiles.forms import UserProfileForm
 from grandchallenge.profiles.models import UserProfile
 from grandchallenge.profiles.serializers import UserProfileSerializer
 from grandchallenge.reader_studies.models import ReaderStudy
@@ -39,31 +41,21 @@ def profile(request):
     return redirect(url)
 
 
-def profile_edit(*args, **kwargs):
-    kwargs["edit_profile_form"] = EditProfileForm
-    kwargs["template_name"] = "profiles/profile_form.html"
-    return userena_views.profile_edit(*args, **kwargs)
-
-
-class UserProfileDetail(UserPassesTestMixin, DetailView):
-    template_name = "profiles/profile_detail.html"
-    context_object_name = "profile"
-
-    def get_test_func(self):
-        profile = self.get_object()
-
-        def can_view_profile():
-            return profile.can_view_profile(self.request.user)
-
-        return can_view_profile
-
+class UserProfileObjectMixin:
     def get_object(self, queryset=None):
         try:
-            return UserProfile.objects.select_related(
-                "user__verification"
-            ).get(user__username__iexact=self.kwargs["username"])
+            return (
+                UserProfile.objects.select_related("user__verification")
+                .exclude(user__username__iexact=settings.ANONYMOUS_USER_NAME)
+                .get(user__username__iexact=self.kwargs["username"])
+            )
         except ObjectDoesNotExist:
             raise Http404("User not found.")
+
+
+class UserProfileDetail(UserProfileObjectMixin, DetailView):
+    model = UserProfile
+    context_object_name = "profile"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -160,16 +152,27 @@ class UserProfileDetail(UserPassesTestMixin, DetailView):
         return context
 
 
-class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
+class UserProfileUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    UserProfileObjectMixin,
+    UpdateView,
+):
+    model = UserProfile
+    form_class = UserProfileForm
+    context_object_name = "profile"
+    permission_required = "change_userprofile"
+    raise_exception = True
+
+
+class UserProfileViewSet(GenericViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = (DjangoObjectOnlyPermissions,)
-    filter_backends = (UserProfileObjectPermissionsFilter,)
+    filter_backends = (ObjectPermissionsFilter,)
     queryset = UserProfile.objects.all()
 
     @action(detail=False, methods=["get"])
     def self(self, request):
         obj = get_object_or_404(UserProfile, user=request.user)
-        if not request.user.has_perm("view_profile", obj):
-            raise PermissionDenied()
         serializer = self.get_serializer(instance=obj)
         return Response(serializer.data)

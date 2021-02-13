@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.files.storage import DefaultStorage
-from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -78,7 +77,6 @@ def is_subset(a, b):
 @override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
 class GrandChallengeFrameworkTestCase(TestCase):
     def setUp(self):
-        call_command("check_permissions")
         self.set_up_base()
         self.set_up_extra()
 
@@ -252,7 +250,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "password2": "testpassword",
             "institution": "test",
             "department": "test",
-            "location": "NL",
+            "country": "NL",
             "website": "http://www.example.com",
             "accept_terms": True,
         }
@@ -589,7 +587,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
 
 class ProjectLoginTest(GrandChallengeFrameworkTestCase):
     """
-    Getting userena login and signup to display inside a project context
+    Getting login and signup to display inside a project context
     (with correct banner and pages, sending project-based email etc..) was
     quite a hassle, not to mention messy. Do all the links still work?
     """

@@ -21,7 +21,6 @@ mark_not_verified.allowed_permissions = ("change",)
 
 
 class VerificationAdmin(admin.ModelAdmin):
-    list_select_related = ("user__userena_signup",)
     list_display = (
         "user",
         "created",

@@ -3,8 +3,8 @@ from django.urls import path, re_path
 from grandchallenge.groups.views import UserAutocomplete
 from grandchallenge.profiles.views import (
     UserProfileDetail,
+    UserProfileUpdate,
     profile,
-    profile_edit,
 )
 
 urlpatterns = [
@@ -21,7 +21,7 @@ urlpatterns = [
     ),
     re_path(
         r"^(?P<username>[\@\.\+\w-]+)/edit/$",
-        profile_edit,
+        UserProfileUpdate.as_view(),
         name="profile-update",
     ),
 ]
