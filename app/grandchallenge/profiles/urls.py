@@ -1,50 +1,27 @@
-from django.conf.urls import include
 from django.urls import path, re_path
-from django.views.defaults import permission_denied
 
 from grandchallenge.groups.views import UserAutocomplete
-from grandchallenge.profiles.forms import SignupFormExtra
 from grandchallenge.profiles.views import (
-    PreSocialView,
     UserProfileDetail,
-    login_redirect,
     profile,
     profile_edit,
-    profile_edit_redirect,
-    signin,
-    signup,
-    signup_complete,
 )
 
 urlpatterns = [
-    path(
-        "signup/",
-        signup,
-        {"signup_form": SignupFormExtra},
-        name="profile_signup",
-    ),
-    path("signup-social/", PreSocialView.as_view(), name="pre-social"),
-    path("signin/", signin, name="profile_signin"),
-    path("signup_complete/", signup_complete, name="profile_signup_complete"),
-    path("login-redirect/", login_redirect, name="login_redirect"),
-    path("profile/edit/", profile_edit_redirect, name="profile_redirect_edit"),
-    path("profile/", profile, name="profile_redirect"),
     path(
         "user-autocomplete/",
         UserAutocomplete.as_view(),
         name="users-autocomplete",
     ),
+    path("profile/", profile, name="profile-detail-redirect"),
+    re_path(
+        r"^(?P<username>[\@\.\+\w-]+)/$",
+        UserProfileDetail.as_view(),
+        name="profile-detail",
+    ),
     re_path(
         r"^(?P<username>[\@\.\+\w-]+)/edit/$",
         profile_edit,
-        name="userena_profile_edit",
+        name="profile-update",
     ),
-    re_path(
-        r"^(?P<username>(?!(signout|signup|signin)/)[\@\.\+\w-]+)/$",
-        UserProfileDetail.as_view(),
-        name="userena_profile_detail",
-    ),
-    re_path(r"^page/(?P<page>[0-9]+)/$", lambda r: permission_denied(r, "")),
-    re_path(r"^$", lambda r: permission_denied(r, "")),
-    path("", include("userena.urls")),
 ]

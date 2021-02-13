@@ -74,6 +74,7 @@ citeproc-py = "*"
 django-ipware = "*"
 pyswot = "*"
 django-redis = "*"
+django-allauth = "^0.44.0"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

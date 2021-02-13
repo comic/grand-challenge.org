@@ -47,7 +47,7 @@ class TestLoginViews:
 
             assert response.status_code == 302
             assert response.url.startswith(
-                f"https://testserver/users/signin/?next=http%3A//"
+                f"https://testserver/accounts/login/?next=http%3A//"
                 f"{e.submission.phase.challenge.short_name}.testserver/"
             )
 

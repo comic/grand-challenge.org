@@ -87,17 +87,18 @@ ANONYMOUS_USER_NAME = "AnonymousUser"
 REGISTERED_USERS_GROUP_NAME = "__registered_users_group__"
 REGISTERED_AND_ANON_USERS_GROUP_NAME = "__registered_and_anonymous_users__"
 
+##############################################################################
+#
+# django-userena
+#
+##############################################################################
+
 AUTH_PROFILE_MODULE = "profiles.UserProfile"
 USERENA_USE_HTTPS = False
 USERENA_DEFAULT_PRIVACY = "open"
 USERENA_MUGSHOT_SIZE = 460
 USERENA_REGISTER_USER = False
 USERENA_REGISTER_PROFILE = False
-LOGIN_URL = "/users/signin/"
-LOGOUT_URL = "/users/signout/"
-
-LOGIN_REDIRECT_URL = "/users/login-redirect/"
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
 
 # Do not give message popups saying "you have been logged out". Users are expected
 # to know they have been logged out when they click the logout button
@@ -378,6 +379,10 @@ THIRD_PARTY_APPS = [
     "drf_yasg",
     "markdownx",  # for editing markdown
     "django_filters",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "grandchallenge.profiles.providers.gmail",
     # django-machina dependencies:
     "mptt",
     "haystack",
@@ -443,15 +448,53 @@ INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 ADMIN_URL = f'{os.environ.get("DJANGO_ADMIN_URL", "django-admin")}/'
 
-AUTHENTICATION_BACKENDS = (
-    "social_core.backends.google.GoogleOAuth2",
-    "userena.backends.UserenaAuthenticationBackend",
-    "guardian.backends.ObjectPermissionBackend",
+AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-)
+    "allauth.account.auth_backends.AuthenticationBackend",
+    "guardian.backends.ObjectPermissionBackend",
+]
 
 GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
+
+##############################################################################
+#
+# django-allauth
+#
+##############################################################################
+
+ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
+ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
+
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_USERNAME_MIN_LENGTH = 4
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_USERNAME_BLACKLIST = USERNAME_DENYLIST
+
+SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_STORE_TOKENS = False
+SOCIALACCOUNT_PROVIDERS = {
+    "gmail": {
+        "APP": {
+            "client_id": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""),
+            "secret": os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""),
+        }
+    }
+}
+
+# Use full paths as view name lookups do not work on subdomains
+LOGIN_URL = "/accounts/login/"
+LOGOUT_URL = "/accounts/logout/"
+LOGIN_REDIRECT_URL = "/users/profile/"
+
+##############################################################################
+#
+# django-social-auth
+#
+##############################################################################
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", ""
@@ -459,8 +502,8 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""
 )
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
 
-# TODO: JM - Add the profile filling as a partial
 SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_details",
     "social_core.pipeline.social_auth.social_uid",
@@ -469,7 +512,6 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.associate_by_email",
     "social_core.pipeline.user.get_username",
     "social_core.pipeline.user.create_user",
-    "grandchallenge.profiles.social_auth.pipeline.profile.create_profile",
     "social_core.pipeline.social_auth.associate_user",
     "social_core.pipeline.social_auth.load_extra_data",
     "social_core.pipeline.user.user_details",

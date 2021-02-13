@@ -84,6 +84,10 @@
     </main>
 {% endblock %}
 
+{% block extra_body %}
+    {# Block used by django-allauth #}
+{% endblock %}
+
 {% block footer %}
     {% include "grandchallenge/partials/footer.html" %}
 {% endblock %}

@@ -26,12 +26,12 @@ class UserProfile(UserenaBaseProfile):
 
     def get_absolute_url(self):
         return reverse(
-            "userena_profile_detail", kwargs={"username": self.user.username}
+            "profile-detail", kwargs={"username": self.user.username}
         )
 
 
 @disable_for_loaddata
-def create_user_profile(sender, instance, created, **kwargs):
+def create_user_profile(instance, created, *_, **__):
     if created:
         UserProfile.objects.create(user=instance)
 

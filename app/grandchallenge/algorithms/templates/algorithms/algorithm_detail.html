@@ -93,7 +93,7 @@
             <h5>
                 By
                 {% for user in object.editors_group.user_set.all %}
-                    <a href="{% url 'userena_profile_detail' username=user.username %}">
+                    <a href="{% url 'profile-detail' username=user.username %}">
                         {# @formatter:off #}
                         {% firstof user.get_full_name user.username %}</a>{% if forloop.revcounter0 > 1 %},{% elif forloop.revcounter0 == 1 %} and {% else %}.{% endif %}
                         {# @formatter:on #}

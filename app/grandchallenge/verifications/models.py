@@ -1,4 +1,6 @@
+from allauth.account.signals import email_confirmed
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.timezone import now
 from pyswot import is_academic
@@ -7,6 +9,10 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.tokens import (
     email_verification_token_generator,
 )
+
+
+def email_is_trusted(*, email):
+    return is_academic(email)
 
 
 class Verification(models.Model):
@@ -35,21 +41,22 @@ class Verification(models.Model):
 
     @property
     def signup_email_activated(self):
-        return self.user.userena_signup.activation_completed
+        try:
+            return self.user.userena_signup.activation_completed
+        except ObjectDoesNotExist:
+            return self.user.emailaddress_set.filter(
+                verified=True, email=self.signup_email
+            ).exists()
 
     @property
     def signup_email_is_trusted(self):
-        return self.signup_email_activated and self._email_is_trusted(
-            self.signup_email
+        return self.signup_email_activated and email_is_trusted(
+            email=self.signup_email
         )
 
     @property
     def verification_email_is_trusted(self):
-        return self.email_is_verified and self._email_is_trusted(self.email)
-
-    @staticmethod
-    def _email_is_trusted(email):
-        return is_academic(email)
+        return self.email_is_verified and email_is_trusted(email=self.email)
 
     @property
     def token(self):
@@ -65,3 +72,16 @@ class Verification(models.Model):
             self.verified_at = now()
 
         super().save(*args, **kwargs)
+
+
+def create_verification(email_address, *_, **__):
+    if (
+        email_is_trusted(email=email_address.email)
+        and not Verification.objects.filter(user=email_address.user).exists()
+    ):
+        Verification.objects.create(
+            user=email_address.user, email=email_address.email
+        )
+
+
+email_confirmed.connect(create_verification)

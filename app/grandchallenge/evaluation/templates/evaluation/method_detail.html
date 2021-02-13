@@ -30,7 +30,7 @@
         <dd>{{ object.phase.title }}</dd>
 
         <dt>Creator</dt>
-        <dd><a href="{% url 'userena_profile_detail' object.creator.username %}">{{ object.creator }}</a></dd>
+        <dd><a href="{% url 'profile-detail' object.creator.username %}">{{ object.creator }}</a></dd>
 
         <dt>Created</dt>
         <dd>{{ object.created }}</dd>

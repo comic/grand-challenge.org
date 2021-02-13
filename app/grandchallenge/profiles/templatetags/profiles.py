@@ -19,7 +19,7 @@ def user_profile_link(user: Union[AbstractUser, None]) -> str:
     if user:
         username = user.username
         profile_url = reverse(
-            "userena_profile_detail", kwargs={"username": user.username}
+            "profile-detail", kwargs={"username": user.username}
         )
         mugshot = format_html(
             (

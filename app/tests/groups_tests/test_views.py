@@ -1,7 +1,5 @@
 import pytest
-from django.core.management import call_command
 from lxml.html.diff import html_escape
-from userena.models import UserenaSignup
 
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
@@ -109,10 +107,7 @@ class TestAutocompleteViews:
         last_name = "Doe"
 
         if is_verified:
-            call_command("check_permissions")
-            u = UserenaSignup.objects.create_user(
-                "userena", "userena@test.com", "testpassword", active=True
-            )
+            u = UserFactory()
             VerificationFactory(user=u, is_verified=True)
             u.first_name = first_name
             u.last_name = last_name
@@ -153,10 +148,7 @@ class TestAutocompleteViews:
         admin = UserFactory()
         archive.add_editor(admin)
 
-        call_command("check_permissions")
-        user = UserenaSignup.objects.create_user(
-            "userena", "userena@test.com", "testpassword", active=True
-        )
+        user = UserFactory()
         VerificationFactory(user=user, is_verified=True)
 
         response = get_view_for_user(
