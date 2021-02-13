@@ -6,7 +6,9 @@ from io import BytesIO
 
 import boto3
 from PIL import Image
+from allauth.account.models import EmailAddress
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
@@ -15,7 +17,6 @@ from django.core.files.base import ContentFile, File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
 from rest_framework.authtoken.models import Token
-from userena.models import UserenaSignup
 
 import grandchallenge.cases.models
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
@@ -119,11 +120,19 @@ class Command(BaseCommand):
         users = {}
 
         for username in usernames:
-            users[username] = UserenaSignup.objects.create_user(
+            users[username] = get_user_model().objects.create(
                 username=username,
                 email=f"{username}@example.com",
-                password=username,
-                active=True,
+                is_active=True,
+            )
+            users[username].set_password(username)
+            users[username].save()
+
+            EmailAddress.objects.create(
+                user=users[username],
+                email=users[username].email,
+                verified=True,
+                primary=True,
             )
 
         return users

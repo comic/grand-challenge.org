@@ -46,7 +46,7 @@
                     <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
                     <td>{{ method.phase.title }}</td>
                     <td><a
-                            href="{% url 'userena_profile_detail' method.creator.username %}">{{ method.creator }}</a>
+                            href="{% url 'profile-detail' method.creator.username %}">{{ method.creator }}</a>
                     </td>
                     <td>{{ method.image_sha256 }}</td>
                     <td>{{ method.ready }}</td>

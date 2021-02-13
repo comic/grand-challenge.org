@@ -26,7 +26,7 @@ class UserProfile(UserenaBaseProfile):
 
     def get_absolute_url(self):
         return reverse(
-            "userena_profile_detail", kwargs={"username": self.user.username}
+            "profile-detail", kwargs={"username": self.user.username}
         )
 
 

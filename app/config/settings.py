@@ -99,11 +99,6 @@ USERENA_DEFAULT_PRIVACY = "open"
 USERENA_MUGSHOT_SIZE = 460
 USERENA_REGISTER_USER = False
 USERENA_REGISTER_PROFILE = False
-LOGIN_URL = "/users/signin/"
-LOGOUT_URL = "/users/signout/"
-
-LOGIN_REDIRECT_URL = "/users/login-redirect/"
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
 
 # Do not give message popups saying "you have been logged out". Users are expected
 # to know they have been logged out when they click the logout button
@@ -492,6 +487,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+LOGIN_URL = "account_login"
+LOGOUT_URL = "account_logout"
+LOGIN_REDIRECT_URL = "profile-detail-redirect"
+
 ##############################################################################
 #
 # django-social-auth
@@ -504,6 +503,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get(
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get(
     "SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", ""
 )
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL
 
 # TODO: JM - Add the profile filling as a partial
 SOCIAL_AUTH_PIPELINE = (

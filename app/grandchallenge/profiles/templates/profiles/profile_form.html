@@ -1,16 +1,13 @@
-{% extends 'userena/site_signin.html' %}
+{% extends 'base.html' %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block title %}{% trans "Account setup" %}{% endblock %}
-
-{% block content_title %}<h2>{% blocktrans with profile.user.username as username %}Account &raquo;
-    {{ username }}{% endblocktrans %}</h2>{% endblock %}
+{% block title %}Edit Profile{% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href>Users</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'userena_profile_detail' username=profile.user.username %}">{{ profile.user.username }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'profile-detail' username=profile.user.username %}">{{ profile.user.username }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">Edit Profile</li>
     </ol>
 {% endblock %}

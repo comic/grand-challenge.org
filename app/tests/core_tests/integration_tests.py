@@ -1,6 +1,7 @@
 import re
 from random import choice
 
+from allauth.account.models import EmailAddress
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -8,12 +9,15 @@ from django.core.files.storage import DefaultStorage
 from django.core.management import call_command
 from django.test import TestCase
 from django.test.utils import override_settings
-from userena.models import UserenaSignup
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.pages.models import Page
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import PageFactory, RegistrationRequestFactory
+from tests.factories import (
+    PageFactory,
+    RegistrationRequestFactory,
+    UserFactory,
+)
 from tests.utils import get_http_host
 
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -91,14 +95,15 @@ class GrandChallengeFrameworkTestCase(TestCase):
         try:
             self.root = User.objects.filter(username="root")[0]
         except IndexError:
-            # A user who has created a project
-            root = UserenaSignup.objects.create_user(
-                "root", "w.s.kerkstra@gmail.com", "testpassword", active=True
+            self.root = UserFactory(
+                username="root", email="w.s.kerkstra@gmail.com", is_active=True
             )
-            root.is_staff = True
-            root.is_superuser = True
-            root.save()
-            self.root = root
+            self.root.set_password("testpassword")
+            self.root.save()
+
+            EmailAddress.objects.create(
+                user=self.root, email=self.root.email, verified=True
+            )
 
     def _create_dummy_project(self, projectname="testproject"):
         """
@@ -237,6 +242,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
         """
         if overwrite_data is None:
             overwrite_data = {}
+
         data = {
             "first_name": "test",
             "last_name": "test",
@@ -246,22 +252,21 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "password2": "testpassword",
             "institution": "test",
             "department": "test",
-            "country": "NL",
+            "location": "NL",
             "website": "http://www.example.com",
             "accept_terms": True,
         }
         data.update(overwrite_data)  # overwrite any key in default if in data
-        signin_page = self.client.post(reverse("profile_signup"), data)
-        # check whether signin succeeded. If succeeded the response will be a
-        # httpResponseRedirect object, which has a 'Location' key in its
-        # items(). Don't know how to better check for type here.
-        lst = [x[0] for x in signin_page.items()]
-        self.assertTrue(
-            "Location" in lst,
-            "could not create user. errors in"
-            " html:\n %s \n posted data: %s"
-            % (extract_form_errors(signin_page.content), data),
+
+        self.client.logout()
+        response = self.client.post(
+            reverse("account_signup"), data, follow=True
         )
+
+        assert response.status_code == 200
+        assert response.template_name == ["account/verification_sent.html"]
+
+        assert get_user_model().objects.get(username=data["username"])
 
     def _create_random_user(self, startname=""):
         username = startname + "".join(
@@ -278,12 +283,17 @@ class GrandChallengeFrameworkTestCase(TestCase):
         Any unspecified values are given default values.
         """
         username = data["username"]
+
         self._signup_user(data)
-        validation_mail = mail.outbox[-1]
+
+        validation_mail = [
+            e for e in mail.outbox if e.recipients() == [data["email"]]
+        ][0]
+
         self.assertTrue(
-            "signup" in validation_mail.subject,
-            "There was no email"
-            " sent which had 'signup' in the subject line",
+            "Please Confirm Your E-mail" in validation_mail.subject,
+            "There was no email sent which had 'Please Confirm Your E-mail' "
+            "in the subject line",
         )
         # validate the user with the link that was emailed
         pattern = "/testserver(.*)" + PI_LINE_END_REGEX
@@ -299,12 +309,12 @@ class GrandChallengeFrameworkTestCase(TestCase):
             ),
         )
         validationlink = validationlink_result.group(1).strip()
-        response = self.client.post(validationlink)
+        response = self.client.post(validationlink, follow=True)
         self.assertEqual(
             response.status_code,
-            302,
+            200,
             "Could not load user validation link. Expected"
-            " a redirect (HTTP 302), got HTTP {} instead".format(
+            " a redirect (HTTP 200), got HTTP {} instead".format(
                 response.status_code
             ),
         )
@@ -604,13 +614,15 @@ class ProjectLoginTest(GrandChallengeFrameworkTestCase):
         # centered signup form.
         self._create_random_user()
         # see if views work and all urls can be found
-        login_url = reverse("userena_signin")
-        logout_url = reverse("userena_signout")
-        profile_signup_complete_url = reverse("profile_signup_complete")
-        self._test_url_can_be_viewed(self.signedup_user, login_url)
+        login_url = reverse("account_login")
+        logout_url = reverse("account_logout")
+        profile_signup_complete_url = reverse(
+            "profile-detail", kwargs={"username": self.signedup_user.username}
+        )
+        self._test_url_can_not_be_viewed(self.signedup_user, login_url)
         self._test_url_can_be_viewed(None, login_url)
         self._test_url_can_be_viewed(self.participant, logout_url)
-        self._test_url_can_be_viewed(None, logout_url)
+        self._test_url_can_not_be_viewed(None, logout_url)
         self._test_url_can_be_viewed(
             self.signedup_user, profile_signup_complete_url
         )
@@ -618,9 +630,5 @@ class ProjectLoginTest(GrandChallengeFrameworkTestCase):
         # password reset is in the "forgot password?" link on the project
         # based login page. Make sure this works right.
         self._test_url_can_be_viewed(
-            self.participant, reverse("userena_password_reset")
+            self.participant, reverse("account_reset_password")
         )
-
-
-# The other userena urls are not realy tied up with project so I will
-# leave to userena to test.

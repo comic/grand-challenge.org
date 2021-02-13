@@ -21,7 +21,7 @@
                     {{ object.created|date:"j N Y" }}
                     by
                     {# @formatter:off #}
-            {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<a href="{% url 'userena_profile_detail' username=author.username %}">{% firstof author.get_full_name author.username %}</a>{% endfor %}
+            {% for author in object.authors.all %}{% if not forloop.first %}{% if forloop.last %} and {% else %}, {% endif %}{% endif %}<a href="{% url 'profile-detail' username=author.username %}">{% firstof author.get_full_name author.username %}</a>{% endfor %}
             {# @formatter:on #}
                 </p>
 

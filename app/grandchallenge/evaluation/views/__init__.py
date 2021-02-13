@@ -58,7 +58,7 @@ class PhaseCreate(
     success_message = "Phase successfully created"
     permission_required = "change_challenge"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
         return self.request.challenge
@@ -83,7 +83,7 @@ class PhaseUpdate(
     success_message = "Configuration successfully updated"
     permission_required = "change_phase"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_object(self, queryset=None):
         return Phase.objects.get(
@@ -112,7 +112,7 @@ class MethodCreate(
     form_class = MethodForm
     permission_required = "change_challenge"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
         return self.request.challenge
@@ -136,7 +136,7 @@ class MethodCreate(
 class MethodList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Method
     permission_required = "view_method"
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -149,7 +149,7 @@ class MethodDetail(
     model = Method
     permission_required = "view_method"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
 
 class SubmissionCreateBase(SuccessMessageMixin, CreateView):
@@ -287,7 +287,7 @@ class SubmissionCreate(
     form_class = SubmissionForm
     permission_required = "create_phase_submission"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
         return self.phase
@@ -299,7 +299,7 @@ class LegacySubmissionCreate(
     form_class = LegacySubmissionForm
     permission_required = "change_challenge"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
         return self.request.challenge
@@ -313,7 +313,7 @@ class LegacySubmissionCreate(
 class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Submission
     permission_required = "view_submission"
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -334,7 +334,7 @@ class SubmissionDetail(
     model = Submission
     permission_required = "view_submission"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
 
 class TeamContextMixin:
@@ -366,7 +366,7 @@ class EvaluationList(
 ):
     model = Evaluation
     permission_required = "view_evaluation"
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -619,4 +619,4 @@ class EvaluationUpdate(
     success_message = "Result successfully updated."
     permission_required = "change_evaluation"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")

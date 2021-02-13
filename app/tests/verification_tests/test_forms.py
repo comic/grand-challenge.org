@@ -1,6 +1,4 @@
 import pytest
-from django.core.management import call_command
-from userena.models import UserenaSignup
 
 from grandchallenge.verifications.forms import (
     ConfirmEmailForm,
@@ -56,22 +54,14 @@ class TestVerificationForm:
         assert ["This email is already in use"] == form.errors["email"]
 
     def test_cannot_make_validation_with_other_validation_email(self):
-        call_command("check_permissions")
-        u = UserenaSignup.objects.create_user(
-            "userena", "userena@gmail.com", "testpassword", active=True
-        )
-
+        u = UserFactory()
         v = VerificationFactory(user=u)
         form = VerificationForm(user=UserFactory(), data={"email": v.email})
 
         assert ["This email is already in use"] == form.errors["email"]
 
     def test_can_only_create_one_validation(self):
-        call_command("check_permissions")
-        u = UserenaSignup.objects.create_user(
-            "userena", "userena@google.com", "testpassword", active=True
-        )
-
+        u = UserFactory()
         VerificationFactory(user=u)
         form = VerificationForm(user=u, data={"email": u.email, "user": u})
 
@@ -83,10 +73,7 @@ class TestVerificationForm:
 @pytest.mark.django_db
 class TestConfirmEmailForm:
     def test_user_can_verify(self):
-        call_command("check_permissions")
-        user = UserenaSignup.objects.create_user(
-            "userena", "userena@google.com", "testpassword", active=True
-        )
+        user = UserFactory()
         verification = VerificationFactory(user=user)
         form = ConfirmEmailForm(
             user=user,
@@ -97,15 +84,10 @@ class TestConfirmEmailForm:
         assert form.is_valid()
 
     def test_user_can_not_verify_other_token(self):
-        call_command("check_permissions")
-        u1 = UserenaSignup.objects.create_user(
-            "userena", "userena@google.com", "testpassword", active=True
-        )
+        u1 = UserFactory()
         v1 = VerificationFactory(user=u1)
 
-        u2 = UserenaSignup.objects.create_user(
-            "userena2", "userena2@google.com", "testpassword", active=True
-        )
+        u2 = UserFactory()
         VerificationFactory(user=u2)
 
         form = ConfirmEmailForm(

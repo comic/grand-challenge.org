@@ -24,7 +24,7 @@ class UserAuthAndTestMixin(UserPassesTestMixin):
     raise_exception = True
 
     def get_login_url(self):
-        return reverse("userena_signin")
+        return reverse("account_login")
 
     def redirect_to_login(
         self, next, login_url=None, redirect_field_name=REDIRECT_FIELD_NAME

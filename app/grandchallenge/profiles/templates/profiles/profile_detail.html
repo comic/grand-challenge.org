@@ -58,11 +58,11 @@
                                 </a>
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
-                               href='{% url 'userena_profile_edit' user.username %}'><i
+                               href='{% url 'profile-update' user.username %}'><i
                                     class="fa fa-edit fa-fw"></i>&nbsp;{% trans "Edit profile" %}</a>
                             {% if profile.user.has_usable_password %}
                                 <a class="list-group-item list-group-item-action"
-                                   href='{% url 'userena_password_change' user.username %}'><i
+                                   href='{% url 'account_change_password' %}'><i
                                         class="fa fa-key fa-fw"></i>&nbsp;{% trans "Change password" %}
                                 </a>
                             {% endif %}

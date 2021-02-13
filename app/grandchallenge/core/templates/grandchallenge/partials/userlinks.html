@@ -13,11 +13,11 @@
         </a>
         <div class="dropdown-menu dropdown-menu-right">
             <a class="dropdown-item"
-               href="{% url 'userena_profile_detail' user.username %}">
+               href="{% url 'profile-detail' user.username %}">
                 Signed in as <b>{{ user.username }}</b></a>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item"
-               href="{% url 'userena_profile_detail' user.username %}">
+               href="{% url 'profile-detail' user.username %}">
                 Your Profile</a>
             <a class="dropdown-item"
                href="{% url 'challenges:users-list' %}">
@@ -27,15 +27,15 @@
                 Your Uploads</a>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item"
-               href="{% url 'userena_signout' %}?next=/">
+               href="{% url 'account_logout' %}?next=/">
                 Sign out</a>
         </div>
     </li>
 {% else %}
     <li class="pr-2 my-1"><a
             class="btn btn-outline-primary"
-            href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}#signin">Sign In</a></li>
+            href="{% url 'account_login' %}?next={{ request.build_absolute_uri }}#signin">Sign In</a></li>
     <li class="my-1"><a
             class="btn btn-outline-primary"
-            href="{% url 'userena_signin' %}?next={{ request.build_absolute_uri }}#register">Register</a></li>
+            href="{% url 'account_signup' %}?next={{ request.build_absolute_uri }}#register">Register</a></li>
 {% endif %}

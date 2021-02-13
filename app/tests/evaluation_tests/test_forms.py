@@ -1,6 +1,4 @@
 import pytest
-from django.core.management import call_command
-from userena.models import UserenaSignup
 
 from grandchallenge.evaluation.forms import SubmissionForm
 from tests.algorithms_tests.factories import (
@@ -92,10 +90,7 @@ class TestSubmissionForm:
 
     @pytest.mark.parametrize("is_verified", (True, False))
     def test_user_with_verification(self, is_verified):
-        call_command("check_permissions")
-        user = UserenaSignup.objects.create_user(
-            "userena", "userena@google.com", "testpassword", active=True
-        )
+        user = UserFactory()
         VerificationFactory(user=user, is_verified=is_verified)
 
         form = SubmissionForm(

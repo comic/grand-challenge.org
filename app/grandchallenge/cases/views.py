@@ -54,7 +54,7 @@ class RawImageUploadSessionList(
 ):
     model = RawImageUploadSession
     permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
     row_template = "cases/rawimageuploadsession_row.html"
     search_fields = [
         "pk",
@@ -73,7 +73,7 @@ class RawImageUploadSessionDetail(
     model = RawImageUploadSession
     permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
 
 class OSDImageDetail(
@@ -84,7 +84,7 @@ class OSDImageDetail(
         f"{Image._meta.app_label}.view_{Image._meta.model_name}"
     )
     raise_exception = True
-    login_url = reverse_lazy("userena_signin")
+    login_url = reverse_lazy("account_login")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

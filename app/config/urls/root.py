@@ -73,7 +73,6 @@ urlpatterns = [
             "grandchallenge.verifications.urls", namespace="verifications",
         ),
     ),
-    path("socialauth/", include("social_django.urls", namespace="social")),
     path(
         "challenges/",
         include("grandchallenge.challenges.urls", namespace="challenges"),

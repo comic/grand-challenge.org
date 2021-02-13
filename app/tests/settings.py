@@ -9,7 +9,8 @@ from config.settings import *  # noqa: F401, F403, E402
 
 """ Settings overrides for tests """
 
-ALLOWED_HOSTS = [".testserver"]
+SESSION_COOKIE_DOMAIN = ".testserver"
+ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
 
 WHITENOISE_AUTOREFRESH = True
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"

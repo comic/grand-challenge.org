@@ -19,8 +19,11 @@ class AccountAdapter(DefaultAccountAdapter):
 
         return url_has_allowed_host_and_scheme(
             url=url,
-            allowed_hosts={*challenge_domains, *workstation_domains},
-            require_https=True,
+            allowed_hosts={
+                *challenge_domains,
+                *workstation_domains,
+                settings.SESSION_COOKIE_DOMAIN.lstrip("."),
+            },
         )
 
     def clean_email(self, email):
