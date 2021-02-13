@@ -140,6 +140,6 @@ def get_banner_path(instance, filename):
 
 
 def get_mugshot_path(instance, filename):
-    time_prefix = now().strftime("%Y/%m/%d/")
+    time_prefix = now().strftime("%Y/%m/%d")
     extension = filename.split(".")[-1].lower()
     return f"mugshots/{time_prefix}/{uuid4()}.{extension}"
