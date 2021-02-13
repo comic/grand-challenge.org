@@ -28,7 +28,6 @@ docker = "*"
 "oauth2" = "*"
 python-magic = "*"
 pytz = "*"
-social-auth-app-django = "*"
 gunicorn = "*"
 uvicorn = "*"
 django-celery-email = "*"
@@ -74,7 +73,8 @@ citeproc-py = "*"
 django-ipware = "*"
 pyswot = "*"
 django-redis = "*"
-django-allauth = "^0.44.0"
+django-allauth = "*"
+defusedxml = "*" # Required for django-allauth dependency resolution
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
