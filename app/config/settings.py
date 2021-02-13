@@ -485,9 +485,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-LOGIN_URL = "account_login"
-LOGOUT_URL = "account_logout"
-LOGIN_REDIRECT_URL = "profile-detail-redirect"
+# Use full paths as view name lookups do not work on subdomains
+LOGIN_URL = "/accounts/login/"
+LOGOUT_URL = "/accounts/logout/"
+LOGIN_REDIRECT_URL = "/users/profile/"
 
 ##############################################################################
 #
