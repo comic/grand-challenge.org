@@ -182,13 +182,12 @@ with the service running in the docker container.
 
     $ export $(cat .env.local | egrep -v "^#" | xargs)
 
-6. Run migrations and check_permissions (optionally load demo data).
+6. Run migrations (optionally load demo data).
 
 .. code-block:: console
 
     $ cd app
     $ python manage.py migrate
-    $ python manage.py check_permissions
     $ python manage.py init_gc_demo
 
 7. You can now start the server using ``python manage.py runserver_plus``.

@@ -658,20 +658,6 @@ pytz = "*"
 
 [[package]]
 category = "main"
-description = "Complete user management application for Django"
-name = "django-userena-ce"
-optional = false
-python-versions = ">=3.6"
-version = "6.0.1"
-
-[package.dependencies]
-Django = ">=2.2"
-django-guardian = ">=2.0"
-easy-thumbnails = "*"
-html2text = "*"
-
-[[package]]
-category = "main"
 description = "Tweak the form field rendering in templates, not in python-level form definitions."
 name = "django-widget-tweaks"
 optional = false
@@ -844,14 +830,6 @@ name = "h11"
 optional = false
 python-versions = "*"
 version = "0.9.0"
-
-[[package]]
-category = "main"
-description = "Turn HTML into equivalent Markdown-structured text."
-name = "html2text"
-optional = false
-python-versions = ">=3.5"
-version = "2020.1.16"
 
 [[package]]
 category = "main"
@@ -2057,7 +2035,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
 [metadata]
-content-hash = "91d65aa5eb35285cf7453848fced82770e5fb4d78f97fbdc0074c325da7e3b13"
+content-hash = "524fb0ebda64b8849068bc38df274d440bd401c5c66577b5b23078861ebc1536"
 lock-version = "1.0"
 python-versions = "^3.8"
 
@@ -2378,10 +2356,6 @@ django-timezone-field = [
     {file = "django-timezone-field-4.0.tar.gz", hash = "sha256:7e3620fe2211c2d372fad54db8f86ff884098d018d56fda4dca5e64929e05ffc"},
     {file = "django_timezone_field-4.0-py3-none-any.whl", hash = "sha256:758b7d41084e9ea2e89e59eb616e9b6326e6fbbf9d14b6ef062d624fe8cc6246"},
 ]
-django-userena-ce = [
-    {file = "django-userena-ce-6.0.1.tar.gz", hash = "sha256:d8bacf315919a12f5e07eaac69834a1408fcf58f17808e2fd275d31555dfa945"},
-    {file = "django_userena_ce-6.0.1-py3-none-any.whl", hash = "sha256:e1f98e3447903d4608a44ddbb2ecb01e2ae356cdfcda6be5226fd7260d2b78e0"},
-]
 django-widget-tweaks = [
     {file = "django-widget-tweaks-1.4.8.tar.gz", hash = "sha256:9f91ca4217199b7671971d3c1f323a2bec71a0c27dec6260b3c006fa541bc489"},
     {file = "django_widget_tweaks-1.4.8-py2.py3-none-any.whl", hash = "sha256:f80bff4a8a59b278bb277a405a76a8b9a884e4bae7a6c70e78a39c626cd1c836"},
@@ -2431,10 +2405,6 @@ gunicorn = [
 h11 = [
     {file = "h11-0.9.0-py2.py3-none-any.whl", hash = "sha256:4bc6d6a1238b7615b266ada57e0618568066f57dd6fa967d1290ec9309b2f2f1"},
     {file = "h11-0.9.0.tar.gz", hash = "sha256:33d4bca7be0fa039f4e84d50ab00531047e53d6ee8ffbc83501ea602c169cae1"},
-]
-html2text = [
-    {file = "html2text-2020.1.16-py3-none-any.whl", hash = "sha256:c7c629882da0cf377d66f073329ccf34a12ed2adf0169b9285ae4e63ef54c82b"},
-    {file = "html2text-2020.1.16.tar.gz", hash = "sha256:e296318e16b059ddb97f7a8a1d6a5c1d7af4544049a01e261731d2d5cc277bbb"},
 ]
 httplib2 = [
     {file = "httplib2-0.18.1-py3-none-any.whl", hash = "sha256:ca2914b015b6247791c4866782fa6042f495b94401a0f0bd3e1d6e0ba2236782"},

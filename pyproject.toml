@@ -22,7 +22,6 @@ celery = {extras = ["redis", "sqs"], version = "^4.4.6"}
 django = "<3.2"
 django-countries = "*"
 django-crispy-forms = "*"
-django-userena-ce = "*"
 djangorestframework = "*"
 docker = "*"
 "oauth2" = "*"
