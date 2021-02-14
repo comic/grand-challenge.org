@@ -105,3 +105,12 @@ dl.inline dt:after {
     background-color: var(--gray-dark);
     color: var(--light);
 }
+
+ul.socialaccount_providers {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul.socialaccount_providers > li {
+    min-width: 300px;
+}

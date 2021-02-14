@@ -1,4 +1,6 @@
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.account.utils import user_email, user_username
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django import forms
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -37,3 +39,14 @@ class AccountAdapter(DefaultAccountAdapter):
             )
 
         return email
+
+
+class SocialAccountAdapter(DefaultSocialAccountAdapter):
+    def populate_user(self, *args, **kwargs):
+        user = super().populate_user(*args, **kwargs)
+
+        if not user_username(user) and user_email(user):
+            # If no username set, use the first part of their email
+            user_username(user, user_email(user).split("@")[0])
+
+        return user

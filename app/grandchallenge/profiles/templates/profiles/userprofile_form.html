@@ -7,20 +7,17 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href>Users</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'profile-detail' username=profile.user.username %}">{{ profile.user.username }}</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'profile-detail' username=profile.user.username %}">{{ profile.user.username }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">Edit Profile</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <div class="white-box">
-        <form action="" enctype="multipart/form-data" method="post">
-            {% csrf_token %}
-            <fieldset>
-                <legend>{% trans "Edit Profile" %}</legend>
-                {{ form | crispy }}
-            </fieldset>
-            <input type="submit" value="{% trans "Save changes" %}"/>
-        </form>
-    </div>
+    <h1>{% trans "Edit Profile" %}</h1>
+    <form action="" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        {{ form | crispy }}
+        <input class="btn btn-primary" type="submit" value="{% trans "Save changes" %}"/>
+    </form>
 {% endblock %}
