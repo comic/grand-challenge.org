@@ -21,8 +21,8 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyPermissionRequestUpdate,
     ReaderStudyStatistics,
     ReaderStudyUpdate,
-    ReadersProgress,
     ReadersUpdate,
+    UsersProgress,
 )
 
 app_name = "reader-studies"
@@ -90,11 +90,7 @@ urlpatterns = [
         ReadersUpdate.as_view(),
         name="readers-update",
     ),
-    path(
-        "<slug>/readers/progress/",
-        ReadersProgress.as_view(),
-        name="readers-progress",
-    ),
+    path("<slug>/progress/", UsersProgress.as_view(), name="users-progress",),
     path(
         "<slug>/permission-requests/",
         ReaderStudyPermissionRequestList.as_view(),
