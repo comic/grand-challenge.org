@@ -671,16 +671,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         hanging_list_count = len(self.hanging_list)
 
-        if self.answerable_question_count == 0 or hanging_list_count == 0:
-            return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
-
         expected = hanging_list_count * self.answerable_question_count
+
         answers = Answer.objects.filter(
             question__in=self.answerable_questions,
             creator_id=user.id,
             is_ground_truth=False,
         ).distinct()
         answer_count = answers.count()
+
+        if expected == 0 or answer_count == 0:
+            return {"questions": 0.0, "hangings": 0.0, "diff": 0.0}
 
         # Group the answers by images and filter out the images that
         # have an inadequate amount of answers
