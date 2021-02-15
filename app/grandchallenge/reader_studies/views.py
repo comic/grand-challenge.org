@@ -1,5 +1,4 @@
 import csv
-import re
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -21,9 +20,9 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -42,6 +41,7 @@ from guardian.shortcuts import get_perms
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.viewsets import (
     ModelViewSet,
     ReadOnlyModelViewSet,
@@ -57,6 +57,7 @@ from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
     DjangoObjectOnlyWithCustomPostPermissions,
 )
+from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -207,6 +208,9 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 .order_by("username")
                 .all()
             )
+
+            context.update(self._reader_study_export_context)
+
             context.update(
                 {
                     "readers": readers,
@@ -236,6 +240,21 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
             )
 
         return context
+
+    @property
+    def _reader_study_export_context(self):
+        limit = 1000
+        return {
+            "limit": limit,
+            "now": now().isoformat(),
+            "answer_offsets": range(
+                0,
+                Answer.objects.filter(
+                    question__reader_study=self.object
+                ).count(),
+                limit,
+            ),
+        }
 
 
 class ReaderStudyUpdate(
@@ -792,35 +811,7 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
         return context
 
 
-class ExportCSVMixin(object):
-    def _create_dicts(self, headers, data):
-        return map(lambda x: dict(zip(headers, x)), data)
-
-    def _preprocess_data(self, data):
-        processed = []
-        for entry in data:
-            processed.append(
-                map(lambda x: re.sub(r"[\n\r\t]", " ", str(x)), entry)
-            )
-        return processed
-
-    def _create_csv_response(self, data, headers, filename="export.csv"):
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        writer = csv.DictWriter(
-            response,
-            quoting=csv.QUOTE_ALL,
-            escapechar="\\",
-            fieldnames=headers,
-        )
-        writer.writeheader()
-        csv_dict = self._create_dicts(headers, self._preprocess_data(data))
-        writer.writerows(csv_dict)
-
-        return response
-
-
-class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
+class ReaderStudyViewSet(ReadOnlyModelViewSet):
     serializer_class = ReaderStudySerializer
     queryset = ReaderStudy.objects.all().prefetch_related(
         "images", "questions__options"
@@ -830,31 +821,14 @@ class ReaderStudyViewSet(ExportCSVMixin, ReadOnlyModelViewSet):
     change_permission = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
+    renderer_classes = (
+        *api_settings.DEFAULT_RENDERER_CLASSES,
+        PaginatedCSVRenderer,
+    )
 
     def _check_change_perms(self, user, obj):
         if not (user and user.has_perm(self.change_permission, obj)):
             raise Http404()
-
-    # TODO JM @action(detail=True)
-    def export_answers(self, request, pk=None):
-        reader_study = self.get_object()
-        self._check_change_perms(request.user, reader_study)
-        data = []
-        headers = []
-        for answer in (
-            Answer.objects.select_related("question__reader_study")
-            .select_related("creator")
-            .prefetch_related("images")
-            .filter(question__reader_study=reader_study, is_ground_truth=False)
-        ):
-            data += [answer.csv_values]
-            if len(answer.csv_headers) > len(headers):
-                headers = answer.csv_headers
-        return self._create_csv_response(
-            data,
-            headers,
-            filename=f"{reader_study.slug}-answers-{timezone.now().isoformat()}.csv",
-        )
 
     @action(detail=True, methods=["patch"])
     def generate_hanging_list(self, request, pk=None):
@@ -919,7 +893,12 @@ class QuestionViewSet(ReadOnlyModelViewSet):
     serializer_class = QuestionSerializer
     queryset = Question.objects.all().select_related("reader_study")
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["reader_study"]
+    renderer_classes = (
+        *api_settings.DEFAULT_RENDERER_CLASSES,
+        PaginatedCSVRenderer,
+    )
 
 
 class AnswerViewSet(ModelViewSet):
@@ -932,6 +911,10 @@ class AnswerViewSet(ModelViewSet):
     permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["question__reader_study"]
+    renderer_classes = (
+        *api_settings.DEFAULT_RENDERER_CLASSES,
+        PaginatedCSVRenderer,
+    )
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)

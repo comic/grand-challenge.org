@@ -30,7 +30,7 @@
                    href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
                    aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
                 </a>
-                 <a class="nav-link" id="v-pills-readers-tab" data-toggle="pill"
+                <a class="nav-link" id="v-pills-readers-tab" data-toggle="pill"
                    href="#v-pills-readers" role="tab" aria-controls="v-pills-readers"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i> Readers &nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ num_readers }}</span>
@@ -218,16 +218,15 @@
                  aria-labelledby="v-pills-editors-tab">
 
                 <h2>Editors</h2>
-
-                {% url 'reader-studies:editors-update' slug=object.slug as editor_update_url %}
-                {% include "groups/partials/user_list.html" with edit_url=editor_update_url form=editor_remove_form users=object.editors_group.user_set.all %}
-
                 <p class="mt-3">
                     <a class="btn btn-primary"
                        href="{% url 'reader-studies:editors-update' slug=object.slug %}">
                         <i class="fas fa-plus"></i> Add Editors
                     </a>
                 </p>
+
+                {% url 'reader-studies:editors-update' slug=object.slug as editor_update_url %}
+                {% include "groups/partials/user_list.html" with edit_url=editor_update_url form=editor_remove_form users=object.editors_group.user_set.all %}
             </div>
 
             <div class="tab-pane fade"
@@ -279,7 +278,9 @@
                                             <i class="fa fa-trash-alt"></i>
                                         </a>
                                     {% else %}
-                                         <button type="button" class="btn btn-danger btn-sm" title="This question cannot be deleted. It already has answers associated with it." disabled>
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                                title="This question cannot be deleted. It already has answers associated with it."
+                                                disabled>
                                             <i class="fa fa-trash-alt"></i>
                                         </button>
                                     {% endif %}
@@ -303,25 +304,15 @@
                  aria-labelledby="v-pills-readers-tab">
 
                 <h2> Readers </h2>
-                  {% if num_readers > 10 %}
-                    <p class="mt-3">
-                            <a class="btn btn-primary"
-                               href="{% url 'reader-studies:readers-update' slug=object.slug %}">
-                                <i class="fas fa-plus"></i> Add Readers
-                            </a>
-                    </p>
-                  {% endif %}
+                <p class="mt-3">
+                    <a class="btn btn-primary"
+                       href="{% url 'reader-studies:readers-update' slug=object.slug %}">
+                        <i class="fas fa-plus"></i> Add Readers
+                    </a>
+                </p>
 
                 {% url 'reader-studies:readers-update' slug=object.slug as readers_update_url %}
                 {% include "groups/partials/user_list.html" with role_name="readers" edit_url=readers_update_url form=editor_remove_form users=readers %}
-
-                  <p class="mt-3">
-                        <a class="btn btn-primary"
-                           href="{% url 'reader-studies:readers-update' slug=object.slug %}">
-                            <i class="fas fa-plus"></i> Add Readers
-                        </a>
-                  </p>
-
             </div>
 
             <div class="tab-pane fade"
@@ -380,20 +371,36 @@
                 <p>
                     You can access this reader study and integrate its data into
                     other applications via the live
-                    <a href="{% url 'api:reader-study-detail' pk=object.pk %}">REST
-                        API</a>,
+                    <a href="{% url 'api:reader-study-detail' pk=object.pk %}">REST API</a>,
                     alternatively, you can download the current data in CSV format:
                 </p>
-                <p class="mt-3">
-                    {# TODO JM #}
-                    CSV export is temporarily disabled, please use the REST API.
-                    {% comment %}
+
+                <p>
                     <a class="btn btn-primary"
-                       href="{% url 'api:reader-study-export-answers' pk=object.pk %}">
-                        <i class="fas fa-file-csv"></i> Export as CSV
+                       href="{% url 'api:reader-study-detail' pk=object.pk %}?format=csv"
+                       download="{{ object.slug }}_{{ now }}.csv">
+                        <i class="fas fa-file-csv"></i> Reader Study
                     </a>
-                    {% endcomment %}
                 </p>
+
+                <p>
+                    <a class="btn btn-primary"
+                       href="{% url 'api:reader-studies-question-list' %}?format=csv&reader_study={{ object.pk }}&limit={{ limit }}"
+                       download="{{ object.slug }}_questions_{{ now }}.csv">
+                        <i class="fas fa-file-csv"></i> Questions
+                    </a>
+                </p>
+
+                {% for offset in answer_offsets %}
+                    <p>
+                        <a class="btn btn-primary"
+                           href="{% url 'api:reader-studies-answer-list' %}?format=csv&question__reader_study={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
+                           download="{{ object.slug }}_answers_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
+                            <i class="fas fa-file-csv"></i> Answers ({{ offset|add:1 }} to {{ offset|add:limit }})
+                        </a>
+                    </p>
+                {% endfor %}
+
             </div>
 
             {% if perms.reader_studies.add_readerstudy %}

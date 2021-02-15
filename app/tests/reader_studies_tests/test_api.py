@@ -1,4 +1,3 @@
-import csv
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -7,7 +6,6 @@ from unittest import mock
 import pytest
 
 from grandchallenge.reader_studies.models import Answer, Question
-from grandchallenge.reader_studies.views import ExportCSVMixin
 from tests.cases_tests.factories import (
     RawImageFileFactory,
     RawImageUploadSessionFactory,
@@ -851,53 +849,6 @@ def test_csv_export(now, client, answer_type, answer):
         content_type="application/json",
     )
     assert response.status_code == 404
-
-
-@pytest.mark.parametrize(
-    "data,elements,lines",
-    (
-        ([["a"], ["b"], ["c"]], 1, 3),
-        ([["a"], ["b,c"], ["c"]], 1, 3),
-        ([["a\nb"], ["b"], ["c"]], 1, 3),
-        ([["a\rb\nc", "\nb", "\rc\r\r"]], 3, 1),
-        ([["a", "a", "\na"], ["b", "b", "b"], ["c", "c", "c"]], 3, 3),
-        (
-            [["a", '{"a":\n{"b": "c\nd"}\n}'], ["b", "b,c,d"], ["c", "d\r"]],
-            2,
-            3,
-        ),
-    ),
-)
-def test_csv_export_preprocessing(tmp_path, data, elements, lines):
-    exporter = ExportCSVMixin()
-    processed = exporter._preprocess_data(data)
-    assert len(processed) == lines
-
-    # Unfortunately, we have to create an actual file here, as both tempfile
-    # and StringIO seem to cause issues with line endings
-    with open(tmp_path / "csv.csv", "w+", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerows(processed)
-
-    with open(tmp_path / "csv.csv", "r", newline="") as f:
-        reader = csv.reader(f)
-        for line in reader:
-            assert len(line) == elements
-        assert reader.line_num == lines
-
-
-def test_csv_export_create_dicts():
-    exporter = ExportCSVMixin()
-    headers = ["foo", "bar"]
-    data = []
-
-    for x in range(10):
-        data.append([f"foo{x}", f"bar{x}"])
-
-    csv_dicts = exporter._create_dicts(headers, data)
-
-    for index, dct in enumerate(csv_dicts):
-        assert dct == {"foo": f"foo{index}", "bar": f"bar{index}"}
 
 
 @pytest.mark.django_db

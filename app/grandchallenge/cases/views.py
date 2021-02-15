@@ -20,7 +20,6 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
-from rest_framework_csv.renderers import PaginatedCSVRenderer
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
@@ -40,6 +39,7 @@ from grandchallenge.cases.serializers import (
 from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyWithCustomPostPermissions,
 )
+from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.reader_studies.tasks import (
