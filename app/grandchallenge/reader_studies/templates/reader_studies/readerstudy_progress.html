@@ -123,7 +123,7 @@
             });
             $('#proceed').on('click', () => {
                 $.post({
-                    url: "{% url 'reader-studies:answers-remove' slug=object.slug %}",
+                    url: "{% url 'reader-studies:answers-remove' slug=reader_study.slug %}",
                     data: {user: user, csrfmiddlewaretoken: window.drf.csrfToken},
                     success: () => {
                         window.location.replace(window.location.href);
