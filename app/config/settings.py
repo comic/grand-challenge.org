@@ -49,6 +49,7 @@ IGNORABLE_404_URLS = [
     re.compile(r".*/trackback.*"),
     re.compile(r"^/site/.*"),
     re.compile(r"^/media/cache/.*"),
+    re.compile(r"^/favicon.ico$"),
 ]
 
 # Used as starting points for various other paths. realpath(__file__) starts in
