@@ -19,6 +19,11 @@
 {% block content %}
     <h2>Users Progress for {{ reader_study.title }}</h2>
 
+    <p>
+        The following users have answered at least one question in this reader study,
+        all other users are yet to answer any of the questions.
+    </p>
+
     <ul class="list-group list-group-flush">
         {% for user in users %}
             <li class="list-group-item">
@@ -65,7 +70,7 @@
             </li>
         {% empty %}
             <li class="list-group-item">
-                There are no readers for this reader study.
+                No-one has answered any questions in this reader study.
             </li>
         {% endfor %}
     </ul>

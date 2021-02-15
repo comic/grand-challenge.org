@@ -10,7 +10,6 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.db import transaction
-from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -671,11 +670,7 @@ class UsersProgress(
                 "progress": self.object.get_progress_for_user(reader),
             }
             for reader in get_user_model()
-            .objects.filter(
-                Q(groups__editors_of_readerstudy=self.object)
-                | Q(groups__readers_of_readerstudy=self.object)
-                | Q(answer__question__reader_study=self.object)
-            )
+            .objects.filter(answer__question__reader_study=self.object)
             .distinct()
             .select_related("user_profile", "verification")
             .order_by("username")
