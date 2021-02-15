@@ -378,7 +378,7 @@
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'api:reader-study-detail' pk=object.pk %}?format=csv"
-                       download="{{ object.slug }}_{{ now }}.csv">
+                       download="reader_study_{{ object.slug }}_{{ now }}.csv">
                         <i class="fas fa-file-csv"></i> Reader Study
                     </a>
                 </p>
@@ -386,16 +386,26 @@
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'api:reader-studies-question-list' %}?format=csv&reader_study={{ object.pk }}&limit={{ limit }}"
-                       download="{{ object.slug }}_questions_{{ now }}.csv">
+                       download="reader_study_{{ object.slug }}_questions_{{ now }}.csv">
                         <i class="fas fa-file-csv"></i> Questions
                     </a>
                 </p>
+
+                {% for offset in image_offsets %}
+                    <p>
+                        <a class="btn btn-primary"
+                           href="{% url 'api:image-list' %}?format=csv&readerstudies={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
+                           download="reader_study_{{ object.slug }}_images_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
+                            <i class="fas fa-file-csv"></i> Images ({{ offset|add:1 }} to {{ offset|add:limit }})
+                        </a>
+                    </p>
+                {% endfor %}
 
                 {% for offset in answer_offsets %}
                     <p>
                         <a class="btn btn-primary"
                            href="{% url 'api:reader-studies-answer-list' %}?format=csv&question__reader_study={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
-                           download="{{ object.slug }}_answers_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
+                           download="reader_study_{{ object.slug }}_answers_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
                             <i class="fas fa-file-csv"></i> Answers ({{ offset|add:1 }} to {{ offset|add:limit }})
                         </a>
                     </p>

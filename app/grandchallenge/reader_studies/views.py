@@ -254,6 +254,7 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                 ).count(),
                 limit,
             ),
+            "image_offsets": range(0, self.object.images.count(), limit),
         }
 
 
