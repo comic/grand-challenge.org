@@ -632,11 +632,11 @@ class ReadersUpdate(ReaderStudyUserGroupUpdateMixin):
     success_message = "Readers successfully updated"
 
 
-class ReadersProgress(
+class UsersProgress(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = ReaderStudy
-    template_name = "reader_studies/readers_progress.html"
+    template_name = "reader_studies/readerstudy_progress.html"
     permission_required = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
@@ -645,10 +645,7 @@ class ReadersProgress(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        reader_remove_form = ReadersForm()
-        reader_remove_form.fields["action"].initial = ReadersForm.REMOVE
-
-        readers = [
+        users = [
             {
                 "obj": reader,
                 "progress": self.object.get_progress_for_user(reader),
@@ -657,20 +654,14 @@ class ReadersProgress(
             .objects.filter(
                 Q(groups__editors_of_readerstudy=self.object)
                 | Q(groups__readers_of_readerstudy=self.object)
+                | Q(answer__question__reader_study=self.object)
             )
             .distinct()
             .select_related("user_profile", "verification")
             .order_by("username")
         ]
 
-        context.update(
-            {
-                "reader_study": self.object,
-                "readers": readers,
-                "reader_remove_form": reader_remove_form,
-                "num_readers": self.object.readers_group.user_set.count(),
-            }
-        )
+        context.update({"reader_study": self.object, "users": users})
 
         return context
 

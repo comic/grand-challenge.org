@@ -1,4 +1,17 @@
 {% extends "base.html" %}
+{% load url %}
+
+{% block title %}
+    Delete Question - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ question.reader_study.get_absolute_url }}">{{ question.reader_study.title }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Delete Question {{ object }}</li>
+    </ol>
+{% endblock %}
 
 {% block content %}
     <h2>Confirm Deletion</h2>

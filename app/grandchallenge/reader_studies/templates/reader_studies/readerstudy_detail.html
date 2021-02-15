@@ -32,12 +32,12 @@
                 </a>
                  <a class="nav-link" id="v-pills-readers-tab" data-toggle="pill"
                    href="#v-pills-readers" role="tab" aria-controls="v-pills-readers"
-                   aria-selected="false"><i class="fas fa-users fa-fw"></i> Readers &nbsp;<span
+                   aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Readers&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ num_readers }}</span>
                 </a>
                 <a class="nav-link" id="v-pills-readers-tab"
-                   href="{% url 'reader-studies:readers-progress' slug=object.slug %}"
-                ><i class="fas fa-tasks fa-fw"></i> Readers Progress
+                   href="{% url 'reader-studies:users-progress' slug=object.slug %}"
+                ><i class="fas fa-tasks fa-fw"></i>&nbsp;Users Progress
                 </a>
                 <a class="nav-link"
                    href="{% url 'reader-studies:permission-request-list' slug=object.slug %}"
