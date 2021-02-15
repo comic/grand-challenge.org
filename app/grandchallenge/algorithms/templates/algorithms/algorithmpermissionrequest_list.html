@@ -31,7 +31,6 @@
                 <th>Created</th>
                 <th>Username</th>
                 <th>Name</th>
-                <th>Email</th>
                 <th>Institution</th>
                 <th>Department</th>
                 <th>Location</th>
@@ -52,9 +51,6 @@
                     </td>
                     <td>
                         {{ request.user.get_full_name }}
-                    </td>
-                    <td>
-                        {{ request.user.email }}
                     </td>
                     <td>
                         {{ request.user.user_profile.institution }}
@@ -97,7 +93,7 @@
                 order: [[8, "asc"], [0, "desc"]],
                 "pageLength": 25,
                 "columnDefs": [{
-                    "targets": [7],
+                    "targets": [-1],
                     "searchable": false,
                     "orderable": false
                 }]

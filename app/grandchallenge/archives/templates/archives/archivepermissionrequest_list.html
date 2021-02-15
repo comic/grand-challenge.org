@@ -53,9 +53,6 @@
                         {{ request.user.get_full_name }}
                     </td>
                     <td>
-                        {{ request.user.email }}
-                    </td>
-                    <td>
                         {{ request.user.user_profile.institution }}
                     </td>
                     <td>
@@ -96,7 +93,7 @@
                 order: [[8, "asc"], [0, "desc"]],
                 "pageLength": 25,
                 "columnDefs": [{
-                    "targets": [7],
+                    "targets": [-1],
                     "searchable": false,
                     "orderable": false
                 }]
