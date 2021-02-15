@@ -38,6 +38,7 @@ from grandchallenge.core.validators import (
 )
 from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
+    send_missing_method_email,
     send_successful_evaluation_email,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks
@@ -587,7 +588,7 @@ class Submission(UUIDModel):
         method = self.latest_ready_method
 
         if not method:
-            # TODO Email admins
+            send_missing_method_email(self)
             return
 
         evaluation = Evaluation.objects.create(submission=self, method=method)
@@ -608,9 +609,12 @@ class Submission(UUIDModel):
                     slug="predictions-csv-file"
                 )
             else:
-                raise NotImplementedError(
-                    f"Interface is not defined for {mimetype} files"
+                evaluation.update_status(
+                    status=Evaluation.FAILURE,
+                    stderr=f"{mimetype} files are not supported.",
+                    error_message=f"{mimetype} files are not supported.",
                 )
+                return
 
             evaluation.inputs.set(
                 [

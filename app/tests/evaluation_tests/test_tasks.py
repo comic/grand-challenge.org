@@ -184,3 +184,34 @@ class TestSetEvaluationInputs(TestCase):
         assert evaluation.status == evaluation.PENDING
         assert evaluation.error_message == ""
         assert evaluation.inputs.count() == 1
+
+
+@pytest.mark.django_db
+def test_non_zip_submission_failure(
+    client, evaluation_image, submission_file, settings
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # Upload a submission and create an evaluation
+    eval_container, sha256 = evaluation_image
+    method = MethodFactory(
+        image__from_path=eval_container, image_sha256=sha256, ready=True
+    )
+
+    # Try with a 7z file
+    submission = SubmissionFactory(
+        predictions_file__from_path=Path(__file__).parent
+        / "resources"
+        / "submission.7z",
+        phase=method.phase,
+    )
+
+    # The evaluation method should return the correct answer
+    assert len(submission.evaluation_set.all()) == 1
+    evaluation = submission.evaluation_set.first()
+    assert evaluation.error_message.endswith(
+        "7z-compressed files are not supported."
+    )
+    assert evaluation.status == evaluation.FAILURE
