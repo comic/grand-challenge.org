@@ -98,25 +98,25 @@ def send_successful_evaluation_email(evaluation):
         )
 
 
-def send_missing_method_email(evaluation):
+def send_missing_method_email(submission):
     site = Site.objects.get_current()
-    challenge = evaluation.phase.challenge
+    challenge = submission.phase.challenge
 
-    recipients = list(challenge.get_admins())
+    recipients = challenge.get_admins()
 
     for recipient in recipients:
         message = format_html(
             "Dear {recipient},\n\n"
             "The submission from {user} could not be evaluated, "
-            "because there is no evaluation method for {challenge} in the {phase} evaluation phase yet. "
+            "because there is no valid evaluation method for {challenge} in the {phase} evaluation phase. "
             "Please upload an evaluation method container.\n\n"
             "Regards,\n"
             "{site}\n\n"
             "This is an automated service email from {domain}.",
             recipient=recipient.username,
-            user=evaluation.creator.username,
+            user=submission.creator.username,
             challenge=challenge.short_name,
-            phase=evaluation.phase.slug,
+            phase=submission.phase.slug,
             site=site.name,
             domain=site.domain,
         )
