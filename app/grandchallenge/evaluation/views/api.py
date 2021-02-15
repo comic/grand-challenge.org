@@ -2,9 +2,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework_csv.renderers import PaginatedCSVRenderer
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.serializers import EvaluationSerializer
 

@@ -1,13 +1,10 @@
-import csv
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
 from grandchallenge.reader_studies.models import Answer, Question
-from grandchallenge.reader_studies.views import ExportCSVMixin
 from tests.cases_tests.factories import (
     RawImageFileFactory,
     RawImageUploadSessionFactory,
@@ -745,7 +742,6 @@ def test_ground_truth_is_excluded(client):
     assert results[0]["pk"] == str(a2.pk)
 
 
-@pytest.mark.skip("Temporarily disabled")  # TODO JM
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "answer_type,answer",
@@ -787,11 +783,7 @@ def test_ground_truth_is_excluded(client):
         ),
     ),
 )
-@mock.patch(
-    "grandchallenge.reader_studies.views.timezone.now",
-    return_value=datetime(2020, 1, 1, 0, 0, tzinfo=timezone.utc),
-)
-def test_csv_export(now, client, answer_type, answer):
+def test_csv_export(client, answer_type, answer):
     im = ImageFactory()
 
     rs = ReaderStudyFactory()
@@ -813,12 +805,12 @@ def test_csv_export(now, client, answer_type, answer):
     a.save()
 
     response = get_view_for_user(
-        viewname="api:reader-study-export-answers",
-        reverse_kwargs={"pk": rs.pk},
+        viewname="api:reader-studies-answer-list",
+        params={"question__reader_study": str(rs.pk)},
         user=editor,
         client=client,
         method=client.get,
-        content_type="application/json",
+        HTTP_ACCEPT="text/csv",
     )
 
     headers = str(response.serialize_headers())
@@ -826,78 +818,50 @@ def test_csv_export(now, client, answer_type, answer):
 
     assert response.status_code == 200
     assert "Content-Type: text/csv" in headers
-    assert (
-        f'filename="{rs.slug}-answers-2020-01-01T00:00:00+00:00.csv"'
-        in headers
-    )
-    assert a.question.question_text in content
-    assert a.question.get_answer_type_display() in content
-    assert str(a.question.required) in content
-    assert a.question.get_image_port_display() in content
+
     if isinstance(answer, dict):
         for key in answer:
             assert key in content
     else:
-        assert re.sub(r"[\n\r\t]", " ", str(a.answer)) in content
-    assert im.name in content
+        assert re.sub(r"\n", r"\\n", str(a.answer)) in content
     assert a.creator.username in content
 
     response = get_view_for_user(
-        viewname="api:reader-study-export-answers",
-        reverse_kwargs={"pk": rs.pk},
-        user=reader,
+        viewname="api:reader-studies-question-list",
+        params={"reader_study": str(rs.pk)},
+        user=editor,
         client=client,
         method=client.get,
-        content_type="application/json",
+        HTTP_ACCEPT="text/csv",
     )
-    assert response.status_code == 404
 
+    headers = str(response.serialize_headers())
+    content = str(response.content)
 
-@pytest.mark.parametrize(
-    "data,elements,lines",
-    (
-        ([["a"], ["b"], ["c"]], 1, 3),
-        ([["a"], ["b,c"], ["c"]], 1, 3),
-        ([["a\nb"], ["b"], ["c"]], 1, 3),
-        ([["a\rb\nc", "\nb", "\rc\r\r"]], 3, 1),
-        ([["a", "a", "\na"], ["b", "b", "b"], ["c", "c", "c"]], 3, 3),
-        (
-            [["a", '{"a":\n{"b": "c\nd"}\n}'], ["b", "b,c,d"], ["c", "d\r"]],
-            2,
-            3,
-        ),
-    ),
-)
-def test_csv_export_preprocessing(tmp_path, data, elements, lines):
-    exporter = ExportCSVMixin()
-    processed = exporter._preprocess_data(data)
-    assert len(processed) == lines
+    assert response.status_code == 200
+    assert "Content-Type: text/csv" in headers
 
-    # Unfortunately, we have to create an actual file here, as both tempfile
-    # and StringIO seem to cause issues with line endings
-    with open(tmp_path / "csv.csv", "w+", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerows(processed)
+    assert a.question.question_text in content
+    assert a.question.get_answer_type_display() in content
+    assert str(a.question.required) in content
+    assert a.question.get_image_port_display() in content
 
-    with open(tmp_path / "csv.csv", "r", newline="") as f:
-        reader = csv.reader(f)
-        for line in reader:
-            assert len(line) == elements
-        assert reader.line_num == lines
+    response = get_view_for_user(
+        viewname="api:image-list",
+        params={"readerstudies": str(rs.pk)},
+        user=editor,
+        client=client,
+        method=client.get,
+        HTTP_ACCEPT="text/csv",
+    )
 
+    headers = str(response.serialize_headers())
+    content = str(response.content)
 
-def test_csv_export_create_dicts():
-    exporter = ExportCSVMixin()
-    headers = ["foo", "bar"]
-    data = []
+    assert response.status_code == 200
+    assert "Content-Type: text/csv" in headers
 
-    for x in range(10):
-        data.append([f"foo{x}", f"bar{x}"])
-
-    csv_dicts = exporter._create_dicts(headers, data)
-
-    for index, dct in enumerate(csv_dicts):
-        assert dct == {"foo": f"foo{index}", "bar": f"bar{index}"}
+    assert im.name in content
 
 
 @pytest.mark.django_db
