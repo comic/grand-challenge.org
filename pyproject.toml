@@ -91,4 +91,3 @@ werkzeug = {extras = ["watchdog"], version = "^1.0.1"}
 sphinx-rtd-theme = "*"
 sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
-curlylint = "^0.12.0"
