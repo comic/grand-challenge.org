@@ -23,3 +23,7 @@ repos:
           - pep8-naming
           - flake8-docstrings
           - mccabe
+  - repo: https://github.com/thibaudcolas/curlylint
+    rev: "6a111be"
+    hooks:
+      - id: curlylint
