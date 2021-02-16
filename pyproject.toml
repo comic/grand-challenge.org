@@ -6,6 +6,16 @@ build-backend = "poetry.masonry.api"
 line-length = 79
 target-version = ['py38']
 
+[tool.curlylint.rules]
+html_has_lang = 'en'
+django_forms_rendering = true
+image_alt = true
+# TODO: Enable this, would otherwise be a big change
+# indent = 4
+meta_viewport = true
+no_autofocus = true
+tabindex_no_positive = true
+
 [tool.poetry]
 name = "grand-challenge.org"
 version = "0.1.0"
