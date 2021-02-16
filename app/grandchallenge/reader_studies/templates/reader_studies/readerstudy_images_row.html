@@ -4,20 +4,20 @@
 {% load pathlib %}
 
 {{ object.name }}
-<split/>
+<split></split>
 
 {{ object.created|naturaltime }}
-<split/>
+<split></split>
 
 {{ object.origin.creator|user_profile_link }}
-<split/>
+<split></split>
 
 <a href="{% url 'workstations:workstation-session-create' slug=reader_study.workstation.slug %}?{% workstation_query image=object config=reader_study.workstation_config %}">
     <span class="badge badge-primary">
         <i class="fa fa-eye"></i> View Case
     </span>
 </a>
-<split/>
+<split></split>
 
 <ul class="list-unstyled mb-0">
     {% for file in object.files.all %}
@@ -30,7 +30,7 @@
         </li>
     {% endfor %}
 </ul>
-<split/>
+<split></split>
 
 <button class="btn btn-danger btn-sm" onclick="removeImage('{{ object.id }}')">Remove</button>
-<split/>
+<split></split>

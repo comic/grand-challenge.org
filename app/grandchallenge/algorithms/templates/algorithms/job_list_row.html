@@ -11,13 +11,13 @@
    title="View result details">
     <i class="fa fa-info-circle"></i>
 </a>
-<split/>
+<split></split>
 
 {{ object.created|naturaltime }}
-<split/>
+<split></split>
 
 {{ object.creator|user_profile_link }}
-<split/>
+<split></split>
 
 <a href="#resultInfoModal"
    class="badge
@@ -54,10 +54,10 @@
 {% if object.rendered_result_text %}
     {{ object.rendered_result_text|json_script:object.pk }}
 {% endif %}
-<split/>
+<split></split>
 
 {{ object.comment }}
-<split/>
+<split></split>
 
 {% if object.public %}
     <i class="fa fa-eye text-success"
@@ -72,7 +72,7 @@
            title="Result and images are private"></i>
     {% endif %}
 {% endif %}
-<split/>
+<split></split>
 
 {% if object.status == object.SUCCESS %}
     <a class="badge badge-primary"
