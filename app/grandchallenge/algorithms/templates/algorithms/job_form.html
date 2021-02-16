@@ -13,9 +13,9 @@
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
-        </a>
+        </a></li>
         <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a>
+            href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
         <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Update
