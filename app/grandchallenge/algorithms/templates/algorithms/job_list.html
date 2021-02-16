@@ -9,7 +9,7 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
-        <li class="breadcrumb-item"><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a>
+        <li class="breadcrumb-item"><a href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">Results</li>
     </ol>
 {% endblock %}

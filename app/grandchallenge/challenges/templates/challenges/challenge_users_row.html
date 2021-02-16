@@ -8,18 +8,18 @@
     <i class="fa fa-eye-slash text-danger"
        title="Challenge not listed on the all challenges page"></i>
 {% endif %}
-<split/>
+<split></split>
 
 {{ object.created }}
-<split/>
+<split></split>
 
 {% for user in object.get_admins %}
     {{ user|user_profile_link }}<br/>
 {% endfor %}
-<split/>
+<split></split>
 
 {{ object.description }}
-<split/>
+<split></split>
 
 {% if object.use_evaluation %}
     <i class="fas fa-check text-success"
@@ -28,4 +28,4 @@
     <i class="fas fa-times text-danger"
        title="Challenge is not using automated evaluation"></i>
 {% endif %}
-<split/>
+<split></split>

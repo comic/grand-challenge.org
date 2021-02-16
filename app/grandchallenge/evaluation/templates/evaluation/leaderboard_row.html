@@ -12,14 +12,14 @@
                title="Select for comparison"
                value="{{ object.pk }}">
     </div>
-    <split/>
+    <split></split>
 {% endif %}
 
 {{ object.rank|ordinal }}
 {% if object.submission.phase.evaluation_detail_observable_url %}
     <input type="hidden" class="browseEvaluationPK" value="{{ object.pk }}">
 {% endif %}
-<split/>
+<split></split>
 
 {{ object.submission.creator|user_profile_link }}
 {% if object.submission.phase.challenge.use_teams %}
@@ -29,16 +29,16 @@
         {% endif %}
     {% endwith %}
 {% endif %}
-<split/>
+<split></split>
 
 {{ object.submission.created|date:"j N Y" }}
-<split/>
+<split></split>
 
 {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
     <a href="{{ object.get_absolute_url }}">
         <b>{{ object.rank_score|floatformat }}</b>
     </a>
-    <split/>
+    <split></split>
 {% endif %}
 
 {% with object.metrics.0|get_jsonpath:object.submission.phase.score_jsonpath as metric %}
@@ -60,7 +60,7 @@
         {% if object.submission.phase.scoring_method_choice == object.submission.phase.ABSOLUTE %}
             </b>{% endif %}
     </a>
-    <split/>
+    <split></split>
 {% endwith %}
 
 {% for col in object.submission.phase.extra_results_columns %}
@@ -79,13 +79,13 @@
                 {% endif %}
             {% endfilter %}
         </a>
-        <split/>
+        <split></split>
     {% endwith %}
 {% endfor %}
 
 {% if object.submission.phase.display_submission_comments %}
     {{ object.submission.comment }}
-    <split/>
+    <split></split>
 {% endif %}
 
 {% if object.submission.phase.show_publication_url %}
@@ -94,7 +94,7 @@
             <i class="fa fa-file"></i>
         </a>
     {% endif %}
-    <split/>
+    <split></split>
 {% endif %}
 
 {% if object.submission.phase.show_supplementary_file_link %}
@@ -103,6 +103,6 @@
             <i class="fa fa-file"></i>
         </a>
     {% endif %}
-    <split/>
+    <split></split>
 {% endif %}
 

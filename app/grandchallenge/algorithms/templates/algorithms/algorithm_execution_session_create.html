@@ -16,7 +16,7 @@
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
-        </a>
+        </a></li>
         <li class="breadcrumb-item active"
             aria-current="page">Create Experiment
         </li>
@@ -36,19 +36,19 @@
                 It will not cost an algorithm user any credits to try this algorithm.
             {% else %}
                 It will require an algorithm user {{ algorithm.credits_per_job }} credits per image to try
-            this algorithm.
-            {%  endif %}
+                this algorithm.
+            {% endif %}
             You can change the amount of credits that it will cost to try this algorithm by changing the Job credits in
             <a href="{% url 'algorithms:update' slug=algorithm.slug %}"> Settings</a>
             (a user receives a 1000 credits a month).
             A job credit of zero means users can try this algorithm an unlimited number of times.
-            </p>
+        </p>
         {% crispy form %}
     {% else %}
         {% if remaining_jobs <= 0 %}
             <p>
-            You have run out of credits to try this algorithm. You can try again on {{ next_job_at }}.
-            You can request more credits by sending an e-mail to
+                You have run out of credits to try this algorithm. You can try again on {{ next_job_at }}.
+                You can request more credits by sending an e-mail to
                 <a href="{{ 'mailto:support@grand-challenge.org'|random_encode }}" class="text-radboud">
                     support@grand-challenge.org</a>.
             </p>
@@ -56,22 +56,23 @@
             <p>Select the images that you would like to run the algorithm on.</p>
             {% if algorithm.credits_per_job != 0 %}
                 <p>
-                    Trying this algorithm requires {{ algorithm.credits_per_job }} credit{{ algorithm.credits_per_job|pluralize }}
+                    Trying this algorithm requires {{ algorithm.credits_per_job }}
+                    credit{{ algorithm.credits_per_job|pluralize }}
                     per image. You have {{ user_credits }} credit{{ user_credits|pluralize }} left for this month,
                     allowing you to upload {{ remaining_jobs }} image{{ remaining_jobs|pluralize }}.
                 </p>
-            {%  endif %}
+            {% endif %}
             {% crispy form %}
-        {%  endif %}
-    <p>
-        By running this algorithm you agree to the
-        <a href="{% url 'policies:detail' slug='terms-of-service' %}"> General
-            Terms of Service</a>{% if algorithm.additional_terms_markdown %},
-        as well as this algorithm's specific Terms of Service:
+        {% endif %}
+        <p>
+            By running this algorithm you agree to the
+            <a href="{% url 'policies:detail' slug='terms-of-service' %}"> General
+                Terms of Service</a>{% if algorithm.additional_terms_markdown %},
+            as well as this algorithm's specific Terms of Service:
         {% else %}.
         {% endif %}
+        </p>
     {% endif %}
-    </p>
 
     {{ algorithm.additional_terms_markdown|md2html }}
 
