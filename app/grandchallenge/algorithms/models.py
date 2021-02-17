@@ -98,9 +98,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         default="<pre>{{ results|tojson(indent=2) }}</pre>",
         help_text=(
             "Define the jinja template to render the content of the "
-            "results.json to html. For example, the following template will print "
-            "out all the keys and values of the result.json. Use result-dict to access"
-            "the json root."
+            "results.json to html. For example, the following template will "
+            "print out all the keys and values of the result.json. "
+            "Use results to access the json root. "
             "{% for key, value in results.metrics.items() -%}"
             "{{ key }}  {{ value }}"
             "{% endfor %}"
