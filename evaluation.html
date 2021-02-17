@@ -3,9 +3,9 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Evaluation &mdash; grand-challenge.org  documentation</title>
   
@@ -16,7 +16,10 @@
 
   
   
+
   
+  
+
   
 
   
@@ -29,7 +32,6 @@
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -51,7 +53,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> grand-challenge.org
+            <a href="index.html" class="icon icon-home"> grand-challenge.org
           
 
           
@@ -142,6 +144,8 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -153,7 +157,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/evaluation.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -277,26 +281,26 @@ is one number per evaluation. For example:</p>
 <h3>Evaluation Options<a class="headerlink" href="#evaluation-options" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="grandchallenge.evaluation.models.Phase">
-<em class="property">class </em><code class="sig-prename descclassname">grandchallenge.evaluation.models.</code><code class="sig-name descname">Phase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">created</span></em>, <em class="sig-param"><span class="n">modified</span></em>, <em class="sig-param"><span class="n">challenge</span></em>, <em class="sig-param"><span class="n">archive</span></em>, <em class="sig-param"><span class="n">title</span></em>, <em class="sig-param"><span class="n">slug</span></em>, <em class="sig-param"><span class="n">score_title</span></em>, <em class="sig-param"><span class="n">score_jsonpath</span></em>, <em class="sig-param"><span class="n">score_error_jsonpath</span></em>, <em class="sig-param"><span class="n">score_default_sort</span></em>, <em class="sig-param"><span class="n">score_decimal_places</span></em>, <em class="sig-param"><span class="n">extra_results_columns</span></em>, <em class="sig-param"><span class="n">scoring_method_choice</span></em>, <em class="sig-param"><span class="n">result_display_choice</span></em>, <em class="sig-param"><span class="n">creator_must_be_verified</span></em>, <em class="sig-param"><span class="n">submission_kind</span></em>, <em class="sig-param"><span class="n">allow_submission_comments</span></em>, <em class="sig-param"><span class="n">display_submission_comments</span></em>, <em class="sig-param"><span class="n">supplementary_file_choice</span></em>, <em class="sig-param"><span class="n">supplementary_file_label</span></em>, <em class="sig-param"><span class="n">supplementary_file_help_text</span></em>, <em class="sig-param"><span class="n">show_supplementary_file_link</span></em>, <em class="sig-param"><span class="n">publication_url_choice</span></em>, <em class="sig-param"><span class="n">show_publication_url</span></em>, <em class="sig-param"><span class="n">daily_submission_limit</span></em>, <em class="sig-param"><span class="n">submissions_open</span></em>, <em class="sig-param"><span class="n">submissions_close</span></em>, <em class="sig-param"><span class="n">submission_page_html</span></em>, <em class="sig-param"><span class="n">auto_publish_new_results</span></em>, <em class="sig-param"><span class="n">display_all_metrics</span></em>, <em class="sig-param"><span class="n">evaluation_detail_observable_url</span></em>, <em class="sig-param"><span class="n">evaluation_comparison_observable_url</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">grandchallenge.evaluation.models.</span></code><code class="sig-name descname"><span class="pre">Phase</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">challenge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_jsonpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_error_jsonpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_default_sort</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_decimal_places</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_results_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_method_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_display_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator_must_be_verified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_submission_comments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_submission_comments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supplementary_file_help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_supplementary_file_link</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">publication_url_choice</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_publication_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">daily_submission_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submissions_open</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submissions_close</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submission_page_html</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_publish_new_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_all_metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_detail_observable_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_comparison_observable_url</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="py exception">
 <dt id="grandchallenge.evaluation.models.Phase.DoesNotExist">
-<em class="property">exception </em><code class="sig-name descname">DoesNotExist</code><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.DoesNotExist" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">DoesNotExist</span></code><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.DoesNotExist" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py exception">
 <dt id="grandchallenge.evaluation.models.Phase.MultipleObjectsReturned">
-<em class="property">exception </em><code class="sig-name descname">MultipleObjectsReturned</code><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></code><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py class">
 <dt id="grandchallenge.evaluation.models.Phase.SubmissionKind">
-<em class="property">class </em><code class="sig-name descname">SubmissionKind</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase.SubmissionKind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.SubmissionKind" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-name descname"><span class="pre">SubmissionKind</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase.SubmissionKind"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.SubmissionKind" title="Permalink to this definition">¶</a></dt>
 <dd><p>An enumeration.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="grandchallenge.evaluation.models.Phase.save">
-<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">save</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/models.html#Phase.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.models.Phase.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the current instance. Override this in a subclass if you want to
 control the saving process.</p>
 <p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
@@ -312,7 +316,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <span id="template-tags"></span><h2>Template Tags<a class="headerlink" href="#module-grandchallenge.evaluation.templatetags.evaluation_extras" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="grandchallenge.evaluation.templatetags.evaluation_extras.get_jsonpath">
-<code class="sig-prename descclassname">grandchallenge.evaluation.templatetags.evaluation_extras.</code><code class="sig-name descname">get_jsonpath</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">jsonpath</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/templatetags/evaluation_extras.html#get_jsonpath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#grandchallenge.evaluation.templatetags.evaluation_extras.get_jsonpath" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">grandchallenge.evaluation.templatetags.evaluation_extras.</span></code><code class="sig-name descname"><span class="pre">get_jsonpath</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jsonpath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/evaluation/templatetags/evaluation_extras.html#get_jsonpath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.evaluation.templatetags.evaluation_extras.get_jsonpath" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets a value from a dictionary based on a jsonpath. It will only return
 one result, and if a key does not exist it will return an empty string as
 template tags should not raise errors.</p>
@@ -337,37 +341,29 @@ template tags should not raise errors.</p>
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="processor.html" class="btn btn-neutral float-right" title="Processor specification" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="development.html" class="btn btn-neutral float-left" title="Development" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="processor.html" class="btn btn-neutral float-right" title="Processor specification" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="development.html" class="btn btn-neutral float-left" title="Development" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        
-        &copy; Copyright 2018, James Meakin
+        &#169; Copyright 2018, James Meakin.
 
     </p>
   </div>
     
     
     
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     
     provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 

@@ -3,9 +3,9 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>simple_history.models &mdash; grand-challenge.org  documentation</title>
   
@@ -16,7 +16,10 @@
 
   
   
+
   
+  
+
   
 
   
@@ -29,7 +32,6 @@
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/language_data.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -49,7 +51,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> grand-challenge.org
+            <a href="../../index.html" class="icon icon-home"> grand-challenge.org
           
 
           
@@ -129,6 +131,8 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -169,7 +173,7 @@
 <span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Q</span>
+<span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">ManyToManyField</span><span class="p">,</span> <span class="n">Q</span>
 <span class="kn">from</span> <span class="nn">django.db.models.fields.proxy</span> <span class="kn">import</span> <span class="n">OrderWrt</span>
 <span class="kn">from</span> <span class="nn">django.forms.models</span> <span class="kn">import</span> <span class="n">model_to_dict</span>
 <span class="kn">from</span> <span class="nn">django.urls</span> <span class="kn">import</span> <span class="n">reverse</span>
@@ -539,9 +543,12 @@
                 <span class="n">field</span><span class="o">.</span><span class="n">attname</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">attname</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
             <span class="p">}</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history_excluded_fields</span><span class="p">:</span>
+                <span class="c1"># We don&#39;t add ManyToManyFields to this list because they may cause</span>
+                <span class="c1"># the subsequent `.get()` call to fail. See #706 for context.</span>
                 <span class="n">excluded_attnames</span> <span class="o">=</span> <span class="p">[</span>
                     <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">field</span><span class="p">)</span><span class="o">.</span><span class="n">attname</span>
                     <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history_excluded_fields</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">field</span><span class="p">),</span> <span class="n">ManyToManyField</span><span class="p">)</span>
                 <span class="p">]</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">values</span> <span class="o">=</span> <span class="p">(</span>
@@ -741,19 +748,22 @@
 
 
 <span class="k">class</span> <span class="nc">HistoricalChanges</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">diff_against</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_history</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">diff_against</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_history</span><span class="p">,</span> <span class="n">excluded_fields</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">old_history</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="p">(</span><span class="s2">&quot;unsupported type(s) for diffing: &quot;</span> <span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39; and &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">old_history</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-
+        <span class="k">if</span> <span class="n">excluded_fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">excluded_fields</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">changes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">changed_fields</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">old_values</span> <span class="o">=</span> <span class="n">model_to_dict</span><span class="p">(</span><span class="n">old_history</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span>
         <span class="n">current_values</span> <span class="o">=</span> <span class="n">model_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">new_value</span> <span class="ow">in</span> <span class="n">current_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">excluded_fields</span><span class="p">:</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">old_values</span><span class="p">:</span>
                 <span class="n">old_value</span> <span class="o">=</span> <span class="n">old_values</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">old_value</span> <span class="o">!=</span> <span class="n">new_value</span><span class="p">:</span>
@@ -783,28 +793,25 @@
            
           </div>
           <footer>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        
-        &copy; Copyright 2018, James Meakin
+        &#169; Copyright 2018, James Meakin.
 
     </p>
   </div>
     
     
     
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     
     provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 

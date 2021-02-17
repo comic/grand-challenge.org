@@ -3,9 +3,9 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Development &mdash; grand-challenge.org  documentation</title>
   
@@ -16,7 +16,10 @@
 
   
   
+
   
+  
+
   
 
   
@@ -29,7 +32,6 @@
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -51,7 +53,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> grand-challenge.org
+            <a href="index.html" class="icon icon-home"> grand-challenge.org
           
 
           
@@ -148,6 +150,8 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -159,7 +163,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/development.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -195,14 +199,14 @@ For the same reason, we currently recommend running PyCharm from wsl rather than
 <ol class="arabic simple" start="2">
 <li><p>Clone the repo</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> git clone https://github.com/comic/grand-challenge.org
-<span class="gp">$</span> <span class="nb">cd</span> grand-challenge.org
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git clone https://github.com/comic/grand-challenge.org
+<span class="gp">$ </span><span class="nb">cd</span> grand-challenge.org
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
 <li><p>You can then start the development site by invoking</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ./cycle_docker_compose.sh
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./cycle_docker_compose.sh
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">app/</span></code> directory is mounted in the containers,
@@ -220,8 +224,8 @@ These users include <code class="docutils literal notranslate"><span class="pre"
 who have permission to administer the existing fixtures and create new ones.</p>
 <p>If you would like to test out the algorithms you can download an <a class="reference external" href="https://hub.docker.com/r/grandchallenge/otsu">Example Algorithm Image</a> from Docker Hub.
 Save it locally with</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker pull grandchallenge/otsu
-<span class="gp">$</span> docker save grandchallenge/otsu &gt; otsu.tar
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker pull grandchallenge/otsu
+<span class="gp">$ </span>docker save grandchallenge/otsu &gt; otsu.tar
 </pre></div>
 </div>
 <p>You can then upload <code class="docutils literal notranslate"><span class="pre">otsu.tar</span></code> as a container image to the local site.</p>
@@ -238,27 +242,27 @@ You can also run the tests locally by</p>
 <ol class="arabic simple">
 <li><p>In a console window make sure the database is running</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ./cycle_docker_compose.sh
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./cycle_docker_compose.sh
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
 <li><p>Then in a second window run</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker-compose run --rm web pytest -n <span class="m">2</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker-compose run --rm web pytest -n <span class="m">2</span>
 </pre></div>
 </div>
 <p>Replace 2 with the number of CPUs that you have on your system, this runs
 the tests in parallel.</p>
 <p>If you want to add a new test please add them to the <code class="docutils literal notranslate"><span class="pre">app/tests</span></code> folder.
 If you only want to run the tests for a particular app, eg. for <code class="docutils literal notranslate"><span class="pre">teams</span></code>, you can do</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker-compose run --rm web pytest -k teams_tests
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker-compose run --rm web pytest -k teams_tests
 </pre></div>
 </div>
 </div>
 <div class="section" id="id1">
 <h2>Development<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
 <p>You will need to install pre-commit so that the code is correctly formatted</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> python3 -m pip install pre-commit
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python3 -m pip install pre-commit
 </pre></div>
 </div>
 <p>Please do all development on a branch and make a pull request to master, this will need to be reviewed before it is integrated.</p>
@@ -328,7 +332,7 @@ with the service running in the docker container.</p>
 <ol class="arabic simple">
 <li><p>Run the <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> stack for the database and celery task handling</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ./cycle_docker_compose.sh
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./cycle_docker_compose.sh
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
@@ -337,15 +341,15 @@ with the service running in the docker container.</p>
 <li><p>Activate the virtual env: <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">shell</span></code>.</p></li>
 <li><p>Load the environmental variables contained in <code class="docutils literal notranslate"><span class="pre">.env.local</span></code></p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nb">export</span> <span class="k">$(</span>cat .env.local <span class="p">|</span> egrep -v <span class="s2">&quot;^#&quot;</span> <span class="p">|</span> xargs<span class="k">)</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span> <span class="k">$(</span>cat .env.local <span class="p">|</span> egrep -v <span class="s2">&quot;^#&quot;</span> <span class="p">|</span> xargs<span class="k">)</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="6">
 <li><p>Run migrations (optionally load demo data).</p></li>
 </ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nb">cd</span> app
-<span class="gp">$</span> python manage.py migrate
-<span class="gp">$</span> python manage.py init_gc_demo
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">cd</span> app
+<span class="gp">$ </span>python manage.py migrate
+<span class="gp">$ </span>python manage.py init_gc_demo
 </pre></div>
 </div>
 <ol class="arabic simple" start="7">
@@ -369,11 +373,11 @@ Choose the same python interpreter here, and make sure to load the environmental
 <h2>Creating Migrations<a class="headerlink" href="#creating-migrations" title="Permalink to this headline">¶</a></h2>
 <p>If you change a <code class="docutils literal notranslate"><span class="pre">models.py</span></code> file then you will need to make the corresponding migration files.
 You can do this with</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> make migrations
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make migrations
 </pre></div>
 </div>
 <p>or, more explicitly</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> docker-compose run --rm --user <span class="sb">`</span>id -u<span class="sb">`</span> web python manage.py makemigrations
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker-compose run --rm --user <span class="sb">`</span>id -u<span class="sb">`</span> web python manage.py makemigrations
 </pre></div>
 </div>
 <p>add these to git and commit.</p>
@@ -381,7 +385,7 @@ You can do this with</p>
 <div class="section" id="building-the-documentation">
 <h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this headline">¶</a></h2>
 <p>Having built the web container with <code class="docutils literal notranslate"><span class="pre">cycle_docker_compose.sh</span></code> you can use this to generate the docs with</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> make docs
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make docs
 </pre></div>
 </div>
 <p>This will create the docs in the <code class="docutils literal notranslate"><span class="pre">docs/_build/html</span></code> directory.</p>
@@ -390,13 +394,13 @@ You can do this with</p>
 <h2>Adding new dependencies<a class="headerlink" href="#adding-new-dependencies" title="Permalink to this headline">¶</a></h2>
 <p>Poetry is used to manage the dependencies of the platform.
 To add a new dependency use</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> poetry add &lt;whatever&gt;
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry add &lt;whatever&gt;
 </pre></div>
 </div>
 <p>and then commit the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
 If this is a development dependency then use the <code class="docutils literal notranslate"><span class="pre">--dev</span></code> flag, see the <code class="docutils literal notranslate"><span class="pre">poetry</span></code> documentation for more details.</p>
 <p>Versions are unpinned in the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file, to update the resolved dependencies use</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> poetry lock
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry lock
 </pre></div>
 </div>
 <p>and commit the update <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
@@ -419,37 +423,29 @@ If you want to run this in a production environment you will need to make severa
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="evaluation.html" class="btn btn-neutral float-right" title="Evaluation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="architecture.html" class="btn btn-neutral float-left" title="Architecture" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="evaluation.html" class="btn btn-neutral float-right" title="Evaluation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="architecture.html" class="btn btn-neutral float-left" title="Architecture" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        
-        &copy; Copyright 2018, James Meakin
+        &#169; Copyright 2018, James Meakin.
 
     </p>
   </div>
     
     
     
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     
     provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
