@@ -28,6 +28,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -417,7 +418,13 @@ class Job(UUIDModel, ComponentJob):
     @cached_property
     def rendered_result_text(self):
         try:
-            results = self.outputs.get(interface__slug="results-json-file")
+            results = get(
+                [
+                    o.value
+                    for o in self.outputs.all()
+                    if o.interface.slug == "results-json-file"
+                ]
+            )
         except ObjectDoesNotExist:
             return ""
 
