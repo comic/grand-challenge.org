@@ -23,10 +23,3 @@ def test_make_migration(capsys):
 )
 def test_all_users_group_exists(group):
     assert Group.objects.get(name=group)
-
-
-@pytest.mark.django_db
-def test_uvicorn_worker_imported():
-    from config.uvicorn import UvicornWorker
-
-    assert UvicornWorker()
