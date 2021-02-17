@@ -82,7 +82,7 @@ def test_rendered_result_text():
 
     job = AlgorithmJobFactory()
     job.algorithm_image.algorithm.result_template = (
-        "foo score: {{result_dict.foo}}"
+        "foo score: {{results.foo}}"
     )
 
     assert job.rendered_result_text == ""

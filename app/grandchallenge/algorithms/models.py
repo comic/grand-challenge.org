@@ -28,7 +28,6 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
-from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -95,13 +94,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     )
     result_template = models.TextField(
         blank=True,
-        default="<pre>{{ result_dict|tojson(indent=2) }}</pre>",
+        default="<pre>{{ results|tojson(indent=2) }}</pre>",
         help_text=(
             "Define the jinja template to render the content of the "
-            "result.json to html. For example, the following template will print "
+            "results.json to html. For example, the following template will print "
             "out all the keys and values of the result.json. Use result-dict to access"
             "the json root."
-            "{% for key, value in result_dict.metrics.items() -%}"
+            "{% for key, value in results.metrics.items() -%}"
             "{{ key }}  {{ value }}"
             "{% endfor %}"
         ),
@@ -418,20 +417,15 @@ class Job(UUIDModel, ComponentJob):
     @cached_property
     def rendered_result_text(self):
         try:
-            result_dict = get(
-                [
-                    o.value
-                    for o in self.outputs.all()
-                    if o.interface.slug == "results-json-file"
-                ]
-            )
+            results = self.outputs.get(interface__slug="results-json-file")
         except ObjectDoesNotExist:
             return ""
 
         try:
+            # TODO remove legacy result_dict
             template_output = JINJA_ENGINE.from_string(
                 self.algorithm_image.algorithm.result_template
-            ).render(result_dict=result_dict)
+            ).render(results=results, result_dict=results)
         except (TemplateError, TypeError, ValueError):
             return "Jinja template is invalid"
 
