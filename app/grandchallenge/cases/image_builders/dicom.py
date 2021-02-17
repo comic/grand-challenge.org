@@ -183,7 +183,7 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
         float(i) for i in getattr(ref_file, "ImagePositionPatient", (0, 0, 0))
     )
     dimensions = 4 if dicom_ds.n_time and dicom_ds.n_time > 1 else 3
-    direction = np.eye(dimensions, dtype=np.float)
+    direction = np.eye(dimensions, dtype=float)
     direction = _extract_direction(dicom_ds, direction)
     pixel_dims = (
         dicom_ds.n_slices,

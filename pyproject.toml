@@ -75,7 +75,6 @@ prometheus_client = "*"
 openslide-python = "*"
 humanize = "*"
 disposable-email-domains = "*"
-docutils = "<0.16" # Required for boto3 depedency resolution
 django-machina = "*"
 django-haystack = "3.0b1"
 citeproc-py = "*"
@@ -83,7 +82,6 @@ django-ipware = "*"
 pyswot = "*"
 django-redis = "*"
 django-allauth = "*"
-defusedxml = "*" # Required for django-allauth dependency resolution
 easy_thumbnails = "*"
 
 [tool.poetry.dev-dependencies]

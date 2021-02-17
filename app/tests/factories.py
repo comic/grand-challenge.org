@@ -180,7 +180,8 @@ class SessionFactory(factory.django.DjangoModelFactory):
 
 
 class FuzzyFloatCoordinatesList(factory.fuzzy.BaseFuzzyAttribute):
-    def __init__(self, size=None):
+    def __init__(self, size=None, **kwargs):
+        super().__init__(**kwargs)
         self.size = size
 
     def fuzz(self):

@@ -6,7 +6,7 @@ from django.contrib.flatpages.admin import FlatPageAdmin
 from django.contrib.flatpages.forms import FlatpageForm
 from django.contrib.flatpages.models import FlatPage
 from rest_framework.authtoken.admin import TokenAdmin
-from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.models import TokenProxy
 
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 
@@ -42,8 +42,8 @@ class SearchableTokenAdmin(TokenAdmin):
     search_fields = ("user__username",)
 
 
-admin.site.unregister(Token)
-admin.site.register(Token, SearchableTokenAdmin)
+admin.site.unregister(TokenProxy)
+admin.site.register(TokenProxy, SearchableTokenAdmin)
 
 admin.site.unregister(Group)
 admin.site.register(Group, GroupWithUsers)
