@@ -341,7 +341,7 @@ class Command(BaseCommand):
         )
         algorithm.users_group.user_set.add(self.users["algorithmuser"])
         algorithm.result_template = (
-            "{% for key, value in result_dict.metrics.items() -%}"
+            "{% for key, value in results.metrics.items() -%}"
             "{{ key }}  {{ value }}"
             "{% endfor %}"
         )

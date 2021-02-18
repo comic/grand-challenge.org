@@ -86,8 +86,8 @@ class Migration(migrations.Migration):
                     "result_template",
                     models.TextField(
                         blank=True,
-                        default="<pre>{{ result_dict|tojson(indent=2) }}</pre>",
-                        help_text="Define the jinja template to render the content of the result.json to html. For example, the following template will print out all the keys and values of the result.json. Use result-dict to accessthe json root.{% for key, value in result_dict.metrics.items() -%}{{ key }}  {{ value }}{% endfor %}",
+                        default="<pre>{{ results|tojson(indent=2) }}</pre>",
+                        help_text="Define the jinja template to render the content of the results.json to html. For example, the following template will print out all the keys and values of the result.json. Use results to access the json root. {% for key, value in results.metrics.items() -%}{{ key }}  {{ value }}{% endfor %}",
                     ),
                 ),
                 (
