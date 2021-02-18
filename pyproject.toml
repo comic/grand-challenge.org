@@ -38,7 +38,7 @@ docker = "*"
 python-magic = "*"
 pytz = "*"
 gunicorn = "*"
-uvicorn = "*"
+uvicorn = {version = "*", extras = ["standard"]}
 django-celery-email = "*"
 simpleitk = "*"
 "psycopg2" = "*"
