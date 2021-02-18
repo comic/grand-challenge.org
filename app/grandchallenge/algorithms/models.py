@@ -429,10 +429,9 @@ class Job(UUIDModel, ComponentJob):
             return ""
 
         try:
-            # TODO remove legacy result_dict
             template_output = JINJA_ENGINE.from_string(
                 self.algorithm_image.algorithm.result_template
-            ).render(results=results, result_dict=results)
+            ).render(results=results)
         except (TemplateError, TypeError, ValueError):
             return "Jinja template is invalid"
 
