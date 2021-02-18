@@ -64,18 +64,18 @@
         <div class="container py-5 px-4">
             <div class="row">
                 <div class="col-md-3">
-                    <img src="{% static 'products/images/banner2.png' %}" alt="Logo" style="width:100%">
-                </div>
-
-                <div class="col-md-6 px-4">
                     <div class="h4">About</div>
                     <div>
-                        This is an initiative of the <a href="http://diagnijmegen.nl/" title="DIAG" target="_blank"
+                        AI for Radiology is a non-commercial initiative of the <a href="http://diagnijmegen.nl/" title="DIAG" target="_blank"
                                                         class="text-radboud">Diagnostic Image Analysis Group</a>,
                         part of the Department of Radiology and Nuclear Medicine at the <a
                             href="https://www.radboudumc.nl/en/" title="Radboudumc" target="_blank"
-                            class="text-radboud">Radboud university medical center</a>, Nijmegen, the Netherlands.
+                            class="text-radboud">Radboud university medical center</a>.
                     </div>
+                </div>
+
+                <div class="col-md-6 px-4">
+                    {% include "products/partials/subscribe.html" %}
                 </div>
 
                 <div class="col-md-3 px-4">
