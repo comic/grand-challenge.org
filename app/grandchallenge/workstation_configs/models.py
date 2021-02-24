@@ -144,8 +144,21 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         (SLAB_RENDER_METHOD_AVERAGE, "Average"),
     )
 
+    IMAGE_CONTEXT_DEFAULT = "DEF"
+    IMAGE_CONTEXT_PATHOLOGY = "PATH"
+    IMAGE_CONTEXT_OPTHAMOLOGY = "OPTHA"
+    IMAGE_CONTEXT_MPMRI = "MPMRI"
+
+    IMAGE_CONTEXT_CHOICES = (
+        (IMAGE_CONTEXT_DEFAULT, "Default"),
+        (IMAGE_CONTEXT_PATHOLOGY, "Pathology"),
+        (IMAGE_CONTEXT_OPTHAMOLOGY, "Opthamology"),
+        (IMAGE_CONTEXT_MPMRI, "Multiparametric MRI"),
+    )
+
     IMAGE_INTERPOLATION_TYPE_NEAREST = "NN"
     IMAGE_INTERPOLATION_TYPE_TRILINEAR = "TL"
+
     IMAGE_INTERPOLATION_TYPE_CHOICES = (
         (IMAGE_INTERPOLATION_TYPE_NEAREST, "NearestNeighbor"),
         (IMAGE_INTERPOLATION_TYPE_TRILINEAR, "Trilinear"),
@@ -160,12 +173,20 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         blank=True,
         related_name="workstation_window_presets",
     )
+
     default_window_preset = models.ForeignKey(
         to="WindowPreset",
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
         related_name="workstation_default_window_presets",
+    )
+
+    image_context = models.CharField(
+        blank=True,
+        max_length=6,
+        default=IMAGE_CONTEXT_DEFAULT,
+        choices=IMAGE_CONTEXT_CHOICES,
     )
 
     # 4 digits, 2 decimal places, 0.01 min, 99.99 max
@@ -176,6 +197,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         decimal_places=2,
         validators=[MinValueValidator(limit_value=0.01)],
     )
+
     default_slab_render_method = models.CharField(
         max_length=3, choices=SLAB_RENDER_METHOD_CHOICES, blank=True
     )
@@ -187,12 +209,14 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     default_overlay_lut = models.ForeignKey(
         to="LookUpTable", blank=True, null=True, on_delete=models.SET_NULL
     )
+
     default_overlay_interpolation = models.CharField(
         max_length=2,
         choices=IMAGE_INTERPOLATION_TYPE_CHOICES,
         default=IMAGE_INTERPOLATION_TYPE_NEAREST,
         blank=True,
     )
+
     # 3 digits, 2 decimal places, 0.00 min, 1.00 max
     default_overlay_alpha = models.DecimalField(
         blank=True,

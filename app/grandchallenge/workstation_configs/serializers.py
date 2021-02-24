@@ -38,6 +38,7 @@ class LookUpTableSerializer(ModelSerializer):
 
 class WorkstationConfigSerializer(ModelSerializer):
     creator = SlugRelatedField(read_only=True, slug_field="username")
+    image_context = CharField(source="get_image_context_display")
     default_slab_render_method = CharField(
         source="get_default_slab_render_method_display"
     )
@@ -62,6 +63,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "created",
             "modified",
             "creator",
+            "image_context",
             "window_presets",
             "default_window_preset",
             "default_slab_thickness_mm",
@@ -81,6 +83,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_reset_tool",
         ]
         swagger_schema_fields = swagger_schema_fields_for_charfield(
+            image_context=model._meta.get_field("image_context"),
             default_orientation=model._meta.get_field("default_orientation"),
             default_slab_render_method=model._meta.get_field(
                 "default_slab_render_method"
