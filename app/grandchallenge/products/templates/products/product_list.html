@@ -4,8 +4,33 @@
     AI for radiology
 {% endblock %}
 
+
 {% block content %}
+<script>
+  $(window).on('load',function(){
+  if (!sessionStorage.getItem('shown-modal')){
+    $('#myModal').modal('show');
+    sessionStorage.setItem('shown-modal', 'true');
+  }
+});
+  
+</script>
+
   <div class="d-flex justify-content-between align-items-center">
+    
+    <div class="modal fade" id="myModal">
+      <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                  </button>
+                  {% include "products/partials/subscribe.html" %}
+                </div>
+            </div>
+      </div>
+    </div>
+
     <h1>Products</h1>
   </div>
     <p> Find the artificial intelligence based software for radiology that you are looking for. <br>
