@@ -85,9 +85,21 @@ The default hanging list presents each reader with 1 image per protocol.
 
 You are able to customise the hanging list in the study edit page.
 Here, you are able to assign multiple images and overlays to each protocol.
-A ``main`` and ``secondary`` image port are available.
-Overlays can be applied to either image port by using the keys ``main-overlay``
-and ``secondary-overlay``.
+
+Available image ports are:
+* ``main``
+* ``secondary``
+* ``tertiary``
+* ``quaternary``
+* ``quinary``
+* ``senary``
+* ``septenary``
+* ``octonary``
+* ``nonary``
+* ``denary``
+
+Overlays can be applied to the image ports by using the image-port name with
+the suffix '-overlay' (e.g. ``main-overlay``).
 
 Questions
 ---------
@@ -123,6 +135,38 @@ based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
 """
 
+
+#: Supported image ports.
+IMAGE_PORTS = [
+    "main",
+    "secondary",
+    "tertiary",
+    "quaternary",
+    "quinary",
+    "senary",
+    "septenary",
+    "octonary",
+    "nonary",
+    "denary",
+]
+
+
+def generate_image_port_properties(image_ports):
+    properties = {}
+    image_port_overlays = [f"{port}-overlay" for port in image_ports]
+    for port in image_ports + image_port_overlays:
+        properties[port] = {
+            "$id": f"#/items/properties/{port}",
+            "type": "string",
+            "title": f"The {port[0].upper() + port[1:]} Schema",
+            "default": "",
+            "examples": [f"im_{port}.mhd"],
+            "pattern": "^(.*)$",
+        }
+    return properties
+
+
+#: Schema used to validate if the hanging list is of the correct format.
 HANGING_LIST_SCHEMA = {
     "definitions": {},
     "$schema": "http://json-schema.org/draft-06/schema#",
@@ -134,40 +178,7 @@ HANGING_LIST_SCHEMA = {
         "title": "The Items Schema",
         "required": ["main"],
         "additionalProperties": False,
-        "properties": {
-            "main": {
-                "$id": "#/items/properties/main",
-                "type": "string",
-                "title": "The Main Schema",
-                "default": "",
-                "examples": ["im1.mhd"],
-                "pattern": "^(.*)$",
-            },
-            "main-overlay": {
-                "$id": "#/items/properties/main-overlay",
-                "type": "string",
-                "title": "The Main Overlay Schema",
-                "default": "",
-                "examples": ["im1-overlay.mhd"],
-                "pattern": "^(.*)$",
-            },
-            "secondary": {
-                "$id": "#/items/properties/secondary",
-                "type": "string",
-                "title": "The Secondary Schema",
-                "default": "",
-                "examples": ["im2.mhd"],
-                "pattern": "^(.*)$",
-            },
-            "secondary-overlay": {
-                "$id": "#/items/properties/secondary-overlay",
-                "type": "string",
-                "title": "The Secondary Overlay Schema",
-                "default": "",
-                "examples": ["im2-overlay.mhd"],
-                "pattern": "^(.*)$",
-            },
-        },
+        "properties": generate_image_port_properties(IMAGE_PORTS),
     },
 }
 
