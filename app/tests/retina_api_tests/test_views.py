@@ -26,70 +26,9 @@ from tests.cases_tests.factories import (
     ImageFactoryWithImageFile3DLarge4Slices,
 )
 from tests.retina_api_tests.helpers import (
-    batch_test_data_endpoints,
-    batch_test_image_endpoint_redirects,
     client_force_login,
-    client_login,
     get_user_from_str,
 )
-
-
-@pytest.mark.django_db
-class TestImageAPIEndpoint:
-    # test methods are added dynamically
-    pass
-
-
-batch_test_image_endpoint_redirects(TestImageAPIEndpoint)
-
-
-@pytest.mark.django_db
-class TestDataAPIEndpoint:
-    # test methods are added dynamically
-    pass
-
-
-batch_test_data_endpoints(TestDataAPIEndpoint)
-
-
-@pytest.mark.django_db
-class TestImageElementSpacingView:
-    @pytest.mark.parametrize(
-        "user", ["anonymous", "normal", "staff", "retina_user"]
-    )
-    def test_no_access(self, client, user):
-        image = ImageFactoryWithImageFile()
-        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
-        client, _ = client_login(client, user=user)
-        response = client.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    @pytest.mark.parametrize(
-        "user,expected_status",
-        [
-            ("anonymous", status.HTTP_403_FORBIDDEN),
-            ("normal", status.HTTP_403_FORBIDDEN),
-            ("staff", status.HTTP_403_FORBIDDEN),
-            ("retina_user", status.HTTP_200_OK),
-        ],
-    )
-    def test_access(self, client, user, expected_status):
-        image = ImageFactoryWithImageFile()
-        image.permit_viewing_by_retina_users()
-        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
-        client, _ = client_login(client, user=user)
-        response = client.get(url)
-        assert response.status_code == expected_status
-
-    def test_returns_correct_spacing(self, client):
-        image = ImageFactoryWithImageFile()
-        image.permit_viewing_by_retina_users()
-        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
-        client, _ = client_login(client, user="retina_user")
-        response = client.get(url)
-        assert response.status_code == status.HTTP_200_OK
-        r = response.json()
-        assert list(image.get_sitk_image().GetSpacing()) == r
 
 
 @pytest.mark.django_db
