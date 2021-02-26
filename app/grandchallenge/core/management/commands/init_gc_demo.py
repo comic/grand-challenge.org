@@ -459,7 +459,7 @@ class Command(BaseCommand):
         question = Question.objects.create(
             reader_study=reader_study,
             question_text="foo",
-            answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
+            answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
         )
 
         answer = Answer.objects.create(

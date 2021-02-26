@@ -21,17 +21,17 @@ def test_example_ground_truth(client, tmpdir):
         QuestionFactory(
             reader_study=rs,
             question_text="q1",
-            answer_type=Question.ANSWER_TYPE_BOOL,
+            answer_type=Question.AnswerType.BOOL,
         ),
         QuestionFactory(
             reader_study=rs,
             question_text="q2",
-            answer_type=Question.ANSWER_TYPE_CHOICE,
+            answer_type=Question.AnswerType.CHOICE,
         ),
         QuestionFactory(
             reader_study=rs,
             question_text="q3",
-            answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
+            answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
         ),
     )
     CategoricalOptionFactory(question=q2, title="option")
@@ -93,7 +93,7 @@ def test_answer_remove(client):
     q = QuestionFactory(
         reader_study=rs,
         question_text="q1",
-        answer_type=Question.ANSWER_TYPE_BOOL,
+        answer_type=Question.AnswerType.BOOL,
     )
     im = ImageFactory()
     a1 = AnswerFactory(creator=r1, question=q, answer=True)
@@ -139,7 +139,7 @@ def test_question_delete(client):
     q = QuestionFactory(
         reader_study=rs,
         question_text="q1",
-        answer_type=Question.ANSWER_TYPE_BOOL,
+        answer_type=Question.AnswerType.BOOL,
     )
     assert Question.objects.count() == 1
 
@@ -176,7 +176,7 @@ def test_question_delete_disabled_for_questions_with_answers(client):
     q = QuestionFactory(
         reader_study=rs,
         question_text="q1",
-        answer_type=Question.ANSWER_TYPE_BOOL,
+        answer_type=Question.AnswerType.BOOL,
     )
     AnswerFactory(creator=r1, question=q, answer=True)
 
