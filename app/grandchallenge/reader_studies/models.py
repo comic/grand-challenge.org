@@ -150,21 +150,8 @@ IMAGE_PORTS = [
     "denary",
 ]
 
-
-def generate_image_port_properties(image_ports):
-    properties = {}
-    image_port_overlays = [f"{port}-overlay" for port in image_ports]
-    for port in image_ports + image_port_overlays:
-        properties[port] = {
-            "$id": f"#/items/properties/{port}",
-            "type": "string",
-            "title": f"The {port.title()} Schema",
-            "default": "",
-            "examples": [f"im_{port}.mhd"],
-            "pattern": "^(.*)$",
-        }
-    return properties
-
+#: Supported image-port overlays.
+IMAGE_PORT_OVERLAYS = [f"{port}-overlay" for port in IMAGE_PORTS]
 
 #: Schema used to validate if the hanging list is of the correct format.
 HANGING_LIST_SCHEMA = {
@@ -178,7 +165,17 @@ HANGING_LIST_SCHEMA = {
         "title": "The Items Schema",
         "required": ["main"],
         "additionalProperties": False,
-        "properties": generate_image_port_properties(IMAGE_PORTS),
+        "properties": {
+            port: {
+                "$id": f"#/items/properties/{port}",
+                "type": "string",
+                "title": f"The {port.title()} Schema",
+                "default": "",
+                "examples": [f"im_{port}.mhd"],
+                "pattern": "^(.*)$",
+            }
+            for port in IMAGE_PORTS + IMAGE_PORT_OVERLAYS
+        },
     },
 }
 
