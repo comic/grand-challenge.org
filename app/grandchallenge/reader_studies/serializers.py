@@ -25,12 +25,12 @@ class CategoricalOptionSerializer(ModelSerializer):
 
 
 class QuestionSerializer(HyperlinkedModelSerializer):
-    answer_type = CharField(source="get_answer_type_display")
+    answer_type = CharField(source="get_answer_type_display", read_only=True)
     reader_study = HyperlinkedRelatedField(
         view_name="api:reader-study-detail", read_only=True
     )
-    form_direction = CharField(source="get_direction_display")
-    image_port = CharField(source="get_image_port_display")
+    form_direction = CharField(source="get_direction_display", read_only=True)
+    image_port = CharField(source="get_image_port_display", read_only=True)
     options = CategoricalOptionSerializer(many=True, read_only=True)
 
     class Meta:

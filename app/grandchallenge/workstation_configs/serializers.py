@@ -38,15 +38,17 @@ class LookUpTableSerializer(ModelSerializer):
 class WorkstationConfigSerializer(ModelSerializer):
     creator = SlugRelatedField(read_only=True, slug_field="username")
     default_slab_render_method = CharField(
-        source="get_default_slab_render_method_display"
+        source="get_default_slab_render_method_display", read_only=True,
     )
-    default_orientation = CharField(source="get_default_orientation_display")
+    default_orientation = CharField(
+        source="get_default_orientation_display", read_only=True
+    )
     default_slab_thickness_mm = FloatField()
     window_presets = WindowPresetSerializer(many=True, read_only=True)
     default_window_preset = WindowPresetSerializer()
     default_overlay_lut = LookUpTableSerializer()
     default_overlay_interpolation = CharField(
-        source="get_default_overlay_interpolation_display"
+        source="get_default_overlay_interpolation_display", read_only=True,
     )
     default_overlay_alpha = FloatField()
     default_zoom_scale = FloatField()
