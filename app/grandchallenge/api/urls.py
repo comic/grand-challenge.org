@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 from django.conf.urls import include
 from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
@@ -158,11 +156,10 @@ router.register(
 router.register(r"workstations/sessions", SessionViewSet)
 
 
-ModuleWrapper = namedtuple("ModuleWrapper", ["urlpatterns"])
-
-
 class SchemaView(SpectacularAPIView):
-    urlconf = ModuleWrapper((path("api/v1/", include(router.urls)),))
+    urlconf = [
+        path("api/v1/", include(router.urls)),
+    ]
 
 
 urlpatterns = [
