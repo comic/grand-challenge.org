@@ -91,18 +91,11 @@ class TreeImageSerializer(TreeObjectSerializer):
     voxel_depth_mm = serializers.FloatField()
 
 
-class ImageLevelAnnotationsForImageSerializer(serializers.BaseSerializer):
-    quality = serializers.UUIDField(allow_null=True)
-    pathology = serializers.UUIDField(allow_null=True)
-    retina_pathology = serializers.UUIDField(allow_null=True)
-    oct_retina_pathology = serializers.UUIDField(allow_null=True)
-    text = serializers.UUIDField(allow_null=True)
-
-    def to_representation(self, instance):
-        return {
-            "quality": instance.get("quality"),
-            "pathology": instance.get("pathology"),
-            "retina_pathology": instance.get("retina_pathology"),
-            "oct_retina_pathology": instance.get("oct_retina_pathology"),
-            "text": instance.get("text"),
-        }
+class ImageLevelAnnotationsForImageSerializer(serializers.Serializer):
+    quality = serializers.UUIDField(allow_null=True, read_only=True)
+    pathology = serializers.UUIDField(allow_null=True, read_only=True)
+    retina_pathology = serializers.UUIDField(allow_null=True, read_only=True)
+    oct_retina_pathology = serializers.UUIDField(
+        allow_null=True, read_only=True
+    )
+    text = serializers.UUIDField(allow_null=True, read_only=True)
