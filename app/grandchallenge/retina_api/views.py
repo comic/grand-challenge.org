@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     MultipleObjectsReturned,
-    ObjectDoesNotExist,
     ValidationError,
 )
 from django.http import HttpResponse
@@ -67,37 +66,13 @@ from grandchallenge.retina_api.mixins import (
     RetinaAdminAPIPermission,
     RetinaOwnerAPIPermission,
 )
-from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.serializers import (
     B64ImageSerializer,
     ImageLevelAnnotationsForImageSerializer,
     TreeImageSerializer,
     TreeObjectSerializer,
 )
-from grandchallenge.retina_api.tasks import cache_archive_data
 from grandchallenge.studies.models import Study
-
-
-class ArchiveView(APIView):
-    permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (authentication.SessionAuthentication,)
-    pagination_class = None
-
-    def get(self, request):
-        try:
-            archive_data_object = ArchiveDataModel.objects.get(pk=1)
-        except ObjectDoesNotExist:
-            cache_archive_data.delay()
-            return Response(
-                {
-                    "error": [
-                        1,
-                        "Archive data task triggered. Try again in 2 minutes.",
-                    ]
-                }
-            )
-
-        return Response(archive_data_object.value)
 
 
 class ImageView(RetinaAPIPermissionMixin, View):
@@ -143,10 +118,7 @@ class ImageView(RetinaAPIPermissionMixin, View):
             print("failed unique image search")
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        if image_type == "thumb":
-            response = redirect("retina:image-thumbnail", image_id=image.id)
-        else:
-            response = redirect("retina:image-numpy", image_id=image.id)
+        response = redirect("retina:image-thumbnail", image_id=image.id)
 
         return response
 

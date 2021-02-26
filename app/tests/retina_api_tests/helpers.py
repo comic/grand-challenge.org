@@ -85,10 +85,7 @@ def create_datastructures_data(archive_pars=None):
 
 
 def batch_test_image_endpoint_redirects(test_class):
-    for image_type, reverse_name in (
-        ("thumb", "retina:image-thumbnail"),
-        ("original", "retina:image-numpy"),
-    ):
+    for image_type, reverse_name in (("thumb", "retina:image-thumbnail"),):
         (
             test_redirect_no_perm,
             test_redirect,

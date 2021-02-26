@@ -4,9 +4,10 @@ from django.conf import settings
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views import View
+from rest_framework import status
+
 from grandchallenge.cases.models import Image
 from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
-from rest_framework import status
 
 
 class ThumbnailView(RetinaAPIPermissionMixin, View):

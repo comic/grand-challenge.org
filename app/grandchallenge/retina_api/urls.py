@@ -37,7 +37,6 @@ annotation_router.register(
     basename="imagetextannotation",
 )
 urlpatterns = [
-    path("archives/", views.ArchiveView.as_view(), name="archives-api-view"),
     path(
         "archive_data/",
         views.ArchiveAPIView.as_view(),
