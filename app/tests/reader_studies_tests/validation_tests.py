@@ -39,7 +39,11 @@ from tests.utils import get_view_for_user
         (
             [
                 {"main": "image_0", "secondary": "image_1"},
-                {"main": "image_2", "secondary": "image_3"},
+                {
+                    "main": "image_2",
+                    "secondary": "image_3",
+                    "tertiary": "image_4",
+                },
             ],
             True,
         ),

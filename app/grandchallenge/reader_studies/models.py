@@ -136,21 +136,21 @@ as for each case are displayed in the ``statistics`` view.
 """
 
 
-class ImagePorts(models.IntegerChoices):
-    MAIN = 0, "main"
-    SECONDARY = 1, "secondary"
-    TERTIARY = 2, "tertiary"
-    QUATERNARY = 3, "quaternary"
-    QUINARY = 4, "quinary"
-    SENARY = 5, "senary"
-    SEPTENARY = 6, "septenary"
-    OCTONARY = 7, "octonary"
-    NONARY = 8, "nonary"
-    DENARY = 9, "denary"
+class ImagePort(models.TextChoices):
+    MAIN = "M", "Main"
+    SECONDARY = "S", "Secondary"
+    TERTIARY = "TERTIARY", "Tertiary"
+    QUATERNARY = "QUATERNARY", "Quaternary"
+    QUINARY = "QUINARY", "Quinary"
+    SENARY = "SENARY", "Senary"
+    SEPTENARY = "SEPTENARY", "Septenary"
+    OCTONARY = "OCTONARY", "Octonary"
+    NONARY = "NONARY", "Nonary"
+    DENARY = "DENARY", "Denary"
 
 
 #: Supported image-port overlays.
-IMAGE_PORT_OVERLAYS = [f"{port}-overlay" for port in ImagePorts.labels]
+IMAGE_PORT_OVERLAYS = [f"{port.lower()}-overlay" for port in ImagePort.labels]
 
 #: Schema used to validate if the hanging list is of the correct format.
 HANGING_LIST_SCHEMA = {
@@ -173,7 +173,8 @@ HANGING_LIST_SCHEMA = {
                 "examples": [f"im_{port}.mhd"],
                 "pattern": "^(.*)$",
             }
-            for port in ImagePorts.labels + IMAGE_PORT_OVERLAYS
+            for port in [p.lower() for p in ImagePort.labels]
+            + IMAGE_PORT_OVERLAYS
         },
     },
 }
@@ -1195,8 +1196,8 @@ class Question(UUIDModel):
         default=ANSWER_TYPE_SINGLE_LINE_TEXT,
     )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
-    image_port = models.IntegerField(
-        choices=ImagePorts.choices, blank=True, null=True, default=None
+    image_port = models.CharField(
+        max_length=10, choices=ImagePort.choices, blank=True, default="",
     )
     required = models.BooleanField(default=True)
     direction = models.CharField(
@@ -1219,7 +1220,7 @@ class Question(UUIDModel):
             f"{self.question_text} "
             "("
             f"{self.get_answer_type_display()}, "
-            f"{self.get_image_port_display() + ' port,' if self.image_port is not None else ''}"
+            f"{self.get_image_port_display() + ' port,' if self.image_port else ''}"
             f"{'' if self.required else 'not'} required, "
             f"order {self.order}"
             ")"
@@ -1310,7 +1311,7 @@ class Question(UUIDModel):
         # Make sure that the image port is only set when using drawn
         # annotations.
         if (self.answer_type in self.annotation_types) != bool(
-            self.image_port is not None
+            self.image_port
         ):
             raise ValidationError(
                 "The image port must (only) be set for annotation questions."
