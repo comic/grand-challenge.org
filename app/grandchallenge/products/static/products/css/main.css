@@ -18,6 +18,12 @@ html {
     color: #00afdc !important
 }
 
+.bg-radboud {
+    color: #fff;
+    background-color: #00afdc;
+    border-color: #00afdc;
+}
+
 .btn:hover {
     background-color: #007896;
     border-color: #007896;

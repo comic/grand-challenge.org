@@ -1,0 +1,22 @@
+{% load static %}
+
+<script>
+  $(window).on('load',function(){
+  if (!localStorage.getItem('shown-alert')){
+    $('#subscribeAlert').show();
+    localStorage.setItem('shown-alert', 'true');
+  }
+});
+</script>
+
+<div class="alert alert-dismissible bg-radboud rounded-0 collapse" id="subscribeAlert" role="alert">
+  <div class="container">
+    <div class="col">
+      Subscribe to our monthly newsletter
+          <a href="http://eepurl.com/hrqfdr" title="Subscribe" class="btn btn-sm btn-square btn-dark ml-3" target="_blank">Subscribe</a>
+    </div>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+</div>
