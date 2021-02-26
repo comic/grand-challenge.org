@@ -124,39 +124,24 @@ KEY_BINDINGS_SCHEMA = {
 
 
 class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
+    class Orientation(models.TextChoices):
+        AXIAL = "A", "Axial"
+        CORONAL = "C", "Coronal"
+        SAGITTAL = "S", "Sagittal"
 
-    ORIENTATION_AXIAL = "A"
-    ORIENTATION_CORONAL = "C"
-    ORIENTATION_SAGITTAL = "S"
-
-    ORIENTATION_CHOICES = (
-        (ORIENTATION_AXIAL, "Axial"),
-        (ORIENTATION_CORONAL, "Coronal"),
-        (ORIENTATION_SAGITTAL, "Sagittal"),
-    )
-
-    SLAB_RENDER_METHOD_MAXIMUM = "MAX"
-    SLAB_RENDER_METHOD_MINIMUM = "MIN"
-    SLAB_RENDER_METHOD_AVERAGE = "AVG"
-
-    SLAB_RENDER_METHOD_CHOICES = (
-        (SLAB_RENDER_METHOD_MAXIMUM, "Maximum"),
-        (SLAB_RENDER_METHOD_MINIMUM, "Minimum"),
-        (SLAB_RENDER_METHOD_AVERAGE, "Average"),
-    )
+    class SlabRenderMethod(models.TextChoices):
+        MAXIMUM = "MAX", "Maximum"
+        MINIMUM = "MIN", "Minimum"
+        AVERAGE = "AVG", "Average"
 
     class ImageContext(models.TextChoices):
         PATHOLOGY = "PATH", "Pathology"
         OPHTHAMOLOGY = "OPHTH", "Ophthamology"
         MPMRI = "MPMRI", "Multiparametric MRI"
 
-    IMAGE_INTERPOLATION_TYPE_NEAREST = "NN"
-    IMAGE_INTERPOLATION_TYPE_TRILINEAR = "TL"
-
-    IMAGE_INTERPOLATION_TYPE_CHOICES = (
-        (IMAGE_INTERPOLATION_TYPE_NEAREST, "NearestNeighbor"),
-        (IMAGE_INTERPOLATION_TYPE_TRILINEAR, "Trilinear"),
-    )
+    class ImageInterpolationType(models.TextChoices):
+        NEAREST = "NN", "NearestNeighbor"
+        TRILINEAR = "TL", "Trilinear"
 
     creator = models.ForeignKey(
         get_user_model(), null=True, on_delete=models.SET_NULL
@@ -190,11 +175,11 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     )
 
     default_slab_render_method = models.CharField(
-        max_length=3, choices=SLAB_RENDER_METHOD_CHOICES, blank=True
+        max_length=3, choices=SlabRenderMethod.choices, blank=True
     )
 
     default_orientation = models.CharField(
-        max_length=1, choices=ORIENTATION_CHOICES, blank=True
+        max_length=1, choices=Orientation.choices, blank=True
     )
 
     default_overlay_lut = models.ForeignKey(
@@ -203,8 +188,8 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     default_overlay_interpolation = models.CharField(
         max_length=2,
-        choices=IMAGE_INTERPOLATION_TYPE_CHOICES,
-        default=IMAGE_INTERPOLATION_TYPE_NEAREST,
+        choices=ImageInterpolationType.choices,
+        default=ImageInterpolationType.NEAREST,
         blank=True,
     )
 
@@ -283,6 +268,7 @@ class WindowPreset(TitleSlugDescriptionModel):
 
 
 class LookUpTable(TitleSlugDescriptionModel):
+
     COLOR_INTERPOLATION_RGB = "RGB"
     COLOR_INTERPOLATION_HLS = "HLS"
     COLOR_INTERPOLATION_HLS_POS = "HLSpos"
