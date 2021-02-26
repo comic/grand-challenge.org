@@ -2085,11 +2085,13 @@ class TestImageLevelAnnotationsForImageViewSet:
         elif user_type == "retina_grader":
             assert response.status_code == status.HTTP_200_OK
             assert response.data == {
-                "quality": annotations["quality"].id,
-                "pathology": annotations["pathology"].id,
-                "retina_pathology": annotations["retina_pathology"].id,
-                "oct_retina_pathology": annotations["oct_retina_pathology"].id,
-                "text": annotations["text"].id,
+                "quality": str(annotations["quality"].id),
+                "pathology": str(annotations["pathology"].id),
+                "retina_pathology": str(annotations["retina_pathology"].id),
+                "oct_retina_pathology": str(
+                    annotations["oct_retina_pathology"].id
+                ),
+                "text": str(annotations["text"].id),
             }
         else:
             assert response.status_code == status.HTTP_403_FORBIDDEN

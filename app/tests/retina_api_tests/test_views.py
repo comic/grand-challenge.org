@@ -364,9 +364,9 @@ class TestBase64ThumbnailView:
         image_base64_str = self.get_b64_from_image(image, max_dimension, is_3d)
 
         returned_img = PILImage.open(
-            BytesIO(base64.b64decode(response.content))
+            BytesIO(base64.b64decode(response.json()["content"]))
         )
-        assert response.content == image_base64_str
+        assert response.json()["content"] == image_base64_str.decode()
         width, height = returned_img.size
         assert max(width, height) == max_dimension
 

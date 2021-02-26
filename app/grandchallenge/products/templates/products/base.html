@@ -31,6 +31,7 @@
 {% block body %}
 
     {% navbar %}
+    {% include "products/partials/subscribebar.html" %}
 
     <main role="main" class="flex-fill">
         <div id="page" class="container pb-3">
@@ -64,18 +65,20 @@
         <div class="container py-5 px-4">
             <div class="row">
                 <div class="col-md-3">
-                    <img src="{% static 'products/images/banner2.png' %}" alt="Logo" style="width:100%">
-                </div>
-
-                <div class="col-md-6 px-4">
                     <div class="h4">About</div>
                     <div>
-                        This is an initiative of the <a href="http://diagnijmegen.nl/" title="DIAG" target="_blank"
+                        AI for Radiology is a non-commercial initiative of the <a href="http://diagnijmegen.nl/" title="DIAG" target="_blank"
                                                         class="text-radboud">Diagnostic Image Analysis Group</a>,
                         part of the Department of Radiology and Nuclear Medicine at the <a
                             href="https://www.radboudumc.nl/en/" title="Radboudumc" target="_blank"
-                            class="text-radboud">Radboud university medical center</a>, Nijmegen, the Netherlands.
+                            class="text-radboud">Radboud university medical center</a>.
                     </div>
+                </div>
+
+                <div class="col-md-6 px-4">
+                    <div class="h4">Newsletter</div>
+                    <p>Subscribe to our monthly newsletter to stay up to date on the latest developments in the commercial field of artificial intelligence in radiology.</p>
+                    <a href="http://eepurl.com/hrqfdr" title="Subscribe" class="btn btn-sm btn-square btn-dark" target="_blank">Subscribe</a>
                 </div>
 
                 <div class="col-md-3 px-4">
