@@ -68,9 +68,8 @@ from grandchallenge.retina_api.mixins import (
     RetinaOwnerAPIPermission,
 )
 from grandchallenge.retina_api.models import ArchiveDataModel
-from grandchallenge.retina_api.renderers import Base64Renderer
 from grandchallenge.retina_api.serializers import (
-    BytesImageSerializer,
+    B64ImageSerializer,
     ImageLevelAnnotationsForImageSerializer,
     TreeImageSerializer,
     TreeObjectSerializer,
@@ -869,16 +868,15 @@ class ArchiveAPIView(APIView):
 class B64ThumbnailAPIView(RetrieveAPIView):
     permission_classes = (DjangoObjectPermissions, RetinaAPIPermission)
     authentication_classes = (authentication.TokenAuthentication,)
-    renderer_classes = (Base64Renderer,)
     queryset = Image.objects.all()
-    serializer_class = BytesImageSerializer
+    serializer_class = B64ImageSerializer
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         width = kwargs.get("width", settings.RETINA_DEFAULT_THUMBNAIL_SIZE)
         height = kwargs.get("height", settings.RETINA_DEFAULT_THUMBNAIL_SIZE)
         serializer_context = {"width": width, "height": height}
-        serializer = BytesImageSerializer(instance, context=serializer_context)
+        serializer = B64ImageSerializer(instance, context=serializer_context)
         return Response(serializer.data)
 
 
