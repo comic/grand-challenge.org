@@ -158,7 +158,7 @@ def generate_image_port_properties(image_ports):
         properties[port] = {
             "$id": f"#/items/properties/{port}",
             "type": "string",
-            "title": f"The {port[0].upper() + port[1:]} Schema",
+            "title": f"The {port.title()} Schema",
             "default": "",
             "examples": [f"im_{port}.mhd"],
             "pattern": "^(.*)$",
