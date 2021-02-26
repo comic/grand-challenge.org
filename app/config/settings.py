@@ -358,7 +358,6 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # custom extensions
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
-    "drf_yasg",
     "markdownx",  # for editing markdown
     "django_filters",
     "drf_spectacular",
