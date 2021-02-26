@@ -68,7 +68,7 @@ class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
 
 class ArchiveAPIView(APIView):
     permission_classes = (RetinaAPIPermission,)
-    # authentication_classes = (authentication.TokenAuthentication,)
+    authentication_classes = (authentication.TokenAuthentication,)
     pagination_class = None
 
     def get(self, request, pk=None):
