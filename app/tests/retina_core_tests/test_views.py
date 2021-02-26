@@ -68,9 +68,3 @@ class TestCustomImageViews:
             nda_image = nda_image[depth // 2]
         expected_np = nda_image.astype(np.uint8)
         assert np.array_equal(response_np, expected_np)
-
-    def test_numpy_endpoint_non_authenticated(self, client):
-        image = ImageFactoryWithImageFile()
-        url = reverse("retina:image-numpy", args=[image.id])
-        response = client.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
