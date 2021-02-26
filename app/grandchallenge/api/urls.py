@@ -155,29 +155,16 @@ router.register(
 )
 router.register(r"workstations/sessions", SessionViewSet)
 
-# TODO Reintroduce the schema view
-"""
-schema_view = get_schema_view(
-    openapi.Info(
-        title=f"{settings.SESSION_COOKIE_DOMAIN.lstrip('.')} API",
-        default_version="v1",
-        description=f"The API for {settings.SESSION_COOKIE_DOMAIN.lstrip('.')}.",
-        license=openapi.License(name="Apache License 2.0"),
-        terms_of_service=reverse_lazy(
-            "policies:detail", kwargs={"slug": "terms-of-service"}
-        ),
-    ),
-    public=True,
-    permission_classes=(permissions.AllowAny,),
-    patterns=[
+
+class SchemaView(SpectacularAPIView):
+    urlconf = [
         path("api/v1/", include(router.urls)),
         path("api/v1/metrics/", MetricsAPIView.as_view()),
-    ],
-)
-"""
+    ]
+
 
 urlpatterns = [
-    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("schema/", SchemaView.as_view(), name="schema"),
     path(
         "schema/swagger/",
         SpectacularSwaggerView.as_view(url_name="api:schema"),

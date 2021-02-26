@@ -636,6 +636,12 @@ if SENTRY_DSN:
     )
     ignore_logger("django.security.DisallowedHost")
 
+###############################################################################
+#
+# django-rest-framework and drf-spectacular
+#
+###############################################################################
+
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -650,11 +656,20 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-SWAGGER_SETTINGS = {
-    "SECURITY_DEFINITIONS": {
-        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
-    }
+SPECTACULAR_SETTINGS = {
+    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
+    "TITLE": f"{SESSION_COOKIE_DOMAIN.lstrip('.')} API",
+    "DESCRIPTION": f"The API for {SESSION_COOKIE_DOMAIN.lstrip('.')}.",
+    "TOS": f"https://{SESSION_COOKIE_DOMAIN.lstrip('.')}/policies/terms-of-service/",
+    "LICENSE": {"name": "Apache License 2.0"},
+    "VERSION": "1.0.0",
 }
+
+###############################################################################
+#
+# CORS
+#
+###############################################################################
 
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
@@ -670,6 +685,12 @@ CORS_ALLOW_HEADERS = [
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api
 CORS_ALLOW_CREDENTIALS = True
+
+###############################################################################
+#
+# celery
+#
+###############################################################################
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
