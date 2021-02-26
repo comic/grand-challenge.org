@@ -124,6 +124,7 @@ KEY_BINDINGS_SCHEMA = {
 
 
 class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
+
     ORIENTATION_AXIAL = "A"
     ORIENTATION_CORONAL = "C"
     ORIENTATION_SAGITTAL = "S"
@@ -144,17 +145,10 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         (SLAB_RENDER_METHOD_AVERAGE, "Average"),
     )
 
-    IMAGE_CONTEXT_DEFAULT = "DEF"
-    IMAGE_CONTEXT_PATHOLOGY = "PATH"
-    IMAGE_CONTEXT_OPTHAMOLOGY = "OPTHA"
-    IMAGE_CONTEXT_MPMRI = "MPMRI"
-
-    IMAGE_CONTEXT_CHOICES = (
-        (IMAGE_CONTEXT_DEFAULT, "Default"),
-        (IMAGE_CONTEXT_PATHOLOGY, "Pathology"),
-        (IMAGE_CONTEXT_OPTHAMOLOGY, "Opthamology"),
-        (IMAGE_CONTEXT_MPMRI, "Multiparametric MRI"),
-    )
+    class ImageContext(models.TextChoices):
+        PATHOLOGY = "PATH", "Pathology"
+        OPHTHAMOLOGY = "OPHTH", "Ophthamology"
+        MPMRI = "MPMRI", "Multiparametric MRI"
 
     IMAGE_INTERPOLATION_TYPE_NEAREST = "NN"
     IMAGE_INTERPOLATION_TYPE_TRILINEAR = "TL"
@@ -183,10 +177,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     )
 
     image_context = models.CharField(
-        blank=True,
-        max_length=6,
-        default=IMAGE_CONTEXT_DEFAULT,
-        choices=IMAGE_CONTEXT_CHOICES,
+        blank=True, max_length=6, choices=ImageContext.choices,
     )
 
     # 4 digits, 2 decimal places, 0.01 min, 99.99 max
