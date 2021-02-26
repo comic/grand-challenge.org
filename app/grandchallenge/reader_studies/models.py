@@ -1194,7 +1194,7 @@ class Question(UUIDModel):
         choices=ANSWER_TYPE_CHOICES,
         default=ANSWER_TYPE_SINGLE_LINE_TEXT,
     )
-    # Set blank because the field the required status is complex and handled in front end.
+    # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.IntegerField(
         choices=ImagePorts.choices, blank=True, null=True, default=None
     )
