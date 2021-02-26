@@ -1,8 +1,6 @@
 from django.urls import include, path
 
-from grandchallenge.retina_core.views import (
-    ThumbnailView,
-)
+from grandchallenge.retina_core.views import ThumbnailView
 
 app_name = "retina"
 urlpatterns = [
