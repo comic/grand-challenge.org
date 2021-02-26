@@ -50,5 +50,6 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
                 'For example: [{ "voxel_value": 0, "name": "Level 0", "visible": '
                 'false, "metric_template": "{{metrics.volumes[0]}} mm³"},]'
             ),
-            "image_context": "This tells the viewer how to show the images defined in the hanging list",
+            "image_context": "This tells the viewer how to show the images "
+            "defined in the hanging list",
         }
