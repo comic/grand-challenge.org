@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 choices=[
                     ("PATH", "Pathology"),
-                    ("OPHTH", "Ophthamology"),
+                    ("OPHTH", "Ophthalmology"),
                     ("MPMRI", "Multiparametric MRI"),
                 ],
                 max_length=6,

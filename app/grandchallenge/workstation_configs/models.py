@@ -136,7 +136,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     class ImageContext(models.TextChoices):
         PATHOLOGY = "PATH", "Pathology"
-        OPHTHAMOLOGY = "OPHTH", "Ophthamology"
+        OPHTHALMOLOGY = "OPHTH", "Ophthalmology"
         MPMRI = "MPMRI", "Multiparametric MRI"
 
     class ImageInterpolationType(models.TextChoices):
