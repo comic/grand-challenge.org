@@ -161,8 +161,9 @@ class ReaderStudyUpdateForm(ReaderStudyCreateForm, ModelForm):
             "hanging_list": (
                 "A list of hangings. "
                 "The hanging defines which image (the hanging value) "
-                "should be assigned to which image port or overlay.  "
-                'e.g., [{"main":"im1.mhd","secondary":"im2.mhd", "secondary-overlay": "im2_overlay.mhd"}]'
+                "should be assigned to which image port or overlay. Options are: "
+                "main, secondary, tertiary, quaternary, quinary, senary, septenary, octonary, nonary, denary. "
+                'For instance: [{"main":"im1.mhd","main":"im1-overlay.mhd"}]'
             ),
             "case_text": (
                 "Free text that can be included for each case, where the key "
