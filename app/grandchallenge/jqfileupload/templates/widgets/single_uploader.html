@@ -1,12 +1,10 @@
 {% load url %}
-{% load auth_token %}
 
 <div class="file-upload drop-here-floater"
      id="{{ widget.attrs.id }}"
      data-upload-target="{% url 'api:staged-file-list' %}"
      data-multi-upload="{{ multi_upload }}"
      data-auto-commit="{{ auto_commit }}"
-     data-auth-token="{% auth_token user %}"
      data-file-size-url="{% url 'api:staged-file-get-current-file-size' %}"
 >
 
