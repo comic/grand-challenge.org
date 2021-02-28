@@ -357,7 +357,7 @@ THIRD_PARTY_APPS = [
     "guardian",  # per object permissions
     "easy_thumbnails",  # for mugshots
     "rest_framework",  # provides REST API
-    "rest_framework.authtoken",  # token auth for REST API
+    "knox",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
@@ -652,8 +652,7 @@ if SENTRY_DSN:
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.TokenAuthentication",
-        "grandchallenge.api.authentication.BearerTokenAuthentication",
+        "knox.auth.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
@@ -670,6 +669,10 @@ SPECTACULAR_SETTINGS = {
     "TOS": f"https://{SESSION_COOKIE_DOMAIN.lstrip('.')}/policies/terms-of-service/",
     "LICENSE": {"name": "Apache License 2.0"},
     "VERSION": "1.0.0",
+}
+
+REST_KNOX = {
+    "AUTH_HEADER_PREFIX": "Bearer",
 }
 
 ###############################################################################

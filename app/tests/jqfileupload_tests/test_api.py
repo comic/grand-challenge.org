@@ -2,7 +2,7 @@ import uuid
 from io import BytesIO
 
 import pytest
-from rest_framework.authtoken.models import Token
+from knox.models import AuthToken
 
 from grandchallenge.jqfileupload.models import StagedFile
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
@@ -33,13 +33,13 @@ def test_cors_headers_are_set(settings):
 @pytest.mark.django_db
 def test_single_chunk_api(client):
     filename = "test.bin"
-    token = Token.objects.create(user=UserFactory())
+    _, token = AuthToken.objects.create(user=UserFactory())
 
     response = create_upload_file_request(
         rf=client,
         filename=filename,
         url=reverse("api:staged-file-list"),
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
 
     assert response.status_code == 201
@@ -59,13 +59,13 @@ def test_single_chunk_api(client):
 def test_single_chunk_client_api(client):
     filename = "test.bin"
     content = load_test_data()
-    token = Token.objects.create(user=UserFactory())
+    _, token = AuthToken.objects.create(user=UserFactory())
 
     response = client.post(
         path=reverse("api:staged-file-list"),
         data={filename: BytesIO(content)},
         format="multipart",
-        HTTP_AUTHORIZATION=f"Token {token}",
+        HTTP_AUTHORIZATION=f"Bearer {token}",
     )
 
     assert response.status_code == 201
@@ -89,7 +89,7 @@ def test_rfc7233_implementation_api(client):
         test_rfc7233_implementation_api, content
     )
     url = reverse("api:staged-file-list")
-    token = Token.objects.create(user=UserFactory())
+    _, token = AuthToken.objects.create(user=UserFactory())
 
     part_1_response = create_partial_upload_file_request(
         client,
@@ -98,7 +98,7 @@ def test_rfc7233_implementation_api(client):
         0,
         10,
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_1_response.status_code == 201
 
@@ -109,7 +109,7 @@ def test_rfc7233_implementation_api(client):
         10,
         len(content) // 2,
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_2_response.status_code == 201
 
@@ -120,7 +120,7 @@ def test_rfc7233_implementation_api(client):
         len(content) // 2,
         len(content),
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_3_response.status_code == 201
 
@@ -151,7 +151,7 @@ def test_rfc7233_implementation_client_api(client):
     upload_id = generate_new_upload_id(
         test_rfc7233_implementation_client_api, content
     )
-    token = Token.objects.create(user=UserFactory())
+    _, token = AuthToken.objects.create(user=UserFactory())
     filename = "whatever.bin"
 
     start_byte = 0
@@ -172,7 +172,7 @@ def test_rfc7233_implementation_client_api(client):
             data={filename: BytesIO(chunk), "X-Upload-ID": upload_id},
             format="multipart",
             HTTP_CONTENT_RANGE=f"bytes {start_byte}-{end_byte - 1}/{len(content)}",
-            HTTP_AUTHORIZATION=f"Token {token}",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
         )
         assert response.status_code == 201
 
@@ -192,13 +192,13 @@ def test_rfc7233_implementation_client_api(client):
 @pytest.mark.django_db
 def test_wrong_upload_headers(client):
     url = reverse("api:staged-file-list")
-    token = Token.objects.create(user=UserFactory())
+    _, token = AuthToken.objects.create(user=UserFactory())
 
     response = create_upload_file_request(
         client,
         url=url,
         method="put",
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 405
 
@@ -210,7 +210,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         test_wrong_upload_headers_rfc7233_api, content
     )
     url = reverse("api:staged-file-list")
-    token = Token.objects.create(user=UserFactory())
+    _, token = AuthToken.objects.create(user=UserFactory())
 
     response = create_partial_upload_file_request(
         client,
@@ -219,7 +219,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         0,
         10,
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 201
 
@@ -230,7 +230,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         0,
         10,
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 400
 
@@ -242,7 +242,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="corrupted data: 54343-3223/21323",
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 400
 
@@ -254,7 +254,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="bytes 54343-3223/21323",
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 400
 
@@ -266,7 +266,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="bytes 54343-3223/*",
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 400
 
@@ -278,7 +278,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="bytes 1000-3000/2000",
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 400
 
@@ -290,7 +290,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         10,
         url=url,
         http_content_range="bytes 1000-2000/*",
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 400
 
@@ -301,7 +301,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
         0,
         10,
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert response.status_code == 400
 
@@ -310,7 +310,7 @@ def test_wrong_upload_headers_rfc7233_api(client):
 def test_inconsistent_chunks_rfc7233(client):
     content = load_test_data()
     url = reverse("api:staged-file-list")
-    token = Token.objects.create(user=UserFactory())
+    _, token = AuthToken.objects.create(user=UserFactory())
 
     # Overlapping chunks
     upload_id = generate_new_upload_id(
@@ -323,7 +323,7 @@ def test_inconsistent_chunks_rfc7233(client):
         0,
         10,
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_1.status_code == 201
     part_2 = create_partial_upload_file_request(
@@ -333,7 +333,7 @@ def test_inconsistent_chunks_rfc7233(client):
         5,
         15,
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_2.status_code == 400
 
@@ -347,7 +347,7 @@ def test_inconsistent_chunks_rfc7233(client):
         10,
         filename="a",
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_1.status_code == 201
     part_2 = create_partial_upload_file_request(
@@ -358,7 +358,7 @@ def test_inconsistent_chunks_rfc7233(client):
         20,
         filename="b",
         url=url,
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_2.status_code == 400
 
@@ -372,7 +372,7 @@ def test_inconsistent_chunks_rfc7233(client):
         10,
         url=url,
         http_content_range="bytes 0-9/20",
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_1.status_code == 201
     part_2 = create_partial_upload_file_request(
@@ -383,7 +383,7 @@ def test_inconsistent_chunks_rfc7233(client):
         20,
         url=url,
         http_content_range="bytes 10-19/30",
-        extra_headers={"HTTP_AUTHORIZATION": f"Token {token}"},
+        extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
     assert part_2.status_code == 400
 
@@ -395,12 +395,12 @@ def test_get_current_file_size(client):
         StagedFileFactory(
             client_id="foo", file_id=uid, start_byte=x, end_byte=x + 49
         )
-    token = Token.objects.create(user=UserFactory())
+    _, token = AuthToken.objects.create(user=UserFactory())
 
     response = client.get(
         path=reverse("api:staged-file-get-current-file-size"),
         data={"file": "foo"},
-        HTTP_AUTHORIZATION=f"Token {token}",
+        HTTP_AUTHORIZATION=f"Bearer {token}",
     )
     parsed_json = response.json()
     assert parsed_json["current_size"] == 999
@@ -410,7 +410,7 @@ def test_get_current_file_size(client):
     response = client.get(
         path=reverse("api:staged-file-get-current-file-size"),
         data={"file": "foo"},
-        HTTP_AUTHORIZATION=f"Token {token}",
+        HTTP_AUTHORIZATION=f"Bearer {token}",
     )
     parsed_json = response.json()
     assert parsed_json["current_size"] == 549

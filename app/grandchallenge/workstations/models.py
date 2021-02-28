@@ -11,7 +11,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
-from rest_framework.authtoken.models import Token
+from knox.models import AuthToken
 from simple_history.models import HistoricalRecords
 
 from grandchallenge.components.backends.docker import (
@@ -383,11 +383,9 @@ class Session(UUIDModel):
         }
 
         if self.creator:
-            env.update(
-                {
-                    "GRAND_CHALLENGE_AUTHORIZATION": f"TOKEN {Token.objects.get_or_create(user=self.creator)[0].key}"
-                }
-            )
+            # TODO: set maxmium duration
+            _, token = AuthToken.objects.create(user=self.creator)
+            env.update({"GRAND_CHALLENGE_AUTHORIZATION": f"Bearer {token}"})
 
         if settings.DEBUG:
             # Allow the container to communicate with the dev environment

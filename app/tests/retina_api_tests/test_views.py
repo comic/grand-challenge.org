@@ -8,8 +8,8 @@ import pytest
 from PIL import Image as PILImage
 from django.conf import settings
 from django.core.cache import cache
+from knox.models import AuthToken
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
 from rest_framework.utils import encoders
@@ -186,8 +186,8 @@ class TestArchiveAPIView:
         user_model = get_user_from_str(user)
         kwargs = {}
         if user_model is not None and not isinstance(user_model, str):
-            token_object, _ = Token.objects.get_or_create(user=user_model)
-            kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
+            _, token = AuthToken.objects.create(user=user_model)
+            kwargs.update({"HTTP_AUTHORIZATION": f"Bearer {token}"})
         return client.get(url, **kwargs)
 
     @staticmethod
@@ -197,8 +197,8 @@ class TestArchiveAPIView:
             args=[pk] if pk is not None else [],
         )
         kwargs = {}
-        token_object, _ = Token.objects.get_or_create(user=user)
-        kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
+        _, token = AuthToken.objects.create(user=user)
+        kwargs.update({"HTTP_AUTHORIZATION": f"Bearer {token}"})
         return client.get(url, **kwargs)
 
     @staticmethod
@@ -321,8 +321,8 @@ class TestBase64ThumbnailView:
         user_model = get_user_from_str(user)
         kwargs = {}
         if user_model is not None and not isinstance(user_model, str):
-            token_object, _ = Token.objects.get_or_create(user=user_model)
-            kwargs.update({"HTTP_AUTHORIZATION": f"Token {token_object.key}"})
+            _, token = AuthToken.objects.create(user=user_model)
+            kwargs.update({"HTTP_AUTHORIZATION": f"Bearer {token}"})
         response = client.get(url, **kwargs)
         assert response.status_code == expected_status
 
@@ -334,7 +334,8 @@ class TestBase64ThumbnailView:
             kwargs.update({"width": max_dimension, "height": max_dimension})
         url = reverse("retina:api:image-thumbnail", kwargs=kwargs)
         client, user_model = client_force_login(client, user="retina_user")
-        token = f"Token {Token.objects.create(user=user_model).key}"
+        _, token = AuthToken.objects.create(user=user_model)
+        token = f"Bearer {token}"
         response = client.get(url, HTTP_AUTHORIZATION=token)
         return response
 

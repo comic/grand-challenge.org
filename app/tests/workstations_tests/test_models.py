@@ -3,7 +3,6 @@ from datetime import timedelta
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from docker.errors import NotFound
-from rest_framework.authtoken.models import Token
 
 from grandchallenge.components.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
@@ -29,10 +28,7 @@ def test_session_environ(settings, debug):
     env = s.environment
 
     assert env["GRAND_CHALLENGE_API_ROOT"] == "https://testserver/api/v1/"
-    assert (
-        Token.objects.get(user=s.creator).key
-        in env["GRAND_CHALLENGE_AUTHORIZATION"]
-    )
+    assert "Bearer " in env["GRAND_CHALLENGE_AUTHORIZATION"]
     assert env["WORKSTATION_SESSION_ID"] == str(s.pk)
     assert "WORKSTATION_SENTRY_DSN" in env
 
