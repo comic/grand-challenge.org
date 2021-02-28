@@ -3,6 +3,7 @@ from datetime import timedelta
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from docker.errors import NotFound
+from knox.models import AuthToken
 
 from grandchallenge.components.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
@@ -36,6 +37,32 @@ def test_session_environ(settings, debug):
         assert "GRAND_CHALLENGE_UNSAFE" in env
     else:
         assert "GRAND_CHALLENGE_UNSAFE" not in env
+
+
+@pytest.mark.django_db
+def test_session_auth_token():
+    s = SessionFactory()
+
+    # Calling environment should generate an auth token for the creator
+    assert s.auth_token is None
+
+    _ = s.environment
+
+    assert s.auth_token.user == s.creator
+    assert s.auth_token.expiry == s.expires_at
+
+    # old tokens should be deleted
+    old_pk = s.auth_token.pk
+
+    _ = s.environment
+
+    assert s.auth_token.pk != old_pk
+
+    # expiry should stay in sync
+    s.maximum_duration = timedelta(days=1)
+    s.save()
+
+    assert s.auth_token.expiry == s.expires_at
 
 
 @pytest.mark.django_db
@@ -103,6 +130,8 @@ def test_correct_session_stopped(http_image, docker_client, settings):
         assert s1.service.container
         assert s2.service.container
 
+        auth_token_pk = s2.auth_token.pk
+
         s2.user_finished = True
         s2.save()
 
@@ -110,6 +139,11 @@ def test_correct_session_stopped(http_image, docker_client, settings):
         with pytest.raises(NotFound):
             # noinspection PyStatementEffect
             s2.service.container
+
+        with pytest.raises(ObjectDoesNotExist):
+            # auth token should be deleted when the service is stopped
+            AuthToken.objects.get(pk=auth_token_pk)
+
     finally:
         stop_all_sessions()
 

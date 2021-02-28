@@ -320,6 +320,9 @@ class Session(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    auth_token = models.ForeignKey(
+        AuthToken, null=True, on_delete=models.SET_NULL
+    )
     workstation_image = models.ForeignKey(
         WorkstationImage, on_delete=models.CASCADE
     )
@@ -327,7 +330,9 @@ class Session(UUIDModel):
     user_finished = models.BooleanField(default=False)
     logs = models.TextField(editable=False, blank=True)
     ping_times = models.JSONField(null=True, default=None)
-    history = HistoricalRecords(excluded_fields=["logs", "ping_times"])
+    history = HistoricalRecords(
+        excluded_fields=["logs", "ping_times", "auth_token"]
+    )
 
     class Meta(UUIDModel.Meta):
         ordering = ("created", "creator")
@@ -383,8 +388,14 @@ class Session(UUIDModel):
         }
 
         if self.creator:
-            # TODO: set maxmium duration
-            _, token = AuthToken.objects.create(user=self.creator)
+            if self.auth_token:
+                self.auth_token.delete()
+
+            auth_token, token = AuthToken.objects.create(user=self.creator)
+
+            self.auth_token = auth_token
+            self.save()
+
             env.update({"GRAND_CHALLENGE_AUTHORIZATION": f"Bearer {token}"})
 
         if settings.DEBUG:
@@ -461,6 +472,9 @@ class Session(UUIDModel):
         self.service.stop_and_cleanup()
         self.update_status(status=self.STOPPED)
 
+        if self.auth_token:
+            self.auth_token.delete()
+
     def update_status(self, *, status: STATUS_CHOICES) -> None:
         """
         Updates the status of this session.
@@ -508,6 +522,10 @@ class Session(UUIDModel):
             self.region = settings.WORKSTATIONS_ACTIVE_REGIONS[0]
 
         super().save(*args, **kwargs)
+
+        if self.auth_token and self.auth_token.expiry != self.expires_at:
+            self.auth_token.expiry = self.expires_at
+            self.auth_token.save(update_fields=("expiry",))
 
         if created:
             self.assign_permissions()
