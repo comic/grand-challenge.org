@@ -130,6 +130,7 @@ def test_correct_session_stopped(http_image, docker_client, settings):
         assert s1.service.container
         assert s2.service.container
 
+        s2.refresh_from_db()
         auth_token_pk = s2.auth_token.pk
 
         s2.user_finished = True
