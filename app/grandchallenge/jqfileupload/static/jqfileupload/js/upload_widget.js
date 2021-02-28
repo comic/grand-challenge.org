@@ -30,7 +30,7 @@
             return cookieValue;
         }
 
-        const csrftoken = getCookie('.csrftoken');
+        const csrftoken = getCookie('_csrftoken');
 
         var client_upload_session_key = generate_labeled_id("client_upload_session");
         target_url = target_url + "?client_session=" + client_upload_session_key;

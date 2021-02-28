@@ -215,7 +215,7 @@ CSRF_COOKIE_SECURE = True
 # Trust all subdomains for CSRF, used for jqfileupload. Changed the name
 # of the CSRF token as existing ones are already in use.
 CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
-CSRF_COOKIE_NAME = ".csrftoken"
+CSRF_COOKIE_NAME = "_csrftoken"
 CSRF_TRUSTED_ORIGINS = [
     SESSION_COOKIE_DOMAIN,
 ]
