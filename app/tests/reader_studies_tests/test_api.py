@@ -79,7 +79,7 @@ def test_answer_create(client):
     reader = UserFactory()
     rs.add_reader(reader)
 
-    q = QuestionFactory(reader_study=rs, answer_type=Question.ANSWER_TYPE_BOOL)
+    q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",
@@ -114,7 +114,7 @@ def test_answer_update(client):
     editor = UserFactory()
     rs.add_editor(editor)
 
-    q = QuestionFactory(reader_study=rs, answer_type=Question.ANSWER_TYPE_BOOL)
+    q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",
@@ -214,7 +214,7 @@ def test_answer_creator_is_reader(client):
     rs_set.rs1.images.add(im)
 
     q = QuestionFactory(
-        reader_study=rs_set.rs1, answer_type=Question.ANSWER_TYPE_BOOL
+        reader_study=rs_set.rs1, answer_type=Question.AnswerType.BOOL
     )
 
     tests = (
@@ -245,29 +245,29 @@ def test_answer_creator_is_reader(client):
 @pytest.mark.parametrize(
     "answer_type,answer,expected",
     (
-        (Question.ANSWER_TYPE_BOOL, True, 201),
-        (Question.ANSWER_TYPE_BOOL, "True", 400),
-        (Question.ANSWER_TYPE_BOOL, 12, 400),
-        (Question.ANSWER_TYPE_NUMBER, 12, 201),
-        (Question.ANSWER_TYPE_NUMBER, "12", 400),
-        (Question.ANSWER_TYPE_NUMBER, True, 400),
-        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, "dgfsgfds", 201),
-        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, True, 400),
-        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, 12, 400),
-        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfsgfds", 201),
-        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, True, 400),
-        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, 12, 400),
-        (Question.ANSWER_TYPE_HEADING, True, 400),
-        (Question.ANSWER_TYPE_HEADING, "null", 400),
-        (Question.ANSWER_TYPE_HEADING, None, 400),
-        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, "", 400),
-        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, True, 400),
-        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, False, 400),
-        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, 134, 400),
-        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, "dsfuag", 400),
-        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, {}, 400),
+        (Question.AnswerType.BOOL, True, 201),
+        (Question.AnswerType.BOOL, "True", 400),
+        (Question.AnswerType.BOOL, 12, 400),
+        (Question.AnswerType.NUMBER, 12, 201),
+        (Question.AnswerType.NUMBER, "12", 400),
+        (Question.AnswerType.NUMBER, True, 400),
+        (Question.AnswerType.SINGLE_LINE_TEXT, "dgfsgfds", 201),
+        (Question.AnswerType.SINGLE_LINE_TEXT, True, 400),
+        (Question.AnswerType.SINGLE_LINE_TEXT, 12, 400),
+        (Question.AnswerType.MULTI_LINE_TEXT, "dgfsgfds", 201),
+        (Question.AnswerType.MULTI_LINE_TEXT, True, 400),
+        (Question.AnswerType.MULTI_LINE_TEXT, 12, 400),
+        (Question.AnswerType.HEADING, True, 400),
+        (Question.AnswerType.HEADING, "null", 400),
+        (Question.AnswerType.HEADING, None, 400),
+        (Question.AnswerType.BOUNDING_BOX_2D, "", 400),
+        (Question.AnswerType.BOUNDING_BOX_2D, True, 400),
+        (Question.AnswerType.BOUNDING_BOX_2D, False, 400),
+        (Question.AnswerType.BOUNDING_BOX_2D, 134, 400),
+        (Question.AnswerType.BOUNDING_BOX_2D, "dsfuag", 400),
+        (Question.AnswerType.BOUNDING_BOX_2D, {}, 400),
         (
-            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            Question.AnswerType.BOUNDING_BOX_2D,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "2D bounding box",
@@ -277,7 +277,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            Question.AnswerType.BOUNDING_BOX_2D,
             {
                 "type": "2D bounding box",
                 "name": "test_name",
@@ -286,7 +286,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            Question.AnswerType.BOUNDING_BOX_2D,
             {
                 "version": {"major": 1, "minor": 0},
                 "name": "test_name",
@@ -295,18 +295,18 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            Question.AnswerType.BOUNDING_BOX_2D,
             '{"version": {"major": 1, "minor": 0}, "type": "2D bounding box", "name": "test_name", "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]]}',
             400,
         ),  # Valid json, but a string
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "", 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, True, 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, False, 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, 134, 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "dsfuag", 400),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, {}, 400),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, "", 400),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, True, 400),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, False, 400),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, 134, 400),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, "dsfuag", 400),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, {}, 400),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
+            Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple 2D bounding boxes",
@@ -325,7 +325,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
+            Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "type": "2D bounding box",
                 "name": "test_name",
@@ -334,7 +334,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
+            Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "version": {"major": 1, "minor": 0},
                 "name": "test_name",
@@ -352,7 +352,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
+            Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple 2D bounding boxes",
@@ -379,7 +379,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            Question.AnswerType.DISTANCE_MEASUREMENT,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Distance measurement",
@@ -390,7 +390,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            Question.AnswerType.DISTANCE_MEASUREMENT,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Distance measurement",
@@ -400,7 +400,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple distance measurements",
@@ -409,7 +409,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple distance measurements",
@@ -422,7 +422,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple distance measurements",
@@ -432,7 +432,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Distance measurements",
@@ -442,7 +442,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple distance measurements",
@@ -452,7 +452,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple distance measurements",
@@ -465,7 +465,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
                 "type": "Multiple distance measurements",
                 "lines": [{"start": (1, 2, 3), "end": (4, 5, 6)}],
@@ -473,7 +473,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_POINT,
+            Question.AnswerType.POINT,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Point",
@@ -483,7 +483,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_POINT,
+            Question.AnswerType.POINT,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Point",
@@ -493,7 +493,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_POINTS,
+            Question.AnswerType.MULTIPLE_POINTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple points",
@@ -503,7 +503,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_POINTS,
+            Question.AnswerType.MULTIPLE_POINTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple points",
@@ -513,7 +513,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_POLYGON,
+            Question.AnswerType.POLYGON,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Polygon",
@@ -526,7 +526,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_POLYGON,
+            Question.AnswerType.POLYGON,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Polygon",
@@ -538,7 +538,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_POLYGON,
+            Question.AnswerType.POLYGON,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Polygon",
@@ -550,7 +550,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_POLYGON,
+            Question.AnswerType.POLYGON,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Polygon",
@@ -562,7 +562,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_POLYGON,
+            Question.AnswerType.POLYGON,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Polygon",
@@ -574,7 +574,7 @@ def test_answer_creator_is_reader(client):
             400,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_POLYGONS,
+            Question.AnswerType.MULTIPLE_POLYGONS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple polygons",
@@ -592,7 +592,7 @@ def test_answer_creator_is_reader(client):
             201,
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_POLYGONS,
+            Question.AnswerType.MULTIPLE_POLYGONS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple polygons",
@@ -608,22 +608,22 @@ def test_answer_creator_is_reader(client):
             },
             400,
         ),
-        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, None, 400),
-        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, None, 400),
-        (Question.ANSWER_TYPE_BOOL, None, 400),
-        (Question.ANSWER_TYPE_NUMBER, None, 400),
-        (Question.ANSWER_TYPE_HEADING, None, 400),
-        (Question.ANSWER_TYPE_2D_BOUNDING_BOX, None, 201),
-        (Question.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, None, 201),
-        (Question.ANSWER_TYPE_DISTANCE_MEASUREMENT, None, 201),
-        (Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS, None, 201),
-        (Question.ANSWER_TYPE_POINT, None, 201),
-        (Question.ANSWER_TYPE_MULTIPLE_POINTS, None, 201),
-        (Question.ANSWER_TYPE_POLYGON, None, 201),
-        (Question.ANSWER_TYPE_MULTIPLE_POLYGONS, None, 201),
-        (Question.ANSWER_TYPE_CHOICE, None, 400),
-        (Question.ANSWER_TYPE_MULTIPLE_CHOICE, None, 400),
-        (Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN, None, 400),
+        (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
+        (Question.AnswerType.MULTI_LINE_TEXT, None, 400),
+        (Question.AnswerType.BOOL, None, 400),
+        (Question.AnswerType.NUMBER, None, 400),
+        (Question.AnswerType.HEADING, None, 400),
+        (Question.AnswerType.BOUNDING_BOX_2D, None, 201),
+        (Question.AnswerType.MULTIPLE_2D_BOUNDING_BOXES, None, 201),
+        (Question.AnswerType.DISTANCE_MEASUREMENT, None, 201),
+        (Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS, None, 201),
+        (Question.AnswerType.POINT, None, 201),
+        (Question.AnswerType.MULTIPLE_POINTS, None, 201),
+        (Question.AnswerType.POLYGON, None, 201),
+        (Question.AnswerType.MULTIPLE_POLYGONS, None, 201),
+        (Question.AnswerType.CHOICE, None, 400),
+        (Question.AnswerType.MULTIPLE_CHOICE, None, 400),
+        (Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN, None, 400),
     ),
 )
 def test_answer_is_correct_type(client, answer_type, answer, expected):
@@ -661,10 +661,10 @@ def test_mine(client):
     rs2.add_reader(reader)
 
     q1 = QuestionFactory(
-        reader_study=rs1, answer_type=Question.ANSWER_TYPE_BOOL
+        reader_study=rs1, answer_type=Question.AnswerType.BOOL
     )
     q2 = QuestionFactory(
-        reader_study=rs2, answer_type=Question.ANSWER_TYPE_BOOL
+        reader_study=rs2, answer_type=Question.AnswerType.BOOL
     )
 
     a1 = AnswerFactory(question=q1, creator=reader, answer=True)
@@ -718,7 +718,7 @@ def test_ground_truth_is_excluded(client):
     rs.add_editor(editor)
     rs.add_reader(editor)
 
-    q = QuestionFactory(reader_study=rs, answer_type=Question.ANSWER_TYPE_BOOL)
+    q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
 
     a1 = AnswerFactory(
         question=q, creator=editor, answer=True, is_ground_truth=True
@@ -746,12 +746,12 @@ def test_ground_truth_is_excluded(client):
 @pytest.mark.parametrize(
     "answer_type,answer",
     (
-        (Question.ANSWER_TYPE_BOOL, True),
-        (Question.ANSWER_TYPE_NUMBER, 12),
-        (Question.ANSWER_TYPE_SINGLE_LINE_TEXT, "dgfsgfds"),
-        (Question.ANSWER_TYPE_MULTI_LINE_TEXT, "dgfsgfds\ndgfsgfds"),
+        (Question.AnswerType.BOOL, True),
+        (Question.AnswerType.NUMBER, 12),
+        (Question.AnswerType.SINGLE_LINE_TEXT, "dgfsgfds"),
+        (Question.AnswerType.MULTI_LINE_TEXT, "dgfsgfds\ndgfsgfds"),
         (
-            Question.ANSWER_TYPE_2D_BOUNDING_BOX,
+            Question.AnswerType.BOUNDING_BOX_2D,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "2D bounding box",
@@ -760,7 +760,7 @@ def test_ground_truth_is_excluded(client):
             },
         ),
         (
-            Question.ANSWER_TYPE_DISTANCE_MEASUREMENT,
+            Question.AnswerType.DISTANCE_MEASUREMENT,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Distance measurement",
@@ -770,7 +770,7 @@ def test_ground_truth_is_excluded(client):
             },
         ),
         (
-            Question.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+            Question.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
                 "version": {"major": 1, "minor": 0},
                 "type": "Multiple distance measurements",
@@ -951,13 +951,13 @@ def test_ground_truth(client):
     rs.add_reader(reader)
 
     q1 = QuestionFactory(
-        answer_type=Question.ANSWER_TYPE_CHOICE, reader_study=rs
+        answer_type=Question.AnswerType.CHOICE, reader_study=rs
     )
     q2 = QuestionFactory(
-        answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE, reader_study=rs
+        answer_type=Question.AnswerType.MULTIPLE_CHOICE, reader_study=rs
     )
     q3 = QuestionFactory(
-        answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+        answer_type=Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         reader_study=rs,
     )
 

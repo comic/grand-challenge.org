@@ -371,7 +371,7 @@ def test_validate_answer():
 
     q = QuestionFactory(
         reader_study=rs,
-        answer_type=Question.ANSWER_TYPE_BOOL,
+        answer_type=Question.AnswerType.BOOL,
         question_text="q1",
     )
 

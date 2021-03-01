@@ -208,8 +208,8 @@ def test_question_update(client):
     question = QuestionFactory(
         question_text="foo",
         reader_study=rs,
-        answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
-        direction=Question.DIRECTION_HORIZONTAL,
+        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
+        direction=Question.Direction.HORIZONTAL,
         order=100,
     )
 
@@ -236,8 +236,8 @@ def test_question_update(client):
     assert response.status_code == 200
 
     assert question.question_text == "foo"
-    assert question.answer_type == Question.ANSWER_TYPE_SINGLE_LINE_TEXT
-    assert question.direction == Question.DIRECTION_HORIZONTAL
+    assert question.answer_type == Question.AnswerType.SINGLE_LINE_TEXT
+    assert question.direction == Question.Direction.HORIZONTAL
     assert question.order == 100
 
     get_view_for_user(
@@ -246,8 +246,8 @@ def test_question_update(client):
         method=client.post,
         data={
             "question_text": "bar",
-            "answer_type": Question.ANSWER_TYPE_BOOL,
-            "direction": Question.DIRECTION_VERTICAL,
+            "answer_type": Question.AnswerType.BOOL,
+            "direction": Question.Direction.VERTICAL,
             "order": 200,
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
@@ -261,8 +261,8 @@ def test_question_update(client):
 
     question.refresh_from_db()
     assert question.question_text == "bar"
-    assert question.answer_type == Question.ANSWER_TYPE_BOOL
-    assert question.direction == Question.DIRECTION_VERTICAL
+    assert question.answer_type == Question.AnswerType.BOOL
+    assert question.direction == Question.Direction.VERTICAL
     assert question.order == 200
 
     AnswerFactory(question=question, answer="true")
@@ -274,8 +274,8 @@ def test_question_update(client):
         method=client.post,
         data={
             "question_text": "foo",
-            "answer_type": Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
-            "direction": Question.DIRECTION_HORIZONTAL,
+            "answer_type": Question.AnswerType.SINGLE_LINE_TEXT,
+            "direction": Question.Direction.HORIZONTAL,
             "order": 100,
             "options-TOTAL_FORMS": 2,
             "options-INITIAL_FORMS": 1,
@@ -289,8 +289,8 @@ def test_question_update(client):
 
     question.refresh_from_db()
     assert question.question_text == "bar"
-    assert question.answer_type == Question.ANSWER_TYPE_BOOL
-    assert question.direction == Question.DIRECTION_HORIZONTAL
+    assert question.answer_type == Question.AnswerType.BOOL
+    assert question.direction == Question.Direction.HORIZONTAL
     assert question.order == 100
 
 
@@ -358,12 +358,12 @@ def test_reader_study_copy(client):
     rs.add_editor(editor2)
     QuestionFactory(
         reader_study=rs,
-        answer_type=Question.ANSWER_TYPE_BOOL,
+        answer_type=Question.AnswerType.BOOL,
         question_text="q1",
     ),
     QuestionFactory(
         reader_study=rs,
-        answer_type=Question.ANSWER_TYPE_BOOL,
+        answer_type=Question.AnswerType.BOOL,
         question_text="q2",
     )
 
@@ -635,22 +635,22 @@ def test_reader_study_add_ground_truth(client, settings):
     q = QuestionFactory(
         reader_study=rs,
         question_text="bar",
-        answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
+        answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
     )
     q0 = QuestionFactory(
         reader_study=rs,
         question_text="bool",
-        answer_type=Question.ANSWER_TYPE_BOOL,
+        answer_type=Question.AnswerType.BOOL,
     )
     q1 = QuestionFactory(
         reader_study=rs,
         question_text="choice",
-        answer_type=Question.ANSWER_TYPE_CHOICE,
+        answer_type=Question.AnswerType.CHOICE,
     )
     q2 = QuestionFactory(
         reader_study=rs,
         question_text="mchoice",
-        answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE,
+        answer_type=Question.AnswerType.MULTIPLE_CHOICE,
     )
     options = {}
     for i, q_ in enumerate([q1, q2]):

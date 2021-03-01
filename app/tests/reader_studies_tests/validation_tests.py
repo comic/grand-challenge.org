@@ -39,7 +39,11 @@ from tests.utils import get_view_for_user
         (
             [
                 {"main": "image_0", "secondary": "image_1"},
-                {"main": "image_2", "secondary": "image_3"},
+                {
+                    "main": "image_2",
+                    "secondary": "image_3",
+                    "tertiary": "image_4",
+                },
             ],
             True,
         ),
@@ -51,11 +55,11 @@ def test_hanging_list_validation(hanging_list, expected):
     )
 
     rs = ReaderStudyFactory(hanging_list=hanging_list)
-    images = [ImageFactory(name=f"image_{n}") for n in range(4)]
+    images = [ImageFactory(name=f"image_{n}") for n in range(5)]
     rs.images.set(images)
     rs.save()
 
-    assert rs.images.all().count() == 4
+    assert rs.images.all().count() == 5
 
     assert rs.hanging_list_valid == expected
 
