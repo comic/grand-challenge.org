@@ -244,9 +244,21 @@
 
 <span class="s2">You are able to customise the hanging list in the study edit page.</span>
 <span class="s2">Here, you are able to assign multiple images and overlays to each protocol.</span>
-<span class="s2">A ``main`` and ``secondary`` image port are available.</span>
-<span class="s2">Overlays can be applied to either image port by using the keys ``main-overlay``</span>
-<span class="s2">and ``secondary-overlay``.</span>
+
+<span class="s2">Available image ports are:</span>
+<span class="s2">* ``main``</span>
+<span class="s2">* ``secondary``</span>
+<span class="s2">* ``tertiary``</span>
+<span class="s2">* ``quaternary``</span>
+<span class="s2">* ``quinary``</span>
+<span class="s2">* ``senary``</span>
+<span class="s2">* ``septenary``</span>
+<span class="s2">* ``octonary``</span>
+<span class="s2">* ``nonary``</span>
+<span class="s2">* ``denary``</span>
+
+<span class="s2">Overlays can be applied to the image ports by using the image-port name with</span>
+<span class="s2">the suffix &#39;-overlay&#39; (e.g. ``main-overlay``).</span>
 
 <span class="s2">Questions</span>
 <span class="s2">---------</span>
@@ -282,6 +294,24 @@
 <span class="s2">as for each case are displayed in the ``statistics`` view.</span>
 <span class="s2">&quot;&quot;&quot;</span>
 
+
+<div class="viewcode-block" id="ImagePort"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ImagePort">[docs]</a><span class="k">class</span> <span class="nc">ImagePort</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="n">MAIN</span> <span class="o">=</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span> <span class="s2">&quot;Main&quot;</span>
+    <span class="n">SECONDARY</span> <span class="o">=</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;Secondary&quot;</span>
+    <span class="n">TERTIARY</span> <span class="o">=</span> <span class="s2">&quot;TERTIARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Tertiary&quot;</span>
+    <span class="n">QUATERNARY</span> <span class="o">=</span> <span class="s2">&quot;QUATERNARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quaternary&quot;</span>
+    <span class="n">QUINARY</span> <span class="o">=</span> <span class="s2">&quot;QUINARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Quinary&quot;</span>
+    <span class="n">SENARY</span> <span class="o">=</span> <span class="s2">&quot;SENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Senary&quot;</span>
+    <span class="n">SEPTENARY</span> <span class="o">=</span> <span class="s2">&quot;SEPTENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Septenary&quot;</span>
+    <span class="n">OCTONARY</span> <span class="o">=</span> <span class="s2">&quot;OCTONARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Octonary&quot;</span>
+    <span class="n">NONARY</span> <span class="o">=</span> <span class="s2">&quot;NONARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Nonary&quot;</span>
+    <span class="n">DENARY</span> <span class="o">=</span> <span class="s2">&quot;DENARY&quot;</span><span class="p">,</span> <span class="s2">&quot;Denary&quot;</span></div>
+
+
+<span class="c1">#: Supported image-port overlays.</span>
+<span class="n">IMAGE_PORT_OVERLAYS</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">-overlay&quot;</span> <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">ImagePort</span><span class="o">.</span><span class="n">labels</span><span class="p">]</span>
+
+<span class="c1">#: Schema used to validate if the hanging list is of the correct format.</span>
 <span class="n">HANGING_LIST_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;definitions&quot;</span><span class="p">:</span> <span class="p">{},</span>
     <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json-schema.org/draft-06/schema#&quot;</span><span class="p">,</span>
@@ -294,38 +324,16 @@
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;main&quot;</span><span class="p">],</span>
         <span class="s2">&quot;additionalProperties&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
         <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;main&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/main&quot;</span><span class="p">,</span>
+            <span class="n">port</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;#/items/properties/</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Main Schema&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;The </span><span class="si">{</span><span class="n">port</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="si">}</span><span class="s2"> Schema&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;im1.mhd&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;im_</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">.mhd&quot;</span><span class="p">],</span>
                 <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(.*)$&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="s2">&quot;main-overlay&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/main-overlay&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Main Overlay Schema&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;im1-overlay.mhd&quot;</span><span class="p">],</span>
-                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(.*)$&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="s2">&quot;secondary&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/secondary&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Secondary Schema&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;im2.mhd&quot;</span><span class="p">],</span>
-                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(.*)$&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="s2">&quot;secondary-overlay&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;$id&quot;</span><span class="p">:</span> <span class="s2">&quot;#/items/properties/secondary-overlay&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;The Secondary Overlay Schema&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;examples&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;im2-overlay.mhd&quot;</span><span class="p">],</span>
-                <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;^(.*)$&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ImagePort</span><span class="o">.</span><span class="n">labels</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">IMAGE_PORT_OVERLAYS</span>
         <span class="p">},</span>
     <span class="p">},</span>
 <span class="p">}</span>
@@ -719,7 +727,7 @@
 <span class="sd">        All questions for this ``ReaderStudy`` except those with answer type</span>
 <span class="sd">        `heading`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">answer_type</span><span class="o">=</span><span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_HEADING</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">answer_type</span><span class="o">=</span><span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">HEADING</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span> <span class="nf">answerable_question_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -736,7 +744,7 @@
                     <span class="k">continue</span>
                 <span class="n">question</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">question_text</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
                 <span class="n">_answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">gt</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
-                <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_CHOICE</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="n">option</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">_answer</span><span class="p">)</span>
                         <span class="n">_answer</span> <span class="o">=</span> <span class="n">option</span><span class="o">.</span><span class="n">pk</span>
@@ -745,8 +753,8 @@
                             <span class="sa">f</span><span class="s2">&quot;Option &#39;</span><span class="si">{</span><span class="n">_answer</span><span class="si">}</span><span class="s2">&#39; is not valid for question </span><span class="si">{</span><span class="n">question</span><span class="o">.</span><span class="n">question_text</span><span class="si">}</span><span class="s2">&quot;</span>
                         <span class="p">)</span>
                 <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
-                    <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">,</span>
-                    <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
+                    <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
+                    <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
                 <span class="p">):</span>
                     <span class="n">_answer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
                         <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">title__in</span><span class="o">=</span><span class="n">_answer</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
@@ -1265,83 +1273,50 @@
 
 
 <div class="viewcode-block" id="Question"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a><span class="k">class</span> <span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
-    <span class="n">ANSWER_TYPE_SINGLE_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;STXT&quot;</span>
-    <span class="n">ANSWER_TYPE_MULTI_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;MTXT&quot;</span>
-    <span class="n">ANSWER_TYPE_BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span>
-    <span class="n">ANSWER_TYPE_NUMBER</span> <span class="o">=</span> <span class="s2">&quot;NUMB&quot;</span>
-    <span class="n">ANSWER_TYPE_HEADING</span> <span class="o">=</span> <span class="s2">&quot;HEAD&quot;</span>
-    <span class="n">ANSWER_TYPE_2D_BOUNDING_BOX</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span>
-    <span class="n">ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES</span> <span class="o">=</span> <span class="s2">&quot;M2DB&quot;</span>
-    <span class="n">ANSWER_TYPE_DISTANCE_MEASUREMENT</span> <span class="o">=</span> <span class="s2">&quot;DIST&quot;</span>
-    <span class="n">ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="s2">&quot;MDIS&quot;</span>
-    <span class="n">ANSWER_TYPE_POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span>
-    <span class="n">ANSWER_TYPE_MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span>
-    <span class="n">ANSWER_TYPE_POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span>
-    <span class="n">ANSWER_TYPE_POLYGON_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;PIMG&quot;</span>
-    <span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span>
-    <span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;MPIM&quot;</span>
-    <span class="n">ANSWER_TYPE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span>
-    <span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span>
-    <span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span>
-    <span class="c1"># WARNING: Do not change the display text, these are used in the front end</span>
-    <span class="n">ANSWER_TYPE_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_SINGLE_LINE_TEXT</span><span class="p">,</span> <span class="s2">&quot;Single line text&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_MULTI_LINE_TEXT</span><span class="p">,</span> <span class="s2">&quot;Multi line text&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_BOOL</span><span class="p">,</span> <span class="s2">&quot;Bool&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_NUMBER</span><span class="p">,</span> <span class="s2">&quot;Number&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_HEADING</span><span class="p">,</span> <span class="s2">&quot;Heading&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_2D_BOUNDING_BOX</span><span class="p">,</span> <span class="s2">&quot;2D bounding box&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">,</span> <span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_DISTANCE_MEASUREMENT</span><span class="p">,</span> <span class="s2">&quot;Distance measurement&quot;</span><span class="p">),</span>
-        <span class="p">(</span>
-            <span class="n">ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
+<div class="viewcode-block" id="Question.AnswerType"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.AnswerType">[docs]</a>    <span class="k">class</span> <span class="nc">AnswerType</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+        <span class="c1"># WARNING: Do not change the display text, these are used in the front end</span>
+        <span class="n">SINGLE_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;STXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Single line text&quot;</span>
+        <span class="n">MULTI_LINE_TEXT</span> <span class="o">=</span> <span class="s2">&quot;MTXT&quot;</span><span class="p">,</span> <span class="s2">&quot;Multi line text&quot;</span>
+        <span class="n">BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Bool&quot;</span>
+        <span class="n">NUMBER</span> <span class="o">=</span> <span class="s2">&quot;NUMB&quot;</span><span class="p">,</span> <span class="s2">&quot;Number&quot;</span>
+        <span class="n">HEADING</span> <span class="o">=</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">,</span> <span class="s2">&quot;Heading&quot;</span>
+        <span class="n">BOUNDING_BOX_2D</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span><span class="p">,</span> <span class="s2">&quot;2D bounding box&quot;</span>
+        <span class="n">MULTIPLE_2D_BOUNDING_BOXES</span> <span class="o">=</span> <span class="s2">&quot;M2DB&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple 2D bounding boxes&quot;</span>
+        <span class="n">DISTANCE_MEASUREMENT</span> <span class="o">=</span> <span class="s2">&quot;DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;Distance measurement&quot;</span>
+        <span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;MDIS&quot;</span><span class="p">,</span>
             <span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_POINT</span><span class="p">,</span> <span class="s2">&quot;Point&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_POINTS</span><span class="p">,</span> <span class="s2">&quot;Multiple points&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_POLYGON</span><span class="p">,</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_POLYGON_IMAGE</span><span class="p">,</span> <span class="s2">&quot;Polygon (saved as mask)&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons&quot;</span><span class="p">),</span>
-        <span class="p">(</span>
-            <span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE</span><span class="p">,</span>
-            <span class="s2">&quot;Multiple polygons (saved as mask)&quot;</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_CHOICE</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span><span class="p">,</span> <span class="s2">&quot;Point&quot;</span>
+        <span class="n">MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple points&quot;</span>
+        <span class="n">POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon&quot;</span>
+        <span class="n">POLYGON_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;PIMG&quot;</span><span class="p">,</span> <span class="s2">&quot;Polygon (saved as mask)&quot;</span>
+        <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons&quot;</span>
+        <span class="n">MULTIPLE_POLYGONS_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;MPIM&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple polygons (saved as mask)&quot;</span>
+        <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="s2">&quot;Choice&quot;</span>
+        <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice&quot;</span>
+        <span class="n">MULTIPLE_CHOICE_DROPDOWN</span> <span class="o">=</span> <span class="s2">&quot;MCHD&quot;</span><span class="p">,</span> <span class="s2">&quot;Multiple choice dropdown&quot;</span></div>
 
     <span class="c1"># What is the orientation of the question form when presented on the</span>
     <span class="c1"># front end?</span>
-    <span class="n">DIRECTION_HORIZONTAL</span> <span class="o">=</span> <span class="s2">&quot;H&quot;</span>
-    <span class="n">DIRECTION_VERTICAL</span> <span class="o">=</span> <span class="s2">&quot;V&quot;</span>
-    <span class="n">DIRECTION_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">(</span><span class="n">DIRECTION_HORIZONTAL</span><span class="p">,</span> <span class="s2">&quot;Horizontal&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">DIRECTION_VERTICAL</span><span class="p">,</span> <span class="s2">&quot;Vertical&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
+<div class="viewcode-block" id="Question.Direction"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.Direction">[docs]</a>    <span class="k">class</span> <span class="nc">Direction</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+        <span class="n">HORIZONTAL</span> <span class="o">=</span> <span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="s2">&quot;Horizontal&quot;</span>
+        <span class="n">VERTICAL</span> <span class="o">=</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;Vertical&quot;</span></div>
 
-    <span class="c1"># What image port should be used for a drawn annotation?</span>
-    <span class="n">IMAGE_PORT_MAIN</span> <span class="o">=</span> <span class="s2">&quot;M&quot;</span>
-    <span class="n">IMAGE_PORT_SECONDARY</span> <span class="o">=</span> <span class="s2">&quot;S&quot;</span>
-    <span class="n">IMAGE_PORT_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">(</span><span class="n">IMAGE_PORT_MAIN</span><span class="p">,</span> <span class="s2">&quot;Main&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">IMAGE_PORT_SECONDARY</span><span class="p">,</span> <span class="s2">&quot;Secondary&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
-
-    <span class="n">SCORING_FUNCTION_ACCURACY</span> <span class="o">=</span> <span class="s2">&quot;ACC&quot;</span>
-    <span class="n">SCORING_FUNCTION_CHOICES</span> <span class="o">=</span> <span class="p">((</span><span class="n">SCORING_FUNCTION_ACCURACY</span><span class="p">,</span> <span class="s2">&quot;Accuracy score&quot;</span><span class="p">),)</span>
+<div class="viewcode-block" id="Question.ScoringFunction"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.ScoringFunction">[docs]</a>    <span class="k">class</span> <span class="nc">ScoringFunction</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+        <span class="n">ACCURACY</span> <span class="o">=</span> <span class="s2">&quot;ACC&quot;</span><span class="p">,</span> <span class="s2">&quot;Accuracy score&quot;</span></div>
 
     <span class="n">SCORING_FUNCTIONS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">SCORING_FUNCTION_ACCURACY</span><span class="p">:</span> <span class="n">accuracy_score</span><span class="p">,</span>
+        <span class="n">ScoringFunction</span><span class="o">.</span><span class="n">ACCURACY</span><span class="p">:</span> <span class="n">accuracy_score</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="n">EXAMPLE_FOR_ANSWER_TYPE</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">ANSWER_TYPE_SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">answer</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
-        <span class="n">ANSWER_TYPE_MULTI_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">answer</span><span class="se">\\</span><span class="s2">nanswer</span><span class="se">\\</span><span class="s2">nanswer</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
-        <span class="n">ANSWER_TYPE_BOOL</span><span class="p">:</span> <span class="s2">&quot;&#39;true&#39;&quot;</span><span class="p">,</span>
-        <span class="n">ANSWER_TYPE_CHOICE</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">option</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
-        <span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">[&quot;option1&quot;, &quot;option2&quot;]</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
-        <span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">[&quot;option1&quot;, &quot;option2&quot;]</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">answer</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+        <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTI_LINE_TEXT</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">answer</span><span class="se">\\</span><span class="s2">nanswer</span><span class="se">\\</span><span class="s2">nanswer</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+        <span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span> <span class="s2">&quot;&#39;true&#39;&quot;</span><span class="p">,</span>
+        <span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">option</span><span class="se">\&quot;</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+        <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">[&quot;option1&quot;, &quot;option2&quot;]</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">[&quot;option1&quot;, &quot;option2&quot;]</span><span class="se">\&#39;</span><span class="s1">&#39;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="n">reader_study</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
@@ -1351,20 +1326,21 @@
     <span class="n">help_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">answer_type</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="n">ANSWER_TYPE_CHOICES</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">ANSWER_TYPE_SINGLE_LINE_TEXT</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">SINGLE_LINE_TEXT</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="c1"># Set blank because the requirement is dependent on answer_type and handled in the front end</span>
     <span class="n">image_port</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
-        <span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">IMAGE_PORT_CHOICES</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">ImagePort</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
     <span class="p">)</span>
     <span class="n">required</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">direction</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
-        <span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">DIRECTION_CHOICES</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DIRECTION_HORIZONTAL</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">Direction</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">Direction</span><span class="o">.</span><span class="n">HORIZONTAL</span>
     <span class="p">)</span>
     <span class="n">scoring_function</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="n">SCORING_FUNCTION_CHOICES</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="n">SCORING_FUNCTION_ACCURACY</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">ScoringFunction</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">ScoringFunction</span><span class="o">.</span><span class="n">ACCURACY</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 
@@ -1428,8 +1404,8 @@
 <span class="sd">        to ``answer`` and ``ground_truth``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
+            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
+            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
         <span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">answer</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">ground_truth</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">return</span> <span class="mf">1.0</span>
@@ -1476,8 +1452,7 @@
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span>
-            <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_BOOL</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_HEADING</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">BOOL</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">HEADING</span><span class="p">]</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -1488,16 +1463,16 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">annotation_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_2D_BOUNDING_BOX</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_DISTANCE_MEASUREMENT</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_POINT</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_POINTS</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_POLYGON</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_POLYGON_IMAGE</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">BOUNDING_BOX_2D</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_2D_BOUNDING_BOXES</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POINT</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">POLYGON_IMAGE</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS_IMAGE</span><span class="p">,</span>
         <span class="p">]</span>
 
 <div class="viewcode-block" id="Question.is_answer_valid"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question.is_answer_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_answer_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">answer</span><span class="p">):</span>
@@ -1627,7 +1602,7 @@
         <span class="n">instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Validates all fields provided for ``answer``.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">question</span><span class="o">.</span><span class="n">ANSWER_TYPE_HEADING</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">HEADING</span><span class="p">:</span>
             <span class="c1"># Maintained for historical consistency</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Headings are not answerable.&quot;</span><span class="p">)</span>
 
@@ -1672,7 +1647,7 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;This user is not a reader for this study.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
-            <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_CHOICE</span>
+            <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span>
             <span class="ow">and</span> <span class="n">answer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -1680,8 +1655,8 @@
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">,</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
+            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
+            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
         <span class="p">):</span>
             <span class="n">options</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">options</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">answer</span><span class="p">):</span>
@@ -1691,7 +1666,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">answer_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_CHOICE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="o">==</span> <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answer</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1699,8 +1674,8 @@
                 <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">answer_type</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE</span><span class="p">,</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
+            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
+            <span class="n">Question</span><span class="o">.</span><span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE_DROPDOWN</span><span class="p">,</span>
         <span class="p">):</span>
             <span class="k">return</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">answer</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
