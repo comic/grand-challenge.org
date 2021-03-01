@@ -212,6 +212,13 @@ SESSION_COOKIE_DOMAIN = os.environ.get(
 # We're always running behind a proxy so set these to true
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+# Trust all subdomains for CSRF, used for jqfileupload. Changed the name
+# of the CSRF token as existing ones are already in use.
+CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
+CSRF_COOKIE_NAME = "_csrftoken"
+CSRF_TRUSTED_ORIGINS = [
+    SESSION_COOKIE_DOMAIN,
+]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Set the allowed hosts to the cookie domain
@@ -230,8 +237,9 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
+# "origin-when-cross-origin" required for jqfileupload for cross domain POSTs
 SECURE_REFERRER_POLICY = os.environ.get(
-    "SECURE_REFERRER_POLICY", "same-origin"
+    "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
 )
 
 IPWARE_META_PRECEDENCE_ORDER = (
