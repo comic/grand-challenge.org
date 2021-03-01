@@ -7,7 +7,6 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
-from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
 from grandchallenge.reader_studies.models import (
     ANSWER_TYPE_SCHEMA,
@@ -26,12 +25,12 @@ class CategoricalOptionSerializer(ModelSerializer):
 
 
 class QuestionSerializer(HyperlinkedModelSerializer):
-    answer_type = CharField(source="get_answer_type_display")
+    answer_type = CharField(source="get_answer_type_display", read_only=True)
     reader_study = HyperlinkedRelatedField(
         view_name="api:reader-study-detail", read_only=True
     )
-    form_direction = CharField(source="get_direction_display")
-    image_port = CharField(source="get_image_port_display")
+    form_direction = CharField(source="get_direction_display", read_only=True)
+    image_port = CharField(source="get_image_port_display", read_only=True)
     options = CategoricalOptionSerializer(many=True, read_only=True)
 
     class Meta:
@@ -47,13 +46,6 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "reader_study",
             "required",
             "options",
-        )
-        swagger_schema_fields = swagger_schema_fields_for_charfield(
-            answer_type=model._meta.get_field("answer_type"),
-            form_direction=model._meta.get_field(
-                "direction"
-            ),  # model.direction gets remapped
-            image_port=model._meta.get_field("image_port"),
         )
 
 
