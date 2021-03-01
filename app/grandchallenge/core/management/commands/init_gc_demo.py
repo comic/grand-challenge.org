@@ -16,7 +16,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile, File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
+from knox import crypto
 from knox.models import AuthToken
+from knox.settings import CONSTANTS
 
 import grandchallenge.cases.models
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
@@ -451,10 +453,25 @@ class Command(BaseCommand):
 
     def _create_user_tokens(self):
         out = f"{'*' * 80}\n"
-        for user in ["admin", "retina", "algorithmuser", "readerstudy"]:
-            _, token = AuthToken.objects.create(
-                user=self.users[user], expiry=None
-            )
+        # Hard code tokens used in gcapi integration tests
+        user_tokens = {
+            "admin": "1b9436200001f2eaf57cd77db075cbb60a49a00a",
+            "retina": "f1f98a1733c05b12118785ffd995c250fe4d90da",
+            "algorithmuser": "dc3526c2008609b429514b6361a33f8516541464",
+            "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
+        }
+        for user, token in user_tokens.items():
+            salt = crypto.create_salt_string()
+            digest = crypto.hash_token(token, salt)
+
+            AuthToken(
+                token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
+                digest=digest,
+                salt=salt,
+                user=self.users[user],
+                expiry=None,
+            ).save()
+
             out += f"\t{user} token is: {token}\n"
         out += f"{'*' * 80}\n"
         logger.debug(out)
