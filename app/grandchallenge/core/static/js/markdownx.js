@@ -388,7 +388,7 @@
             }
             var form = new FormData();
             if (csrf) {
-                var csrfToken = getCookie("csrftoken");
+                var csrfToken = getCookie("_csrftoken");
                 if (!csrfToken) csrfToken = document.querySelector("input[name='csrfmiddlewaretoken']").value;
                 form.append("csrfmiddlewaretoken", csrfToken);
             }
