@@ -37,7 +37,9 @@ class LookUpTableSerializer(ModelSerializer):
 
 class WorkstationConfigSerializer(ModelSerializer):
     creator = SlugRelatedField(read_only=True, slug_field="username")
-    image_context = CharField(source="get_image_context_display")
+    image_context = CharField(
+        source="get_image_context_display", read_only=True,
+    )
     default_slab_render_method = CharField(
         source="get_default_slab_render_method_display", read_only=True,
     )
