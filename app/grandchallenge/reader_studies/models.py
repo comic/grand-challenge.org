@@ -1148,7 +1148,7 @@ class Question(UUIDModel):
         ACCURACY = "ACC", "Accuracy score"
 
     SCORING_FUNCTIONS = {
-        ScoringFunction.ACCURACY.value: accuracy_score,
+        ScoringFunction.ACCURACY: accuracy_score,
     }
 
     EXAMPLE_FOR_ANSWER_TYPE = {
