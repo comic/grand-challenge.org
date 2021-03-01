@@ -83,6 +83,7 @@ django-redis = "*"
 django-allauth = "*"
 easy_thumbnails = "*"
 drf-spectacular = "^0.13.2"
+jinja2 = "^2.11.3"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

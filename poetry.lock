@@ -882,7 +882,7 @@ python-versions = "*"
 version = "1.1.1"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "A very fast and expressive template engine."
 name = "jinja2"
 optional = false
@@ -1005,7 +1005,7 @@ python-versions = ">=3.5, <4"
 version = "2.4.0"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Safely add untrusted strings to HTML/XML markup."
 name = "markupsafe"
 optional = false
@@ -2007,7 +2007,7 @@ docs = ["sphinx"]
 test = ["pytest", "pytest-cov"]
 
 [metadata]
-content-hash = "ec89115fa378c07283565ab34e1abc01ac7a626dff66dde6422251dcc19c4976"
+content-hash = "2125258e47634bef05e4f2557441e0f6a13420970d3b8f1da6d5162453f258b0"
 lock-version = "1.0"
 python-versions = "^3.8"
 
