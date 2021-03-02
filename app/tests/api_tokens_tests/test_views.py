@@ -1,13 +1,15 @@
 import pytest
 from django.conf import settings
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from tests.api_tokens_tests.factories import AuthTokenFactory
+from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("view", ("list",))
+@pytest.mark.parametrize("view", ("list", "create",))
 def test_logged_in_views(client, view):
     viewname = f"api-tokens:{view}"
 
@@ -31,3 +33,31 @@ def test_list_view_is_filtered(client):
     assert len(response.context[-1]["object_list"]) == 1
     assert tokens[0][0] in response.context[-1]["object_list"]
     assert tokens[1][0] not in response.context[-1]["object_list"]
+
+
+@pytest.mark.django_db
+def test_token_is_created_for_user(client):
+    user = UserFactory()
+
+    assert not user.auth_token_set.exists()
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="api-tokens:create",
+        data={},
+        user=user,
+    )
+
+    assert response.status_code == 302
+
+    token = user.auth_token_set.get()
+
+    assert token.expiry is None
+
+    messages = list(get_messages(response.wsgi_request))
+
+    assert len(messages) == 1
+    assert str(messages[0]).startswith(
+        f"Your new API token is:<br><br><pre>{token.token_key}"
+    )

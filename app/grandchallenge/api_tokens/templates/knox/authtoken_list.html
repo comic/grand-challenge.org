@@ -16,12 +16,19 @@
         <a href="{% url 'api:swagger-ui' %}">REST API</a>.
     </p>
 
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'api-tokens:create' %}">
+            <i class="fa fa-plus"></i> Create a Token
+        </a>
+    </p>
+
     <div class="table-responsive">
         <table class="table table-hover table-borderless">
             <thead class="thead-light">
             <tr>
+                <th>Token</th>
                 <th>Created</th>
-                <th>Key</th>
                 <th>Expires</th>
                 <th>Description</th>
             </tr>
@@ -29,15 +36,15 @@
             <tbody>
             {% for object in object_list %}
                 <tr>
+                    <td>{{ object.token_key }}...</td>
                     <td>
                         {{ object.created }}
                     </td>
-                    <td>{{ object.token_key }}...</td>
                     <td>
-                        {% if expires is None %}
+                        {% if object.expiry is None %}
                             Never
                         {% else %}
-                            {{ object.expires }}
+                            {{ object.expiry }}
                         {% endif %}
                     </td>
                     <td>
@@ -58,7 +65,7 @@
         $(document).ready(function () {
             $('.table').each(function () {
                 $(this).DataTable({
-                    "order": [[0, "desc"]],
+                    "order": [[1, "desc"]],
                     "paging": false,
                 });
             });

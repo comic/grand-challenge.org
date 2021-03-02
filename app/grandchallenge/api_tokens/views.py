@@ -1,6 +1,11 @@
-from django.views.generic import ListView
+from django.contrib import messages
+from django.utils.html import format_html
+from django.views.generic import FormView, ListView
 from guardian.mixins import LoginRequiredMixin
 from knox.models import AuthToken
+
+from grandchallenge.api_tokens.forms import AuthTokenForm
+from grandchallenge.subdomains.utils import reverse
 
 
 class APITokenList(LoginRequiredMixin, ListView):
@@ -11,3 +16,29 @@ class APITokenList(LoginRequiredMixin, ListView):
         return qs.filter(user=self.request.user).prefetch_related(
             "session_set"
         )
+
+
+class APITokenCreate(LoginRequiredMixin, FormView):
+    template_name = "knox/authtoken_form.html"
+    form_class = AuthTokenForm
+
+    def form_valid(self, form):
+        _, token = form.create_token(user=self.request.user)
+        messages.add_message(
+            self.request,
+            messages.INFO,
+            format_html(
+                (
+                    "Your new API token is:<br><br>"
+                    "<pre>{}</pre>"
+                    "Please keep treat this like a password remove the key if "
+                    "necessary. The key will not be visible again once this "
+                    "message has been dismissed."
+                ),
+                token,
+            ),
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("api-tokens:list")
