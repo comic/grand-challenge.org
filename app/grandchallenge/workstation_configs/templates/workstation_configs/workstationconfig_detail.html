@@ -117,6 +117,10 @@
                 <i class="fas {% if object.show_reset_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
+        <tr>
+            <td class="font-weight-bold">Enable contrast enhancement preprocessing (fundus)</td>
+            <td><pre>{{ object.enable_contrast_enhancement }}</pre></td>
+        </tr>
     </table>
 
     {% if "change_workstationconfig" in config_perms %}

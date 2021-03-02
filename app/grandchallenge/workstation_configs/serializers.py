@@ -1,6 +1,6 @@
 from rest_framework.fields import CharField, FloatField
 from rest_framework.relations import SlugRelatedField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from grandchallenge.workstation_configs.models import (
     LookUpTable,
@@ -56,6 +56,8 @@ class WorkstationConfigSerializer(ModelSerializer):
     default_overlay_alpha = FloatField()
     default_zoom_scale = FloatField()
 
+    enabled_preprocessors = SerializerMethodField()
+
     class Meta:
         model = WorkstationConfig
         fields = [
@@ -84,4 +86,12 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_flip_tool",
             "show_window_level_tool",
             "show_reset_tool",
+            "enable_contrast_enhancement",
         ]
+
+        def get_enabled_preprocessors(self):
+            if self.enable_contrast_enhancement:
+                text = ["contrast_enhanced"]
+            else:
+                text = []
+            return text
