@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block title %}Delete a Token - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href>Settings</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'api-tokens:list' %}">API Tokens</a></li>
+        <li class="breadcrumb-item"><a href>{{ object.token_key }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Delete</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Delete a Token</h2>
+
+    <p>
+        Please click below to delete the token that begins with {{ object.token_key }}.
+        Please note that this action is not reversible.
+    </p>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <a href="{% url 'api-tokens:list' %}"
+           type="button"
+           class="btn btn-secondary">Cancel</a>
+        <input type="submit"
+               value="I understand, delete the token '{{ object.token_key }}'"
+               class="btn btn-danger"/>
+    </form>
+{% endblock %}

@@ -1,6 +1,7 @@
 import pytest
 from django.conf import settings
 from django.contrib.messages import get_messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 
 from tests.api_tokens_tests.factories import AuthTokenFactory
@@ -61,3 +62,30 @@ def test_token_is_created_for_user(client):
     assert str(messages[0]).startswith(
         f"Your new API token is:<br><br><pre>{token.token_key}"
     )
+
+
+@pytest.mark.django_db
+def test_user_cannot_delete_token_of_another(client):
+    token, _ = AuthTokenFactory()
+    user = UserFactory()
+
+    def _delete_token(u):
+        return get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="api-tokens:delete",
+            reverse_kwargs={"token_key": token.token_key},
+            data={},
+            user=u,
+        )
+
+    # Other user cannot delete
+    assert _delete_token(user).status_code == 404
+
+    # Ensure the token still exists
+    token.refresh_from_db()
+    assert _delete_token(token.user).status_code == 302
+
+    # Token deleted by the owner
+    with pytest.raises(ObjectDoesNotExist):
+        token.refresh_from_db()

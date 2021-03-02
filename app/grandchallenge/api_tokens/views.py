@@ -1,6 +1,7 @@
 from django.contrib import messages
+from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
-from django.views.generic import FormView, ListView
+from django.views.generic import DeleteView, FormView, ListView
 from guardian.mixins import LoginRequiredMixin
 from knox.models import AuthToken
 
@@ -39,6 +40,25 @@ class APITokenCreate(LoginRequiredMixin, FormView):
             ),
         )
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("api-tokens:list")
+
+
+class APITokenDelete(LoginRequiredMixin, DeleteView):
+    model = AuthToken
+    success_message = "Token successfully deleted"
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            klass=AuthToken,
+            token_key=self.kwargs["token_key"],
+            user=self.request.user,
+        )
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, self.success_message)
+        return super().delete(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse("api-tokens:list")

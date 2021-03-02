@@ -31,6 +31,7 @@
                 <th>Created</th>
                 <th>Expires</th>
                 <th>Description</th>
+                <th>Delete</th>
             </tr>
             </thead>
             <tbody>
@@ -51,6 +52,13 @@
                         {% for session in object.session_set.all %}
                             Automatically for <a href="{{ session.get_absolute_url }}">{{ session }}</a>
                         {% endfor %}
+                    </td>
+                    <td>
+                        <a class="btn btn-sm btn-danger"
+                           href="{% url "api-tokens:delete" token_key=object.token_key %}"
+                           title="Delete Token">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
                     </td>
                 </tr>
             {% endfor %}
