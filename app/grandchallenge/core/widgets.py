@@ -26,23 +26,29 @@ class JSONEditorWidget(forms.Textarea):
 
 
 class MarkdownEditorWidget(MarkdownxWidget):
-    class Media(MarkdownxWidget.Media):
-        js = [
-            *MarkdownxWidget.Media.js,
-            "vendor/js/markdown-toolbar-element/index.umd.js",
-        ]
+    @property
+    def media(self):
+        return forms.Media(
+            js=(
+                "js/markdownx.js",
+                "vendor/js/markdown-toolbar-element/index.umd.js",
+            )
+        )
 
 
 class MarkdownEditorAdminWidget(AdminMarkdownxWidget):
-    class Media(AdminMarkdownxWidget.Media):
-        css = {
-            "all": [
-                *AdminMarkdownxWidget.Media.css["all"],
-                "vendor/css/base.min.css",
-                "vendor/fa/css/all.css",
-            ]
-        }
-        js = [
-            *AdminMarkdownxWidget.Media.js,
-            "vendor/js/markdown-toolbar-element/index.umd.js",
-        ]
+    @property
+    def media(self):
+        return forms.Media(
+            css={
+                "all": [
+                    *AdminMarkdownxWidget.Media.css["all"],
+                    "vendor/css/base.min.css",
+                    "vendor/fa/css/all.css",
+                ]
+            },
+            js=[
+                "js/markdownx.js",
+                "vendor/js/markdown-toolbar-element/index.umd.js",
+            ],
+        )

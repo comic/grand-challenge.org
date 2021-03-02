@@ -364,9 +364,9 @@ class QuestionOptionMixin(object):
         context = self.get_context_data()
         options = context["options"]
         if form.data["answer_type"] not in [
-            Question.ANSWER_TYPE_CHOICE,
-            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
-            Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+            Question.AnswerType.CHOICE,
+            Question.AnswerType.MULTIPLE_CHOICE,
+            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ]:
             if getattr(self, "object", None):
                 self.object.options.all().delete()

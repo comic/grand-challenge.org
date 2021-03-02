@@ -16,7 +16,7 @@
     <div class="card-columns">
         {% for config in object_list %}
             <div class="card">
-                 <div class="card-body">
+                <div class="card-body">
                     <h5 class="card-title">{{ config.title }}</h5>
                     <div class="mb-2">
                         <small>
@@ -27,6 +27,10 @@
                             {% if config.default_orientation %}
                                 <label for="orientation" class="font-weight-bold mb-0">Orientation:</label>
                                 <div id="orientation">{{ config.get_default_orientation_display }}</div>
+                            {% endif %}
+                            {% if config.image_context %}
+                                <label for="image_context" class="font-weight-bold mb-0">Image context:</label>
+                                <div id="image_context">{{ config.get_image_context_display }}</div>
                             {% endif %}
                             <label for="interpolation" class="font-weight-bold mb-0">Overlay interpolation:</label>
                             <div id="interpolation">{{ config.get_default_overlay_interpolation_display }}</div>
@@ -39,7 +43,7 @@
                     </a>
                 </div>
             </div>
-        {% empty %}
+            {% empty %}
             <p>No viewer configurations available.</p>
         {% endfor %}
     </div>
