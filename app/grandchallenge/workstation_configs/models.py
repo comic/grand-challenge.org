@@ -232,6 +232,10 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     show_flip_tool = models.BooleanField(default=True)
     show_window_level_tool = models.BooleanField(default=True)
     show_reset_tool = models.BooleanField(default=True)
+    enable_contrast_enhancement = models.BooleanField(
+        default=False,
+        verbose_name="Enable contrast enhancement preprocessing (fundus)",
+    )
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")
