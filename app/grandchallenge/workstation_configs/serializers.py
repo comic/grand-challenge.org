@@ -86,7 +86,6 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_flip_tool",
             "show_window_level_tool",
             "show_reset_tool",
-            "enable_contrast_enhancement",
             "enabled_preprocessors",
         ]
 
