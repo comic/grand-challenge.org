@@ -396,6 +396,7 @@ LOCAL_APPS = [
     "grandchallenge.admins",
     "grandchallenge.anatomy",
     "grandchallenge.api",
+    "grandchallenge.api_tokens",
     "grandchallenge.challenges",
     "grandchallenge.core",
     "grandchallenge.evaluation",

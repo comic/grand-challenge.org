@@ -66,6 +66,9 @@
                                         class="fa fa-key fa-fw"></i>&nbsp;{% trans "Change password" %}
                                 </a>
                             {% endif %}
+                            <a class="list-group-item list-group-item-action"
+                               href='{% url 'api-tokens:list' %}'><i
+                                    class="fas fa-unlock fa-fw"></i>&nbsp;{% trans "Manage API Tokens" %}</a>
                         </ul>
                     {% endif %}
 

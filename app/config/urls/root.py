@@ -68,6 +68,10 @@ urlpatterns = [
     path("api/", include("grandchallenge.api.urls", namespace="api")),
     path("users/", include("grandchallenge.profiles.urls")),
     path(
+        "settings/api-tokens/",
+        include("grandchallenge.api_tokens.urls", namespace="api-tokens"),
+    ),
+    path(
         "verifications/",
         include(
             "grandchallenge.verifications.urls", namespace="verifications",

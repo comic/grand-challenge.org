@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}API Tokens - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href>Settings</a></li>
+        <li class="breadcrumb-item active" aria-current="page">API Tokens</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>API Tokens</h2>
+    <p>
+        Here is a list of your personal tokens that you can use for authenticating against the
+        <a href="{% url 'api:swagger-ui' %}">REST API</a>.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless">
+            <thead class="thead-light">
+            <tr>
+                <th>Created</th>
+                <th>Key</th>
+                <th>Expires</th>
+                <th>Description</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for object in object_list %}
+                <tr>
+                    <td>
+                        {{ object.created }}
+                    </td>
+                    <td>{{ object.token_key }}...</td>
+                    <td>
+                        {% if expires is None %}
+                            Never
+                        {% else %}
+                            {{ object.expires }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for session in object.session_set.all %}
+                            Automatically for <a href="{{ session.get_absolute_url }}">{{ session }}</a>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').each(function () {
+                $(this).DataTable({
+                    "order": [[0, "desc"]],
+                    "paging": false,
+                });
+            });
+        });
+    </script>
+{% endblock %}
