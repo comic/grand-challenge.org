@@ -14,6 +14,9 @@ class UserProfileForm(forms.ModelForm):
     last_name = forms.CharField(
         label=_("Last Name"), max_length=30, required=True
     )
+    organization_display = forms.BooleanField(
+        label=_("Display organizations"), required=False
+    )
 
     class Meta:
         model = UserProfile
@@ -25,6 +28,7 @@ class UserProfileForm(forms.ModelForm):
             "department",
             "country",
             "website",
+            "organization_display",
         )
 
     def __init__(self, *args, **kwargs):
@@ -43,6 +47,9 @@ class UserProfileForm(forms.ModelForm):
 
         instance.user.first_name = self.cleaned_data["first_name"]
         instance.user.last_name = self.cleaned_data["last_name"]
+        instance.user.organization_display = self.cleaned_data[
+            "organization_display"
+        ]
         instance.user.save()
 
         return instance
@@ -75,4 +82,7 @@ class SignupForm(UserProfileForm):
         user_profile.department = self.cleaned_data["department"]
         user_profile.country = self.cleaned_data["country"]
         user_profile.website = self.cleaned_data["website"]
+        user_profile.organization_display = self.cleaned_data[
+            "organization_display"
+        ]
         user_profile.save()
