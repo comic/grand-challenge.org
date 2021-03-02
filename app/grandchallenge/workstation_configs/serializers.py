@@ -89,8 +89,8 @@ class WorkstationConfigSerializer(ModelSerializer):
             "enable_contrast_enhancement",
         ]
 
-        def get_enabled_preprocessors(self):
-            if self.enable_contrast_enhancement:
+        def get_enabled_preprocessors(self, obj):
+            if obj.enable_contrast_enhancement:
                 text = ["contrast_enhanced"]
             else:
                 text = []
