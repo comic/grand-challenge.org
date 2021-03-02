@@ -14,7 +14,7 @@ class UserProfileForm(forms.ModelForm):
     last_name = forms.CharField(
         label=_("Last Name"), max_length=30, required=True
     )
-    organization_display = forms.BooleanField(
+    display_organizations = forms.BooleanField(
         label=_("Display organizations"), required=False
     )
 
@@ -28,7 +28,7 @@ class UserProfileForm(forms.ModelForm):
             "department",
             "country",
             "website",
-            "organization_display",
+            "display_organizations",
         )
 
     def __init__(self, *args, **kwargs):
@@ -36,6 +36,7 @@ class UserProfileForm(forms.ModelForm):
 
         if self.instance.pk is None:
             self.fields.pop("mugshot")
+            self.fields.pop("display_organizations")
         else:
             self.fields["first_name"].initial = self.instance.user.first_name
             self.fields["last_name"].initial = self.instance.user.last_name
@@ -47,8 +48,8 @@ class UserProfileForm(forms.ModelForm):
 
         instance.user.first_name = self.cleaned_data["first_name"]
         instance.user.last_name = self.cleaned_data["last_name"]
-        instance.user.organization_display = self.cleaned_data[
-            "organization_display"
+        instance.user.display_organizations = self.cleaned_data[
+            "display_organizations"
         ]
         instance.user.save()
 
@@ -82,7 +83,4 @@ class SignupForm(UserProfileForm):
         user_profile.department = self.cleaned_data["department"]
         user_profile.country = self.cleaned_data["country"]
         user_profile.website = self.cleaned_data["website"]
-        user_profile.organization_display = self.cleaned_data[
-            "organization_display"
-        ]
         user_profile.save()

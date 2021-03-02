@@ -44,7 +44,10 @@ class UserProfile(models.Model):
     department = models.CharField(max_length=100)
     country = CountryField()
     website = models.CharField(max_length=150, blank=True)
-    organization_display = models.BooleanField(default=False, blank=True)
+    display_organizations = models.BooleanField(
+        default=True,
+        help_text="Display the organizations that you are a member of in your profile.",
+    )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

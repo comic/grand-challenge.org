@@ -65,7 +65,8 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
         profile_groups = profile_user.groups.all()
 
         organizations = Organization.objects.filter(
-            members_group__in=profile_groups
+            Q(members_group__in=profile_groups)
+            | Q(editors_group__in=profile_groups)
         ).distinct()
 
         archives = (
