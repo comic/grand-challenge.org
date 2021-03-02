@@ -84,6 +84,7 @@ easy_thumbnails = "*"
 drf-spectacular = "^0.13.2"
 jinja2 = "^2.11.3"
 openpyxl = "^3.0.6"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
