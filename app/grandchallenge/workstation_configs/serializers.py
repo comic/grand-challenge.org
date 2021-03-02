@@ -2,7 +2,6 @@ from rest_framework.fields import CharField, FloatField
 from rest_framework.relations import SlugRelatedField
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
-from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.workstation_configs.models import (
     LookUpTable,
     WindowPreset,
@@ -83,15 +82,6 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_reset_tool",
             "enable_contrast_enhancement",
         ]
-        swagger_schema_fields = swagger_schema_fields_for_charfield(
-            default_orientation=model._meta.get_field("default_orientation"),
-            default_slab_render_method=model._meta.get_field(
-                "default_slab_render_method"
-            ),
-            default_overlay_interpolation=model._meta.get_field(
-                "default_overlay_interpolation"
-            ),
-        )
 
         def get_enabled_preprocessors(self):
             if self.enable_contrast_enhancement:
