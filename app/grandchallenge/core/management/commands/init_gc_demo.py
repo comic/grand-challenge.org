@@ -452,7 +452,6 @@ class Command(BaseCommand):
         answer.save()
 
     def _create_user_tokens(self):
-        out = f"{'*' * 80}\n"
         # Hard code tokens used in gcapi integration tests
         user_tokens = {
             "admin": "1b9436200001f2eaf57cd77db075cbb60a49a00a",
@@ -460,6 +459,8 @@ class Command(BaseCommand):
             "algorithmuser": "dc3526c2008609b429514b6361a33f8516541464",
             "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
         }
+
+        out = f"{'*' * 80}\n"
         for user, token in user_tokens.items():
             salt = crypto.create_salt_string()
             digest = crypto.hash_token(token, salt)
