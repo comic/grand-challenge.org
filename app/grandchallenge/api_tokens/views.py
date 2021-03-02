@@ -32,7 +32,7 @@ class APITokenCreate(LoginRequiredMixin, FormView):
                 (
                     "Your new API token is:<br><br>"
                     "<pre>{}</pre>"
-                    "Please keep treat this like a password remove the key if "
+                    "Please treat this like a password remove the key if "
                     "necessary. The key will not be visible again once this "
                     "message has been dismissed."
                 ),
