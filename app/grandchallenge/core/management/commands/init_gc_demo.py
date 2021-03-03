@@ -16,7 +16,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile, File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
-from rest_framework.authtoken.models import Token
+from knox import crypto
+from knox.models import AuthToken
+from knox.settings import CONSTANTS
 
 import grandchallenge.cases.models
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
@@ -97,13 +99,12 @@ class Command(BaseCommand):
         self.users = self._create_users(usernames=default_users)
 
         self._set_user_permissions()
-        self._create_user_tokens()
         self._create_demo_challenge()
         self._create_external_challenge()
         self._create_workstation()
         self._create_algorithm_demo()
         self._create_reader_studies()
-        self._log_tokens()
+        self._create_user_tokens()
         self._setup_public_storage()
 
     @staticmethod
@@ -170,24 +171,6 @@ class Command(BaseCommand):
         add_archive_perm = Permission.objects.get(codename="add_archive")
         self.users["archive"].user_permissions.add(add_archive_perm)
         self.users["demo"].user_permissions.add(add_archive_perm)
-
-    def _create_user_tokens(self):
-        Token.objects.get_or_create(
-            user=self.users["admin"],
-            key="1b9436200001f2eaf57cd77db075cbb60a49a00a",
-        )
-        Token.objects.get_or_create(
-            user=self.users["retina"],
-            key="f1f98a1733c05b12118785ffd995c250fe4d90da",
-        )
-        Token.objects.get_or_create(
-            user=self.users["algorithmuser"],
-            key="dc3526c2008609b429514b6361a33f8516541464",
-        )
-        Token.objects.get_or_create(
-            user=self.users["readerstudy"],
-            key="01614a77b1c0b4ecd402be50a8ff96188d5b011d",
-        )
 
     def _create_demo_challenge(self):
         demo = Challenge.objects.create(
@@ -459,7 +442,7 @@ class Command(BaseCommand):
         question = Question.objects.create(
             reader_study=reader_study,
             question_text="foo",
-            answer_type=Question.ANSWER_TYPE_SINGLE_LINE_TEXT,
+            answer_type=Question.AnswerType.SINGLE_LINE_TEXT,
         )
 
         answer = Answer.objects.create(
@@ -468,10 +451,31 @@ class Command(BaseCommand):
         answer.images.add(grandchallenge.cases.models.Image.objects.first())
         answer.save()
 
-    @staticmethod
-    def _log_tokens():
-        out = [f"\t{t.user} token is: {t}\n" for t in Token.objects.all()]
-        logger.debug(f"{'*' * 80}\n{''.join(out)}{'*' * 80}")
+    def _create_user_tokens(self):
+        # Hard code tokens used in gcapi integration tests
+        user_tokens = {
+            "admin": "1b9436200001f2eaf57cd77db075cbb60a49a00a",
+            "retina": "f1f98a1733c05b12118785ffd995c250fe4d90da",
+            "algorithmuser": "dc3526c2008609b429514b6361a33f8516541464",
+            "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
+        }
+
+        out = f"{'*' * 80}\n"
+        for user, token in user_tokens.items():
+            salt = crypto.create_salt_string()
+            digest = crypto.hash_token(token, salt)
+
+            AuthToken(
+                token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
+                digest=digest,
+                salt=salt,
+                user=self.users[user],
+                expiry=None,
+            ).save()
+
+            out += f"\t{user} token is: {token}\n"
+        out += f"{'*' * 80}\n"
+        logger.debug(out)
 
     @staticmethod
     def _setup_public_storage():

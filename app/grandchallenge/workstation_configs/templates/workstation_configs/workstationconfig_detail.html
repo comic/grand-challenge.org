@@ -26,6 +26,10 @@
 
     <table class="table table-hover my-3">
         <tr>
+            <td class="font-weight-bold">Image context</td>
+            <td>{{ object.get_image_context_display }}</td>
+        </tr>
+        <tr>
             <td class="font-weight-bold">Window presets</td>
             <td>
                 {% for x in object.window_presets.all %}
@@ -63,11 +67,15 @@
         </tr>
         <tr>
             <td class="font-weight-bold">Overlay Segments</td>
-            <td><pre>{{ object.overlay_segments|json_dumps }}</pre></td>
+            <td>
+                <pre>{{ object.overlay_segments|json_dumps }}</pre>
+            </td>
         </tr>
         <tr>
             <td class="font-weight-bold">Key Bindings</td>
-            <td><pre>{{ object.key_bindings|json_dumps }}</pre></td>
+            <td>
+                <pre>{{ object.key_bindings|json_dumps }}</pre>
+            </td>
         </tr>
         <tr>
             <td class="font-weight-bold">Default zoom scale</td>
@@ -108,6 +116,10 @@
             <td>
                 <i class="fas {% if object.show_reset_tool %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Enable contrast enhancement preprocessing (fundus)</td>
+            <td><pre>{{ object.enable_contrast_enhancement }}</pre></td>
         </tr>
     </table>
 

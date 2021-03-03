@@ -1,8 +1,7 @@
 from rest_framework.fields import CharField, FloatField
 from rest_framework.relations import SlugRelatedField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
-from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.workstation_configs.models import (
     LookUpTable,
     WindowPreset,
@@ -38,19 +37,26 @@ class LookUpTableSerializer(ModelSerializer):
 
 class WorkstationConfigSerializer(ModelSerializer):
     creator = SlugRelatedField(read_only=True, slug_field="username")
-    default_slab_render_method = CharField(
-        source="get_default_slab_render_method_display"
+    image_context = CharField(
+        source="get_image_context_display", read_only=True,
     )
-    default_orientation = CharField(source="get_default_orientation_display")
+    default_slab_render_method = CharField(
+        source="get_default_slab_render_method_display", read_only=True,
+    )
+    default_orientation = CharField(
+        source="get_default_orientation_display", read_only=True
+    )
     default_slab_thickness_mm = FloatField()
     window_presets = WindowPresetSerializer(many=True, read_only=True)
     default_window_preset = WindowPresetSerializer()
     default_overlay_lut = LookUpTableSerializer()
     default_overlay_interpolation = CharField(
-        source="get_default_overlay_interpolation_display"
+        source="get_default_overlay_interpolation_display", read_only=True,
     )
     default_overlay_alpha = FloatField()
     default_zoom_scale = FloatField()
+
+    enabled_preprocessors = SerializerMethodField()
 
     class Meta:
         model = WorkstationConfig
@@ -62,6 +68,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "created",
             "modified",
             "creator",
+            "image_context",
             "window_presets",
             "default_window_preset",
             "default_slab_thickness_mm",
@@ -79,13 +86,12 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_flip_tool",
             "show_window_level_tool",
             "show_reset_tool",
+            "enabled_preprocessors",
         ]
-        swagger_schema_fields = swagger_schema_fields_for_charfield(
-            default_orientation=model._meta.get_field("default_orientation"),
-            default_slab_render_method=model._meta.get_field(
-                "default_slab_render_method"
-            ),
-            default_overlay_interpolation=model._meta.get_field(
-                "default_overlay_interpolation"
-            ),
-        )
+
+    def get_enabled_preprocessors(self, obj):
+        if obj.enable_contrast_enhancement:
+            text = ["contrast_enhanced"]
+        else:
+            text = []
+        return text

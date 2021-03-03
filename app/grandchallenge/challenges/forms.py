@@ -54,7 +54,12 @@ class ChallengeUpdateForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             TabHolder(
-                Tab("Information", *common_information_items, "disclaimer"),
+                Tab(
+                    "Information",
+                    *common_information_items,
+                    "display_forum_link",
+                    "disclaimer",
+                ),
                 Tab("Images", "banner", *common_images_items),
                 Tab("Event", *event_items),
                 Tab("Registration", *registration_items),
@@ -67,6 +72,7 @@ class ChallengeUpdateForm(forms.ModelForm):
         model = Challenge
         fields = [
             *common_information_items,
+            "display_forum_link",
             "disclaimer",
             "banner",
             *common_images_items,

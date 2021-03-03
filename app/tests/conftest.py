@@ -638,17 +638,17 @@ def reader_study_with_gt():
     q1, q2, q3 = [
         QuestionFactory(
             reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
+            answer_type=Question.AnswerType.BOOL,
             question_text="q1",
         ),
         QuestionFactory(
             reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
+            answer_type=Question.AnswerType.BOOL,
             question_text="q2",
         ),
         QuestionFactory(
             reader_study=rs,
-            answer_type=Question.ANSWER_TYPE_BOOL,
+            answer_type=Question.AnswerType.BOOL,
             question_text="q3",
         ),
     ]

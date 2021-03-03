@@ -124,32 +124,24 @@ KEY_BINDINGS_SCHEMA = {
 
 
 class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
-    ORIENTATION_AXIAL = "A"
-    ORIENTATION_CORONAL = "C"
-    ORIENTATION_SAGITTAL = "S"
+    class Orientation(models.TextChoices):
+        AXIAL = "A", "Axial"
+        CORONAL = "C", "Coronal"
+        SAGITTAL = "S", "Sagittal"
 
-    ORIENTATION_CHOICES = (
-        (ORIENTATION_AXIAL, "Axial"),
-        (ORIENTATION_CORONAL, "Coronal"),
-        (ORIENTATION_SAGITTAL, "Sagittal"),
-    )
+    class SlabRenderMethod(models.TextChoices):
+        MAXIMUM = "MAX", "Maximum"
+        MINIMUM = "MIN", "Minimum"
+        AVERAGE = "AVG", "Average"
 
-    SLAB_RENDER_METHOD_MAXIMUM = "MAX"
-    SLAB_RENDER_METHOD_MINIMUM = "MIN"
-    SLAB_RENDER_METHOD_AVERAGE = "AVG"
+    class ImageContext(models.TextChoices):
+        PATHOLOGY = "PATH", "Pathology"
+        OPHTHALMOLOGY = "OPHTH", "Ophthalmology"
+        MPMRI = "MPMRI", "Multiparametric MRI"
 
-    SLAB_RENDER_METHOD_CHOICES = (
-        (SLAB_RENDER_METHOD_MAXIMUM, "Maximum"),
-        (SLAB_RENDER_METHOD_MINIMUM, "Minimum"),
-        (SLAB_RENDER_METHOD_AVERAGE, "Average"),
-    )
-
-    IMAGE_INTERPOLATION_TYPE_NEAREST = "NN"
-    IMAGE_INTERPOLATION_TYPE_TRILINEAR = "TL"
-    IMAGE_INTERPOLATION_TYPE_CHOICES = (
-        (IMAGE_INTERPOLATION_TYPE_NEAREST, "NearestNeighbor"),
-        (IMAGE_INTERPOLATION_TYPE_TRILINEAR, "Trilinear"),
-    )
+    class ImageInterpolationType(models.TextChoices):
+        NEAREST = "NN", "NearestNeighbor"
+        TRILINEAR = "TL", "Trilinear"
 
     creator = models.ForeignKey(
         get_user_model(), null=True, on_delete=models.SET_NULL
@@ -160,12 +152,17 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         blank=True,
         related_name="workstation_window_presets",
     )
+
     default_window_preset = models.ForeignKey(
         to="WindowPreset",
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
         related_name="workstation_default_window_presets",
+    )
+
+    image_context = models.CharField(
+        blank=True, max_length=6, choices=ImageContext.choices,
     )
 
     # 4 digits, 2 decimal places, 0.01 min, 99.99 max
@@ -176,23 +173,26 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         decimal_places=2,
         validators=[MinValueValidator(limit_value=0.01)],
     )
+
     default_slab_render_method = models.CharField(
-        max_length=3, choices=SLAB_RENDER_METHOD_CHOICES, blank=True
+        max_length=3, choices=SlabRenderMethod.choices, blank=True
     )
 
     default_orientation = models.CharField(
-        max_length=1, choices=ORIENTATION_CHOICES, blank=True
+        max_length=1, choices=Orientation.choices, blank=True
     )
 
     default_overlay_lut = models.ForeignKey(
         to="LookUpTable", blank=True, null=True, on_delete=models.SET_NULL
     )
+
     default_overlay_interpolation = models.CharField(
         max_length=2,
-        choices=IMAGE_INTERPOLATION_TYPE_CHOICES,
-        default=IMAGE_INTERPOLATION_TYPE_NEAREST,
+        choices=ImageInterpolationType.choices,
+        default=ImageInterpolationType.NEAREST,
         blank=True,
     )
+
     # 3 digits, 2 decimal places, 0.00 min, 1.00 max
     default_overlay_alpha = models.DecimalField(
         blank=True,
@@ -232,6 +232,10 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     show_flip_tool = models.BooleanField(default=True)
     show_window_level_tool = models.BooleanField(default=True)
     show_reset_tool = models.BooleanField(default=True)
+    enable_contrast_enhancement = models.BooleanField(
+        default=False,
+        verbose_name="Enable contrast enhancement preprocessing (fundus)",
+    )
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")
@@ -268,6 +272,7 @@ class WindowPreset(TitleSlugDescriptionModel):
 
 
 class LookUpTable(TitleSlugDescriptionModel):
+
     COLOR_INTERPOLATION_RGB = "RGB"
     COLOR_INTERPOLATION_HLS = "HLS"
     COLOR_INTERPOLATION_HLS_POS = "HLSpos"

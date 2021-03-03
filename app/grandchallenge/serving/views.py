@@ -5,7 +5,7 @@ from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
 from guardian.shortcuts import get_objects_for_user
-from rest_framework.authentication import TokenAuthentication
+from knox.auth import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 from grandchallenge.cases.models import Image

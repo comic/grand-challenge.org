@@ -212,6 +212,13 @@ SESSION_COOKIE_DOMAIN = os.environ.get(
 # We're always running behind a proxy so set these to true
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+# Trust all subdomains for CSRF, used for jqfileupload. Changed the name
+# of the CSRF token as existing ones are already in use.
+CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
+CSRF_COOKIE_NAME = "_csrftoken"
+CSRF_TRUSTED_ORIGINS = [
+    SESSION_COOKIE_DOMAIN,
+]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Set the allowed hosts to the cookie domain
@@ -230,8 +237,9 @@ SECURE_BROWSER_XSS_FILTER = strtobool(
     os.environ.get("SECURE_BROWSER_XSS_FILTER", "False")
 )
 X_FRAME_OPTIONS = os.environ.get("X_FRAME_OPTIONS", "DENY")
+# "origin-when-cross-origin" required for jqfileupload for cross domain POSTs
 SECURE_REFERRER_POLICY = os.environ.get(
-    "SECURE_REFERRER_POLICY", "same-origin"
+    "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
 )
 
 IPWARE_META_PRECEDENCE_ORDER = (
@@ -349,7 +357,7 @@ THIRD_PARTY_APPS = [
     "guardian",  # per object permissions
     "easy_thumbnails",  # for mugshots
     "rest_framework",  # provides REST API
-    "rest_framework.authtoken",  # token auth for REST API
+    "knox",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
     "django_select2",  # for multiple choice widgets
     "django_summernote",  # for WYSIWYG page editing
@@ -358,9 +366,9 @@ THIRD_PARTY_APPS = [
     "django_extensions",  # custom extensions
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
-    "drf_yasg",
     "markdownx",  # for editing markdown
     "django_filters",
+    "drf_spectacular",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -388,6 +396,7 @@ LOCAL_APPS = [
     "grandchallenge.admins",
     "grandchallenge.anatomy",
     "grandchallenge.api",
+    "grandchallenge.api_tokens",
     "grandchallenge.challenges",
     "grandchallenge.core",
     "grandchallenge.evaluation",
@@ -635,24 +644,43 @@ if SENTRY_DSN:
     )
     ignore_logger("django.security.DisallowedHost")
 
+###############################################################################
+#
+# django-rest-framework and drf-spectacular
+#
+###############################################################################
+
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.TokenAuthentication",
-        "grandchallenge.api.authentication.BearerTokenAuthentication",
+        "knox.auth.TokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PAGINATION_CLASS": "grandchallenge.api.pagination.MaxLimit1000OffsetPagination",
     "PAGE_SIZE": 100,
     "UNAUTHENTICATED_USER": "guardian.utils.get_anonymous_user",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-SWAGGER_SETTINGS = {
-    "SECURITY_DEFINITIONS": {
-        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
-    }
+SPECTACULAR_SETTINGS = {
+    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
+    "TITLE": f"{SESSION_COOKIE_DOMAIN.lstrip('.')} API",
+    "DESCRIPTION": f"The API for {SESSION_COOKIE_DOMAIN.lstrip('.')}.",
+    "TOS": f"https://{SESSION_COOKIE_DOMAIN.lstrip('.')}/policies/terms-of-service/",
+    "LICENSE": {"name": "Apache License 2.0"},
+    "VERSION": "1.0.0",
 }
+
+REST_KNOX = {
+    "AUTH_HEADER_PREFIX": "Bearer",
+}
+
+###############################################################################
+#
+# CORS
+#
+###############################################################################
 
 VALID_SUBDOMAIN_REGEX = r"[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?"
 CORS_ORIGIN_REGEX_WHITELIST = [
@@ -668,6 +696,12 @@ CORS_ALLOW_HEADERS = [
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api
 CORS_ALLOW_CREDENTIALS = True
+
+###############################################################################
+#
+# celery
+#
+###############################################################################
 
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True

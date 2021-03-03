@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from grandchallenge.api.swagger import swagger_schema_fields_for_charfield
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -20,9 +19,6 @@ class ComponentInterfaceSerialzer(serializers.ModelSerializer):
             "kind",
             "pk",
         ]
-        swagger_schema_fields = swagger_schema_fields_for_charfield(
-            kind=model._meta.get_field("kind")
-        )
 
 
 class SimpleImageSerializer(serializers.ModelSerializer):

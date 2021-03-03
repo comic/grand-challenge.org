@@ -86,7 +86,7 @@ def test_assign_score(settings):
     im = ImageFactory()
     q1 = QuestionFactory(reader_study=rs)
     q2 = QuestionFactory(
-        reader_study=rs, answer_type=Question.ANSWER_TYPE_MULTIPLE_CHOICE
+        reader_study=rs, answer_type=Question.AnswerType.MULTIPLE_CHOICE
     )
     e, r1, r2 = UserFactory(), UserFactory(), UserFactory()
 

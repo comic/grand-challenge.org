@@ -85,9 +85,21 @@ The default hanging list presents each reader with 1 image per protocol.
 
 You are able to customise the hanging list in the study edit page.
 Here, you are able to assign multiple images and overlays to each protocol.
-A ``main`` and ``secondary`` image port are available.
-Overlays can be applied to either image port by using the keys ``main-overlay``
-and ``secondary-overlay``.
+
+Available image ports are:
+* ``main``
+* ``secondary``
+* ``tertiary``
+* ``quaternary``
+* ``quinary``
+* ``senary``
+* ``septenary``
+* ``octonary``
+* ``nonary``
+* ``denary``
+
+Overlays can be applied to the image ports by using the image-port name with
+the suffix '-overlay' (e.g. ``main-overlay``).
 
 Questions
 ---------
@@ -123,6 +135,24 @@ based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
 """
 
+
+class ImagePort(models.TextChoices):
+    MAIN = "M", "Main"
+    SECONDARY = "S", "Secondary"
+    TERTIARY = "TERTIARY", "Tertiary"
+    QUATERNARY = "QUATERNARY", "Quaternary"
+    QUINARY = "QUINARY", "Quinary"
+    SENARY = "SENARY", "Senary"
+    SEPTENARY = "SEPTENARY", "Septenary"
+    OCTONARY = "OCTONARY", "Octonary"
+    NONARY = "NONARY", "Nonary"
+    DENARY = "DENARY", "Denary"
+
+
+#: Supported image-port overlays.
+IMAGE_PORT_OVERLAYS = [f"{port.lower()}-overlay" for port in ImagePort.labels]
+
+#: Schema used to validate if the hanging list is of the correct format.
 HANGING_LIST_SCHEMA = {
     "definitions": {},
     "$schema": "http://json-schema.org/draft-06/schema#",
@@ -135,38 +165,16 @@ HANGING_LIST_SCHEMA = {
         "required": ["main"],
         "additionalProperties": False,
         "properties": {
-            "main": {
-                "$id": "#/items/properties/main",
+            port: {
+                "$id": f"#/items/properties/{port}",
                 "type": "string",
-                "title": "The Main Schema",
+                "title": f"The {port.title()} Schema",
                 "default": "",
-                "examples": ["im1.mhd"],
+                "examples": [f"im_{port}.mhd"],
                 "pattern": "^(.*)$",
-            },
-            "main-overlay": {
-                "$id": "#/items/properties/main-overlay",
-                "type": "string",
-                "title": "The Main Overlay Schema",
-                "default": "",
-                "examples": ["im1-overlay.mhd"],
-                "pattern": "^(.*)$",
-            },
-            "secondary": {
-                "$id": "#/items/properties/secondary",
-                "type": "string",
-                "title": "The Secondary Schema",
-                "default": "",
-                "examples": ["im2.mhd"],
-                "pattern": "^(.*)$",
-            },
-            "secondary-overlay": {
-                "$id": "#/items/properties/secondary-overlay",
-                "type": "string",
-                "title": "The Secondary Overlay Schema",
-                "default": "",
-                "examples": ["im2-overlay.mhd"],
-                "pattern": "^(.*)$",
-            },
+            }
+            for port in [p.lower() for p in ImagePort.labels]
+            + IMAGE_PORT_OVERLAYS
         },
     },
 }
@@ -560,7 +568,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         All questions for this ``ReaderStudy`` except those with answer type
         `heading`.
         """
-        return self.questions.exclude(answer_type=Question.ANSWER_TYPE_HEADING)
+        return self.questions.exclude(answer_type=Question.AnswerType.HEADING)
 
     @cached_property
     def answerable_question_count(self):
@@ -577,7 +585,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                     continue
                 question = self.questions.get(question_text=key)
                 _answer = json.loads(gt[key])
-                if question.answer_type == Question.ANSWER_TYPE_CHOICE:
+                if question.answer_type == Question.AnswerType.CHOICE:
                     try:
                         option = question.options.get(title=_answer)
                         _answer = option.pk
@@ -586,8 +594,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                             f"Option '{_answer}' is not valid for question {question.question_text}"
                         )
                 if question.answer_type in (
-                    Question.ANSWER_TYPE_MULTIPLE_CHOICE,
-                    Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+                    Question.AnswerType.MULTIPLE_CHOICE,
+                    Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
                 ):
                     _answer = list(
                         question.options.filter(title__in=_answer).values_list(
@@ -1106,83 +1114,50 @@ ANSWER_TYPE_SCHEMA = {
 
 
 class Question(UUIDModel):
-    ANSWER_TYPE_SINGLE_LINE_TEXT = "STXT"
-    ANSWER_TYPE_MULTI_LINE_TEXT = "MTXT"
-    ANSWER_TYPE_BOOL = "BOOL"
-    ANSWER_TYPE_NUMBER = "NUMB"
-    ANSWER_TYPE_HEADING = "HEAD"
-    ANSWER_TYPE_2D_BOUNDING_BOX = "2DBB"
-    ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES = "M2DB"
-    ANSWER_TYPE_DISTANCE_MEASUREMENT = "DIST"
-    ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS = "MDIS"
-    ANSWER_TYPE_POINT = "POIN"
-    ANSWER_TYPE_MULTIPLE_POINTS = "MPOI"
-    ANSWER_TYPE_POLYGON = "POLY"
-    ANSWER_TYPE_POLYGON_IMAGE = "PIMG"
-    ANSWER_TYPE_MULTIPLE_POLYGONS = "MPOL"
-    ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE = "MPIM"
-    ANSWER_TYPE_CHOICE = "CHOI"
-    ANSWER_TYPE_MULTIPLE_CHOICE = "MCHO"
-    ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN = "MCHD"
-    # WARNING: Do not change the display text, these are used in the front end
-    ANSWER_TYPE_CHOICES = (
-        (ANSWER_TYPE_SINGLE_LINE_TEXT, "Single line text"),
-        (ANSWER_TYPE_MULTI_LINE_TEXT, "Multi line text"),
-        (ANSWER_TYPE_BOOL, "Bool"),
-        (ANSWER_TYPE_NUMBER, "Number"),
-        (ANSWER_TYPE_HEADING, "Heading"),
-        (ANSWER_TYPE_2D_BOUNDING_BOX, "2D bounding box"),
-        (ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES, "Multiple 2D bounding boxes"),
-        (ANSWER_TYPE_DISTANCE_MEASUREMENT, "Distance measurement"),
-        (
-            ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
+    class AnswerType(models.TextChoices):
+        # WARNING: Do not change the display text, these are used in the front end
+        SINGLE_LINE_TEXT = "STXT", "Single line text"
+        MULTI_LINE_TEXT = "MTXT", "Multi line text"
+        BOOL = "BOOL", "Bool"
+        NUMBER = "NUMB", "Number"
+        HEADING = "HEAD", "Heading"
+        BOUNDING_BOX_2D = "2DBB", "2D bounding box"
+        MULTIPLE_2D_BOUNDING_BOXES = "M2DB", "Multiple 2D bounding boxes"
+        DISTANCE_MEASUREMENT = "DIST", "Distance measurement"
+        MULTIPLE_DISTANCE_MEASUREMENTS = (
+            "MDIS",
             "Multiple distance measurements",
-        ),
-        (ANSWER_TYPE_POINT, "Point"),
-        (ANSWER_TYPE_MULTIPLE_POINTS, "Multiple points"),
-        (ANSWER_TYPE_POLYGON, "Polygon"),
-        (ANSWER_TYPE_POLYGON_IMAGE, "Polygon (saved as mask)"),
-        (ANSWER_TYPE_MULTIPLE_POLYGONS, "Multiple polygons"),
-        (
-            ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE,
-            "Multiple polygons (saved as mask)",
-        ),
-        (ANSWER_TYPE_CHOICE, "Choice"),
-        (ANSWER_TYPE_MULTIPLE_CHOICE, "Multiple choice"),
-        (ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN, "Multiple choice dropdown"),
-    )
+        )
+        POINT = "POIN", "Point"
+        MULTIPLE_POINTS = "MPOI", "Multiple points"
+        POLYGON = "POLY", "Polygon"
+        POLYGON_IMAGE = "PIMG", "Polygon (saved as mask)"
+        MULTIPLE_POLYGONS = "MPOL", "Multiple polygons"
+        MULTIPLE_POLYGONS_IMAGE = "MPIM", "Multiple polygons (saved as mask)"
+        CHOICE = "CHOI", "Choice"
+        MULTIPLE_CHOICE = "MCHO", "Multiple choice"
+        MULTIPLE_CHOICE_DROPDOWN = "MCHD", "Multiple choice dropdown"
 
     # What is the orientation of the question form when presented on the
     # front end?
-    DIRECTION_HORIZONTAL = "H"
-    DIRECTION_VERTICAL = "V"
-    DIRECTION_CHOICES = (
-        (DIRECTION_HORIZONTAL, "Horizontal"),
-        (DIRECTION_VERTICAL, "Vertical"),
-    )
+    class Direction(models.TextChoices):
+        HORIZONTAL = "H", "Horizontal"
+        VERTICAL = "V", "Vertical"
 
-    # What image port should be used for a drawn annotation?
-    IMAGE_PORT_MAIN = "M"
-    IMAGE_PORT_SECONDARY = "S"
-    IMAGE_PORT_CHOICES = (
-        (IMAGE_PORT_MAIN, "Main"),
-        (IMAGE_PORT_SECONDARY, "Secondary"),
-    )
-
-    SCORING_FUNCTION_ACCURACY = "ACC"
-    SCORING_FUNCTION_CHOICES = ((SCORING_FUNCTION_ACCURACY, "Accuracy score"),)
+    class ScoringFunction(models.TextChoices):
+        ACCURACY = "ACC", "Accuracy score"
 
     SCORING_FUNCTIONS = {
-        SCORING_FUNCTION_ACCURACY: accuracy_score,
+        ScoringFunction.ACCURACY: accuracy_score,
     }
 
     EXAMPLE_FOR_ANSWER_TYPE = {
-        ANSWER_TYPE_SINGLE_LINE_TEXT: "'\"answer\"'",
-        ANSWER_TYPE_MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
-        ANSWER_TYPE_BOOL: "'true'",
-        ANSWER_TYPE_CHOICE: "'\"option\"'",
-        ANSWER_TYPE_MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
-        ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN: '\'["option1", "option2"]\'',
+        AnswerType.SINGLE_LINE_TEXT: "'\"answer\"'",
+        AnswerType.MULTI_LINE_TEXT: "'\"answer\\nanswer\\nanswer\"'",
+        AnswerType.BOOL: "'true'",
+        AnswerType.CHOICE: "'\"option\"'",
+        AnswerType.MULTIPLE_CHOICE: '\'["option1", "option2"]\'',
+        AnswerType.MULTIPLE_CHOICE_DROPDOWN: '\'["option1", "option2"]\'',
     }
 
     reader_study = models.ForeignKey(
@@ -1192,20 +1167,21 @@ class Question(UUIDModel):
     help_text = models.TextField(blank=True)
     answer_type = models.CharField(
         max_length=4,
-        choices=ANSWER_TYPE_CHOICES,
-        default=ANSWER_TYPE_SINGLE_LINE_TEXT,
+        choices=AnswerType.choices,
+        default=AnswerType.SINGLE_LINE_TEXT,
     )
+    # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
-        max_length=1, choices=IMAGE_PORT_CHOICES, blank=True, default=""
+        max_length=10, choices=ImagePort.choices, blank=True, default=""
     )
     required = models.BooleanField(default=True)
     direction = models.CharField(
-        max_length=1, choices=DIRECTION_CHOICES, default=DIRECTION_HORIZONTAL
+        max_length=1, choices=Direction.choices, default=Direction.HORIZONTAL
     )
     scoring_function = models.CharField(
         max_length=3,
-        choices=SCORING_FUNCTION_CHOICES,
-        default=SCORING_FUNCTION_ACCURACY,
+        choices=ScoringFunction.choices,
+        default=ScoringFunction.ACCURACY,
     )
     order = models.PositiveSmallIntegerField(default=100)
 
@@ -1269,8 +1245,8 @@ class Question(UUIDModel):
         to ``answer`` and ``ground_truth``.
         """
         if self.answer_type in (
-            self.ANSWER_TYPE_MULTIPLE_CHOICE,
-            self.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+            Question.AnswerType.MULTIPLE_CHOICE,
+            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ):
             if len(answer) == 0 and len(ground_truth) == 0:
                 return 1.0
@@ -1317,8 +1293,7 @@ class Question(UUIDModel):
             )
 
         if (
-            self.answer_type
-            in [self.ANSWER_TYPE_BOOL, self.ANSWER_TYPE_HEADING]
+            self.answer_type in [self.AnswerType.BOOL, self.AnswerType.HEADING]
             and self.required
         ):
             raise ValidationError(
@@ -1329,16 +1304,16 @@ class Question(UUIDModel):
     @property
     def annotation_types(self):
         return [
-            self.ANSWER_TYPE_2D_BOUNDING_BOX,
-            self.ANSWER_TYPE_MULTIPLE_2D_BOUNDING_BOXES,
-            self.ANSWER_TYPE_DISTANCE_MEASUREMENT,
-            self.ANSWER_TYPE_MULTIPLE_DISTANCE_MEASUREMENTS,
-            self.ANSWER_TYPE_POINT,
-            self.ANSWER_TYPE_MULTIPLE_POINTS,
-            self.ANSWER_TYPE_POLYGON,
-            self.ANSWER_TYPE_POLYGON_IMAGE,
-            self.ANSWER_TYPE_MULTIPLE_POLYGONS,
-            self.ANSWER_TYPE_MULTIPLE_POLYGONS_IMAGE,
+            self.AnswerType.BOUNDING_BOX_2D,
+            self.AnswerType.MULTIPLE_2D_BOUNDING_BOXES,
+            self.AnswerType.DISTANCE_MEASUREMENT,
+            self.AnswerType.MULTIPLE_DISTANCE_MEASUREMENTS,
+            self.AnswerType.POINT,
+            self.AnswerType.MULTIPLE_POINTS,
+            self.AnswerType.POLYGON,
+            self.AnswerType.POLYGON_IMAGE,
+            self.AnswerType.MULTIPLE_POLYGONS,
+            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
         ]
 
     def is_answer_valid(self, *, answer):
@@ -1468,7 +1443,7 @@ class Answer(UUIDModel):
         instance=None,
     ):
         """Validates all fields provided for ``answer``."""
-        if question.answer_type == question.ANSWER_TYPE_HEADING:
+        if question.answer_type == Question.AnswerType.HEADING:
             # Maintained for historical consistency
             raise ValidationError("Headings are not answerable.")
 
@@ -1513,7 +1488,7 @@ class Answer(UUIDModel):
             raise ValidationError("This user is not a reader for this study.")
 
         if (
-            question.answer_type == Question.ANSWER_TYPE_CHOICE
+            question.answer_type == Question.AnswerType.CHOICE
             and answer not in question.options.values_list("id", flat=True)
         ):
             raise ValidationError(
@@ -1521,8 +1496,8 @@ class Answer(UUIDModel):
             )
 
         if question.answer_type in (
-            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
-            Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+            Question.AnswerType.MULTIPLE_CHOICE,
+            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ):
             options = question.options.values_list("id", flat=True)
             if not all(x in options for x in answer):
@@ -1532,7 +1507,7 @@ class Answer(UUIDModel):
 
     @property
     def answer_text(self):
-        if self.question.answer_type == Question.ANSWER_TYPE_CHOICE:
+        if self.question.answer_type == Question.AnswerType.CHOICE:
             return (
                 self.question.options.filter(pk=self.answer)
                 .values_list("title", flat=True)
@@ -1540,8 +1515,8 @@ class Answer(UUIDModel):
                 or ""
             )
         if self.question.answer_type in (
-            Question.ANSWER_TYPE_MULTIPLE_CHOICE,
-            Question.ANSWER_TYPE_MULTIPLE_CHOICE_DROPDOWN,
+            Question.AnswerType.MULTIPLE_CHOICE,
+            Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ):
             return ", ".join(
                 self.question.options.filter(pk__in=self.answer).values_list(

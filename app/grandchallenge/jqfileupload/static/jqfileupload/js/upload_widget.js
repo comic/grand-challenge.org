@@ -13,7 +13,24 @@
         var is_autocommit = upload_element.data("auto-commit");
         var target_url = upload_element.data("upload-target");
         var file_size_url = upload_element.data("file-size-url");
-        var auth_token = upload_element.data("auth-token");
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('_csrftoken');
 
         var client_upload_session_key = generate_labeled_id("client_upload_session");
         target_url = target_url + "?client_session=" + client_upload_session_key;
@@ -33,9 +50,12 @@
                 retryTimeout: 500,
                 maxRetries: 50,
                 headers: {
-                    "Authorization": "Token " + auth_token
+                    "X-CSRFToken": csrftoken
                 },
                 limitConcurrentUploads: 1,
+                xhrFields: {
+                    withCredentials: true
+                },
             });
 
         var drop_overlay_timer = null;

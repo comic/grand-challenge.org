@@ -15,6 +15,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
         fields = (
             "title",
             "description",
+            "image_context",
             "window_presets",
             "default_window_preset",
             "default_slab_thickness_mm",
@@ -32,6 +33,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "show_flip_tool",
             "show_window_level_tool",
             "show_reset_tool",
+            "enable_contrast_enhancement",
         )
         widgets = {
             "overlay_segments": JSONEditorWidget(
@@ -49,4 +51,6 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
                 'For example: [{ "voxel_value": 0, "name": "Level 0", "visible": '
                 'false, "metric_template": "{{metrics.volumes[0]}} mm³"},]'
             ),
+            "image_context": "This tells the viewer how to show the images "
+            "defined in the hanging list",
         }
