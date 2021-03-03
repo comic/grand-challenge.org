@@ -6,6 +6,8 @@ from rest_framework.test import force_authenticate
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import PolicyFactory, UserFactory
+from tests.organizations_tests.factories import OrganizationFactory
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -94,3 +96,87 @@ class TestProfileViewSets:
         ):
             assert field in response.data
         assert "country" not in response.data
+        assert user.user_profile.display_organizations
+
+    def test_organization_display(self, client):
+        u1 = UserFactory()
+        u2 = UserFactory()
+        org1 = OrganizationFactory()
+        org2 = OrganizationFactory()
+        org1.add_member(u1)
+
+        assert org1.is_member(u1)
+        assert not org2.is_member(u1)
+        assert not org1.is_member(u2)
+        assert not org2.is_member(u2)
+
+        response = get_view_for_user(
+            viewname="profile-detail",
+            client=client,
+            user=u1,
+            reverse_kwargs={"username": u1.username},
+        )
+        assert len(response.context[-1]["organizations"]) == 1
+        assert org1.title in response.content.decode()
+        assert org2.title not in response.content.decode()
+
+        response = get_view_for_user(
+            viewname="profile-detail",
+            client=client,
+            user=u2,
+            reverse_kwargs={"username": u2.username},
+        )
+        assert len(response.context[-1]["organizations"]) == 0
+        assert "Organizations" not in response.content.decode()
+        u1.user_profile.display_organizations = False
+        u1.user_profile.save()
+
+        response = get_view_for_user(
+            viewname="profile-detail",
+            client=client,
+            user=u1,
+            reverse_kwargs={"username": u1.username},
+        )
+
+        assert org1.title not in response.content.decode()
+
+    def test_organization_update(self, client):
+        u1 = UserFactory()
+        org1 = OrganizationFactory()
+        org1.add_member(u1)
+
+        response = get_view_for_user(
+            viewname="profile-detail",
+            client=client,
+            user=u1,
+            reverse_kwargs={"username": u1.username},
+        )
+
+        assert org1.title in response.content.decode()
+
+        _ = get_view_for_user(
+            viewname="profile-update",
+            client=client,
+            method=client.post,
+            user=u1,
+            reverse_kwargs={"username": u1.username},
+            data={
+                "first_name": "Firstname",
+                "last_name": "Lastname",
+                "institution": "Institution",
+                "department": "Department",
+                "country": "NL",
+                "display_organizations": False,
+            },
+        )
+
+        u1.user_profile.refresh_from_db()
+
+        response = get_view_for_user(
+            viewname="profile-detail",
+            client=client,
+            user=u1,
+            reverse_kwargs={"username": u1.username},
+        )
+
+        assert org1.title not in response.content.decode()
