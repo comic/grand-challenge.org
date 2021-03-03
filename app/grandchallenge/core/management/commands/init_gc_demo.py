@@ -97,6 +97,10 @@ class Command(BaseCommand):
             "archive",
         ]
         self.users = self._create_users(usernames=default_users)
+        self.users["retina_import_user"] = get_user_model().objects.get(
+            username=settings.RETINA_IMPORT_USER_NAME
+        )
+        self._create_superuser()
 
         self._set_user_permissions()
         self._create_demo_challenge()
@@ -137,6 +141,14 @@ class Command(BaseCommand):
             )
 
         return users
+
+    def _create_superuser(self):
+        su = get_user_model().objects.create_superuser(
+            "superuser", "superuser@example.com", "superuser"
+        )
+        EmailAddress.objects.create(
+            user=su, email=su.email, verified=True, primary=True,
+        )
 
     def _set_user_permissions(self):
         self.users["admin"].is_staff = True
@@ -458,18 +470,25 @@ class Command(BaseCommand):
             "retina": "f1f98a1733c05b12118785ffd995c250fe4d90da",
             "algorithmuser": "dc3526c2008609b429514b6361a33f8516541464",
             "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
+            "retina_import_user": "e8db90bfbea3c35f40b4537fdca9b3bf1cd78a51",
         }
 
         out = f"{'*' * 80}\n"
         for user, token in user_tokens.items():
             salt = crypto.create_salt_string()
             digest = crypto.hash_token(token, salt)
+            if user == "retina_import_user":
+                user = get_user_model().objects.get(
+                    username=settings.RETINA_IMPORT_USER_NAME
+                )
+            else:
+                user = self.users.get(user)
 
             AuthToken(
                 token_key=token[: CONSTANTS.TOKEN_KEY_LENGTH],
                 digest=digest,
                 salt=salt,
-                user=self.users[user],
+                user=user,
                 expiry=None,
             ).save()
 
