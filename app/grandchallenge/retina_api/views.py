@@ -4,8 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework as drf_filters
 from guardian.shortcuts import get_objects_for_user
-from knox.auth import TokenAuthentication
-from rest_framework import authentication, mixins, status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import DjangoObjectPermissions
@@ -69,7 +68,6 @@ class ETDRSGridAnnotationViewSet(viewsets.ModelViewSet):
 
 class ArchiveAPIView(APIView):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     pagination_class = None
 
     def get(self, request, pk=None):
@@ -123,7 +121,6 @@ class ArchiveAPIView(APIView):
 
 class B64ThumbnailAPIView(RetrieveAPIView):
     permission_classes = (DjangoObjectPermissions, RetinaAPIPermission)
-    authentication_classes = (TokenAuthentication,)
     queryset = Image.objects.all()
     serializer_class = B64ImageSerializer
 
@@ -138,7 +135,6 @@ class B64ThumbnailAPIView(RetrieveAPIView):
 
 class LandmarkAnnotationSetViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = LandmarkAnnotationSetSerializer
     filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
@@ -175,7 +171,6 @@ class ImageLevelAnnotationsForImageViewSet(
     mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = ImageLevelAnnotationsForImageSerializer
     filter_backends = (filters.ObjectPermissionsFilter,)
 
@@ -204,7 +199,6 @@ class ImageLevelAnnotationsForImageViewSet(
 
 class QualityAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = ImageQualityAnnotationSerializer
     filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
@@ -213,7 +207,6 @@ class QualityAnnotationViewSet(viewsets.ModelViewSet):
 
 class PathologyAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = ImagePathologyAnnotationSerializer
     filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
@@ -222,7 +215,6 @@ class PathologyAnnotationViewSet(viewsets.ModelViewSet):
 
 class RetinaPathologyAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = RetinaImagePathologyAnnotationSerializer
     filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
@@ -231,7 +223,6 @@ class RetinaPathologyAnnotationViewSet(viewsets.ModelViewSet):
 
 class OctRetinaPathologyAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = OctRetinaImagePathologyAnnotationSerializer
     filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
@@ -240,7 +231,6 @@ class OctRetinaPathologyAnnotationViewSet(viewsets.ModelViewSet):
 
 class TextAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = ImageTextAnnotationSerializer
     filter_backends = (filters.ObjectPermissionsFilter, RetinaAnnotationFilter)
     pagination_class = None
@@ -249,7 +239,6 @@ class TextAnnotationViewSet(viewsets.ModelViewSet):
 
 class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = NestedPolygonAnnotationSetSerializer
     filter_backends = (
         filters.ObjectPermissionsFilter,
@@ -263,7 +252,6 @@ class PolygonAnnotationSetViewSet(viewsets.ModelViewSet):
 
 class SinglePolygonViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = SinglePolygonAnnotationSerializer
     filter_backends = (
         filters.ObjectPermissionsFilter,
@@ -275,7 +263,6 @@ class SinglePolygonViewSet(viewsets.ModelViewSet):
 
 class BooleanClassificationAnnotationViewSet(viewsets.ModelViewSet):
     permission_classes = (RetinaAPIPermission,)
-    authentication_classes = (TokenAuthentication,)
     serializer_class = BooleanClassificationAnnotationSerializer
     filter_backends = (
         filters.ObjectPermissionsFilter,
