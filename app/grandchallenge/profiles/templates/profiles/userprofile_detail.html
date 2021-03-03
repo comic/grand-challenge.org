@@ -88,6 +88,19 @@
                                     href="{{ profile.website }}">Website</a></li>
                         {% endif %}
                     </ul>
+                    {% if profile.display_organizations and organizations %}
+                            <h5>Organizations</h5>
+                            <ul class="list-unstyled">
+                                 {% for organization in organizations %}
+                                   <a href="{{ organization.get_absolute_url }}">
+                                     <img width ="40" height ="40"
+                                                 loading="lazy"
+                                                 src="{{ organization.logo.url }}"
+                                                 title="{{organization.title}}"
+                                                 alt="{{ organization }} Logo"></a>
+                                 {% endfor %}
+                            </ul>
+                    {% endif %}
 
                     <h5>Statistics</h5>
                     <ul class="list-unstyled">
