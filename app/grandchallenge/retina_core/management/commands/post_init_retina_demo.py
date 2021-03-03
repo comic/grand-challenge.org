@@ -23,7 +23,7 @@ class Command(BaseCommand):
                 "Skipping this command, server is not in DEBUG mode."
             )
 
-        # Add retina user to imported archives
+        # Add retina user to imported archives and algorithms
         retina_user = get_user_model().objects.get(username="retina")
         for model in (Archive, Algorithm):
             for obj in model.objects.all():
