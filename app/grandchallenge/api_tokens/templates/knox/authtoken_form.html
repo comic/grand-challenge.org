@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create a Token - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href>Settings</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'api-tokens:list' %}">API Tokens</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Create</li>
+
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Create a Token</h2>
+
+    <p>
+        Please click on the button below to create a new API token for your account.
+    </p>
+
+    {% crispy form %}
+
+{% endblock %}

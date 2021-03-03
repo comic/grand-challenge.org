@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}API Tokens - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href>Settings</a></li>
+        <li class="breadcrumb-item active" aria-current="page">API Tokens</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>API Tokens</h2>
+    <p>
+        Here is a list of your personal tokens that you can use for authenticating against the
+        <a href="{% url 'api:swagger-ui' %}">REST API</a>.
+    </p>
+
+    <p>
+        <a class="btn btn-primary"
+           href="{% url 'api-tokens:create' %}">
+            <i class="fa fa-plus"></i> Create a Token
+        </a>
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless">
+            <thead class="thead-light">
+            <tr>
+                <th>Token</th>
+                <th>Created</th>
+                <th>Expires</th>
+                <th>Description</th>
+                <th>Delete</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for object in object_list %}
+                <tr>
+                    <td>{{ object.token_key }}...</td>
+                    <td>
+                        {{ object.created }}
+                    </td>
+                    <td>
+                        {% if object.expiry is None %}
+                            Never
+                        {% else %}
+                            {{ object.expiry }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for session in object.session_set.all %}
+                            Automatically for <a href="{{ session.get_absolute_url }}">{{ session }}</a>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <a class="btn btn-sm btn-danger"
+                           href="{% url "api-tokens:delete" token_key=object.token_key %}"
+                           title="Delete Token">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.table').each(function () {
+                $(this).DataTable({
+                    "order": [[1, "desc"]],
+                    "paging": false,
+                });
+            });
+        });
+    </script>
+{% endblock %}

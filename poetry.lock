@@ -563,6 +563,19 @@ redis = ">=3.0.0"
 
 [[package]]
 category = "main"
+description = "Authentication for django rest framework"
+name = "django-rest-knox"
+optional = false
+python-versions = "*"
+version = "4.1.0"
+
+[package.dependencies]
+cryptography = "*"
+django = "*"
+djangorestframework = "*"
+
+[[package]]
+category = "main"
 description = "Select2 option fields for Django"
 name = "django-select2"
 optional = false
@@ -2036,7 +2049,7 @@ version = "5.2.0"
 brotli = ["brotli"]
 
 [metadata]
-content-hash = "be5d7fc529480d02b0bce1f39b1fb94d74e0c6a1ea48c9befd12b2599845e4a9"
+content-hash = "89459f99ede89bc3ae0f484a053ff85a11eef5797ebdc9edf221b2b5259f94fb"
 lock-version = "1.0"
 python-versions = "^3.8"
 
@@ -2330,6 +2343,11 @@ django-mptt = [
 django-redis = [
     {file = "django-redis-4.12.1.tar.gz", hash = "sha256:306589c7021e6468b2656edc89f62b8ba67e8d5a1c8877e2688042263daa7a63"},
     {file = "django_redis-4.12.1-py3-none-any.whl", hash = "sha256:1133b26b75baa3664164c3f44b9d5d133d1b8de45d94d79f38d1adc5b1d502e5"},
+]
+django-rest-knox = [
+    {file = "django-rest-knox-4.1.0.tar.gz", hash = "sha256:4a57b05b04fcccc41fcc969ad0e3f180467d7045b45003b58f5a437d6d3370d4"},
+    {file = "django_rest_knox-4.1.0-py2-none-any.whl", hash = "sha256:f7dac2f7a6ece7c1bd331bdb01dc3d16e0b340f3d1001a7285cc13b171d539a3"},
+    {file = "django_rest_knox-4.1.0-py3-none-any.whl", hash = "sha256:e4ac93e6d7dd63af5b58ff19d7f197788a874e932464d77db5630f185365eac0"},
 ]
 django-select2 = [
     {file = "django-select2-7.6.1.tar.gz", hash = "sha256:25362c5bafe082a19add598fb0a69e3239b94759691a0ac8e01ab7fba8e650ad"},

@@ -12,6 +12,11 @@ from config.settings import *  # noqa: F401, F403, E402
 SESSION_COOKIE_DOMAIN = ".testserver"
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
 
+# Speed up token generation in tests
+REST_KNOX[  # noqa F405
+    "SECURE_HASH_ALGORITHM"
+] = "cryptography.hazmat.primitives.hashes.MD5"
+
 WHITENOISE_AUTOREFRESH = True
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
