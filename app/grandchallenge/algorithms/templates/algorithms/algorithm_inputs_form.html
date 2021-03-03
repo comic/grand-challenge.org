@@ -43,10 +43,11 @@
             (a user receives a 1000 credits a month).
             A job credit of zero means users can try this algorithm an unlimited number of times.
         </p>
-        {% for field in form.get_form_fields %}
-            {{ field|as_crispy_field }}
-        {% endfor %}
-        {% crispy form %}
+        <form method="POST">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <input type="submit" name="save" value="Submit" class="btn btn-primary" id="submit-id-save">
+        </form>
     {% else %}
         {% if remaining_jobs <= 0 %}
             <p>

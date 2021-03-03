@@ -59,10 +59,6 @@ class AlgorithmInputsForm(SaveFormInitMixin, Form):
                 field = self.FORM_FIELDS[inp.kind]
                 self.fields[inp.slug] = field["class"](**field["kwargs"])
 
-    def get_form_fields(self):
-        for field in self.fields:
-            yield self[field]
-
 
 class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
     class Meta:

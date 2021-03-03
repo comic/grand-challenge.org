@@ -58,6 +58,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.compontents.models import ComponentInterfaceValue
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
@@ -449,16 +450,33 @@ class AlgorithmExecutionSessionCreate(
             "user_credits": total_jobs,
         }
 
+    def get_form_kwargs(self):
+        """Return the keyword arguments for instantiating the form."""
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"algorithm": self.algorithm})
+        return kwargs
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context.update({"algorithm": self.algorithm})
-        context.update({"form": self.form_class(algorithm=self.algorithm)})
         context.update(
             self.get_remaining_jobs(
                 credits_per_job=self.algorithm.credits_per_job
             )
         )
         return context
+
+    def form_valid(self, form):
+        for slug, value in form.cleaned_data.items():
+            ci = self.algorithm.inputs.get(slug=slug)
+            ComponentInterfaceValue.objects.create(interface=ci, value=value)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:execution-session-detail",
+            kwargs={"slug": self.kwargs["slug"]},
+        )
 
 
 class AlgorithmExecutionSessionDetail(
