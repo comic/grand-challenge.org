@@ -1,6 +1,11 @@
 from crispy_forms.helper import FormHelper
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import (
+    BooleanField,
+    CharField,
+    FloatField,
+    Form,
+    IntegerField,
     ModelForm,
     TextInput,
 )
@@ -13,6 +18,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -24,6 +30,38 @@ from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.subdomains.utils import reverse_lazy
+
+
+class AlgorithmInputsForm(SaveFormInitMixin, Form):
+    FORM_FIELDS = {
+        InterfaceKindChoices.BOOL: {
+            "class": BooleanField,
+            "kwargs": {"required": False},
+        },
+        InterfaceKindChoices.STRING: {
+            "class": CharField,
+            "kwargs": {"required": True},
+        },
+        InterfaceKindChoices.INTEGER: {
+            "class": IntegerField,
+            "kwargs": {"required": True},
+        },
+        InterfaceKindChoices.FLOAT: {
+            "class": FloatField,
+            "kwargs": {"required": True},
+        },
+    }
+
+    def __init__(self, *args, algorithm=None, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if algorithm is not None:
+            for inp in algorithm.inputs.all():
+                field = self.FORM_FIELDS[inp.kind]
+                self.fields[inp.slug] = field["class"](**field["kwargs"])
+
+    def get_form_fields(self):
+        for field in self.fields:
+            yield self[field]
 
 
 class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):

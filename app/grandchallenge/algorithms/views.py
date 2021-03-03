@@ -18,6 +18,7 @@ from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
     DetailView,
+    FormView,
     ListView,
     UpdateView,
 )
@@ -37,6 +38,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
+    AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
     JobForm,
     UsersForm,
@@ -291,65 +293,13 @@ class AlgorithmImageUpdate(
         return context
 
 
-class AlgorithmExecutionSessionCreate(
-    UserFormKwargsMixin,
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    CreateView,
-):
-    model = RawImageUploadSession
-    form_class = UploadRawImagesForm
-    template_name = "algorithms/algorithm_execution_session_create.html"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
-    )
-    raise_exception = True
-
+class RemainingJobsMixin:
     @property
     def algorithm(self) -> Algorithm:
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "linked_task": create_algorithm_jobs_for_session.signature(
-                    kwargs={
-                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
-                    },
-                    immutable=True,
-                )
-            }
-        )
-        return kwargs
-
     def get_permission_object(self):
         return self.algorithm
-
-    def get_initial(self):
-        if self.algorithm.latest_ready_image is None:
-            raise Http404()
-        return super().get_initial()
-
-    def form_valid(self, form):
-        form.instance.creator = self.request.user
-        return super().form_valid(form)
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
-        context.update(
-            self.get_remaining_jobs(
-                credits_per_job=self.algorithm.credits_per_job
-            )
-        )
-        return context
-
-    def get_success_url(self):
-        return reverse(
-            "algorithms:execution-session-detail",
-            kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
-        )
 
     def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
         """
@@ -386,6 +336,129 @@ class AlgorithmExecutionSessionCreate(
             "next_job_at": next_job_at,
             "user_credits": total_jobs,
         }
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        context.update(
+            self.get_remaining_jobs(
+                credits_per_job=self.algorithm.credits_per_job
+            )
+        )
+        return context
+
+
+class AlgorithmExecutionSessionCreateOld(
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    CreateView,
+    RemainingJobsMixin,
+):
+    model = RawImageUploadSession
+    form_class = UploadRawImagesForm
+    template_name = "algorithms/algorithm_execution_session_create.html"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "linked_task": create_algorithm_jobs_for_session.signature(
+                    kwargs={
+                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
+                    },
+                    immutable=True,
+                )
+            }
+        )
+        return kwargs
+
+    def get_initial(self):
+        if self.algorithm.latest_ready_image is None:
+            raise Http404()
+        return super().get_initial()
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:execution-session-detail",
+            kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
+        )
+
+
+class AlgorithmExecutionSessionCreate(
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    FormView,
+):
+    form_class = AlgorithmInputsForm
+    template_name = "algorithms/algorithm_inputs_form.html"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+    @property
+    def algorithm(self) -> Algorithm:
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.algorithm
+
+    def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
+        """
+        Determines the number of jobs left for the user and when the next job can be started
+
+        :return: A dictionary containing remaining_jobs (int) and
+        next_job_at (datetime)
+        """
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_credit = Credit.objects.get(user=self.request.user)
+
+        if credits_per_job == 0:
+            return {
+                "remaining_jobs": 1,
+                "next_job_at": now,
+                "user_credits": user_credit.credits,
+            }
+
+        jobs = Job.credits_set.spent_credits(user=self.request.user)
+
+        if jobs["oldest"]:
+            next_job_at = jobs["oldest"] + period
+        else:
+            next_job_at = now
+
+        if jobs["total"]:
+            total_jobs = user_credit.credits - jobs["total"]
+        else:
+            total_jobs = user_credit.credits
+
+        return {
+            "remaining_jobs": int(total_jobs / max(credits_per_job, 1)),
+            "next_job_at": next_job_at,
+            "user_credits": total_jobs,
+        }
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        context.update({"form": self.form_class(algorithm=self.algorithm)})
+        context.update(
+            self.get_remaining_jobs(
+                credits_per_job=self.algorithm.credits_per_job
+            )
+        )
+        return context
 
 
 class AlgorithmExecutionSessionDetail(

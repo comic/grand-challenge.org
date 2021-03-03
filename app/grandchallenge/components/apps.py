@@ -41,6 +41,26 @@ def init_default_interfaces(*_, **__):
             "kind": ComponentInterface.Kind.JSON,
             "relative_path": "metrics.json",
         },
+        {
+            "title": "Boolean",
+            "kind": ComponentInterface.Kind.BOOL,
+            "relative_path": "bool",
+        },
+        {
+            "title": "String",
+            "kind": ComponentInterface.Kind.STRING,
+            "relative_path": "string",
+        },
+        {
+            "title": "Integer",
+            "kind": ComponentInterface.Kind.INTEGER,
+            "relative_path": "int",
+        },
+        {
+            "title": "Float",
+            "kind": ComponentInterface.Kind.FLOAT,
+            "relative_path": "float",
+        },
     ]
 
     for interface in default_interfaces:
