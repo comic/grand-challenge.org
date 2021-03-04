@@ -73,9 +73,6 @@ push: push_web_base push_web_test_base push_web push_http
 migrations:
 	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations
 
-post_init_retina_demo:
-	docker-compose run -u $(USER_ID) --rm web python manage.py post_init_retina_demo
-
 .PHONY: docs
 docs:
 	docker-compose run --rm -v `pwd`/docs:/docs -u $(USER_ID) web bash -c "cd /docs && make html"
