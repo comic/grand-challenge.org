@@ -50,7 +50,7 @@
                     </td>
                     <td>
                         {% for session in object.session_set.all %}
-                            Automatically for <a href="{{ session.get_absolute_url }}">{{ session }}</a>
+                            Automatically created for <a href="{{ session.get_absolute_url }}">{{ session }}</a>
                         {% endfor %}
                     </td>
                     <td>

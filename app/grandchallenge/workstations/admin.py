@@ -28,6 +28,7 @@ class SessionHistoryAdmin(SimpleHistoryAdmin):
         "logs",
         "region",
         "ping_times",
+        "auth_token",
     ]
     search_fields = [
         "creator__username",
