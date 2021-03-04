@@ -33,6 +33,7 @@ from tests.serializer_helpers import (
                     "pk",
                     "title",
                     "slug",
+                    "average_duration",
                 ),
             },
             {
