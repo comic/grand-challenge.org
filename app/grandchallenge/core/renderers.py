@@ -1,5 +1,7 @@
 import json
 
+from rest_framework.settings import api_settings
+from rest_framework.utils.encoders import JSONEncoder
 from rest_framework_csv.renderers import CSVRenderer
 
 
@@ -24,6 +26,11 @@ class PaginatedCSVRenderer(CSVRenderer):
     @staticmethod
     def _flatten_value(value):
         if isinstance(value, (dict, list)):
-            return json.dumps(value)
+            return json.dumps(
+                value,
+                cls=JSONEncoder,
+                ensure_ascii=not api_settings.UNICODE_JSON,
+                allow_nan=not api_settings.STRICT_JSON,
+            )
         else:
             return value
