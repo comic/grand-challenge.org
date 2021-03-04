@@ -71,7 +71,7 @@
 {% block script %}
     {{ block.super }}
 
-    {{ average_job_duration|json_script:"averageJobDuration" }}
+    {{ algorithm.average_duration|json_script:"averageJobDuration" }}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"
             integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ="
             crossorigin="anonymous"></script>

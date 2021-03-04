@@ -127,10 +127,10 @@
                         with its default configuration.
                     {% endif %}
                 </p>
-                {% if average_job_duration %}
+                {% if object.average_duration %}
                     <p>
                         On average, successful jobs for this algorithm have
-                        taken {{ average_job_duration|naturaldelta }}.
+                        taken {{ object.average_duration|naturaldelta }}.
                     </p>
                 {% endif %}
                 <p>

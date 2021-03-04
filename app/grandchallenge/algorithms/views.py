@@ -162,15 +162,6 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             {"pending_permission_requests": pending_permission_requests}
         )
 
-        context.update(
-            {
-                "average_job_duration": Job.objects.filter(
-                    algorithm_image__algorithm=context["object"],
-                    status=Job.SUCCESS,
-                ).average_duration()
-            }
-        )
-
         return context
 
 
@@ -402,15 +393,7 @@ class AlgorithmExecutionSessionDetail(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "algorithm": self.algorithm,
-                "average_job_duration": Job.objects.filter(
-                    algorithm_image__algorithm=self.algorithm,
-                    status=Job.SUCCESS,
-                ).average_duration(),
-            }
-        )
+        context.update({"algorithm": self.algorithm})
         return context
 
 
