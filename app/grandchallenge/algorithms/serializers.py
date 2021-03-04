@@ -87,6 +87,8 @@ class JobSerializer(serializers.ModelSerializer):
             "status",
             "rendered_result_text",
             "algorithm_title",
+            "started_at",
+            "completed_at",
         ]
 
 
