@@ -1,30 +1,13 @@
-from io import BytesIO
-
 import SimpleITK
-import numpy as np
 from PIL import Image as PILImage
 from django.conf import settings
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
-from django.views import View, generic
+from django.views import View
 from rest_framework import status
 
 from grandchallenge.cases.models import Image
 from grandchallenge.retina_api.mixins import RetinaAPIPermissionMixin
-
-
-class IndexView(RetinaAPIPermissionMixin, generic.TemplateView):
-    template_name = "pages/home.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["LOGOUT_URL"] = settings.LOGOUT_URL
-        context["IS_RETINA_ADMIN"] = self.request.user.groups.filter(
-            name=settings.RETINA_ADMINS_GROUP_NAME
-        ).exists()
-        context["DEBUG"] = settings.DEBUG
-        context["SENTRY_DSN"] = settings.SENTRY_DSN
-        return context
 
 
 class ThumbnailView(RetinaAPIPermissionMixin, View):
@@ -59,31 +42,4 @@ class ThumbnailView(RetinaAPIPermissionMixin, View):
         )
         response = HttpResponse(content_type="image/png")
         image.save(response, "png")
-        return response
-
-
-class NumpyView(RetinaAPIPermissionMixin, View):
-    """View class for returning a specific image as a numpy array."""
-
-    raise_exception = True  # Raise 403 on unauthenticated request
-
-    def get(self, request, image_id):
-        image_object = get_object_or_404(Image, pk=image_id)
-
-        if not request.user.has_perm("view_image", image_object):
-            return HttpResponse(status=status.HTTP_403_FORBIDDEN)
-
-        image_itk = image_object.get_sitk_image()
-        if image_itk is None:
-            return HttpResponse(status=status.HTTP_404_NOT_FOUND)
-        npy = SimpleITK.GetArrayFromImage(image_itk)
-
-        bio = BytesIO()
-        np.save(bio, npy)
-        bio.seek(0)
-        # return numpy array as response
-        response = HttpResponse(
-            bio.getvalue(), content_type="application/octet-stream"
-        )
-        bio.close()
         return response
