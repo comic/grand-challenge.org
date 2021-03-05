@@ -13,8 +13,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 
-from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.models import FolderUpload, Image, ImageFile
+from panimg.types import ImageBuilderResult
 
 
 @dataclass

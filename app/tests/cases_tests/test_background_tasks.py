@@ -10,12 +10,6 @@ from billiard.exceptions import SoftTimeLimitExceeded
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 
-from grandchallenge.cases.image_builders.metaio_utils import (
-    ADDITIONAL_HEADERS,
-    EXPECTED_HEADERS,
-    HEADERS_MATCHING_NUM_TIMEPOINTS,
-    parse_mh_header,
-)
 from grandchallenge.cases.models import (
     Image,
     RawImageFile,
@@ -26,6 +20,12 @@ from grandchallenge.cases.tasks import (
     check_compressed_and_extract,
 )
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+from panimg.image_builders.metaio_utils import (
+    ADDITIONAL_HEADERS,
+    EXPECTED_HEADERS,
+    HEADERS_MATCHING_NUM_TIMEPOINTS,
+    parse_mh_header,
+)
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UploadSessionFactory, UserFactory
 from tests.jqfileupload_tests.external_test_support import (

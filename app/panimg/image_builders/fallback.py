@@ -7,8 +7,8 @@ from PIL import Image
 from PIL.Image import DecompressionBombError
 from django.core.exceptions import ValidationError
 
-from grandchallenge.cases.image_builders.types import ImageBuilderResult
-from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
+from panimg.image_builders.utils import convert_itk_to_internal
+from panimg.types import ImageBuilderResult
 
 
 def format_error(message):

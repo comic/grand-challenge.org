@@ -15,7 +15,5 @@ class ImageBuilderResult:
 
 
 @dataclass
-class ImporterResult:
-    new_images: Set[Image]
-    consumed_files: Set[Path]
+class PanimgResult(ImageBuilderResult):
     file_errors: Dict[Path, List[str]]

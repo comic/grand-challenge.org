@@ -11,8 +11,8 @@ from django.core.exceptions import ValidationError
 from pytest import approx
 from tifffile import tifffile
 
-
-from grandchallenge.cases.image_builders.tiff import (
+from grandchallenge.cases.models import Image
+from panimg.image_builders.tiff import (
     GrandChallengeTiffFile,
     _convert_to_tiff,
     _create_dzi_images,
@@ -24,7 +24,6 @@ from grandchallenge.cases.image_builders.tiff import (
     _load_with_tiff,
     image_builder_tiff,
 )
-from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
 
 

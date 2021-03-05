@@ -5,7 +5,7 @@ from pathlib import Path
 import SimpleITK
 import pytest
 
-from grandchallenge.cases.image_builders.metaio_utils import (
+from panimg.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,
     load_sitk_image,
     load_sitk_image_with_nd_support,

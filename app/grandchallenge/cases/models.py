@@ -14,15 +14,15 @@ from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 
-from grandchallenge.cases.image_builders.metaio_utils import (
-    load_sitk_image,
-    parse_mh_header,
-)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
+from panimg.image_builders.metaio_utils import (
+    load_sitk_image,
+    parse_mh_header,
+)
 
 logger = logging.getLogger(__name__)
 
