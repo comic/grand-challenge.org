@@ -562,8 +562,8 @@ def delete_image_files(*_, instance: ImageFile, **__):
 
 
 class FolderUpload:
-    def __init__(self, image, folder):
-        self.image = image
+    def __init__(self, image_id, folder):
+        self.image_id = image_id
         self.folder = folder
 
     def full_clean(self):
@@ -573,9 +573,9 @@ class FolderUpload:
     def destination_filename(self, file_path):
         return (
             f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
-            f"{str(self.image.pk)[0:2]}/"
-            f"{str(self.image.pk)[2:4]}/"
-            f"{self.image.pk}/"
+            f"{str(self.image_id)[0:2]}/"
+            f"{str(self.image_id)[2:4]}/"
+            f"{self.image_id}/"
             f"{file_path.parent.parent.stem}/"
             f"{file_path.parent.stem}/"
             f"{file_path.name}"

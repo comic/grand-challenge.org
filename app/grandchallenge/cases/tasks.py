@@ -401,12 +401,13 @@ def import_images(
         )
         for f in result.new_image_files
     }
+    new_folders = {FolderUpload(**asdict(f)) for f in result.new_folders}
 
     _store_images(
         origin=origin,
         images=new_images,
         image_files=new_image_files,
-        folders=result.new_folders,
+        folders=new_folders,
     )
 
     return ImporterResult(

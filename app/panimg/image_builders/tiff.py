@@ -12,8 +12,13 @@ import tifffile
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from grandchallenge.cases.models import FolderUpload
-from panimg.models import ColorSpace, ImageType, PanImg, PanImgFile
+from panimg.models import (
+    ColorSpace,
+    ImageType,
+    PanImg,
+    PanImgFile,
+    PanImgFolder,
+)
 from panimg.types import ImageBuilderResult
 
 
@@ -245,12 +250,12 @@ def _new_image_files(
 
 def _new_folder_uploads(
     *, dzi_output: str, image: PanImg,
-) -> Set[FolderUpload]:
+) -> Set[PanImgFolder]:
     new_folder_upload = set()
 
     if dzi_output:
-        dzi_folder_upload = FolderUpload(
-            folder=dzi_output + "_files", image=image
+        dzi_folder_upload = PanImgFolder(
+            folder=dzi_output + "_files", image_id=image.pk
         )
         new_folder_upload.add(dzi_folder_upload)
 

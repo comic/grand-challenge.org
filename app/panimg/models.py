@@ -41,3 +41,9 @@ class PanImgFile:
     image_type: ImageType
     file: TemporaryFile
     filename: str
+
+
+@dataclass(frozen=True)
+class PanImgFolder:
+    image_id: UUID
+    folder: str
