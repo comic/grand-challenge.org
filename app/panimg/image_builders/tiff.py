@@ -192,7 +192,7 @@ def _get_color_space(*, color_space_string) -> Optional[ColorSpace]:
 
 
 def _create_image_file(
-    *, path: str, image: PanImg, output_directory: Path
+    *, path: Path, image: PanImg, output_directory: Path
 ) -> PanImgFile:
     temp_file = NamedTemporaryFile(delete=False, dir=output_directory)
     with open(path, "rb") as open_file:
@@ -201,7 +201,7 @@ def _create_image_file(
             buffer = open_file.read(1024)
             temp_file.write(buffer)
 
-    if path.lower().endswith("dzi"):
+    if path.suffix.lower() == ".dzi":
         return PanImgFile(
             image_id=image.pk,
             image_type=ImageType.DZI,
@@ -241,7 +241,7 @@ def _new_image_files(
 ) -> Set[PanImgFile]:
     new_image_files = {
         _create_image_file(
-            path=str(gc_file.path.absolute()),
+            path=gc_file.path.absolute(),
             image=image,
             output_directory=output_directory,
         )
@@ -259,13 +259,14 @@ def _new_image_files(
 
 
 def _new_folder_uploads(
-    *, dzi_output: str, image: PanImg,
+    *, dzi_output: Path, image: PanImg,
 ) -> Set[PanImgFolder]:
     new_folder_upload = set()
 
     if dzi_output:
         dzi_folder_upload = PanImgFolder(
-            folder=dzi_output + "_files", image_id=image.pk
+            folder=dzi_output.parent / (dzi_output.name + "_files"),
+            image_id=image.pk,
         )
         new_folder_upload.add(dzi_folder_upload)
 
@@ -479,15 +480,17 @@ def _create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> PanImg:
 
 def _create_dzi_images(
     *, gc_file: GrandChallengeTiffFile
-) -> (str, GrandChallengeTiffFile):
+) -> (Path, GrandChallengeTiffFile):
     # Creates a dzi file(out.dzi) and corresponding tiles in folder {pk}_files
-    dzi_output = str(gc_file.path.parent / str(gc_file.pk))
+    dzi_output = gc_file.path.parent / str(gc_file.pk)
     try:
         image = pyvips.Image.new_from_file(
             str(gc_file.path.absolute()), access="sequential"
         )
-        pyvips.Image.dzsave(image, dzi_output, tile_size=DZI_TILE_SIZE)
-        gc_file.source_files.append(dzi_output + ".dzi")
+        pyvips.Image.dzsave(image, str(dzi_output), tile_size=DZI_TILE_SIZE)
+        gc_file.source_files.append(
+            dzi_output.parent / (dzi_output.name + ".dzi")
+        )
     except Exception as e:
         raise ValidationError(f"Image can't be converted to dzi: {e}")
 

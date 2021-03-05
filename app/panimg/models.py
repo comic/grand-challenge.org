@@ -47,4 +47,4 @@ class PanImgFile:
 @dataclass(frozen=True)
 class PanImgFolder:
     image_id: UUID
-    folder: str
+    folder: Path
