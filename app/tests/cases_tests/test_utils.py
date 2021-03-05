@@ -4,9 +4,9 @@ import SimpleITK
 import pytest
 from pytest import approx
 
-from grandchallenge.cases.image_builders.metaio_utils import load_sitk_image
-from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 from grandchallenge.cases.models import Image
+from panimg.image_builders.metaio_utils import load_sitk_image
+from panimg.image_builders.utils import convert_itk_to_internal
 from tests.cases_tests import RESOURCE_PATH
 
 

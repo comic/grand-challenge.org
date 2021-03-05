@@ -3,7 +3,7 @@ from typing import Set
 
 import SimpleITK
 
-from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
+from panimg.image_builders.utils import convert_itk_to_internal
 from panimg.types import ImageBuilderResult
 
 

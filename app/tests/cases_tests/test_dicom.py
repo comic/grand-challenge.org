@@ -15,7 +15,7 @@ from grandchallenge.cases.image_builders.dicom import (
     format_error,
     image_builder_dicom,
 )
-from grandchallenge.cases.image_builders.metaio_utils import parse_mh_header
+from panimg.image_builders.metaio_utils import parse_mh_header
 from tests.cases_tests import RESOURCE_PATH
 
 DICOM_DIR = RESOURCE_PATH / "dicom"

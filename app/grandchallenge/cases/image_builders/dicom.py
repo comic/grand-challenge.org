@@ -7,7 +7,7 @@ import SimpleITK
 import numpy as np
 import pydicom
 
-from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
+from panimg.image_builders.utils import convert_itk_to_internal
 from panimg.types import ImageBuilderResult
 
 NUMPY_IMAGE_TYPES = {

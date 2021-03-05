@@ -1,6 +1,7 @@
 import os
 import tarfile
 import zipfile
+from dataclasses import dataclass
 from datetime import timedelta
 from itertools import chain
 from pathlib import Path
@@ -25,7 +26,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from grandchallenge.cases.emails import send_failed_file_import
-from grandchallenge.cases.image_builders.types import ImporterResult
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -350,6 +350,13 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     )
 
     _delete_session_files(session_files=session_files,)
+
+
+@dataclass
+class ImporterResult:
+    new_images: Set[Image]
+    consumed_files: Set[Path]
+    file_errors: Dict[Path, List[str]]
 
 
 def import_images(
