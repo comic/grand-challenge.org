@@ -2,11 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Callable, Iterable, Optional, Set
 
-from panimg.image_builders.dicom import image_builder_dicom
-from panimg.image_builders.fallback import image_builder_fallback
-from panimg.image_builders.metaio_mhd_mha import image_builder_mhd
-from panimg.image_builders.nifti import image_builder_nifti
-from panimg.image_builders.tiff import image_builder_tiff
+from panimg.image_builders import DEFAULT_IMAGE_BUILDERS
 from panimg.types import ImageBuilderResult, PanimgResult
 
 
@@ -45,12 +41,3 @@ def convert(
         consumed_files=consumed_files,
         file_errors={**file_errors},
     )
-
-
-DEFAULT_IMAGE_BUILDERS = [
-    image_builder_mhd,
-    image_builder_nifti,
-    image_builder_dicom,
-    image_builder_tiff,
-    image_builder_fallback,
-]

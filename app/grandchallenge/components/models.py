@@ -35,8 +35,7 @@ from grandchallenge.core.validators import (
     ExtensionValidator,
     MimeTypeValidator,
 )
-from panimg.image_builders.metaio_mhd_mha import image_builder_mhd
-from panimg.image_builders.tiff import image_builder_tiff
+from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 logger = logging.getLogger(__name__)
 

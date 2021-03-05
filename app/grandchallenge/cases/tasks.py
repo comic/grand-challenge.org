@@ -39,7 +39,8 @@ from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
     StagedAjaxFile,
 )
-from panimg.panimg import convert
+from panimg import convert
+from panimg.types import PanimgResult
 
 
 class ProvisioningError(Exception):
@@ -386,34 +387,55 @@ def import_images(
     """
     created_image_prefix = str(origin.pk)[:8] if origin is not None else ""
 
-    result = convert(
+    panimg_result = convert(
         files=files,
         builders=builders,
         created_image_prefix=created_image_prefix,
     )
 
-    new_images = {Image(**asdict(im)) for im in result.new_images}
+    django_result = _convert_panimg_to_django(panimg_result=panimg_result)
+
+    _store_images(
+        origin=origin,
+        images=django_result.new_images,
+        image_files=django_result.new_image_files,
+        folders=django_result.new_folders,
+    )
+
+    return ImporterResult(
+        new_images=django_result.new_images,
+        consumed_files=panimg_result.consumed_files,
+        file_errors=panimg_result.file_errors,
+    )
+
+
+@dataclass
+class ConversionResult:
+    new_images: Set[Image]
+    new_image_files: Set[ImageFile]
+    new_folders: Set[FolderUpload]
+
+
+def _convert_panimg_to_django(
+    *, panimg_result: PanimgResult
+) -> ConversionResult:
+    new_images = {Image(**asdict(im)) for im in panimg_result.new_images}
     new_image_files = {
         ImageFile(
             image_id=f.image_id,
             image_type=f.image_type,
             file=File(f.file, f.filename),
         )
-        for f in result.new_image_files
+        for f in panimg_result.new_image_files
     }
-    new_folders = {FolderUpload(**asdict(f)) for f in result.new_folders}
+    new_folders = {
+        FolderUpload(**asdict(f)) for f in panimg_result.new_folders
+    }
 
-    _store_images(
-        origin=origin,
-        images=new_images,
-        image_files=new_image_files,
-        folders=new_folders,
-    )
-
-    return ImporterResult(
+    return ConversionResult(
         new_images=new_images,
-        consumed_files=result.consumed_files,
-        file_errors=result.file_errors,
+        new_image_files=new_image_files,
+        new_folders=new_folders,
     )
 
 
