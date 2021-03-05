@@ -11,10 +11,9 @@ import pyvips
 import tifffile
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files import File
 
-from grandchallenge.cases.models import FolderUpload, ImageFile
-from panimg.models import ColorSpace, PanImg
+from grandchallenge.cases.models import FolderUpload
+from panimg.models import ColorSpace, ImageType, PanImg, PanImgFile
 from panimg.types import ImageBuilderResult
 
 
@@ -187,7 +186,7 @@ def _get_color_space(*, color_space_string) -> Optional[ColorSpace]:
     return color_space
 
 
-def _create_image_file(*, path: str, image: PanImg) -> ImageFile:
+def _create_image_file(*, path: str, image: PanImg) -> PanImgFile:
     temp_file = TemporaryFile()
     with open(path, "rb") as open_file:
         buffer = True
@@ -196,16 +195,18 @@ def _create_image_file(*, path: str, image: PanImg) -> ImageFile:
             temp_file.write(buffer)
 
     if path.lower().endswith("dzi"):
-        return ImageFile(
+        return PanImgFile(
             image_id=image.pk,
-            image_type=ImageFile.IMAGE_TYPE_DZI,
-            file=File(temp_file, name=f"{image.pk}.dzi"),
+            image_type=ImageType.DZI.value,
+            file=temp_file,
+            filename=f"{image.pk}.dzi",
         )
     else:
-        return ImageFile(
+        return PanImgFile(
             image_id=image.pk,
-            image_type=ImageFile.IMAGE_TYPE_TIFF,
-            file=File(temp_file, name=f"{image.pk}.tif"),
+            image_type=ImageType.TIFF.value,
+            file=temp_file,
+            filename=f"{image.pk}.tif",
         )
 
 
@@ -230,7 +231,7 @@ def _load_and_create_dzi(
 
 def _new_image_files(
     *, gc_file: GrandChallengeTiffFile, image: PanImg,
-) -> Set[ImageFile]:
+) -> Set[PanImgFile]:
     new_image_files = {
         _create_image_file(path=str(gc_file.path.absolute()), image=image)
     }

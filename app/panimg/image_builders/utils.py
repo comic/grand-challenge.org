@@ -5,17 +5,15 @@ from uuid import uuid4
 
 import SimpleITK
 from django.conf import settings
-from django.core.files import File
 
-from grandchallenge.cases.models import ImageFile
-from panimg.models import ColorSpace, PanImg
+from panimg.models import ColorSpace, ImageType, PanImg, PanImgFile
 
 
 def convert_itk_to_internal(
     simple_itk_image: SimpleITK.Image,
     name: Optional[AnyStr] = None,
     use_spacing: Optional[bool] = True,
-) -> Tuple[PanImg, Sequence[ImageFile]]:
+) -> Tuple[PanImg, Sequence[PanImgFile]]:
     color_space = simple_itk_image.GetNumberOfComponentsPerPixel()
     color_space = {
         1: ColorSpace.GRAY.value,
@@ -79,10 +77,11 @@ def convert_itk_to_internal(
                 while buffer:
                     buffer = open_file.read(1024)
                     temp_file.write(buffer)
-            db_image_file = ImageFile(
+            db_image_file = PanImgFile(
                 image_id=db_image.pk,
-                image_type=ImageFile.IMAGE_TYPE_MHD,
-                file=File(temp_file, name=_file.name),
+                image_type=ImageType.MHD.value,
+                file=temp_file,
+                filename=_file.name,
             )
             db_image_files.append(db_image_file)
 

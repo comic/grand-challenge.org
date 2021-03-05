@@ -22,6 +22,7 @@ from celery import shared_task
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
 
@@ -391,12 +392,20 @@ def import_images(
         created_image_prefix=created_image_prefix,
     )
 
-    new_images = {Image(**asdict(image)) for image in result.new_images}
+    new_images = {Image(**asdict(im)) for im in result.new_images}
+    new_image_files = {
+        ImageFile(
+            image_id=f.image_id,
+            image_type=f.image_type,
+            file=File(f.file, f.filename),
+        )
+        for f in result.new_image_files
+    }
 
     _store_images(
         origin=origin,
         images=new_images,
-        image_files=result.new_image_files,
+        image_files=new_image_files,
         folders=result.new_folders,
     )
 

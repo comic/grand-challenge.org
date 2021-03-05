@@ -23,7 +23,7 @@ from panimg.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
-from panimg.models import ColorSpace
+from panimg.models import ColorSpace, ImageType
 
 logger = logging.getLogger(__name__)
 
@@ -529,9 +529,9 @@ class Image(UUIDModel):
 
 
 class ImageFile(UUIDModel):
-    IMAGE_TYPE_MHD = "MHD"
-    IMAGE_TYPE_TIFF = "TIFF"
-    IMAGE_TYPE_DZI = "DZI"
+    IMAGE_TYPE_MHD = ImageType.MHD.value
+    IMAGE_TYPE_TIFF = ImageType.TIFF.value
+    IMAGE_TYPE_DZI = ImageType.DZI.value
 
     IMAGE_TYPES = (
         (IMAGE_TYPE_MHD, "MHD"),

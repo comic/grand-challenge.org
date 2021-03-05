@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from tempfile import TemporaryFile
 from typing import Optional
 from uuid import UUID
 
@@ -9,6 +10,12 @@ class ColorSpace(Enum):
     RGB = "RGB"
     RGBA = "RGBA"
     YCBCR = "YCBCR"
+
+
+class ImageType(Enum):
+    MHD = "MHD"
+    TIFF = "TIFF"
+    DZI = "DZI"
 
 
 @dataclass(frozen=True)
@@ -26,3 +33,11 @@ class PanImg:
     window_center: Optional[float]
     window_width: Optional[float]
     color_space: ColorSpace
+
+
+@dataclass(frozen=True)
+class PanImgFile:
+    image_id: UUID
+    image_type: ImageType
+    file: TemporaryFile
+    filename: str

@@ -6,6 +6,7 @@ from unittest import mock
 import numpy as np
 import pydicom
 import pytest
+from django.core.files import File
 from pydicom.pixel_data_handlers.gdcm_handler import (
     is_available as gdcm_is_available,
 )
@@ -79,10 +80,10 @@ def test_image_builder_dicom_4dct():
     assert image.shape == [19, 4, 2, 3]
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.file.name.endswith("mha")
+        x for x in result.new_image_files if x.filename.endswith("mha")
     ][0]
 
-    headers = parse_mh_header(mha_file_obj.file)
+    headers = parse_mh_header(File(mha_file_obj.file, mha_file_obj.filename))
 
     direction = headers["TransformMatrix"].split()
     origin = headers["Offset"].split()
@@ -131,10 +132,10 @@ def test_dicom_rescaling(folder, element_type):
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.file.name.endswith("mha")
+        x for x in result.new_image_files if x.filename.endswith("mha")
     ][0]
 
-    headers = parse_mh_header(mha_file_obj.file)
+    headers = parse_mh_header(File(mha_file_obj.file, mha_file_obj.filename))
     assert headers["ElementType"] == element_type
 
 
@@ -148,10 +149,10 @@ def test_dicom_window_level():
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.file.name.endswith("mha")
+        x for x in result.new_image_files if x.filename.endswith("mha")
     ][0]
 
-    headers = parse_mh_header(mha_file_obj.file)
+    headers = parse_mh_header(File(mha_file_obj.file, mha_file_obj.filename))
     assert headers["WindowCenter"] == "30"
     assert headers["WindowWidth"] == "200"
 

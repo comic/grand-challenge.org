@@ -9,13 +9,12 @@ from typing import Mapping, Sequence, Set, Tuple, Union
 
 import SimpleITK
 
-from grandchallenge.cases.models import ImageFile
 from panimg.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
 from panimg.image_builders.utils import convert_itk_to_internal
-from panimg.models import PanImg
+from panimg.models import PanImg, PanImgFile
 from panimg.types import ImageBuilderResult
 
 
@@ -62,7 +61,7 @@ def image_builder_mhd(  # noqa: C901
 
     def convert_itk_file(
         headers: Mapping[str, Union[str, None]], filename: Path
-    ) -> Tuple[PanImg, Sequence[ImageFile]]:
+    ) -> Tuple[PanImg, Sequence[PanImgFile]]:
         try:
             simple_itk_image = load_sitk_image(filename.absolute())
             simple_itk_image: SimpleITK.Image
