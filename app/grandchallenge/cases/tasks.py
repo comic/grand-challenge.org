@@ -407,7 +407,7 @@ def import_images(
 
 def _store_images(
     *,
-    origin: RawImageUploadSession,
+    origin: Optional[RawImageUploadSession],
     images: Set[Image],
     image_files: Set[ImageFile],
     folders: Set[FolderUpload],
@@ -415,9 +415,11 @@ def _store_images(
     with transaction.atomic():
         for image in images:
             image.origin = origin
+            image.full_clean()
             image.save()
 
         for obj in chain(image_files, folders):
+            obj.full_clean()
             obj.save()
 
 

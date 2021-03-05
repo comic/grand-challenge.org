@@ -239,24 +239,29 @@ class Image(UUIDModel):
     )
 
     name = models.CharField(max_length=4096)
-    study = models.ForeignKey(Study, on_delete=models.CASCADE, null=True)
+    study = models.ForeignKey(
+        Study, null=True, blank=True, on_delete=models.SET_NULL,
+    )
     origin = models.ForeignKey(
-        to=RawImageUploadSession, null=True, on_delete=models.SET_NULL
+        to=RawImageUploadSession,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
     modality = models.ForeignKey(
-        ImagingModality, on_delete=models.SET_NULL, null=True
+        ImagingModality, null=True, blank=True, on_delete=models.SET_NULL,
     )
 
     width = models.IntegerField(blank=False)
     height = models.IntegerField(blank=False)
-    depth = models.IntegerField(null=True)
-    voxel_width_mm = models.FloatField(null=True)
-    voxel_height_mm = models.FloatField(null=True)
-    voxel_depth_mm = models.FloatField(null=True)
-    timepoints = models.IntegerField(null=True)
-    resolution_levels = models.IntegerField(null=True)
-    window_center = models.FloatField(null=True)
-    window_width = models.FloatField(null=True)
+    depth = models.IntegerField(null=True, blank=True)
+    voxel_width_mm = models.FloatField(null=True, blank=True)
+    voxel_height_mm = models.FloatField(null=True, blank=True)
+    voxel_depth_mm = models.FloatField(null=True, blank=True)
+    timepoints = models.IntegerField(null=True, blank=True)
+    resolution_levels = models.IntegerField(null=True, blank=True)
+    window_center = models.FloatField(null=True, blank=True)
+    window_width = models.FloatField(null=True, blank=True)
     color_space = models.CharField(
         max_length=5, blank=False, choices=COLOR_SPACES
     )
@@ -272,6 +277,7 @@ class Image(UUIDModel):
         choices=STEREOSCOPIC_CHOICES,
         default=STEREOSCOPIC_EMPTY,
         null=True,
+        blank=True,
         help_text="Is this the left or right image of a stereoscopic pair?",
     )
     field_of_view = models.CharField(
@@ -279,6 +285,7 @@ class Image(UUIDModel):
         choices=FOV_CHOICES,
         default=FOV_EMPTY,
         null=True,
+        blank=True,
         help_text="What is the field of view of this image?",
     )
 
