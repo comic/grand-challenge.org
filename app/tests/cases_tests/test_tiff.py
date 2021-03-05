@@ -304,7 +304,7 @@ def test_image_builder_tiff(tmpdir_factory,):
             [
                 imagefile
                 for imagefile in image_builder_result.new_image_files
-                if imagefile.image.pk == valid_tiff_pk
+                if imagefile.image_id == valid_tiff_pk
             ]
         )
         == 2

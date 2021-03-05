@@ -7,15 +7,15 @@ import SimpleITK
 from django.conf import settings
 from django.core.files import File
 
-from grandchallenge.cases.models import Image, ImageFile
-from panimg.models import ColorSpace
+from grandchallenge.cases.models import ImageFile
+from panimg.models import ColorSpace, PanImg
 
 
 def convert_itk_to_internal(
     simple_itk_image: SimpleITK.Image,
     name: Optional[AnyStr] = None,
     use_spacing: Optional[bool] = True,
-) -> Tuple[Image, Sequence[ImageFile]]:
+) -> Tuple[PanImg, Sequence[ImageFile]]:
     color_space = simple_itk_image.GetNumberOfComponentsPerPixel()
     color_space = {
         1: ColorSpace.GRAY.value,
@@ -52,7 +52,7 @@ def convert_itk_to_internal(
         except (RuntimeError, ValueError):
             window_width = None
 
-        db_image = Image(
+        db_image = PanImg(
             pk=pk,
             name=name,
             width=simple_itk_image.GetWidth(),
@@ -80,7 +80,7 @@ def convert_itk_to_internal(
                     buffer = open_file.read(1024)
                     temp_file.write(buffer)
             db_image_file = ImageFile(
-                image=db_image,
+                image_id=db_image.pk,
                 image_type=ImageFile.IMAGE_TYPE_MHD,
                 file=File(temp_file, name=_file.name),
             )

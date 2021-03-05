@@ -13,8 +13,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 
-from grandchallenge.cases.models import FolderUpload, Image, ImageFile
-from panimg.models import ColorSpace
+from grandchallenge.cases.models import FolderUpload, ImageFile
+from panimg.models import ColorSpace, PanImg
 from panimg.types import ImageBuilderResult
 
 
@@ -25,7 +25,7 @@ class GrandChallengeTiffFile:
     image_width: int = 0
     image_height: int = 0
     resolution_levels: int = 0
-    color_space: str = ""
+    color_space: Optional[ColorSpace] = None
     voxel_width_mm: float = 0
     voxel_height_mm: float = 0
     voxel_depth_mm: Optional[float] = None
@@ -187,7 +187,7 @@ def _get_color_space(*, color_space_string) -> Optional[ColorSpace]:
     return color_space
 
 
-def _create_image_file(*, path: str, image: Image) -> ImageFile:
+def _create_image_file(*, path: str, image: PanImg) -> ImageFile:
     temp_file = TemporaryFile()
     with open(path, "rb") as open_file:
         buffer = True
@@ -197,13 +197,13 @@ def _create_image_file(*, path: str, image: Image) -> ImageFile:
 
     if path.lower().endswith("dzi"):
         return ImageFile(
-            image=image,
+            image_id=image.pk,
             image_type=ImageFile.IMAGE_TYPE_DZI,
             file=File(temp_file, name=f"{image.pk}.dzi"),
         )
     else:
         return ImageFile(
-            image=image,
+            image_id=image.pk,
             image_type=ImageFile.IMAGE_TYPE_TIFF,
             file=File(temp_file, name=f"{image.pk}.tif"),
         )
@@ -229,7 +229,7 @@ def _load_and_create_dzi(
 
 
 def _new_image_files(
-    *, gc_file: GrandChallengeTiffFile, image: Image,
+    *, gc_file: GrandChallengeTiffFile, image: PanImg,
 ) -> Set[ImageFile]:
     new_image_files = {
         _create_image_file(path=str(gc_file.path.absolute()), image=image)
@@ -243,7 +243,7 @@ def _new_image_files(
 
 
 def _new_folder_uploads(
-    *, dzi_output: str, image: Image,
+    *, dzi_output: str, image: PanImg,
 ) -> Set[FolderUpload]:
     new_folder_upload = set()
 
@@ -440,9 +440,9 @@ def image_builder_tiff(  # noqa: C901
     )
 
 
-def _create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
+def _create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> PanImg:
     # Builds a new Image model item
-    return Image(
+    return PanImg(
         pk=tiff_file.pk,
         name=tiff_file.path.name,
         width=tiff_file.image_width,
@@ -450,12 +450,12 @@ def _create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
         depth=1,
         resolution_levels=tiff_file.resolution_levels,
         color_space=tiff_file.color_space,
-        eye_choice=Image.EYE_UNKNOWN,
-        stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
-        field_of_view=Image.FOV_UNKNOWN,
         voxel_width_mm=tiff_file.voxel_width_mm,
         voxel_height_mm=tiff_file.voxel_height_mm,
         voxel_depth_mm=tiff_file.voxel_depth_mm,
+        timepoints=None,
+        window_center=None,
+        window_width=None,
     )
 
 

@@ -1,7 +1,7 @@
 import os
 import tarfile
 import zipfile
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import timedelta
 from itertools import chain
 from pathlib import Path
@@ -391,15 +391,17 @@ def import_images(
         created_image_prefix=created_image_prefix,
     )
 
+    new_images = {Image(**asdict(image)) for image in result.new_images}
+
     _store_images(
         origin=origin,
-        images=result.new_images,
+        images=new_images,
         image_files=result.new_image_files,
         folders=result.new_folders,
     )
 
     return ImporterResult(
-        new_images=result.new_images,
+        new_images=new_images,
         consumed_files=result.consumed_files,
         file_errors=result.file_errors,
     )

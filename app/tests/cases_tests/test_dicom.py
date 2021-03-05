@@ -1,4 +1,5 @@
 import os
+from dataclasses import asdict
 from pathlib import Path
 from unittest import mock
 
@@ -9,6 +10,7 @@ from pydicom.pixel_data_handlers.gdcm_handler import (
     is_available as gdcm_is_available,
 )
 
+from grandchallenge.cases.models import Image
 from panimg.image_builders.dicom import (
     _get_headers_by_study,
     _validate_dicom_files,
@@ -73,7 +75,7 @@ def test_image_builder_dicom_4dct():
     }
 
     assert len(result.new_images) == 1
-    image = result.new_images.pop()
+    image = Image(**asdict(result.new_images.pop()))
     assert image.shape == [19, 4, 2, 3]
     assert len(result.new_image_files) == 1
     mha_file_obj = [

@@ -566,6 +566,10 @@ class FolderUpload:
         self.image = image
         self.folder = folder
 
+    def full_clean(self):
+        """Required as this is treated like a django model"""
+        pass
+
     def destination_filename(self, file_path):
         return (
             f"{settings.IMAGE_FILES_SUBDIRECTORY}/"
