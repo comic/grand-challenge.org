@@ -393,6 +393,8 @@ def import_images(
         created_image_prefix=created_image_prefix,
     )
 
+    _check_all_ids(panimg_result=panimg_result)
+
     django_result = _convert_panimg_to_django(panimg_result=panimg_result)
 
     _store_images(
@@ -407,6 +409,27 @@ def import_images(
         consumed_files=panimg_result.consumed_files,
         file_errors=panimg_result.file_errors,
     )
+
+
+def _check_all_ids(*, panimg_result: PanimgResult):
+    """
+    Check the integrity of the conversion job.
+
+    All new_ids must be new, this will be found when saving the Django objects.
+    Every new image must have at least one file associated with it, and
+    new folders can only belong to new images.
+    """
+    new_ids = {im.pk for im in panimg_result.new_images}
+    new_file_ids = {f.image_id for f in panimg_result.new_image_files}
+    new_folder_ids = {f.image_id for f in panimg_result.new_folders}
+
+    if new_ids != new_file_ids:
+        raise ValidationError(
+            "Each new image should have at least 1 file assigned"
+        )
+
+    if new_folder_ids - new_ids:
+        raise ValidationError("New folder does not belong to a new image")
 
 
 @dataclass
