@@ -10,8 +10,8 @@ import openslide
 import pyvips
 import tifffile
 from django.conf import settings
-from django.core.exceptions import ValidationError
 
+from panimg.exceptions import ValidationError
 from panimg.models import (
     ColorSpace,
     ImageType,
@@ -43,7 +43,7 @@ class GrandChallengeTiffFile:
             )
         if not self.image_height:
             raise ValidationError(
-                "Not a valid tif: Image heigth could not be determined"
+                "Not a valid tif: Image height could not be determined"
             )
         if not self.resolution_levels:
             raise ValidationError(

@@ -5,7 +5,6 @@ import SimpleITK
 import numpy as np
 from PIL import Image
 from PIL.Image import DecompressionBombError
-from django.core.exceptions import ValidationError
 
 from panimg.image_builders.utils import convert_itk_to_internal
 from panimg.types import ImageBuilderResult
@@ -42,9 +41,7 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
             img = Image.open(file)
 
             if img.format.lower() not in ["jpeg", "png"]:
-                raise ValidationError(
-                    f"Unsupported image format: {img.format}"
-                )
+                raise ValueError(f"Unsupported image format: {img.format}")
 
             img_array = np.array(img)
             is_vector = img.mode != "L"
@@ -55,7 +52,7 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
             new_images.add(n_image)
             new_image_files |= set(n_image_files)
             consumed_files.add(file)
-        except (IOError, ValidationError, DecompressionBombError):
+        except (IOError, ValueError, DecompressionBombError):
             errors[file] = format_error("Not a valid image file")
 
     return ImageBuilderResult(
