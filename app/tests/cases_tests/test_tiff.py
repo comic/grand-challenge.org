@@ -7,11 +7,11 @@ from uuid import uuid4
 import pytest
 import pyvips
 import tifffile as tiff_lib
-from django.core.exceptions import ValidationError
 from pytest import approx
 from tifffile import tifffile
 
 from grandchallenge.cases.models import Image
+from panimg.exceptions import ValidationError
 from panimg.image_builders.tiff import (
     GrandChallengeTiffFile,
     _convert_to_tiff,
@@ -72,7 +72,7 @@ def test_get_color_space(color_space_string, expected):
             10,
             0.1,
             0.1,
-            "Not a valid tif: Image heigth could not be determined",
+            "Not a valid tif: Image height could not be determined",
         ),
         (
             "dummy.tiff",

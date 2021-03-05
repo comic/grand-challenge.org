@@ -9,7 +9,6 @@ from uuid import UUID, uuid4
 import openslide
 import pyvips
 import tifffile
-from django.conf import settings
 
 from panimg.exceptions import ValidationError
 from panimg.models import (
@@ -19,6 +18,7 @@ from panimg.models import (
     PanImgFile,
     PanImgFolder,
 )
+from panimg.settings import DZI_TILE_SIZE
 from panimg.types import ImageBuilderResult
 
 
@@ -474,9 +474,7 @@ def _create_dzi_images(
         image = pyvips.Image.new_from_file(
             str(gc_file.path.absolute()), access="sequential"
         )
-        pyvips.Image.dzsave(
-            image, dzi_output, tile_size=settings.DZI_TILE_SIZE
-        )
+        pyvips.Image.dzsave(image, dzi_output, tile_size=DZI_TILE_SIZE)
         gc_file.source_files.append(dzi_output + ".dzi")
     except Exception as e:
         raise ValidationError(f"Image can't be converted to dzi: {e}")

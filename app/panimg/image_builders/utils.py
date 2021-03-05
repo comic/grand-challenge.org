@@ -4,9 +4,9 @@ from typing import AnyStr, Optional, Sequence, Tuple
 from uuid import uuid4
 
 import SimpleITK
-from django.conf import settings
 
 from panimg.models import ColorSpace, ImageType, PanImg, PanImgFile
+from panimg.settings import ITK_INTERNAL_FILE_FORMAT
 
 
 def convert_itk_to_internal(
@@ -31,7 +31,7 @@ def convert_itk_to_internal(
             name = str(pk)
         SimpleITK.WriteImage(
             simple_itk_image,
-            str(work_dir / f"{pk}.{settings.ITK_INTERNAL_FILE_FORMAT}"),
+            str(work_dir / f"{pk}.{ITK_INTERNAL_FILE_FORMAT}"),
             True,
         )
 
