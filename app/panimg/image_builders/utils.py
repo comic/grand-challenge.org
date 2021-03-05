@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.files import File
 
 from grandchallenge.cases.models import Image, ImageFile
+from panimg.models import ColorSpace
 
 
 def convert_itk_to_internal(
@@ -17,9 +18,9 @@ def convert_itk_to_internal(
 ) -> Tuple[Image, Sequence[ImageFile]]:
     color_space = simple_itk_image.GetNumberOfComponentsPerPixel()
     color_space = {
-        1: Image.COLOR_SPACE_GRAY,
-        3: Image.COLOR_SPACE_RGB,
-        4: Image.COLOR_SPACE_RGBA,
+        1: ColorSpace.GRAY.value,
+        3: ColorSpace.RGB.value,
+        4: ColorSpace.RGBA.value,
     }.get(color_space, None)
     if color_space is None:
         raise ValueError("Unknown color space for MetaIO image.")

@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 
 from grandchallenge.cases.models import FolderUpload, Image, ImageFile
+from panimg.models import ColorSpace
 from panimg.types import ImageBuilderResult
 
 
@@ -172,14 +173,14 @@ def _extract_tags(
     return gc_file
 
 
-def _get_color_space(*, color_space_string) -> Image.COLOR_SPACES:
+def _get_color_space(*, color_space_string) -> Optional[ColorSpace]:
     color_space_string = color_space_string.split(".")[1].upper()
 
     if color_space_string == "MINISBLACK":
-        color_space = Image.COLOR_SPACE_GRAY
+        color_space = ColorSpace.GRAY.value
     else:
         try:
-            color_space = dict(Image.COLOR_SPACES)[color_space_string]
+            color_space = ColorSpace[color_space_string].value
         except KeyError:
             return None
 

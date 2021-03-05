@@ -23,6 +23,7 @@ from panimg.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
+from panimg.models import ColorSpace
 
 logger = logging.getLogger(__name__)
 
@@ -175,10 +176,10 @@ def image_file_path(instance, filename):
 
 
 class Image(UUIDModel):
-    COLOR_SPACE_GRAY = "GRAY"
-    COLOR_SPACE_RGB = "RGB"
-    COLOR_SPACE_RGBA = "RGBA"
-    COLOR_SPACE_YCBCR = "YCBCR"
+    COLOR_SPACE_GRAY = ColorSpace.GRAY.value
+    COLOR_SPACE_RGB = ColorSpace.RGB.value
+    COLOR_SPACE_RGBA = ColorSpace.RGBA.value
+    COLOR_SPACE_YCBCR = ColorSpace.YCBCR.value
 
     COLOR_SPACES = (
         (COLOR_SPACE_GRAY, "GRAY"),
