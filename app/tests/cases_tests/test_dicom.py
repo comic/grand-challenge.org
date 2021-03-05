@@ -9,7 +9,7 @@ from pydicom.pixel_data_handlers.gdcm_handler import (
     is_available as gdcm_is_available,
 )
 
-from grandchallenge.cases.image_builders.dicom import (
+from panimg.image_builders.dicom import (
     _get_headers_by_study,
     _validate_dicom_files,
     format_error,
@@ -51,7 +51,7 @@ def test_validate_dicom_files():
         assert study.n_time == 19
         assert study.n_slices == 4
     with mock.patch(
-        "grandchallenge.cases.image_builders.dicom._get_headers_by_study",
+        "panimg.image_builders.dicom._get_headers_by_study",
         return_value=(
             {"foo": {"headers": headers[1:], "file": "bar", "index": 1}},
             {},

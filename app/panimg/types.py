@@ -15,9 +15,5 @@ class ImageBuilderResult:
 
 
 @dataclass
-class PanimgResult:
-    new_images: Set[Image]
-    new_image_files: Set[ImageFile]
-    new_folders: Set[FolderUpload]
-    consumed_files: Set[Path]
+class PanimgResult(ImageBuilderResult):
     file_errors: Dict[Path, List[str]]

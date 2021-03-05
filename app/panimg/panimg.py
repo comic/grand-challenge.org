@@ -2,13 +2,13 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Callable, Iterable, Optional, Set
 
-from grandchallenge.cases.image_builders.dicom import image_builder_dicom
 from grandchallenge.cases.image_builders.fallback import image_builder_fallback
 from grandchallenge.cases.image_builders.metaio_mhd_mha import (
     image_builder_mhd,
 )
 from grandchallenge.cases.image_builders.nifti import image_builder_nifti
 from grandchallenge.cases.image_builders.tiff import image_builder_tiff
+from panimg.image_builders.dicom import image_builder_dicom
 from panimg.types import ImageBuilderResult, PanimgResult
 
 DEFAULT_IMAGE_BUILDERS = [
