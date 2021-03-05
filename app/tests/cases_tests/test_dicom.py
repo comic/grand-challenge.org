@@ -6,7 +6,6 @@ from unittest import mock
 import numpy as np
 import pydicom
 import pytest
-from django.core.files import File
 from pydicom.pixel_data_handlers.gdcm_handler import (
     is_available as gdcm_is_available,
 )
@@ -68,9 +67,9 @@ def test_validate_dicom_files():
             )
 
 
-def test_image_builder_dicom_4dct():
+def test_image_builder_dicom_4dct(tmpdir):
     files = {Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]}
-    result = image_builder_dicom(files=files)
+    result = image_builder_dicom(files=files, output_directory=tmpdir)
     assert result.consumed_files == {
         Path(DICOM_DIR).joinpath(f"{x}.dcm") for x in range(1, 77)
     }
@@ -83,7 +82,7 @@ def test_image_builder_dicom_4dct():
         x for x in result.new_image_files if x.filename.endswith("mha")
     ][0]
 
-    headers = parse_mh_header(File(mha_file_obj.file, mha_file_obj.filename))
+    headers = parse_mh_header(mha_file_obj.file)
 
     direction = headers["TransformMatrix"].split()
     origin = headers["Offset"].split()
@@ -118,7 +117,7 @@ def test_image_builder_dicom_4dct():
         ("dicom_slope", "MET_FLOAT"),
     ],
 )
-def test_dicom_rescaling(folder, element_type):
+def test_dicom_rescaling(folder, element_type, tmpdir):
     """
     2.dcm in dicom_intercept and dicom_slope has been modified to add a
     small intercept (0.01) or slope (1.001) respectively.
@@ -128,31 +127,31 @@ def test_dicom_rescaling(folder, element_type):
         for d in os.walk(RESOURCE_PATH / folder)
         for f in d[2]
     ]
-    result = image_builder_dicom(files=files)
+    result = image_builder_dicom(files=files, output_directory=tmpdir)
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
         x for x in result.new_image_files if x.filename.endswith("mha")
     ][0]
 
-    headers = parse_mh_header(File(mha_file_obj.file, mha_file_obj.filename))
+    headers = parse_mh_header(mha_file_obj.file)
     assert headers["ElementType"] == element_type
 
 
-def test_dicom_window_level():
+def test_dicom_window_level(tmpdir):
     files = {
         Path(d[0]).joinpath(f)
         for d in os.walk(RESOURCE_PATH / "dicom")
         for f in d[2]
     }
-    result = image_builder_dicom(files=files)
+    result = image_builder_dicom(files=files, output_directory=tmpdir)
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
         x for x in result.new_image_files if x.filename.endswith("mha")
     ][0]
 
-    headers = parse_mh_header(File(mha_file_obj.file, mha_file_obj.filename))
+    headers = parse_mh_header(mha_file_obj.file)
     assert headers["WindowCenter"] == "30"
     assert headers["WindowWidth"] == "200"
 

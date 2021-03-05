@@ -2,7 +2,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from tempfile import TemporaryFile
+from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
@@ -181,18 +181,20 @@ def _get_color_space(*, color_space_string) -> Optional[ColorSpace]:
     color_space_string = color_space_string.split(".")[1].upper()
 
     if color_space_string == "MINISBLACK":
-        color_space = ColorSpace.GRAY.value
+        color_space = ColorSpace.GRAY
     else:
         try:
-            color_space = ColorSpace[color_space_string].value
+            color_space = ColorSpace[color_space_string]
         except KeyError:
             return None
 
     return color_space
 
 
-def _create_image_file(*, path: str, image: PanImg) -> PanImgFile:
-    temp_file = TemporaryFile()
+def _create_image_file(
+    *, path: str, image: PanImg, output_directory: Path
+) -> PanImgFile:
+    temp_file = NamedTemporaryFile(delete=False, dir=output_directory)
     with open(path, "rb") as open_file:
         buffer = True
         while buffer:
@@ -202,15 +204,15 @@ def _create_image_file(*, path: str, image: PanImg) -> PanImgFile:
     if path.lower().endswith("dzi"):
         return PanImgFile(
             image_id=image.pk,
-            image_type=ImageType.DZI.value,
-            file=temp_file,
+            image_type=ImageType.DZI,
+            file=Path(temp_file.name),
             filename=f"{image.pk}.dzi",
         )
     else:
         return PanImgFile(
             image_id=image.pk,
-            image_type=ImageType.TIFF.value,
-            file=temp_file,
+            image_type=ImageType.TIFF,
+            file=Path(temp_file.name),
             filename=f"{image.pk}.tif",
         )
 
@@ -235,15 +237,23 @@ def _load_and_create_dzi(
 
 
 def _new_image_files(
-    *, gc_file: GrandChallengeTiffFile, image: PanImg,
+    *, gc_file: GrandChallengeTiffFile, image: PanImg, output_directory: Path
 ) -> Set[PanImgFile]:
     new_image_files = {
-        _create_image_file(path=str(gc_file.path.absolute()), image=image)
+        _create_image_file(
+            path=str(gc_file.path.absolute()),
+            image=image,
+            output_directory=output_directory,
+        )
     }
 
     if gc_file.source_files:
         for s in gc_file.source_files:
-            new_image_files.add(_create_image_file(path=s, image=image))
+            new_image_files.add(
+                _create_image_file(
+                    path=s, image=image, output_directory=output_directory
+                )
+            )
 
     return new_image_files
 
@@ -388,7 +398,7 @@ def _load_gc_files(
 
 
 def image_builder_tiff(  # noqa: C901
-    *, files: Set[Path], **_
+    *, files: Set[Path], output_directory: Path, **_
 ) -> ImageBuilderResult:
     new_images = set()
     new_image_files = set()
@@ -429,7 +439,9 @@ def image_builder_tiff(  # noqa: C901
         image = _create_tiff_image_entry(tiff_file=gc_file)
 
         new_images.add(image)
-        new_image_files |= _new_image_files(gc_file=gc_file, image=image,)
+        new_image_files |= _new_image_files(
+            gc_file=gc_file, image=image, output_directory=output_directory
+        )
         new_folders |= _new_folder_uploads(dzi_output=dzi_output, image=image,)
 
         if gc_file.associated_files:

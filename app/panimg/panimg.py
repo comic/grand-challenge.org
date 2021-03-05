@@ -9,6 +9,7 @@ from panimg.types import ImageBuilderResult, PanimgResult
 def convert(
     *,
     files: Set[Path],
+    output_directory: Path,
     builders: Optional[Iterable[Callable]] = None,
     created_image_prefix: str = "",
 ) -> PanimgResult:
@@ -23,6 +24,7 @@ def convert(
     for builder in builders:
         builder_result: ImageBuilderResult = builder(
             files=files - consumed_files,
+            output_directory=output_directory,
             created_image_prefix=created_image_prefix,
         )
 

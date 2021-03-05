@@ -19,7 +19,7 @@ from panimg.types import ImageBuilderResult
 
 
 def image_builder_mhd(  # noqa: C901
-    *, files: Set[Path], **_
+    *, files: Set[Path], output_directory: Path, **_
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -60,7 +60,7 @@ def image_builder_mhd(  # noqa: C901
         return data_file == "LOCAL"
 
     def convert_itk_file(
-        headers: Mapping[str, Union[str, None]], filename: Path
+        *, filename: Path, output_dir: Path,
     ) -> Tuple[PanImg, Sequence[PanImgFile]]:
         try:
             simple_itk_image = load_sitk_image(filename.absolute())
@@ -68,7 +68,11 @@ def image_builder_mhd(  # noqa: C901
         except RuntimeError:
             raise ValueError("SimpleITK cannot open file")
 
-        return convert_itk_to_internal(simple_itk_image, name=filename.name)
+        return convert_itk_to_internal(
+            simple_itk_image=simple_itk_image,
+            name=filename.name,
+            output_directory=output_dir,
+        )
 
     def format_error(message):
         return f"Mhd image builder: {message}"
@@ -104,7 +108,9 @@ def image_builder_mhd(  # noqa: C901
                     )
                     continue
 
-            n_image, n_image_files = convert_itk_file(parsed_headers, file)
+            n_image, n_image_files = convert_itk_file(
+                filename=file, output_dir=output_directory
+            )
             new_images.add(n_image)
             new_image_files |= set(n_image_files)
 

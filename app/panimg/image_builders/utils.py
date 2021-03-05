@@ -1,5 +1,5 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory, TemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import AnyStr, Optional, Sequence, Tuple
 from uuid import uuid4
 
@@ -10,15 +10,17 @@ from panimg.settings import ITK_INTERNAL_FILE_FORMAT
 
 
 def convert_itk_to_internal(
+    *,
     simple_itk_image: SimpleITK.Image,
+    output_directory: Path,
     name: Optional[AnyStr] = None,
     use_spacing: Optional[bool] = True,
 ) -> Tuple[PanImg, Sequence[PanImgFile]]:
     color_space = simple_itk_image.GetNumberOfComponentsPerPixel()
     color_space = {
-        1: ColorSpace.GRAY.value,
-        3: ColorSpace.RGB.value,
-        4: ColorSpace.RGBA.value,
+        1: ColorSpace.GRAY,
+        3: ColorSpace.RGB,
+        4: ColorSpace.RGBA,
     }.get(color_space, None)
     if color_space is None:
         raise ValueError("Unknown color space for MetaIO image.")
@@ -71,7 +73,7 @@ def convert_itk_to_internal(
         )
         db_image_files = []
         for _file in work_dir.iterdir():
-            temp_file = TemporaryFile()
+            temp_file = NamedTemporaryFile(delete=False, dir=output_directory)
             with open(str(_file), "rb") as open_file:
                 buffer = True
                 while buffer:
@@ -79,8 +81,8 @@ def convert_itk_to_internal(
                     temp_file.write(buffer)
             db_image_file = PanImgFile(
                 image_id=db_image.pk,
-                image_type=ImageType.MHD.value,
-                file=temp_file,
+                image_type=ImageType.MHD,
+                file=Path(temp_file.name),
                 filename=_file.name,
             )
             db_image_files.append(db_image_file)

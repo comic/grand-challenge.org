@@ -387,22 +387,24 @@ def import_images(
     """
     created_image_prefix = str(origin.pk)[:8] if origin is not None else ""
 
-    panimg_result = convert(
-        files=files,
-        builders=builders,
-        created_image_prefix=created_image_prefix,
-    )
+    with TemporaryDirectory() as output_directory:
+        panimg_result = convert(
+            files=files,
+            output_directory=output_directory,
+            builders=builders,
+            created_image_prefix=created_image_prefix,
+        )
 
-    _check_all_ids(panimg_result=panimg_result)
+        _check_all_ids(panimg_result=panimg_result)
 
-    django_result = _convert_panimg_to_django(panimg_result=panimg_result)
+        django_result = _convert_panimg_to_django(panimg_result=panimg_result)
 
-    _store_images(
-        origin=origin,
-        images=django_result.new_images,
-        image_files=django_result.new_image_files,
-        folders=django_result.new_folders,
-    )
+        _store_images(
+            origin=origin,
+            images=django_result.new_images,
+            image_files=django_result.new_image_files,
+            folders=django_result.new_folders,
+        )
 
     return ImporterResult(
         new_images=django_result.new_images,
@@ -447,7 +449,7 @@ def _convert_panimg_to_django(
         ImageFile(
             image_id=f.image_id,
             image_type=f.image_type,
-            file=File(f.file, f.filename),
+            file=File(open(f.file, "rb"), f.filename),
         )
         for f in panimg_result.new_image_files
     }

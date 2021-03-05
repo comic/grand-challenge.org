@@ -1,4 +1,5 @@
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import SimpleITK
 import pytest
@@ -71,5 +72,8 @@ def test_convert_itk_to_internal(image: Path):
         assert internal_image.resolution_levels is None
 
     img_ref = load_sitk_image(image)
-    internal_image = convert_itk_to_internal(img_ref)
+    with TemporaryDirectory() as output:
+        internal_image = convert_itk_to_internal(
+            simple_itk_image=img_ref, output_directory=output
+        )
     assert_img_properties(img_ref, internal_image[0])
