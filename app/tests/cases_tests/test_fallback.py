@@ -5,22 +5,22 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from grandchallenge.cases.models import Image
 from panimg.image_builders.fallback import (
     format_error,
     image_builder_fallback,
 )
+from panimg.models import ColorSpace
 from tests.cases_tests import RESOURCE_PATH
 
 
 @pytest.mark.parametrize(
     "src,colorspace",
     (
-        (RESOURCE_PATH / "test_grayscale.jpg", Image.COLOR_SPACE_GRAY),
-        (RESOURCE_PATH / "test_rgb.jpg", Image.COLOR_SPACE_RGB),
-        (RESOURCE_PATH / "test_grayscale.png", Image.COLOR_SPACE_GRAY),
-        (RESOURCE_PATH / "test_rgb.png", Image.COLOR_SPACE_RGB),
-        (RESOURCE_PATH / "test_rgba.png", Image.COLOR_SPACE_RGBA),
+        (RESOURCE_PATH / "test_grayscale.jpg", ColorSpace.GRAY),
+        (RESOURCE_PATH / "test_rgb.jpg", ColorSpace.RGB),
+        (RESOURCE_PATH / "test_grayscale.png", ColorSpace.GRAY),
+        (RESOURCE_PATH / "test_rgb.png", ColorSpace.RGB),
+        (RESOURCE_PATH / "test_rgba.png", ColorSpace.RGBA),
     ),
 )
 def test_image_builder_fallback(tmpdir, src, colorspace):
