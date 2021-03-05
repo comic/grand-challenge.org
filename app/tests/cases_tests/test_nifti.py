@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from grandchallenge.cases.image_builders.nifti import image_builder_nifti
 from grandchallenge.cases.models import Image
+from panimg.image_builders.nifti import image_builder_nifti
 from tests.cases_tests import RESOURCE_PATH
 
 

@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from grandchallenge.cases.image_builders.fallback import (
+from grandchallenge.cases.models import Image
+from panimg.image_builders.fallback import (
     format_error,
     image_builder_fallback,
 )
-from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
 
 
