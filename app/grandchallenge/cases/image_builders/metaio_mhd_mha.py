@@ -13,9 +13,9 @@ from grandchallenge.cases.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
 )
-from grandchallenge.cases.image_builders.types import ImageBuilderResult
 from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
 from grandchallenge.cases.models import Image, ImageFile
+from panimg.types import ImageBuilderResult
 
 
 def image_builder_mhd(  # noqa: C901

@@ -1,12 +1,20 @@
 import os
 import tarfile
 import zipfile
-from collections import defaultdict
 from datetime import timedelta
 from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, Iterable, List, Sequence, Set, Tuple
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
 
 from billiard.exceptions import SoftTimeLimitExceeded
 from celery import shared_task
@@ -17,17 +25,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from grandchallenge.cases.emails import send_failed_file_import
-from grandchallenge.cases.image_builders.dicom import image_builder_dicom
-from grandchallenge.cases.image_builders.fallback import image_builder_fallback
-from grandchallenge.cases.image_builders.metaio_mhd_mha import (
-    image_builder_mhd,
-)
-from grandchallenge.cases.image_builders.nifti import image_builder_nifti
-from grandchallenge.cases.image_builders.tiff import image_builder_tiff
-from grandchallenge.cases.image_builders.types import (
-    ImageBuilderResult,
-    ImporterResult,
-)
+from grandchallenge.cases.image_builders.types import ImporterResult
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -40,6 +38,7 @@ from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
     StagedAjaxFile,
 )
+from panimg.panimg import convert
 
 
 class ProvisioningError(Exception):
@@ -118,15 +117,6 @@ def populate_provisioning_directory(
             f"{exceptions_raised} errors occurred during provisioning of the "
             f"image construction directory"
         )
-
-
-DEFAULT_IMAGE_BUILDERS = [
-    image_builder_mhd,
-    image_builder_nifti,
-    image_builder_dicom,
-    image_builder_tiff,
-    image_builder_fallback,
-]
 
 
 def remove_duplicate_files(
@@ -365,8 +355,8 @@ def _handle_raw_image_files(tmp_dir, upload_session):
 def import_images(
     *,
     files: Set[Path],
-    origin: RawImageUploadSession = None,
-    builders: Iterable[Callable] = None,
+    origin: Optional[RawImageUploadSession] = None,
+    builders: Optional[Iterable[Callable]] = None,
 ) -> ImporterResult:
     """
     Creates Image objects from a set of files.
@@ -386,41 +376,25 @@ def import_images(
         any file errors
 
     """
-
-    new_images = set()
-    new_image_files = set()
-    new_folders = set()
-    consumed_files = set()
-    file_errors = defaultdict(list)
-
     created_image_prefix = str(origin.pk)[:8] if origin is not None else ""
-    builders = builders if builders is not None else DEFAULT_IMAGE_BUILDERS
 
-    for builder in builders:
-        builder_result: ImageBuilderResult = builder(
-            files=files - consumed_files,
-            created_image_prefix=created_image_prefix,
-        )
-
-        new_images |= builder_result.new_images
-        new_image_files |= builder_result.new_image_files
-        new_folders |= builder_result.new_folders
-        consumed_files |= builder_result.consumed_files
-
-        for filepath, msg in builder_result.file_errors.items():
-            file_errors[filepath].append(msg)
+    result = convert(
+        files=files,
+        builders=builders,
+        created_image_prefix=created_image_prefix,
+    )
 
     _store_images(
         origin=origin,
-        images=new_images,
-        image_files=new_image_files,
-        folders=new_folders,
+        images=result.new_images,
+        image_files=result.new_image_files,
+        folders=result.new_folders,
     )
 
     return ImporterResult(
-        new_images=new_images,
-        consumed_files=consumed_files,
-        file_errors=file_errors,
+        new_images=result.new_images,
+        consumed_files=result.consumed_files,
+        file_errors=result.file_errors,
     )
 
 
