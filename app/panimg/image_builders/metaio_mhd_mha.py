@@ -7,8 +7,6 @@ See: https://itk.org/Wiki/MetaIO/Documentation
 from pathlib import Path
 from typing import Mapping, Sequence, Set, Tuple, Union
 
-import SimpleITK
-
 from panimg.image_builders.metaio_utils import (
     load_sitk_image,
     parse_mh_header,
@@ -64,7 +62,6 @@ def image_builder_mhd(  # noqa: C901
     ) -> Tuple[PanImg, Sequence[PanImgFile]]:
         try:
             simple_itk_image = load_sitk_image(filename.absolute())
-            simple_itk_image: SimpleITK.Image
         except RuntimeError:
             raise ValueError("SimpleITK cannot open file")
 

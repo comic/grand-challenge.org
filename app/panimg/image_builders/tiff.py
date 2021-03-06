@@ -1,8 +1,8 @@
 import os
 import re
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
@@ -194,27 +194,20 @@ def _get_color_space(*, color_space_string) -> Optional[ColorSpace]:
 def _create_image_file(
     *, path: Path, image: PanImg, output_directory: Path
 ) -> PanImgFile:
-    temp_file = NamedTemporaryFile(delete=False, dir=output_directory)
-    with open(path, "rb") as open_file:
-        buffer = True
-        while buffer:
-            buffer = open_file.read(1024)
-            temp_file.write(buffer)
 
-    if path.suffix.lower() == ".dzi":
-        return PanImgFile(
-            image_id=image.pk,
-            image_type=ImageType.DZI,
-            file=Path(temp_file.name),
-            filename=f"{image.pk}.dzi",
-        )
-    else:
-        return PanImgFile(
-            image_id=image.pk,
-            image_type=ImageType.TIFF,
-            file=Path(temp_file.name),
-            filename=f"{image.pk}.tif",
-        )
+    output_file = output_directory / f"{image.pk}{path.suffix}"
+
+    # TODO (jmsmkn): Would be good to remove tiff moving, but shutil is fast
+    # DZI and their files are created in the correct place anyway
+    shutil.move(src=path, dst=output_file)
+
+    return PanImgFile(
+        image_id=image.pk,
+        image_type=ImageType.DZI
+        if path.suffix.lower() == ".dzi"
+        else ImageType.TIFF,
+        file=output_file,
+    )
 
 
 def _load_with_tiff(
@@ -226,14 +219,16 @@ def _load_with_tiff(
 
 
 def _load_and_create_dzi(
-    *, gc_file: GrandChallengeTiffFile
+    *, gc_file: GrandChallengeTiffFile, output_directory: Path
 ) -> (str, GrandChallengeTiffFile):
     open_slide_file = openslide.open_slide(str(gc_file.path.absolute()))
     gc_file = _extract_openslide_properties(
         gc_file=gc_file, image=open_slide_file
     )
     gc_file.validate()
-    return _create_dzi_images(gc_file=gc_file)
+    return _create_dzi_images(
+        gc_file=gc_file, output_directory=output_directory
+    )
 
 
 def _new_image_files(
@@ -423,12 +418,6 @@ def image_builder_tiff(  # noqa: C901
         except Exception as e:
             error += f"Load error: {e}. "
 
-        # try and load image with open_slide
-        try:
-            dzi_output, gc_file = _load_and_create_dzi(gc_file=gc_file)
-        except Exception as e:
-            error += f"Dzi error: {e}. "
-
         # validate
         try:
             gc_file.validate()
@@ -437,11 +426,22 @@ def image_builder_tiff(  # noqa: C901
             invalid_file_errors[gc_file.path] = format_error(error)
             continue
 
+        image_out_dir = output_directory / str(gc_file.pk)
+        image_out_dir.mkdir()
+
+        # try and load image with open_slide
+        try:
+            dzi_output, gc_file = _load_and_create_dzi(
+                gc_file=gc_file, output_directory=image_out_dir
+            )
+        except Exception as e:
+            error += f"Dzi error: {e}. "
+
         image = _create_tiff_image_entry(tiff_file=gc_file)
 
         new_images.add(image)
         new_image_files |= _new_image_files(
-            gc_file=gc_file, image=image, output_directory=output_directory
+            gc_file=gc_file, image=image, output_directory=image_out_dir
         )
         new_folders |= _new_folder_uploads(dzi_output=dzi_output, image=image,)
 
@@ -479,10 +479,10 @@ def _create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> PanImg:
 
 
 def _create_dzi_images(
-    *, gc_file: GrandChallengeTiffFile
+    *, gc_file: GrandChallengeTiffFile, output_directory: Path
 ) -> (Path, GrandChallengeTiffFile):
     # Creates a dzi file(out.dzi) and corresponding tiles in folder {pk}_files
-    dzi_output = gc_file.path.parent / str(gc_file.pk)
+    dzi_output = output_directory / str(gc_file.pk)
     try:
         image = pyvips.Image.new_from_file(
             str(gc_file.path.absolute()), access="sequential"

@@ -79,7 +79,7 @@ def test_image_builder_dicom_4dct(tmpdir):
     assert image.shape == [19, 4, 2, 3]
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.filename.endswith("mha")
+        x for x in result.new_image_files if x.file.suffix == ".mha"
     ][0]
 
     headers = parse_mh_header(mha_file_obj.file)
@@ -131,7 +131,7 @@ def test_dicom_rescaling(folder, element_type, tmpdir):
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.filename.endswith("mha")
+        x for x in result.new_image_files if x.file.suffix == ".mha"
     ][0]
 
     headers = parse_mh_header(mha_file_obj.file)
@@ -148,7 +148,7 @@ def test_dicom_window_level(tmpdir):
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.filename.endswith("mha")
+        x for x in result.new_image_files if x.file.suffix == ".mha"
     ][0]
 
     headers = parse_mh_header(mha_file_obj.file)

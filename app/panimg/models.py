@@ -41,7 +41,6 @@ class PanImgFile:
     image_id: UUID
     image_type: ImageType
     file: Path
-    filename: str
 
 
 @dataclass(frozen=True)

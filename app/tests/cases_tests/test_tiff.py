@@ -187,7 +187,10 @@ def test_load_with_open_slide(
     gc_file = GrandChallengeTiffFile(temp_file)
     try:
         gc_file = _load_with_tiff(gc_file=gc_file)
-        _load_and_create_dzi(gc_file=gc_file)
+        _load_and_create_dzi(
+            gc_file=gc_file,
+            output_directory=Path(tmpdir_factory.mktemp("output")),
+        )
     except Exception as e:
         error_message = str(e)
 
@@ -216,7 +219,10 @@ def test_dzi_creation(
     shutil.copy(source_dir / filename, temp_file)
     gc_file = GrandChallengeTiffFile(temp_file)
     try:
-        _create_dzi_images(gc_file=gc_file)
+        _create_dzi_images(
+            gc_file=gc_file,
+            output_directory=Path(tmpdir_factory.mktemp("output")),
+        )
     except ValidationError as e:
         error_message = str(e)
 
@@ -274,6 +280,8 @@ def test_tiff_image_entry_creation(
 def test_image_builder_tiff(tmpdir_factory,):
     # Copy resource files to writable temp folder
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
+    output_dir = Path(tmpdir_factory.mktemp("output"))
+
     shutil.copytree(
         RESOURCE_PATH,
         temp_dir,
@@ -281,10 +289,9 @@ def test_image_builder_tiff(tmpdir_factory,):
     )
     files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
 
-    with TemporaryDirectory() as output:
-        image_builder_result = image_builder_tiff(
-            files=files, output_directory=output
-        )
+    image_builder_result = image_builder_tiff(
+        files=files, output_directory=output_dir
+    )
 
     expected_files = [
         temp_dir / "valid_tiff.tif",
@@ -295,8 +302,11 @@ def test_image_builder_tiff(tmpdir_factory,):
         expected_files
     )
 
+    file_to_pk = {i.name: i.pk for i in image_builder_result.new_images}
+
     for file in expected_files:
-        assert file.name in [i.name for i in image_builder_result.new_images]
+        pk = file_to_pk[file.name]
+        assert os.path.isfile(output_dir / str(pk) / f"{pk}.tif")
 
     valid_tiff_pk = [
         new_image.pk
@@ -317,10 +327,13 @@ def test_image_builder_tiff(tmpdir_factory,):
     )
 
     # Asserts successful creation of dzi files
-    assert os.path.isfile(temp_dir / f"{valid_tiff_pk}.dzi")
-    assert os.path.isdir(temp_dir / f"{valid_tiff_pk}_files")
+    assert os.path.isfile(
+        output_dir / str(valid_tiff_pk) / f"{valid_tiff_pk}.dzi"
+    )
 
-    assert len(list(temp_dir.glob("**/*.jpeg"))) == 9
+    dzi_file_dir = output_dir / str(valid_tiff_pk) / f"{valid_tiff_pk}_files"
+    assert os.path.isdir(dzi_file_dir)
+    assert len(list((dzi_file_dir).rglob("*.jpeg"))) == 9
 
 
 def test_handle_complex_files(tmpdir_factory):

@@ -341,7 +341,9 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         for raw_image_file in session_files
     }
 
-    importer_result = import_images(files=input_files, origin=upload_session,)
+    importer_result = import_images(
+        input_directory=tmp_dir, origin=upload_session,
+    )
 
     _handle_raw_files(
         input_files=input_files,
@@ -363,7 +365,7 @@ class ImporterResult:
 
 def import_images(
     *,
-    files: Set[Path],
+    input_directory: Path,
     origin: Optional[RawImageUploadSession] = None,
     builders: Optional[Iterable[Callable]] = None,
 ) -> ImporterResult:
@@ -389,7 +391,7 @@ def import_images(
 
     with TemporaryDirectory() as output_directory:
         panimg_result = convert(
-            files=files,
+            input_directory=input_directory,
             output_directory=output_directory,
             builders=builders,
             created_image_prefix=created_image_prefix,
@@ -449,7 +451,7 @@ def _convert_panimg_to_django(
         ImageFile(
             image_id=f.image_id,
             image_type=f.image_type,
-            file=File(open(f.file, "rb"), f.filename),
+            file=File(open(f.file, "rb"), f.file.name),
         )
         for f in panimg_result.new_image_files
     }
