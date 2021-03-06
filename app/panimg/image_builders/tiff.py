@@ -217,17 +217,14 @@ def _load_with_tiff(
     return gc_file
 
 
-def _load_and_create_dzi(
-    *, gc_file: GrandChallengeTiffFile, output_directory: Path
+def _load_with_openslide(
+    *, gc_file: GrandChallengeTiffFile
 ) -> (str, GrandChallengeTiffFile):
     open_slide_file = openslide.open_slide(str(gc_file.path.absolute()))
     gc_file = _extract_openslide_properties(
         gc_file=gc_file, image=open_slide_file
     )
-    gc_file.validate()
-    return _create_dzi_images(
-        gc_file=gc_file, output_directory=output_directory
-    )
+    return gc_file
 
 
 def _new_image_files(
@@ -415,7 +412,13 @@ def image_builder_tiff(  # noqa: C901
         try:
             gc_file = _load_with_tiff(gc_file=gc_file)
         except Exception as e:
-            error += f"Load error: {e}. "
+            error += f"TIFF load error: {e}. "
+
+        # try and load image with open slide
+        try:
+            gc_file = _load_with_openslide(gc_file=gc_file)
+        except Exception as e:
+            error += f"OpenSlide load error: {e}. "
 
         # validate
         try:
@@ -428,17 +431,16 @@ def image_builder_tiff(  # noqa: C901
         image_out_dir = output_directory / str(gc_file.pk)
         image_out_dir.mkdir()
 
-        # try and load image with open_slide
+        image = _create_tiff_image_entry(tiff_file=gc_file)
+        new_images.add(image)
+
         try:
-            dzi_output, gc_file = _load_and_create_dzi(
+            dzi_output, gc_file = _create_dzi_images(
                 gc_file=gc_file, output_directory=image_out_dir
             )
-        except Exception as e:
-            error += f"Dzi error: {e}. "
+        except ValidationError as e:
+            error += f"DZI error: {e}. "
 
-        image = _create_tiff_image_entry(tiff_file=gc_file)
-
-        new_images.add(image)
         new_image_files |= _new_image_files(
             gc_file=gc_file, image=image, output_directory=image_out_dir
         )

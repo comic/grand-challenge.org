@@ -19,7 +19,6 @@ from panimg.image_builders.tiff import (
     _create_tiff_image_entry,
     _extract_tags,
     _get_color_space,
-    _load_and_create_dzi,
     _load_gc_files,
     _load_with_tiff,
     image_builder_tiff,
@@ -187,7 +186,7 @@ def test_load_with_open_slide(
     gc_file = GrandChallengeTiffFile(temp_file)
     try:
         gc_file = _load_with_tiff(gc_file=gc_file)
-        _load_and_create_dzi(
+        _create_dzi_images(
             gc_file=gc_file,
             output_directory=Path(tmpdir_factory.mktemp("output")),
         )
