@@ -197,16 +197,15 @@ def _create_image_file(
 
     output_file = output_directory / f"{image.pk}{path.suffix}"
 
-    # TODO (jmsmkn): Would be good to remove tiff moving, but shutil is fast
-    # DZI and their files are created in the correct place anyway
-    shutil.move(src=path, dst=output_file)
+    if path.suffix.lower() == ".dzi":
+        image_type = ImageType.DZI
+    else:
+        # TODO (jmsmkn): Create the tiff files in the correct location
+        shutil.copy(src=str(path.resolve()), dst=str(output_file.resolve()))
+        image_type = ImageType.TIFF
 
     return PanImgFile(
-        image_id=image.pk,
-        image_type=ImageType.DZI
-        if path.suffix.lower() == ".dzi"
-        else ImageType.TIFF,
-        file=output_file,
+        image_id=image.pk, image_type=image_type, file=output_file
     )
 
 
