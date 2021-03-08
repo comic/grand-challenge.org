@@ -12,8 +12,10 @@
     {% for object in object_list %}
         <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
             <div class="col-lg-6 py-5">
-                <img class="w-100 rounded shadow" src="{{ object.logo.url }}"
-                     alt="Logo for blog post {{ object.title }}"/>
+                <a href="{{ object.get_absolute_url }}">
+                    <img class="w-100 rounded shadow" src="{{ object.logo.url }}"
+                         alt="Logo for blog post {{ object.title }}"/>
+                </a>
             </div>
             <div class="col-lg-6 align-self-center">
                 <h3><a href="{{ object.get_absolute_url }}">{{ object.title }}</a></h3>
