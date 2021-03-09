@@ -558,7 +558,7 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
     "th": ["scope", "colspan"],
     "td": ["colspan"],
-    "video": ["src", "loop", "controls"],
+    "video": ["src", "loop", "controls", "poster"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
