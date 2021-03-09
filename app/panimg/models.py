@@ -1,18 +1,19 @@
-from dataclasses import dataclass
 from enum import Enum
-from tempfile import TemporaryFile
+from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
+from pydantic.dataclasses import dataclass
 
-class ColorSpace(Enum):
+
+class ColorSpace(str, Enum):
     GRAY = "GRAY"
     RGB = "RGB"
     RGBA = "RGBA"
     YCBCR = "YCBCR"
 
 
-class ImageType(Enum):
+class ImageType(str, Enum):
     MHD = "MHD"
     TIFF = "TIFF"
     DZI = "DZI"
@@ -39,11 +40,10 @@ class PanImg:
 class PanImgFile:
     image_id: UUID
     image_type: ImageType
-    file: TemporaryFile
-    filename: str
+    file: Path
 
 
 @dataclass(frozen=True)
 class PanImgFolder:
     image_id: UUID
-    folder: str
+    folder: Path
