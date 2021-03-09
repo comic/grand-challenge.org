@@ -1,12 +1,13 @@
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import SimpleITK
 import pytest
 from pytest import approx
 
-from grandchallenge.cases.models import Image
 from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.image_builders.utils import convert_itk_to_internal
+from panimg.models import ColorSpace, PanImg
 from tests.cases_tests import RESOURCE_PATH
 
 
@@ -43,11 +44,11 @@ def assert_sitk_img_equivalence(
     ),
 )
 def test_convert_itk_to_internal(image: Path):
-    def assert_img_properties(img: SimpleITK.Image, internal_image: Image):
+    def assert_img_properties(img: SimpleITK.Image, internal_image: PanImg):
         color_space = {
-            1: Image.COLOR_SPACE_GRAY,
-            3: Image.COLOR_SPACE_RGB,
-            4: Image.COLOR_SPACE_RGBA,
+            1: ColorSpace.GRAY,
+            3: ColorSpace.RGB,
+            4: ColorSpace.RGBA,
         }
 
         assert internal_image.color_space == color_space.get(
@@ -71,5 +72,8 @@ def test_convert_itk_to_internal(image: Path):
         assert internal_image.resolution_levels is None
 
     img_ref = load_sitk_image(image)
-    internal_image = convert_itk_to_internal(img_ref)
+    with TemporaryDirectory() as output:
+        internal_image = convert_itk_to_internal(
+            simple_itk_image=img_ref, output_directory=output
+        )
     assert_img_properties(img_ref, internal_image[0])

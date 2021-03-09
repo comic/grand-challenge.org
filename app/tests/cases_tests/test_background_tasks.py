@@ -275,10 +275,8 @@ def test_errors_on_files_with_duplicate_file_names(settings):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("format", ["mha", "mhd"])
-def test_mhd_file_annotation_creation(settings, format):
+def test_mhd_file_annotation_creation(settings):
     # Override the celery settings
-    settings.ITK_INTERNAL_FILE_FORMAT = format
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

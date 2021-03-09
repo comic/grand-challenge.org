@@ -1,19 +1,24 @@
 import os
 import re
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from tempfile import TemporaryFile
 from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
 import openslide
 import pyvips
 import tifffile
-from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.core.files import File
 
-from grandchallenge.cases.models import FolderUpload, Image, ImageFile
+from panimg.exceptions import ValidationError
+from panimg.models import (
+    ColorSpace,
+    ImageType,
+    PanImg,
+    PanImgFile,
+    PanImgFolder,
+)
+from panimg.settings import DZI_TILE_SIZE
 from panimg.types import ImageBuilderResult
 
 
@@ -24,7 +29,7 @@ class GrandChallengeTiffFile:
     image_width: int = 0
     image_height: int = 0
     resolution_levels: int = 0
-    color_space: str = ""
+    color_space: Optional[ColorSpace] = None
     voxel_width_mm: float = 0
     voxel_height_mm: float = 0
     voxel_depth_mm: Optional[float] = None
@@ -38,7 +43,7 @@ class GrandChallengeTiffFile:
             )
         if not self.image_height:
             raise ValidationError(
-                "Not a valid tif: Image heigth could not be determined"
+                "Not a valid tif: Image height could not be determined"
             )
         if not self.resolution_levels:
             raise ValidationError(
@@ -172,40 +177,36 @@ def _extract_tags(
     return gc_file
 
 
-def _get_color_space(*, color_space_string) -> Image.COLOR_SPACES:
+def _get_color_space(*, color_space_string) -> Optional[ColorSpace]:
     color_space_string = color_space_string.split(".")[1].upper()
 
     if color_space_string == "MINISBLACK":
-        color_space = Image.COLOR_SPACE_GRAY
+        color_space = ColorSpace.GRAY
     else:
         try:
-            color_space = dict(Image.COLOR_SPACES)[color_space_string]
+            color_space = ColorSpace[color_space_string]
         except KeyError:
             return None
 
     return color_space
 
 
-def _create_image_file(*, path: str, image: Image) -> ImageFile:
-    temp_file = TemporaryFile()
-    with open(path, "rb") as open_file:
-        buffer = True
-        while buffer:
-            buffer = open_file.read(1024)
-            temp_file.write(buffer)
+def _create_image_file(
+    *, path: Path, image: PanImg, output_directory: Path
+) -> PanImgFile:
 
-    if path.lower().endswith("dzi"):
-        return ImageFile(
-            image=image,
-            image_type=ImageFile.IMAGE_TYPE_DZI,
-            file=File(temp_file, name=f"{image.pk}.dzi"),
-        )
+    output_file = output_directory / f"{image.pk}{path.suffix}"
+
+    if path.suffix.lower() == ".dzi":
+        image_type = ImageType.DZI
     else:
-        return ImageFile(
-            image=image,
-            image_type=ImageFile.IMAGE_TYPE_TIFF,
-            file=File(temp_file, name=f"{image.pk}.tif"),
-        )
+        # TODO (jmsmkn): Create the tiff files in the correct location
+        shutil.copy(src=str(path.resolve()), dst=str(output_file.resolve()))
+        image_type = ImageType.TIFF
+
+    return PanImgFile(
+        image_id=image.pk, image_type=image_type, file=output_file
+    )
 
 
 def _load_with_tiff(
@@ -216,39 +217,47 @@ def _load_with_tiff(
     return gc_file
 
 
-def _load_and_create_dzi(
+def _load_with_openslide(
     *, gc_file: GrandChallengeTiffFile
 ) -> (str, GrandChallengeTiffFile):
     open_slide_file = openslide.open_slide(str(gc_file.path.absolute()))
     gc_file = _extract_openslide_properties(
         gc_file=gc_file, image=open_slide_file
     )
-    gc_file.validate()
-    return _create_dzi_images(gc_file=gc_file)
+    return gc_file
 
 
 def _new_image_files(
-    *, gc_file: GrandChallengeTiffFile, image: Image,
-) -> Set[ImageFile]:
+    *, gc_file: GrandChallengeTiffFile, image: PanImg, output_directory: Path
+) -> Set[PanImgFile]:
     new_image_files = {
-        _create_image_file(path=str(gc_file.path.absolute()), image=image)
+        _create_image_file(
+            path=gc_file.path.absolute(),
+            image=image,
+            output_directory=output_directory,
+        )
     }
 
     if gc_file.source_files:
         for s in gc_file.source_files:
-            new_image_files.add(_create_image_file(path=s, image=image))
+            new_image_files.add(
+                _create_image_file(
+                    path=s, image=image, output_directory=output_directory
+                )
+            )
 
     return new_image_files
 
 
 def _new_folder_uploads(
-    *, dzi_output: str, image: Image,
-) -> Set[FolderUpload]:
+    *, dzi_output: Path, image: PanImg,
+) -> Set[PanImgFolder]:
     new_folder_upload = set()
 
     if dzi_output:
-        dzi_folder_upload = FolderUpload(
-            folder=dzi_output + "_files", image=image
+        dzi_folder_upload = PanImgFolder(
+            folder=dzi_output.parent / (dzi_output.name + "_files"),
+            image_id=image.pk,
         )
         new_folder_upload.add(dzi_folder_upload)
 
@@ -381,7 +390,7 @@ def _load_gc_files(
 
 
 def image_builder_tiff(  # noqa: C901
-    *, files: Set[Path], **_
+    *, files: Set[Path], output_directory: Path, **_
 ) -> ImageBuilderResult:
     new_images = set()
     new_image_files = set()
@@ -403,13 +412,13 @@ def image_builder_tiff(  # noqa: C901
         try:
             gc_file = _load_with_tiff(gc_file=gc_file)
         except Exception as e:
-            error += f"Load error: {e}. "
+            error += f"TIFF load error: {e}. "
 
-        # try and load image with open_slide
+        # try and load image with open slide
         try:
-            dzi_output, gc_file = _load_and_create_dzi(gc_file=gc_file)
+            gc_file = _load_with_openslide(gc_file=gc_file)
         except Exception as e:
-            error += f"Dzi error: {e}. "
+            error += f"OpenSlide load error: {e}. "
 
         # validate
         try:
@@ -419,10 +428,22 @@ def image_builder_tiff(  # noqa: C901
             invalid_file_errors[gc_file.path] = format_error(error)
             continue
 
-        image = _create_tiff_image_entry(tiff_file=gc_file)
+        image_out_dir = output_directory / str(gc_file.pk)
+        image_out_dir.mkdir()
 
+        image = _create_tiff_image_entry(tiff_file=gc_file)
         new_images.add(image)
-        new_image_files |= _new_image_files(gc_file=gc_file, image=image,)
+
+        try:
+            dzi_output, gc_file = _create_dzi_images(
+                gc_file=gc_file, output_directory=image_out_dir
+            )
+        except ValidationError as e:
+            error += f"DZI error: {e}. "
+
+        new_image_files |= _new_image_files(
+            gc_file=gc_file, image=image, output_directory=image_out_dir
+        )
         new_folders |= _new_folder_uploads(dzi_output=dzi_output, image=image,)
 
         if gc_file.associated_files:
@@ -439,9 +460,9 @@ def image_builder_tiff(  # noqa: C901
     )
 
 
-def _create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
+def _create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> PanImg:
     # Builds a new Image model item
-    return Image(
+    return PanImg(
         pk=tiff_file.pk,
         name=tiff_file.path.name,
         width=tiff_file.image_width,
@@ -449,28 +470,28 @@ def _create_tiff_image_entry(*, tiff_file: GrandChallengeTiffFile) -> Image:
         depth=1,
         resolution_levels=tiff_file.resolution_levels,
         color_space=tiff_file.color_space,
-        eye_choice=Image.EYE_UNKNOWN,
-        stereoscopic_choice=Image.STEREOSCOPIC_UNKNOWN,
-        field_of_view=Image.FOV_UNKNOWN,
         voxel_width_mm=tiff_file.voxel_width_mm,
         voxel_height_mm=tiff_file.voxel_height_mm,
         voxel_depth_mm=tiff_file.voxel_depth_mm,
+        timepoints=None,
+        window_center=None,
+        window_width=None,
     )
 
 
 def _create_dzi_images(
-    *, gc_file: GrandChallengeTiffFile
-) -> (str, GrandChallengeTiffFile):
+    *, gc_file: GrandChallengeTiffFile, output_directory: Path
+) -> (Path, GrandChallengeTiffFile):
     # Creates a dzi file(out.dzi) and corresponding tiles in folder {pk}_files
-    dzi_output = str(gc_file.path.parent / str(gc_file.pk))
+    dzi_output = output_directory / str(gc_file.pk)
     try:
         image = pyvips.Image.new_from_file(
             str(gc_file.path.absolute()), access="sequential"
         )
-        pyvips.Image.dzsave(
-            image, dzi_output, tile_size=settings.DZI_TILE_SIZE
+        pyvips.Image.dzsave(image, str(dzi_output), tile_size=DZI_TILE_SIZE)
+        gc_file.source_files.append(
+            dzi_output.parent / (dzi_output.name + ".dzi")
         )
-        gc_file.source_files.append(dzi_output + ".dzi")
     except Exception as e:
         raise ValidationError(f"Image can't be converted to dzi: {e}")
 

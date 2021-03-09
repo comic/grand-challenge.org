@@ -1,4 +1,5 @@
 import os
+from dataclasses import asdict
 from pathlib import Path
 from unittest import mock
 
@@ -9,6 +10,7 @@ from pydicom.pixel_data_handlers.gdcm_handler import (
     is_available as gdcm_is_available,
 )
 
+from grandchallenge.cases.models import Image
 from panimg.image_builders.dicom import (
     _get_headers_by_study,
     _validate_dicom_files,
@@ -65,19 +67,19 @@ def test_validate_dicom_files():
             )
 
 
-def test_image_builder_dicom_4dct():
+def test_image_builder_dicom_4dct(tmpdir):
     files = {Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]}
-    result = image_builder_dicom(files=files)
+    result = image_builder_dicom(files=files, output_directory=tmpdir)
     assert result.consumed_files == {
         Path(DICOM_DIR).joinpath(f"{x}.dcm") for x in range(1, 77)
     }
 
     assert len(result.new_images) == 1
-    image = result.new_images.pop()
+    image = Image(**asdict(result.new_images.pop()))
     assert image.shape == [19, 4, 2, 3]
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.file.name.endswith("mha")
+        x for x in result.new_image_files if x.file.suffix == ".mha"
     ][0]
 
     headers = parse_mh_header(mha_file_obj.file)
@@ -115,7 +117,7 @@ def test_image_builder_dicom_4dct():
         ("dicom_slope", "MET_FLOAT"),
     ],
 )
-def test_dicom_rescaling(folder, element_type):
+def test_dicom_rescaling(folder, element_type, tmpdir):
     """
     2.dcm in dicom_intercept and dicom_slope has been modified to add a
     small intercept (0.01) or slope (1.001) respectively.
@@ -125,28 +127,28 @@ def test_dicom_rescaling(folder, element_type):
         for d in os.walk(RESOURCE_PATH / folder)
         for f in d[2]
     ]
-    result = image_builder_dicom(files=files)
+    result = image_builder_dicom(files=files, output_directory=tmpdir)
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.file.name.endswith("mha")
+        x for x in result.new_image_files if x.file.suffix == ".mha"
     ][0]
 
     headers = parse_mh_header(mha_file_obj.file)
     assert headers["ElementType"] == element_type
 
 
-def test_dicom_window_level():
+def test_dicom_window_level(tmpdir):
     files = {
         Path(d[0]).joinpath(f)
         for d in os.walk(RESOURCE_PATH / "dicom")
         for f in d[2]
     }
-    result = image_builder_dicom(files=files)
+    result = image_builder_dicom(files=files, output_directory=tmpdir)
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
-        x for x in result.new_image_files if x.file.name.endswith("mha")
+        x for x in result.new_image_files if x.file.suffix == ".mha"
     ][0]
 
     headers = parse_mh_header(mha_file_obj.file)

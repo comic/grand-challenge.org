@@ -943,14 +943,6 @@ UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
 # that can contain reports about the medical images
 DATA_UPLOAD_MAX_MEMORY_SIZE = 16_777_216  # 16 mb
 
-# Internal format to use for metaimages
-ITK_INTERNAL_FILE_FORMAT = os.environ.get(
-    "ITK_INTERNAL_FILE_FORMAT", "mha"
-).lower()
-
-# Tile size in pixels to be used when creating dzi for tif files
-DZI_TILE_SIZE = 2560
-
 # Default maximum width or height for thumbnails in retina workstation
 RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 

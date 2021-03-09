@@ -177,7 +177,9 @@ def _extract_direction(dicom_ds, direction):
     return direction
 
 
-def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
+def _process_dicom_file(  # noqa: C901
+    *, dicom_ds, created_image_prefix, output_directory
+):
     ref_file = pydicom.dcmread(str(dicom_ds.headers[0]["file"]))
     ref_origin = tuple(
         float(i) for i in getattr(ref_file, "ImagePositionPatient", (0, 0, 0))
@@ -256,8 +258,9 @@ def _process_dicom_file(*, dicom_ds, created_image_prefix):  # noqa: C901
 
     # Convert the SimpleITK image to our internal representation
     return convert_itk_to_internal(
-        img,
+        simple_itk_image=img,
         name=f"{created_image_prefix}-{dicom_ds.headers[0]['data'].StudyInstanceUID}-{dicom_ds.index}",
+        output_directory=output_directory,
     )
 
 
@@ -331,7 +334,7 @@ def _create_itk_from_dcm(
 
 
 def image_builder_dicom(
-    *, files: Set[Path], created_image_prefix: str = ""
+    *, files: Set[Path], output_directory: Path, created_image_prefix: str = ""
 ) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
@@ -357,7 +360,9 @@ def image_builder_dicom(
     for dicom_ds in studies:
         try:
             n_image, n_image_files = _process_dicom_file(
-                dicom_ds=dicom_ds, created_image_prefix=created_image_prefix
+                dicom_ds=dicom_ds,
+                created_image_prefix=created_image_prefix,
+                output_directory=output_directory,
             )
             new_images.add(n_image)
             new_image_files |= set(n_image_files)

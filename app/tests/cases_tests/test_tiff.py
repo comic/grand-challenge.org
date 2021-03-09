@@ -1,17 +1,17 @@
 import os
 import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, Mock
 from uuid import uuid4
 
 import pytest
 import pyvips
 import tifffile as tiff_lib
-from django.core.exceptions import ValidationError
 from pytest import approx
 from tifffile import tifffile
 
-from grandchallenge.cases.models import Image
+from panimg.exceptions import ValidationError
 from panimg.image_builders.tiff import (
     GrandChallengeTiffFile,
     _convert_to_tiff,
@@ -19,23 +19,23 @@ from panimg.image_builders.tiff import (
     _create_tiff_image_entry,
     _extract_tags,
     _get_color_space,
-    _load_and_create_dzi,
     _load_gc_files,
     _load_with_tiff,
     image_builder_tiff,
 )
+from panimg.models import ColorSpace
 from tests.cases_tests import RESOURCE_PATH
 
 
 @pytest.mark.parametrize(
     "color_space_string, expected",
     [
-        ("TEST.GRAY", Image.COLOR_SPACE_GRAY),
-        ("TEST.MINISBLACK", Image.COLOR_SPACE_GRAY),
-        ("TEST.minisblack", Image.COLOR_SPACE_GRAY),
-        ("TEST.RGB", Image.COLOR_SPACE_RGB),
-        ("TEST.RGBA", Image.COLOR_SPACE_RGBA),
-        ("TEST.YCBCR", Image.COLOR_SPACE_YCBCR),
+        ("TEST.GRAY", ColorSpace.GRAY),
+        ("TEST.MINISBLACK", ColorSpace.GRAY),
+        ("TEST.minisblack", ColorSpace.GRAY),
+        ("TEST.RGB", ColorSpace.RGB),
+        ("TEST.RGBA", ColorSpace.RGBA),
+        ("TEST.YCBCR", ColorSpace.YCBCR),
         ("Not.Colour", None),
     ],
 )
@@ -72,7 +72,7 @@ def test_get_color_space(color_space_string, expected):
             10,
             0.1,
             0.1,
-            "Not a valid tif: Image heigth could not be determined",
+            "Not a valid tif: Image height could not be determined",
         ),
         (
             "dummy.tiff",
@@ -186,7 +186,10 @@ def test_load_with_open_slide(
     gc_file = GrandChallengeTiffFile(temp_file)
     try:
         gc_file = _load_with_tiff(gc_file=gc_file)
-        _load_and_create_dzi(gc_file=gc_file)
+        _create_dzi_images(
+            gc_file=gc_file,
+            output_directory=Path(tmpdir_factory.mktemp("output")),
+        )
     except Exception as e:
         error_message = str(e)
 
@@ -215,7 +218,10 @@ def test_dzi_creation(
     shutil.copy(source_dir / filename, temp_file)
     gc_file = GrandChallengeTiffFile(temp_file)
     try:
-        _create_dzi_images(gc_file=gc_file)
+        _create_dzi_images(
+            gc_file=gc_file,
+            output_directory=Path(tmpdir_factory.mktemp("output")),
+        )
     except ValidationError as e:
         error_message = str(e)
 
@@ -273,13 +279,19 @@ def test_tiff_image_entry_creation(
 def test_image_builder_tiff(tmpdir_factory,):
     # Copy resource files to writable temp folder
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
+    output_dir = Path(tmpdir_factory.mktemp("output"))
+
     shutil.copytree(
         RESOURCE_PATH,
         temp_dir,
         ignore=shutil.ignore_patterns("dicom*", "complex_tiff", "dzi_tiff"),
     )
     files = [Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]]
-    image_builder_result = image_builder_tiff(files=files)
+
+    image_builder_result = image_builder_tiff(
+        files=files, output_directory=output_dir
+    )
+
     expected_files = [
         temp_dir / "valid_tiff.tif",
         temp_dir / "no_dzi.tif",
@@ -289,8 +301,11 @@ def test_image_builder_tiff(tmpdir_factory,):
         expected_files
     )
 
+    file_to_pk = {i.name: i.pk for i in image_builder_result.new_images}
+
     for file in expected_files:
-        assert file.name in [i.name for i in image_builder_result.new_images]
+        pk = file_to_pk[file.name]
+        assert os.path.isfile(output_dir / str(pk) / f"{pk}.tif")
 
     valid_tiff_pk = [
         new_image.pk
@@ -304,17 +319,20 @@ def test_image_builder_tiff(tmpdir_factory,):
             [
                 imagefile
                 for imagefile in image_builder_result.new_image_files
-                if imagefile.image.pk == valid_tiff_pk
+                if imagefile.image_id == valid_tiff_pk
             ]
         )
         == 2
     )
 
     # Asserts successful creation of dzi files
-    assert os.path.isfile(temp_dir / f"{valid_tiff_pk}.dzi")
-    assert os.path.isdir(temp_dir / f"{valid_tiff_pk}_files")
+    assert os.path.isfile(
+        output_dir / str(valid_tiff_pk) / f"{valid_tiff_pk}.dzi"
+    )
 
-    assert len(list(temp_dir.glob("**/*.jpeg"))) == 9
+    dzi_file_dir = output_dir / str(valid_tiff_pk) / f"{valid_tiff_pk}_files"
+    assert os.path.isdir(dzi_file_dir)
+    assert len(list((dzi_file_dir).rglob("*.jpeg"))) == 9
 
 
 def test_handle_complex_files(tmpdir_factory):
@@ -389,6 +407,10 @@ def test_error_handling(tmpdir_factory):
     temp_dir = Path(tmpdir_factory.mktemp("temp") / "resources")
     shutil.copytree(RESOURCE_PATH / "complex_tiff", temp_dir)
     files = {Path(d[0]).joinpath(f) for d in os.walk(temp_dir) for f in d[2]}
-    image_builder_result = image_builder_tiff(files=files)
+
+    with TemporaryDirectory() as output:
+        image_builder_result = image_builder_tiff(
+            files=files, output_directory=output
+        )
 
     assert len(image_builder_result.file_errors) == 14
