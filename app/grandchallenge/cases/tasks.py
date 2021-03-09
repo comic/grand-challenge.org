@@ -1,33 +1,32 @@
 import os
 import tarfile
 import zipfile
-from collections import defaultdict
+from dataclasses import asdict, dataclass
 from datetime import timedelta
 from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, Dict, Iterable, List, Sequence, Set, Tuple
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
 
 from billiard.exceptions import SoftTimeLimitExceeded
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
+from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
 
 from grandchallenge.cases.emails import send_failed_file_import
-from grandchallenge.cases.image_builders.dicom import image_builder_dicom
-from grandchallenge.cases.image_builders.fallback import image_builder_fallback
-from grandchallenge.cases.image_builders.metaio_mhd_mha import (
-    image_builder_mhd,
-)
-from grandchallenge.cases.image_builders.nifti import image_builder_nifti
-from grandchallenge.cases.image_builders.tiff import image_builder_tiff
-from grandchallenge.cases.image_builders.types import (
-    ImageBuilderResult,
-    ImporterResult,
-)
 from grandchallenge.cases.log import logger
 from grandchallenge.cases.models import (
     FolderUpload,
@@ -40,6 +39,8 @@ from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
     StagedAjaxFile,
 )
+from panimg import convert
+from panimg.types import PanimgResult
 
 
 class ProvisioningError(Exception):
@@ -118,15 +119,6 @@ def populate_provisioning_directory(
             f"{exceptions_raised} errors occurred during provisioning of the "
             f"image construction directory"
         )
-
-
-DEFAULT_IMAGE_BUILDERS = [
-    image_builder_mhd,
-    image_builder_nifti,
-    image_builder_dicom,
-    image_builder_tiff,
-    image_builder_fallback,
-]
 
 
 def remove_duplicate_files(
@@ -349,7 +341,9 @@ def _handle_raw_image_files(tmp_dir, upload_session):
         for raw_image_file in session_files
     }
 
-    importer_result = import_images(files=input_files, origin=upload_session,)
+    importer_result = import_images(
+        input_directory=tmp_dir, origin=upload_session,
+    )
 
     _handle_raw_files(
         input_files=input_files,
@@ -362,11 +356,18 @@ def _handle_raw_image_files(tmp_dir, upload_session):
     _delete_session_files(session_files=session_files,)
 
 
+@dataclass
+class ImporterResult:
+    new_images: Set[Image]
+    consumed_files: Set[Path]
+    file_errors: Dict[Path, List[str]]
+
+
 def import_images(
     *,
-    files: Set[Path],
-    origin: RawImageUploadSession = None,
-    builders: Iterable[Callable] = None,
+    input_directory: Path,
+    origin: Optional[RawImageUploadSession] = None,
+    builders: Optional[Iterable[Callable]] = None,
 ) -> ImporterResult:
     """
     Creates Image objects from a set of files.
@@ -386,47 +387,88 @@ def import_images(
         any file errors
 
     """
-
-    new_images = set()
-    new_image_files = set()
-    new_folders = set()
-    consumed_files = set()
-    file_errors = defaultdict(list)
-
     created_image_prefix = str(origin.pk)[:8] if origin is not None else ""
-    builders = builders if builders is not None else DEFAULT_IMAGE_BUILDERS
 
-    for builder in builders:
-        builder_result: ImageBuilderResult = builder(
-            files=files - consumed_files,
+    with TemporaryDirectory() as output_directory:
+        panimg_result = convert(
+            input_directory=input_directory,
+            output_directory=output_directory,
+            builders=builders,
             created_image_prefix=created_image_prefix,
         )
 
-        new_images |= builder_result.new_images
-        new_image_files |= builder_result.new_image_files
-        new_folders |= builder_result.new_folders
-        consumed_files |= builder_result.consumed_files
+        _check_all_ids(panimg_result=panimg_result)
 
-        for filepath, msg in builder_result.file_errors.items():
-            file_errors[filepath].append(msg)
+        django_result = _convert_panimg_to_django(panimg_result=panimg_result)
 
-    _store_images(
-        origin=origin,
-        images=new_images,
-        image_files=new_image_files,
-        folders=new_folders,
-    )
+        _store_images(
+            origin=origin,
+            images=django_result.new_images,
+            image_files=django_result.new_image_files,
+            folders=django_result.new_folders,
+        )
 
     return ImporterResult(
+        new_images=django_result.new_images,
+        consumed_files=panimg_result.consumed_files,
+        file_errors=panimg_result.file_errors,
+    )
+
+
+def _check_all_ids(*, panimg_result: PanimgResult):
+    """
+    Check the integrity of the conversion job.
+
+    All new_ids must be new, this will be found when saving the Django objects.
+    Every new image must have at least one file associated with it, and
+    new folders can only belong to new images.
+    """
+    new_ids = {im.pk for im in panimg_result.new_images}
+    new_file_ids = {f.image_id for f in panimg_result.new_image_files}
+    new_folder_ids = {f.image_id for f in panimg_result.new_folders}
+
+    if new_ids != new_file_ids:
+        raise ValidationError(
+            "Each new image should have at least 1 file assigned"
+        )
+
+    if new_folder_ids - new_ids:
+        raise ValidationError("New folder does not belong to a new image")
+
+
+@dataclass
+class ConversionResult:
+    new_images: Set[Image]
+    new_image_files: Set[ImageFile]
+    new_folders: Set[FolderUpload]
+
+
+def _convert_panimg_to_django(
+    *, panimg_result: PanimgResult
+) -> ConversionResult:
+    new_images = {Image(**asdict(im)) for im in panimg_result.new_images}
+    new_image_files = {
+        ImageFile(
+            image_id=f.image_id,
+            image_type=f.image_type,
+            file=File(open(f.file, "rb"), f.file.name),
+        )
+        for f in panimg_result.new_image_files
+    }
+    new_folders = {
+        FolderUpload(**asdict(f)) for f in panimg_result.new_folders
+    }
+
+    return ConversionResult(
         new_images=new_images,
-        consumed_files=consumed_files,
-        file_errors=file_errors,
+        new_image_files=new_image_files,
+        new_folders=new_folders,
     )
 
 
 def _store_images(
     *,
-    origin: RawImageUploadSession,
+    origin: Optional[RawImageUploadSession],
     images: Set[Image],
     image_files: Set[ImageFile],
     folders: Set[FolderUpload],
@@ -434,9 +476,11 @@ def _store_images(
     with transaction.atomic():
         for image in images:
             image.origin = origin
+            image.full_clean()
             image.save()
 
         for obj in chain(image_files, folders):
+            obj.full_clean()
             obj.save()
 
 

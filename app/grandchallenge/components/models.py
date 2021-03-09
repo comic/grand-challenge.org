@@ -18,10 +18,6 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 from docker.errors import NotFound
 
-from grandchallenge.cases.image_builders.metaio_mhd_mha import (
-    image_builder_mhd,
-)
-from grandchallenge.cases.image_builders.tiff import image_builder_tiff
 from grandchallenge.cases.models import Image
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.docker import (
@@ -39,6 +35,7 @@ from grandchallenge.core.validators import (
     ExtensionValidator,
     MimeTypeValidator,
 )
+from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +164,6 @@ class ComponentInterface(models.Model):
             return
 
         with TemporaryDirectory() as tmpdir:
-            input_files = set()
             for file in output_files:
                 temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
                 temp_file.parent.mkdir(parents=True, exist_ok=True)
@@ -180,10 +176,8 @@ class ComponentInterface(models.Model):
                         buffer = infile.read(1024)
                         outfile.write(buffer)
 
-                input_files.add(temp_file)
-
             importer_result = import_images(
-                files=input_files,
+                input_directory=tmpdir,
                 builders=[image_builder_mhd, image_builder_tiff],
             )
 

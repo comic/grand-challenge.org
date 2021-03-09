@@ -139,6 +139,12 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             "The number of credits that are required for each execution of this algorithm."
         ),
     )
+    average_duration = models.DurationField(
+        null=True,
+        default=None,
+        editable=False,
+        help_text="The average duration of successful jobs.",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
@@ -260,6 +266,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
             w.save()
 
         return w
+
+    def update_average_duration(self):
+        """Store the duration of successful jobs for this algorithm"""
+        self.average_duration = Job.objects.filter(
+            algorithm_image__algorithm=self, status=Job.SUCCESS,
+        ).average_duration()
+        self.save(update_fields=("average_duration",))
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
@@ -398,6 +411,7 @@ class Job(UUIDModel, ComponentJob):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._public_orig = self.public
+        self._status_orig = self.status
 
     @property
     def container(self):
@@ -465,6 +479,9 @@ class Job(UUIDModel, ComponentJob):
         if adding or self._public_orig != self.public:
             self.update_viewer_groups_for_public()
             self._public_orig = self.public
+
+        if self._status_orig != self.status and self.status == self.SUCCESS:
+            self.algorithm_image.algorithm.update_average_duration()
 
     def init_viewers_group(self):
         self.viewers = Group.objects.create(

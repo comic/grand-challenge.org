@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import AccessMixin
 from rest_framework import permissions
 
@@ -39,34 +38,6 @@ class RetinaAPIPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return is_in_retina_group(request.user)
-
-
-class RetinaAdminAPIPermission(permissions.BasePermission):
-    """
-    Permission class for APIViews in retina app.
-    Checks if user is in retina group
-    """
-
-    def has_permission(self, request, view):
-        return is_in_retina_admins_group(request.user)
-
-
-class RetinaOwnerAPIPermission(permissions.BasePermission):
-    """
-    Permission class for annotation APIViews in retina app.
-    Checks if user is in retina admins group or is owner of this object.
-    Requires that user_id is in view.kwargs to check for ownership.
-    """
-
-    def has_permission(self, request, view):
-        user_id = view.kwargs.get("user_id")
-        user = get_user_model().objects.get(id=user_id)
-        if request.user == user and is_in_retina_group(request.user):
-            return True
-        elif is_in_retina_admins_group(request.user):
-            return True
-        else:
-            return False
 
 
 class RetinaAPIPermissionMixin(AccessMixin):

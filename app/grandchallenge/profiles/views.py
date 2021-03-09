@@ -22,6 +22,7 @@ from grandchallenge.core.permissions.rest_framework import (
     DjangoObjectOnlyPermissions,
 )
 from grandchallenge.evaluation.models import Submission
+from grandchallenge.organizations.models import Organization
 from grandchallenge.profiles.forms import UserProfileForm
 from grandchallenge.profiles.models import UserProfile
 from grandchallenge.profiles.serializers import UserProfileSerializer
@@ -62,6 +63,11 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
 
         profile_user = context["object"].user
         profile_groups = profile_user.groups.all()
+
+        organizations = Organization.objects.filter(
+            Q(members_group__in=profile_groups)
+            | Q(editors_group__in=profile_groups)
+        ).distinct()
 
         archives = (
             get_objects_for_user(
@@ -146,6 +152,7 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
                 "num_algorithms_run": Job.objects.filter(
                     creator=profile_user
                 ).count(),
+                "organizations": organizations,
             }
         )
 

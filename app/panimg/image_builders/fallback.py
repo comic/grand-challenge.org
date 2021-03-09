@@ -5,17 +5,19 @@ import SimpleITK
 import numpy as np
 from PIL import Image
 from PIL.Image import DecompressionBombError
-from django.core.exceptions import ValidationError
 
-from grandchallenge.cases.image_builders.types import ImageBuilderResult
-from grandchallenge.cases.image_builders.utils import convert_itk_to_internal
+from panimg.exceptions import ValidationError
+from panimg.image_builders.utils import convert_itk_to_internal
+from panimg.types import ImageBuilderResult
 
 
 def format_error(message):
     return f"Fallback image builder: {message}"
 
 
-def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
+def image_builder_fallback(
+    *, files: Set[Path], output_directory: Path, **_
+) -> ImageBuilderResult:
     """
     Constructs image objects by inspecting files in a directory.
 
@@ -50,7 +52,10 @@ def image_builder_fallback(*, files: Set[Path], **_) -> ImageBuilderResult:
             is_vector = img.mode != "L"
             img = SimpleITK.GetImageFromArray(img_array, isVector=is_vector)
             n_image, n_image_files = convert_itk_to_internal(
-                img, name=file.name, use_spacing=False
+                simple_itk_image=img,
+                name=file.name,
+                use_spacing=False,
+                output_directory=output_directory,
             )
             new_images.add(n_image)
             new_image_files |= set(n_image_files)

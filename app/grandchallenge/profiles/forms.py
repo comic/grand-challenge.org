@@ -25,6 +25,7 @@ class UserProfileForm(forms.ModelForm):
             "department",
             "country",
             "website",
+            "display_organizations",
         )
 
     def __init__(self, *args, **kwargs):
@@ -32,6 +33,7 @@ class UserProfileForm(forms.ModelForm):
 
         if self.instance.pk is None:
             self.fields.pop("mugshot")
+            self.fields.pop("display_organizations")
         else:
             self.fields["first_name"].initial = self.instance.user.first_name
             self.fields["last_name"].initial = self.instance.user.last_name

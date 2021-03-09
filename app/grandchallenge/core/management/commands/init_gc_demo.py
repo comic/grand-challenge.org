@@ -97,6 +97,11 @@ class Command(BaseCommand):
             "archive",
         ]
         self.users = self._create_users(usernames=default_users)
+        self.users[
+            settings.RETINA_IMPORT_USER_NAME
+        ] = get_user_model().objects.get(
+            username=settings.RETINA_IMPORT_USER_NAME
+        )
 
         self._set_user_permissions()
         self._create_demo_challenge()
@@ -492,6 +497,7 @@ class Command(BaseCommand):
             "retina": "f1f98a1733c05b12118785ffd995c250fe4d90da",
             "algorithmuser": "dc3526c2008609b429514b6361a33f8516541464",
             "readerstudy": "01614a77b1c0b4ecd402be50a8ff96188d5b011d",
+            settings.RETINA_IMPORT_USER_NAME: "e8db90bfbea3c35f40b4537fdca9b3bf1cd78a51",
         }
 
         out = f"{'*' * 80}\n"

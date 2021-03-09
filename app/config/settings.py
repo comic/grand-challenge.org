@@ -558,7 +558,7 @@ BLEACH_ALLOWED_ATTRIBUTES = {
     # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
     "th": ["scope", "colspan"],
     "td": ["colspan"],
-    "video": ["src", "loop", "controls"],
+    "video": ["src", "loop", "controls", "poster"],
 }
 BLEACH_ALLOWED_STYLES = ["height", "margin-left", "text-align", "width"]
 BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
@@ -886,10 +886,6 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"queue": "evaluation"},
         "schedule": timedelta(hours=1),
     },
-    "cache_retina_archive_data": {
-        "task": "grandchallenge.retina_api.tasks.cache_archive_data",
-        "schedule": timedelta(hours=1),
-    },
 }
 
 CELERY_TASK_ROUTES = {
@@ -947,14 +943,6 @@ UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
 # that can contain reports about the medical images
 DATA_UPLOAD_MAX_MEMORY_SIZE = 16_777_216  # 16 mb
 
-# Internal format to use for metaimages
-ITK_INTERNAL_FILE_FORMAT = os.environ.get(
-    "ITK_INTERNAL_FILE_FORMAT", "mha"
-).lower()
-
-# Tile size in pixels to be used when creating dzi for tif files
-DZI_TILE_SIZE = 2560
-
 # Default maximum width or height for thumbnails in retina workstation
 RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 
@@ -962,17 +950,6 @@ RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 RETINA_IMPORT_USER_NAME = "retina_import_user"
-RETINA_EXCEPTION_ARCHIVE = "Australia"
-RETINA_ARCHIVE_NAMES = [
-    "AREDS - GA selection",
-    "kappadata",
-    "Rotterdam_Study_1",
-    "Rotterdam Study 1",
-    "Australia",
-    "RS1",
-    "RS2",
-    "RS3",
-]
 
 ENABLE_DEBUG_TOOLBAR = False
 

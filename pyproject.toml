@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 79
@@ -19,10 +19,15 @@ tabindex_no_positive = true
 [tool.poetry]
 name = "grand-challenge.org"
 version = "0.1.0"
-description = "A framework to objectively evaluate the performance of machine learning algorithms in biomedical imaging"
+description = "A platform for end-to-end development of machine learning solutions in biomedical imaging"
+license = "Apache-2.0"
 authors = ["James Meakin <code@jmsmkn.com>"]
+readme = "README.rst"
+homepage = "https://grand-challenge.org/"
+repository = "https://github.com/comic/grand-challenge.org/"
+documentation = "https://comic.github.io/grand-challenge.org/"
 packages = [
-    { include = "app" },
+    { include = "grandchallenge", from = "app" },
 ]
 
 [tool.poetry.dependencies]
@@ -86,6 +91,7 @@ jinja2 = "^2.11.3"
 openpyxl = "^3.0.6"
 requests = "^2.25.1"
 django_rest_knox = "^4.1.0"
+pydantic = "^1.8.1"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

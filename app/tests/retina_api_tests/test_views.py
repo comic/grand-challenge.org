@@ -14,12 +14,10 @@ from rest_framework.compat import LONG_SEPARATORS, SHORT_SEPARATORS
 from rest_framework.settings import api_settings
 from rest_framework.utils import encoders
 
-from grandchallenge.retina_api.models import ArchiveDataModel
 from grandchallenge.retina_api.serializers import (
     TreeImageSerializer,
     TreeObjectSerializer,
 )
-from grandchallenge.retina_api.tasks import cache_archive_data
 from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
@@ -28,151 +26,9 @@ from tests.cases_tests.factories import (
     ImageFactoryWithImageFile3DLarge4Slices,
 )
 from tests.retina_api_tests.helpers import (
-    batch_test_data_endpoints,
-    batch_test_image_endpoint_redirects,
     client_force_login,
-    client_login,
-    create_datastructures_data,
     get_user_from_str,
 )
-
-
-@pytest.mark.django_db
-class TestArchiveIndexAPIEndpoints:
-    def test_archive_view_non_auth(self, client):
-        # Clear cache manually (this is not done by pytest-django for some reason...)
-        cache.clear()
-        url = reverse("retina:api:archives-api-view")
-        response = client.get(url, HTTP_ACCEPT="application/json")
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_archive_view_normal_non_auth(self, client):
-        # Create data
-        create_datastructures_data()
-
-        # login client
-        client, _ = client_login(client, user="normal")
-
-        url = reverse("retina:api:archives-api-view")
-        response = client.get(url, HTTP_ACCEPT="application/json")
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_archive_view_retina_auth(self, client):
-        # Create data
-        create_datastructures_data()
-
-        # login client
-        client, _ = client_login(client, user="retina_user")
-
-        url = reverse("retina:api:archives-api-view")
-        response = client.get(url, HTTP_ACCEPT="application/json")
-        assert response.status_code == status.HTTP_200_OK
-
-    def test_archive_view_returns_correct_error_on_empty_cache(
-        self, client, monkeypatch
-    ):
-        # Clear cache manually
-        cache.clear()
-
-        # Mock celery task
-        is_called = False
-
-        def call_task():
-            nonlocal is_called
-            is_called = True
-
-        monkeypatch.setattr(cache_archive_data, "delay", call_task)
-
-        # login client
-        client, _ = client_login(client, user="retina_user")
-
-        url = reverse("retina:api:archives-api-view")
-        response = client.get(url, HTTP_ACCEPT="application/json")
-        response_data = json.loads(response.content)
-        # check if correct error is sent
-        assert response_data == {
-            "error": [
-                1,
-                "Archive data task triggered. Try again in 2 minutes.",
-            ]
-        }
-        assert is_called
-
-    def test_archive_view_returns_correct_data_from_cache(self, client):
-        # Clear cache manually
-        cache.clear()
-        # Set cached data
-        test_data = {"test": "data", "object": 1}
-        ArchiveDataModel.objects.update_or_create(
-            pk=1, defaults={"value": test_data},
-        )
-
-        # login client
-        client, _ = client_login(client, user="retina_user")
-
-        url = reverse("retina:api:archives-api-view")
-        response = client.get(url, HTTP_ACCEPT="application/json")
-        response_data = json.loads(response.content)
-        # check if correct data is sent
-        assert response_data == test_data
-
-
-@pytest.mark.django_db
-class TestImageAPIEndpoint:
-    # test methods are added dynamically
-    pass
-
-
-batch_test_image_endpoint_redirects(TestImageAPIEndpoint)
-
-
-@pytest.mark.django_db
-class TestDataAPIEndpoint:
-    # test methods are added dynamically
-    pass
-
-
-batch_test_data_endpoints(TestDataAPIEndpoint)
-
-
-@pytest.mark.django_db
-class TestImageElementSpacingView:
-    @pytest.mark.parametrize(
-        "user", ["anonymous", "normal", "staff", "retina_user"]
-    )
-    def test_no_access(self, client, user):
-        image = ImageFactoryWithImageFile()
-        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
-        client, _ = client_login(client, user=user)
-        response = client.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    @pytest.mark.parametrize(
-        "user,expected_status",
-        [
-            ("anonymous", status.HTTP_403_FORBIDDEN),
-            ("normal", status.HTTP_403_FORBIDDEN),
-            ("staff", status.HTTP_403_FORBIDDEN),
-            ("retina_user", status.HTTP_200_OK),
-        ],
-    )
-    def test_access(self, client, user, expected_status):
-        image = ImageFactoryWithImageFile()
-        image.permit_viewing_by_retina_users()
-        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
-        client, _ = client_login(client, user=user)
-        response = client.get(url)
-        assert response.status_code == expected_status
-
-    def test_returns_correct_spacing(self, client):
-        image = ImageFactoryWithImageFile()
-        image.permit_viewing_by_retina_users()
-        url = reverse("retina:api:image-element-spacing-view", args=[image.pk])
-        client, _ = client_login(client, user="retina_user")
-        response = client.get(url)
-        assert response.status_code == status.HTTP_200_OK
-        r = response.json()
-        assert list(image.get_sitk_image().GetSpacing()) == r
 
 
 @pytest.mark.django_db
