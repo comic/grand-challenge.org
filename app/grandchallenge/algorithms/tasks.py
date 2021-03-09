@@ -1,6 +1,7 @@
 from celery import group, shared_task
 from django.apps import apps
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
@@ -19,6 +20,53 @@ from grandchallenge.components.models import (
 from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.subdomains.utils import reverse
+
+
+@shared_task
+def create_algorithm_jobs_for_inputs(
+    *, algorithm_image_pk, civ_pks, creator_pk
+):
+    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
+
+    # Editors group should be able to view session jobs for debugging
+    groups = [algorithm_image.algorithm.editors_group]
+
+    # TODO: send email without link to session
+    # Send an email to the algorithm editors and creator on job failure
+    # linked_task = send_failed_jobs_email.signature(
+    #     kwargs={"session_pk": session.pk}, immutable=True,
+    # )
+
+    execute_jobs(
+        algorithm_image=algorithm_image,
+        inputs=civ_pks,
+        creator=get_user_model().objects.get(pk=creator_pk),
+        extra_viewer_groups=groups,
+    )
+
+
+@shared_task
+def create_algorithm_jobs_for_session(
+    *, upload_session_pk, algorithm_image_pk
+):
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
+
+    # Editors group should be able to view session jobs for debugging
+    groups = [algorithm_image.algorithm.editors_group]
+
+    # Send an email to the algorithm editors and creator on job failure
+    linked_task = send_failed_jobs_email.signature(
+        kwargs={"session_pk": session.pk}, immutable=True,
+    )
+
+    execute_jobs(
+        algorithm_image=algorithm_image,
+        images=session.image_set.all(),
+        creator=session.creator,
+        extra_viewer_groups=groups,
+        linked_task=linked_task,
+    )
 
 
 @shared_task
@@ -112,14 +160,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 def execute_jobs(
     *,
     algorithm_image,
-    images,
+    inputs,
     creator=None,
     extra_viewer_groups=None,
     linked_task=None,
 ):
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
-        images=images,
+        inputs=inputs,
         creator=creator,
         extra_viewer_groups=extra_viewer_groups,
     )
@@ -135,11 +183,11 @@ def execute_jobs(
 
 
 def create_algorithm_jobs(
-    *, algorithm_image, images, creator=None, extra_viewer_groups=None,
+    *, algorithm_image, inputs, creator=None, extra_viewer_groups=None,
 ):
-    default_input_interface = ComponentInterface.objects.get(
-        slug=DEFAULT_INPUT_INTERFACE_SLUG
-    )
+    # default_input_interface = ComponentInterface.objects.get(
+    #     slug=DEFAULT_INPUT_INTERFACE_SLUG
+    # )
 
     jobs = []
 
@@ -157,35 +205,46 @@ def create_algorithm_jobs(
         )
 
     if algorithm_image:
-        if creator:
-            if (
-                not algorithm_image.algorithm.is_editor(creator)
-                and algorithm_image.algorithm.credits_per_job > 0
-            ):
-                images = images[: remaining_jobs()]
+        j = Job.objects.create(
+            creator=creator, algorithm_image=algorithm_image,
+        )
+        j.inputs.set([ComponentInterfaceValue.objects.get(pk=pk) for pk in inputs])
 
-        for image in images:
-            if not ComponentInterfaceValue.objects.filter(
-                interface=default_input_interface,
-                image=image,
-                algorithms_jobs_as_input__algorithm_image=algorithm_image,
-                algorithms_jobs_as_input__creator=creator,
-            ).exists():
-                j = Job.objects.create(
-                    creator=creator, algorithm_image=algorithm_image,
-                )
-                j.inputs.set(
-                    [
-                        ComponentInterfaceValue.objects.create(
-                            interface=default_input_interface, image=image
-                        )
-                    ]
-                )
+        if extra_viewer_groups is not None:
+            j.viewer_groups.add(*extra_viewer_groups)
 
-                if extra_viewer_groups is not None:
-                    j.viewer_groups.add(*extra_viewer_groups)
+        jobs.append(j)
 
-                jobs.append(j)
+        # # TODO: this logic needs to be changed. It makes no sense now..
+        # if creator:
+        #     if (
+        #         not algorithm_image.algorithm.is_editor(creator)
+        #         and algorithm_image.algorithm.credits_per_job > 0
+        #     ):
+        #         inputs = inputs[: remaining_jobs()]
+
+        # for inp in inputs:
+        #     if not ComponentInterfaceValue.objects.filter(
+        #         interface=default_input_interface,
+        #         image=image,
+        #         algorithms_jobs_as_input__algorithm_image=algorithm_image,
+        #         algorithms_jobs_as_input__creator=creator,
+        #     ).exists():
+        #         j = Job.objects.create(
+        #             creator=creator, algorithm_image=algorithm_image,
+        #         )
+        #         j.inputs.set(
+        #             [
+        #                 ComponentInterfaceValue.objects.create(
+        #                     interface=default_input_interface, image=image
+        #                 )
+        #             ]
+        #         )
+
+        #         if extra_viewer_groups is not None:
+        #             j.viewer_groups.add(*extra_viewer_groups)
+
+        #         jobs.append(j)
 
     return jobs
 

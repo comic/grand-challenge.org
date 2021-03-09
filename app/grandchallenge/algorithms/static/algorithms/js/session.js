@@ -21,38 +21,40 @@ function getUploadSessionStatus(statusUrl) {
 }
 
 function handleUploadSessionStatus(statusUrl, status, imageUrls) {
-    switch (status.toLowerCase()) {
-        case "queued":
-        case "re-queued":
-            setCardAwaitingMessage(cards.imageImport, status);
-            setTimeout(function () {
-                getUploadSessionStatus(statusUrl)
-            }, Math.floor(Math.random() * timeout) + 100);
-            break;
-        case "started":
-            setCardActiveMessage(cards.imageImport, status);
-            setTimeout(function () {
-                getUploadSessionStatus(statusUrl)
-            }, Math.floor(Math.random() * timeout) + 100);
-            break;
-        case "succeeded":
-            let msg = `Imported ${imageUrls.length} Image`;
-            if (imageUrls.length < 1) {
-                setCardErrorMessage(cards.imageImport, "No Images Imported");
-                return;
-            } else if (imageUrls.length > 1) {
-                msg += "s"
-            }
-            setCardCompleteMessage(cards.imageImport, msg);
-            getJobsForImages(imageUrls);
-            break;
-        case "failed":
-        case "cancelled":
-            setCardErrorMessage(cards.imageImport, status);
-            break;
-        default:
-            setCardErrorMessage(cards.imageImport, "Import error");
-    }
+    setCardCompleteMessage(cards.imageImport, msg);
+    getJobsForImages(imageUrls);
+    // switch (status.toLowerCase()) {
+    //     case "queued":
+    //     case "re-queued":
+    //         setCardAwaitingMessage(cards.imageImport, status);
+    //         setTimeout(function () {
+    //             getUploadSessionStatus(statusUrl)
+    //         }, Math.floor(Math.random() * timeout) + 100);
+    //         break;•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    //     case "started":
+    //         setCardActiveMessage(cards.imageImport, status);
+    //         setTimeout(function () {
+    //             getUploadSessionStatus(statusUrl)
+    //         }, Math.floor(Math.random() * timeout) + 100);
+    //         break;
+    //     case "succeeded":
+    //         let msg = `Imported ${imageUrls.length} Image`;
+    //         if (imageUrls.length < 1) {
+    //             setCardErrorMessage(cards.imageImport, "No Images Imported");
+    //             return;
+    //         } else if (imageUrls.length > 1) {
+    //             msg += "s"
+    //         }
+    //         setCardCompleteMessage(cards.imageImport, msg);
+    //         getJobsForImages(imageUrls);
+    //         break;
+    //     case "failed":
+    //     case "cancelled":
+    //         setCardErrorMessage(cards.imageImport, status);
+    //         break;
+    //     default:
+    //         setCardErrorMessage(cards.imageImport, "Import error");
+    //}
 }
 
 function getJobsForImages(imageUrls) {

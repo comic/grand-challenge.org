@@ -405,6 +405,7 @@ class Job(UUIDModel, ComponentJob):
 
     @property
     def input_files(self):
+        return [inp.value for inp in self.inputs.all()]
         return [
             im.file
             for inpt in self.inputs.all()

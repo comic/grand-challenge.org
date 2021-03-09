@@ -154,6 +154,7 @@ def execute_job(
         msg = f"Method {job.container.pk} was not ready to be used."
         job.update_status(status=job.FAILURE, error_message=msg)
         raise RuntimeError(msg)
+    import ipdb; ipdb.set_trace()
 
     try:
         with job.executor_cls(

@@ -20,6 +20,7 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
@@ -55,10 +56,10 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
     HyperlinkedJobSerializer,
 )
-from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_inputs, create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.compontents.models import ComponentInterfaceValue
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
@@ -467,16 +468,57 @@ class AlgorithmExecutionSessionCreate(
         return context
 
     def form_valid(self, form):
+        civs = []
         for slug, value in form.cleaned_data.items():
             ci = self.algorithm.inputs.get(slug=slug)
-            ComponentInterfaceValue.objects.create(interface=ci, value=value)
+            civ = ComponentInterfaceValue.objects.create(interface=ci, value=value)
+            civs.append(civ.pk)
+        create_jobs = create_algorithm_jobs_for_inputs.signature(
+            kwargs={
+                "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
+                "civ_pks": civs,
+                "creator_pk": self.request.user.pk,
+            },
+            immutable=True,
+        )
+        create_jobs.apply_async()
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(
-            "algorithms:execution-session-detail",
+            "algorithms:algorithm-experiment",
             kwargs={"slug": self.kwargs["slug"]},
         )
+
+
+class AlgorithmExperiment(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, TemplateView
+):
+    template_name = "algorithms/experiment.html"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+    @cached_property
+    def algorithm(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.algorithm
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "average_job_duration": Job.objects.filter(
+                    algorithm_image__algorithm=self.algorithm,
+                    status=Job.SUCCESS,
+                ).average_duration(),
+            }
+        )
+        return context
 
 
 class AlgorithmExecutionSessionDetail(
