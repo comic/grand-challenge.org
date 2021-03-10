@@ -4,6 +4,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmCreate,
     AlgorithmDetail,
     AlgorithmExecutionSessionCreate,
+    AlgorithmExecutionSessionCreateOld,
     AlgorithmExecutionSessionDetail,
     AlgorithmExperiment,
     AlgorithmImageCreate,
@@ -46,8 +47,13 @@ urlpatterns = [
     ),
     path(
         "<slug>/experiments/create/",
-        AlgorithmExecutionSessionCreate.as_view(),
+        AlgorithmExecutionSessionCreateOld.as_view(),
         name="execution-session-create",
+    ),
+    path(
+        "<slug>/experiments/new/",
+        AlgorithmExecutionSessionCreate.as_view(),
+        name="execution-session-create-new",
     ),
     path(
         "<slug>/experiments/<uuid:pk>/",

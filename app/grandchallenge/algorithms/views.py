@@ -291,9 +291,6 @@ class RemainingJobsMixin:
     def algorithm(self) -> Algorithm:
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_permission_object(self):
-        return self.algorithm
-
     def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
         """
         Determines the number of jobs left for the user and when the next job can be started
@@ -329,16 +326,6 @@ class RemainingJobsMixin:
             "next_job_at": next_job_at,
             "user_credits": total_jobs,
         }
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
-        context.update(
-            self.get_remaining_jobs(
-                credits_per_job=self.algorithm.credits_per_job
-            )
-        )
-        return context
 
 
 class AlgorithmExecutionSessionCreateOld(
@@ -370,6 +357,9 @@ class AlgorithmExecutionSessionCreateOld(
         )
         return kwargs
 
+    def get_permission_object(self):
+        return self.algorithm
+
     def get_initial(self):
         if self.algorithm.latest_ready_image is None:
             raise Http404()
@@ -378,6 +368,16 @@ class AlgorithmExecutionSessionCreateOld(
     def form_valid(self, form):
         form.instance.creator = self.request.user
         return super().form_valid(form)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        context.update(
+            self.get_remaining_jobs(
+                credits_per_job=self.algorithm.credits_per_job
+            )
+        )
+        return context
 
     def get_success_url(self):
         return reverse(
@@ -391,6 +391,7 @@ class AlgorithmExecutionSessionCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     FormView,
+    RemainingJobsMixin
 ):
     form_class = AlgorithmInputsForm
     template_name = "algorithms/algorithm_inputs_form.html"
@@ -399,48 +400,8 @@ class AlgorithmExecutionSessionCreate(
     )
     raise_exception = True
 
-    @property
-    def algorithm(self) -> Algorithm:
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
-
     def get_permission_object(self):
         return self.algorithm
-
-    def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
-        """
-        Determines the number of jobs left for the user and when the next job can be started
-
-        :return: A dictionary containing remaining_jobs (int) and
-        next_job_at (datetime)
-        """
-        now = timezone.now()
-        period = timedelta(days=30)
-        user_credit = Credit.objects.get(user=self.request.user)
-
-        if credits_per_job == 0:
-            return {
-                "remaining_jobs": 1,
-                "next_job_at": now,
-                "user_credits": user_credit.credits,
-            }
-
-        jobs = Job.credits_set.spent_credits(user=self.request.user)
-
-        if jobs["oldest"]:
-            next_job_at = jobs["oldest"] + period
-        else:
-            next_job_at = now
-
-        if jobs["total"]:
-            total_jobs = user_credit.credits - jobs["total"]
-        else:
-            total_jobs = user_credit.credits
-
-        return {
-            "remaining_jobs": int(total_jobs / max(credits_per_job, 1)),
-            "next_job_at": next_job_at,
-            "user_credits": total_jobs,
-        }
 
     def get_form_kwargs(self):
         """Return the keyword arguments for instantiating the form."""

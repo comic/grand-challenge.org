@@ -66,6 +66,13 @@
                 </a>
             {% endif %}
 
+            {% if request.user.is_staff and "execute_algorithm" in algorithm_perms and object.latest_ready_image %}
+                <a class="nav-link"
+                   href="{% url 'algorithms:execution-session-create-new' slug=object.slug %}">
+                    <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm with flexible inputs (experimental!)
+                </a>
+            {% endif %}
+
             <a class="nav-link"
                href="{% url 'algorithms:job-list' slug=object.slug %}">
                 <i class="fas fa-file-export fa-fw"></i>&nbsp;Results
