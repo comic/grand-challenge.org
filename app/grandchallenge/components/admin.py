@@ -18,7 +18,6 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "default_value",
-        "relative_path",
     )
 
 

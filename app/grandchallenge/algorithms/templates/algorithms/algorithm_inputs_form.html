@@ -4,9 +4,17 @@
 {% load get_obj_perms from guardian_tags %}
 {% load bleach %}
 {% load random_encode %}
+{% load static %}
 
 {% block title %}
     Try-out Algorithm - {{ block.super }}
+{% endblock %}
+
+{% block script %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.25.0/jsoneditor.min.js"
+            integrity="sha256-pIE+GhLwuPCM1Tl7lihioSquMZaPWat5cME8L90gqRI="
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.25.0/jsoneditor.min.css">
 {% endblock %}
 
 {% block breadcrumbs %}

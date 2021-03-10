@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 from crispy_forms.helper import FormHelper
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import (
@@ -6,6 +8,7 @@ from django.forms import (
     FloatField,
     Form,
     IntegerField,
+    JSONField,
     ModelForm,
     TextInput,
 )
@@ -25,10 +28,11 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.core.widgets import MarkdownEditorWidget
+from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
+from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 from grandchallenge.subdomains.utils import reverse_lazy
 
 
@@ -52,11 +56,34 @@ class AlgorithmInputsForm(SaveFormInitMixin, Form):
         },
     }
 
+    ANNOTATION_FORM_FIELDS = (
+        InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+        InterfaceKindChoices.DISTANCE_MEASUREMENT,
+        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+        InterfaceKindChoices.POINT,
+        InterfaceKindChoices.MULTIPLE_POINTS,
+        InterfaceKindChoices.POLYGON,
+        InterfaceKindChoices.MULTIPLE_POLYGONS,
+    )
+
+    def get_form_field(self, kind):
+        if kind in self.ANNOTATION_FORM_FIELDS:
+            return {
+                "class": JSONField,
+                "kwargs": {
+                    "required": True,
+                    "widget": JSONEditorWidget(schema=ANSWER_TYPE_SCHEMA["definitions"][kind])
+                },
+            }
+        if kind in self.FORM_FIELDS:
+            return self.FORM_FIELDS[kind]
+
     def __init__(self, *args, algorithm=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if algorithm is not None:
             for inp in algorithm.inputs.all():
-                field = self.FORM_FIELDS[inp.kind]
+                field = self.get_form_field(inp.kind)
                 self.fields[inp.slug] = field["class"](**field["kwargs"])
 
 
