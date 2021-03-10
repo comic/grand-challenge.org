@@ -804,7 +804,8 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         "images", "questions__options"
     )
     permission_classes = [DjangoObjectOnlyPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filterset_fields = ["slug"]
     change_permission = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
     )
