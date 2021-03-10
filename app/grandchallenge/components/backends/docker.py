@@ -224,6 +224,7 @@ class Executor(DockerConnection):
         return self._result
 
     def _pull_images(self):
+        # import ipdb; ipdb.set_trace()
         try:
             self._client.images.get(name=self._io_image)
         except ImageNotFound:
@@ -252,11 +253,19 @@ class Executor(DockerConnection):
             self._copy_input_files(writer=writer)
 
     def _copy_input_files(self, writer):
-        for file in self._input_files:
+        for name, val in self._input_files:
+            if not hasattr(val, 'name'):
+                from django.core.files.temp import NamedTemporaryFile
+                from django.core import files
+                file = NamedTemporaryFile(delete=True)
+                file.write(bytes(str(val), 'utf-8'))
+                file.flush()
+                temp_file = files.File(file, name=name)
+                val = temp_file
             put_file(
                 container=writer,
-                src=file,
-                dest=f"/input/{Path(file.name).name}",
+                src=val,
+                dest=f"/input/{name}",
             )
 
     def _chmod_volumes(self):
@@ -451,7 +460,7 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     """
     with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as tar_b:
         tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
-        tarinfo.size = src.size
+        tarinfo.size = getattr(src, "size", 100000000)
 
         with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
             tar.addfile(tarinfo, fileobj=f)

@@ -1,3 +1,6 @@
+import traceback
+import sys
+
 import json
 import tarfile
 import uuid
@@ -154,8 +157,6 @@ def execute_job(
         msg = f"Method {job.container.pk} was not ready to be used."
         job.update_status(status=job.FAILURE, error_message=msg)
         raise RuntimeError(msg)
-    import ipdb; ipdb.set_trace()
-
     try:
         with job.executor_cls(
             job_id=str(job.pk),
@@ -187,7 +188,8 @@ def execute_job(
             stderr=ev.stderr,
             error_message="Time limit exceeded.",
         )
-    except Exception:
+    except Exception as e:
+        # import ipdb; ipdb.set_trace()
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
@@ -195,7 +197,7 @@ def execute_job(
             status=job.FAILURE,
             stdout=ev.stdout,
             stderr=ev.stderr,
-            error_message="An unexpected error occurred.",
+            error_message=str(traceback.format_exc()),
         )
         raise
     else:

@@ -45,8 +45,10 @@
                                 class="sr-only">Loading...</span></div>
                     </div>
                     <p class="card-text">
-
+                        <a href=""
+                           class="stretched-link statusMessage"></a>
                     </p>
+
                 </div>
             </div>
 
@@ -79,6 +81,13 @@
             crossorigin="anonymous"></script>
     <script src="{% static 'algorithms/js/session.js' %}"
             type="text/javascript">
+    </script>
+    <script type="text/javascript">
+        (function () {
+            getUploadSessionStatus(
+                ""
+            );
+        })();
     </script>
 
 {% endblock %}

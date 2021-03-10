@@ -14,13 +14,15 @@ const averageJobDuration = moment.duration(JSON.parse(document.getElementById("a
 moment.relativeTimeThreshold('ss', 1);
 
 function getUploadSessionStatus(statusUrl) {
+    handleUploadSessionStatus("", null, []);
     // Checks on the status of the Session (queued, running, started, etc)
-    fetch(statusUrl)
-        .then(response => response.json())
-        .then(session => handleUploadSessionStatus(statusUrl, session.status, session.image_set));
+    // fetch(statusUrl)
+    //     .then(response => response.json())
+    //     .then(session => handleUploadSessionStatus(statusUrl, session.status, session.image_set));
 }
 
 function handleUploadSessionStatus(statusUrl, status, imageUrls) {
+    const msg = `Imported ${imageUrls.length} Image`;
     setCardCompleteMessage(cards.imageImport, msg);
     getJobsForImages(imageUrls);
     // switch (status.toLowerCase()) {
