@@ -69,6 +69,7 @@ from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
+from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -422,6 +423,9 @@ class AlgorithmExecutionSessionCreate(
     def form_valid(self, form):
         civs = []
         for slug, value in form.cleaned_data.items():
+            # not sure how to deal with images yet...
+            if isinstance(value, list) and isinstance(value[0], StagedAjaxFile):
+                continue
             ci = self.algorithm.inputs.get(slug=slug)
             civ = ComponentInterfaceValue.objects.create(interface=ci, value=value)
             civs.append(civ.pk)
