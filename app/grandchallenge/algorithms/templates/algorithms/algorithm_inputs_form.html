@@ -11,10 +11,8 @@
 {% endblock %}
 
 {% block script %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.25.0/jsoneditor.min.js"
-            integrity="sha256-pIE+GhLwuPCM1Tl7lihioSquMZaPWat5cME8L90gqRI="
-            crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.25.0/jsoneditor.min.css">
+    {{ block.super }}
+    {{ form.media }}
 {% endblock %}
 
 {% block breadcrumbs %}

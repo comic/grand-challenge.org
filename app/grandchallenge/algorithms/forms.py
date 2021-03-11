@@ -1,5 +1,3 @@
-from typing import NamedTuple
-
 from crispy_forms.helper import FormHelper
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import (
@@ -35,6 +33,23 @@ from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 from grandchallenge.subdomains.utils import reverse_lazy
 
+image_upload_text = (
+    "The total size of all files uploaded in a single session "
+    "cannot exceed 10 GB.<br>"
+    "The following file formats are supported: "
+    ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, "
+    ".tiff, .png, .jpeg and .jpg.<br>"
+    "The following file formats can be uploaded and will be converted to "
+    "tif: Aperio(.svs), Hamamatsu(.vms, .vmu, .ndpi), Leica(.scn), MIRAX"
+    "(.mrxs) and Ventana(.bif)."
+)
+
+file_upload_text = (
+    "The total size of all files uploaded in a single session "
+    "cannot exceed 10 GB.<br>"
+    "The following file formats are supported: "
+)
+
 
 class AlgorithmInputsForm(SaveFormInitMixin, Form):
     FORM_FIELDS = {
@@ -67,24 +82,78 @@ class AlgorithmInputsForm(SaveFormInitMixin, Form):
         InterfaceKindChoices.MULTIPLE_POLYGONS,
     )
 
-    def get_form_field(self, kind):
+    FILE_FORM_FIELDS = {
+        InterfaceKindChoices.HEAT_MAP: {
+            "help_text": image_upload_text,
+            "validators": [],
+        },
+        InterfaceKindChoices.IMAGE: {
+            "help_text": image_upload_text,
+            "validators": [],
+        },
+        InterfaceKindChoices.SEGMENTATION: {
+            "help_text": image_upload_text,
+            "validators": [],
+        },
+        InterfaceKindChoices.CSV: {
+            "help_text": f"{file_upload_text} .csv",
+            "validators": [ExtensionValidator(allowed_extensions=(".csv",))],
+        },
+        InterfaceKindChoices.JSON: {
+            "help_text": f"{file_upload_text} .json",
+            "validators": [ExtensionValidator(allowed_extensions=(".json",))],
+        },
+        InterfaceKindChoices.ZIP: {
+            "help_text": f"{file_upload_text} .zip",
+            "validators": [ExtensionValidator(allowed_extensions=(".zip",))],
+        },
+    }
+
+    def get_form_field(self, kind, initial, user):
         if kind in self.ANNOTATION_FORM_FIELDS:
-            return {
+            field = {
                 "class": JSONField,
                 "kwargs": {
                     "required": True,
-                    "widget": JSONEditorWidget(schema=ANSWER_TYPE_SCHEMA["definitions"][kind])
+                    "widget": JSONEditorWidget(
+                        schema=ANSWER_TYPE_SCHEMA["definitions"][kind]
+                    ),
+                    "initial": initial,
                 },
             }
+            return field["class"](**field["kwargs"])
+
+        if kind in self.FILE_FORM_FIELDS:
+            field = {
+                "class": UploadedAjaxFileList,
+                "kwargs": {
+                    "required": True,
+                    "widget": uploader.AjaxUploadWidget(
+                        multifile=True, auto_commit=False
+                    ),
+                    "help_text": self.FILE_FORM_FIELDS[kind]["help_text"],
+                    "validators": self.FILE_FORM_FIELDS[kind]["validators"],
+                },
+            }
+            field = field["class"](**field["kwargs"])
+
+            field.widget.user = user
+            return field
+
         if kind in self.FORM_FIELDS:
-            return self.FORM_FIELDS[kind]
+            field = self.FORM_FIELDS[kind]
+            field["kwargs"]["initial"] = initial
+            return field["class"](**field["kwargs"])
 
     def __init__(self, *args, algorithm=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if algorithm is not None:
-            for inp in algorithm.inputs.all():
-                field = self.get_form_field(inp.kind)
-                self.fields[inp.slug] = field["class"](**field["kwargs"])
+        if algorithm is None:
+            return
+        self.helper = FormHelper()
+        for inp in algorithm.inputs.all():
+            self.fields[inp.slug] = self.get_form_field(
+                inp.kind, inp.default_value, user
+            )
 
 
 class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
@@ -128,7 +197,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                     '<a href="{}">create a new one</a>.'
                 ),
                 reverse_lazy("workstation-configs:create"),
-            ),
+            )
         }
 
 
