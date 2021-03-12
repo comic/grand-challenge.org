@@ -4,13 +4,13 @@ from pathlib import Path
 
 import SimpleITK
 import pytest
-
 from panimg.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,
     load_sitk_image,
     load_sitk_image_with_nd_support,
     parse_mh_header,
 )
+
 from tests.cases_tests import RESOURCE_PATH
 
 
