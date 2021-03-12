@@ -25,6 +25,8 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
+from panimg import convert
+from panimg.types import PanimgResult
 
 from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.log import logger
@@ -39,8 +41,6 @@ from grandchallenge.jqfileupload.widgets.uploader import (
     NotFoundError,
     StagedAjaxFile,
 )
-from panimg import convert
-from panimg.types import PanimgResult
 
 
 class ProvisioningError(Exception):

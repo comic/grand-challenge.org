@@ -6,11 +6,6 @@ from unittest import mock
 import numpy as np
 import pydicom
 import pytest
-from pydicom.pixel_data_handlers.gdcm_handler import (
-    is_available as gdcm_is_available,
-)
-
-from grandchallenge.cases.models import Image
 from panimg.image_builders.dicom import (
     _get_headers_by_study,
     _validate_dicom_files,
@@ -18,6 +13,11 @@ from panimg.image_builders.dicom import (
     image_builder_dicom,
 )
 from panimg.image_builders.metaio_utils import parse_mh_header
+from pydicom.pixel_data_handlers.gdcm_handler import (
+    is_available as gdcm_is_available,
+)
+
+from grandchallenge.cases.models import Image
 from tests.cases_tests import RESOURCE_PATH
 
 DICOM_DIR = RESOURCE_PATH / "dicom"
