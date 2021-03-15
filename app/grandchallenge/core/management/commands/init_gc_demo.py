@@ -336,7 +336,7 @@ class Command(BaseCommand):
         with open(
             os.path.join(
                 settings.SITE_ROOT,
-                "tests/algorithms_tests/resources/docker2/algorithm_io.tar",
+                "tests/resources/gc_demo_algorithm/algorithm_io.tar",
             ),
             "rb",
         ) as f:

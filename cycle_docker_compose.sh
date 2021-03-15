@@ -3,6 +3,9 @@
 echo "Starting docker-compose, press Ctrl+D to cycle docker compose using a down-up cycle"
 echo "Press Ctrl+C (once) to stop"
 sleep 1
+docker build -t algorithm_io app/tests/resources/gc_demo_algorithm/
+docker save algorithm_io -o app/tests/resources/gc_demo_algorithm/algorithm_io.tar
+chmod a+r app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 
 export GIT_COMMIT_ID=$(git describe --always --dirty)
 export GIT_BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
