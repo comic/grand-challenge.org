@@ -9,7 +9,7 @@ def init_default_interfaces(*_, **__):
         {
             "title": "Generic Medical Image",
             "kind": ComponentInterface.Kind.IMAGE,
-            "relative_path": "",
+            "relative_path": "image",
         },
         {
             "title": "Generic Overlay",
@@ -60,6 +60,46 @@ def init_default_interfaces(*_, **__):
             "title": "Float",
             "kind": ComponentInterface.Kind.FLOAT,
             "relative_path": "float",
+        },
+        {
+            "title": "2D bounding box",
+            "kind": ComponentInterface.Kind.TWO_D_BOUNDING_BOX,
+            "relative_path": "2d_bounding_box",
+        },
+        {
+            "title": "Multiple 2D bounding boxes",
+            "kind": ComponentInterface.Kind.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            "relative_path": "multiple_2d_bounding_boxes",
+        },
+        {
+            "title": "Distance measurement",
+            "kind": ComponentInterface.Kind.DISTANCE_MEASUREMENT,
+            "relative_path": "distance_measurement",
+        },
+        {
+            "title": "Multiple distance measurements",
+            "kind": ComponentInterface.Kind.MULTIPLE_DISTANCE_MEASUREMENTS,
+            "relative_path": "multiple_distance_measurements",
+        },
+        {
+            "title": "Point",
+            "kind": ComponentInterface.Kind.POINT,
+            "relative_path": "point",
+        },
+        {
+            "title": "Multiple points",
+            "kind": ComponentInterface.Kind.MULTIPLE_POINTS,
+            "relative_path": "multiple_points",
+        },
+        {
+            "title": "Polygon",
+            "kind": ComponentInterface.Kind.POLYGON,
+            "relative_path": "polygon",
+        },
+        {
+            "title": "Multiple polygons",
+            "kind": ComponentInterface.Kind.MULTIPLE_POLYGONS,
+            "relative_path": "multiple_polygons",
         },
     ]
 
