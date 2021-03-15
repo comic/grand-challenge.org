@@ -87,7 +87,7 @@ def execute_algorithm_jobs_for_inputs(*, job_pks):
 
     for job in jobs:
         # check if all ComponentInterfaceValue's have a value.
-        missing_civs = (civ for civ in job.inputs.all() if not civ.has_value())
+        missing_civs = list(civ for civ in job.inputs.all() if not civ.has_value())
         if missing_civs:
             job.update_status(
                 status=job.FAILURE,
