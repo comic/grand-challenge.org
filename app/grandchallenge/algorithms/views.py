@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from pathlib import Path
 from typing import Dict
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -9,6 +10,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from django.core.files import File
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -56,10 +58,16 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
     HyperlinkedJobSerializer,
 )
-from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_inputs, create_algorithm_jobs_for_session
+from grandchallenge.algorithms.tasks import (
+    create_algorithm_jobs_for_inputs,
+    create_algorithm_jobs_for_session,
+)
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
@@ -76,7 +84,7 @@ logger = logging.getLogger(__name__)
 
 
 class AlgorithmCreate(
-    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
+    PermissionRequiredMixin, UserFormKwargsMixin, CreateView
 ):
     model = Algorithm
     form_class = AlgorithmForm
@@ -292,7 +300,7 @@ class RemainingJobsMixin:
     def algorithm(self) -> Algorithm:
         return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
 
-    def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
+    def get_remaining_jobs(self, *, credits_per_job: int) -> Dict:
         """
         Determines the number of jobs left for the user and when the next job can be started
 
@@ -350,7 +358,7 @@ class AlgorithmExecutionSessionCreateOld(
             {
                 "linked_task": create_algorithm_jobs_for_session.signature(
                     kwargs={
-                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
+                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk
                     },
                     immutable=True,
                 )
@@ -392,7 +400,7 @@ class AlgorithmExecutionSessionCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     FormView,
-    RemainingJobsMixin
+    RemainingJobsMixin,
 ):
     form_class = AlgorithmInputsForm
     template_name = "algorithms/algorithm_inputs_form.html"
@@ -421,23 +429,56 @@ class AlgorithmExecutionSessionCreate(
         return context
 
     def form_valid(self, form):
+        def create_upload(image_files):
+            raw_files = []
+            upload_session = RawImageUploadSession.objects.create()
+            for image_file in image_files:
+                raw_files.append(
+                    RawImageFile(
+                        upload_session=upload_session,
+                        filename=image_file.name,
+                        staged_file_id=image_file.uuid,
+                    )
+                )
+            RawImageFile.objects.bulk_create(list(raw_files))
+            upload_session.save()
+            return upload_session.pk
+
         civs = []
+        upload_pks = {}
         for slug, value in form.cleaned_data.items():
-            # not sure how to deal with images yet...
-            if isinstance(value, list) and isinstance(value[0], StagedAjaxFile):
-                continue
             ci = self.algorithm.inputs.get(slug=slug)
-            civ = ComponentInterfaceValue.objects.create(interface=ci, value=value)
-            civs.append(civ.pk)
-        create_jobs = create_algorithm_jobs_for_inputs.signature(
+            if ci.kind in InterfaceKind.interface_type_image():
+                # create civ without image, image will be added when import completes
+                civ = ComponentInterfaceValue.objects.create(interface=ci)
+                civ.save()
+                civs.append(civ.pk)
+                upload_pks[civ.pk] = create_upload(value)
+            elif ci.kind in InterfaceKind.interface_type_file():
+                # should be a single file
+                civ = ComponentInterfaceValue.objects.create(interface=ci)
+                civ.file = File(
+                    value[0].open(), name=str(Path(ci.output_path).name)
+                )
+                civ.full_clean()
+                civ.save()
+                civs.append(civ.pk)
+            else:
+                civ = ComponentInterfaceValue.objects.create(
+                    interface=ci, value=value
+                )
+                civs.append(civ.pk)
+
+        create_job = create_algorithm_jobs_for_inputs.signature(
             kwargs={
                 "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
+                "upload_pks": upload_pks,
                 "civ_pks": civs,
                 "creator_pk": self.request.user.pk,
             },
             immutable=True,
         )
-        create_jobs.apply_async()
+        create_job.apply_async()
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -524,7 +565,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         return (
-            queryset.filter(algorithm_image__algorithm=self.algorithm,)
+            queryset.filter(algorithm_image__algorithm=self.algorithm)
             .prefetch_related(
                 "outputs__image__files",
                 "outputs__interface",

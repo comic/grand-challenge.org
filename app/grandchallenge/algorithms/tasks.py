@@ -1,4 +1,4 @@
-from celery import group, shared_task
+from celery import chord, group, shared_task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -8,13 +8,12 @@ from django.core.mail import send_mail
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
-    DEFAULT_INPUT_INTERFACE_SLUG,
     Job,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.models import (
-    ComponentInterface,
     ComponentInterfaceValue,
 )
 from grandchallenge.credits.models import Credit
@@ -24,25 +23,87 @@ from grandchallenge.subdomains.utils import reverse
 
 @shared_task
 def create_algorithm_jobs_for_inputs(
-    *, algorithm_image_pk, civ_pks, creator_pk
+    *, algorithm_image_pk, civ_pks, upload_pks, creator_pk
 ):
     algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
+
+    if Job.objects.filter(
+        algorithm_image=algorithm_image,
+        inputs__pk__in=civ_pks,
+        creator_id=creator_pk,
+    ).exists():
+        raise ValueError("job already started")
 
     # Editors group should be able to view session jobs for debugging
     groups = [algorithm_image.algorithm.editors_group]
 
-    # TODO: send email without link to session
-    # Send an email to the algorithm editors and creator on job failure
-    # linked_task = send_failed_jobs_email.signature(
-    #     kwargs={"session_pk": session.pk}, immutable=True,
-    # )
-
-    execute_jobs(
+    jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
         inputs=civ_pks,
         creator=get_user_model().objects.get(pk=creator_pk),
         extra_viewer_groups=groups,
     )
+    start_jobs = execute_algorithm_jobs_for_inputs.signature(
+        kwargs={"job_pks": list(job.pk for job in jobs)}, immutable=True
+    )
+    if upload_pks:
+        image_tasks = group(
+            create_component_interface_value_for_image.signature(
+                kwargs={
+                    "component_interface_value_pk": civ_pk,
+                    "upload_pk": upload_pk,
+                },
+                immutable=True,
+            )
+            for civ_pk, upload_pk in upload_pks.items()
+        )
+        start_jobs = chord(image_tasks, start_jobs)
+
+    start_jobs.apply_async()
+
+
+@shared_task
+def create_component_interface_value_for_image(
+    *, component_interface_value_pk, upload_pk
+):
+    session = RawImageUploadSession.objects.get(pk=upload_pk)
+    session.status = RawImageUploadSession.REQUEUED
+    session.save()
+
+    build_images(upload_session_pk=upload_pk)
+
+    for image in session.image_set.all():
+        # Todo: should not allow > 1 image
+        civ = ComponentInterfaceValue.objects.get(
+            pk=component_interface_value_pk
+        )
+        civ.image = image
+        civ.save()
+
+
+@shared_task
+def execute_algorithm_jobs_for_inputs(*, job_pks):
+    jobs = Job.objects.filter(pk__in=job_pks)
+
+    for job in jobs:
+        # check if all ComponentInterfaceValue's have a value.
+        missing_civs = (civ for civ in job.inputs.all() if not civ.has_value())
+        if missing_civs:
+            job.update_status(
+                status=job.FAILURE,
+                error_message=(
+                    f"Job can't be started, input is missing for interface(s):"
+                    f" {list(c.interface.title for c in missing_civs)}"
+                ),
+            )
+            continue
+
+        # Send an email to the algorithm editors and creator on job failure
+        linked_task = send_failed_jobs_email.signature(
+            kwargs={}, immutable=True
+        )
+
+        execute_job(job_pks=(job.pk,), linked_task=linked_task)
 
 
 @shared_task
@@ -57,7 +118,7 @@ def create_algorithm_jobs_for_session(
 
     # Send an email to the algorithm editors and creator on job failure
     linked_task = send_failed_jobs_email.signature(
-        kwargs={"session_pk": session.pk}, immutable=True,
+        kwargs={"session_pk": session.pk}, immutable=True
     )
 
     execute_jobs(
@@ -81,7 +142,7 @@ def create_algorithm_jobs_for_session(
 
     # Send an email to the algorithm editors and creator on job failure
     linked_task = send_failed_jobs_email.signature(
-        kwargs={"session_pk": session.pk}, immutable=True,
+        kwargs={"session_pk": session.pk}, immutable=True
     )
 
     execute_jobs(
@@ -145,7 +206,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
     # Once the algorithm has been run, score the submission. No emails as
     # algorithm editors should not have access to the underlying images.
     linked_task = set_evaluation_inputs.signature(
-        kwargs={"evaluation_pk": evaluation.pk}, immutable=True,
+        kwargs={"evaluation_pk": evaluation.pk}, immutable=True
     )
 
     execute_jobs(
@@ -182,8 +243,20 @@ def execute_jobs(
         return workflow.apply_async()
 
 
+def execute_job(*, job_pks, linked_task=None):
+    jobs = Job.objects.filter(pk__in=job_pks)
+
+    workflow = group(j.signature for j in jobs)
+
+    if linked_task is not None:
+        linked_task.kwargs.update({"job_pks": [j.pk for j in jobs]})
+        workflow |= linked_task
+
+    return workflow.apply_async()
+
+
 def create_algorithm_jobs(
-    *, algorithm_image, inputs, creator=None, extra_viewer_groups=None,
+    *, algorithm_image, inputs, creator=None, extra_viewer_groups=None
 ):
     # default_input_interface = ComponentInterface.objects.get(
     #     slug=DEFAULT_INPUT_INTERFACE_SLUG
@@ -206,9 +279,11 @@ def create_algorithm_jobs(
 
     if algorithm_image:
         j = Job.objects.create(
-            creator=creator, algorithm_image=algorithm_image,
+            creator=creator, algorithm_image=algorithm_image
         )
-        j.inputs.set([ComponentInterfaceValue.objects.get(pk=pk) for pk in inputs])
+        j.inputs.set(
+            [ComponentInterfaceValue.objects.get(pk=pk) for pk in inputs]
+        )
 
         if extra_viewer_groups is not None:
             j.viewer_groups.add(*extra_viewer_groups)

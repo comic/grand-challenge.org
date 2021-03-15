@@ -19,7 +19,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import InterfaceKind
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -51,109 +51,81 @@ file_upload_text = (
 )
 
 
+class InterfaceFormField:
+    def __init__(
+        self,
+        kind: InterfaceKind.InterfaceKindChoices,
+        initial=None,
+        user=None
+    ):
+        field_type = field_for_interface(kind)
+
+        # bool can't be required
+        kwargs = {
+            "required": (
+                kind != InterfaceKind.InterfaceKindChoices.BOOL
+            )
+        }
+        if initial:
+            kwargs["initial"] = initial
+        if kind in InterfaceKind.interface_type_annotation():
+            kwargs["widget"] = JSONEditorWidget(
+                schema=ANSWER_TYPE_SCHEMA["definitions"][kind]
+            )
+        if kind in InterfaceKind.interface_type_file():
+            kwargs["widget"] = uploader.AjaxUploadWidget(
+                multifile=False, auto_commit=False
+            )
+            kwargs["help_text"] = f"{file_upload_text} .{kind.lower()}"
+            kwargs["validators"] = [
+                ExtensionValidator(allowed_extensions=(f".{kind.lower()}",))
+            ]
+        if kind in InterfaceKind.interface_type_image():
+            kwargs["widget"] = uploader.AjaxUploadWidget(
+                multifile=True, auto_commit=False
+            )
+            kwargs["help_text"] = image_upload_text
+        self._field = field_type(**kwargs)
+        if user:
+            self._field.widget.user = user
+
+    @property
+    def field(self):
+        return self._field
+
+
+def field_for_interface(i: InterfaceKind.InterfaceKindChoices):
+    if i == InterfaceKind.InterfaceKindChoices.BOOL:
+        return BooleanField
+    if i == InterfaceKind.InterfaceKindChoices.STRING:
+        return CharField
+    if i == InterfaceKind.InterfaceKindChoices.INTEGER:
+        return IntegerField
+    if i == InterfaceKind.InterfaceKindChoices.FLOAT:
+        return FloatField
+    if i == InterfaceKind.InterfaceKindChoices.BOOL:
+        return BooleanField
+    if i == InterfaceKind.InterfaceKindChoices.BOOL:
+        return BooleanField
+    if i in InterfaceKind.interface_type_annotation():
+        return JSONField
+    if (
+        i in InterfaceKind.interface_type_image()
+        or i in InterfaceKind.interface_type_file()
+    ):
+        return UploadedAjaxFileList
+
+
 class AlgorithmInputsForm(SaveFormInitMixin, Form):
-    FORM_FIELDS = {
-        InterfaceKindChoices.BOOL: {
-            "class": BooleanField,
-            "kwargs": {"required": False},
-        },
-        InterfaceKindChoices.STRING: {
-            "class": CharField,
-            "kwargs": {"required": True},
-        },
-        InterfaceKindChoices.INTEGER: {
-            "class": IntegerField,
-            "kwargs": {"required": True},
-        },
-        InterfaceKindChoices.FLOAT: {
-            "class": FloatField,
-            "kwargs": {"required": True},
-        },
-    }
-
-    ANNOTATION_FORM_FIELDS = (
-        InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-        InterfaceKindChoices.DISTANCE_MEASUREMENT,
-        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-        InterfaceKindChoices.POINT,
-        InterfaceKindChoices.MULTIPLE_POINTS,
-        InterfaceKindChoices.POLYGON,
-        InterfaceKindChoices.MULTIPLE_POLYGONS,
-    )
-
-    FILE_FORM_FIELDS = {
-        InterfaceKindChoices.HEAT_MAP: {
-            "help_text": image_upload_text,
-            "validators": [],
-        },
-        InterfaceKindChoices.IMAGE: {
-            "help_text": image_upload_text,
-            "validators": [],
-        },
-        InterfaceKindChoices.SEGMENTATION: {
-            "help_text": image_upload_text,
-            "validators": [],
-        },
-        InterfaceKindChoices.CSV: {
-            "help_text": f"{file_upload_text} .csv",
-            "validators": [ExtensionValidator(allowed_extensions=(".csv",))],
-        },
-        InterfaceKindChoices.JSON: {
-            "help_text": f"{file_upload_text} .json",
-            "validators": [ExtensionValidator(allowed_extensions=(".json",))],
-        },
-        InterfaceKindChoices.ZIP: {
-            "help_text": f"{file_upload_text} .zip",
-            "validators": [ExtensionValidator(allowed_extensions=(".zip",))],
-        },
-    }
-
-    def get_form_field(self, kind, initial, user):
-        if kind in self.ANNOTATION_FORM_FIELDS:
-            field = {
-                "class": JSONField,
-                "kwargs": {
-                    "required": True,
-                    "widget": JSONEditorWidget(
-                        schema=ANSWER_TYPE_SCHEMA["definitions"][kind]
-                    ),
-                    "initial": initial,
-                },
-            }
-            return field["class"](**field["kwargs"])
-
-        if kind in self.FILE_FORM_FIELDS:
-            field = {
-                "class": UploadedAjaxFileList,
-                "kwargs": {
-                    "required": True,
-                    "widget": uploader.AjaxUploadWidget(
-                        multifile=True, auto_commit=False
-                    ),
-                    "help_text": self.FILE_FORM_FIELDS[kind]["help_text"],
-                    "validators": self.FILE_FORM_FIELDS[kind]["validators"],
-                },
-            }
-            field = field["class"](**field["kwargs"])
-
-            field.widget.user = user
-            return field
-
-        if kind in self.FORM_FIELDS:
-            field = self.FORM_FIELDS[kind]
-            field["kwargs"]["initial"] = initial
-            return field["class"](**field["kwargs"])
-
     def __init__(self, *args, algorithm=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if algorithm is None:
             return
         self.helper = FormHelper()
         for inp in algorithm.inputs.all():
-            self.fields[inp.slug] = self.get_form_field(
+            self.fields[inp.slug] = InterfaceFormField(
                 inp.kind, inp.default_value, user
-            )
+            ).field
 
 
 class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):

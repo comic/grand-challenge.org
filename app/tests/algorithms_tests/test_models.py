@@ -9,7 +9,7 @@ from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKindChoices,
+    InterfaceKind,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -61,10 +61,10 @@ def test_group_deletion_reverse(group):
 def test_default_interfaces_created():
     a = AlgorithmFactory()
 
-    assert {i.kind for i in a.inputs.all()} == {InterfaceKindChoices.IMAGE}
+    assert {i.kind for i in a.inputs.all()} == {InterfaceKind.InterfaceKindChoices.IMAGE}
     assert {o.kind for o in a.outputs.all()} == {
-        InterfaceKindChoices.JSON,
-        InterfaceKindChoices.HEAT_MAP,
+        InterfaceKind.InterfaceKindChoices.JSON,
+        InterfaceKind.InterfaceKindChoices.HEAT_MAP,
     }
 
 
