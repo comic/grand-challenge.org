@@ -8,12 +8,14 @@ from django.core.mail import send_mail
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    DEFAULT_INPUT_INTERFACE_SLUG,
     Job,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.models import (
+    ComponentInterface,
     ComponentInterfaceValue,
 )
 from grandchallenge.credits.models import Credit
@@ -81,6 +83,16 @@ def create_component_interface_value_for_image(
         civ.save()
 
 
+def create_civ_for_images(images):
+    default_input_interface = ComponentInterface.objects.get(
+        slug=DEFAULT_INPUT_INTERFACE_SLUG
+    )
+
+    return [ComponentInterfaceValue.objects.create(
+        interface=default_input_interface, image=image
+    ).pk for image in images]
+
+
 @shared_task
 def execute_algorithm_jobs_for_inputs(*, job_pks):
     jobs = Job.objects.filter(pk__in=job_pks)
@@ -123,31 +135,7 @@ def create_algorithm_jobs_for_session(
 
     execute_jobs(
         algorithm_image=algorithm_image,
-        images=session.image_set.all(),
-        creator=session.creator,
-        extra_viewer_groups=groups,
-        linked_task=linked_task,
-    )
-
-
-@shared_task
-def create_algorithm_jobs_for_session(
-    *, upload_session_pk, algorithm_image_pk
-):
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
-
-    # Editors group should be able to view session jobs for debugging
-    groups = [algorithm_image.algorithm.editors_group]
-
-    # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(
-        kwargs={"session_pk": session.pk}, immutable=True
-    )
-
-    execute_jobs(
-        algorithm_image=algorithm_image,
-        images=session.image_set.all(),
+        inputs=create_civ_for_images(session.image_set.all()),
         creator=session.creator,
         extra_viewer_groups=groups,
         linked_task=linked_task,
@@ -184,7 +172,7 @@ def create_algorithm_jobs_for_archive(
 
             execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
-                images=images,
+                inputs=create_civ_for_images(images),
                 creator=None,
                 extra_viewer_groups=groups,
                 linked_task=linked_task,
@@ -211,7 +199,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 
     execute_jobs(
         algorithm_image=evaluation.submission.algorithm_image,
-        images=evaluation.submission.phase.archive.images.all(),
+        inputs=create_civ_for_images(evaluation.submission.phase.archive.images.all()),
         creator=None,
         extra_viewer_groups=groups,
         linked_task=linked_task,
