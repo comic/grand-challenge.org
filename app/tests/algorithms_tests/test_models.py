@@ -61,7 +61,9 @@ def test_group_deletion_reverse(group):
 def test_default_interfaces_created():
     a = AlgorithmFactory()
 
-    assert {i.kind for i in a.inputs.all()} == {InterfaceKind.InterfaceKindChoices.IMAGE}
+    assert {i.kind for i in a.inputs.all()} == {
+        InterfaceKind.InterfaceKindChoices.IMAGE
+    }
     assert {o.kind for o in a.outputs.all()} == {
         InterfaceKind.InterfaceKindChoices.JSON,
         InterfaceKind.InterfaceKindChoices.HEAT_MAP,
