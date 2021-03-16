@@ -47,7 +47,7 @@ function handleJobStatus(job) {
 
 function handleImageImports(imageInputs){
     if (imageInputs.length == 0){
-        setCardActiveMessage(cards.imageImport, "No images for this job");
+        setCardInactiveMessage(cards.imageImport, "No images for this job");
     }
     else if (imageInputs.every(i => i.image!= null)){
         const msg = `Total of ${imageInputs.length} images`;
@@ -74,8 +74,8 @@ function setCardActiveMessage(card, msg) {
 }
 
 function setCardCompleteMessage(card, msg) {
-    card.classList.remove("active");
-    card.classList.replace("border-primary", "border-success");
+    card.classList.remove("active", "border-light", "border-primary",  "text-muted");
+    card.classList.add("border-success");
     card.querySelector(".statusMessage").innerHTML = msg;
     card.querySelector(".statusSymbol").innerHTML = "<i class=\"text-success fa fa-check fa-2x\"></i>";
 }
@@ -85,4 +85,11 @@ function setCardErrorMessage(card, msg) {
     card.classList.add("border-danger");
     card.querySelector(".statusMessage").innerHTML = msg;
     card.querySelector(".statusSymbol").innerHTML = "<i class=\"text-danger fa fa-times fa-2x\"></i>";
+}
+
+function setCardInactiveMessage(card, msg) {
+    card.classList.remove("active");
+    card.classList.replace("border-primary", "border-success");
+    card.querySelector(".statusMessage").innerHTML = msg;
+    card.querySelector(".statusSymbol").innerHTML = "<i class=\"text-success fa fa-minus fa-2x\"></i>";
 }
