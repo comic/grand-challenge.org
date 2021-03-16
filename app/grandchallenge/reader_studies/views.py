@@ -37,12 +37,13 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
+from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import (
-    ModelViewSet,
+    GenericViewSet,
     ReadOnlyModelViewSet,
 )
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -889,7 +890,13 @@ class QuestionViewSet(ReadOnlyModelViewSet):
     )
 
 
-class AnswerViewSet(ModelViewSet):
+class AnswerViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
     serializer_class = AnswerSerializer
     queryset = (
         Answer.objects.all()
