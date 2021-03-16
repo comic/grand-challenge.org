@@ -4,6 +4,7 @@ from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmPermissionRequest,
 )
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.management.commands.init_gc_demo import (
     get_temporary_image,
 )
@@ -113,6 +114,7 @@ def test_algorithm_create(client):
     creator = get_algorithm_creator()
 
     ws = WorkstationFactory()
+    ci = ComponentInterface.objects.first()
 
     def try_create_algorithm():
         return get_view_for_user(
@@ -124,6 +126,7 @@ def test_algorithm_create(client):
                 "logo": get_temporary_image(),
                 "workstation": ws.pk,
                 "credits_per_job": 1,
+                "inputs": [ci.pk],
             },
             follow=True,
             user=creator,
