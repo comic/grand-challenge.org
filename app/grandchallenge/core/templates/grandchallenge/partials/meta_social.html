@@ -6,22 +6,26 @@
 <meta property="og:url" content="{{ request.build_absolute_uri }}">
 <meta property="og:site_name" content="{{ request.site }}">
 
-{% if object %}
-    <meta name="title" content="{% firstof object.title object.short_name %} - {{ request.site.name }}">
-    <meta property="og:title" content="{% firstof object.title object.short_name %} - {{ request.site.name }}">
+{% firstof social_info archive algorithm reader_study request.challenge object as meta_info %}
 
-    <meta name="description" content="{{ object.description }}">
-    <meta property="og:description" content="{{ object.description }}">
+{% if social_object %}
+    <meta name="title" content="{% firstof meta_info.title object.short_name %} - {{ request.site.name }}">
+    <meta property="og:title" content="{% firstof meta_info.title object.short_name %} - {{ request.site.name }}">
+
+    <meta name="description" content="{{ meta_info.description }}">
+    <meta property="og:description" content="{{ meta_info.description }}">
 
     {% if object.social_image %}
-        <meta property="og:image" content="{{ object.social_image.url }}">
+        <meta property="og:image" content="{{ meta_info.social_image.url }}">
     {% elif object.logo %}
-        <meta property="og:image" content="{{ object.logo.url }}">
+        <meta property="og:image" content="{{ meta_info.logo.url }}">
     {% endif %}
 {% else %}
     <meta name="title" content="{{ request.site.name }}">
     <meta property="og:title" content="{{ request.site.name }}">
 
-    <meta name="description" content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
-    <meta property="og:description" content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
+    <meta name="description"
+          content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
+    <meta property="og:description"
+          content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
 {% endif %}
