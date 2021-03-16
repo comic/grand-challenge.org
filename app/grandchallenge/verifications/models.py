@@ -70,6 +70,7 @@ class Verification(models.Model):
 
         super().save(*args, **kwargs)
 
+    @property
     def user_info(self):
         return format_html(
             "<span>{} <br/> {} <br/> {} <br/> {} <br/> {}</span>",
