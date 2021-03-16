@@ -1,27 +1,13 @@
-{% load url %}
-{% load static %}
-
-<meta property="og:type" content="website">
-<meta property="twitter:card" content="summary_large_image">
-<meta property="og:url" content="{{ request.build_absolute_uri }}">
-<meta property="og:site_name" content="{{ request.site }}">
-
-{% if object %}
-    <meta name="title" content="{% firstof object.title object.short_name %} - {{ request.site.name }}">
-    <meta property="og:title" content="{% firstof object.title object.short_name %} - {{ request.site.name }}">
-
-    <meta name="description" content="{{ object.description }}">
-    <meta property="og:description" content="{{ object.description }}">
-
-    {% if object.social_image %}
-        <meta property="og:image" content="{{ object.social_image.url }}">
-    {% elif object.logo %}
-        <meta property="og:image" content="{{ object.logo.url }}">
-    {% endif %}
+{% if social_info %}
+    {% include "grandchallenge/partials/meta_social_kernel.html" with meta_info=social_info %}
+{% elif archive %}
+    {% include "grandchallenge/partials/meta_social_kernel.html" with meta_info=archive %}
+{% elif algorithm %}
+    {% include "grandchallenge/partials/meta_social_kernel.html" with meta_info=algorithm %}
+{% elif reader_study %}
+    {% include "grandchallenge/partials/meta_social_kernel.html" with meta_info=reader_study %}
+{% elif challenge %}
+    {% include "grandchallenge/partials/meta_social_kernel.html" with meta_info=challenge %}
 {% else %}
-    <meta name="title" content="{{ request.site.name }}">
-    <meta property="og:title" content="{{ request.site.name }}">
-
-    <meta name="description" content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
-    <meta property="og:description" content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
+    {% include "grandchallenge/partials/meta_social_kernel.html" with meta_info=object %}
 {% endif %}
