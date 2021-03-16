@@ -27,14 +27,17 @@ from grandchallenge.subdomains.utils import reverse
 def create_algorithm_job_for_inputs(
     *, algorithm_image_pk, civ_pks, upload_pks, creator_pk
 ):
-    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
+    try:
+        algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
+    except AlgorithmImage.DoesNotExist:
+        return
 
     if Job.objects.filter(
         algorithm_image=algorithm_image,
         inputs__pk__in=civ_pks,
         creator_id=creator_pk,
     ).exists():
-        raise ValueError("job already started")
+        return
 
     # Editors group should be able to view session jobs for debugging
     groups = [algorithm_image.algorithm.editors_group]
@@ -234,7 +237,6 @@ def execute_job(*, job_pks, linked_task=None):
 def create_algorithm_job_with_inputs(
     *, algorithm_image, inputs, creator=None, extra_viewer_groups=None
 ):
-
     if not algorithm_image:
         return None
 

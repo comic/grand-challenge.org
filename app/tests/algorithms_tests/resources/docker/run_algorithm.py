@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # What the user uploads will be placed directly in /input/, but the admin
     # is free to determine the file type. The only limitation is that this will
     # be a single file.
-    input_file = "/input/input_file.tif"
+    input_file = "/input/image/input_file.tif"
     os.makedirs("/output/images")
     shutil.copyfile(input_file, "/output/images/output.tif")
 

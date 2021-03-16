@@ -5,6 +5,7 @@ import pytest
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
+    create_algorithm_job_for_inputs,
     create_algorithm_jobs,
     execute_jobs,
 )
@@ -28,10 +29,26 @@ from tests.factories import (
 
 @pytest.mark.django_db
 class TestCreateAlgorithmJobs:
+    @property
+    def default_input_interface(self):
+        return ComponentInterface.objects.get(
+            slug=DEFAULT_INPUT_INTERFACE_SLUG
+        )
+
     def test_no_algorithm_image_does_nothing(self):
         image = ImageFactory()
+        civ = ComponentInterfaceValueFactory(
+            interface=self.default_input_interface, image=image
+        )
         create_algorithm_jobs(
             algorithm_image=None, images=[image],
+        )
+        assert Job.objects.count() == 0
+        create_algorithm_job_for_inputs(
+            algorithm_image_pk=None,
+            civ_pks=[civ.pk],
+            upload_pks=[],
+            creator_pk=None,
         )
         assert Job.objects.count() == 0
 
@@ -41,20 +58,21 @@ class TestCreateAlgorithmJobs:
         assert Job.objects.count() == 0
 
     def test_civ_existing_does_nothing(self):
-        default_input_interface = ComponentInterface.objects.get(
-            slug=DEFAULT_INPUT_INTERFACE_SLUG
-        )
         image = ImageFactory()
         ai = AlgorithmImageFactory()
-        j = AlgorithmJobFactory(creator=None, algorithm_image=ai)
+        j = AlgorithmJobFactory(creator=ai.creator, algorithm_image=ai)
         civ = ComponentInterfaceValueFactory(
-            interface=default_input_interface, image=image
+            interface=self.default_input_interface, image=image
         )
         j.inputs.set([civ])
         assert Job.objects.count() == 1
-        jobs = create_algorithm_jobs(algorithm_image=ai, images=[image])
+        create_algorithm_job_for_inputs(
+            algorithm_image_pk=ai.pk,
+            civ_pks=[civ.pk],
+            upload_pks=[],
+            creator_pk=ai.creator.pk,
+        )
         assert Job.objects.count() == 1
-        assert len(jobs) == 0
 
     def test_creates_job_correctly(self):
         ai = AlgorithmImageFactory()
@@ -176,6 +194,9 @@ def test_algorithm(client, algorithm_image, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+    default_input_interface = ComponentInterface.objects.get(
+        slug=DEFAULT_INPUT_INTERFACE_SLUG
+    )
 
     assert Job.objects.count() == 0
 
@@ -193,6 +214,7 @@ def test_algorithm(client, algorithm_image, settings):
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
     )
+
     execute_jobs(algorithm_image=alg, images=[image_file.image])
     jobs = Job.objects.filter(algorithm_image=alg).all()
 
