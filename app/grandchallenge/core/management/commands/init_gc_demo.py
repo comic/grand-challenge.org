@@ -333,15 +333,17 @@ class Command(BaseCommand):
         algorithm_image = AlgorithmImage(
             creator=self.users["algorithm"], algorithm=algorithm, ready=True
         )
-        with open(
-            os.path.join(
-                settings.SITE_ROOT,
-                "tests/resources/gc_demo_algorithm/algorithm_io.tar",
-            ),
-            "rb",
-        ) as f:
-            container = File(f)
-            algorithm_image.image.save("algorithm_io.tar", container)
+        algorithm_image_path = "tests/resources/gc_demo_algorithm/algorithm_io.tar"
+        if os.path.exists(algorithm_image_path):
+            with open(
+                os.path.join(
+                    settings.SITE_ROOT,
+                    algorithm_image_path,
+                ),
+                "rb",
+            ) as f:
+                container = File(f)
+                algorithm_image.image.save("algorithm_io.tar", container)
 
         algorithm_image.save()
 
