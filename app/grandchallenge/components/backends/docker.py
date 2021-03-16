@@ -263,6 +263,7 @@ class Executor(DockerConnection):
                 file.flush()
                 temp_file = files.File(file, name=name)
                 val = temp_file
+
             put_file(
                 container=writer, src=val, dest=f"/input/{name}",
             )
@@ -294,7 +295,7 @@ class Executor(DockerConnection):
                 detach=True,
                 labels=self._labels,
                 environment={
-                    "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
+                    "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
                 },
                 **self._run_kwargs,
             )

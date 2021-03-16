@@ -170,6 +170,4 @@ class TestAlgorithmJobGroups(TestCase):
 
     def test_viewer_group_in_m2m(self):
         j = AlgorithmJobFactory()
-        assert {*j.viewer_groups.all()} == {
-            j.viewers,
-        }
+        assert {*j.viewer_groups.all()} == {j.viewers}

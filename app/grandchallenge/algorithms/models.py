@@ -270,7 +270,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     def update_average_duration(self):
         """Store the duration of successful jobs for this algorithm"""
         self.average_duration = Job.objects.filter(
-            algorithm_image__algorithm=self, status=Job.SUCCESS,
+            algorithm_image__algorithm=self, status=Job.SUCCESS
         ).average_duration()
         self.save(update_fields=("average_duration",))
 
@@ -361,7 +361,7 @@ class JobQuerySet(models.QuerySet):
         user_groups = Group.objects.filter(user=user)
 
         return (
-            self.filter(creator=user, created__range=[now - period, now],)
+            self.filter(creator=user, created__range=[now - period, now])
             .distinct()
             .order_by("created")
             .select_related("algorithm_image__algorithm")
@@ -498,9 +498,7 @@ class Job(UUIDModel, ComponentJob):
         # If there is a creator they can view and change this job
         if self.creator:
             self.viewers.user_set.add(self.creator)
-            assign_perm(
-                f"change_{self._meta.model_name}", self.creator, self,
-            )
+            assign_perm(f"change_{self._meta.model_name}", self.creator, self)
 
     def update_viewer_groups_for_public(self):
         g = Group.objects.get(
