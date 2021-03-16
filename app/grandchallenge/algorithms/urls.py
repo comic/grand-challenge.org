@@ -61,7 +61,7 @@ urlpatterns = [
         name="execution-session-detail",
     ),
     path(
-        "<slug>/experiment/",
+        "<slug>/experiment/<uuid:pk>",
         AlgorithmExperiment.as_view(),
         name="algorithm-experiment",
     ),

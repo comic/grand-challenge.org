@@ -305,6 +305,7 @@ class ComponentInterfaceValue(models.Model):
         to=Image, null=True, blank=True, on_delete=models.CASCADE
     )
 
+    @property
     def has_value(self):
         return self.value is not None or self.image or self.file
 

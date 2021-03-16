@@ -62,6 +62,8 @@ def create_algorithm_jobs_for_inputs(
         start_jobs = chord(image_tasks, start_jobs)
 
     start_jobs.apply_async()
+    # Todo: maybe create single jobs?
+    return jobs[0]
 
 
 @shared_task
@@ -99,7 +101,7 @@ def execute_algorithm_jobs_for_inputs(*, job_pks):
 
     for job in jobs:
         # check if all ComponentInterfaceValue's have a value.
-        missing_civs = list(civ for civ in job.inputs.all() if not civ.has_value())
+        missing_civs = list(civ for civ in job.inputs.all() if not civ.has_value)
         if missing_civs:
             job.update_status(
                 status=job.FAILURE,

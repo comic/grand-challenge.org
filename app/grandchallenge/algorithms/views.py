@@ -407,6 +407,7 @@ class AlgorithmExecutionSessionCreate(
     permission_required = (
         f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
     )
+    job = None
     raise_exception = True
 
     def get_permission_object(self):
@@ -478,13 +479,14 @@ class AlgorithmExecutionSessionCreate(
             },
             immutable=True,
         )
-        create_job.apply_async()
+
+        self.job = create_job()
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse(
             "algorithms:algorithm-experiment",
-            kwargs={"slug": self.kwargs["slug"]},
+            kwargs={"slug": self.kwargs["slug"], "pk": self.job.pk},
         )
 
 
