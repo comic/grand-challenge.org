@@ -53,18 +53,13 @@ file_upload_text = (
 
 class InterfaceFormField:
     def __init__(
-        self,
-        kind: InterfaceKind.InterfaceKindChoices,
-        initial=None,
-        user=None
+        self, kind: InterfaceKind.InterfaceKindChoices, initial=None, user=None
     ):
         field_type = field_for_interface(kind)
 
         # bool can't be required
         kwargs = {
-            "required": (
-                kind != InterfaceKind.InterfaceKindChoices.BOOL
-            )
+            "required": (kind != InterfaceKind.InterfaceKindChoices.BOOL)
         }
         if initial:
             kwargs["initial"] = initial

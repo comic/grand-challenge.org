@@ -1,5 +1,4 @@
 import traceback
-import sys
 
 import json
 import tarfile
@@ -188,7 +187,7 @@ def execute_job(
             stderr=ev.stderr,
             error_message="Time limit exceeded.",
         )
-    except Exception as e:
+    except Exception:
         # import ipdb; ipdb.set_trace()
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name

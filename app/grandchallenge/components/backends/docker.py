@@ -254,19 +254,16 @@ class Executor(DockerConnection):
 
     def _copy_input_files(self, writer):
         for name, val in self._input_files:
-            if not hasattr(val, 'name'):
+            if not hasattr(val, "name"):
                 from django.core.files.temp import NamedTemporaryFile
                 from django.core import files
+
                 file = NamedTemporaryFile(delete=True)
-                file.write(bytes(str(val), 'utf-8'))
+                file.write(bytes(str(val), "utf-8"))
                 file.flush()
                 temp_file = files.File(file, name=name)
                 val = temp_file
-            put_file(
-                container=writer,
-                src=val,
-                dest=f"/input/{name}",
-            )
+            put_file(container=writer, src=val, dest=f"/input/{name}")
 
     def _chmod_volumes(self):
         """Ensure that the i/o directories are writable."""
@@ -295,7 +292,7 @@ class Executor(DockerConnection):
                 detach=True,
                 labels=self._labels,
                 environment={
-                    "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
+                    "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
                 },
                 **self._run_kwargs,
             )

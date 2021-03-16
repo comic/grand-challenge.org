@@ -75,8 +75,10 @@ def create_component_interface_value_for_image(
 
     build_images(upload_session_pk=upload_pk)
 
+    if session.image_set.count() > 1:
+        raise ValueError("Image imports should result in a single image")
+
     for image in session.image_set.all():
-        # Todo: should not allow > 1 image
         civ = ComponentInterfaceValue.objects.get(
             pk=component_interface_value_pk
         )
@@ -88,22 +90,28 @@ def create_component_interface_value_for_image(
 def execute_algorithm_job_for_inputs(*, job_pk):
     job = Job.objects.get(pk=job_pk)
 
+    # Send an email to the algorithm editors and creator on job failure
+    linked_task = send_failed_jobs_email.signature(
+        kwargs={"job_pks": job_pk}, immutable=True
+    )
+
     # check if all ComponentInterfaceValue's have a value.
-    missing_civs = list(civ for civ in job.inputs.all() if not civ.has_value)
-    if missing_civs:
+    # Todo: move this check to execute() code when using inputs is done
+    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
+    if missing_inputs:
         job.update_status(
             status=job.FAILURE,
             error_message=(
                 f"Job can't be started, input is missing for interface(s):"
-                f" {list(c.interface.title for c in missing_civs)}"
+                f" {list(c.interface.title for c in missing_inputs)}"
             ),
         )
+        linked_task.apply_async()
         return
 
-    # Send an email to the algorithm editors and creator on job failure
-    linked_task = send_failed_jobs_email.signature(kwargs={}, immutable=True)
+    workflow = job.signature | linked_task
 
-    execute_job(job_pks=(job.pk,), linked_task=linked_task)
+    return workflow.apply_async()
 
 
 @shared_task
@@ -217,18 +225,6 @@ def execute_jobs(
             workflow |= linked_task
 
         return workflow.apply_async()
-
-
-def execute_job(*, job_pks, linked_task=None):
-    jobs = Job.objects.filter(pk__in=job_pks)
-
-    workflow = group(j.signature for j in jobs)
-
-    if linked_task is not None:
-        linked_task.kwargs.update({"job_pks": [j.pk for j in jobs]})
-        workflow |= linked_task
-
-    return workflow.apply_async()
 
 
 def create_algorithm_job_with_inputs(

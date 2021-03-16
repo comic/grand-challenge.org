@@ -50,7 +50,7 @@ def test_setting_display_all_metrics(client, challenge_set):
     metrics = {"public": 3245.235, "secret": 4328.432, "extra": 2144.312}
     phase = challenge_set.challenge.phase_set.get()
 
-    e = EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS,)
+    e = EvaluationFactory(submission__phase=phase, status=Evaluation.SUCCESS)
 
     e.outputs.add(
         ComponentInterfaceValue.objects.create(
@@ -100,5 +100,9 @@ def test_setting_display_all_metrics(client, challenge_set):
 def test_default_interfaces_created():
     p = PhaseFactory()
 
-    assert {i.kind for i in p.inputs.all()} == {InterfaceKind.InterfaceKindChoices.CSV}
-    assert {o.kind for o in p.outputs.all()} == {InterfaceKind.InterfaceKindChoices.JSON}
+    assert {i.kind for i in p.inputs.all()} == {
+        InterfaceKind.InterfaceKindChoices.CSV
+    }
+    assert {o.kind for o in p.outputs.all()} == {
+        InterfaceKind.InterfaceKindChoices.JSON
+    }
