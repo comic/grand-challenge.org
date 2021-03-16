@@ -14,49 +14,45 @@ const averageJobDuration = moment.duration(JSON.parse(document.getElementById("a
 moment.relativeTimeThreshold('ss', 1);
 
 function getUploadSessionStatus(statusUrl) {
-    handleUploadSessionStatus("", null, []);
     // Checks on the status of the Session (queued, running, started, etc)
-    // fetch(statusUrl)
-    //     .then(response => response.json())
-    //     .then(session => handleUploadSessionStatus(statusUrl, session.status, session.image_set));
+    fetch(statusUrl)
+        .then(response => response.json())
+        .then(session => handleUploadSessionStatus(statusUrl, session.status, session.image_set));
 }
 
 function handleUploadSessionStatus(statusUrl, status, imageUrls) {
-    const msg = `Imported ${imageUrls.length} Image`;
-    setCardCompleteMessage(cards.imageImport, msg);
-    getJobsForImages(imageUrls);
-    // switch (status.toLowerCase()) {
-    //     case "queued":
-    //     case "re-queued":
-    //         setCardAwaitingMessage(cards.imageImport, status);
-    //         setTimeout(function () {
-    //             getUploadSessionStatus(statusUrl)
-    //         }, Math.floor(Math.random() * timeout) + 100);
-    //         break;•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-    //     case "started":
-    //         setCardActiveMessage(cards.imageImport, status);
-    //         setTimeout(function () {
-    //             getUploadSessionStatus(statusUrl)
-    //         }, Math.floor(Math.random() * timeout) + 100);
-    //         break;
-    //     case "succeeded":
-    //         let msg = `Imported ${imageUrls.length} Image`;
-    //         if (imageUrls.length < 1) {
-    //             setCardErrorMessage(cards.imageImport, "No Images Imported");
-    //             return;
-    //         } else if (imageUrls.length > 1) {
-    //             msg += "s"
-    //         }
-    //         setCardCompleteMessage(cards.imageImport, msg);
-    //         getJobsForImages(imageUrls);
-    //         break;
-    //     case "failed":
-    //     case "cancelled":
-    //         setCardErrorMessage(cards.imageImport, status);
-    //         break;
-    //     default:
-    //         setCardErrorMessage(cards.imageImport, "Import error");
-    //}
+    switch (status.toLowerCase()) {
+        case "queued":
+        case "re-queued":
+            setCardAwaitingMessage(cards.imageImport, status);
+            setTimeout(function () {
+                getUploadSessionStatus(statusUrl)
+            }, Math.floor(Math.random() * timeout) + 100);
+            break;
+        case "started":
+            setCardActiveMessage(cards.imageImport, status);
+            setTimeout(function () {
+                getUploadSessionStatus(statusUrl)
+            }, Math.floor(Math.random() * timeout) + 100);
+            break;
+        case "succeeded":
+            let msg = `Imported ${imageUrls.length} Image`;
+            if (imageUrls.length < 1) {
+                setCardErrorMessage(cards.imageImport, "No Images Imported");
+                return;
+            } else if (imageUrls.length > 1) {
+                msg += "s"
+            }
+            setCardCompleteMessage(cards.imageImport, msg);
+            getJobsForImages(imageUrls);
+            break;
+        case "failed":
+        case "cancelled":
+            setCardErrorMessage(cards.imageImport, status);
+            break;
+        default:
+            setCardErrorMessage(cards.imageImport, "Import error");
+    }
 }
 
 function getJobsForImages(imageUrls) {

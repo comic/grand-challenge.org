@@ -59,7 +59,7 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
 )
 from grandchallenge.algorithms.tasks import (
-    create_algorithm_jobs_for_inputs,
+    create_algorithm_job_for_inputs,
     create_algorithm_jobs_for_session,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
@@ -337,7 +337,7 @@ class RemainingJobsMixin:
         }
 
 
-class AlgorithmExecutionSessionCreateOld(
+class AlgorithmExecutionSessionCreate(
     UserFormKwargsMixin,
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
@@ -395,7 +395,7 @@ class AlgorithmExecutionSessionCreateOld(
         )
 
 
-class AlgorithmExecutionSessionCreate(
+class AlgorithmExperimentCreate(
     UserFormKwargsMixin,
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
@@ -470,7 +470,7 @@ class AlgorithmExecutionSessionCreate(
                 )
                 civs.append(civ.pk)
 
-        create_job = create_algorithm_jobs_for_inputs.signature(
+        create_job = create_algorithm_job_for_inputs.signature(
             kwargs={
                 "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
                 "upload_pks": upload_pks,
