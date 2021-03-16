@@ -1,6 +1,7 @@
 from allauth.account.signals import email_confirmed
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils.html import format_html
 from django.utils.timezone import now
 from pyswot import is_academic
 
@@ -68,6 +69,16 @@ class Verification(models.Model):
             self.verified_at = now()
 
         super().save(*args, **kwargs)
+
+    def user_info(self):
+        return format_html(
+            "<span>{} <br/> {} <br/> {} <br/> {} <br/> {}</span>",
+            self.user.get_full_name(),
+            self.user.user_profile.institution,
+            self.user.user_profile.department,
+            self.user.user_profile.country,
+            self.user.user_profile.website,
+        )
 
 
 def create_verification(email_address, *_, **__):
