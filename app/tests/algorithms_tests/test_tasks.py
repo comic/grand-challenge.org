@@ -194,9 +194,6 @@ def test_algorithm(client, algorithm_image, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
-    default_input_interface = ComponentInterface.objects.get(
-        slug=DEFAULT_INPUT_INTERFACE_SLUG
-    )
 
     assert Job.objects.count() == 0
 

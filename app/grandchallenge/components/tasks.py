@@ -187,7 +187,6 @@ def execute_job(
             error_message="Time limit exceeded.",
         )
     except Exception:
-        # import ipdb; ipdb.set_trace()
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
