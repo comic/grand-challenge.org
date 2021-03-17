@@ -366,6 +366,6 @@ def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
     assert sorted(
         list(job.inputs.all().values_list("pk", flat=True))
     ) == sorted(civ_pks)
-    assert {[x[0] for x in job.input_files]} - set(
+    assert {x[0] for x in job.input_files} - set(
         job.outputs.first().value["inputs"]
     ) == set()
