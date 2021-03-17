@@ -252,19 +252,18 @@ class Executor(DockerConnection):
             self._copy_input_files(writer=writer)
 
     def _copy_input_files(self, writer):
-        for name, val in self._input_files:
-            if not hasattr(val, "name"):
-                from django.core.files.temp import NamedTemporaryFile
-                from django.core import files
-
-                file = NamedTemporaryFile(delete=True)
-                file.write(bytes(str(val), "utf-8"))
-                file.flush()
-                temp_file = files.File(file, name=name)
-                val = temp_file
-
+        for input_file in self._input_files:
+            if isinstance(input_file, tuple):
+                name, input_file = input_file
+                if not hasattr(input_file, "name"):
+                    file = NamedTemporaryFile(delete=True)
+                    file.write(bytes(str(input_file), "utf-8"))
+                    file.flush()
+                    input_file = File(file, name=name)
             put_file(
-                container=writer, src=val, dest=f"/input/{name}",
+                container=writer,
+                src=input_file,
+                dest=f"/input/{Path(input_file.name).name}",
             )
 
     def _chmod_volumes(self):
