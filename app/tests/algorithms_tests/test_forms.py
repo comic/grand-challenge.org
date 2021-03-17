@@ -265,7 +265,10 @@ def test_create_experiment_json_input_field_validation(client, slug):
 
     with pytest.raises(TypeError) as e:
         try_create_algorithm_experiment()
-    assert "the JSON object must be str, bytes or bytearray, not NoneType" in str(e)
+    assert (
+        "the JSON object must be str, bytes or bytearray, not NoneType"
+        in str(e)
+    )
 
 
 @pytest.mark.django_db
