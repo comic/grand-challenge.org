@@ -159,7 +159,7 @@
                             {% endif %}
                             {% if input.value %}
                                 <li>
-                                    {{ input.interface.slug }}: {{ input.value|truncatechars_html:70 }}
+                                    {{ input.interface.slug }}: {{ input.value|truncatechars_html:1000 }}
                                 </li>
                             {% endif %}
                         {% endfor %}
