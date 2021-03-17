@@ -9,7 +9,7 @@ def init_default_interfaces(*_, **__):
         {
             "title": "Generic Medical Image",
             "kind": ComponentInterface.Kind.IMAGE,
-            "relative_path": "image",
+            "relative_path": "",
         },
         {
             "title": "Generic Overlay",

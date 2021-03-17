@@ -190,7 +190,7 @@ class TestCreateJobsWorkflow:
 
 
 @pytest.mark.django_db
-def test_algorithm(client, algorithm_image, settings):
+def test_algorithm_blah(client, algorithm_image, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -211,31 +211,33 @@ def test_algorithm(client, algorithm_image, settings):
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
     )
-
     execute_jobs(algorithm_image=alg, images=[image_file.image])
     jobs = Job.objects.filter(algorithm_image=alg).all()
 
     # There should be a single, successful job
     assert len(jobs) == 1
-    assert jobs[0].stdout.endswith("Greetings from stdout\n")
-    assert jobs[0].stderr.endswith('("Hello from stderr")\n')
-    assert jobs[0].error_message == ""
-    assert jobs[0].status == jobs[0].SUCCESS
+    # execute_job(job_pk=jobs[0].pk, job_app_label='algorithms', job_model_name='job')
+    job = Job.objects.filter(algorithm_image=alg).first()
+    job.refresh_from_db()
+    assert job.stdout.endswith("Greetings from stdout\n")
+    assert job.stderr.endswith('("Hello from stderr")\n')
+    assert job.error_message == ""
+    assert job.status == jobs[0].SUCCESS
 
     # The job should have two ComponentInterfaceValues,
     # one for the results.json and one for output.tif
-    assert len(jobs[0].outputs.all()) == 2
+    assert len(job.outputs.all()) == 2
     json_result_interface = ComponentInterface.objects.get(
         slug="results-json-file"
     )
-    json_result_civ = jobs[0].outputs.get(interface=json_result_interface)
+    json_result_civ = job.outputs.get(interface=json_result_interface)
     assert json_result_civ.value == {
         "entity": "out.tif",
         "metrics": {"abnormal": 0.19, "normal": 0.81},
     }
 
     heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
-    heatmap_civ = jobs[0].outputs.get(interface=heatmap_interface)
+    heatmap_civ = job.outputs.get(interface=heatmap_interface)
 
     assert heatmap_civ.image.name == "output.tif"
 
@@ -258,11 +260,14 @@ def test_algorithm(client, algorithm_image, settings):
     ).all()
     # There should be a single, successful job
     assert len(jobs) == 1
-
+    # execute_job(job_pk=job.pk, job_app_label='algorithms', job_model_name='job')
+    # job = Job.objects.filter(algorithm_image=alg).first()
+    # job.refresh_from_db()
+    # import ipdb; ipdb.set_trace()
     # The job should have three ComponentInterfaceValues,
     # one with the detection_results store in the file
-    assert len(jobs[0].outputs.all()) == 3
-    detection_civ = jobs[0].outputs.get(interface=detection_interface)
+    assert len(job.outputs.all()) == 3
+    detection_civ = job.outputs.get(interface=detection_interface)
     assert not detection_civ.value
     assert re.search("detection_results.*json$", detection_civ.file.name)
 
