@@ -83,7 +83,7 @@ def read_json_file(path_to_file):
     )
     print(path_to_file.absolute())
     try:
-        file = open(path_to_file, "r")
+        file = open(path_to_file)
         if file.mode == "r":
             file_contents = file.read()
             file_object = json.loads(file_contents)

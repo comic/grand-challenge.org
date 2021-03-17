@@ -28,7 +28,7 @@ STATUS_MAPPING = {
 }
 
 
-class DataImporter(object):
+class DataImporter:
     def __init__(self):
         self.images_path = Path(".")
 
