@@ -4,12 +4,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-
 from panimg.image_builders.fallback import (
     format_error,
     image_builder_fallback,
 )
 from panimg.models import ColorSpace
+
 from tests.cases_tests import RESOURCE_PATH
 
 

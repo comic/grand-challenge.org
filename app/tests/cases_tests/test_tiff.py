@@ -8,9 +8,6 @@ from uuid import uuid4
 import pytest
 import pyvips
 import tifffile as tiff_lib
-from pytest import approx
-from tifffile import tifffile
-
 from panimg.exceptions import ValidationError
 from panimg.image_builders.tiff import (
     GrandChallengeTiffFile,
@@ -24,6 +21,9 @@ from panimg.image_builders.tiff import (
     image_builder_tiff,
 )
 from panimg.models import ColorSpace
+from pytest import approx
+from tifffile import tifffile
+
 from tests.cases_tests import RESOURCE_PATH
 
 

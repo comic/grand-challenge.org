@@ -39,7 +39,7 @@ class ProductImage(models.Model):
     img = models.ImageField(upload_to=get_logo_path)
 
 
-class Status(object):
+class Status:
     CERTIFIED = "cer"
     YES = "yes"
     NO = "no"

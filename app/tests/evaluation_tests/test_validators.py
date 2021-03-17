@@ -11,7 +11,7 @@ from grandchallenge.core.validators import (
 
 
 @dataclass
-class FakeFile(object):
+class FakeFile:
     name: str
 
 

@@ -26,10 +26,8 @@ from tests.serializer_helpers import (
                 "factory": AlgorithmFactory,
                 "serializer": AlgorithmSerializer,
                 "fields": (
-                    "algorithm_container_images",
                     "api_url",
                     "description",
-                    "latest_ready_image",
                     "pk",
                     "title",
                     "slug",

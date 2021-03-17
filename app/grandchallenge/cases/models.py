@@ -13,17 +13,17 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+from panimg.image_builders.metaio_utils import (
+    load_sitk_image,
+    parse_mh_header,
+)
+from panimg.models import ColorSpace, ImageType
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
-from panimg.image_builders.metaio_utils import (
-    load_sitk_image,
-    parse_mh_header,
-)
-from panimg.models import ColorSpace, ImageType
 
 logger = logging.getLogger(__name__)
 
@@ -427,7 +427,7 @@ class Image(UUIDModel):
 
         # Check file size to guard for out of memory error
         if file_size > settings.MAX_SITK_FILE_SIZE:
-            raise IOError(
+            raise OSError(
                 f"File exceeds maximum file size. (Size: {file_size}, Max: {settings.MAX_SITK_FILE_SIZE})"
             )
 

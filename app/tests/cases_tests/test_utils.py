@@ -3,11 +3,11 @@ from tempfile import TemporaryDirectory
 
 import SimpleITK
 import pytest
-from pytest import approx
-
 from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.image_builders.utils import convert_itk_to_internal
 from panimg.models import ColorSpace, PanImg
+from pytest import approx
+
 from tests.cases_tests import RESOURCE_PATH
 
 

@@ -1,0 +1,29 @@
+{% load url %}
+{% load static %}
+
+<meta property="og:type" content="website">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:site_name" content="{{ request.site }}">
+
+{% if meta_info %}
+    <meta name="title" content="{% firstof meta_info.title meta_info.short_name %} - {{ request.site.name }}">
+    <meta property="og:title" content="{% firstof meta_info.title meta_info.short_name %} - {{ request.site.name }}">
+
+    <meta name="description" content="{{ meta_info.description }}">
+    <meta property="og:description" content="{{ meta_info.description }}">
+
+    {% if meta_info.social_image %}
+        <meta property="og:image" content="{{ meta_info.social_image.url }}">
+    {% elif meta_info.logo %}
+        <meta property="og:image" content="{{ meta_info.logo.url }}">
+    {% endif %}
+{% else %}
+    <meta name="title" content="{{ request.site.name }}">
+    <meta property="og:title" content="{{ request.site.name }}">
+
+    <meta name="description"
+          content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
+    <meta property="og:description"
+          content="A platform for end-to-end development of machine learning solutions in biomedical imaging.">
+{% endif %}
