@@ -135,7 +135,7 @@ def test_4d_mh_loader_with_invalid_data_type_fails(tmpdir):
         targets.append(dest)
         shutil.copy(str(src), str(dest))
     tmp_header_file = targets[0]
-    with open(str(tmp_header_file), "r") as f:
+    with open(str(tmp_header_file)) as f:
         modified_header = f.read().replace("MET_UCHAR", "MET_OTHER")
     with open(str(tmp_header_file), "w") as f:
         f.write(modified_header)
@@ -154,7 +154,7 @@ def test_4d_mh_loader_with_uncompressed_data(tmpdir):
         targets.append(dest)
         shutil.copy(str(src), str(dest))
     tmp_header_file, tmp_data_file = targets
-    with open(str(tmp_header_file), "r") as f:
+    with open(str(tmp_header_file)) as f:
         modified_header = f.read().replace(
             "CompressedData = True", "CompressedData = False"
         )
@@ -171,7 +171,7 @@ def test_4d_mh_loader_with_more_than_4_dimensions_fails(tmpdir):
     src = RESOURCE_PATH / "image10x11x12x13.mhd"
     dest = Path(tmpdir) / src.name
     shutil.copy(str(src), str(dest))
-    with open(str(dest), "r") as f:
+    with open(str(dest)) as f:
         modified_header = f.read().replace("NDims = 4", "NDims = 5")
     with open(str(dest), "w") as f:
         f.write(modified_header)
@@ -213,7 +213,7 @@ def test_load_sitk_image_with_corrupt_additional_meta_data_fails(
     src = RESOURCE_PATH / "image10x11x12x13.mhd"
     dest = Path(tmpdir) / src.name
     shutil.copy(str(src), str(dest))
-    with open(str(dest), "r") as f:
+    with open(str(dest)) as f:
         lines = f.readlines()
     lines.insert(-1, f"{key} = {value}\n")
     with open(str(dest), "w") as f:

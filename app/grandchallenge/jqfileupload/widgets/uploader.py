@@ -145,7 +145,7 @@ class OpenedStagedAjaxFile(BufferedIOBase):
             return b""
 
         if self._file_pointer < 0:
-            raise IOError("invalid file pointer position")
+            raise OSError("invalid file pointer position")
 
         if size is None:
             size = self.size - self._file_pointer
@@ -191,7 +191,7 @@ class OpenedStagedAjaxFile(BufferedIOBase):
         elif from_what == 2:
             new_pointer = self.size + offset
         if new_pointer < 0:
-            raise IOError("invalid file pointer")
+            raise OSError("invalid file pointer")
 
         self._file_pointer = new_pointer
         if self._file_pointer < self._chunk_map.len:
@@ -296,7 +296,7 @@ class StagedAjaxFile:
         :class:`OpenedStagedAjaxFile` represeting the opened file.
         """
         if not self.is_complete:
-            raise IOError("incomplete upload")
+            raise OSError("incomplete upload")
 
         return OpenedStagedAjaxFile(self.__uuid)
 

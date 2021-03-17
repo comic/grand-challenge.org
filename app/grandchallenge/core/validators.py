@@ -8,7 +8,7 @@ from jsonschema import ValidationError as JSONValidationError, validate
 
 
 @deconstructible
-class MimeTypeValidator(object):
+class MimeTypeValidator:
     allowed_types = ()
 
     def __init__(self, *, allowed_types: Tuple[str, ...]):
@@ -37,7 +37,7 @@ class MimeTypeValidator(object):
 
 
 @deconstructible
-class ExtensionValidator(object):
+class ExtensionValidator:
     """
     Performs soft validation of the filename. Usage:
 
@@ -95,7 +95,7 @@ def get_file_mimetype(f):
 
 
 @deconstructible
-class JSONSchemaValidator(object):
+class JSONSchemaValidator:
     """Uses jsonschema to validate json fields."""
 
     schema = None

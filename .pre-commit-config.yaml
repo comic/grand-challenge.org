@@ -2,7 +2,7 @@ default_language_version:
   python: python3.8
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v1.5.1
+    rev: v2.10.1
     hooks:
       - id: pyupgrade
         language: python

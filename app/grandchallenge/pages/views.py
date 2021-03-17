@@ -17,13 +17,13 @@ from grandchallenge.pages.models import ErrorPage, Page
 from grandchallenge.subdomains.utils import reverse
 
 
-class ChallengeFilteredQuerysetMixin(object):
+class ChallengeFilteredQuerysetMixin:
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.filter(Q(challenge=self.request.challenge))
 
 
-class ChallengeFormKwargsMixin(object):
+class ChallengeFormKwargsMixin:
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({"challenge": self.request.challenge})

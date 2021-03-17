@@ -360,7 +360,7 @@ class ReaderStudyImagesList(
         )
 
 
-class QuestionOptionMixin(object):
+class QuestionOptionMixin:
     def validate_options(self, form, _super):
         context = self.get_context_data()
         options = context["options"]
