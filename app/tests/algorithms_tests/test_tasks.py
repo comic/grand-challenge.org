@@ -9,7 +9,7 @@ from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
     execute_jobs,
 )
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -190,7 +190,7 @@ class TestCreateJobsWorkflow:
 
 
 @pytest.mark.django_db
-def test_algorithm_blah(client, algorithm_image, settings):
+def test_algorithm(client, algorithm_image, settings):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -216,28 +216,26 @@ def test_algorithm_blah(client, algorithm_image, settings):
 
     # There should be a single, successful job
     assert len(jobs) == 1
-    # execute_job(job_pk=jobs[0].pk, job_app_label='algorithms', job_model_name='job')
-    job = Job.objects.filter(algorithm_image=alg).first()
-    job.refresh_from_db()
-    assert job.stdout.endswith("Greetings from stdout\n")
-    assert job.stderr.endswith('("Hello from stderr")\n')
-    assert job.error_message == ""
-    assert job.status == jobs[0].SUCCESS
+
+    assert jobs[0].stdout.endswith("Greetings from stdout\n")
+    assert jobs[0].stderr.endswith('("Hello from stderr")\n')
+    assert jobs[0].error_message == ""
+    assert jobs[0].status == jobs[0].SUCCESS
 
     # The job should have two ComponentInterfaceValues,
     # one for the results.json and one for output.tif
-    assert len(job.outputs.all()) == 2
+    assert len(jobs[0].outputs.all()) == 2
     json_result_interface = ComponentInterface.objects.get(
         slug="results-json-file"
     )
-    json_result_civ = job.outputs.get(interface=json_result_interface)
+    json_result_civ = jobs[0].outputs.get(interface=json_result_interface)
     assert json_result_civ.value == {
         "entity": "out.tif",
         "metrics": {"abnormal": 0.19, "normal": 0.81},
     }
 
     heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
-    heatmap_civ = job.outputs.get(interface=heatmap_interface)
+    heatmap_civ = jobs[0].outputs.get(interface=heatmap_interface)
 
     assert heatmap_civ.image.name == "output.tif"
 
@@ -245,6 +243,7 @@ def test_algorithm_blah(client, algorithm_image, settings):
     detection_interface = ComponentInterfaceFactory(
         store_in_database=False,
         relative_path="detection_results.json",
+        title="detection-json-file",
         slug="detection-json-file",
         kind=ComponentInterface.Kind.JSON,
     )
@@ -260,14 +259,11 @@ def test_algorithm_blah(client, algorithm_image, settings):
     ).all()
     # There should be a single, successful job
     assert len(jobs) == 1
-    # execute_job(job_pk=job.pk, job_app_label='algorithms', job_model_name='job')
-    # job = Job.objects.filter(algorithm_image=alg).first()
-    # job.refresh_from_db()
-    # import ipdb; ipdb.set_trace()
+
     # The job should have three ComponentInterfaceValues,
     # one with the detection_results store in the file
-    assert len(job.outputs.all()) == 3
-    detection_civ = job.outputs.get(interface=detection_interface)
+    assert len(jobs[0].outputs.all()) == 3
+    detection_civ = jobs[0].outputs.get(interface=detection_interface)
     assert not detection_civ.value
     assert re.search("detection_results.*json$", detection_civ.file.name)
 
@@ -306,3 +302,70 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     assert len(jobs) == 1
     assert jobs.first().error_message == "Invalid filetype."
     assert len(jobs[0].outputs.all()) == 2
+
+
+@pytest.mark.django_db
+def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+
+    assert Job.objects.count() == 0
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_io_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True,
+    )
+    alg.algorithm.add_editor(creator)
+
+    alg.algorithm.inputs.set(ComponentInterface.objects.all())
+    civs = []
+    for ci in ComponentInterface.objects.all():
+        if ci.kind in InterfaceKind.interface_type_image():
+            image_file = ImageFileFactory(
+                file__from_path=Path(__file__).parent
+                / "resources"
+                / "input_file.tif",
+            )
+            civs.append(
+                ComponentInterfaceValueFactory(
+                    interface=ci, image=image_file.image, file=None
+                )
+            )
+        elif ci.kind in InterfaceKind.interface_type_file():
+            civs.append(
+                ComponentInterfaceValueFactory(
+                    interface=ci,
+                    file__from_path=Path(__file__).parent
+                    / "resources"
+                    / "test.json",
+                )
+            )
+        else:
+            civs.append(
+                ComponentInterfaceValueFactory(
+                    interface=ci, value="test", file=None
+                )
+            )
+
+    civ_pks = [civ.pk for civ in civs]
+    create_algorithm_job_for_inputs(
+        algorithm_image_pk=alg.pk,
+        civ_pks=civ_pks,
+        upload_pks=[],
+        creator_pk=creator.pk,
+    )
+
+    assert Job.objects.count() == 1
+    job = Job.objects.first()
+
+    assert job.status == job.SUCCESS
+    assert sorted(
+        list(job.inputs.all().values_list("pk", flat=True))
+    ) == sorted(civ_pks)
+    assert {x[0] for x in job.input_files} - set(
+        job.outputs.first().value["inputs"]
+    ) == set()

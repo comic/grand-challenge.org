@@ -5,7 +5,7 @@ from warnings import warn
 
 def get_classes(csvfile: str):
     output = []
-    with open(csvfile, "r") as f:
+    with open(csvfile) as f:
         reader = DictReader(f)
         for row in reader:
             output.append(float(row["Class"]))

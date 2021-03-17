@@ -1,6 +1,5 @@
 import json
 import tarfile
-import traceback
 import uuid
 from datetime import timedelta
 from typing import Dict
@@ -194,7 +193,7 @@ def execute_job(
             status=job.FAILURE,
             stdout=ev.stdout,
             stderr=ev.stderr,
-            error_message=str(traceback.format_exc()),
+            error_message="An unexpected error occurred.",
         )
         raise
     else:

@@ -23,14 +23,15 @@ mark_not_verified.allowed_permissions = ("change",)
 class VerificationAdmin(admin.ModelAdmin):
     list_display = (
         "user",
+        "user_info",
         "created",
         "signup_email",
-        "signup_email_activated",
         "email",
         "email_is_verified",
         "is_verified",
         "verified_at",
     )
+    list_select_related = ("user__user_profile",)
     list_filter = ("email_is_verified", "is_verified")
     readonly_fields = (
         "created",

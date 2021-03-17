@@ -19,32 +19,18 @@ from grandchallenge.components.serializers import (
 
 
 class AlgorithmSerializer(serializers.ModelSerializer):
-    algorithm_container_images = HyperlinkedRelatedField(
-        many=True, read_only=True, view_name="api:algorithms-image-detail"
-    )
-    latest_ready_image = SerializerMethodField()
     average_duration = SerializerMethodField()
 
     class Meta:
         model = Algorithm
         fields = [
-            "algorithm_container_images",
             "api_url",
             "description",
-            "latest_ready_image",
             "pk",
             "title",
             "slug",
             "average_duration",
         ]
-
-    def get_latest_ready_image(self, obj: Algorithm):
-        """Used by latest_container_image SerializerMethodField."""
-        ci = obj.latest_ready_image
-        if ci:
-            return ci.api_url
-        else:
-            return None
 
     def get_average_duration(self, obj: Algorithm) -> Optional[float]:
         """The average duration of successful jobs in seconds"""

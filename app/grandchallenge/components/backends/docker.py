@@ -1,6 +1,7 @@
 import io
 import os
 import re
+import sys
 import tarfile
 from contextlib import contextmanager
 from pathlib import Path
@@ -13,6 +14,7 @@ from typing import Tuple
 import docker
 from django.conf import settings
 from django.core.files import File
+from django.core.files.temp import NamedTemporaryFile
 from django.db.models import Model, QuerySet
 from docker.api.container import ContainerApiMixin
 from docker.errors import APIError, ImageNotFound
@@ -224,7 +226,6 @@ class Executor(DockerConnection):
         return self._result
 
     def _pull_images(self):
-        # import ipdb; ipdb.set_trace()
         try:
             self._client.images.get(name=self._io_image)
         except ImageNotFound:
@@ -261,10 +262,9 @@ class Executor(DockerConnection):
                     file.write(bytes(str(input_file), "utf-8"))
                     file.flush()
                     input_file = File(file, name=name)
+            self._create_subdirs(os.path.join("/input", *name.split("/")[:-1]))
             put_file(
-                container=writer,
-                src=input_file,
-                dest=f"/input/{Path(input_file.name).name}",
+                container=writer, src=input_file, dest=f"/input/{name}",
             )
 
     def _chmod_volumes(self):
@@ -277,6 +277,21 @@ class Executor(DockerConnection):
             },
             name=f"{self._job_label}-chmod-volumes",
             command="chmod -R 0777 /input/ /output/",
+            remove=True,
+            labels=self._labels,
+            **self._run_kwargs,
+        )
+
+    def _create_subdirs(self, path):
+        """Ensure that the i/o directories are writable."""
+        self._client.containers.run(
+            image=self._io_image,
+            volumes={
+                self._input_volume: {"bind": "/input/", "mode": "rw"},
+                self._output_volume: {"bind": "/output/", "mode": "rw"},
+            },
+            name=f"{self._job_label}-create-subdirs",
+            command=f"mkdir -p {path}",
             remove=True,
             labels=self._labels,
             **self._run_kwargs,
@@ -459,7 +474,7 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     """
     with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as tar_b:
         tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
-        tarinfo.size = getattr(src, "size", 100000000)
+        tarinfo.size = getattr(src, "size", sys.getsizeof(src))
 
         with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
             tar.addfile(tarinfo, fileobj=f)

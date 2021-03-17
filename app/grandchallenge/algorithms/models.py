@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import timedelta
+from itertools import chain
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -419,20 +420,34 @@ class Job(UUIDModel, ComponentJob):
         return self.algorithm_image
 
     def get_path_and_value(self, inp):
-        if inp.file or inp.image:
-            file = inp.file or inp.image
-            file = file.files.first().file
-            return (
-                os.path.join(
-                    inp.interface.relative_path, file.name.split("/")[-1]
-                ),
-                file,
-            )
-        return inp.interface.relative_path, inp.value
+        if inp.file:
+            file = inp.file
+            return [
+                (
+                    os.path.join(
+                        inp.interface.relative_path, file.name.split("/")[-1]
+                    ),
+                    file,
+                )
+            ]
+        if inp.image:
+            return [
+                (
+                    os.path.join(
+                        inp.interface.relative_path,
+                        im_file.file.name.split("/")[-1],
+                    ),
+                    im_file.file,
+                )
+                for im_file in inp.image.files.all()
+            ]
+        return [(inp.interface.relative_path, inp.value)]
 
     @property
     def input_files(self):
-        return [self.get_path_and_value(inp) for inp in self.inputs.all()]
+        return chain(
+            *[self.get_path_and_value(inp) for inp in self.inputs.all()]
+        )
 
     @property
     def output_interfaces(self):
