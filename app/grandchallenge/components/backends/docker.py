@@ -13,6 +13,7 @@ from typing import Tuple
 import docker
 from django.conf import settings
 from django.core.files import File
+from django.core.files.temp import NamedTemporaryFile
 from django.db.models import Model, QuerySet
 from docker.api.container import ContainerApiMixin
 from docker.errors import APIError, ImageNotFound
