@@ -261,8 +261,8 @@ def test_algorithm_blah(client, algorithm_image, settings):
     # There should be a single, successful job
     assert len(jobs) == 1
     # execute_job(job_pk=job.pk, job_app_label='algorithms', job_model_name='job')
-    # job = Job.objects.filter(algorithm_image=alg).first()
-    # job.refresh_from_db()
+    job = Job.objects.filter(algorithm_image=alg).first()
+    job.refresh_from_db()
     # import ipdb; ipdb.set_trace()
     # The job should have three ComponentInterfaceValues,
     # one with the detection_results store in the file
