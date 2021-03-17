@@ -21,6 +21,6 @@ class ComponentInterfaceValueFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ComponentInterfaceValue
 
-    pk = factory.Sequence(lambda n: n)
+    pk = factory.Sequence(lambda n: n + 9999999)
     interface = factory.SubFactory(ComponentInterfaceFactory)
     file = factory.django.FileField()

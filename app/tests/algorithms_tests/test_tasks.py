@@ -335,7 +335,7 @@ def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
                     interface=ci, image=image_file.image, file=None
                 )
             )
-        if ci.kind in InterfaceKind.interface_type_file():
+        elif ci.kind in InterfaceKind.interface_type_file():
             civs.append(
                 ComponentInterfaceValueFactory(
                     interface=ci,
@@ -361,12 +361,11 @@ def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
 
     assert Job.objects.count() == 1
     job = Job.objects.first()
-    # job_pk = job.pk
 
-    # from grandchallenge.components.tasks import execute_job
-    # import ipdb; ipdb.set_trace()
-    # execute_job(job_pk=job_pk, job_app_label='algorithms', job_model_name='job')
+    assert job.status == job.SUCCESS
     assert sorted(
         list(job.inputs.all().values_list("pk", flat=True))
     ) == sorted(civ_pks)
-    assert job.status == job.SUCCESS
+    assert {[x[0] for x in job.input_files]} - set(
+        job.outputs.first().value["inputs"]
+    ) == set()
