@@ -169,14 +169,20 @@ def challenge_set_with_evaluation(challenge_set):
 
 
 def docker_image(
-    tmpdir_factory, docker_client, docker_api_client, path, label
+    tmpdir_factory,
+    docker_client,
+    docker_api_client,
+    path,
+    label,
+    full_path=None,
 ):
     """Create the docker container."""
-    im, _ = docker_client.images.build(
-        path=os.path.join(
+    if not full_path:
+        full_path = os.path.join(
             os.path.split(__file__)[0], path, "resources", "docker",
-        ),
-        tag=f"test-{label}:latest",
+        )
+    im, _ = docker_client.images.build(
+        path=full_path, tag=f"test-{label}:latest",
     )
     assert im.id in [x.id for x in docker_client.images.list()]
     image = docker_api_client.get_image(f"test-{label}:latest")
@@ -215,6 +221,21 @@ def algorithm_image(tmpdir_factory, docker_client, docker_api_client):
         docker_api_client,
         path="algorithms_tests",
         label="algorithm",
+    )
+
+
+@pytest.fixture(scope="session")
+def algorithm_io_image(tmpdir_factory, docker_client, docker_api_client):
+    """Create the example algorithm container."""
+    return docker_image(
+        tmpdir_factory,
+        docker_client,
+        docker_api_client,
+        path="",
+        label="algorithm-io",
+        full_path=os.path.join(
+            os.path.split(__file__)[0], "resources", "gc_demo_algorithm",
+        ),
     )
 
 
