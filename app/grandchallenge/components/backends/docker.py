@@ -1,6 +1,7 @@
 import io
 import os
 import re
+import sys
 import tarfile
 from contextlib import contextmanager
 from pathlib import Path
@@ -473,7 +474,7 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     """
     with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as tar_b:
         tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
-        tarinfo.size = getattr(src, "size", 100000000)
+        tarinfo.size = getattr(src, "size", sys.getsizeof(src))
 
         with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
             tar.addfile(tarinfo, fileobj=f)
