@@ -13,6 +13,21 @@ class AlgorithmImageAdmin(GuardedModelAdmin):
     exclude = ("image",)
 
 
+def requeue_jobs(modeladmin, request, queryset):
+    """
+    Retries the selected jobs.
+
+    Note that any linked task will not be executed.
+    """
+    queryset.update(status=Job.RETRY)
+    for job in queryset:
+        job.signature.apply_async()
+
+
+requeue_jobs.short_description = "Requeue selected jobs"
+requeue_jobs.allowed_permissions = ("change",)
+
+
 class JobAdmin(GuardedModelAdmin):
     autocomplete_fields = ("viewer_groups",)
     ordering = ("-created",)
@@ -46,6 +61,7 @@ class JobAdmin(GuardedModelAdmin):
         "pk",
         "algorithm_image__algorithm__slug",
     )
+    actions = (requeue_jobs,)
 
     def algorithm(self, obj):
         return obj.algorithm_image.algorithm
