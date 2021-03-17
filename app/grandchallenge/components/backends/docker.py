@@ -224,7 +224,6 @@ class Executor(DockerConnection):
         return self._result
 
     def _pull_images(self):
-        # import ipdb; ipdb.set_trace()
         try:
             self._client.images.get(name=self._io_image)
         except ImageNotFound:
