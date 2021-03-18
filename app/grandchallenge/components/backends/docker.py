@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import re
 import sys
@@ -259,7 +260,7 @@ class Executor(DockerConnection):
                 name, input_file = input_file
                 if not hasattr(input_file, "name"):
                     file = NamedTemporaryFile(delete=True)
-                    file.write(bytes(str(input_file), "utf-8"))
+                    file.write(bytes(json.dumps(input_file), "utf-8"))
                     file.flush()
                     input_file = File(file, name=name)
             else:

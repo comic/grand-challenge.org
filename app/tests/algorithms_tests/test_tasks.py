@@ -323,6 +323,7 @@ def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())
     civs = []
+    expected = []
     for ci in ComponentInterface.objects.all():
         if ci.kind in InterfaceKind.interface_type_image():
             image_file = ImageFileFactory(
@@ -335,6 +336,7 @@ def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
                     interface=ci, image=image_file.image, file=None
                 )
             )
+            expected.append("file")
         elif ci.kind in InterfaceKind.interface_type_file():
             civs.append(
                 ComponentInterfaceValueFactory(
@@ -344,12 +346,14 @@ def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
                     / "test.json",
                 )
             )
+            expected.append("json")
         else:
             civs.append(
                 ComponentInterfaceValueFactory(
                     interface=ci, value="test", file=None
                 )
             )
+            expected.append("test")
 
     civ_pks = [civ.pk for civ in civs]
     create_algorithm_job_for_inputs(
@@ -363,9 +367,12 @@ def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
     job = Job.objects.first()
 
     assert job.status == job.SUCCESS
+    assert {x[0] for x in job.input_files} == set(
+        job.outputs.first().value.keys()
+    )
     assert sorted(
-        list(job.inputs.all().values_list("pk", flat=True))
-    ) == sorted(civ_pks)
-    assert {x[0] for x in job.input_files} - set(
-        job.outputs.first().value["inputs"]
-    ) == set()
+        map(
+            lambda x: x if x != {} else "json",
+            job.outputs.first().value.values(),
+        )
+    ) == sorted(expected)
