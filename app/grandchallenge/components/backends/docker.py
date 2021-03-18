@@ -262,7 +262,8 @@ class Executor(DockerConnection):
                     file.write(bytes(str(input_file), "utf-8"))
                     file.flush()
                     input_file = File(file, name=name)
-            self._create_subdirs(os.path.join("/input", *name.split("/")[:-1]))
+            subdirs = os.path.join("/input", *name.split("/")[:-1])
+            writer.exec_run(f"mkdir -p {subdirs}")
             put_file(
                 container=writer, src=input_file, dest=f"/input/{name}",
             )
@@ -277,21 +278,6 @@ class Executor(DockerConnection):
             },
             name=f"{self._job_label}-chmod-volumes",
             command="chmod -R 0777 /input/ /output/",
-            remove=True,
-            labels=self._labels,
-            **self._run_kwargs,
-        )
-
-    def _create_subdirs(self, path):
-        """Ensure that the i/o directories are writable."""
-        self._client.containers.run(
-            image=self._io_image,
-            volumes={
-                self._input_volume: {"bind": "/input/", "mode": "rw"},
-                self._output_volume: {"bind": "/output/", "mode": "rw"},
-            },
-            name=f"{self._job_label}-create-subdirs",
-            command=f"mkdir -p {path}",
             remove=True,
             labels=self._labels,
             **self._run_kwargs,
