@@ -61,7 +61,7 @@ class InterfaceFormField:
         kwargs = {
             "required": (kind != InterfaceKind.InterfaceKindChoices.BOOL)
         }
-        if initial:
+        if initial is not None:
             kwargs["initial"] = initial
         if kind in InterfaceKind.interface_type_annotation():
             kwargs["widget"] = JSONEditorWidget(
