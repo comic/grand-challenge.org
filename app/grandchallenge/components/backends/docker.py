@@ -262,6 +262,8 @@ class Executor(DockerConnection):
                     file.write(bytes(str(input_file), "utf-8"))
                     file.flush()
                     input_file = File(file, name=name)
+            else:
+                name = input_file.name
             subdirs = os.path.join("/input", *name.split("/")[:-1])
             writer.exec_run(f"mkdir -p {subdirs}")
             put_file(

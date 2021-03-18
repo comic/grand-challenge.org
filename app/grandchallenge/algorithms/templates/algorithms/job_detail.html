@@ -148,6 +148,21 @@
                                     </a>
                                 </li>
                             {% endfor %}
+                            {% if input.file %}
+                                <li>
+                                    <a class="badge badge-primary"
+                                       href="{{ input.file.url }}" download="{{ input.file.name|name }}">
+                                        <i class="fa fa-download"></i>
+                                        Input {{ forloop.parentloop.counter }} {{ input.file.name|stem }}
+                                        ({{ input.file|suffix }})
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% if input.value %}
+                                <li>
+                                    {{ input.interface.slug }}: {{ input.value|truncatechars_html:1000 }}
+                                </li>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 </dd>

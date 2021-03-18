@@ -95,7 +95,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
 
     # Send an email to the algorithm editors and creator on job failure
     linked_task = send_failed_jobs_email.signature(
-        kwargs={"job_pks": job_pk}, immutable=True
+        kwargs={"job_pks": [job.pk]}, immutable=True
     )
 
     # check if all ComponentInterfaceValue's have a value.

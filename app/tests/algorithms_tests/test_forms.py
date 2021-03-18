@@ -147,3 +147,169 @@ def test_algorithm_create(client):
     assert alg.slug == "foo-bar"
     assert alg.is_editor(user=creator)
     assert not alg.is_user(user=creator)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "slug, content_parts",
+    (
+        (None, ['<input type="file"', '<input name="generic-medical-image"']),
+        (
+            "generic-overlay",
+            ['<input type="file"', '<input name="generic-overlay"'],
+        ),
+        (
+            "generic-medical-image",
+            ['<input type="file"', '<input name="generic-medical-image"'],
+        ),
+        ("boolean", ['<input type="checkbox"', 'name="boolean"']),
+        ("string", ['<input type="text" name="string"']),
+        ("integer", ['<input type="number"', 'name="integer"']),
+        ("float", ['<input type="number"', 'name="float"', 'step="any"']),
+        (
+            "2d-bounding-box",
+            [
+                'class="jsoneditorwidget ',
+                '<div id="jsoneditor_id_2d-bounding-box"',
+            ],
+        ),
+        (
+            "multiple-2d-bounding-boxes",
+            [
+                'class="jsoneditorwidget ',
+                '<div id="jsoneditor_id_multiple-2d-bounding-boxes"',
+            ],
+        ),
+        (
+            "distance-measurement",
+            [
+                'class="jsoneditorwidget ',
+                '<div id="jsoneditor_id_distance-measurement"',
+            ],
+        ),
+        (
+            "multiple-distance-measurements",
+            [
+                'class="jsoneditorwidget ',
+                '<div id="jsoneditor_id_multiple-distance-measurements"',
+            ],
+        ),
+        (
+            "point",
+            ['class="jsoneditorwidget ', '<div id="jsoneditor_id_point"'],
+        ),
+        (
+            "multiple-points",
+            [
+                'class="jsoneditorwidget ',
+                '<div id="jsoneditor_id_multiple-points"',
+            ],
+        ),
+        (
+            "polygon",
+            ['class="jsoneditorwidget ', '<div id="jsoneditor_id_polygon"'],
+        ),
+        (
+            "multiple-polygons",
+            [
+                'class="jsoneditorwidget ',
+                '<div id="jsoneditor_id_multiple-polygons"',
+            ],
+        ),
+    ),
+)
+def test_create_experiment_input_fields(client, slug, content_parts):
+    alg, creator = create_algorithm_with_input(slug)
+
+    def load_create_experiment_form():
+        return get_view_for_user(
+            viewname="algorithms:execution-session-create-new",
+            client=client,
+            reverse_kwargs={"slug": alg.slug},
+            follow=True,
+            user=creator,
+        )
+
+    response = load_create_experiment_form()
+    assert response.status_code == 200
+    for c in content_parts:
+        assert c in response.rendered_content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "slug",
+    [
+        "2d-bounding-box",
+        "multiple-2d-bounding-boxes",
+        "distance-measurement",
+        "multiple-distance-measurements",
+        "point",
+        "multiple-points",
+        "polygon",
+        "multiple-polygons",
+    ],
+)
+def test_create_experiment_json_input_field_validation(client, slug):
+    alg, creator = create_algorithm_with_input(slug)
+
+    def try_create_algorithm_experiment():
+        return get_view_for_user(
+            viewname="algorithms:execution-session-create-new",
+            client=client,
+            reverse_kwargs={"slug": alg.slug},
+            method=client.post,
+            follow=True,
+            user=creator,
+        )
+
+    with pytest.raises(TypeError) as e:
+        try_create_algorithm_experiment()
+    assert (
+        "the JSON object must be str, bytes or bytearray, not NoneType"
+        in str(e)
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "slug, content_parts",
+    (
+        (None, ['class="invalid-feedback"', "Not a valid UUID: %(string)s"]),
+        (
+            "generic-overlay",
+            ['class="invalid-feedback"', "Not a valid UUID: %(string)s"],
+        ),
+        ("string", ['class="invalid-feedback"', "This field is required."]),
+        ("integer", ['class="invalid-feedback"', "This field is required."]),
+        ("float", ['class="invalid-feedback"', "This field is required."]),
+    ),
+)
+def test_create_experiment_simple_input_field_validation(
+    client, slug, content_parts
+):
+    alg, creator = create_algorithm_with_input(slug)
+
+    def try_create_algorithm_experiment():
+        return get_view_for_user(
+            viewname="algorithms:execution-session-create-new",
+            client=client,
+            reverse_kwargs={"slug": alg.slug},
+            method=client.post,
+            follow=True,
+            user=creator,
+        )
+
+    response = try_create_algorithm_experiment()
+    assert response.status_code == 200
+    for c in content_parts:
+        assert c in response.rendered_content
+
+
+def create_algorithm_with_input(slug):
+    creator = get_algorithm_creator()
+    alg = AlgorithmFactory()
+    alg.add_editor(user=creator)
+    if slug:
+        alg.inputs.set([ComponentInterface.objects.get(slug=slug)])
+    return alg, creator
