@@ -90,25 +90,23 @@ class InterfaceFormField:
 
 
 def field_for_interface(i: InterfaceKind.InterfaceKindChoices):
-    if i == InterfaceKind.InterfaceKindChoices.BOOL:
-        return BooleanField
-    if i == InterfaceKind.InterfaceKindChoices.STRING:
-        return CharField
-    if i == InterfaceKind.InterfaceKindChoices.INTEGER:
-        return IntegerField
-    if i == InterfaceKind.InterfaceKindChoices.FLOAT:
-        return FloatField
-    if i == InterfaceKind.InterfaceKindChoices.BOOL:
-        return BooleanField
-    if i == InterfaceKind.InterfaceKindChoices.BOOL:
-        return BooleanField
-    if i in InterfaceKind.interface_type_annotation():
-        return JSONField
-    if (
-        i in InterfaceKind.interface_type_image()
-        or i in InterfaceKind.interface_type_file()
+    fields = {}
+    for kind in InterfaceKind.interface_type_annotation():
+        fields[kind] = JSONField
+    for kind in (
+        InterfaceKind.interface_type_image()
+        + InterfaceKind.interface_type_file()
     ):
-        return UploadedAjaxFileList
+        fields[kind] = UploadedAjaxFileList
+    fields.update(
+        {
+            InterfaceKind.InterfaceKindChoices.BOOL: BooleanField,
+            InterfaceKind.InterfaceKindChoices.STRING: CharField,
+            InterfaceKind.InterfaceKindChoices.INTEGER: IntegerField,
+            InterfaceKind.InterfaceKindChoices.FLOAT: FloatField,
+        }
+    )
+    return fields[i]
 
 
 class AlgorithmInputsForm(SaveFormInitMixin, Form):
