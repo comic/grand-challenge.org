@@ -168,7 +168,7 @@ class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
 
         if not value.question.is_image_type:
             raise ValidationError(
-                "This answer does not accept image type answers."
+                "This question does not accept image type answers."
             )
 
         return value

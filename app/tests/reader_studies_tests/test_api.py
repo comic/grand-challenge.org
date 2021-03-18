@@ -1162,6 +1162,6 @@ def test_question_accepts_image_type_answers(client, settings):
 
     assert response.status_code == 400
     assert (
-        b"This answer does not accept image type answers"
+        b"This question does not accept image type answers"
         in response.rendered_content
     )
