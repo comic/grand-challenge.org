@@ -448,6 +448,50 @@ def test_algorithm_jobs_list_view(client):
 
 
 @pytest.mark.django_db
+def test_aglorithm_detail_flexible_inputs(client):
+    editor = UserFactory()
+
+    alg = AlgorithmFactory()
+    alg.add_editor(editor)
+    AlgorithmImageFactory(algorithm=alg, ready=True)
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 200
+    assert (
+        "Try-out Algorithm with flexible inputs (experimental!)"
+        not in response.rendered_content
+    )
+
+    alg.use_flexible_inputs = True
+    alg.save()
+
+    response = get_view_for_user(
+        viewname="algorithms:detail",
+        reverse_kwargs={"slug": slugify(alg.slug)},
+        client=client,
+        user=editor,
+        method=client.get,
+        follow=True,
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 200
+    assert (
+        "Try-out Algorithm with flexible inputs (experimental!)"
+        in response.rendered_content
+    )
+
+
+@pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         ai = AlgorithmImageFactory(ready=True)
