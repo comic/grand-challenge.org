@@ -1341,6 +1341,13 @@ class Question(UUIDModel):
                 "ANSWER_TYPE_SCHEMA."
             )
 
+    @property
+    def is_image_type(self):
+        return self.answer_type in [
+            self.AnswerType.POLYGON_IMAGE,
+            self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
+        ]
+
 
 class CategoricalOption(models.Model):
     question = models.ForeignKey(

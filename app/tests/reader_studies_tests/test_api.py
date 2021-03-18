@@ -1066,3 +1066,102 @@ def test_assign_answer_image(client, settings, answer_type):
     assert answer.answer_image == image
     assert reader.has_perm("view_image", image)
     assert editor.has_perm("view_image", image)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("answer_type", ("PIMG", "MPIM"))
+def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    rs = ReaderStudyFactory()
+    im = ImageFactory()
+    editor, reader = UserFactory(), UserFactory()
+
+    rs.images.add(im)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+
+    question = QuestionFactory(reader_study=rs, answer_type=answer_type)
+
+    us1 = RawImageUploadSessionFactory(creator=reader)
+    us2 = RawImageUploadSessionFactory(creator=editor)
+
+    answer1 = AnswerFactory(
+        creator=reader,
+        question=question,
+        answer={"upload_session_pk": str(us1.pk)},
+    )
+
+    f = StagedFileFactory(
+        file__from_path=Path(__file__).parent.parent
+        / "cases_tests"
+        / "resources"
+        / "image10x10x10.mha"
+    )
+    RawImageFileFactory(upload_session=us1, staged_file_id=f.file_id)
+
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": us2.pk},
+        user=editor,
+        client=client,
+        method=client.patch,
+        data={"answer": str(answer1.pk)},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert (
+        b"User does not have permission to add an image to this answer"
+        in response.rendered_content
+    )
+
+
+@pytest.mark.django_db
+def test_question_accepts_image_type_answers(client, settings):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    rs = ReaderStudyFactory()
+    im = ImageFactory()
+    reader = UserFactory()
+
+    rs.images.add(im)
+    rs.add_reader(reader)
+
+    question = QuestionFactory(
+        reader_study=rs, answer_type=Question.AnswerType.BOOL
+    )
+
+    us = RawImageUploadSessionFactory(creator=reader)
+
+    answer = AnswerFactory(
+        creator=reader,
+        question=question,
+        answer={"upload_session_pk": str(us.pk)},
+    )
+
+    f = StagedFileFactory(
+        file__from_path=Path(__file__).parent.parent
+        / "cases_tests"
+        / "resources"
+        / "image10x10x10.mha"
+    )
+    RawImageFileFactory(upload_session=us, staged_file_id=f.file_id)
+
+    response = get_view_for_user(
+        viewname="api:upload-session-process-images",
+        reverse_kwargs={"pk": us.pk},
+        user=reader,
+        client=client,
+        method=client.patch,
+        data={"answer": str(answer.pk)},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert (
+        b"This question does not accept image type answers"
+        in response.rendered_content
+    )
