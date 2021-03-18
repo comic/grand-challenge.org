@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('algorithms', '0005_algorithm_average_duration'),
+        ("algorithms", "0005_algorithm_average_duration"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='algorithm',
-            name='use_flexible_inputs',
+            model_name="algorithm",
+            name="use_flexible_inputs",
             field=models.BooleanField(default=False),
         ),
     ]
