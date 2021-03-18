@@ -79,7 +79,10 @@ def add_images_to_component_interface_value(
     build_images(upload_session_pk=upload_pk)
 
     if session.image_set.count() > 1:
-        raise ValueError("Image imports should result in a single image")
+        session.status = RawImageUploadSession.FAILURE
+        session.error_message = "Image imports should result in a single image"
+        session.save()
+        return
 
     for image in session.image_set.all():
         civ = ComponentInterfaceValue.objects.get(

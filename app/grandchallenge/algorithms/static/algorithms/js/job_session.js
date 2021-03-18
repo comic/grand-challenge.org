@@ -26,7 +26,7 @@ function handleJobStatus(job) {
 
     handleImageImports(imageInputs)
 
-    let estimatedRemainingTime =averageJobDuration;
+    let estimatedRemainingTime = averageJobDuration;
 
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
@@ -53,7 +53,7 @@ function handleImageImports(imageInputs){
         const msg = `Total of ${imageInputs.length} images`;
         setCardCompleteMessage(cards.imageImport, msg);
     } else {
-        const msg = `${finishedImports.length} of ${imageInputs.length} images imported`;
+        const msg = `${imageInputs.filter(i => i.image!= null).length} of ${imageInputs.length} images imported`;
         setCardAwaitingMessage(cards.imageImport, msg);
     }
 }
