@@ -73,9 +73,11 @@ class Publication(models.Model):
         editable=False, null=True
     )
     year = models.PositiveIntegerField(editable=False, null=True)
+    citation = models.TextField(null=True)
 
     def __str__(self):
-        return f"{self.identifier} {self.ama_html}"
+        return f"{self.identifier} {self.citation}"
+        # return f"{self.identifier} {self.ama_html}"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -143,5 +145,6 @@ class Publication(models.Model):
         # The bibliography only contains 1 element
         citation = str(bibliography.bibliography()[0])
         citation = re.sub(r"^1\. ", "", citation)
+        self.citation = clean(citation)
 
         return clean(citation)
