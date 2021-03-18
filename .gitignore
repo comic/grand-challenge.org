@@ -97,5 +97,6 @@ postgres_data/
 node_modules/
 dist/
 
-# Processor container image
+# Processor container images
 app/algorithm.tar.gz
+app/tests/resources/gc_demo_algorithm/algorithm_io.tar
