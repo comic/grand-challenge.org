@@ -163,7 +163,12 @@ class RawImageUploadSessionPatchSerializer(RawImageUploadSessionSerializer):
 
         if not user.has_perm("change_answer", value):
             raise ValidationError(
-                "User does not have permission add an image to this answer"
+                "User does not have permission to add an image to this answer"
+            )
+
+        if not value.question.is_image_type:
+            raise ValidationError(
+                "This answer does not accept image type answers."
             )
 
         return value
