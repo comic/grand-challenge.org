@@ -148,7 +148,7 @@
                                     </a>
                                 </li>
                             {% endfor %}
-                            {% if input.file %}
+                            {% if input.file is not None %}
                                 <li>
                                     <a class="badge badge-primary"
                                        href="{{ input.file.url }}" download="{{ input.file.name|name }}">
