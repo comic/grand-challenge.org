@@ -53,7 +53,7 @@ def create_algorithm_job_for_inputs(
     )
     if upload_pks:
         image_tasks = group(
-            create_component_interface_value_for_image.signature(
+            add_images_to_component_interface_value.signature(
                 kwargs={
                     "component_interface_value_pk": civ_pk,
                     "upload_pk": upload_pk,
@@ -69,7 +69,7 @@ def create_algorithm_job_for_inputs(
 
 
 @shared_task
-def create_component_interface_value_for_image(
+def add_images_to_component_interface_value(
     *, component_interface_value_pk, upload_pk
 ):
     session = RawImageUploadSession.objects.get(pk=upload_pk)
