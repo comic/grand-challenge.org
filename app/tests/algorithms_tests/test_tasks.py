@@ -398,13 +398,13 @@ def test_algorithm_input_image_multiple_files(
     # when running normally, but unfortunately it is currently hard to test.
     # We should look into this at some point.
 
-    job = Job.objects.first()
-    assert job.status == job.FAILURE
-    assert job.error_message == (
-        "Job can't be started, input is missing for interface(s): "
-        "['Generic Medical Image'] "
-        "ValueError('Image imports should result in a single image')"
-    )
+    # job = Job.objects.first()
+    # assert job.status == job.FAILURE
+    # assert job.error_message == (
+    #     "Job can't be started, input is missing for interface(s): "
+    #     "['Generic Medical Image'] "
+    #     "ValueError('Image imports should result in a single image')"
+    # )
 
 
 @pytest.mark.django_db
