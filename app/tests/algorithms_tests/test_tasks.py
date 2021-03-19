@@ -37,18 +37,8 @@ class TestCreateAlgorithmJobs:
 
     def test_no_algorithm_image_does_nothing(self):
         image = ImageFactory()
-        civ = ComponentInterfaceValueFactory(
-            interface=self.default_input_interface, image=image
-        )
         create_algorithm_jobs(
             algorithm_image=None, images=[image],
-        )
-        assert Job.objects.count() == 0
-        create_algorithm_job_for_inputs(
-            algorithm_image_pk=None,
-            civ_pks=[civ.pk],
-            upload_pks=[],
-            creator_pk=None,
         )
         assert Job.objects.count() == 0
 

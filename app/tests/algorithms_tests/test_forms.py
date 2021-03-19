@@ -219,7 +219,7 @@ def test_algorithm_create(client):
     ),
 )
 def test_create_experiment_input_fields(
-    client, slug, content_parts, component_interfaces
+    client, component_interfaces, slug, content_parts
 ):
     alg, creator = create_algorithm_with_input(slug)
 
@@ -252,7 +252,7 @@ def test_create_experiment_input_fields(
         "multiple-polygons",
     ],
 )
-def test_create_experiment_json_input_field_validation(client, slug):
+def test_create_experiment_json_input_field_validation(client, component_interfaces, slug):
     alg, creator = create_algorithm_with_input(slug)
 
     def try_create_algorithm_experiment():
@@ -288,7 +288,7 @@ def test_create_experiment_json_input_field_validation(client, slug):
     ),
 )
 def test_create_experiment_simple_input_field_validation(
-    client, slug, content_parts
+    client, component_interfaces, slug, content_parts
 ):
     alg, creator = create_algorithm_with_input(slug)
 
