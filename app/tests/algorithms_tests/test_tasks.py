@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -350,3 +351,44 @@ def test_algorithm_multiple_inputs(
             job.outputs.first().value.values(),
         )
     ) == sorted(expected)
+
+
+@pytest.mark.django_db
+@patch("grandchallenge.algorithms.tasks.build_images", return_value=None)
+def test_algorithm_input_image_multiple_files(
+    build_images, client, algorithm_io_image, settings, component_interfaces
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+
+    assert Job.objects.count() == 0
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_io_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
+    )
+    alg.algorithm.add_editor(creator)
+
+    alg.algorithm.inputs.set(ComponentInterface.objects.all())
+    # create the job
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+    us = RawImageUploadSessionFactory()
+
+    ImageFactory(origin=us), ImageFactory(origin=us)
+    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+
+    civ = ComponentInterfaceValueFactory(interface=ci)
+
+    run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks={civ.pk: us.pk})
+
+    job = Job.objects.first()
+    assert job.status == job.FAILURE
+    assert job.error_message == (
+        "Job can't be started, input is missing for interface(s): "
+        "['Generic Medical Image'] "
+        "ValueError('Image imports should result in a single image')"
+    )
