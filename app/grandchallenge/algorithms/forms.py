@@ -19,6 +19,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
+from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
@@ -33,16 +34,6 @@ from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 from grandchallenge.subdomains.utils import reverse_lazy
 
-image_upload_text = (
-    "The total size of all files uploaded in a single session "
-    "cannot exceed 10 GB.<br>"
-    "The following file formats are supported: "
-    ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, "
-    ".tiff, .png, .jpeg and .jpg.<br>"
-    "The following file formats can be uploaded and will be converted to "
-    "tif: Aperio(.svs), Hamamatsu(.vms, .vmu, .ndpi), Leica(.scn), MIRAX"
-    "(.mrxs) and Ventana(.bif)."
-)
 
 file_upload_text = (
     "The total size of all files uploaded in a single session "
@@ -79,7 +70,7 @@ class InterfaceFormField:
             kwargs["widget"] = uploader.AjaxUploadWidget(
                 multifile=True, auto_commit=False
             )
-            kwargs["help_text"] = image_upload_text
+            kwargs["help_text"] = IMAGE_UPLOAD_HELP_TEXT
         self._field = field_type(**kwargs)
         if user:
             self._field.widget.user = user
@@ -134,7 +125,6 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "logo",
             "social_image",
             "public",
-            "inputs",
             "workstation",
             "workstation_config",
             "credits_per_job",
