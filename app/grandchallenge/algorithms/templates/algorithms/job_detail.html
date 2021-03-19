@@ -158,7 +158,7 @@
                                     </a>
                                 </li>
                             {% endif %}
-                            {% if input.value %}
+                            {% if input.value is not None %}
                                 <li>
                                     {{ input.interface.slug }}: {{ input.value|truncatechars_html:1000 }}
                                 </li>

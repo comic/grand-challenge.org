@@ -27,10 +27,7 @@ from grandchallenge.subdomains.utils import reverse
 def create_algorithm_job_for_inputs(
     *, algorithm_image_pk, civ_pks, upload_pks, creator_pk
 ):
-    try:
-        algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
-    except AlgorithmImage.DoesNotExist:
-        return
+    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
 
     if Job.objects.filter(
         algorithm_image=algorithm_image,
