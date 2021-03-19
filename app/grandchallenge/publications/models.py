@@ -73,9 +73,10 @@ class Publication(models.Model):
         editable=False, null=True
     )
     year = models.PositiveIntegerField(editable=False, null=True)
+    citation = models.TextField(editable=False, blank=True)
 
     def __str__(self):
-        return f"{self.identifier} {self.ama_html}"
+        return clean(f"{self.identifier} {self.citation}")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,6 +93,7 @@ class Publication(models.Model):
 
         self.title = str(reference.get("title", ""))
         self.year = reference.get("issued", {}).get("year")
+        self.citation = self.ama_html
 
         try:
             self.referenced_by_count = int(
