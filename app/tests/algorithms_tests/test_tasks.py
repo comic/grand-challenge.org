@@ -12,8 +12,11 @@ from grandchallenge.algorithms.tasks import (
     execute_jobs,
     run_algorithm_job_for_inputs,
 )
-from grandchallenge.components.models import ComponentInterface, \
-    ComponentInterfaceValue, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
