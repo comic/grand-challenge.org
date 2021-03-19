@@ -19,6 +19,7 @@ def update_publication_metadata():
             logger.warning(
                 f"Identifier {publication.identifier} not recognised"
             )
+            continue
 
         publication.identifier = new_identifier
         publication.csl = csl
