@@ -24,7 +24,7 @@ function handleJobStatus(job) {
     let jobStatus = job.status.toLowerCase();
     let imageInputs = job.inputs.filter(i => ["Image","Heat Map","Segmentation"].includes(i.interface.kind));
 
-    handleImageImports(imageInputs)
+    handleImageImports(jobStatus, imageInputs)
 
     let estimatedRemainingTime = averageJobDuration;
 
@@ -45,17 +45,21 @@ function handleJobStatus(job) {
     }
 }
 
-function handleImageImports(imageInputs){
+function handleImageImports(jobStatus, imageInputs){
     if (imageInputs.length == 0){
         setCardInactiveMessage(cards.imageImport, "No images for this job");
-    }
-    else if (imageInputs.every(i => i.image!= null)){
+    } else if (imageInputs.every(i => i.image!= null)){
         const msg = `Total of ${imageInputs.length} images`;
         setCardCompleteMessage(cards.imageImport, msg);
     } else {
-        const msg = `${imageInputs.filter(i => i.image!= null).length} of ${imageInputs.length} images imported`;
-        setCardAwaitingMessage(cards.imageImport, msg);
+        const msg = `${imageInputs.filter(i => i.image != null).length} of ${imageInputs.length} images imported`;
+        if (jobStatus == "queued" || jobStatus === "re-queued") {
+            setCardAwaitingMessage(cards.imageImport, msg);
+        } else {
+            setCardErrorMessage(cards.imageImport, `Errored: ${msg}`);
+        }
     }
+
 }
 
 function setCardAwaitingMessage(card, msg) {
@@ -81,7 +85,7 @@ function setCardCompleteMessage(card, msg) {
 }
 
 function setCardErrorMessage(card, msg) {
-    card.classList.remove("active", "text-muted", "border-primary", "border-success");
+    card.classList.remove("active", "text-muted", "border-light", "border-primary", "border-success");
     card.classList.add("border-danger");
     card.querySelector(".statusMessage").innerHTML = msg;
     card.querySelector(".statusSymbol").innerHTML = "<i class=\"text-danger fa fa-times fa-2x\"></i>";
