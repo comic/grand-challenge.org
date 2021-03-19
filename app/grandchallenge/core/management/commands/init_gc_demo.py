@@ -313,17 +313,10 @@ class Command(BaseCommand):
         ex_challenge.save()
 
     def _create_io_algorithm(self):
-        cases_image = grandchallenge.cases.models.Image(
-            name="test_image_.mha",
-            modality=ImagingModality.objects.get(modality="CT"),
-            width=128,
-            height=128,
-            color_space="RGB",
-        )
-        cases_image.save()
-
         algorithm = Algorithm.objects.create(
-            title="Test Algorithm IO", logo=get_temporary_image()
+            title="Test Algorithm IO",
+            logo=get_temporary_image(),
+            use_flexible_inputs=True,
         )
         algorithm.editors_group.user_set.add(
             self.users["algorithm"], self.users["demo"]
