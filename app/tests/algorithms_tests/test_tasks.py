@@ -383,7 +383,8 @@ def test_algorithm_input_image_multiple_files(
 
     civ = ComponentInterfaceValueFactory(interface=ci)
 
-    run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks={civ.pk: us.pk})
+    with pytest.raises(ValueError):
+        run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks={civ.pk: us.pk})
 
     job = Job.objects.first()
     assert job.status == job.FAILURE
