@@ -134,7 +134,6 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "logo",
             "social_image",
             "public",
-            "inputs",
             "workstation",
             "workstation_config",
             "credits_per_job",
