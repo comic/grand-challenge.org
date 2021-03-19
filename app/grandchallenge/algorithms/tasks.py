@@ -1,7 +1,6 @@
 from celery import chord, group, shared_task
 from django.apps import apps
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 
@@ -24,9 +23,7 @@ from grandchallenge.subdomains.utils import reverse
 
 
 @shared_task
-def run_algorithm_job_for_inputs(
-    *, job_pk, upload_pks
-):
+def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
     start_jobs = execute_algorithm_job_for_inputs.signature(
         kwargs={"job_pk": job_pk}, immutable=True
     )

@@ -5,9 +5,9 @@ import pytest
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
-    run_algorithm_job_for_inputs,
     create_algorithm_jobs,
     execute_jobs,
+    run_algorithm_job_for_inputs,
 )
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from tests.algorithms_tests.factories import (
@@ -49,10 +49,7 @@ class TestCreateAlgorithmJobs:
         )
         j.inputs.set([civ])
         assert Job.objects.count() == 1
-        run_algorithm_job_for_inputs(
-            job_pk=j.pk,
-            upload_pks=[],
-        )
+        run_algorithm_job_for_inputs(job_pk=j.pk, upload_pks=[])
         assert Job.objects.count() == 1
 
     def test_creates_job_correctly(self):
@@ -181,7 +178,7 @@ def test_algorithm(client, algorithm_image, settings):
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_image
     alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True,
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
     )
 
     # We should not be able to download image
@@ -190,7 +187,7 @@ def test_algorithm(client, algorithm_image, settings):
 
     # Run the algorithm, it will create a results.json and an output.tif
     image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
     execute_jobs(algorithm_image=alg, images=[image_file.image])
     jobs = Job.objects.filter(algorithm_image=alg).all()
@@ -231,7 +228,7 @@ def test_algorithm(client, algorithm_image, settings):
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
     image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
 
     execute_jobs(algorithm_image=alg, images=[image_file.image])
@@ -260,7 +257,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_image
     alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True,
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
     )
 
     # Make sure the job fails when trying to upload an invalid file
@@ -273,7 +270,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
     image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
 
     execute_jobs(algorithm_image=alg, images=[image_file.image])
@@ -300,16 +297,13 @@ def test_algorithm_multiple_inputs(
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_io_image
     alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True,
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
     )
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())
     # create the job
-    job = Job.objects.create(
-        creator=creator,
-        algorithm_image=alg,
-    )
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
 
     expected = []
     for ci in ComponentInterface.objects.all():
@@ -317,7 +311,7 @@ def test_algorithm_multiple_inputs(
             image_file = ImageFileFactory(
                 file__from_path=Path(__file__).parent
                 / "resources"
-                / "input_file.tif",
+                / "input_file.tif"
             )
             job.inputs.add(
                 ComponentInterfaceValueFactory(
@@ -343,10 +337,7 @@ def test_algorithm_multiple_inputs(
             )
             expected.append("test")
 
-    run_algorithm_job_for_inputs(
-        job_pk=job.pk,
-        upload_pks=[],
-    )
+    run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks=[])
 
     job = Job.objects.first()
     assert job.status == job.SUCCESS

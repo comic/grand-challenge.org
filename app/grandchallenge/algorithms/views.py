@@ -59,8 +59,8 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
 )
 from grandchallenge.algorithms.tasks import (
-    run_algorithm_job_for_inputs,
     create_algorithm_jobs_for_session,
+    run_algorithm_job_for_inputs,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
