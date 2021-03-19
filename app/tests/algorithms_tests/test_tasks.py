@@ -305,7 +305,9 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
 
 
 @pytest.mark.django_db
-def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
+def test_algorithm_multiple_inputs(
+    client, algorithm_io_image, settings, component_interfaces
+):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -365,7 +367,12 @@ def test_algorithm_multiple_inputs(client, algorithm_io_image, settings):
 
     assert Job.objects.count() == 1
     job = Job.objects.first()
+    from grandchallenge.components.tasks import execute_job
 
+    execute_job(
+        job_pk=job.pk, job_app_label="algorithms", job_model_name="job"
+    )
+    job.refresh_from_db()
     assert job.status == job.SUCCESS
     assert {x[0] for x in job.input_files} == set(
         job.outputs.first().value.keys()
