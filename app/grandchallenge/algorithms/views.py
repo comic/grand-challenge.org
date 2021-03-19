@@ -59,7 +59,7 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
 )
 from grandchallenge.algorithms.tasks import (
-    create_algorithm_job_for_inputs,
+    run_algorithm_job_for_inputs,
     create_algorithm_jobs_for_session,
 )
 from grandchallenge.cases.forms import UploadRawImagesForm
@@ -406,7 +406,6 @@ class AlgorithmExperimentCreate(
     permission_required = (
         f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
     )
-    job = None
     raise_exception = True
 
     def get_permission_object(self):
@@ -444,7 +443,14 @@ class AlgorithmExperimentCreate(
             upload_session.save()
             return upload_session.pk
 
-        civs = []
+        job = Job.objects.create(
+            creator=self.request.user,
+            algorithm_image=self.algorithm.latest_ready_image,
+        )
+
+        if self.algorithm.editors_group:
+            job.viewer_groups.add(*[self.algorithm.editors_group])
+
         upload_pks = {}
         for slug, value in form.cleaned_data.items():
             ci = self.algorithm.inputs.get(slug=slug)
@@ -452,7 +458,7 @@ class AlgorithmExperimentCreate(
                 # create civ without image, image will be added when import completes
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
                 civ.save()
-                civs.append(civ.pk)
+                job.inputs.add(civ)
                 upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
                 # should be a single file
@@ -462,30 +468,25 @@ class AlgorithmExperimentCreate(
                 )
                 civ.full_clean()
                 civ.save()
-                civs.append(civ.pk)
+                job.inputs.add(civ)
             else:
                 civ = ComponentInterfaceValue.objects.create(
                     interface=ci, value=value
                 )
-                civs.append(civ.pk)
+                job.inputs.add(civ)
 
-        create_job = create_algorithm_job_for_inputs.signature(
-            kwargs={
-                "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
-                "upload_pks": upload_pks,
-                "civ_pks": civs,
-                "creator_pk": self.request.user.pk,
-            },
+        run_job = run_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": job.pk, "upload_pks": upload_pks},
             immutable=True,
         )
 
-        self.job = create_job()
-        return super().form_valid(form)
+        run_job.apply_async()
 
-    def get_success_url(self):
-        return reverse(
-            "algorithms:algorithm-experiment",
-            kwargs={"slug": self.kwargs["slug"], "pk": self.job.pk},
+        return HttpResponseRedirect(
+            reverse(
+                "algorithms:algorithm-experiment",
+                kwargs={"slug": self.kwargs["slug"], "pk": job.pk},
+            )
         )
 
 

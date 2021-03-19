@@ -24,29 +24,11 @@ from grandchallenge.subdomains.utils import reverse
 
 
 @shared_task
-def create_algorithm_job_for_inputs(
-    *, algorithm_image_pk, civ_pks, upload_pks, creator_pk
+def run_algorithm_job_for_inputs(
+    *, job_pk, upload_pks
 ):
-    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
-
-    if Job.objects.filter(
-        algorithm_image=algorithm_image,
-        inputs__pk__in=civ_pks,
-        creator_id=creator_pk,
-    ).exists():
-        return
-
-    # Editors group should be able to view session jobs for debugging
-    groups = [algorithm_image.algorithm.editors_group]
-
-    job = create_algorithm_job_with_inputs(
-        algorithm_image=algorithm_image,
-        inputs=civ_pks,
-        creator=get_user_model().objects.get(pk=creator_pk),
-        extra_viewer_groups=groups,
-    )
     start_jobs = execute_algorithm_job_for_inputs.signature(
-        kwargs={"job_pk": job.pk}, immutable=True
+        kwargs={"job_pk": job_pk}, immutable=True
     )
     if upload_pks:
         image_tasks = group(
@@ -62,7 +44,6 @@ def create_algorithm_job_for_inputs(
         start_jobs = chord(image_tasks, start_jobs)
 
     start_jobs.apply_async()
-    return job
 
 
 @shared_task

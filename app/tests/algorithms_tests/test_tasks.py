@@ -5,7 +5,7 @@ import pytest
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
-    create_algorithm_job_for_inputs,
+    run_algorithm_job_for_inputs,
     create_algorithm_jobs,
     execute_jobs,
 )
@@ -35,23 +35,6 @@ class TestCreateAlgorithmJobs:
             slug=DEFAULT_INPUT_INTERFACE_SLUG
         )
 
-    def test_no_algorithm_image_does_nothing(self):
-        image = ImageFactory()
-        civ = ComponentInterfaceValueFactory(
-            interface=self.default_input_interface, image=image
-        )
-        create_algorithm_jobs(
-            algorithm_image=None, images=[image],
-        )
-        assert Job.objects.count() == 0
-        create_algorithm_job_for_inputs(
-            algorithm_image_pk=None,
-            civ_pks=[civ.pk],
-            upload_pks=[],
-            creator_pk=None,
-        )
-        assert Job.objects.count() == 0
-
     def test_no_images_does_nothing(self):
         ai = AlgorithmImageFactory()
         create_algorithm_jobs(algorithm_image=ai, images=[])
@@ -66,11 +49,9 @@ class TestCreateAlgorithmJobs:
         )
         j.inputs.set([civ])
         assert Job.objects.count() == 1
-        create_algorithm_job_for_inputs(
-            algorithm_image_pk=ai.pk,
-            civ_pks=[civ.pk],
+        run_algorithm_job_for_inputs(
+            job_pk=j.pk,
             upload_pks=[],
-            creator_pk=ai.creator.pk,
         )
         assert Job.objects.count() == 1
 
@@ -324,7 +305,12 @@ def test_algorithm_multiple_inputs(
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())
-    civs = []
+    # create the job
+    job = Job.objects.create(
+        creator=creator,
+        algorithm_image=alg,
+    )
+
     expected = []
     for ci in ComponentInterface.objects.all():
         if ci.kind in InterfaceKind.interface_type_image():
@@ -333,14 +319,14 @@ def test_algorithm_multiple_inputs(
                 / "resources"
                 / "input_file.tif",
             )
-            civs.append(
+            job.inputs.add(
                 ComponentInterfaceValueFactory(
                     interface=ci, image=image_file.image, file=None
                 )
             )
             expected.append("file")
         elif ci.kind in InterfaceKind.interface_type_file():
-            civs.append(
+            job.inputs.add(
                 ComponentInterfaceValueFactory(
                     interface=ci,
                     file__from_path=Path(__file__).parent
@@ -350,22 +336,18 @@ def test_algorithm_multiple_inputs(
             )
             expected.append("json")
         else:
-            civs.append(
+            job.inputs.add(
                 ComponentInterfaceValueFactory(
                     interface=ci, value="test", file=None
                 )
             )
             expected.append("test")
 
-    civ_pks = [civ.pk for civ in civs]
-    create_algorithm_job_for_inputs(
-        algorithm_image_pk=alg.pk,
-        civ_pks=civ_pks,
+    run_algorithm_job_for_inputs(
+        job_pk=job.pk,
         upload_pks=[],
-        creator_pk=creator.pk,
     )
 
-    assert Job.objects.count() == 1
     job = Job.objects.first()
     assert job.status == job.SUCCESS
     assert {x[0] for x in job.input_files} == set(
