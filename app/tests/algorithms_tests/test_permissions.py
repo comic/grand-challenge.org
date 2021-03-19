@@ -14,6 +14,7 @@ from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs_for_archive,
     create_algorithm_jobs_for_evaluation,
     create_algorithm_jobs_for_session,
+    run_algorithm_job_for_inputs,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -181,6 +182,31 @@ def test_api_job_list_permissions(client):
         assert image_pks == {
             str(i.image.pk) for j in test[2] for i in j.inputs.all()
         }
+
+
+@pytest.mark.django_db
+def test_algorithm_create_permissions(client):
+    alg = AlgorithmFactory()
+    editor, user, user1 = UserFactory(), UserFactory(), UserFactory()
+
+    alg.add_editor(user=editor)
+    alg.add_user(user=user)
+
+    tests = ((None, 302), (user1, 403), (editor, 200), (user, 200))
+    for test, view in zip(
+        tests,
+        [
+            "algorithms:execution-session-create-new",
+            "algorithms:execution-session-create",
+        ],
+    ):
+        response = get_view_for_user(
+            viewname=view,
+            reverse_kwargs={"slug": alg.slug},
+            client=client,
+            user=test[0],
+        )
+        assert response.status_code == test[1]
 
 
 @pytest.mark.django_db
