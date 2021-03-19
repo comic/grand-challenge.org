@@ -38,9 +38,38 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
             )
             for civ_pk, upload_pk in upload_pks.items()
         )
-        start_jobs = chord(image_tasks, start_jobs)
+        start_jobs = chord(image_tasks, start_jobs).on_error(
+            group(on_chord_error.s(job_pk=job_pk))
+        )
 
     start_jobs.apply_async()
+
+
+@shared_task(bind=True)
+def on_chord_error(self, task_id, *args, **kwargs):
+    job_pk = kwargs.pop("job_pk")
+    job = Job.objects.get(pk=job_pk)
+
+    # Send an email to the algorithm editors and creator on job failure
+    linked_task = send_failed_jobs_email.signature(
+        kwargs={"job_pks": [job.pk]}, immutable=True
+    )
+
+    error_message = ""
+    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
+    if missing_inputs:
+        error_message += (
+            f"Job can't be started, input is missing for interface(s):"
+            f" {list(c.interface.title for c in missing_inputs)} "
+        )
+    res = self.AsyncResult(task_id).result
+    if isinstance(res, Exception):
+        error_message += str(res)
+    job.update_status(
+        status=job.FAILURE, error_message=error_message,
+    )
+
+    linked_task.apply_async()
 
 
 @shared_task
@@ -54,10 +83,11 @@ def add_images_to_component_interface_value(
     build_images(upload_session_pk=upload_pk)
 
     if session.image_set.count() > 1:
+        error_message = "Image imports should result in a single image"
         session.status = RawImageUploadSession.FAILURE
-        session.error_message = "Image imports should result in a single image"
+        session.error_message = error_message
         session.save()
-        return
+        raise ValueError(error_message)
 
     for image in session.image_set.all():
         civ = ComponentInterfaceValue.objects.get(
