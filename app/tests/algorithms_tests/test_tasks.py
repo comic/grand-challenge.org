@@ -6,11 +6,14 @@ import pytest
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
+    add_images_to_component_interface_value,
     create_algorithm_jobs,
+    execute_algorithm_job_for_inputs,
     execute_jobs,
     run_algorithm_job_for_inputs,
 )
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import ComponentInterface, \
+    ComponentInterfaceValue, InterfaceKind
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -381,7 +384,8 @@ def test_algorithm_input_image_multiple_files(
     ImageFactory(origin=us), ImageFactory(origin=us)
     ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
 
-    civ = ComponentInterfaceValueFactory(interface=ci)
+    civ = ComponentInterfaceValue.objects.create(interface=ci)
+    job.inputs.add(civ)
 
     with pytest.raises(ValueError):
         run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks={civ.pk: us.pk})
@@ -391,10 +395,68 @@ def test_algorithm_input_image_multiple_files(
     # when running normally, but unfortunately it is currently hard to test.
     # We should look into this at some point.
 
-    # job = Job.objects.first()
-    # assert job.status == job.FAILURE
-    # assert job.error_message == (
-    #     "Job can't be started, input is missing for interface(s): "
-    #     "['Generic Medical Image'] "
-    #     "ValueError('Image imports should result in a single image')"
-    # )
+    job = Job.objects.first()
+    assert job.status == job.FAILURE
+    assert job.error_message == (
+        "Job can't be started, input is missing for interface(s): "
+        "['Generic Medical Image'] "
+        "ValueError('Image imports should result in a single image')"
+    )
+
+
+@pytest.mark.django_db
+def test_add_images_to_component_interface_value():
+    # Override the celery settings
+    us = RawImageUploadSessionFactory()
+    ImageFactory(origin=us), ImageFactory(origin=us)
+    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+
+    civ = ComponentInterfaceValueFactory(interface=ci)
+
+    with pytest.raises(ValueError) as err:
+        add_images_to_component_interface_value(
+            component_interface_value_pk=civ.pk, upload_pk=us.pk
+        )
+    assert "Image imports should result in a single image" in str(err)
+    assert civ.image is None
+
+    us2 = RawImageUploadSessionFactory()
+    image = ImageFactory(origin=us2)
+    civ2 = ComponentInterfaceValueFactory(interface=ci)
+    add_images_to_component_interface_value(
+        component_interface_value_pk=civ2.pk, upload_pk=us2.pk
+    )
+    civ2.refresh_from_db()
+    assert civ2.image == image
+
+
+@pytest.mark.django_db
+def test_execute_algorithm_job_for_inputs(
+    client, algorithm_io_image, settings
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_io_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
+    )
+    alg.algorithm.add_editor(creator)
+
+    # create the job without value for the ComponentInterfaceValues
+    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+    civ = ComponentInterfaceValue.objects.create(interface=ci)
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+    job.inputs.add(civ)
+    execute_algorithm_job_for_inputs(job_pk=job.pk)
+
+    job.refresh_from_db()
+    assert job.status == Job.FAILURE
+    assert (
+        "Job can't be started, input is missing for interface(s):"
+        in job.error_message
+    )
