@@ -73,9 +73,6 @@
                 {% endif %}
             {% endif %}
 
-            {% if request.user.is_staff and "execute_algorithm" in algorithm_perms and object.latest_ready_image %}
-
-            {% endif %}
 
             <a class="nav-link"
                href="{% url 'algorithms:job-list' slug=object.slug %}">
