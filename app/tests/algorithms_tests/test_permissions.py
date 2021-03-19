@@ -14,7 +14,6 @@ from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs_for_archive,
     create_algorithm_jobs_for_evaluation,
     create_algorithm_jobs_for_session,
-    run_algorithm_job_for_inputs,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
