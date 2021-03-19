@@ -218,7 +218,9 @@ def test_algorithm_create(client):
         ),
     ),
 )
-def test_create_experiment_input_fields(client, slug, content_parts):
+def test_create_experiment_input_fields(
+    client, slug, content_parts, component_interfaces
+):
     alg, creator = create_algorithm_with_input(slug)
 
     def load_create_experiment_form():

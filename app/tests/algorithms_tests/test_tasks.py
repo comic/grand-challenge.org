@@ -367,12 +367,6 @@ def test_algorithm_multiple_inputs(
 
     assert Job.objects.count() == 1
     job = Job.objects.first()
-    from grandchallenge.components.tasks import execute_job
-
-    execute_job(
-        job_pk=job.pk, job_app_label="algorithms", job_model_name="job"
-    )
-    job.refresh_from_db()
     assert job.status == job.SUCCESS
     assert {x[0] for x in job.input_files} == set(
         job.outputs.first().value.keys()
