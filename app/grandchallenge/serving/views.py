@@ -2,6 +2,7 @@ import posixpath
 
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
+from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
 from guardian.shortcuts import get_objects_for_user
@@ -96,7 +97,10 @@ def serve_component_interface_value(
 
     if (
         get_objects_for_user(user=user, perms="algorithms.view_job")
-        .filter(outputs__pk=component_interface_value_pk)
+        .filter(
+            Q(outputs__pk=component_interface_value_pk)
+            | Q(inputs__pk=component_interface_value_pk)
+        )
         .exists()
     ):
         return protected_storage_redirect(name=civ.file.name)

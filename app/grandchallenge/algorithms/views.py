@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-from pathlib import Path
 from typing import Dict
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -17,6 +16,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.text import get_valid_filename
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -448,38 +448,40 @@ class AlgorithmExperimentCreate(
             algorithm_image=self.algorithm.latest_ready_image,
         )
 
-        if self.algorithm.editors_group:
-            job.viewer_groups.add(*[self.algorithm.editors_group])
+        job.viewer_groups.add(self.algorithm.editors_group)
 
         upload_pks = {}
+        civs = []
+
+        interfaces = {ci.slug: ci for ci in self.algorithm.inputs.all()}
+
         for slug, value in form.cleaned_data.items():
-            ci = self.algorithm.inputs.get(slug=slug)
+            ci = interfaces[slug]
             if ci.kind in InterfaceKind.interface_type_image():
                 # create civ without image, image will be added when import completes
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
-                civ.save()
-                job.inputs.add(civ)
+                civs.append(civ)
                 upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
                 # should be a single file
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
-                civ.file = File(
-                    value[0].open(), name=str(Path(ci.output_path).name)
-                )
-                civ.full_clean()
-                civ.save()
-                job.inputs.add(civ)
+                name = get_valid_filename(value[0].name)
+                with value[0].open() as f:
+                    civ.file = File(f, name=name)
+                    civ.save()
+                civs.append(civ)
             else:
                 civ = ComponentInterfaceValue.objects.create(
                     interface=ci, value=value
                 )
-                job.inputs.add(civ)
+                civs.append(civ)
+
+        job.inputs.add(*civs)
 
         run_job = run_algorithm_job_for_inputs.signature(
             kwargs={"job_pk": job.pk, "upload_pks": upload_pks},
             immutable=True,
         )
-
         run_job.apply_async()
 
         return HttpResponseRedirect(

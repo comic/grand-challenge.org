@@ -422,15 +422,7 @@ class Job(UUIDModel, ComponentJob):
 
     def get_path_and_value(self, inp):
         if inp.file:
-            file = inp.file
-            return [
-                (
-                    os.path.join(
-                        inp.interface.relative_path, file.name.split("/")[-1]
-                    ),
-                    file,
-                )
-            ]
+            return [(inp.interface.relative_path, inp.file)]
         if inp.image:
             return [
                 (
