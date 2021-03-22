@@ -448,12 +448,17 @@ def test_algorithm_jobs_list_view(client):
 
 
 @pytest.mark.django_db
-def test_aglorithm_detail_flexible_inputs(client):
+def test_algorithm_detail_flexible_inputs(client):
     editor = UserFactory()
 
     alg = AlgorithmFactory()
     alg.add_editor(editor)
     AlgorithmImageFactory(algorithm=alg, ready=True)
+
+    flexi_input_url = reverse(
+        viewname="algorithms:execution-session-create-new",
+        kwargs={"slug": alg.slug},
+    )
 
     response = get_view_for_user(
         viewname="algorithms:detail",
@@ -466,10 +471,7 @@ def test_aglorithm_detail_flexible_inputs(client):
     )
 
     assert response.status_code == 200
-    assert (
-        "Try-out Algorithm with flexible inputs (experimental!)"
-        not in response.rendered_content
-    )
+    assert flexi_input_url not in response.rendered_content
 
     alg.use_flexible_inputs = True
     alg.save()
@@ -485,10 +487,7 @@ def test_aglorithm_detail_flexible_inputs(client):
     )
 
     assert response.status_code == 200
-    assert (
-        "Try-out Algorithm with flexible inputs (experimental!)"
-        in response.rendered_content
-    )
+    assert flexi_input_url in response.rendered_content
 
 
 @pytest.mark.django_db

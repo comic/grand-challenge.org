@@ -51,7 +51,7 @@ urlpatterns = [
         name="execution-session-create",
     ),
     path(
-        "<slug>/experiments/new/",
+        "<slug>/experiments/create/flex/",
         AlgorithmExperimentCreate.as_view(),
         name="execution-session-create-new",
     ),

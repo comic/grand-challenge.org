@@ -26,6 +26,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import JSONEditorWidget, MarkdownEditorWidget
 from grandchallenge.groups.forms import UserGroupForm
@@ -34,7 +35,6 @@ from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 from grandchallenge.subdomains.utils import reverse_lazy
 
-
 file_upload_text = (
     "The total size of all files uploaded in a single session "
     "cannot exceed 10 GB.<br>"
@@ -42,16 +42,31 @@ file_upload_text = (
 )
 
 
+def _join_with_br(a, b):
+    if a:
+        return f"{a}<br>{b}"
+    else:
+        return b
+
+
 class InterfaceFormField:
     def __init__(
-        self, kind: InterfaceKind.InterfaceKindChoices, initial=None, user=None
+        self,
+        *,
+        kind: InterfaceKind.InterfaceKindChoices,
+        initial=None,
+        user=None,
+        help_text="",
     ):
         field_type = field_for_interface(kind)
 
         # bool can't be required
         kwargs = {
-            "required": (kind != InterfaceKind.InterfaceKindChoices.BOOL)
+            "required": (kind != InterfaceKind.InterfaceKindChoices.BOOL),
         }
+
+        extra_help = ""
+
         if initial is not None:
             kwargs["initial"] = initial
         if kind in InterfaceKind.interface_type_annotation():
@@ -62,16 +77,20 @@ class InterfaceFormField:
             kwargs["widget"] = uploader.AjaxUploadWidget(
                 multifile=False, auto_commit=False
             )
-            kwargs["help_text"] = f"{file_upload_text} .{kind.lower()}"
             kwargs["validators"] = [
                 ExtensionValidator(allowed_extensions=(f".{kind.lower()}",))
             ]
+            extra_help = f"{file_upload_text} .{kind.lower()}"
         if kind in InterfaceKind.interface_type_image():
             kwargs["widget"] = uploader.AjaxUploadWidget(
                 multifile=True, auto_commit=False
             )
-            kwargs["help_text"] = IMAGE_UPLOAD_HELP_TEXT
-        self._field = field_type(**kwargs)
+            extra_help = IMAGE_UPLOAD_HELP_TEXT
+
+        self._field = field_type(
+            help_text=_join_with_br(help_text, extra_help), **kwargs
+        )
+
         if user:
             self._field.widget.user = user
 
@@ -103,12 +122,18 @@ def field_for_interface(i: InterfaceKind.InterfaceKindChoices):
 class AlgorithmInputsForm(SaveFormInitMixin, Form):
     def __init__(self, *args, algorithm=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+
         if algorithm is None:
             return
+
         self.helper = FormHelper()
+
         for inp in algorithm.inputs.all():
             self.fields[inp.slug] = InterfaceFormField(
-                inp.kind, inp.default_value, user
+                kind=inp.kind,
+                initial=inp.default_value,
+                user=user,
+                help_text=clean(inp.description) if inp.description else "",
             ).field
 
 
