@@ -548,10 +548,24 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "execution-session-create-new",
+                {"slug": ai.algorithm.slug},
+                "execute_algorithm",
+                ai.algorithm,
+                None,
+            ),
+            (
                 "execution-session-detail",
                 {"slug": ai.algorithm.slug, "pk": s.pk},
                 "view_rawimageuploadsession",
                 s,
+                None,
+            ),
+            (
+                "job-experiment-detail",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "view_job",
+                j,
                 None,
             ),
             (

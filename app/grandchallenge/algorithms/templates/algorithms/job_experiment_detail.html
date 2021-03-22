@@ -7,14 +7,17 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a
+    <li class="breadcrumb-item"><a
                 href="{% url 'algorithms:list' %}">Algorithms</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
+                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
         </a></li>
+        <li class="breadcrumb-item"><a
+            href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Experiment {{ object.pk }}
+            aria-current="page">Experiment
         </li>
     </ol>
 {% endblock %}
@@ -32,7 +35,7 @@
                         <i class="text-success fa fa-check fa-2x"></i>
                     </div>
                 </div>
-                <a href="{% url 'algorithms:execution-session-create' slug=algorithm.slug %}"
+                <a href="{% url 'algorithms:execution-session-create-new' slug=object.algorithm_image.algorithm.slug %}"
                    class="stretched-link"></a>
             </div>
         </div>
@@ -57,7 +60,7 @@
                     <div class="text-center p-3 statusSymbol">
                     </div>
                     <p class="card-text">
-                        <a href="{% url 'algorithms:job-list' slug=algorithm.slug %}"
+                        <a href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
                            class="stretched-link statusMessage"></a>
                     </p>
                 </div>
@@ -70,7 +73,7 @@
 {% block script %}
     {{ block.super }}
 
-    {{ average_job_duration|json_script:"averageJobDuration" }}
+    {{ object.algorithm_image.algorithm.average_duration|json_script:"averageJobDuration" }}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"
             integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ="
             crossorigin="anonymous"></script>
@@ -80,7 +83,7 @@
     <script type="text/javascript">
         (function () {
             getJobStatus(
-                 "{% url 'api:algorithms-job-detail' pk=pk %}"
+                 "{% url 'api:algorithms-job-detail' pk=object.pk %}"
             );
         })();
     </script>

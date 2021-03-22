@@ -184,31 +184,6 @@ def test_api_job_list_permissions(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_create_permissions(client):
-    alg = AlgorithmFactory()
-    editor, user, user1 = UserFactory(), UserFactory(), UserFactory()
-
-    alg.add_editor(user=editor)
-    alg.add_user(user=user)
-
-    tests = ((None, 302), (user1, 403), (editor, 200), (user, 200))
-    for test, view in zip(
-        tests,
-        [
-            "algorithms:execution-session-create-new",
-            "algorithms:execution-session-create",
-        ],
-    ):
-        response = get_view_for_user(
-            viewname=view,
-            reverse_kwargs={"slug": alg.slug},
-            client=client,
-            user=test[0],
-        )
-        assert response.status_code == test[1]
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize("group", ["user", "editor"])
 def test_workstation_changes(client, group):
     # Ensure that read permissions are kept up to date if the workstation

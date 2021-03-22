@@ -22,7 +22,6 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
-    TemplateView,
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
@@ -484,40 +483,23 @@ class AlgorithmExperimentCreate(
 
         return HttpResponseRedirect(
             reverse(
-                "algorithms:algorithm-experiment",
+                "algorithms:job-experiment-detail",
                 kwargs={"slug": self.kwargs["slug"], "pk": job.pk},
             )
         )
 
 
-class AlgorithmExperiment(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, TemplateView
+class JobExperimentDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
-    template_name = "algorithms/experiment.html"
-    permission_required = (
-        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
-    )
+    template_name = "algorithms/job_experiment_detail.html"
+    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    model = Job
     raise_exception = True
 
-    @cached_property
-    def algorithm(self):
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.algorithm
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "algorithm": self.algorithm,
-                "average_job_duration": Job.objects.filter(
-                    algorithm_image__algorithm=self.algorithm,
-                    status=Job.SUCCESS,
-                ).average_duration(),
-            }
-        )
-        return context
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.select_related("algorithm_image__algorithm")
 
 
 class AlgorithmExecutionSessionDetail(
