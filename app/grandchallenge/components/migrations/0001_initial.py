@@ -57,6 +57,7 @@ class Migration(migrations.Migration):
                         default=None,
                         help_text="Default value for this field, only valid for inputs.",
                         null=True,
+                        blank=True,
                     ),
                 ),
                 (

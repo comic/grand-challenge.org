@@ -130,6 +130,7 @@ class ComponentInterface(models.Model):
         blank=True, help_text="Description of this input/output field."
     )
     default_value = models.JSONField(
+        blank=True,
         null=True,
         default=None,
         help_text="Default value for this field, only valid for inputs.",
