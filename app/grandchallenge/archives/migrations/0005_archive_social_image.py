@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name="social_image",
             field=models.ImageField(
                 blank=True,
-                help_text="An image for this archive which is displayed when you post the link to this archive on social media. Should be square with a resolution of 640x320 px (1280x640 px for best display).",
+                help_text="An image for this archive which is displayed when you post the link to this archive on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
                 storage=grandchallenge.core.storage.PublicS3Storage(),
                 upload_to=grandchallenge.core.storage.get_social_image_path,
             ),

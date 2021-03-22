@@ -133,7 +133,7 @@ class ChallengeBase(models.Model):
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
-        help_text="An image for this challenge which is displayed when you post the link on social media. Should be square with a resolution of 640x320 px (1280x640 px for best display).",
+        help_text="An image for this challenge which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
     )
     hidden = models.BooleanField(
         default=True,

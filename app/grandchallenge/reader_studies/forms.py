@@ -50,7 +50,7 @@ from grandchallenge.subdomains.utils import reverse_lazy
 READER_STUDY_HELP_TEXTS = {
     "title": "The title of this reader study.",
     "logo": "The logo for this reader study.",
-    "social_image": "An image for this reader study which is displayed when posting the reader study link on social media. Should be square with a resolution of 640x320 px (1280x640 px for best display).",
+    "social_image": "An image for this reader study which is displayed when posting the reader study link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
     "description": "Describe what this reader study is for.",
     "workstation": (
         "Which workstation should be used for this reader study? "
