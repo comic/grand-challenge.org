@@ -2,7 +2,7 @@
 Development
 ===========
 
-Grand-challenge is distributed as a set of containers that are defined and linked together in ``docker-compose.yml``. 
+Grand-challenge is distributed as a set of containers that are defined and linked together in ``docker-compose.yml``.
 To develop the platform you need to have docker and docker-compose running on your system.
 
 Installation
@@ -45,12 +45,25 @@ If you follow the installation instructions above you will be able to go to http
 this is using a self-signed certificate so you will need to accept the security warning.
 
 The development site will apply all migrations and add a set of fixtures to help you with developing grand-challenge.org.
-These fixtures include Archives, Reader Studies, Challenges, Algorithms and Workstations. 
+These fixtures include Archives, Reader Studies, Challenges, Algorithms and Workstations.
 Some default users are created with specific permissions, each user has the same username and password.
-These users include ``archive``, ``readerstudy``, ``demo``, ``algorithm`` and ``workstation``, 
+These users include ``archive``, ``readerstudy``, ``demo``, ``algorithm`` and ``workstation``,
 who have permission to administer the existing fixtures and create new ones.
 
-If you would like to test out the algorithms you can download an `Example Algorithm Image`_ from Docker Hub.
+If you would like to test out the algorithms you can create a simple algorithm that lists its inputs in a `results.json` file by running
+
+.. code-block:: console
+
+    $ make create_io_algorithm
+
+Before you run
+
+.. code-block:: console
+
+    $ ./cycle_docker_compose.sh
+
+
+You can also download an `Example Algorithm Image`_ from Docker Hub.
 Save it locally with
 
 .. code-block:: console
@@ -60,22 +73,22 @@ Save it locally with
 
 You can then upload ``otsu.tar`` as a container image to the local site.
 
-If you would like to generate your own Algorithm or Evaluation containers you can do this using `Evalutils`_, 
+If you would like to generate your own Algorithm or Evaluation containers you can do this using `Evalutils`_,
 please see the `Getting Started with Evalutils`_ documentation.
 
-There is an interactive debugger from ``django-extensions`` which will halt on exceptions (see the `RunServerPlus`_ documentation), 
+There is an interactive debugger from ``django-extensions`` which will halt on exceptions (see the `RunServerPlus`_ documentation),
 it's really handy for interactive debugging to place ``1/0`` in your code as a breakpoint.
 
 Running the Tests
 -----------------
 
 GitHub actions is used to run the test suite on every new commit.
-You can also run the tests locally by 
+You can also run the tests locally by
 
 1. In a console window make sure the database is running
 
 .. code-block:: console
-    
+
     $ ./cycle_docker_compose.sh
 
 2. Then in a second window run

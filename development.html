@@ -222,7 +222,15 @@ These fixtures include Archives, Reader Studies, Challenges, Algorithms and Work
 Some default users are created with specific permissions, each user has the same username and password.
 These users include <code class="docutils literal notranslate"><span class="pre">archive</span></code>, <code class="docutils literal notranslate"><span class="pre">readerstudy</span></code>, <code class="docutils literal notranslate"><span class="pre">demo</span></code>, <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> and <code class="docutils literal notranslate"><span class="pre">workstation</span></code>,
 who have permission to administer the existing fixtures and create new ones.</p>
-<p>If you would like to test out the algorithms you can download an <a class="reference external" href="https://hub.docker.com/r/grandchallenge/otsu">Example Algorithm Image</a> from Docker Hub.
+<p>If you would like to test out the algorithms you can create a simple algorithm that lists its inputs in a <cite>results.json</cite> file by running</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make create_io_algorithm
+</pre></div>
+</div>
+<p>Before you run</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./cycle_docker_compose.sh
+</pre></div>
+</div>
+<p>You can also download an <a class="reference external" href="https://hub.docker.com/r/grandchallenge/otsu">Example Algorithm Image</a> from Docker Hub.
 Save it locally with</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>docker pull grandchallenge/otsu
 <span class="gp">$ </span>docker save grandchallenge/otsu &gt; otsu.tar
