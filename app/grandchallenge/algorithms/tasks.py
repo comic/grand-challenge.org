@@ -1,4 +1,4 @@
-from celery import group, shared_task
+from celery import chord, group, shared_task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -12,6 +12,7 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -19,6 +20,108 @@ from grandchallenge.components.models import (
 from grandchallenge.credits.models import Credit
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.subdomains.utils import reverse
+
+
+@shared_task
+def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
+    start_jobs = execute_algorithm_job_for_inputs.signature(
+        kwargs={"job_pk": job_pk}, immutable=True
+    )
+    if upload_pks:
+        image_tasks = group(
+            add_images_to_component_interface_value.signature(
+                kwargs={
+                    "component_interface_value_pk": civ_pk,
+                    "upload_pk": upload_pk,
+                },
+                immutable=True,
+            )
+            for civ_pk, upload_pk in upload_pks.items()
+        )
+        start_jobs = chord(image_tasks, start_jobs).on_error(
+            group(on_chord_error.s(job_pk=job_pk))
+        )
+
+    start_jobs.apply_async()
+
+
+@shared_task(bind=True)
+def on_chord_error(self, task_id, *args, **kwargs):
+    job_pk = kwargs.pop("job_pk")
+    job = Job.objects.get(pk=job_pk)
+
+    # Send an email to the algorithm editors and creator on job failure
+    linked_task = send_failed_jobs_email.signature(
+        kwargs={"job_pks": [job.pk]}, immutable=True
+    )
+
+    error_message = ""
+    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
+    if missing_inputs:
+        error_message += (
+            f"Job can't be started, input is missing for interface(s):"
+            f" {list(c.interface.title for c in missing_inputs)} "
+        )
+    res = self.AsyncResult(task_id).result
+    if isinstance(res, Exception):
+        error_message += str(res)
+    job.update_status(
+        status=job.FAILURE, error_message=error_message,
+    )
+
+    linked_task.apply_async()
+
+
+@shared_task
+def add_images_to_component_interface_value(
+    *, component_interface_value_pk, upload_pk
+):
+    session = RawImageUploadSession.objects.get(pk=upload_pk)
+    session.status = RawImageUploadSession.REQUEUED
+    session.save()
+
+    build_images(upload_session_pk=upload_pk)
+
+    if session.image_set.count() > 1:
+        error_message = "Image imports should result in a single image"
+        session.status = RawImageUploadSession.FAILURE
+        session.error_message = error_message
+        session.save()
+        raise ValueError(error_message)
+
+    civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
+    civ.image = session.image_set.get()
+    civ.save()
+
+    civ.image.update_viewer_groups_permissions()
+
+
+@shared_task
+def execute_algorithm_job_for_inputs(*, job_pk):
+    job = Job.objects.get(pk=job_pk)
+
+    # Send an email to the algorithm editors and creator on job failure
+    linked_task = send_failed_jobs_email.signature(
+        kwargs={"job_pks": [job.pk]}, immutable=True
+    )
+
+    # check if all ComponentInterfaceValue's have a value.
+    # Todo: move this check to execute() code when using inputs is done
+    missing_inputs = list(civ for civ in job.inputs.all() if not civ.has_value)
+    if missing_inputs:
+        job.update_status(
+            status=job.FAILURE,
+            error_message=(
+                f"Job can't be started, input is missing for interface(s):"
+                f" {list(c.interface.title for c in missing_inputs)}"
+            ),
+        )
+        linked_task.apply_async()
+        return
+
+    workflow = job.signature | linked_task
+
+    return workflow.apply_async()
 
 
 @shared_task
@@ -33,7 +136,7 @@ def create_algorithm_jobs_for_session(
 
     # Send an email to the algorithm editors and creator on job failure
     linked_task = send_failed_jobs_email.signature(
-        kwargs={"session_pk": session.pk}, immutable=True,
+        kwargs={"session_pk": session.pk}, immutable=True
     )
 
     execute_jobs(
@@ -97,7 +200,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
     # Once the algorithm has been run, score the submission. No emails as
     # algorithm editors should not have access to the underlying images.
     linked_task = set_evaluation_inputs.signature(
-        kwargs={"evaluation_pk": evaluation.pk}, immutable=True,
+        kwargs={"evaluation_pk": evaluation.pk}, immutable=True
     )
 
     execute_jobs(
@@ -134,8 +237,38 @@ def execute_jobs(
         return workflow.apply_async()
 
 
+def create_algorithm_job_with_inputs(
+    *, algorithm_image, inputs, creator=None, extra_viewer_groups=None
+):
+    if not algorithm_image:
+        return None
+
+    if creator:
+        if (
+            not algorithm_image.algorithm.is_editor(creator)
+            and algorithm_image.algorithm.credits_per_job > 0
+        ):
+            r = remaining_jobs(
+                creator=creator, algorithm_image=algorithm_image
+            )
+            if r <= 0:
+                # no more credits to start job, should not happen as
+                # this is handled in the UI already
+                return None
+
+    job = Job.objects.create(creator=creator, algorithm_image=algorithm_image)
+    job.inputs.set(
+        [ComponentInterfaceValue.objects.get(pk=pk) for pk in inputs]
+    )
+
+    if extra_viewer_groups is not None:
+        job.viewer_groups.add(*extra_viewer_groups)
+
+    return job
+
+
 def create_algorithm_jobs(
-    *, algorithm_image, images, creator=None, extra_viewer_groups=None,
+    *, algorithm_image, images, creator=None, extra_viewer_groups=None
 ):
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
@@ -143,51 +276,54 @@ def create_algorithm_jobs(
 
     jobs = []
 
-    def remaining_jobs() -> int:
-        user_credit = Credit.objects.get(user=creator)
-        jobs = Job.credits_set.spent_credits(user=creator)
+    if not algorithm_image:
+        return jobs
 
-        if jobs["total"]:
-            total_jobs = user_credit.credits - jobs["total"]
-        else:
-            total_jobs = user_credit.credits
-
-        return int(
-            total_jobs / max(algorithm_image.algorithm.credits_per_job, 1)
-        )
-
-    if algorithm_image:
-        if creator:
-            if (
-                not algorithm_image.algorithm.is_editor(creator)
-                and algorithm_image.algorithm.credits_per_job > 0
-            ):
-                images = images[: remaining_jobs()]
-
-        for image in images:
-            if not ComponentInterfaceValue.objects.filter(
-                interface=default_input_interface,
-                image=image,
-                algorithms_jobs_as_input__algorithm_image=algorithm_image,
-                algorithms_jobs_as_input__creator=creator,
-            ).exists():
-                j = Job.objects.create(
-                    creator=creator, algorithm_image=algorithm_image,
+    if creator:
+        if (
+            not algorithm_image.algorithm.is_editor(creator)
+            and algorithm_image.algorithm.credits_per_job > 0
+        ):
+            images = images[
+                : remaining_jobs(
+                    creator=creator, algorithm_image=algorithm_image
                 )
-                j.inputs.set(
-                    [
-                        ComponentInterfaceValue.objects.create(
-                            interface=default_input_interface, image=image
-                        )
-                    ]
-                )
+            ]
 
-                if extra_viewer_groups is not None:
-                    j.viewer_groups.add(*extra_viewer_groups)
+    for image in images:
+        if not ComponentInterfaceValue.objects.filter(
+            interface=default_input_interface,
+            image=image,
+            algorithms_jobs_as_input__algorithm_image=algorithm_image,
+            algorithms_jobs_as_input__creator=creator,
+        ).exists():
+            j = Job.objects.create(
+                creator=creator, algorithm_image=algorithm_image
+            )
+            j.inputs.set(
+                [
+                    ComponentInterfaceValue.objects.create(
+                        interface=default_input_interface, image=image
+                    )
+                ]
+            )
 
-                jobs.append(j)
+            if extra_viewer_groups is not None:
+                j.viewer_groups.add(*extra_viewer_groups)
+
+            jobs.append(j)
 
     return jobs
+
+
+def remaining_jobs(*, creator, algorithm_image):
+    user_credit = Credit.objects.get(user=creator)
+    jobs = Job.credits_set.spent_credits(user=creator)
+    if jobs["total"]:
+        total_jobs = user_credit.credits - jobs["total"]
+    else:
+        total_jobs = user_credit.credits
+    return int(total_jobs / max(algorithm_image.algorithm.credits_per_job, 1))
 
 
 @shared_task

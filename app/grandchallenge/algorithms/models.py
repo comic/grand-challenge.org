@@ -1,5 +1,7 @@
 import logging
+import os
 from datetime import timedelta
+from itertools import chain
 
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -145,6 +147,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         editable=False,
         help_text="The average duration of successful jobs.",
     )
+    use_flexible_inputs = models.BooleanField(default=False)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
@@ -270,7 +273,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     def update_average_duration(self):
         """Store the duration of successful jobs for this algorithm"""
         self.average_duration = Job.objects.filter(
-            algorithm_image__algorithm=self, status=Job.SUCCESS,
+            algorithm_image__algorithm=self, status=Job.SUCCESS
         ).average_duration()
         self.save(update_fields=("average_duration",))
 
@@ -361,7 +364,7 @@ class JobQuerySet(models.QuerySet):
         user_groups = Group.objects.filter(user=user)
 
         return (
-            self.filter(creator=user, created__range=[now - period, now],)
+            self.filter(creator=user, created__range=[now - period, now])
             .distinct()
             .order_by("created")
             .select_related("algorithm_image__algorithm")
@@ -417,13 +420,27 @@ class Job(UUIDModel, ComponentJob):
     def container(self):
         return self.algorithm_image
 
+    def get_path_and_value(self, inp):
+        if inp.file:
+            return [(inp.interface.relative_path, inp.file)]
+        if inp.image:
+            return [
+                (
+                    os.path.join(
+                        inp.interface.relative_path,
+                        im_file.file.name.split("/")[-1],
+                    ),
+                    im_file.file,
+                )
+                for im_file in inp.image.files.all()
+            ]
+        return [(inp.interface.relative_path, inp.value)]
+
     @property
     def input_files(self):
-        return [
-            im.file
-            for inpt in self.inputs.all()
-            for im in inpt.image.files.all()
-        ]
+        return chain(
+            *[self.get_path_and_value(inp) for inp in self.inputs.all()]
+        )
 
     @property
     def output_interfaces(self):
@@ -494,9 +511,7 @@ class Job(UUIDModel, ComponentJob):
         # If there is a creator they can view and change this job
         if self.creator:
             self.viewers.user_set.add(self.creator)
-            assign_perm(
-                f"change_{self._meta.model_name}", self.creator, self,
-            )
+            assign_perm(f"change_{self._meta.model_name}", self.creator, self)
 
     def update_viewer_groups_for_public(self):
         g = Group.objects.get(

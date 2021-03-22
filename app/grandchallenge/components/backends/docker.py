@@ -1,6 +1,8 @@
 import io
+import json
 import os
 import re
+import sys
 import tarfile
 from contextlib import contextmanager
 from pathlib import Path
@@ -13,6 +15,7 @@ from typing import Tuple
 import docker
 from django.conf import settings
 from django.core.files import File
+from django.core.files.temp import NamedTemporaryFile
 from django.db.models import Model, QuerySet
 from docker.api.container import ContainerApiMixin
 from docker.errors import APIError, ImageNotFound
@@ -252,11 +255,20 @@ class Executor(DockerConnection):
             self._copy_input_files(writer=writer)
 
     def _copy_input_files(self, writer):
-        for file in self._input_files:
+        for input_file in self._input_files:
+            if isinstance(input_file, tuple):
+                name, input_file = input_file
+                if not hasattr(input_file, "name"):
+                    file = NamedTemporaryFile(delete=True)
+                    file.write(bytes(json.dumps(input_file), "utf-8"))
+                    file.flush()
+                    input_file = File(file, name=name)
+            else:
+                name = input_file.name
+            subdirs = os.path.join("/input", *name.split("/")[:-1])
+            writer.exec_run(f"mkdir -p {subdirs}")
             put_file(
-                container=writer,
-                src=file,
-                dest=f"/input/{Path(file.name).name}",
+                container=writer, src=input_file, dest=f"/input/{name}",
             )
 
     def _chmod_volumes(self):
@@ -286,7 +298,7 @@ class Executor(DockerConnection):
                 detach=True,
                 labels=self._labels,
                 environment={
-                    "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
+                    "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES
                 },
                 **self._run_kwargs,
             )
@@ -451,7 +463,7 @@ def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
     """
     with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as tar_b:
         tarinfo = tarfile.TarInfo(name=os.path.basename(dest))
-        tarinfo.size = src.size
+        tarinfo.size = getattr(src, "size", sys.getsizeof(src))
 
         with tarfile.open(fileobj=tar_b, mode="w") as tar, src.open("rb") as f:
             tar.addfile(tarinfo, fileobj=f)

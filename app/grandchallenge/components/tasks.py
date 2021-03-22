@@ -154,7 +154,6 @@ def execute_job(
         msg = f"Method {job.container.pk} was not ready to be used."
         job.update_status(status=job.FAILURE, error_message=msg)
         raise RuntimeError(msg)
-
     try:
         with job.executor_cls(
             job_id=str(job.pk),

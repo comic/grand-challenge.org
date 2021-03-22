@@ -16,10 +16,6 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
         "relative_path",
         "store_in_database",
     )
-    readonly_fields = (
-        "default_value",
-        "relative_path",
-    )
 
 
 class ComponentInterfaceValueAdmin(admin.ModelAdmin):

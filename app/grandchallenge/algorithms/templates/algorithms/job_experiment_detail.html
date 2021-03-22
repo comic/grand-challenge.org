@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    Algorithm Experiment - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
+        </a></li>
+        <li class="breadcrumb-item"><a
+            href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Experiment
+        </li>
+    </ol>
+{% endblock %}
+
+
+{% block content %}
+
+    <div class="row equal-height">
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h5 class="card-title">Creating inputs</h5>
+                    <div class="text-center p-3">
+                        <i class="text-success fa fa-check fa-2x"></i>
+                    </div>
+                </div>
+                <a href="{% url 'algorithms:execution-session-create-new' slug=object.algorithm_image.algorithm.slug %}"
+                   class="stretched-link"></a>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div id="imageImportCard" class="card text-center border-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Importing Images</h5>
+                    <div class="text-center p-3 statusSymbol">
+                        <div class="text-secondary spinner-grow" role="status"><span
+                                class="sr-only">Loading...</span></div>
+                    </div>
+                    <p class="card-text">
+                        <a class="stretched-link statusMessage"></a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div id="jobCard" class="card text-center border-light text-muted">
+                <div class="card-body">
+                    <h5 class="card-title">Running Algorithm</h5>
+                    <div class="text-center p-3 statusSymbol">
+                    </div>
+                    <p class="card-text">
+                        <a href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
+                           class="stretched-link statusMessage"></a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    {{ object.algorithm_image.algorithm.average_duration|json_script:"averageJobDuration" }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"
+            integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ="
+            crossorigin="anonymous"></script>
+    <script src="{% static 'algorithms/js/job_session.js' %}"
+            type="text/javascript">
+    </script>
+    <script type="text/javascript">
+        (function () {
+            getJobStatus(
+                 "{% url 'api:algorithms-job-detail' pk=object.pk %}"
+            );
+        })();
+    </script>
+
+{% endblock %}

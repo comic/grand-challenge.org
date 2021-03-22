@@ -42,42 +42,83 @@ logger = logging.getLogger(__name__)
 DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
-class InterfaceKindChoices(models.TextChoices):
-    STRING = "STR", _("String")
-    INTEGER = "INT", _("Integer")
-    FLOAT = "FLT", _("Float")
-    BOOL = "BOOL", _("Bool")
+class InterfaceKind:
+    class InterfaceKindChoices(models.TextChoices):
+        STRING = "STR", _("String")
+        INTEGER = "INT", _("Integer")
+        FLOAT = "FLT", _("Float")
+        BOOL = "BOOL", _("Bool")
 
-    # Annotation Types
-    TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
-    MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
-    DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
-    MULTIPLE_DISTANCE_MEASUREMENTS = (
-        "MDIS",
-        _("Multiple distance measurements"),
-    )
-    POINT = "POIN", _("Point")
-    MULTIPLE_POINTS = "MPOI", _("Multiple points")
-    POLYGON = "POLY", _("Polygon")
-    MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
+        # Annotation Types
+        TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
+        MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
+        DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
+        MULTIPLE_DISTANCE_MEASUREMENTS = (
+            "MDIS",
+            _("Multiple distance measurements"),
+        )
+        POINT = "POIN", _("Point")
+        MULTIPLE_POINTS = "MPOI", _("Multiple points")
+        POLYGON = "POLY", _("Polygon")
+        MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
 
-    # Choice Types
-    CHOICE = "CHOI", _("Choice")
-    MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
+        # Choice Types
+        CHOICE = "CHOI", _("Choice")
+        MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
 
-    # Image types
-    IMAGE = "IMG", _("Image")
-    SEGMENTATION = "SEG", _("Segmentation")
-    HEAT_MAP = "HMAP", _("Heat Map")
+        # Image types
+        IMAGE = "IMG", _("Image")
+        SEGMENTATION = "SEG", _("Segmentation")
+        HEAT_MAP = "HMAP", _("Heat Map")
 
-    # Legacy support
-    JSON = "JSON", _("JSON file")
-    CSV = "CSV", _("CSV file")
-    ZIP = "ZIP", _("ZIP file")
+        # Legacy support
+        JSON = "JSON", _("JSON file")
+        CSV = "CSV", _("CSV file")
+        ZIP = "ZIP", _("ZIP file")
+
+    @staticmethod
+    def interface_type_file():
+        return (
+            InterfaceKind.InterfaceKindChoices.CSV,
+            InterfaceKind.InterfaceKindChoices.JSON,
+            InterfaceKind.InterfaceKindChoices.ZIP,
+        )
+
+    @staticmethod
+    def interface_type_image():
+        return (
+            InterfaceKind.InterfaceKindChoices.IMAGE,
+            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
+            InterfaceKind.InterfaceKindChoices.SEGMENTATION,
+        )
+
+    @staticmethod
+    def interface_type_annotation():
+        return (
+            InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKind.InterfaceKindChoices.POINT,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKind.InterfaceKindChoices.POLYGON,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
+        )
+
+    @staticmethod
+    def interface_type_simple():
+        return (
+            InterfaceKind.InterfaceKindChoices.STRING,
+            InterfaceKind.InterfaceKindChoices.INTEGER,
+            InterfaceKind.InterfaceKindChoices.FLOAT,
+            InterfaceKind.InterfaceKindChoices.BOOL,
+            InterfaceKind.InterfaceKindChoices.CHOICE,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
+        )
 
 
 class ComponentInterface(models.Model):
-    Kind = InterfaceKindChoices
+    Kind = InterfaceKind.InterfaceKindChoices
 
     title = models.CharField(
         max_length=255,
@@ -86,9 +127,10 @@ class ComponentInterface(models.Model):
     )
     slug = AutoSlugField(populate_from="title")
     description = models.TextField(
-        blank=True, help_text="Description of this input/output field.",
+        blank=True, help_text="Description of this input/output field."
     )
     default_value = models.JSONField(
+        blank=True,
         null=True,
         default=None,
         help_text="Default value for this field, only valid for inputs.",
@@ -137,12 +179,12 @@ class ComponentInterface(models.Model):
     def create_component_interface_values(self, *, reader, job):
         # TODO JM These functions rely on docker specific code (reader)
         if self.kind in (
-            InterfaceKindChoices.HEAT_MAP,
-            InterfaceKindChoices.IMAGE,
+            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
+            InterfaceKind.InterfaceKindChoices.IMAGE,
         ):
             self._create_images_result(reader=reader, job=job)
 
-        if self.kind == InterfaceKindChoices.JSON:
+        if self.kind == InterfaceKind.InterfaceKindChoices.JSON:
             self._create_json_result(reader=reader, job=job)
 
     def _create_images_result(self, *, reader, job):
@@ -213,7 +255,7 @@ class ComponentInterface(models.Model):
                 interface=self, value=result
             )
         else:
-            civ = ComponentInterfaceValue.objects.create(interface=self,)
+            civ = ComponentInterfaceValue.objects.create(interface=self)
             try:
                 civ.file = File(file, name=str(output_file.name))
                 civ.full_clean()
@@ -263,6 +305,10 @@ class ComponentInterfaceValue(models.Model):
     image = models.ForeignKey(
         to=Image, null=True, blank=True, on_delete=models.CASCADE
     )
+
+    @property
+    def has_value(self):
+        return self.value is not None or self.image or self.file
 
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"

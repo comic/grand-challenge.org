@@ -12,6 +12,7 @@ from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.reader_studies.models import Question
 from tests.annotations_tests.factories import (
     BooleanClassificationAnnotationFactory,
@@ -31,6 +32,7 @@ from tests.annotations_tests.factories import (
 )
 from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import ImageFactoryWithoutImageFile
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import (
     ChallengeFactory,
@@ -169,14 +171,20 @@ def challenge_set_with_evaluation(challenge_set):
 
 
 def docker_image(
-    tmpdir_factory, docker_client, docker_api_client, path, label
+    tmpdir_factory,
+    docker_client,
+    docker_api_client,
+    path,
+    label,
+    full_path=None,
 ):
     """Create the docker container."""
-    im, _ = docker_client.images.build(
-        path=os.path.join(
+    if not full_path:
+        full_path = os.path.join(
             os.path.split(__file__)[0], path, "resources", "docker",
-        ),
-        tag=f"test-{label}:latest",
+        )
+    im, _ = docker_client.images.build(
+        path=full_path, tag=f"test-{label}:latest",
     )
     assert im.id in [x.id for x in docker_client.images.list()]
     image = docker_api_client.get_image(f"test-{label}:latest")
@@ -215,6 +223,21 @@ def algorithm_image(tmpdir_factory, docker_client, docker_api_client):
         docker_api_client,
         path="algorithms_tests",
         label="algorithm",
+    )
+
+
+@pytest.fixture(scope="session")
+def algorithm_io_image(tmpdir_factory, docker_client, docker_api_client):
+    """Create the example algorithm container."""
+    return docker_image(
+        tmpdir_factory,
+        docker_client,
+        docker_api_client,
+        path="",
+        label="algorithm-io",
+        full_path=os.path.join(
+            os.path.split(__file__)[0], "resources", "gc_demo_algorithm",
+        ),
     )
 
 
@@ -692,3 +715,71 @@ def image_with_image_level_annotations():
         "text": ImageTextAnnotationFactory(**factory_kwargs),
     }
     return image, grader, annotations
+
+
+@pytest.fixture
+def component_interfaces():
+    civs = [
+        {
+            "title": "Boolean",
+            "kind": ComponentInterface.Kind.BOOL,
+            "relative_path": "bool",
+        },
+        {
+            "title": "String",
+            "kind": ComponentInterface.Kind.STRING,
+            "relative_path": "string",
+        },
+        {
+            "title": "Integer",
+            "kind": ComponentInterface.Kind.INTEGER,
+            "relative_path": "int",
+        },
+        {
+            "title": "Float",
+            "kind": ComponentInterface.Kind.FLOAT,
+            "relative_path": "float",
+        },
+        {
+            "title": "2D bounding box",
+            "kind": ComponentInterface.Kind.TWO_D_BOUNDING_BOX,
+            "relative_path": "2d_bounding_box",
+        },
+        {
+            "title": "Multiple 2D bounding boxes",
+            "kind": ComponentInterface.Kind.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            "relative_path": "multiple_2d_bounding_boxes",
+        },
+        {
+            "title": "Distance measurement",
+            "kind": ComponentInterface.Kind.DISTANCE_MEASUREMENT,
+            "relative_path": "distance_measurement",
+        },
+        {
+            "title": "Multiple distance measurements",
+            "kind": ComponentInterface.Kind.MULTIPLE_DISTANCE_MEASUREMENTS,
+            "relative_path": "multiple_distance_measurements",
+        },
+        {
+            "title": "Point",
+            "kind": ComponentInterface.Kind.POINT,
+            "relative_path": "point",
+        },
+        {
+            "title": "Multiple points",
+            "kind": ComponentInterface.Kind.MULTIPLE_POINTS,
+            "relative_path": "multiple_points",
+        },
+        {
+            "title": "Polygon",
+            "kind": ComponentInterface.Kind.POLYGON,
+            "relative_path": "polygon",
+        },
+        {
+            "title": "Multiple polygons",
+            "kind": ComponentInterface.Kind.MULTIPLE_POLYGONS,
+            "relative_path": "multiple_polygons",
+        },
+    ]
+
+    return [ComponentInterfaceFactory(**civ) for civ in civs]

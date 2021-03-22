@@ -108,6 +108,7 @@ class Command(BaseCommand):
         self._create_external_challenge()
         self._create_workstation()
         self._create_algorithm_demo()
+        self._create_io_algorithm()
         self._create_reader_studies()
         self._create_user_tokens()
         self._setup_public_storage()
@@ -310,6 +311,32 @@ class Command(BaseCommand):
         ex_challenge.modalities.add(mr_modality)
         ex_challenge.series.add(s)
         ex_challenge.save()
+
+    def _create_io_algorithm(self):
+        algorithm = Algorithm.objects.create(
+            title="Test Algorithm IO",
+            logo=get_temporary_image(),
+            use_flexible_inputs=True,
+        )
+        algorithm.editors_group.user_set.add(
+            self.users["algorithm"], self.users["demo"]
+        )
+        algorithm.users_group.user_set.add(self.users["algorithmuser"])
+
+        algorithm_image = AlgorithmImage(
+            creator=self.users["algorithm"], algorithm=algorithm, ready=True
+        )
+        algorithm_image_path = (
+            "tests/resources/gc_demo_algorithm/algorithm_io.tar"
+        )
+        if os.path.exists(algorithm_image_path):
+            with open(
+                os.path.join(settings.SITE_ROOT, algorithm_image_path,), "rb",
+            ) as f:
+                container = File(f)
+                algorithm_image.image.save("algorithm_io.tar", container)
+
+        algorithm_image.save()
 
     def _create_algorithm_demo(self):
         cases_image = grandchallenge.cases.models.Image(

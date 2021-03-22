@@ -1,14 +1,22 @@
 import re
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
+    add_images_to_component_interface_value,
     create_algorithm_jobs,
+    execute_algorithm_job_for_inputs,
     execute_jobs,
+    run_algorithm_job_for_inputs,
 )
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
@@ -28,12 +36,11 @@ from tests.factories import (
 
 @pytest.mark.django_db
 class TestCreateAlgorithmJobs:
-    def test_no_algorithm_image_does_nothing(self):
-        image = ImageFactory()
-        create_algorithm_jobs(
-            algorithm_image=None, images=[image],
+    @property
+    def default_input_interface(self):
+        return ComponentInterface.objects.get(
+            slug=DEFAULT_INPUT_INTERFACE_SLUG
         )
-        assert Job.objects.count() == 0
 
     def test_no_images_does_nothing(self):
         ai = AlgorithmImageFactory()
@@ -41,20 +48,16 @@ class TestCreateAlgorithmJobs:
         assert Job.objects.count() == 0
 
     def test_civ_existing_does_nothing(self):
-        default_input_interface = ComponentInterface.objects.get(
-            slug=DEFAULT_INPUT_INTERFACE_SLUG
-        )
         image = ImageFactory()
         ai = AlgorithmImageFactory()
-        j = AlgorithmJobFactory(creator=None, algorithm_image=ai)
+        j = AlgorithmJobFactory(creator=ai.creator, algorithm_image=ai)
         civ = ComponentInterfaceValueFactory(
-            interface=default_input_interface, image=image
+            interface=self.default_input_interface, image=image
         )
         j.inputs.set([civ])
         assert Job.objects.count() == 1
-        jobs = create_algorithm_jobs(algorithm_image=ai, images=[image])
+        run_algorithm_job_for_inputs(job_pk=j.pk, upload_pks=[])
         assert Job.objects.count() == 1
-        assert len(jobs) == 0
 
     def test_creates_job_correctly(self):
         ai = AlgorithmImageFactory()
@@ -182,7 +185,7 @@ def test_algorithm(client, algorithm_image, settings):
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_image
     alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True,
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
     )
 
     # We should not be able to download image
@@ -191,13 +194,14 @@ def test_algorithm(client, algorithm_image, settings):
 
     # Run the algorithm, it will create a results.json and an output.tif
     image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
     execute_jobs(algorithm_image=alg, images=[image_file.image])
     jobs = Job.objects.filter(algorithm_image=alg).all()
 
     # There should be a single, successful job
     assert len(jobs) == 1
+
     assert jobs[0].stdout.endswith("Greetings from stdout\n")
     assert jobs[0].stderr.endswith('("Hello from stderr")\n')
     assert jobs[0].error_message == ""
@@ -224,13 +228,14 @@ def test_algorithm(client, algorithm_image, settings):
     detection_interface = ComponentInterfaceFactory(
         store_in_database=False,
         relative_path="detection_results.json",
+        title="detection-json-file",
         slug="detection-json-file",
         kind=ComponentInterface.Kind.JSON,
     )
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
     image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
 
     execute_jobs(algorithm_image=alg, images=[image_file.image])
@@ -259,7 +264,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     # Create the algorithm image
     algorithm_container, sha256 = algorithm_image
     alg = AlgorithmImageFactory(
-        image__from_path=algorithm_container, image_sha256=sha256, ready=True,
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
     )
 
     # Make sure the job fails when trying to upload an invalid file
@@ -272,7 +277,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
     image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
 
     execute_jobs(algorithm_image=alg, images=[image_file.image])
@@ -282,3 +287,179 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     assert len(jobs) == 1
     assert jobs.first().error_message == "Invalid filetype."
     assert len(jobs[0].outputs.all()) == 2
+
+
+@pytest.mark.django_db
+def test_algorithm_multiple_inputs(
+    client, algorithm_io_image, settings, component_interfaces
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+
+    assert Job.objects.count() == 0
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_io_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
+    )
+    alg.algorithm.add_editor(creator)
+
+    alg.algorithm.inputs.set(ComponentInterface.objects.all())
+    # create the job
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+
+    expected = []
+    for ci in ComponentInterface.objects.all():
+        if ci.kind in InterfaceKind.interface_type_image():
+            image_file = ImageFileFactory(
+                file__from_path=Path(__file__).parent
+                / "resources"
+                / "input_file.tif"
+            )
+            job.inputs.add(
+                ComponentInterfaceValueFactory(
+                    interface=ci, image=image_file.image, file=None
+                )
+            )
+            expected.append("file")
+        elif ci.kind in InterfaceKind.interface_type_file():
+            job.inputs.add(
+                ComponentInterfaceValueFactory(
+                    interface=ci,
+                    file__from_path=Path(__file__).parent
+                    / "resources"
+                    / "test.json",
+                )
+            )
+            expected.append("json")
+        else:
+            job.inputs.add(
+                ComponentInterfaceValueFactory(
+                    interface=ci, value="test", file=None
+                )
+            )
+            expected.append("test")
+
+    run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks=[])
+
+    job = Job.objects.first()
+    assert job.status == job.SUCCESS
+    assert {x[0] for x in job.input_files} == set(
+        job.outputs.first().value.keys()
+    )
+    assert sorted(
+        map(
+            lambda x: x if x != {} else "json",
+            job.outputs.first().value.values(),
+        )
+    ) == sorted(expected)
+
+
+@pytest.mark.django_db
+@patch("grandchallenge.algorithms.tasks.build_images", return_value=None)
+def test_algorithm_input_image_multiple_files(
+    build_images, client, algorithm_io_image, settings, component_interfaces
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+
+    assert Job.objects.count() == 0
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_io_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
+    )
+    alg.algorithm.add_editor(creator)
+
+    alg.algorithm.inputs.set(ComponentInterface.objects.all())
+    # create the job
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+    us = RawImageUploadSessionFactory()
+
+    ImageFactory(origin=us), ImageFactory(origin=us)
+    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+
+    civ = ComponentInterfaceValue.objects.create(interface=ci)
+    job.inputs.add(civ)
+
+    with pytest.raises(ValueError):
+        run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks={civ.pk: us.pk})
+
+    # TODO: celery errorhandling with the .on_error seems to not work when
+    # TASK_ALWAYS_EAGER is set to True. The error function does get called
+    # when running normally, but unfortunately it is currently hard to test.
+    # We should look into this at some point.
+
+    # job = Job.objects.first()
+    # assert job.status == job.FAILURE
+    # assert job.error_message == (
+    #     "Job can't be started, input is missing for interface(s): "
+    #     "['Generic Medical Image'] "
+    #     "ValueError('Image imports should result in a single image')"
+    # )
+
+
+@pytest.mark.django_db
+def test_add_images_to_component_interface_value():
+    # Override the celery settings
+    us = RawImageUploadSessionFactory()
+    ImageFactory(origin=us), ImageFactory(origin=us)
+    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+
+    civ = ComponentInterfaceValueFactory(interface=ci)
+
+    with pytest.raises(ValueError) as err:
+        add_images_to_component_interface_value(
+            component_interface_value_pk=civ.pk, upload_pk=us.pk
+        )
+    assert "Image imports should result in a single image" in str(err)
+    assert civ.image is None
+
+    us2 = RawImageUploadSessionFactory()
+    image = ImageFactory(origin=us2)
+    civ2 = ComponentInterfaceValueFactory(interface=ci)
+    add_images_to_component_interface_value(
+        component_interface_value_pk=civ2.pk, upload_pk=us2.pk
+    )
+    civ2.refresh_from_db()
+    assert civ2.image == image
+
+
+@pytest.mark.django_db
+def test_execute_algorithm_job_for_inputs(
+    client, algorithm_io_image, settings
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+
+    # Create the algorithm image
+    algorithm_container, sha256 = algorithm_io_image
+    alg = AlgorithmImageFactory(
+        image__from_path=algorithm_container, image_sha256=sha256, ready=True
+    )
+    alg.algorithm.add_editor(creator)
+
+    # create the job without value for the ComponentInterfaceValues
+    ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
+    civ = ComponentInterfaceValue.objects.create(interface=ci)
+    job = Job.objects.create(creator=creator, algorithm_image=alg)
+    job.inputs.add(civ)
+    execute_algorithm_job_for_inputs(job_pk=job.pk)
+
+    job.refresh_from_db()
+    assert job.status == Job.FAILURE
+    assert (
+        "Job can't be started, input is missing for interface(s):"
+        in job.error_message
+    )

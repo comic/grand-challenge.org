@@ -5,6 +5,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmDetail,
     AlgorithmExecutionSessionCreate,
     AlgorithmExecutionSessionDetail,
+    AlgorithmExperimentCreate,
     AlgorithmImageCreate,
     AlgorithmImageDetail,
     AlgorithmImageUpdate,
@@ -15,6 +16,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmUpdate,
     EditorsUpdate,
     JobDetail,
+    JobExperimentDetail,
     JobUpdate,
     JobViewersUpdate,
     JobsList,
@@ -49,6 +51,11 @@ urlpatterns = [
         name="execution-session-create",
     ),
     path(
+        "<slug>/experiments/create/flex/",
+        AlgorithmExperimentCreate.as_view(),
+        name="execution-session-create-new",
+    ),
+    path(
         "<slug>/experiments/<uuid:pk>/",
         AlgorithmExecutionSessionDetail.as_view(),
         name="execution-session-detail",
@@ -59,6 +66,11 @@ urlpatterns = [
         "<slug>/jobs/<uuid:pk>/update/",
         JobUpdate.as_view(),
         name="job-update",
+    ),
+    path(
+        "<slug>/jobs/<uuid:pk>/experiment/",
+        JobExperimentDetail.as_view(),
+        name="job-experiment-detail",
     ),
     path(
         "<slug>/jobs/<uuid:pk>/viewers/update/",

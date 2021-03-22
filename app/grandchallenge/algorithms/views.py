@@ -9,15 +9,18 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from django.core.files import File
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.text import get_valid_filename
 from django.views.generic import (
     CreateView,
     DetailView,
+    FormView,
     ListView,
     UpdateView,
 )
@@ -37,6 +40,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
+    AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
     JobForm,
     UsersForm,
@@ -53,9 +57,16 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
     HyperlinkedJobSerializer,
 )
-from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
+from grandchallenge.algorithms.tasks import (
+    create_algorithm_jobs_for_session,
+    run_algorithm_job_for_inputs,
+)
 from grandchallenge.cases.forms import UploadRawImagesForm
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
@@ -71,7 +82,7 @@ logger = logging.getLogger(__name__)
 
 
 class AlgorithmCreate(
-    PermissionRequiredMixin, UserFormKwargsMixin, CreateView,
+    PermissionRequiredMixin, UserFormKwargsMixin, CreateView
 ):
     model = Algorithm
     form_class = AlgorithmForm
@@ -282,11 +293,54 @@ class AlgorithmImageUpdate(
         return context
 
 
+class RemainingJobsMixin:
+    @property
+    def algorithm(self) -> Algorithm:
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def get_remaining_jobs(self, *, credits_per_job: int) -> Dict:
+        """
+        Determines the number of jobs left for the user and when the next job can be started
+
+        :return: A dictionary containing remaining_jobs (int) and
+        next_job_at (datetime)
+        """
+        now = timezone.now()
+        period = timedelta(days=30)
+        user_credit = Credit.objects.get(user=self.request.user)
+
+        if credits_per_job == 0:
+            return {
+                "remaining_jobs": 1,
+                "next_job_at": now,
+                "user_credits": user_credit.credits,
+            }
+
+        jobs = Job.credits_set.spent_credits(user=self.request.user)
+
+        if jobs["oldest"]:
+            next_job_at = jobs["oldest"] + period
+        else:
+            next_job_at = now
+
+        if jobs["total"]:
+            total_jobs = user_credit.credits - jobs["total"]
+        else:
+            total_jobs = user_credit.credits
+
+        return {
+            "remaining_jobs": int(total_jobs / max(credits_per_job, 1)),
+            "next_job_at": next_job_at,
+            "user_credits": total_jobs,
+        }
+
+
 class AlgorithmExecutionSessionCreate(
     UserFormKwargsMixin,
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     CreateView,
+    RemainingJobsMixin,
 ):
     model = RawImageUploadSession
     form_class = UploadRawImagesForm
@@ -296,17 +350,13 @@ class AlgorithmExecutionSessionCreate(
     )
     raise_exception = True
 
-    @property
-    def algorithm(self) -> Algorithm:
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
                 "linked_task": create_algorithm_jobs_for_session.signature(
                     kwargs={
-                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk,
+                        "algorithm_image_pk": self.algorithm.latest_ready_image.pk
                     },
                     immutable=True,
                 )
@@ -342,41 +392,117 @@ class AlgorithmExecutionSessionCreate(
             kwargs={"slug": self.kwargs["slug"], "pk": self.object.pk},
         )
 
-    def get_remaining_jobs(self, *, credits_per_job: int,) -> Dict:
-        """
-        Determines the number of jobs left for the user and when the next job can be started
 
-        :return: A dictionary containing remaining_jobs (int) and
-        next_job_at (datetime)
-        """
-        now = timezone.now()
-        period = timedelta(days=30)
-        user_credit = Credit.objects.get(user=self.request.user)
+class AlgorithmExperimentCreate(
+    UserFormKwargsMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    FormView,
+    RemainingJobsMixin,
+):
+    form_class = AlgorithmInputsForm
+    template_name = "algorithms/algorithm_inputs_form.html"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.execute_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
 
-        if credits_per_job == 0:
-            return {
-                "remaining_jobs": 1,
-                "next_job_at": now,
-                "user_credits": user_credit.credits,
-            }
+    def get_permission_object(self):
+        return self.algorithm
 
-        jobs = Job.credits_set.spent_credits(user=self.request.user)
+    def get_form_kwargs(self):
+        """Return the keyword arguments for instantiating the form."""
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"algorithm": self.algorithm})
+        return kwargs
 
-        if jobs["oldest"]:
-            next_job_at = jobs["oldest"] + period
-        else:
-            next_job_at = now
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"algorithm": self.algorithm})
+        context.update(
+            self.get_remaining_jobs(
+                credits_per_job=self.algorithm.credits_per_job
+            )
+        )
+        return context
 
-        if jobs["total"]:
-            total_jobs = user_credit.credits - jobs["total"]
-        else:
-            total_jobs = user_credit.credits
+    def form_valid(self, form):
+        def create_upload(image_files):
+            raw_files = []
+            upload_session = RawImageUploadSession.objects.create(
+                creator=self.request.user
+            )
+            for image_file in image_files:
+                raw_files.append(
+                    RawImageFile(
+                        upload_session=upload_session,
+                        filename=image_file.name,
+                        staged_file_id=image_file.uuid,
+                    )
+                )
+            RawImageFile.objects.bulk_create(list(raw_files))
+            return upload_session.pk
 
-        return {
-            "remaining_jobs": int(total_jobs / max(credits_per_job, 1)),
-            "next_job_at": next_job_at,
-            "user_credits": total_jobs,
-        }
+        job = Job.objects.create(
+            creator=self.request.user,
+            algorithm_image=self.algorithm.latest_ready_image,
+        )
+
+        job.viewer_groups.add(self.algorithm.editors_group)
+
+        upload_pks = {}
+        civs = []
+
+        interfaces = {ci.slug: ci for ci in self.algorithm.inputs.all()}
+
+        for slug, value in form.cleaned_data.items():
+            ci = interfaces[slug]
+            if ci.kind in InterfaceKind.interface_type_image():
+                # create civ without image, image will be added when import completes
+                civ = ComponentInterfaceValue.objects.create(interface=ci)
+                civs.append(civ)
+                upload_pks[civ.pk] = create_upload(value)
+            elif ci.kind in InterfaceKind.interface_type_file():
+                # should be a single file
+                civ = ComponentInterfaceValue.objects.create(interface=ci)
+                name = get_valid_filename(value[0].name)
+                with value[0].open() as f:
+                    civ.file = File(f, name=name)
+                    civ.save()
+                civs.append(civ)
+            else:
+                civ = ComponentInterfaceValue.objects.create(
+                    interface=ci, value=value
+                )
+                civs.append(civ)
+
+        job.inputs.add(*civs)
+
+        run_job = run_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": job.pk, "upload_pks": upload_pks},
+            immutable=True,
+        )
+        run_job.apply_async()
+
+        return HttpResponseRedirect(
+            reverse(
+                "algorithms:job-experiment-detail",
+                kwargs={"slug": self.kwargs["slug"], "pk": job.pk},
+            )
+        )
+
+
+class JobExperimentDetail(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    template_name = "algorithms/job_experiment_detail.html"
+    permission_required = f"{Job._meta.app_label}.view_{Job._meta.model_name}"
+    model = Job
+    raise_exception = True
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.select_related("algorithm_image__algorithm")
 
 
 class AlgorithmExecutionSessionDetail(
@@ -426,7 +552,7 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         return (
-            queryset.filter(algorithm_image__algorithm=self.algorithm,)
+            queryset.filter(algorithm_image__algorithm=self.algorithm)
             .prefetch_related(
                 "outputs__image__files",
                 "outputs__interface",
