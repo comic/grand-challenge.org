@@ -429,7 +429,9 @@ class AlgorithmExperimentCreate(
     def form_valid(self, form):
         def create_upload(image_files):
             raw_files = []
-            upload_session = RawImageUploadSession.objects.create()
+            upload_session = RawImageUploadSession.objects.create(
+                creator=self.request.user
+            )
             for image_file in image_files:
                 raw_files.append(
                     RawImageFile(
@@ -439,7 +441,6 @@ class AlgorithmExperimentCreate(
                     )
                 )
             RawImageFile.objects.bulk_create(list(raw_files))
-            upload_session.save()
             return upload_session.pk
 
         job = Job.objects.create(
