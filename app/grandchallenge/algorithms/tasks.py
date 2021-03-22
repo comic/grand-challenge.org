@@ -89,12 +89,11 @@ def add_images_to_component_interface_value(
         session.save()
         raise ValueError(error_message)
 
-    for image in session.image_set.all():
-        civ = ComponentInterfaceValue.objects.get(
-            pk=component_interface_value_pk
-        )
-        civ.image = image
-        civ.save()
+    civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
+    civ.image = session.image_set.get()
+    civ.save()
+
+    civ.image.update_viewer_groups_permissions()
 
 
 @shared_task
