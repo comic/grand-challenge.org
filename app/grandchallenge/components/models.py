@@ -155,7 +155,7 @@ class ComponentInterface(models.Model):
     )
     store_in_database = models.BooleanField(
         default=True,
-        editable=False,
+        editable=True,
         help_text=(
             "Should the value be saved in a database field, "
             "only valid for outputs."
