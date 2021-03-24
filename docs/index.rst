@@ -37,6 +37,7 @@ or spin up your own instance.
     development
     evaluation
     processor
+    components
     workstations
     reader-studies
     design
