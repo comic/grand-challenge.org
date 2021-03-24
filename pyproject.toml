@@ -89,6 +89,7 @@ django_rest_knox = "^4.1.0"
 numpy = "*"
 Pillow = "*"
 panimg = "^0.1.0"
+sphinxcontrib-django = "^0.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
