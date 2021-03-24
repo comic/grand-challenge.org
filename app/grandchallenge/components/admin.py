@@ -14,8 +14,13 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
         "kind",
         "default_value",
         "relative_path",
-        "store_in_database",
     )
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ("store_in_database", *self.readonly_fields)
+        else:
+            return self.readonly_fields
 
 
 class ComponentInterfaceValueAdmin(admin.ModelAdmin):
