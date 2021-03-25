@@ -58,7 +58,7 @@ Algorithm Outputs
 =================
 
 Outputs of an algorithm must be stored in the directory ``/output/``. As with the inputs, a ``ComponentInterface`` needs to be defined for each of the expected outputs.
-
+For outputs of kind ``JSON file`` you can determine (only when creating the ``ComponentInterface``) if the json should be stored as file or in the database. Use this option if you expect the json file to be very large.
 results.json
 ------------
 
