@@ -87,7 +87,8 @@
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processor.html">Processor specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
@@ -167,6 +168,7 @@
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
@@ -193,10 +195,10 @@
 </li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.Answer.DoesNotExist">Answer.DoesNotExist</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.Answer.MultipleObjectsReturned">Answer.MultipleObjectsReturned</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.ANSWER_TYPE_SCHEMA">ANSWER_TYPE_SCHEMA (in module grandchallenge.reader_studies.models)</a>
 </li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.answerable_question_count">answerable_question_count (grandchallenge.reader_studies.models.ReaderStudy attribute)</a>
@@ -209,6 +211,8 @@
         <li><a href="reader-studies.html#grandchallenge.reader_studies.models.Question.api_url">(grandchallenge.reader_studies.models.Question property)</a>
 </li>
       </ul></li>
+      <li><a href="components.html#grandchallenge.components.models.DurationQuerySet.average_duration">average_duration() (grandchallenge.components.models.DurationQuerySet method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -225,11 +229,23 @@
 </li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.CategoricalOption.DoesNotExist">CategoricalOption.DoesNotExist</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.CategoricalOption.MultipleObjectsReturned">CategoricalOption.MultipleObjectsReturned</a>
 </li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.Question.clean">clean() (grandchallenge.reader_studies.models.Question method)</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.ComponentInterface">ComponentInterface (class in grandchallenge.components.models)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="components.html#grandchallenge.components.models.ComponentInterface.DoesNotExist">ComponentInterface.DoesNotExist</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.ComponentInterface.MultipleObjectsReturned">ComponentInterface.MultipleObjectsReturned</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.ComponentInterfaceValue">ComponentInterfaceValue (class in grandchallenge.components.models)</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.ComponentInterfaceValue.DoesNotExist">ComponentInterfaceValue.DoesNotExist</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.ComponentInterfaceValue.MultipleObjectsReturned">ComponentInterfaceValue.MultipleObjectsReturned</a>
 </li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.Answer.csv_values">csv_values() (grandchallenge.reader_studies.models.Answer property)</a>
 
@@ -248,6 +264,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="workstations.html#grandchallenge.workstations.models.delete_workstation_groups_hook">delete_workstation_groups_hook() (in module grandchallenge.workstations.models)</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.DurationQuerySet">DurationQuerySet (class in grandchallenge.components.models)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -276,14 +294,21 @@
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.get_progress_for_user">get_progress_for_user() (grandchallenge.reader_studies.models.ReaderStudy method)</a>
 </li>
       <li>
+    grandchallenge.components.models
+
+      <ul>
+        <li><a href="components.html#module-grandchallenge.components.models">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
     grandchallenge.evaluation.templatetags.evaluation_extras
 
       <ul>
         <li><a href="evaluation.html#module-grandchallenge.evaluation.templatetags.evaluation_extras">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     grandchallenge.reader_studies.models
 
@@ -332,10 +357,22 @@
 </li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.ImagePort">ImagePort (class in grandchallenge.reader_studies.models)</a>
 </li>
-      <li><a href="reader-studies.html#grandchallenge.reader_studies.models.Question.is_answer_valid">is_answer_valid() (grandchallenge.reader_studies.models.Question method)</a>
+      <li><a href="components.html#grandchallenge.components.models.InterfaceKind.interface_type_annotation">interface_type_annotation() (grandchallenge.components.models.InterfaceKind static method)</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">interface_type_file() (grandchallenge.components.models.InterfaceKind static method)</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">interface_type_image() (grandchallenge.components.models.InterfaceKind static method)</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.InterfaceKind.interface_type_simple">interface_type_simple() (grandchallenge.components.models.InterfaceKind static method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="components.html#grandchallenge.components.models.InterfaceKind">InterfaceKind (class in grandchallenge.components.models)</a>
+</li>
+      <li><a href="components.html#grandchallenge.components.models.InterfaceKind.InterfaceKindChoices">InterfaceKind.InterfaceKindChoices (class in grandchallenge.components.models)</a>
+</li>
+      <li><a href="reader-studies.html#grandchallenge.reader_studies.models.Question.is_answer_valid">is_answer_valid() (grandchallenge.reader_studies.models.Question method)</a>
+</li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_editor">is_editor() (grandchallenge.reader_studies.models.ReaderStudy method)</a>
 </li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.Question.is_fully_editable">is_fully_editable() (grandchallenge.reader_studies.models.Question property)</a>
@@ -343,6 +380,14 @@
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_reader">is_reader() (grandchallenge.reader_studies.models.ReaderStudy method)</a>
 </li>
       <li><a href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_valid">is_valid() (grandchallenge.reader_studies.models.ReaderStudy property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="components.html#grandchallenge.components.models.ComponentInterface.Kind">Kind (grandchallenge.components.models.ComponentInterface attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -366,6 +411,8 @@
     module
 
       <ul>
+        <li><a href="components.html#module-grandchallenge.components.models">grandchallenge.components.models</a>
+</li>
         <li><a href="evaluation.html#module-grandchallenge.evaluation.templatetags.evaluation_extras">grandchallenge.evaluation.templatetags.evaluation_extras</a>
 </li>
         <li><a href="reader-studies.html#module-grandchallenge.reader_studies.models">grandchallenge.reader_studies.models</a>
@@ -525,6 +572,8 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="components.html#grandchallenge.components.models.DurationQuerySet.with_duration">with_duration() (grandchallenge.components.models.DurationQuerySet method)</a>
+</li>
       <li><a href="workstations.html#grandchallenge.workstations.models.Workstation">Workstation (class in grandchallenge.workstations.models)</a>
 </li>
       <li><a href="workstations.html#grandchallenge.workstations.models.Workstation.DoesNotExist">Workstation.DoesNotExist</a>

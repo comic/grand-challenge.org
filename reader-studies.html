@@ -89,7 +89,8 @@
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processor.html">Processor specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workstations.html">Workstations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Reader Studies</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#creating-a-reader-study">Creating a Reader Study</a></li>
@@ -267,6 +268,23 @@ as for each case are displayed in the <code class="docutils literal notranslate"
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></code><code class="sig-name descname"><span class="pre">Answer</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Answer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer" title="Permalink to this definition">¶</a></dt>
 <dd><p>An <code class="docutils literal notranslate"><span class="pre">Answer</span></code> can be provided to a <code class="docutils literal notranslate"><span class="pre">Question</span></code> that is a part of a
 <code class="docutils literal notranslate"><span class="pre">ReaderStudy</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
+<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
+<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
+<li><p><strong>creator</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – Creator</p></li>
+<li><p><strong>question</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Question</p></li>
+<li><p><strong>answer</strong> (<em>JSONField</em>) – Answer</p></li>
+<li><p><strong>answer_image</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">Image</span></code>) – Answer image</p></li>
+<li><p><strong>is_ground_truth</strong> (<em>BooleanField</em>) – Is ground truth</p></li>
+<li><p><strong>score</strong> (<em>FloatField</em>) – Score</p></li>
+<li><p><strong>explanation</strong> (<em>TextField</em>) – Explanation</p></li>
+<li><p><strong>images</strong> (<em>ManyToManyField</em>) – Images</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py exception">
 <dt id="grandchallenge.reader_studies.models.Answer.DoesNotExist">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">DoesNotExist</span></code><a class="headerlink" href="#grandchallenge.reader_studies.models.Answer.DoesNotExist" title="Permalink to this definition">¶</a></dt>
@@ -323,7 +341,17 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dl class="py class">
 <dt id="grandchallenge.reader_studies.models.CategoricalOption">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></code><code class="sig-name descname"><span class="pre">CategoricalOption</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#CategoricalOption"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py exception">
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>question</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.Question" title="grandchallenge.reader_studies.models.Question"><code class="xref py py-class docutils literal notranslate"><span class="pre">Question</span></code></a>) – Question</p></li>
+<li><p><strong>title</strong> (<em>CharField</em>) – Title</p></li>
+<li><p><strong>default</strong> (<em>BooleanField</em>) – Default</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
 <dt id="grandchallenge.reader_studies.models.CategoricalOption.DoesNotExist">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">DoesNotExist</span></code><a class="headerlink" href="#grandchallenge.reader_studies.models.CategoricalOption.DoesNotExist" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -356,7 +384,25 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dl class="py class">
 <dt id="grandchallenge.reader_studies.models.Question">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></code><code class="sig-name descname"><span class="pre">Question</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">question_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">answer_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_port</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scoring_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py class">
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
+<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
+<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
+<li><p><strong>reader_study</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study</p></li>
+<li><p><strong>question_text</strong> (<em>TextField</em>) – Question text</p></li>
+<li><p><strong>help_text</strong> (<em>TextField</em>) – Help text</p></li>
+<li><p><strong>answer_type</strong> (<em>CharField</em>) – Answer type</p></li>
+<li><p><strong>image_port</strong> (<em>CharField</em>) – Image port</p></li>
+<li><p><strong>required</strong> (<em>BooleanField</em>) – Required</p></li>
+<li><p><strong>direction</strong> (<em>CharField</em>) – Direction</p></li>
+<li><p><strong>scoring_function</strong> (<em>CharField</em>) – Scoring function</p></li>
+<li><p><strong>order</strong> (<em>PositiveSmallIntegerField</em>) – Order</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py class">
 <dt id="grandchallenge.reader_studies.models.Question.AnswerType">
 <em class="property"><span class="pre">class</span> </em><code class="sig-name descname"><span class="pre">AnswerType</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#Question.AnswerType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.Question.AnswerType" title="Permalink to this definition">¶</a></dt>
 <dd><p>An enumeration.</p>
@@ -449,6 +495,39 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><p>Reader Study model.</p>
 <p>A reader study is a tool that allows users to have a set of readers answer
 a set of questions on a set of images (cases).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>title</strong> (<em>CharField</em>) – Title</p></li>
+<li><p><strong>description</strong> (<em>TextField</em>) – Description</p></li>
+<li><p><strong>slug</strong> (<em>AutoSlugField</em>) – Slug</p></li>
+<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
+<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
+<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
+<li><p><strong>editors_group</strong> (OneToOneField to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Editors group</p></li>
+<li><p><strong>readers_group</strong> (OneToOneField to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Readers group</p></li>
+<li><p><strong>workstation</strong> (ForeignKey to <a class="reference internal" href="workstations.html#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – Workstation</p></li>
+<li><p><strong>workstation_config</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationConfig</span></code>) – Workstation config</p></li>
+<li><p><strong>public</strong> (<em>BooleanField</em>) – Public. Should this reader study be visible to all users on the overview page? This does not grant all users permission to read this study. Users will still need to be added to the study’s readers group in order to do that.</p></li>
+<li><p><strong>logo</strong> (<em>ImageField</em>) – Logo</p></li>
+<li><p><strong>social_image</strong> (<em>ImageField</em>) – Social image. An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).</p></li>
+<li><p><strong>help_text_markdown</strong> (<em>TextField</em>) – Help text markdown</p></li>
+<li><p><strong>hanging_list</strong> (<em>JSONField</em>) – Hanging list</p></li>
+<li><p><strong>shuffle_hanging_list</strong> (<em>BooleanField</em>) – Shuffle hanging list</p></li>
+<li><p><strong>is_educational</strong> (<em>BooleanField</em>) – Is educational. If checked, readers get the option to verify their answers against the uploaded ground truth. This also means that the uploaded ground truth will be readily available to the readers.</p></li>
+<li><p><strong>case_text</strong> (<em>JSONField</em>) – Case text</p></li>
+<li><p><strong>allow_answer_modification</strong> (<em>BooleanField</em>) – Allow answer modification. If true, readers are allowed to modify their answers for a case by navigating back to previous cases. ‘allow_case_browsing’ must be checked with this as well.</p></li>
+<li><p><strong>allow_case_navigation</strong> (<em>BooleanField</em>) – Allow case navigation. If true, readers are allowed to navigate back and forth between cases in this reader study.</p></li>
+<li><p><strong>allow_show_all_annotations</strong> (<em>BooleanField</em>) – Allow show all annotations. If true, readers are allowed to show/hide all annotations for a case.</p></li>
+<li><p><strong>validate_hanging_list</strong> (<em>BooleanField</em>) – Validate hanging list</p></li>
+<li><p><strong>images</strong> (<em>ManyToManyField</em>) – Images</p></li>
+<li><p><strong>publications</strong> (<em>ManyToManyField</em>) – Publications. The publications associated with this reader study</p></li>
+<li><p><strong>modalities</strong> (<em>ManyToManyField</em>) – Modalities. The imaging modalities contained in this reader study</p></li>
+<li><p><strong>structures</strong> (<em>ManyToManyField</em>) – Structures. The structures contained in this reader study</p></li>
+<li><p><strong>organizations</strong> (<em>ManyToManyField</em>) – Organizations. The organizations associated with this reader study</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py exception">
 <dt id="grandchallenge.reader_studies.models.ReaderStudy.DoesNotExist">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">DoesNotExist</span></code><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.DoesNotExist" title="Permalink to this definition">¶</a></dt>
@@ -639,6 +718,19 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><p>When a user wants to read a reader study, editors have the option of
 reviewing each user before accepting or rejecting them. This class records
 the needed info for that.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<em>AutoField</em>) – Id</p></li>
+<li><p><strong>user</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – User. which user requested to participate?</p></li>
+<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
+<li><p><strong>changed</strong> (<em>DateTimeField</em>) – Changed</p></li>
+<li><p><strong>status</strong> (<em>CharField</em>) – Status</p></li>
+<li><p><strong>reader_study</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study. To which reader study has the user requested access?</p></li>
+<li><p><strong>rejection_text</strong> (<em>TextField</em>) – Rejection text. The text that will be sent to the user with the reason for their rejection.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py exception">
 <dt id="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.DoesNotExist">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">DoesNotExist</span></code><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.DoesNotExist" title="Permalink to this definition">¶</a></dt>

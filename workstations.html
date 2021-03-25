@@ -39,7 +39,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Reader Studies" href="reader-studies.html" />
-    <link rel="prev" title="Processor specification" href="processor.html" /> 
+    <link rel="prev" title="Components" href="components.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -89,7 +89,8 @@
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
 <li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processor.html">Processor specification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">Algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Workstations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reader-studies.html">Reader Studies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="design.html">Design decisions</a></li>
@@ -180,14 +181,20 @@ and stopping the <code class="docutils literal notranslate"><span class="pre">Se
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>status</strong> – Stores what has happened with the service, is it running, errored, etc?</p></li>
-<li><p><strong>region</strong> – Stores which region this session runs in</p></li>
-<li><p><strong>creator</strong> – Who created the session? This is also the only user that should be able
+<li><p><strong>status</strong> (<em>PositiveSmallIntegerField</em>) – Stores what has happened with the service, is it running, errored, etc?</p></li>
+<li><p><strong>region</strong> (<em>CharField</em>) – Stores which region this session runs in</p></li>
+<li><p><strong>creator</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – Who created the session? This is also the only user that should be able
 to access the launched service.</p></li>
-<li><p><strong>workstation_image</strong> – The container image that will be launched by this <code class="docutils literal notranslate"><span class="pre">Session</span></code>.</p></li>
-<li><p><strong>maximum_duration</strong> – The maximum time that the service can be active before it is terminated</p></li>
-<li><p><strong>user_finished</strong> – Indicates if the user has chosen to end the session early</p></li>
+<li><p><strong>workstation_image</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.WorkstationImage" title="grandchallenge.workstations.models.WorkstationImage"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationImage</span></code></a>) – The container image that will be launched by this <code class="docutils literal notranslate"><span class="pre">Session</span></code>.</p></li>
+<li><p><strong>maximum_duration</strong> (<em>DurationField</em>) – The maximum time that the service can be active before it is terminated</p></li>
+<li><p><strong>user_finished</strong> (<em>BooleanField</em>) – Indicates if the user has chosen to end the session early</p></li>
 <li><p><strong>history</strong> – The history of this Session</p></li>
+<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
+<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
+<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
+<li><p><strong>auth_token</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">AuthToken</span></code>) – Auth token</p></li>
+<li><p><strong>logs</strong> (<em>TextField</em>) – Logs</p></li>
+<li><p><strong>ping_times</strong> (<em>JSONField</em>) – Ping times</p></li>
 </ul>
 </dd>
 </dl>
@@ -350,6 +357,23 @@ to access the launched service.</p></li>
 <dt id="grandchallenge.workstations.models.Workstation">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></code><code class="sig-name descname"><span class="pre">Workstation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#Workstation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.Workstation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Store the title and description of a workstation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>title</strong> (<em>CharField</em>) – Title</p></li>
+<li><p><strong>description</strong> (<em>TextField</em>) – Description</p></li>
+<li><p><strong>slug</strong> (<em>AutoSlugField</em>) – Slug</p></li>
+<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
+<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
+<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
+<li><p><strong>logo</strong> (<em>ImageField</em>) – Logo</p></li>
+<li><p><strong>editors_group</strong> (OneToOneField to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Editors group</p></li>
+<li><p><strong>users_group</strong> (OneToOneField to <code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code>) – Users group</p></li>
+<li><p><strong>config</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationConfig</span></code>) – Config</p></li>
+<li><p><strong>public</strong> (<em>BooleanField</em>) – Public. If True, all logged in users can use this workstation, otherwise, only the users group can use this workstation.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py exception">
 <dt id="grandchallenge.workstations.models.Workstation.DoesNotExist">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">DoesNotExist</span></code><a class="headerlink" href="#grandchallenge.workstations.models.Workstation.DoesNotExist" title="Permalink to this definition">¶</a></dt>
@@ -389,13 +413,26 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>workstation</strong> – A <code class="docutils literal notranslate"><span class="pre">Workstation</span></code> can have multiple <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code>, that
+<li><p><strong>workstation</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.workstations.models.Workstation" title="grandchallenge.workstations.models.Workstation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Workstation</span></code></a>) – A <code class="docutils literal notranslate"><span class="pre">Workstation</span></code> can have multiple <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code>, that
 represent different versions of a workstation</p></li>
-<li><p><strong>http_port</strong> – This container will expose a http server on this port</p></li>
-<li><p><strong>websocket_port</strong> – This container will expose a websocket on this port. Any relative url
+<li><p><strong>http_port</strong> (<em>PositiveIntegerField</em>) – This container will expose a http server on this port</p></li>
+<li><p><strong>websocket_port</strong> (<em>PositiveIntegerField</em>) – This container will expose a websocket on this port. Any relative url
 that starts with <code class="docutils literal notranslate"><span class="pre">/mlab4d4c4142</span></code> will be proxied to this port.</p></li>
-<li><p><strong>initial_path</strong> – The initial path that users will navigate to in order to load the
+<li><p><strong>initial_path</strong> (<em>CharField</em>) – The initial path that users will navigate to in order to load the
 workstation</p></li>
+<li><p><strong>id</strong> (<em>UUIDField</em>) – Id</p></li>
+<li><p><strong>created</strong> (<em>DateTimeField</em>) – Created</p></li>
+<li><p><strong>modified</strong> (<em>DateTimeField</em>) – Modified</p></li>
+<li><p><strong>creator</strong> (ForeignKey to <code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code>) – Creator</p></li>
+<li><p><strong>staged_image_uuid</strong> (<em>UUIDField</em>) – Staged image uuid</p></li>
+<li><p><strong>image</strong> (<em>FileField</em>) – Image. .tar.gz archive of the container image produced from the command ‘docker save IMAGE | gzip -c &gt; IMAGE.tar.gz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
+<li><p><strong>image_sha256</strong> (<em>CharField</em>) – Image sha256</p></li>
+<li><p><strong>ready</strong> (<em>BooleanField</em>) – Ready. Is this image ready to be used?</p></li>
+<li><p><strong>status</strong> (<em>TextField</em>) – Status</p></li>
+<li><p><strong>requires_gpu</strong> (<em>BooleanField</em>) – Requires gpu</p></li>
+<li><p><strong>requires_gpu_memory_gb</strong> (<em>PositiveIntegerField</em>) – Requires gpu memory gb</p></li>
+<li><p><strong>requires_memory_gb</strong> (<em>PositiveIntegerField</em>) – Requires memory gb</p></li>
+<li><p><strong>requires_cpu_cores</strong> (<em>DecimalField</em>) – Requires cpu cores</p></li>
 </ul>
 </dd>
 </dl>
@@ -438,7 +475,7 @@ bulk_delete.</p>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
         <a href="reader-studies.html" class="btn btn-neutral float-right" title="Reader Studies" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="processor.html" class="btn btn-neutral float-left" title="Processor specification" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="components.html" class="btn btn-neutral float-left" title="Components" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
