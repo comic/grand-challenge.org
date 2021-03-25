@@ -1737,6 +1737,14 @@ lint = ["flake8", "mypy", "docutils-stubs"]
 test = ["pytest"]
 
 [[package]]
+name = "sphinxcontrib-django"
+version = "0.5.1"
+description = "Improve the Sphinx autodoc for Django classes."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "sphinxcontrib-htmlhelp"
 version = "1.0.3"
 description = "sphinxcontrib-htmlhelp is a sphinx extension which renders HTML help files"
@@ -2034,7 +2042,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "dd44176081f4e6c5c954eff40161ecc3f5fde3aa0f94806d10f91c6bebeec1b6"
+content-hash = "2c6241e3dc36640d8e1678e8d8c454f6ee952f3d71640280715c0d39c5d23419"
 
 [metadata.files]
 alabaster = [
@@ -3026,6 +3034,10 @@ sphinxcontrib-applehelp = [
 sphinxcontrib-devhelp = [
     {file = "sphinxcontrib-devhelp-1.0.2.tar.gz", hash = "sha256:ff7f1afa7b9642e7060379360a67e9c41e8f3121f2ce9164266f61b9f4b338e4"},
     {file = "sphinxcontrib_devhelp-1.0.2-py2.py3-none-any.whl", hash = "sha256:8165223f9a335cc1af7ffe1ed31d2871f325254c0423bc0c4c7cd1c1e4734a2e"},
+]
+sphinxcontrib-django = [
+    {file = "sphinxcontrib-django-0.5.1.tar.gz", hash = "sha256:3b48a9067d8db4713d47e3a4160af10288d02d448c866d1b44b001adbe74cc1e"},
+    {file = "sphinxcontrib_django-0.5.1-py2.py3-none-any.whl", hash = "sha256:73ef7fdbf2ed6d4f35b7ae709032bd5ac493d93cedd0624ea7b51bf5fce41267"},
 ]
 sphinxcontrib-htmlhelp = [
     {file = "sphinxcontrib-htmlhelp-1.0.3.tar.gz", hash = "sha256:e8f5bb7e31b2dbb25b9cc435c8ab7a79787ebf7f906155729338f3156d93659b"},

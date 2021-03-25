@@ -43,7 +43,11 @@ DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
 class InterfaceKind:
+    """Interface kind."""
+
     class InterfaceKindChoices(models.TextChoices):
+        """Interface kind choices."""
+
         STRING = "STR", _("String")
         INTEGER = "INT", _("Integer")
         FLOAT = "FLT", _("Float")
@@ -78,6 +82,12 @@ class InterfaceKind:
 
     @staticmethod
     def interface_type_file():
+        """Interface kinds that are files:
+
+        * CSV file
+        * JSON file
+        * ZIP file
+        """
         return (
             InterfaceKind.InterfaceKindChoices.CSV,
             InterfaceKind.InterfaceKindChoices.JSON,
@@ -86,6 +96,12 @@ class InterfaceKind:
 
     @staticmethod
     def interface_type_image():
+        """Interface kinds that are images:
+
+        * Image
+        * Heat Map
+        * Segmentation
+        """
         return (
             InterfaceKind.InterfaceKindChoices.IMAGE,
             InterfaceKind.InterfaceKindChoices.HEAT_MAP,
@@ -94,6 +110,17 @@ class InterfaceKind:
 
     @staticmethod
     def interface_type_annotation():
+        """Interface kinds that are annotations.
+
+        * 2D bounding box
+        * Multiple 2D bounding boxes
+        * Distance measurement
+        * Multiple distance measurements
+        * Point
+        * Multiple points
+        * Polygon
+        * Multiple polygons
+        """
         return (
             InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
@@ -107,6 +134,15 @@ class InterfaceKind:
 
     @staticmethod
     def interface_type_simple():
+        """Simple interface kinds.
+
+        * String
+        * Integer
+        * Float
+        * Bool
+        * Choice
+        * Multiple choice
+        """
         return (
             InterfaceKind.InterfaceKindChoices.STRING,
             InterfaceKind.InterfaceKindChoices.INTEGER,
