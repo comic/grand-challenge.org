@@ -14,7 +14,7 @@ Inputs to an algorithm are available in the container in the ``/input`` director
 
 The ``relative_path`` property on the ``ComponentInterface`` is used to determine where the input value will be placed inside the container.
 
-The simple and annotation types get written to a json file, located in ``/input/{relative_path}`` in the container. The file and image types get placed in ``/input/{relative_path}/{filename}``.
+The simple and annotation types get written to a json file, located in ``/input/{relative_path}`` in the container. The image types get placed in ``/input/{relative_path}/{filename}``.
 
 When creating a new experiment for an algorithm, you can provide values for all ``ComponentInterfaces`` using the form provided.
 
