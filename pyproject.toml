@@ -89,7 +89,6 @@ django_rest_knox = "^4.1.0"
 numpy = "*"
 Pillow = "*"
 panimg = "^0.1.0"
-sphinxcontrib-django = "^0.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
@@ -106,3 +105,4 @@ werkzeug = {extras = ["watchdog"], version = "^1.0.1"}
 sphinx-rtd-theme = "*"
 sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
+sphinxcontrib-django = "^0.5.1"
