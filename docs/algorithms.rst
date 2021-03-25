@@ -5,7 +5,7 @@
 What is an algorithm?
 =====================
 
-An algorithm takes a set of inputs and a container image. A container is created from the image to process the inputs to outputs.
+An algorithm is a container image that is executed on a set of inputs, producing a set of outputs. The inputs and outputs can be text, numbers, booleans, medical images or annotations.
 
 Algorithm Inputs
 ================
