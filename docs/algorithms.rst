@@ -22,27 +22,7 @@ When creating a new experiment for an algorithm, you can provide values for all 
 Image files
 -----------
 
-For image type inputs, the following image types are currently supported:
-
-* .mha
-* .mhd
-* .raw
-* .zraw
-* .dcm
-* .nii
-* .nii.gz
-* .tiff
-* .png
-* .jpeg
-* .jpg
-
-The following file formats can be uploaded and will be converted to tif:
-
-* Aperio (.svs)
-* Hamamatsu (.vms, .vmu, .ndpi)
-* Leica (.scn)
-* MIRAX (.mrxs)
-* Ventana (.bif)
+Grand Challenge works with two image formats that will need to be read or written by your algorithm container image ``.mha`` and ``.tif``.
 
 Execution
 =========
