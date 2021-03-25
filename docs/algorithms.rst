@@ -16,7 +16,7 @@ The ``relative_path`` property on the ``ComponentInterface`` is used to determin
 
 The simple and annotation types get written to a json file, located in ``/input/{relative_path}`` in the container. The file and image types get placed in ``/input/{relative_path}/{filename}``.
 
-When creating a new experiment for an algorithm, you can fill out provide values for all ``ComponentInterfaces`` using the form provided.
+When creating a new experiment for an algorithm, you can provide values for all ``ComponentInterfaces`` using the form provided.
 
 
 Image files
