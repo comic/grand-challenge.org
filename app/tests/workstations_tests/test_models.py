@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from docker.errors import NotFound
 from knox.models import AuthToken
 
+from config.settings import WORKSTATIONS_GRACE_MINUTES
 from grandchallenge.components.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
@@ -49,7 +50,9 @@ def test_session_auth_token():
     _ = s.environment
 
     assert s.auth_token.user == s.creator
-    assert s.auth_token.expiry == s.expires_at
+    assert s.auth_token.expiry == s.expires_at + timedelta(
+        minutes=2 * WORKSTATIONS_GRACE_MINUTES
+    )
 
     # old tokens should be deleted
     old_pk = s.auth_token.pk
@@ -62,7 +65,9 @@ def test_session_auth_token():
     s.maximum_duration = timedelta(days=1)
     s.save()
 
-    assert s.auth_token.expiry == s.expires_at
+    assert s.auth_token.expiry == s.expires_at + timedelta(
+        minutes=2 * WORKSTATIONS_GRACE_MINUTES
+    )
 
 
 @pytest.mark.django_db
