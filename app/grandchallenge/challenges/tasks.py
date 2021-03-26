@@ -49,7 +49,7 @@ def check_external_challenge_urls():
             url = challenge.homepage
             if not url.startswith("http"):
                 url = "http://" + url
-            r = get(url)
+            r = get(url, timeout=60)
             # raise an exception when we receive a http error (e.g., 404)
             r.raise_for_status()
         except exceptions.RequestException as err:
