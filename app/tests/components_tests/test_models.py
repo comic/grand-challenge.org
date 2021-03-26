@@ -4,7 +4,9 @@ import pytest
 from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.components.models import InterfaceKind
 from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import EvaluationFactory
 
 
@@ -66,3 +68,29 @@ def test_average_duration_filtering():
     assert Job.objects.filter(
         algorithm_image=j1.algorithm_image
     ).average_duration() == timedelta(minutes=5)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "kind,object_store_required",
+    (
+        (InterfaceKind.InterfaceKindChoices.CSV, True),
+        (InterfaceKind.InterfaceKindChoices.ZIP, True),
+        (InterfaceKind.InterfaceKindChoices.JSON, False),
+        (InterfaceKind.InterfaceKindChoices.SEGMENTATION, True),
+        (InterfaceKind.InterfaceKindChoices.IMAGE, True),
+        (InterfaceKind.InterfaceKindChoices.HEAT_MAP, True),
+        (InterfaceKind.InterfaceKindChoices.BOOL, False),
+    ),
+)
+def test_save_in_object_store(kind, object_store_required):
+    ci = ComponentInterfaceFactory(kind=kind, store_in_database=True)
+
+    if object_store_required:
+        assert ci.save_in_object_store is True
+        ci.store_in_database = False
+        assert ci.save_in_object_store is True
+    else:
+        assert ci.save_in_object_store is False
+        ci.store_in_database = False
+        assert ci.save_in_object_store is True

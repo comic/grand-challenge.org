@@ -14,6 +14,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmPermissionRequestList,
     AlgorithmPermissionRequestUpdate,
     AlgorithmUpdate,
+    ComponentInterfaceList,
     EditorsUpdate,
     JobDetail,
     JobExperimentDetail,
@@ -28,6 +29,11 @@ app_name = "algorithms"
 urlpatterns = [
     path("", AlgorithmList.as_view(), name="list"),
     path("create/", AlgorithmCreate.as_view(), name="create"),
+    path(
+        "interfaces/",
+        ComponentInterfaceList.as_view(),
+        name="component-interface-list",
+    ),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
     path("<slug>/update/", AlgorithmUpdate.as_view(), name="update"),
     path(
