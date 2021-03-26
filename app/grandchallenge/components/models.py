@@ -216,10 +216,15 @@ class ComponentInterface(models.Model):
     @property
     def save_in_object_store(self):
         # CSV and ZIP should always be saved to S3, others are optional
-        return self.kind in (
-            InterfaceKind.InterfaceKindChoices.CSV,
-            InterfaceKind.InterfaceKindChoices.ZIP,
-        ) or not (not self.is_image_kind and self.store_in_database)
+        return (
+            self.is_image_kind
+            or self.kind
+            in (
+                InterfaceKind.InterfaceKindChoices.CSV,
+                InterfaceKind.InterfaceKindChoices.ZIP,
+            )
+            or not self.store_in_database
+        )
 
     class Meta:
         ordering = ("pk",)
