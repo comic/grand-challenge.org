@@ -490,14 +490,16 @@ class Image(UUIDModel):
         )
 
         expected_groups = {
-            *Group.objects.filter(
-                algorithm_jobs_groups | reader_studies_groups | archive_groups
-            ).distinct()
+            *Group.objects.filter(algorithm_jobs_groups),
+            *Group.objects.filter(reader_studies_groups),
+            *Group.objects.filter(archive_groups),
         }
 
         # Reader study editors for reader studies that have answers that
         # include this image.
-        for answer in self.answer_set.all():
+        for answer in self.answer_set.select_related(
+            "question__reader_study__editors_group"
+        ).all():
             expected_groups.add(answer.question.reader_study.editors_group)
 
         current_groups = get_groups_with_perms(self, attach_perms=True)
