@@ -824,6 +824,8 @@ WORKSTATIONS_RENDERING_SUBDOMAINS = {
     "eu-nl-1",
     "eu-nl-2",
 }
+# Number of minutes grace period before the container is stopped
+WORKSTATIONS_GRACE_MINUTES = 5
 
 CELERY_BEAT_SCHEDULE = {
     "ping_google": {
@@ -859,7 +861,7 @@ CELERY_BEAT_SCHEDULE = {
                 "region": region,
             },
             "options": {"queue": f"workstations-{region}"},
-            "schedule": timedelta(minutes=5),
+            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
         }
         for region in WORKSTATIONS_ACTIVE_REGIONS
     },
