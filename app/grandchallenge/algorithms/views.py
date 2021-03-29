@@ -64,6 +64,7 @@ from grandchallenge.algorithms.tasks import (
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.components.models import (
+    ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
 )
@@ -79,6 +80,10 @@ from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
+
+
+class ComponentInterfaceList(LoginRequiredMixin, ListView):
+    model = ComponentInterface
 
 
 class AlgorithmCreate(

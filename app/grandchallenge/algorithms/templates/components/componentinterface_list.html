@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block title %}
+    Interfaces - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Interfaces</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Interfaces</h2>
+
+    <p>
+        Here is a list of all of the interfaces that you can select to use in your algorithm.
+        The input column shows the file that your algorithm must read if that interface is selected as an input
+        interface.
+        The output column shows the file that your algorithm must write if that interface is selected as an output
+        interface.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm" id="interfacesTable">
+            <thead class="thead-light">
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Kind</th>
+                <th>Input</th>
+                <th>Output</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            {% for interface in object_list %}
+                <tr>
+                    <td>{{ interface.title }}</td>
+                    <td>{{ interface.description }}</td>
+                    <td>{{ interface.get_kind_display }}</td>
+                    <td>
+                        {% if interface.is_image_kind %}
+                            One of:
+                            <pre>{{ interface.input_path }}/&lt;uuid&gt;.mha</pre>
+                            <pre>{{ interface.input_path }}/&lt;uuid&gt;.tif</pre>
+                        {% else %}
+                            <pre>{{ interface.input_path }}</pre>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if interface.is_image_kind %}
+                            One of:
+                            <pre>{{ interface.output_path }}/&lt;uuid&gt;.mha</pre>
+                            <pre>{{ interface.output_path }}/&lt;uuid&gt;.tif</pre>
+                        {% else %}
+                            <pre>{{ interface.output_path }}</pre>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#interfacesTable').DataTable({
+                "pageLength": 100,
+            });
+        });
+    </script>
+{% endblock %}

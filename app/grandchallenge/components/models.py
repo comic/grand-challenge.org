@@ -209,19 +209,32 @@ class ComponentInterface(models.Model):
     def output_path(self):
         return safe_join("/output", self.relative_path)
 
+    @property
+    def is_image_kind(self):
+        return self.kind in InterfaceKind.interface_type_image()
+
+    @property
+    def save_in_object_store(self):
+        # CSV and ZIP should always be saved to S3, others are optional
+        return (
+            self.is_image_kind
+            or self.kind
+            in (
+                InterfaceKind.InterfaceKindChoices.CSV,
+                InterfaceKind.InterfaceKindChoices.ZIP,
+            )
+            or not self.store_in_database
+        )
+
     class Meta:
         ordering = ("pk",)
 
     def create_component_interface_values(self, *, reader, job):
         # TODO JM These functions rely on docker specific code (reader)
-        if self.kind in (
-            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
-            InterfaceKind.InterfaceKindChoices.IMAGE,
-        ):
+        if self.is_image_kind:
             self._create_images_result(reader=reader, job=job)
-
-        if self.kind == InterfaceKind.InterfaceKindChoices.JSON:
-            self._create_json_result(reader=reader, job=job)
+        else:
+            self._create_file_result(reader=reader, job=job)
 
     def _create_images_result(self, *, reader, job):
         # TODO JM in the future this will be a file, not a directory
@@ -265,7 +278,7 @@ class ComponentInterface(models.Model):
             )
             job.outputs.add(civ)
 
-    def _create_json_result(self, reader, job):
+    def _create_file_result(self, reader, job):
         output_file = Path(self.output_path)
         try:
             file = get_file(container=reader, src=output_file)
@@ -276,7 +289,15 @@ class ComponentInterface(models.Model):
                 f"organisers for assistance."
             )
 
-        if self.store_in_database:
+        if self.save_in_object_store:
+            civ = ComponentInterfaceValue.objects.create(interface=self)
+            try:
+                civ.file = File(file, name=str(output_file.name))
+                civ.full_clean()
+                civ.save()
+            except ValidationError:
+                raise ComponentException("Invalid filetype.")
+        else:
             try:
                 result = json.loads(
                     file.read().decode(),
@@ -290,14 +311,6 @@ class ComponentInterface(models.Model):
             civ = ComponentInterfaceValue.objects.create(
                 interface=self, value=result
             )
-        else:
-            civ = ComponentInterfaceValue.objects.create(interface=self)
-            try:
-                civ.file = File(file, name=str(output_file.name))
-                civ.full_clean()
-                civ.save()
-            except ValidationError:
-                raise ComponentException("Invalid filetype.")
 
         job.outputs.add(civ)
 
