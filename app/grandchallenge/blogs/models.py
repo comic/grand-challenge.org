@@ -36,3 +36,7 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return reverse("blogs:detail", kwargs={"slug": self.slug})
+
+    @property
+    def public(self):
+        return self.published
