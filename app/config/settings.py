@@ -330,6 +330,8 @@ MIDDLEWARE = (
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
+    # Redirects last as they're a last resort
+    "django.contrib.redirects.middleware.RedirectFallbackMiddleware",
 )
 
 # Python dotted path to the WSGI application used by Django's runserver.
@@ -348,6 +350,7 @@ DJANGO_APPS = [
     "django.contrib.postgres",
     "django.contrib.flatpages",
     "django.contrib.sitemaps",
+    "django.contrib.redirects",
 ]
 
 THIRD_PARTY_APPS = [
