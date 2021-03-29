@@ -7,6 +7,10 @@
 <meta property="og:site_name" content="{{ request.site }}">
 
 {% if meta_info %}
+    {% if meta_info.public is False %}
+        <meta name="robots" content="noindex">
+    {% endif %}
+
     <meta name="title" content="{% firstof meta_info.title meta_info.short_name %} - {{ request.site.name }}">
     <meta property="og:title" content="{% firstof meta_info.title meta_info.short_name %} - {{ request.site.name }}">
 
