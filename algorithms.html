@@ -181,9 +181,18 @@
 </div>
 <div class="section" id="algorithm-inputs">
 <h2>Algorithm Inputs<a class="headerlink" href="#algorithm-inputs" title="Permalink to this headline">¶</a></h2>
-<p>Inputs to an algorithm are available in the container in the <code class="docutils literal notranslate"><span class="pre">/input</span></code> directory. You can add <a class="reference internal" href="components.html#components"><span class="std std-ref">component interfaces</span></a> that will provide the inputs to your algorithm.</p>
+<p>Inputs to an algorithm are available in the container in the <code class="docutils literal notranslate"><span class="pre">/input</span></code> directory.
+You can add <a class="reference internal" href="components.html#components"><span class="std std-ref">component interfaces</span></a> that will provide the inputs to your algorithm.
+You can find a list of the <a class="reference external" href="https://grand-challenge.org/algorithms/interfaces/">currently available interfaces</a> on grand challenge.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">relative_path</span></code> property on the <code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code> is used to determine where the input value will be placed inside the container.</p>
-<p>The simple and annotation types get written to a json file, located in <code class="docutils literal notranslate"><span class="pre">/input/{relative_path}</span></code> in the container. The image types get placed in <code class="docutils literal notranslate"><span class="pre">/input/{relative_path}/{filename}</span></code>.</p>
+<p>The most types get written to a json file, located in <code class="docutils literal notranslate"><span class="pre">/input/{relative_path}</span></code> in the container.
+You can read and parse these with</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/input/</span><span class="si">{relative_path}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+</pre></div>
+</div>
 <p>When creating a new experiment for an algorithm, you can provide values for all <code class="docutils literal notranslate"><span class="pre">ComponentInterfaces</span></code> using the form provided.</p>
 <div class="section" id="image-files">
 <h3>Image files<a class="headerlink" href="#image-files" title="Permalink to this headline">¶</a></h3>
@@ -198,8 +207,9 @@
 </div>
 <div class="section" id="algorithm-outputs">
 <h2>Algorithm Outputs<a class="headerlink" href="#algorithm-outputs" title="Permalink to this headline">¶</a></h2>
-<p>Outputs of an algorithm must be stored in the directory <code class="docutils literal notranslate"><span class="pre">/output/</span></code>. As with the inputs, a <code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code> needs to be defined for each of the expected outputs.
-For outputs of kind <code class="docutils literal notranslate"><span class="pre">JSON</span> <span class="pre">file</span></code> you can determine (only when creating the <code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code>) if the json should be stored as file or in the database. Use this option if you expect the json file to be very large.</p>
+<p>Outputs of an algorithm must be stored in the directory <code class="docutils literal notranslate"><span class="pre">/output/</span></code>.
+As with the inputs, a <code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code> needs to be defined for each of the expected outputs.
+You can find a list of the <a class="reference external" href="https://grand-challenge.org/algorithms/interfaces/">currently available interfaces</a> on grand challenge.</p>
 <div class="section" id="results-json">
 <h3>results.json<a class="headerlink" href="#results-json" title="Permalink to this headline">¶</a></h3>
 <p>If one of the defined outputs for the algorithms is a <code class="docutils literal notranslate"><span class="pre">results.json</span></code> file, the contents of this file will be parsed and shown on the algorithm’s result page. You can provide a jinja template to an algorithm for the rendering of these results.</p>
