@@ -525,10 +525,10 @@ class Session(UUIDModel):
 
         if self.auth_token and self.auth_token.expiry != (
             self.expires_at
-            + timedelta(minutes=2 * settings.WORKSTATIONS_GRACE_MINUTES)
+            + timedelta(minutes=settings.WORKSTATIONS_GRACE_MINUTES)
         ):
             self.auth_token.expiry = self.expires_at + timedelta(
-                minutes=2 * settings.WORKSTATIONS_GRACE_MINUTES
+                minutes=settings.WORKSTATIONS_GRACE_MINUTES
             )
             self.auth_token.save(update_fields=("expiry",))
 

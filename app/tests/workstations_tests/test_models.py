@@ -51,7 +51,7 @@ def test_session_auth_token():
 
     assert s.auth_token.user == s.creator
     assert s.auth_token.expiry == s.expires_at + timedelta(
-        minutes=2 * WORKSTATIONS_GRACE_MINUTES
+        minutes=WORKSTATIONS_GRACE_MINUTES
     )
 
     # old tokens should be deleted
@@ -66,7 +66,7 @@ def test_session_auth_token():
     s.save()
 
     assert s.auth_token.expiry == s.expires_at + timedelta(
-        minutes=2 * WORKSTATIONS_GRACE_MINUTES
+        minutes=WORKSTATIONS_GRACE_MINUTES
     )
 
 
