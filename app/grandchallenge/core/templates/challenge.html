@@ -39,8 +39,9 @@
             <div class="col-md-10">
                 <div class="nav nav-tabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
-                           href="{% url 'pages:detail' challenge_short_name=challenge.short_name page_title=challenge.page_set.first.title %}">
+                    <! -- Todo: Adjust the view_name before merging with master (include the page_title slug)-->
+                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
+                           href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
                             Info
                         </a>
                     </li>
@@ -73,13 +74,13 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
                                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
-                                    Leaderboard(s)</a>
+                                    Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>
                         {% elif not challenge.hidden %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
                                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
-                                    Leaderboard(s)</a>
+                                    Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>
                         {% endif %}
                     {% endif %}
