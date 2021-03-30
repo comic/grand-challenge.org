@@ -4,6 +4,13 @@
 {% load bleach %}
 {% load static %}
 
+{% block title %}
+    {% filter title %}
+        {% firstof currentpage.display_title currentpage.title %}
+    {% endfilter %}
+    - {{ block.super }}
+{% endblock %}
+
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
@@ -59,4 +66,22 @@
             {% endif %}
         {% endif %}
     </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {# For displaying equations on the site, the safe config is important #}
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
+            async></script>
+    {# geocharts #}
+    <script type="text/javascript"
+            src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript"
+            src="{% static "js/render_geocharts.js" %}"></script>
+    {# make the tables sortable #}
+    <script type="text/javascript"
+            src="{% static "js/sort_tables.js" %}"></script>
+    {# render embeddable google forums #}
+    <script type="text/javascript"
+            src="{% static "js/embed_forums.js" %}"></script>
 {% endblock %}
