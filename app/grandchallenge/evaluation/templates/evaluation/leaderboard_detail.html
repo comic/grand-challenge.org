@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="nav nav-pills col-12 pl-3 mt-3">
+    <div class="nav nav-pills col-12 pl-3 my-3">
         {% for phase in challenge.phase_set.all %}
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
@@ -25,7 +25,6 @@
 {% endblock %}
 
 {% block content %}
-    <div class="mt-3">
         <h2>{{ phase.title }} Leaderboard {{ request.GET.date }}</h2>
 
         {% if phase.evaluation_comparison_observable_url %}
@@ -120,7 +119,6 @@
                 </div>
             </div>
         {% endif %}
-    </div>
 {% endblock %}
 
 {% block script %}
