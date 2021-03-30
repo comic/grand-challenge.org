@@ -2,6 +2,7 @@ import datetime
 import logging
 from itertools import chain, product
 
+from actstream.actions import follow, unfollow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField, CICharField
@@ -525,20 +526,24 @@ class Challenge(ChallengeBase):
     def add_participant(self, user):
         if user != get_anonymous_user():
             user.groups.add(self.participants_group)
+            follow(user=user, obj=self.forum, actor_only=False)
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_participant(self, user):
         user.groups.remove(self.participants_group)
+        unfollow(user=user, obj=self.forum)
 
     def add_admin(self, user):
         if user != get_anonymous_user():
             user.groups.add(self.admins_group)
+            follow(user=user, obj=self.forum, actor_only=False)
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
+        unfollow(user=user, obj=self.forum)
 
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"
