@@ -478,7 +478,7 @@ Django = ">=2.2"
 
 [[package]]
 name = "django-haystack"
-version = "3.0b1"
+version = "3.0"
 description = "Pluggable search for Django."
 category = "main"
 optional = false
@@ -2053,7 +2053,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "52b7bc9bef9767a5d9031328eba9ff1e45411eebc2f628219054791bfbb51286"
+content-hash = "62aaebffc25cd263e05aaba10e2d1e7ca49609e207d93ce494ffb961264c2fd4"
 
 [metadata.files]
 alabaster = [
@@ -2324,8 +2324,7 @@ django-guardian = [
     {file = "django_guardian-2.3.0-py3-none-any.whl", hash = "sha256:0e70706c6cda88ddaf8849bddb525b8df49de05ba0798d4b3506049f0d95cbc8"},
 ]
 django-haystack = [
-    {file = "django-haystack-3.0b1.tar.gz", hash = "sha256:9dba64f5c76cf147ac382d4a4a270f30d30a45a3a7a1738a9d05c96d18777c07"},
-    {file = "django_haystack-3.0b1-py3-none-any.whl", hash = "sha256:b83705e1cf8141cd1755fc6683ac65fea4e1281f4b4306bc9224af96495b0df3"},
+    {file = "django-haystack-3.0.tar.gz", hash = "sha256:d490f920afa85471dd1fa5000bc8eff4b704daacbe09aee1a64e75cbc426f3be"},
 ]
 django-ipware = [
     {file = "django-ipware-3.0.2.tar.gz", hash = "sha256:c7df8e1410a8e5d6b1fbae58728402ea59950f043c3582e033e866f0f0cf5e94"},
