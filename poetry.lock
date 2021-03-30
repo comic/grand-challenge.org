@@ -311,6 +311,17 @@ argon2 = ["argon2-cffi (>=16.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-activity-stream"
+version = "0.10.0"
+description = "Generate generic activity streams from the actions on your site. Users can follow any actors' activities for personalized streams."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+jsonfield = ["django-jsonfield-backport (>=1.0.2,<2.0)"]
+
+[[package]]
 name = "django-allauth"
 version = "0.44.0"
 description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
@@ -2042,7 +2053,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2c6241e3dc36640d8e1678e8d8c454f6ee952f3d71640280715c0d39c5d23419"
+content-hash = "52b7bc9bef9767a5d9031328eba9ff1e45411eebc2f628219054791bfbb51286"
 
 [metadata.files]
 alabaster = [
@@ -2257,6 +2268,10 @@ disposable-email-domains = [
 django = [
     {file = "Django-3.1.6-py3-none-any.whl", hash = "sha256:169e2e7b4839a7910b393eec127fd7cbae62e80fa55f89c6510426abf673fe5f"},
     {file = "Django-3.1.6.tar.gz", hash = "sha256:c6c0462b8b361f8691171af1fb87eceb4442da28477e12200c40420176206ba7"},
+]
+django-activity-stream = [
+    {file = "django-activity-stream-0.10.0.tar.gz", hash = "sha256:2cec600bb5a543dd402747afeeec237e9848993385049adfedc16ec97a6d86f2"},
+    {file = "django_activity_stream-0.10.0-py3-none-any.whl", hash = "sha256:77729f56424292f208c7bb086607e840c59a584cf02b9daa4773f335c8fec0f6"},
 ]
 django-allauth = [
     {file = "django-allauth-0.44.0.tar.gz", hash = "sha256:e51af457466022f52154d74c8523ac69375120fad2acce6e239635d85e610b25"},

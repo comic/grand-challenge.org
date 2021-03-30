@@ -372,6 +372,7 @@ THIRD_PARTY_APPS = [
     "markdownx",  # for editing markdown
     "django_filters",
     "drf_spectacular",
+    "actstream",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -404,6 +405,7 @@ LOCAL_APPS = [
     "grandchallenge.core",
     "grandchallenge.evaluation",
     "grandchallenge.jqfileupload",
+    "grandchallenge.notifications",
     "grandchallenge.pages",
     "grandchallenge.participants",
     "grandchallenge.profiles",
@@ -489,9 +491,21 @@ PROFILES_MUGSHOT_SIZE = 460
 
 ##############################################################################
 #
+# actstream
+#
+##############################################################################
+
+ACTSTREAM_SETTINGS = {
+    "MANAGER": "actstream.managers.ActionManager",
+    "FETCH_RELATIONS": True,
+    "USE_JSONFIELD": True,
+}
+
+##############################################################################
+#
 # django-summernote
 #
-#############################################################################
+##############################################################################
 
 # WYSIWYG editing with Summernote
 SUMMERNOTE_THEME = "bs4"
