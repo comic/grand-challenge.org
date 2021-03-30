@@ -340,6 +340,9 @@ class Challenge(ChallengeBase):
             self.create_groups()
             self.create_forum()
 
+            if self.creator:
+                self.add_admin(user=self.creator)
+
         super().save(*args, **kwargs)
 
         if adding:
@@ -442,12 +445,6 @@ class Challenge(ChallengeBase):
         self.admins_group = admins_group
         self.participants_group = participants_group
 
-        try:
-            self.creator.groups.add(admins_group)
-        except AttributeError:
-            # No creator set
-            pass
-
     def create_forum(self):
         f, created = Forum.objects.get_or_create(
             name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT,
@@ -526,24 +523,28 @@ class Challenge(ChallengeBase):
     def add_participant(self, user):
         if user != get_anonymous_user():
             user.groups.add(self.participants_group)
-            follow(user=user, obj=self.forum, actor_only=False)
+            follow(
+                user=user, obj=self.forum, actor_only=False, send_action=False
+            )
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_participant(self, user):
         user.groups.remove(self.participants_group)
-        unfollow(user=user, obj=self.forum)
+        unfollow(user=user, obj=self.forum, send_action=False)
 
     def add_admin(self, user):
         if user != get_anonymous_user():
             user.groups.add(self.admins_group)
-            follow(user=user, obj=self.forum, actor_only=False)
+            follow(
+                user=user, obj=self.forum, actor_only=False, send_action=False
+            )
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
-        unfollow(user=user, obj=self.forum)
+        unfollow(user=user, obj=self.forum, send_action=False)
 
     class Meta(ChallengeBase.Meta):
         verbose_name = "challenge"

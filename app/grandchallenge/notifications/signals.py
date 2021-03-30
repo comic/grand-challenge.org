@@ -5,11 +5,12 @@ from machina.apps.forum_conversation.models import Topic
 
 
 @receiver(post_save, sender=Topic)
-def create_topic_action(_, *, instance, created, **__):
-    if created:
+def create_topic_action(sender, *, instance, created, **__):
+    if created and int(instance.type) == int(Topic.TOPIC_ANNOUNCE):
         action.send(
             sender=instance.poster,
-            verb="created",
+            verb="announced",
             action_object=instance,
             target=instance.forum,
+            context_class="info",
         )
