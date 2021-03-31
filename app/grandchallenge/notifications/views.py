@@ -9,9 +9,7 @@ class NotificationList(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         context.update(
-            {
-                "object_list": self.request.user.notification_preference.notifications
-            }
+            {"object_list": self.request.user.user_profile.notifications}
         )
 
         return context
