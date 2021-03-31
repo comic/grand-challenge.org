@@ -20,7 +20,6 @@ from tests.notifications_tests.factories import (
     ),
 )
 def test_action_created_on_new_topic(kind, should_create):
-    u = UserFactory()
     p = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
     t = TopicFactory(forum=f, poster=p, type=kind)
@@ -28,9 +27,5 @@ def test_action_created_on_new_topic(kind, should_create):
     if should_create:
         action = Action.objects.get()
         assert str(action).startswith(f"{p} announced {t} on {f}")
-        assert u.user_profile.has_unread_notifications is True
-        assert p.user_profile.has_unread_notifications is False
     else:
         assert Action.objects.exists() is False
-        assert u.user_profile.has_unread_notifications is False
-        assert p.user_profile.has_unread_notifications is False
