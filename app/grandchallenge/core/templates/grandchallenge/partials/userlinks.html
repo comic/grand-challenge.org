@@ -1,13 +1,13 @@
 {% load url %}
 
 {% if user.is_authenticated %}
-    <li class="nav-item"><a class="nav-link" href="{% url 'notifications:list' %}" title="Notifications"><i class="far fa-fw fa-lg fa-bell"></i></a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'notifications:list' %}" title="Notifications"><i class="align-middle far fa-fw fa-lg fa-bell"></i></a></li>
     <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle align-top"
            data-toggle="dropdown" role="button"
            aria-haspopup="true"
            aria-expanded="false">
-            <img src="{{ user.user_profile.get_mugshot_url }}"
+            <img class="rounded-circle" src="{{ user.user_profile.get_mugshot_url }}"
                  alt="User Mugshot" style="height: 1.5em"/>
         </a>
         <div class="dropdown-menu dropdown-menu-right">
