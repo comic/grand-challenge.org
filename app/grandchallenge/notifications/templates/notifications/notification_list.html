@@ -26,6 +26,7 @@
                 {% if object.target %}
                     <a href="{{ object.target.get_absolute_url }}">{{ object.target }}</a>
                 {% endif %}
+                {{ object.timestamp|timesince }} ago
             </li>
             {% empty %}
             <li class="list-group-item">You have no notifications</li>

@@ -1,7 +1,7 @@
 {% load url %}
 
 {% if user.is_authenticated %}
-    <li class="nav-item"><a class="nav-link" href="" title="Notifications"><i class="far fa-fw fa-lg fa-bell"></i></a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'notifications:list' %}" title="Notifications"><i class="far fa-fw fa-lg fa-bell"></i></a></li>
     <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle align-top"
            data-toggle="dropdown" role="button"

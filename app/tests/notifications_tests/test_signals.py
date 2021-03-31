@@ -20,12 +20,12 @@ from tests.notifications_tests.factories import (
     ),
 )
 def test_action_created_on_new_topic(kind, should_create):
-    u = UserFactory()
+    p = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
-    t = TopicFactory(forum=f, poster=u, type=kind)
+    t = TopicFactory(forum=f, poster=p, type=kind)
 
     if should_create:
         action = Action.objects.get()
-        assert str(action).startswith(f"{u} announced {t} on {f}")
+        assert str(action).startswith(f"{p} announced {t} on {f}")
     else:
         assert Action.objects.exists() is False
