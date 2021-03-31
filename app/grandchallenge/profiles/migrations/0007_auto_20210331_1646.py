@@ -11,11 +11,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="userprofile",
-            name="has_notifications",
-            field=models.BooleanField(default=False, editable=False),
-        ),
-        migrations.AddField(
-            model_name="userprofile",
             name="notification_email_last_sent_at",
             field=models.DateTimeField(
                 default=None, editable=False, null=True

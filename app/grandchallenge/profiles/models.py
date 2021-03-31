@@ -58,7 +58,6 @@ class UserProfile(models.Model):
     notification_email_last_sent_at = models.DateTimeField(
         default=None, null=True, editable=False
     )
-    has_notifications = models.BooleanField(default=False, editable=False)
     notifications_last_read_at = models.DateTimeField(
         default=None, null=True, editable=False
     )
@@ -96,6 +95,10 @@ class UserProfile(models.Model):
                 {"d": "identicon", "s": str(settings.PROFILES_MUGSHOT_SIZE)}
             )
             return gravatar_url
+
+    @property
+    def has_unread_notifications(self):
+        return self.notifications.exists()
 
     @property
     def notifications(self):

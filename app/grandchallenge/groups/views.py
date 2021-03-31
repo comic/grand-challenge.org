@@ -97,7 +97,7 @@ class UserAutocomplete(
 
         if is_verified:
             return format_html(
-                '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
+                '<img class="rounded-circle align-middle" src="{}" width ="20" height ="20"> '
                 "&nbsp; <b>{}</b> &nbsp; {} &nbsp;"
                 '<i class="fas fa-user-check text-success"></i>'
                 "&nbsp;Verified email address at {}",
@@ -108,7 +108,7 @@ class UserAutocomplete(
             )
         else:
             return format_html(
-                '<img src="{}" width ="20" height ="20" style="vertical-align:top"> '
+                '<img class="rounded-circle align-middle" src="{}" width ="20" height ="20"> '
                 "&nbsp; <b>{}</b> &nbsp; {}",
                 result.user_profile.get_mugshot_url(),
                 result.get_username(),
