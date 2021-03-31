@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="nav nav-pills col-12 pl-3 my-3">
+    <div class="nav nav-pills col-12 pl-3 mb-3">
         {% if "change_challenge" in challenge_perms or user_is_participant %}
             {% for phase in challenge.phase_set.all %}
                 <li class="nav-item">

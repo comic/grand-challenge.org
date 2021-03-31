@@ -35,8 +35,8 @@
 
 {% block topbar %}
     {% if challenge %}
-        <div class="row">
-            <div class="col-md-10">
+        <div class="row mb-3">
+            <div class="col-md-10 col-sm-8 col-6">
                 <div class="nav nav-tabs" role="tablist">
                     <li class="nav-item">
                     <! -- Todo: Adjust the view_name before merging with master (include the page_title slug)-->
@@ -87,7 +87,7 @@
                 </div>
             </div>
 
-            <div class="col-md-2 d-flex justify-content-end">
+            <div class="col-md-2 col-sm-4 col-6 d-flex justify-content-end">
                 {% if challenge.use_registration_page %}
                     <div>
                         <a class="btn btn-primary"
@@ -105,7 +105,7 @@
                            href="#"
                            role="button"
                            aria-expanded="false">Admin</a>
-                        <ul class="dropdown-menu" role="menu" aria-labelledby="admin">
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="admin">
                             <h6 class="dropdown-header">{% firstof challenge.title challenge.short_name %}</h6>
                             <a class="dropdown-item"
                                href="{% url 'update' challenge_short_name=challenge.short_name %}">
