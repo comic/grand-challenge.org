@@ -109,7 +109,7 @@
                             <h6 class="dropdown-header">{% firstof challenge.title challenge.short_name %}</h6>
                             <a class="dropdown-item"
                                href="{% url 'update' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-cog fa-fw"></i> Settings</a>
+                                <i class="fas fa-cog fa-fw"></i> General Settings</a>
                             <a class="dropdown-item"
                                href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">
                                 <i class="far fa-file fa-fw"></i> Pages</a>
@@ -117,27 +117,30 @@
                             <h6 class="dropdown-header">Users</h6>
                             <a class="dropdown-item"
                                href="{% url 'admins:list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-user fa-fw"></i>&nbsp;Admins</a>
+                                <i class="fas fa-user fa-fw"></i>&nbsp;Admins <span
+                        class="badge badge-pill badge-secondary align-middle">{{ num_admins }}</span></a>
                             <a class="dropdown-item"
                                href="{% url 'participants:list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-users fa-fw"></i>&nbsp;Participants</a>
+                                <i class="fas fa-users fa-fw"></i>&nbsp;Participants <span
+                                    class="badge badge-pill badge-secondary align-middle">{{ num_participants }}</span></a>
                             <a class="dropdown-item"
                                href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-question fa-fw"></i>&nbsp;Participation Requests</a>
+                                <i class="fas fa-question fa-fw"></i>&nbsp;Participation Requests {% if num_requests > 0 %}<span
+                                    class="badge badge-pill badge-secondary align-middle">{{ num_requests }}</span>{% endif %}</a>
+                            <hr>
+                            <h6 class="dropdown-header">Phases</h6>
                             {% if challenge.use_evaluation %}
                                 {% for phase in challenge.phase_set.all %}
-                                    <hr>
-                                    <h6 class="dropdown-header">{{ phase.title }} Evaluation</h6>
                                     <a class="dropdown-item"
                                        href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
-                                        <i class="fas fa-cog fa-fw"></i> Settings
+                                        <i class="fas fa-cog fa-fw"></i> {{ phase.title }} Evaluation Settings
                                     </a>
                                 {% endfor %}
-                                <hr>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:phase-create' challenge_short_name=challenge.short_name %}">
                                     <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase
                                 </a>
+                                <hr>
                                 <a class="dropdown-item"
                                    href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
                                     Methods

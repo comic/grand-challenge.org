@@ -5,6 +5,7 @@ from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.blogs.models import Post
+from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,11 @@ def challenge(request):
         "challenge_perms": get_perms(user, challenge),
         "user_is_participant": challenge.is_participant(user),
         "pages": challenge.page_set.all(),
+        "num_admins": challenge.get_admins().count(),
+        "num_participants": challenge.get_participants().count(),
+        "num_requests": challenge.registrationrequest_set.filter(
+            status=RegistrationRequest.PENDING
+        ).count(),
     }
 
 
