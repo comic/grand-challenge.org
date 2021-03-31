@@ -16,12 +16,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstation_configs.forms import WorkstationConfigForm
-from grandchallenge.workstation_configs.models import (
-    LookUpTable,
-    WorkstationConfig,
-)
+from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstation_configs.serializers import (
-    LookUpTableSerializer,
     WorkstationConfigSerializer,
 )
 
@@ -77,9 +73,3 @@ class WorkstationConfigDelete(
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, self.success_message)
         return super().delete(request, *args, **kwargs)
-
-
-class LookUpTableViewSet(ReadOnlyModelViewSet):
-    serializer_class = LookUpTableSerializer
-    queryset = LookUpTable.objects.all()
-    permission_classes = [IsAuthenticated]  # Note: this is a ReadOnlyView

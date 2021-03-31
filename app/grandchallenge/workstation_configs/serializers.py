@@ -49,6 +49,7 @@ class WorkstationConfigSerializer(ModelSerializer):
     default_slab_thickness_mm = FloatField()
     window_presets = WindowPresetSerializer(many=True, read_only=True)
     default_window_preset = WindowPresetSerializer()
+    overlay_luts = LookUpTableSerializer(many=True, read_only=True)
     default_overlay_lut = LookUpTableSerializer()
     default_overlay_interpolation = CharField(
         source="get_default_overlay_interpolation_display", read_only=True,
@@ -75,6 +76,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "default_slab_render_method",
             "default_orientation",
             "default_overlay_alpha",
+            "overlay_luts",
             "default_overlay_lut",
             "default_overlay_interpolation",
             "overlay_segments",

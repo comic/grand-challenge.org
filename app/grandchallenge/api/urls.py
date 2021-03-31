@@ -36,10 +36,7 @@ from grandchallenge.retina_api.views import (
     TextAnnotationViewSet,
 )
 from grandchallenge.statistics.views import MetricsAPIView
-from grandchallenge.workstation_configs.views import (
-    LookUpTableViewSet,
-    WorkstationConfigViewSet,
-)
+from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
 app_name = "api"
@@ -73,7 +70,9 @@ router.register(
 router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 
 # Evaluations
-router.register(r"evaluations", EvaluationViewSet, basename="evaluation")
+router.register(
+    r"evaluations", EvaluationViewSet, basename="evaluation",
+)
 
 # Profiles
 router.register(
@@ -150,11 +149,6 @@ router.register(
 
 # Workstations
 router.register(
-    r"workstations/configs/look-up-tables",
-    LookUpTableViewSet,
-    basename="workstations-config-look-up-tables",
-)
-router.register(
     r"workstations/configs",
     WorkstationConfigViewSet,
     basename="workstations-config",
@@ -163,7 +157,9 @@ router.register(r"workstations/sessions", SessionViewSet)
 
 
 class SchemaView(SpectacularAPIView):
-    urlconf = [path("api/v1/", include(router.urls))]
+    urlconf = [
+        path("api/v1/", include(router.urls)),
+    ]
 
 
 urlpatterns = [

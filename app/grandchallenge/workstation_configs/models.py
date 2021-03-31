@@ -182,6 +182,12 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         max_length=1, choices=Orientation.choices, blank=True
     )
 
+    overlay_luts = models.ManyToManyField(
+        to="LookUpTable",
+        blank=True,
+        related_name="workstation_overlay_luts",
+    )
+
     default_overlay_lut = models.ForeignKey(
         to="LookUpTable", blank=True, null=True, on_delete=models.SET_NULL
     )
