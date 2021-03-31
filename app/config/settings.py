@@ -512,6 +512,7 @@ PROFILES_MUGSHOT_SIZE = 460
 #
 ##############################################################################
 
+ACTSTREAM_ENABLE = strtobool(os.environ.get("ACTSTREAM_ENABLE", "False"))
 ACTSTREAM_SETTINGS = {
     "MANAGER": "actstream.managers.ActionManager",
     "FETCH_RELATIONS": True,

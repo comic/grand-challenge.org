@@ -1,6 +1,7 @@
 {% load url %}
 
 {% if user.is_authenticated %}
+    {% if ACTSTREAM_ENABLE %}
     <li class="nav-item mr-auto">
         {% if user.user_profile.has_unread_notifications %}
             <span class="text-danger float-right mb-n3">
@@ -13,6 +14,7 @@
             <i class="align-middle far fa-fw fa-lg fa-bell"></i>
         </a>
     </li>
+    {% endif %}
     <li class="nav-item dropdown">
         <a href="#" class="nav-link dropdown-toggle align-top"
            data-toggle="dropdown" role="button"
