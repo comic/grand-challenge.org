@@ -20,8 +20,20 @@
     </ol>
 {% endblock %}
 
-{% block content %}
+{% block sidebar %}
+    <div class="nav nav-pills col-12 pl-3 mb-3">
+        {% if "change_challenge" in challenge_perms or user_is_participant %}
+            {% for phase in challenge.phase_set.all %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                       href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+                </li>
+            {% endfor %}
+        {% endif %}
+    </div>
+{% endblock %}
 
+{% block content %}
     <h2>{{ phase.title }} Submission</h2>
 
     {{ phase.submission_page_html|clean }}
@@ -91,5 +103,4 @@
         <a href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Click
             here</a>
         to view your current submissions to this challenge.</p>
-
 {% endblock %}

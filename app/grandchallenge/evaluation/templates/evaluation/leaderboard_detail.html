@@ -13,6 +13,17 @@
     </ol>
 {% endblock %}
 
+{% block sidebar %}
+    <div class="nav nav-pills col-12 pl-3 mb-3">
+        {% for phase in challenge.phase_set.all %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+            </li>
+        {% endfor %}
+    </div>
+{% endblock %}
+
 {% block content %}
     <h2>{{ phase.title }} Leaderboard {{ request.GET.date }}</h2>
 
