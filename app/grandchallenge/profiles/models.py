@@ -98,7 +98,16 @@ class UserProfile(models.Model):
 
     @property
     def has_unread_notifications(self):
-        return self.notifications.exists()
+        return self.unread_notifications.exists()
+
+    @property
+    def unread_notifications(self):
+        if self.notifications_last_read_at:
+            return self.notifications.exclude(
+                timestamp__lt=self.notifications_last_read_at
+            )
+        else:
+            return self.notifications
 
     @property
     def notifications(self):

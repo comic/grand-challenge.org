@@ -16,6 +16,9 @@
     <ul class="list-group">
         {% for object in object_list %}
             <li class="list-group-item {% if object.data.context_class %}list-group-item-{{ object.data.context_class }}{% endif %}">
+                {% if notifications_last_read_at is None or notifications_last_read_at < object.timestamp %}
+                    <span class="text-primary align-middle mr-2"><i class="fa fa-circle"></i></span>
+                {% endif %}
                 {{ object.actor|user_profile_link }}
                 {{ object.verb }}
                 {% if object.action_object %}
