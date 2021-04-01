@@ -24,7 +24,7 @@
             {% endfor %}
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
-                    href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">View your submissions
+                    href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Your Submissions
                 </a>
             </li>
         {% endif %}
