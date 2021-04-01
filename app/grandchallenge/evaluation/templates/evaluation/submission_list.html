@@ -13,6 +13,24 @@
     </ol>
 {% endblock %}
 
+{% block sidebar %}
+    <div class="nav nav-pills col-12 pl-3 mb-3">
+        {% if "change_challenge" in challenge_perms or user_is_participant %}
+            {% for phase in challenge.phase_set.all %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                       href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+                </li>
+            {% endfor %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+                    href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">View your submissions
+                </a>
+            </li>
+        {% endif %}
+    </div>
+{% endblock %}
+
 {% block content %}
 
     <h2>Submissions</h2>

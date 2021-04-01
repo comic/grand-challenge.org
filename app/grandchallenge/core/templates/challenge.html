@@ -67,7 +67,7 @@
 
                         {% if "change_challenge" in challenge_perms or user_is_participant %}
                             <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' %}active{% endif %}"
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
                                    href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
                                     Submit</a>
                             </li>
