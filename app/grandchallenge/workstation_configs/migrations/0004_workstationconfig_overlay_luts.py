@@ -6,13 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workstation_configs', '0003_workstationconfig_enable_contrast_enhancement'),
+        (
+            "workstation_configs",
+            "0003_workstationconfig_enable_contrast_enhancement",
+        )
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workstationconfig',
-            name='overlay_luts',
-            field=models.ManyToManyField(blank=True, related_name='workstation_overlay_luts', to='workstation_configs.LookUpTable'),
-        ),
+            model_name="workstationconfig",
+            name="overlay_luts",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="workstation_overlay_luts",
+                to="workstation_configs.LookUpTable",
+            ),
+        )
     ]
