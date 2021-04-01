@@ -9,6 +9,7 @@ import sentry_sdk
 from corsheaders.defaults import default_headers
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
+from django.urls import reverse
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -206,6 +207,22 @@ CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
 RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 
+# Workaround for https://github.com/ellmetha/django-machina/issues/219
+ABSOLUTE_URL_OVERRIDES = {
+    "forum.forum": lambda o: reverse(
+        "forum:forum", kwargs={"slug": o.slug, "pk": o.pk},
+    ),
+    "forum_conversation.topic": lambda o: reverse(
+        "forum_conversation:topic",
+        kwargs={
+            "slug": o.slug,
+            "pk": o.pk,
+            "forum_slug": o.forum.slug,
+            "forum_pk": o.forum.pk,
+        },
+    ),
+}
+
 SESSION_COOKIE_DOMAIN = os.environ.get(
     "SESSION_COOKIE_DOMAIN", ".gc.localhost"
 )
@@ -372,6 +389,7 @@ THIRD_PARTY_APPS = [
     "markdownx",  # for editing markdown
     "django_filters",
     "drf_spectacular",
+    "actstream",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -404,6 +422,7 @@ LOCAL_APPS = [
     "grandchallenge.core",
     "grandchallenge.evaluation",
     "grandchallenge.jqfileupload",
+    "grandchallenge.notifications",
     "grandchallenge.pages",
     "grandchallenge.participants",
     "grandchallenge.profiles",
@@ -489,9 +508,22 @@ PROFILES_MUGSHOT_SIZE = 460
 
 ##############################################################################
 #
+# actstream
+#
+##############################################################################
+
+ACTSTREAM_ENABLE = strtobool(os.environ.get("ACTSTREAM_ENABLE", "False"))
+ACTSTREAM_SETTINGS = {
+    "MANAGER": "actstream.managers.ActionManager",
+    "FETCH_RELATIONS": True,
+    "USE_JSONFIELD": True,
+}
+
+##############################################################################
+#
 # django-summernote
 #
-#############################################################################
+##############################################################################
 
 # WYSIWYG editing with Summernote
 SUMMERNOTE_THEME = "bs4"

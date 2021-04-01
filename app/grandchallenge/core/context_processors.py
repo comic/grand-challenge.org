@@ -43,7 +43,10 @@ def deployment_info(*_, **__):
 
 
 def debug(*_, **__):
-    return {"DEBUG": settings.DEBUG}
+    return {
+        "DEBUG": settings.DEBUG,
+        "ACTSTREAM_ENABLE": settings.ACTSTREAM_ENABLE,
+    }
 
 
 def sentry_dsn(*_, **__):

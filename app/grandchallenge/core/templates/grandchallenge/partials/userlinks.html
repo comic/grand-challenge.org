@@ -1,15 +1,27 @@
 {% load url %}
 
 {% if user.is_authenticated %}
-    <li class="dropdown">
-        <a href="#" class="nav-link dropdown-toggle"
+    {% if ACTSTREAM_ENABLE %}
+    <li class="nav-item mr-auto">
+        {% if user.user_profile.has_unread_notifications %}
+            <span class="text-danger float-right mb-n3">
+                <i class="fa fa-xs fa-circle"></i>
+            </span>
+        {% endif %}
+        <a class="nav-link pr-1"
+           href="{% url 'notifications:list' %}"
+           title="Notifications">
+            <i class="align-middle far fa-fw fa-lg fa-bell"></i>
+        </a>
+    </li>
+    {% endif %}
+    <li class="nav-item dropdown">
+        <a href="#" class="nav-link dropdown-toggle align-top"
            data-toggle="dropdown" role="button"
            aria-haspopup="true"
            aria-expanded="false">
-            <img class="mugshot"
-                 src="{{ user.user_profile.get_mugshot_url }}"
-                 alt="User Mugshot"
-                 style="height: 1.33em; vertical-align: -25%;"/>
+            <img class="rounded-circle" src="{{ user.user_profile.get_mugshot_url }}"
+                 alt="User Mugshot" style="height: 1.5em"/>
         </a>
         <div class="dropdown-menu dropdown-menu-right">
             <a class="dropdown-item"

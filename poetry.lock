@@ -311,6 +311,17 @@ argon2 = ["argon2-cffi (>=16.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-activity-stream"
+version = "0.10.0"
+description = "Generate generic activity streams from the actions on your site. Users can follow any actors' activities for personalized streams."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+jsonfield = ["django-jsonfield-backport (>=1.0.2,<2.0)"]
+
+[[package]]
 name = "django-allauth"
 version = "0.44.0"
 description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
@@ -467,7 +478,7 @@ Django = ">=2.2"
 
 [[package]]
 name = "django-haystack"
-version = "3.0b1"
+version = "3.0"
 description = "Pluggable search for Django."
 category = "main"
 optional = false
@@ -2042,7 +2053,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2c6241e3dc36640d8e1678e8d8c454f6ee952f3d71640280715c0d39c5d23419"
+content-hash = "62aaebffc25cd263e05aaba10e2d1e7ca49609e207d93ce494ffb961264c2fd4"
 
 [metadata.files]
 alabaster = [
@@ -2258,6 +2269,10 @@ django = [
     {file = "Django-3.1.6-py3-none-any.whl", hash = "sha256:169e2e7b4839a7910b393eec127fd7cbae62e80fa55f89c6510426abf673fe5f"},
     {file = "Django-3.1.6.tar.gz", hash = "sha256:c6c0462b8b361f8691171af1fb87eceb4442da28477e12200c40420176206ba7"},
 ]
+django-activity-stream = [
+    {file = "django-activity-stream-0.10.0.tar.gz", hash = "sha256:2cec600bb5a543dd402747afeeec237e9848993385049adfedc16ec97a6d86f2"},
+    {file = "django_activity_stream-0.10.0-py3-none-any.whl", hash = "sha256:77729f56424292f208c7bb086607e840c59a584cf02b9daa4773f335c8fec0f6"},
+]
 django-allauth = [
     {file = "django-allauth-0.44.0.tar.gz", hash = "sha256:e51af457466022f52154d74c8523ac69375120fad2acce6e239635d85e610b25"},
 ]
@@ -2309,8 +2324,7 @@ django-guardian = [
     {file = "django_guardian-2.3.0-py3-none-any.whl", hash = "sha256:0e70706c6cda88ddaf8849bddb525b8df49de05ba0798d4b3506049f0d95cbc8"},
 ]
 django-haystack = [
-    {file = "django-haystack-3.0b1.tar.gz", hash = "sha256:9dba64f5c76cf147ac382d4a4a270f30d30a45a3a7a1738a9d05c96d18777c07"},
-    {file = "django_haystack-3.0b1-py3-none-any.whl", hash = "sha256:b83705e1cf8141cd1755fc6683ac65fea4e1281f4b4306bc9224af96495b0df3"},
+    {file = "django-haystack-3.0.tar.gz", hash = "sha256:d490f920afa85471dd1fa5000bc8eff4b704daacbe09aee1a64e75cbc426f3be"},
 ]
 django-ipware = [
     {file = "django-ipware-3.0.2.tar.gz", hash = "sha256:c7df8e1410a8e5d6b1fbae58728402ea59950f043c3582e033e866f0f0cf5e94"},

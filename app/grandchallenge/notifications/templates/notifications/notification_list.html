@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load profiles %}
+{% load humanize %}
+
+{% block title %}Notifications - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">Notifications</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Notifications</h2>
+
+    <ul class="list-group">
+        {% for object in object_list %}
+            <li class="list-group-item {% if object.data.context_class %}list-group-item-{{ object.data.context_class }}{% endif %}">
+                {% if notifications_last_read_at is None or notifications_last_read_at < object.timestamp %}
+                    <span class="text-primary align-middle mr-2"><i class="fa fa-circle"></i></span>
+                {% endif %}
+                {{ object.actor|user_profile_link }}
+                {{ object.verb }}
+                {% if object.action_object %}
+                    <a href="{{ object.action_object.get_absolute_url }}">{{ object.action_object }}</a>
+                    {% if object.target %}
+                        in
+                    {% endif %}
+                {% endif %}
+                {% if object.target %}
+                    <a href="{{ object.target.get_absolute_url }}">{{ object.target }}</a>
+                {% endif %}
+                {{ object.timestamp|naturaltime }}
+            </li>
+            {% empty %}
+            <li class="list-group-item">You have no notifications</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
