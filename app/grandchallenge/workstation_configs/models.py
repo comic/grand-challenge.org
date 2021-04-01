@@ -162,7 +162,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     )
 
     image_context = models.CharField(
-        blank=True, max_length=6, choices=ImageContext.choices,
+        blank=True, max_length=6, choices=ImageContext.choices
     )
 
     # 4 digits, 2 decimal places, 0.01 min, 99.99 max
@@ -180,6 +180,10 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     default_orientation = models.CharField(
         max_length=1, choices=Orientation.choices, blank=True
+    )
+
+    overlay_luts = models.ManyToManyField(
+        to="LookUpTable", blank=True, related_name="workstation_overlay_luts"
     )
 
     default_overlay_lut = models.ForeignKey(

@@ -22,6 +22,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "default_slab_render_method",
             "default_orientation",
             "default_overlay_alpha",
+            "overlay_luts",
             "default_overlay_lut",
             "default_overlay_interpolation",
             "overlay_segments",

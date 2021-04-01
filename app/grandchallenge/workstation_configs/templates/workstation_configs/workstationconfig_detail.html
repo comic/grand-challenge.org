@@ -33,7 +33,7 @@
             <td class="font-weight-bold">Window presets</td>
             <td>
                 {% for x in object.window_presets.all %}
-                    <div>{{ preset }}</div>
+                    <div>{{ x }}</div>
                 {% endfor %}
             </td>
         </tr>
@@ -56,6 +56,14 @@
         <tr>
             <td class="font-weight-bold">Default overlay alpha</td>
             <td>{{ object.default_overlay_alpha }}</td>
+        </tr>
+        <tr>
+            <td class="font-weight-bold">Overlay lookup tables</td>
+            <td>
+                {% for x in object.overlay_luts.all %}
+                    <div>{{ x }}</div>
+                {% endfor %}
+            </td>
         </tr>
         <tr>
             <td class="font-weight-bold">Default overlay lookup table</td>
