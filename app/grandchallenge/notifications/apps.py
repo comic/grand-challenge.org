@@ -10,6 +10,7 @@ class NotificationsConfig(AppConfig):
         registry.register(apps.get_model("auth.User"))
         registry.register(apps.get_model("forum.Forum"))
         registry.register(apps.get_model("forum_conversation.Topic"))
+        registry.register(apps.get_model("forum_conversation.Post"))
 
         # noinspection PyUnresolvedReferences
         import grandchallenge.notifications.signals  # noqa: F401
