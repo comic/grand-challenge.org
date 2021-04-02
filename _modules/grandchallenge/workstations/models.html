@@ -469,7 +469,7 @@
         <span class="n">EU_NL_2</span> <span class="o">=</span> <span class="s2">&quot;eu-nl-2&quot;</span><span class="p">,</span> <span class="s2">&quot;Netherlands (Amsterdam)&quot;</span></div>
 
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
-        <span class="n">choices</span><span class="o">=</span><span class="n">STATUS_CHOICES</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">QUEUED</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">STATUS_CHOICES</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">QUEUED</span><span class="p">,</span> <span class="n">db_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">region</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span>
