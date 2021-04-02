@@ -389,11 +389,13 @@ THIRD_PARTY_APPS = [
     "markdownx",  # for editing markdown
     "django_filters",
     "drf_spectacular",
-    "actstream",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "grandchallenge.profiles.providers.gmail",
+    # Notifications with overrides
+    "actstream",
+    "grandchallenge.notifications",
     # django-machina dependencies:
     "mptt",
     "haystack",
@@ -422,7 +424,6 @@ LOCAL_APPS = [
     "grandchallenge.core",
     "grandchallenge.evaluation",
     "grandchallenge.jqfileupload",
-    "grandchallenge.notifications",
     "grandchallenge.pages",
     "grandchallenge.participants",
     "grandchallenge.profiles",
