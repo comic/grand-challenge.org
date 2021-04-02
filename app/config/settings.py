@@ -389,11 +389,13 @@ THIRD_PARTY_APPS = [
     "markdownx",  # for editing markdown
     "django_filters",
     "drf_spectacular",
-    "actstream",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "grandchallenge.profiles.providers.gmail",
+    # Notifications with overrides
+    "actstream",
+    "grandchallenge.notifications",
     # django-machina dependencies:
     "mptt",
     "haystack",
@@ -422,7 +424,6 @@ LOCAL_APPS = [
     "grandchallenge.core",
     "grandchallenge.evaluation",
     "grandchallenge.jqfileupload",
-    "grandchallenge.notifications",
     "grandchallenge.pages",
     "grandchallenge.participants",
     "grandchallenge.profiles",
@@ -512,9 +513,9 @@ PROFILES_MUGSHOT_SIZE = 460
 #
 ##############################################################################
 
-ACTSTREAM_ENABLE = strtobool(os.environ.get("ACTSTREAM_ENABLE", "False"))
+ACTSTREAM_ENABLE = strtobool(os.environ.get("ACTSTREAM_ENABLE", "True"))
 ACTSTREAM_SETTINGS = {
-    "MANAGER": "actstream.managers.ActionManager",
+    "MANAGER": "grandchallenge.notifications.managers.ActionManager",
     "FETCH_RELATIONS": True,
     "USE_JSONFIELD": True,
 }

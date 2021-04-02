@@ -111,7 +111,7 @@ class UserProfile(models.Model):
 
     @property
     def notifications(self):
-        notifications = user_stream(obj=self.user)
+        notifications = user_stream(obj=self.user, since_following=True)
 
         # Workaround for
         # https://github.com/justquick/django-activity-stream/issues/482

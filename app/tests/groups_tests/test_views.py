@@ -162,7 +162,6 @@ class TestAutocompleteViews:
         assert str(user.pk) in response.json()["results"][0]["id"]
 
     def test_autocomplete_num_queries(self, client, django_assert_num_queries):
-
         archive = ArchiveFactory()
         admin = UserFactory()
         archive.add_editor(admin)
@@ -172,7 +171,7 @@ class TestAutocompleteViews:
         url = reverse("users-autocomplete", kwargs={})
 
         client.login(
-            username=user.username, password=SUPER_SECURE_TEST_PASSWORD
+            username=admin.username, password=SUPER_SECURE_TEST_PASSWORD
         )
 
         method = client.get
@@ -180,8 +179,9 @@ class TestAutocompleteViews:
         url, kwargs = get_http_host(
             url=url, kwargs={"data": {"q": user.username}}
         )
+
         try:
-            with django_assert_num_queries(20) as _:
+            with django_assert_num_queries(12):
                 method(url, **kwargs)
         finally:
             client.logout()

@@ -1,7 +1,9 @@
 import factory
 from django.utils.text import slugify
+from factory import fuzzy
 from factory.fuzzy import FuzzyChoice
 from faker import Faker
+from machina.apps.forum_conversation.models import Post
 from machina.core.db.models import get_model
 
 from tests.factories import UserFactory
@@ -34,3 +36,13 @@ class TopicFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Topic
+
+
+class PostFactory(factory.django.DjangoModelFactory):
+    topic = factory.SubFactory(TopicFactory)
+    poster = factory.SubFactory(UserFactory)
+    subject = factory.LazyAttribute(lambda t: faker.text(max_nb_chars=200))
+    content = fuzzy.FuzzyText(length=255)
+
+    class Meta:
+        model = Post
