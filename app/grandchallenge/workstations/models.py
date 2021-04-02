@@ -309,7 +309,7 @@ class Session(UUIDModel):
         EU_NL_2 = "eu-nl-2", "Netherlands (Amsterdam)"
 
     status = models.PositiveSmallIntegerField(
-        choices=STATUS_CHOICES, default=QUEUED
+        choices=STATUS_CHOICES, default=QUEUED, db_index=True,
     )
     region = models.CharField(
         max_length=14,

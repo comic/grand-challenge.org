@@ -695,13 +695,14 @@ class Evaluation(UUIDModel, ComponentJob):
     submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
     method = models.ForeignKey("Method", on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=True)
+    published = models.BooleanField(default=True, db_index=True)
     rank = models.PositiveIntegerField(
         default=0,
         help_text=(
             "The position of this result on the leaderboard. If the value is "
             "zero, then the result is unranked."
         ),
+        db_index=True,
     )
     rank_score = models.FloatField(default=0.0)
     rank_per_metric = models.JSONField(default=dict)

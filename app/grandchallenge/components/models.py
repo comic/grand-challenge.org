@@ -400,7 +400,7 @@ class ComponentJob(models.Model):
     )
 
     status = models.PositiveSmallIntegerField(
-        choices=STATUS_CHOICES, default=PENDING
+        choices=STATUS_CHOICES, default=PENDING, db_index=True,
     )
     stdout = models.TextField()
     stderr = models.TextField(default="")
