@@ -181,7 +181,7 @@ class TestAutocompleteViews:
             url=url, kwargs={"data": {"q": user.username}}
         )
         try:
-            with django_assert_num_queries(20) as _:
+            with django_assert_num_queries(21) as _:
                 method(url, **kwargs)
         finally:
             client.logout()
