@@ -515,7 +515,7 @@ PROFILES_MUGSHOT_SIZE = 460
 
 ACTSTREAM_ENABLE = strtobool(os.environ.get("ACTSTREAM_ENABLE", "True"))
 ACTSTREAM_SETTINGS = {
-    "MANAGER": "actstream.managers.ActionManager",
+    "MANAGER": "grandchallenge.notifications.managers.ActionManager",
     "FETCH_RELATIONS": True,
     "USE_JSONFIELD": True,
 }
