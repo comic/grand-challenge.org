@@ -49,3 +49,13 @@ def test_action_created_on_new_post(kind):
         assert str(actions[1]).startswith(f"{t.poster} announced {t} on {f}")
     else:
         assert str(actions[1]).startswith(f"{t.poster} posted {t} on {f}")
+
+
+@pytest.mark.django_db
+def test_follow_if_post_in_topic():
+    u = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    t = TopicFactory(forum=f, type=Topic.TOPIC_POST)
+    PostFactory(topic=t, poster=u)
+
+    assert Follow.objects.is_following(user=u, instance=t)

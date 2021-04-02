@@ -35,6 +35,13 @@ def create_topic_action(sender, *, instance, created, **_):
 @receiver(post_save, sender=Post)
 def create_post_action(sender, *, instance, created, **_):
     if created and not instance.is_topic_head:
+        follow(
+            user=instance.poster,
+            obj=instance.topic,
+            actor_only=False,
+            send_action=False,
+        )
+
         action.send(
             sender=instance.poster, verb="replied to", target=instance.topic,
         )
