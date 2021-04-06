@@ -1643,7 +1643,7 @@ numpy = ">=1.16.5"
 
 [[package]]
 name = "sentry-sdk"
-version = "0.20.2"
+version = "1.0.0"
 description = "Python client for Sentry (https://sentry.io)"
 category = "main"
 optional = false
@@ -2114,7 +2114,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "d3065859fb36653f558affc28af3a9cd3aaf45319463ac1ecc7bf1ee0a5d0767"
+content-hash = "494e46c127dfd20deb60a38277ac2f776d0f625bb7a3815c9b489a8f4fab03d8"
 
 [metadata.files]
 alabaster = [
@@ -3064,8 +3064,8 @@ scipy = [
     {file = "scipy-1.6.0.tar.gz", hash = "sha256:cb6dc9f82dfd95f6b9032a8d7ea70efeeb15d5b5fd6ed4e8537bb3c673580566"},
 ]
 sentry-sdk = [
-    {file = "sentry-sdk-0.20.2.tar.gz", hash = "sha256:9044b616ec6663cd50794fb3362efd87586e476e7b51ef2439a711d6569aede7"},
-    {file = "sentry_sdk-0.20.2-py2.py3-none-any.whl", hash = "sha256:efc65e5ffd38324797a7e1dfc8a4e74b62ea6f56a59df5bb03217b84d58dff6a"},
+    {file = "sentry-sdk-1.0.0.tar.gz", hash = "sha256:71de00c9711926816f750bc0f57ef2abbcb1bfbdf5378c601df7ec978f44857a"},
+    {file = "sentry_sdk-1.0.0-py2.py3-none-any.whl", hash = "sha256:9221e985f425913204989d0e0e1cbb719e8b7fa10540f1bc509f660c06a34e66"},
 ]
 simpleitk = [
     {file = "SimpleITK-2.0.2-cp35-cp35m-macosx_10_9_x86_64.whl", hash = "sha256:fa87ed3d73732a4668d8e216aac6e6d547ec92b566681a5d34ca5b7d86c569dc"},
