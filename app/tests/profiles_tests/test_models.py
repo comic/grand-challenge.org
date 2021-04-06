@@ -17,7 +17,7 @@ def test_notification_preference_created():
     assert prefs.receive_notification_emails is True
     assert prefs.notification_email_last_sent_at is None
     assert prefs.has_unread_notifications is False
-    assert prefs.notifications_last_read_at is None
+    assert prefs.notifications_last_read_at is not None
 
 
 @pytest.mark.django_db

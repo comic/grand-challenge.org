@@ -20,10 +20,11 @@ def test_last_read_updated(client):
     viewname = "notifications:list"
     u = UserFactory()
 
-    assert u.user_profile.notifications_last_read_at is None
+    last_read_time = u.user_profile.notifications_last_read_at
+    assert last_read_time is not None
 
     response = get_view_for_user(client=client, viewname=viewname, user=u)
     assert response.status_code == 200
 
     u.user_profile.refresh_from_db()
-    assert u.user_profile.notifications_last_read_at is not None
+    assert u.user_profile.notifications_last_read_at > last_read_time
