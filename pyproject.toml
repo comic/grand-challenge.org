@@ -33,7 +33,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.8"
 "beautifulsoup4" = "*"
-celery = {extras = ["redis", "sqs"], version = "^4.4.6"}
+celery = {extras = ["redis", "sqs"], version = "<5.1"}
 django = "<3.2"
 django-countries = "*"
 django-crispy-forms = "*"
@@ -81,15 +81,15 @@ pyswot = "*"
 django-redis = "*"
 django-allauth = "*"
 easy_thumbnails = "*"
-drf-spectacular = "^0.13.2"
-jinja2 = "^2.11.3"
-openpyxl = "^3.0.6"
-requests = "^2.25.1"
-django_rest_knox = "^4.1.0"
+drf-spectacular = "*"
+jinja2 = "*"
+openpyxl = "*"
+requests = "*"
+django_rest_knox = "*"
 numpy = "*"
 Pillow = "*"
-panimg = "^0.1.0"
-django-activity-stream = "^0.10.0"
+panimg = "*"
+django-activity-stream = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
@@ -102,8 +102,8 @@ sphinx = "*"
 pyupgrade = "*"
 pytest-xdist = "*"
 sphinx-autodoc-typehints = "*"
-werkzeug = {extras = ["watchdog"], version = "^1.0.1"}
+werkzeug = {extras = ["watchdog"], version = "*"}
 sphinx-rtd-theme = "*"
 sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
-sphinxcontrib-django = "^0.5.1"
+sphinxcontrib-django = "*"
