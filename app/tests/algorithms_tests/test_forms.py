@@ -114,7 +114,7 @@ def test_algorithm_create(client):
     creator = get_algorithm_creator()
 
     ws = WorkstationFactory()
-    ci = ComponentInterface.objects.first()
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
 
     def try_create_algorithm():
         return get_view_for_user(
@@ -127,6 +127,7 @@ def test_algorithm_create(client):
                 "workstation": ws.pk,
                 "credits_per_job": 1,
                 "inputs": [ci.pk],
+                "outputs": [ci.pk],
             },
             follow=True,
             user=creator,

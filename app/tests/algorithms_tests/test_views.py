@@ -452,7 +452,7 @@ def test_algorithm_jobs_list_view(client):
 def test_algorithm_detail_flexible_inputs(client):
     editor = UserFactory()
 
-    alg = AlgorithmFactory()
+    alg = AlgorithmFactory(use_flexible_inputs=False)
     alg.add_editor(editor)
     AlgorithmImageFactory(algorithm=alg, ready=True)
 

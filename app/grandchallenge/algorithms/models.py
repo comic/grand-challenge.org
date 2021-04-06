@@ -147,7 +147,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         editable=False,
         help_text="The average duration of successful jobs.",
     )
-    use_flexible_inputs = models.BooleanField(default=False)
+    use_flexible_inputs = models.BooleanField(default=True)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
@@ -189,17 +189,23 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         )
 
     def set_default_interfaces(self):
-        self.inputs.set(
-            [ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)]
-        )
-        self.outputs.set(
-            [
-                ComponentInterface.objects.get(slug="results-json-file"),
-                ComponentInterface.objects.get(
-                    slug=DEFAULT_OUTPUT_INTERFACE_SLUG
-                ),
-            ]
-        )
+        if not self.inputs.exists():
+            self.inputs.set(
+                [
+                    ComponentInterface.objects.get(
+                        slug=DEFAULT_INPUT_INTERFACE_SLUG
+                    )
+                ]
+            )
+        if not self.outputs.exists():
+            self.outputs.set(
+                [
+                    ComponentInterface.objects.get(slug="results-json-file"),
+                    ComponentInterface.objects.get(
+                        slug=DEFAULT_OUTPUT_INTERFACE_SLUG
+                    ),
+                ]
+            )
 
     def assign_permissions(self):
         # Editors and users can view this algorithm

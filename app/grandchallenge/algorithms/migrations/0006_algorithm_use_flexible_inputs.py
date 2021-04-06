@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="algorithm",
             name="use_flexible_inputs",
-            field=models.BooleanField(default=False),
+            field=models.BooleanField(default=True),
         ),
     ]

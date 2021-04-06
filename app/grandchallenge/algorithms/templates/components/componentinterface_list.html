@@ -43,20 +43,18 @@
                     <td>{{ interface.get_kind_display }}</td>
                     <td>
                         {% if interface.is_image_kind %}
-                            One of:
-                            <pre>{{ interface.input_path }}/&lt;uuid&gt;.mha</pre>
-                            <pre>{{ interface.input_path }}/&lt;uuid&gt;.tif</pre>
+                            <code>{{ interface.input_path }}/&lt;uuid&gt;.mha</code> or
+                            <code>{{ interface.input_path }}/&lt;uuid&gt;.tif</code>
                         {% else %}
-                            <pre>{{ interface.input_path }}</pre>
+                            <code>{{ interface.input_path }}</code>
                         {% endif %}
                     </td>
                     <td>
                         {% if interface.is_image_kind %}
-                            One of:
-                            <pre>{{ interface.output_path }}/&lt;uuid&gt;.mha</pre>
-                            <pre>{{ interface.output_path }}/&lt;uuid&gt;.tif</pre>
+                            <code>{{ interface.output_path }}/&lt;uuid&gt;.mha</code> or
+                            <code>{{ interface.output_path }}/&lt;uuid&gt;.tif</code>
                         {% else %}
-                            <pre>{{ interface.output_path }}</pre>
+                            <code>{{ interface.output_path }}</code>
                         {% endif %}
                     </td>
                 </tr>
