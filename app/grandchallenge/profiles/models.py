@@ -59,7 +59,7 @@ class UserProfile(models.Model):
         default=None, null=True, editable=False
     )
     notifications_last_read_at = models.DateTimeField(
-        default=None, null=True, editable=False
+        auto_now_add=True, editable=False
     )
 
     def save(self, *args, **kwargs):
@@ -102,12 +102,9 @@ class UserProfile(models.Model):
 
     @property
     def unread_notifications(self):
-        if self.notifications_last_read_at:
-            return self.notifications.exclude(
-                timestamp__lt=self.notifications_last_read_at
-            )
-        else:
-            return self.notifications
+        return self.notifications.exclude(
+            timestamp__lt=self.notifications_last_read_at
+        )
 
     @property
     def notifications(self):
