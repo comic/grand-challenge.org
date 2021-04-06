@@ -59,7 +59,7 @@ class RawImageUploadSession(UUIDModel):
     )
 
     status = models.PositiveSmallIntegerField(
-        choices=STATUS_CHOICES, default=PENDING
+        choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
 
     error_message = models.TextField(blank=False, null=True, default=None)
