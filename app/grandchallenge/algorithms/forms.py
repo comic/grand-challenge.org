@@ -1,5 +1,5 @@
 from crispy_forms.helper import FormHelper
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     BooleanField,
     CharField,
@@ -8,6 +8,7 @@ from django.forms import (
     IntegerField,
     JSONField,
     ModelForm,
+    ModelMultipleChoiceField,
     TextInput,
 )
 from django.utils.text import format_lazy
@@ -20,7 +21,7 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -137,7 +138,47 @@ class AlgorithmInputsForm(SaveFormInitMixin, Form):
             ).field
 
 
+# Exclude interfaces that are not aimed at algorithms from user selection
+NON_ALGORITHM_INTERFACES = [
+    "predictions-csv-file",
+    "predictions-json-file",
+    "predictions-zip-file",
+    "metrics-json-file",
+]
+
+
 class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
+    inputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=NON_ALGORITHM_INTERFACES
+        ),
+        widget=Select2MultipleWidget,
+        help_text=format_lazy(
+            (
+                "The inputs to this algorithm. "
+                'See the <a href="{}">list of interfaces</a> for more '
+                "information about each interface. "
+                "Please contact support if your desired input is missing."
+            ),
+            reverse_lazy("algorithms:component-interface-list"),
+        ),
+    )
+    outputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=NON_ALGORITHM_INTERFACES
+        ),
+        widget=Select2MultipleWidget,
+        help_text=format_lazy(
+            (
+                "The outputs to this algorithm. "
+                'See the <a href="{}">list of interfaces</a> for more '
+                "information about each interface. "
+                "Please contact support if your desired output is missing."
+            ),
+            reverse_lazy("algorithms:component-interface-list"),
+        ),
+    )
+
     class Meta:
         model = Algorithm
         fields = (
@@ -150,6 +191,9 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
             "logo",
             "social_image",
             "public",
+            "use_flexible_inputs",
+            "inputs",
+            "outputs",
             "workstation",
             "workstation_config",
             "credits_per_job",
@@ -179,6 +223,22 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                 reverse_lazy("workstation-configs:create"),
             )
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        inputs = {inpt.slug for inpt in cleaned_data["inputs"]}
+
+        if (
+            inputs != {"generic-medical-image"}
+            and not cleaned_data["use_flexible_inputs"]
+        ):
+            raise ValidationError(
+                "'Use Flexible Inputs' must also be selected when using the "
+                "set of inputs you have selected."
+            )
+
+        return cleaned_data
 
 
 class AlgorithmImageForm(ModelForm):

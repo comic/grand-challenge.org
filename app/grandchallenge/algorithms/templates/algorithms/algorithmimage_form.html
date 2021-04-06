@@ -23,6 +23,45 @@
 
     <h2>Create An Algorithm Container Image</h2>
 
+    <p>
+        Upload a container image that implements the selected inputs and outputs.
+        In order to work this container will need to read the following input:
+    </p>
+
+    <ul>
+        {% for interface in algorithm.inputs.all %}
+            <li>
+                {{ interface }} at
+                {% if interface.is_image_kind %}
+                    <code>{{ interface.input_path }}/&lt;uuid&gt;.mha</code> or
+                    <code>{{ interface.input_path }}/&lt;uuid&gt;.tif</code>
+                {% else %}
+                    <code>{{ interface.input_path }}</code>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <p>
+        The container will also need to write the following output:
+    </p>
+
+    <ul>
+        {% for interface in algorithm.outputs.all %}
+            <li>
+                {{ interface }} to
+                {% if interface.is_image_kind %}
+                    <code>{{ interface.output_path }}/&lt;uuid&gt;.mha</code> or
+                    <code>{{ interface.output_path }}/&lt;uuid&gt;.tif</code>
+                {% else %}
+                    <code>{{ interface.output_path }}</code>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h3>Container Image Options</h3>
+
     {% crispy form %}
 
 {% endblock %}

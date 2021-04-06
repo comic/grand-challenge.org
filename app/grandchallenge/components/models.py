@@ -199,7 +199,7 @@ class ComponentInterface(models.Model):
     )
 
     def __str__(self):
-        return f"Component Interface {self.title} ({self.get_kind_display()})"
+        return f"{self.title} ({self.get_kind_display()})"
 
     @property
     def input_path(self):
