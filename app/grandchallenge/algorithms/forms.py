@@ -138,7 +138,8 @@ class AlgorithmInputsForm(SaveFormInitMixin, Form):
             ).field
 
 
-EXCLUDED_INTERFACES = [
+# Exclude interfaces that are not aimed at algorithms from user selection
+NON_ALGORITHM_INTERFACES = [
     "predictions-csv-file",
     "predictions-json-file",
     "predictions-zip-file",
@@ -149,7 +150,7 @@ EXCLUDED_INTERFACES = [
 class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=EXCLUDED_INTERFACES
+            slug__in=NON_ALGORITHM_INTERFACES
         ),
         widget=Select2MultipleWidget,
         help_text=format_lazy(
@@ -164,7 +165,7 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
     )
     outputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=EXCLUDED_INTERFACES
+            slug__in=NON_ALGORITHM_INTERFACES
         ),
         widget=Select2MultipleWidget,
         help_text=format_lazy(
