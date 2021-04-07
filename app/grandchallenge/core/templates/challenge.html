@@ -87,10 +87,10 @@
                 </div>
             </div>
 
-            <div class="col-md-2 col-sm-4 col-6 d-flex justify-content-end">
+            <div class="col-md-2 col-sm-4 col-6 py-1 d-flex justify-content-end">
                 {% if challenge.use_registration_page %}
                     <div>
-                        <a class="btn btn-primary"
+                        <a class="btn btn-success"
                            href="{% url 'participants:registration-create' challenge_short_name=challenge.short_name %}"
                            role="button">
                             Join
@@ -100,7 +100,7 @@
 
                 {% if "change_challenge" in challenge_perms %}
                     <div class="dropdown px-1">
-                        <a class="btn btn-primary dropdown-toggle"
+                        <a class="btn btn-dark dropdown-toggle"
                            data-toggle="dropdown"
                            href="#"
                            role="button"
