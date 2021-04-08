@@ -152,3 +152,14 @@ ul.socialaccount_providers > li {
             border-bottom-style: solid;
             border-bottom-color: #2C3E50 !important;
          }
+
+@media (max-width: 800px) {
+    .tab-disappear {
+        display: none !important;
+    }
+}
+@media (min-width: 800px) {
+    .nav-disappear {
+        display: none !important;
+    }
+}
