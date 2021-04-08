@@ -115,51 +115,31 @@ ul.socialaccount_providers > li {
     min-width: 300px;
 }
 
-.nav-pills > .active > a,.nav-pills > .active > a:hover,
-    .nav-pills > li > a {
-        color: #000 !important;
-        padding-top: 5px !important;
-        padding-bottom: 5px !important;
-        margin-bottom: 5px;
-        margin-right: 5px;
-    }
-    .nav-pills > li > a:hover {
-        border-radius: 25px;
-        background-color: #f0f0f0;
-    }
-    .nav-pills > li > a.active {
-         border-radius: 25px;
-         background-color: darkgray !important;
-    }
-
-.nav-tabs > li, .nav-tabs > .active > a,.nav-tabs > .active > a:hover,
-    .nav-tabs > li > a {
-            color: #000 !important;
-            }
-    .nav-tabs > li > a:hover {
-            border:0;
-            color: #000 !important;
-            /*font-weight: bold;*/
-            border-bottom-width: 4px;
-            border-bottom-style: solid;
-             }
-    .nav-tabs > li > a.active {
-            border:0;
-            color: #000 !important;
-            font-weight: bold;
-            /*background-color: #ecf0f1 !important;*/
-            border-bottom-width: 4px !important;
-            border-bottom-style: solid;
-            border-bottom-color: #2C3E50 !important;
-         }
-
-@media (max-width: 800px) {
-    .tab-disappear {
-        display: none !important;
-    }
+.nav-pills > li > .nav-link {
+    color: #000;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+    margin-right: 5px;
 }
-@media (min-width: 800px) {
-    .nav-disappear {
-        display: none !important;
-    }
+.nav-pills > li > .nav-link:hover {
+    border-radius: 25px;
+    background-color: #f0f0f0;
+}
+.nav-pills > li > .nav-link.active {
+    border-radius: 25px;
+    background-color: darkgray;
+}
+
+.nav-tabs > .nav-item > .nav-link {
+    color: #000;
+}
+.nav-tabs > .nav-item > .nav-link:hover {
+    border: inherit;
+    border-bottom: 4px solid #f0f0f0;
+}
+.nav-tabs > .nav-item > .nav-link.active {
+    border: inherit;
+    font-weight: bold;
+    border-bottom: 4px solid #2c3e50;
 }
