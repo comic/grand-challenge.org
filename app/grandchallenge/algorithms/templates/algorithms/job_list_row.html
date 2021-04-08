@@ -47,7 +47,7 @@
    title="Result Info">
     <i class="fa fa-file"></i>
     {% for input in object.inputs.all %}
-        {{ input.image.name }}
+        {{ input.image.name|truncatechars:15 }}
     {% endfor %}
     ({{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %}, with warnings{% endif %})
 </a>
