@@ -132,14 +132,14 @@ ul.socialaccount_providers > li {
          background-color: darkgray !important;
     }
 
-.nav-tabs > .active > a,.nav-tabs > .active > a:hover,
+.nav-tabs > li, .nav-tabs > .active > a,.nav-tabs > .active > a:hover,
     .nav-tabs > li > a {
             color: #000 !important;
             }
     .nav-tabs > li > a:hover {
             border:0;
             color: #000 !important;
-            font-weight: bold;
+            /*font-weight: bold;*/
             border-bottom-width: 4px;
             border-bottom-style: solid;
              }
@@ -147,6 +147,7 @@ ul.socialaccount_providers > li {
             border:0;
             color: #000 !important;
             font-weight: bold;
+            /*background-color: #ecf0f1 !important;*/
             border-bottom-width: 4px !important;
             border-bottom-style: solid;
             border-bottom-color: #2C3E50 !important;

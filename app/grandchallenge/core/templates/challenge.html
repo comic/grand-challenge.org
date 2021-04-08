@@ -35,9 +35,9 @@
 
 {% block topbar %}
     {% if challenge %}
-        <div class="row mb-3">
-            <div class="col-md-10 col-sm-8 col-6">
-                <div class="nav nav-tabs" role="tablist">
+        <div class="row mb-3 mx-1" style="border-bottom:1px solid #ecf0f1">
+            <div class="col-md-10 col-sm-8 col-6 px-0">
+                <div class="nav nav-tabs" role="tablist" style="border-bottom:none">
                     <li class="nav-item">
                     <! -- Todo: Adjust the view_name before merging with master (include the page_title slug)-->
                         <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
@@ -87,7 +87,7 @@
                 </div>
             </div>
 
-            <div class="col-md-2 col-sm-4 col-6 py-1 d-flex justify-content-end">
+            <div class="col-md-2 col-sm-4 col-6 py-0 px-0 d-flex justify-content-end">
                 {% if challenge.use_registration_page %}
                     <div>
                         <a class="btn btn-success"
