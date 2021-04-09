@@ -12,7 +12,16 @@ from grandchallenge.workstation_configs.models import (
 class WindowPresetSerializer(ModelSerializer):
     class Meta:
         model = WindowPreset
-        fields = ["pk", "slug", "title", "description", "center", "width"]
+        fields = [
+            "pk",
+            "slug",
+            "title",
+            "description",
+            "center",
+            "width",
+            "lower_percentile",
+            "upper_percentile",
+        ]
 
 
 class LookUpTableSerializer(ModelSerializer):

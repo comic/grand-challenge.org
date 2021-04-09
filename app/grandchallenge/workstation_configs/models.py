@@ -264,15 +264,45 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
 class WindowPreset(TitleSlugDescriptionModel):
     width = models.PositiveIntegerField(
-        validators=[MinValueValidator(limit_value=1)]
+        blank=True, null=True, validators=[MinValueValidator(limit_value=1)]
     )
-    center = models.IntegerField()
+    center = models.IntegerField(blank=True, null=True)
+
+    lower_percentile = models.PositiveSmallIntegerField(
+        blank=True, null=True, validators=[MaxValueValidator(limit_value=100)]
+    )
+
+    upper_percentile = models.PositiveSmallIntegerField(
+        blank=True, null=True, validators=[MaxValueValidator(limit_value=100)]
+    )
 
     class Meta(TitleSlugDescriptionModel.Meta):
         ordering = ("title",)
+        constraints = [
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_either_fixed_or_percentile",
+                check=(
+                    models.Q(
+                        center__isnull=False,
+                        width__isnull=False,
+                        lower_percentile__isnull=True,
+                        upper_percentile__isnull=True,
+                    )
+                    | models.Q(
+                        center__isnull=True,
+                        width__isnull=True,
+                        lower_percentile__isnull=False,
+                        upper_percentile__isnull=False,
+                    )
+                ),
+            )
+        ]
 
     def __str__(self):
-        return f"{self.title} (center {self.center}, width {self.width})"
+        if None not in {self.center, self.width}:
+            return f"{self.title} (center {self.center}, width {self.width})"
+        else:
+            return f"{self.title} ({self.lower_percentile}%-{self.upper_percentile}%)"
 
 
 class LookUpTable(TitleSlugDescriptionModel):
