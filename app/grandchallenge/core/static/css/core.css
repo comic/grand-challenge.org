@@ -117,10 +117,6 @@ ul.socialaccount_providers > li {
 
 .nav-pills > li > .nav-link {
     color: #000;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    margin-bottom: 5px;
-    margin-right: 5px;
 }
 .nav-pills > li > .nav-link:hover {
     border-radius: 25px;
@@ -142,4 +138,19 @@ ul.socialaccount_providers > li {
     border: inherit;
     font-weight: bold;
     border-bottom: 4px solid #2c3e50;
+}
+
+.phaseDropdown {
+    color: black;
+}
+.phaseDropdown:hover {
+    background-color: #f0f0f0;
+}
+
+.phaseButton {
+    background-color: darkgray;
+    border-radius: 20px;
+}
+.phaseButton:focus {
+    box-shadow:none !important;
 }

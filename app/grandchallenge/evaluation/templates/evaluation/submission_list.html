@@ -18,12 +18,12 @@
         {% if "change_challenge" in challenge_perms or user_is_participant %}
             {% for phase in challenge.phase_set.all %}
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                    <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
                        href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
                 </li>
             {% endfor %}
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+                <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
                     href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Your Submissions
                 </a>
             </li>

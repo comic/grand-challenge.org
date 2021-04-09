@@ -14,14 +14,33 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="nav nav-pills col-12 pl-3 mb-3">
+    <div class="nav nav-pills d-none {% if challenge.phase_set.count > 4 %}d-lg-inline-flex{% elif challenge.phase_set.count == 4 %}d-md-inline-flex{% else %}d-sm-inline-flex{% endif %} col-12 pl-3 mb-3">
         {% for phase in challenge.phase_set.all %}
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
             </li>
         {% endfor %}
     </div>
+    <div class="nav nav-pills d-block {% if challenge.phase_set.count > 4 %}d-lg-none{% elif challenge.phase_set.count == 4 %}d-md-none{% else %}d-sm-none{% endif %} col-12 pl-3 mb-3">
+                <div class="dropdown">
+                    <a class="btn dropdown-toggle phaseButton mr-1 px-4 py-1"
+                           data-toggle="dropdown"
+                           href="#"
+                           role="button"
+                           aria-expanded="false">
+                            Choose a Phase</a>
+                    <ul class="dropdown-menu dropdown-menu-left" role="menu">
+                        {% for phase in challenge.phase_set.all %}
+                            <li class="dropdown-item phaseDropdown px-0">
+                                <a class="nav-link"
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}"
+                                   style="color: black">{{ phase.title }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+        </div>
 {% endblock %}
 
 {% block content %}
