@@ -54,4 +54,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             ),
             "image_context": "This tells the viewer how to show the images "
             "defined in the hanging list",
+            "window_presets": "These are the window LUT presets the viewer can choose between. "
+            "By default, none are selected. "
+            "Select multiple presets by holding CTRL or dragging your mouse",
         }
