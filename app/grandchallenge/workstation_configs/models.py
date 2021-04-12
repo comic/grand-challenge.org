@@ -287,16 +287,22 @@ class WindowPreset(TitleSlugDescriptionModel):
         pass
 
     def clean(self):
-        width_center_none = all(x is None for x in (self.width, self.center))
-        percentiles_none = all(
-            x is None for x in (self.lower_percentile, self.upper_percentile)
+        window_center_all = None not in {self.width, self.center}
+        window_center_none = all(v is None for v in {self.width, self.center})
+        percentile_all = None not in {
+            self.lower_percentile,
+            self.upper_percentile,
+        }
+        percentile_none = all(
+            v is None for v in {self.lower_percentile, self.upper_percentile}
         )
-        if not width_center_none and percentiles_none:
+
+        if window_center_all and percentile_none:
             self._validate_fixed()
-        elif not percentiles_none and width_center_none:
+        elif percentile_all and window_center_none:
             self._validate_percentile()
         else:
-            ValidationError(
+            raise ValidationError(
                 "Either (upper and lower percentiles) or (width and center) should be entered"
             )
 
