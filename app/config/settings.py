@@ -443,6 +443,7 @@ LOCAL_APPS = [
     "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
     "grandchallenge.workstations",
+    "grandchallenge.workspaces",
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
