@@ -276,6 +276,30 @@ class WindowPreset(TitleSlugDescriptionModel):
         blank=True, null=True, validators=[MaxValueValidator(limit_value=100)]
     )
 
+    def _validate_percentile(self):
+        if self.upper_percentile < self.lower_percentile:
+            raise ValidationError(
+                f"Upper percentile ({self.upper_percentile}%) should be below the "
+                f"lower percentile ({self.lower_percentile}%)"
+            )
+
+    def _validate_fixed(self):
+        pass
+
+    def clean(self):
+        width_center_none = all(x is None for x in (self.width, self.center))
+        percentiles_none = all(
+            x is None for x in (self.lower_percentile, self.upper_percentile)
+        )
+        if not width_center_none and percentiles_none:
+            self._validate_fixed()
+        elif not percentiles_none and width_center_none:
+            self._validate_percentile()
+        else:
+            ValidationError(
+                "Either (upper and lower percentiles) or (width and center) should be entered"
+            )
+
     class Meta(TitleSlugDescriptionModel.Meta):
         ordering = ("title",)
         constraints = [
@@ -295,7 +319,13 @@ class WindowPreset(TitleSlugDescriptionModel):
                         upper_percentile__isnull=False,
                     )
                 ),
-            )
+            ),
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_upper_gte_lower_percentile",
+                check=models.Q(
+                    upper_percentile__gte=models.F("lower_percentile")
+                ),
+            ),
         ]
 
     def __str__(self):

@@ -112,3 +112,15 @@ def test_window_presets_db_integrity(config, expected_valid):
     else:
         with pytest.raises(IntegrityError):
             preset.save()
+
+
+@pytest.mark.parametrize(
+    "config, expected_valid", window_presets_tests, ids=ids
+)
+def test_window_presets_form(config, expected_valid):
+    preset = WindowPreset(title="foo", **config)
+    if expected_valid:
+        preset.full_clean()
+    else:
+        with pytest.raises(ValidationError):
+            preset.full_clean()
