@@ -25,12 +25,29 @@
     </ol>
 {% endblock %}
 
-{% block sidebar %}
-      <div class="nav nav-pills flex-column pl-3">
+{% block topbar2 %}
+    <div class="nav nav-pills pl-0 mb-3 d-flex d-sm-none">
         {% for page in pages %}
             {% if not page.hidden %}
                 <li class="nav-item">
-                    <a class="nav-link {% if page == currentpage %}active{% endif %}"
+                    <a class="nav-link py-1 px-3 mr-1 mb-1 {% if page == currentpage %}active{% endif %}"
+                       href="{{ page.get_absolute_url }}">
+                        {% filter title %}
+                            {% firstof page.display_title page.title %}
+                        {% endfilter %}
+                    </a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{% block sidebar %}
+      <div class="nav nav-pills flex-column pl-3 d-none d-sm-block">
+        {% for page in pages %}
+            {% if not page.hidden %}
+                <li class="nav-item">
+                    <a class="nav-link text-center px-4 py-1 mb-1 {% if page == currentpage %}active{% endif %}"
                        href="{{ page.get_absolute_url }}">
                         {% filter title %}
                             {% firstof page.display_title page.title %}

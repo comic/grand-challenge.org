@@ -120,11 +120,11 @@ ul.socialaccount_providers > li {
 }
 .nav-pills > li > .nav-link:hover {
     border-radius: 25px;
+    color: #000;
     background-color: #f0f0f0;
 }
 .nav-pills > li > .nav-link.active {
     border-radius: 25px;
-    background-color: darkgray;
 }
 
 .nav-tabs > .nav-item > .nav-link {
@@ -140,17 +140,18 @@ ul.socialaccount_providers > li {
     border-bottom: 4px solid #2c3e50;
 }
 
-.phaseDropdown {
-    color: black;
+.challengeDropdown > .nav-link {
+    color: #000;
 }
-.phaseDropdown:hover {
+.challengeDropdown:hover {
     background-color: #f0f0f0;
 }
 
 .phaseButton {
-    background-color: darkgray;
     border-radius: 20px;
+    color: #000;
+    padding-top: 3px;
+    padding-bottom: 3px;
 }
-.phaseButton:focus {
-    box-shadow:none !important;
-}
+.phaseButton:focus, .phaseButton:hover {
+    box-shadow:none !important;}
