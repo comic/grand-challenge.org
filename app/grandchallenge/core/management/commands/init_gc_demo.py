@@ -43,6 +43,10 @@ from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.task_categories.models import TaskType
+from grandchallenge.workspaces.models import (
+    WorkspaceKindChoices,
+    WorkspaceTypeConfiguration,
+)
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -198,6 +202,12 @@ class Command(BaseCommand):
         Page.objects.create(
             challenge=demo, title="adm", permission_level="ADM"
         )
+
+        config = WorkspaceTypeConfiguration.objects.create(
+            instance_type="ml.t3.medium",
+            kind=WorkspaceKindChoices.SAGEMAKER_NOTEBOOK,
+        )
+        config.enabled_phases.set(demo.phase_set.all())
 
         Phase.objects.create(challenge=demo, title="Phase 2")
 

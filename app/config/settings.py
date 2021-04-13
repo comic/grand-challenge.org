@@ -815,7 +815,8 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 #
 ###############################################################################
 
-WORKSPACES_SECRET_KEY = os.environ.get("WORKSPACES_SECRET_KEY")
+WORKBENCH_SECRET_KEY = os.environ.get("WORKBENCH_SECRET_KEY")
+WORKBENCH_API_URL = os.environ.get("WORKBENCH_API_URL")
 
 ###############################################################################
 #

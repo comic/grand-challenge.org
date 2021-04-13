@@ -149,7 +149,8 @@ services:
       <<: *private_storage_credentials
       <<: *protected_storage_credentials
       PYTHONDONTWRITEBYTECODE: 1
-      WORKSPACES_SECRET_KEY: "${WORKSPACES_SECRET_KEY-}"
+      WORKBENCH_SECRET_KEY: "${WORKBENCH_SECRET_KEY-}"
+      WORKBENCH_API_URL: "${WORKBENCH_API_URL-}"
     restart: always
     command: "celery -A config worker -l info -c 1"
     scale: 1
