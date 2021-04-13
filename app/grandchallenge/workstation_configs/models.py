@@ -333,6 +333,10 @@ class WindowPreset(TitleSlugDescriptionModel):
                     upper_percentile__gt=models.F("lower_percentile")
                 ),
             ),
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_width_gt_0",
+                check=models.Q(width__gt=0) | models.Q(width__isnull=True),
+            ),
         ]
 
     def __str__(self):

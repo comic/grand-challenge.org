@@ -81,4 +81,13 @@ class Migration(migrations.Migration):
                 name="workstation_configs_windowpreset_upper_gt_lower_percentile",
             ),
         ),
+        migrations.AddConstraint(
+            model_name="windowpreset",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("width__gt", 0), ("width__isnull", True), _connector="OR"
+                ),
+                name="workstation_configs_windowpreset_width_gt_0",
+            ),
+        ),
     ]
