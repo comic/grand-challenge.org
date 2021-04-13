@@ -24,6 +24,10 @@ urlpatterns = [
     path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
     path("update/", ChallengeUpdate.as_view(), name="update"),
     path("summernote/", include("django_summernote.urls")),
+    path(
+        "workspaces/",
+        include("grandchallenge.workspaces.urls", namespace="workspaces"),
+    ),
     path("", include("grandchallenge.pages.urls", namespace="pages")),
 ]
 

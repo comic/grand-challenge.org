@@ -13,11 +13,15 @@ class ProviderChoices(models.IntegerChoices):
 
 
 class Token(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    email = models.EmailField()
-    _token = models.TextField(db_column="token")
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, editable=False
+    )
+    email = models.EmailField(editable=False)
+    _token = models.TextField(db_column="token", editable=False)
     provider = models.PositiveSmallIntegerField(
-        choices=ProviderChoices.choices, default=ProviderChoices.INTERNAL
+        choices=ProviderChoices.choices,
+        default=ProviderChoices.INTERNAL,
+        editable=False,
     )
 
     def __str__(self):
@@ -26,16 +30,18 @@ class Token(models.Model):
     @property
     def token(self):
         if settings.WORKSPACES_SECRET_KEY:
-            c = FernetCrypter(secret_key=settings.WORKSPACE_SECRET_KEY)
-            return c.decrypt(encoded=self.token)
+            return FernetCrypter().decrypt(
+                encoded=self.token, secret_key=settings.WORKSPACES_SECRET_KEY
+            )
         else:
-            return self._token
+            raise RuntimeError("WORKSPACES_SECRET_KEY is not set")
 
     @token.setter
     def token(self, value):
         if settings.WORKSPACES_SECRET_KEY:
-            c = FernetCrypter(secret_key=settings.WORKSPACES_SECRET_KEY)
-            self._token = c.encrypt(data=value)
+            self._token = FernetCrypter().encrypt(
+                data=value, secret_key=settings.WORKSPACES_SECRET_KEY
+            )
         else:
             raise RuntimeError("WORKSPACES_SECRET_KEY is not set")
 
@@ -64,6 +70,9 @@ class WorkspaceTypeConfiguration(models.Model):
     auto_stop_time = models.PositiveSmallIntegerField(default=10)
     kind = models.PositiveSmallIntegerField(
         choices=WorkspaceKindChoices.choices
+    )
+    enabled_phases = models.ManyToManyField(
+        Phase, blank=True, related_name="enabled_workspace_type_configurations"
     )
 
     def __str__(self):
@@ -100,15 +109,6 @@ class WorkspaceTypeConfiguration(models.Model):
             raise NotImplementedError
 
 
-class PhaseConfiguration(models.Model):
-    phase = models.OneToOneField(Phase, on_delete=models.CASCADE)
-    allowed_configurations = models.ManyToManyField(
-        WorkspaceTypeConfiguration,
-        blank=True,
-        related_name="phase_configurations",
-    )
-
-
 class WorkspaceStatus(models.TextChoices):
     QUEUED = "QUEUED", "Queued"
     # Rest from https://github.com/awslabs/service-workbench-on-aws/blob/e800cea5f30aa2208e11962207f6c2e181ddbde6/addons/addon-base-raas/packages/base-raas-services/lib/environment/service-catalog/environent-sc-status-enum.js#L16
@@ -127,13 +127,13 @@ class WorkspaceStatus(models.TextChoices):
 
 
 class Workspace(models.Model):
-    id = models.UUIDField(primary_key=True, editable=False)
+    service_catalog_id = models.UUIDField(
+        editable=False, null=True, default=None
+    )
     user = models.ForeignKey(
         get_user_model(), null=True, on_delete=models.SET_NULL
     )
-    phase_configuration = models.ForeignKey(
-        PhaseConfiguration, on_delete=models.CASCADE
-    )
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
     status = models.CharField(
         max_length=18,
         choices=WorkspaceStatus.choices,

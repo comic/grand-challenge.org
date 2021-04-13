@@ -14,9 +14,6 @@ class FernetCrypter:
     encoding = "utf-8"
     separator = "$"
 
-    def __init__(self, secret_key: str):
-        self.__secret_key = secret_key.encode(self.encoding)
-
     @property
     def algorithm_name(self):
         return f"{self.derivation.__name__}_{self.algorithm.__name__}"
@@ -40,29 +37,31 @@ class FernetCrypter:
 
         return salt, token
 
-    def generate_key(self, *, salt: str):
+    def generate_key(self, *, salt: str, secret_key: str):
         kdf = self.derivation(
             algorithm=self.algorithm(),
             salt=salt.encode(self.encoding),
             iterations=self.iterations,
             length=32,  # Must be 32 for Fernet
         )
-        key = base64.urlsafe_b64encode(kdf.derive(self.__secret_key))
+        key = base64.urlsafe_b64encode(
+            kdf.derive(secret_key.encode(self.encoding))
+        )
         return Fernet(key)
 
-    def encrypt(self, *, data: str) -> str:
+    def encrypt(self, *, data: str, secret_key: str) -> str:
         salt = get_random_string(43)  # 256 bits
         token = (
-            self.generate_key(salt=salt)
+            self.generate_key(salt=salt, secret_key=secret_key)
             .encrypt(data.encode(self.encoding))
             .decode(self.encoding)
         )
         return self.serialize(salt=salt, token=token)
 
-    def decrypt(self, *, encoded: str) -> str:
+    def decrypt(self, *, encoded: str, secret_key: str) -> str:
         salt, token = self.deserialize(encoded=encoded)
         return (
-            self.generate_key(salt=salt)
+            self.generate_key(salt=salt, secret_key=secret_key)
             .decrypt(token.encode(self.encoding))
             .decode(self.encoding)
         )
