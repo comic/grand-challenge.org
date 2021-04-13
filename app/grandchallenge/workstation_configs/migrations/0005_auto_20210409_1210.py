@@ -74,11 +74,11 @@ class Migration(migrations.Migration):
             model_name="windowpreset",
             constraint=models.CheckConstraint(
                 check=models.Q(
-                    upper_percentile__gte=django.db.models.expressions.F(
+                    upper_percentile__gt=django.db.models.expressions.F(
                         "lower_percentile"
                     )
                 ),
-                name="workstation_configs_windowpreset_upper_gte_lower_percentile",
+                name="workstation_configs_windowpreset_upper_gt_lower_percentile",
             ),
         ),
     ]

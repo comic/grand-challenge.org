@@ -277,7 +277,7 @@ class WindowPreset(TitleSlugDescriptionModel):
     )
 
     def _validate_percentile(self):
-        if self.upper_percentile < self.lower_percentile:
+        if self.upper_percentile <= self.lower_percentile:
             raise ValidationError(
                 f"Upper percentile ({self.upper_percentile}%) should be below the "
                 f"lower percentile ({self.lower_percentile}%)"
@@ -328,9 +328,9 @@ class WindowPreset(TitleSlugDescriptionModel):
                 ),
             ),
             models.CheckConstraint(
-                name="%(app_label)s_%(class)s_upper_gte_lower_percentile",
+                name="%(app_label)s_%(class)s_upper_gt_lower_percentile",
                 check=models.Q(
-                    upper_percentile__gte=models.F("lower_percentile")
+                    upper_percentile__gt=models.F("lower_percentile")
                 ),
             ),
         ]
