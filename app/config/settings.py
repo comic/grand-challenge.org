@@ -809,6 +809,20 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 # The name of the group whose members will be able to create reader studies
 READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 
+###############################################################################
+#
+# workspaces
+#
+###############################################################################
+
+WORKSPACES_SECRET_KEY = os.environ.get("WORKSPACES_SECRET_KEY")
+
+###############################################################################
+#
+# workstations
+#
+###############################################################################
+
 # The workstation that is accessible by all authorised users
 DEFAULT_WORKSTATION_SLUG = os.environ.get(
     "DEFAULT_WORKSTATION_SLUG", "cirrus-core"

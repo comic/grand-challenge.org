@@ -1,24 +1,43 @@
 import uuid
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 
 from grandchallenge.evaluation.models import Phase
+from grandchallenge.workspaces.crypters import FernetCrypter
 
 
 class ProviderChoices(models.IntegerChoices):
-    INTERNAL = 0, "internal"
+    INTERNAL = 0, "internal"  # Lower case as this is the provider id
 
 
 class Token(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    token = models.TextField()
+    email = models.EmailField()
+    _token = models.TextField(db_column="token")
     provider = models.PositiveSmallIntegerField(
-        choices=ProviderChoices.choices
+        choices=ProviderChoices.choices, default=ProviderChoices.INTERNAL
     )
 
     def __str__(self):
         return f"{self.user}"
+
+    @property
+    def token(self):
+        if settings.WORKSPACES_SECRET_KEY:
+            c = FernetCrypter(secret_key=settings.WORKSPACE_SECRET_KEY)
+            return c.decrypt(encoded=self.token)
+        else:
+            return self._token
+
+    @token.setter
+    def token(self, value):
+        if settings.WORKSPACES_SECRET_KEY:
+            c = FernetCrypter(secret_key=settings.WORKSPACES_SECRET_KEY)
+            self._token = c.encrypt(data=value)
+        else:
+            raise RuntimeError("WORKSPACES_SECRET_KEY is not set")
 
 
 class WorkspaceKindChoices(models.IntegerChoices):
@@ -90,6 +109,23 @@ class PhaseConfiguration(models.Model):
     )
 
 
+class WorkspaceStatus(models.TextChoices):
+    QUEUED = "QUEUED", "Queued"
+    # Rest from https://github.com/awslabs/service-workbench-on-aws/blob/e800cea5f30aa2208e11962207f6c2e181ddbde6/addons/addon-base-raas/packages/base-raas-services/lib/environment/service-catalog/environent-sc-status-enum.js#L16
+    PENDING = "PENDING", "Pending"
+    TAINTED = "TAINTED", "Tainted"
+    FAILED = "FAILED", "Failed"
+    COMPLETED = "COMPLETED", "Available"
+    STARTING = "STARTING", "Starting"
+    STARTING_FAILED = "STARTING_FAILED", "Starting Failed"
+    STOPPED = "STOPPED", "Stopped"
+    STOPPING = "STOPPING", "Stopping"
+    STOPPING_FAILED = "STOPPING_FAILED", "Stopping Failed"
+    TERMINATING = "TERMINATING", "Terminating"
+    TERMINATED = "TERMINATED", "Terminated"
+    TERMINATING_FAILED = "TERMINATING_FAILED", "Terminating Failed"
+
+
 class Workspace(models.Model):
     id = models.UUIDField(primary_key=True, editable=False)
     user = models.ForeignKey(
@@ -97,4 +133,9 @@ class Workspace(models.Model):
     )
     phase_configuration = models.ForeignKey(
         PhaseConfiguration, on_delete=models.CASCADE
+    )
+    status = models.CharField(
+        max_length=18,
+        choices=WorkspaceStatus.choices,
+        default=WorkspaceStatus.QUEUED,
     )
