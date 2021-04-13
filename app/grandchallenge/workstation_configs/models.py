@@ -287,6 +287,7 @@ class WindowPreset(TitleSlugDescriptionModel):
         pass
 
     def clean(self):
+        super().clean()
         window_center_all = None not in {self.width, self.center}
         window_center_none = all(v is None for v in {self.width, self.center})
         percentile_all = None not in {
