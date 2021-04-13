@@ -21,17 +21,43 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="nav nav-pills col-12 pl-3 mb-3">
+    <div class="nav nav-pills d-none {% if challenge.phase_set.count > 4 %}d-lg-inline-flex{% elif challenge.phase_set.count == 4 %}d-md-inline-flex{% else %}d-sm-inline-flex{% endif %} col-12 pl-3 mb-3">
         {% if "change_challenge" in challenge_perms or user_is_participant %}
             {% for phase in challenge.phase_set.all %}
                 <li class="nav-item">
-                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:submission-create-legacy' and request.resolver_match.kwargs.slug == phase.slug%}active{% endif %}"
+                    <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:submission-create-legacy' and request.resolver_match.kwargs.slug == phase.slug%}active{% endif %}"
                        href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
                 </li>
             {% endfor %}
             <li>
-                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+                <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
                     href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Your Submissions
+                </a>
+            </li>
+        {% endif %}
+    </div>
+    <div class="nav nav-pills d-flex {% if challenge.phase_set.count > 4 %}d-lg-none{% elif challenge.phase_set.count == 4 %}d-md-none{% else %}d-sm-none{% endif %} col-12 pl-3 mb-3">
+        {% if "change_challenge" in challenge_perms or user_is_participant %}
+            <div class="btn dropdown border-0 px-0 py-0 mb-1">
+                <a class="btn btn-outline-dark dropdown-toggle phaseButton mr-1 px-4"
+                   data-toggle="dropdown"
+                   href="#"
+                   role="button"
+                   aria-expanded="false">
+                    Choose a Phase</a>
+                <div class="dropdown-menu dropdown-menu-left" role="menu">
+                    {% for phase in challenge.phase_set.all %}
+                        <li class="dropdown-item challengeDropdown px-0 py-0">
+                            <a class="nav-link mr-1 px-4 py-1"
+                           href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}"
+                            style="color: black">{{ phase.title }}</a>
+                        </li>
+                    {% endfor %}
+                </div>
+            </div>
+            <li>
+                <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+                   href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Your Submissions
                 </a>
             </li>
         {% endif %}
