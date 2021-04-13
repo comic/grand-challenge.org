@@ -398,6 +398,7 @@ class LookUpTable(TitleSlugDescriptionModel):
         return f"{self.title}"
 
     def clean(self):
+        super().clean()
         color_points = len(self.color.split(","))
         alpha_points = len(self.alpha.split(","))
         if color_points != alpha_points:
