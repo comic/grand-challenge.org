@@ -4,11 +4,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from config.celery import app
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workspaces.crypters import FernetCrypter
-from grandchallenge.workspaces.tasks import create_workspace
 
 
 class ProviderChoices(models.IntegerChoices):
@@ -86,7 +86,7 @@ class WorkspaceTypeConfiguration(models.Model):
 
     @property
     def name(self):
-        return f"{self.instance_type} with {self.auto_stop_time} minute timeout".replace(
+        return f"{self.get_kind_display()} {self.instance_type} with {self.auto_stop_time} minute timeout".replace(
             ".", "-"
         )
 
@@ -142,6 +142,10 @@ class Workspace(UUIDModel):
         WorkspaceTypeConfiguration, on_delete=models.PROTECT
     )
     allowed_ip = models.GenericIPAddressField()
+
+    # The notebook urls are 3000+ chars, so use a text field
+    notebook_url = models.TextField(blank=True, editable=False)
+
     status = models.CharField(
         max_length=18,
         choices=WorkspaceStatus.choices,
@@ -154,7 +158,9 @@ class Workspace(UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            create_workspace.apply_async(kwargs={"workspace_pk": self.pk})
+            app.signature(
+                "grandchallenge.workspaces.tasks.create_workspace"
+            ).apply_async(kwargs={"workspace_pk": self.pk})
 
     def get_absolute_url(self):
         return reverse(

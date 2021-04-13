@@ -41,4 +41,8 @@
         <dt class="col-sm-3">Configuration</dt>
         <dd class="col-sm-9">{{ object.configuration }}</dd>
     </dl>
+
+    {% if object.notebook_url %}
+        <a class="btn btn-primary" href="{{ object.notebook_url }}">Connect to Workspace</a>
+    {% endif %}
 {% endblock %}

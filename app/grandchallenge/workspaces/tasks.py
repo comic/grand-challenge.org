@@ -1,15 +1,16 @@
 import requests
 from celery import shared_task
-from django.apps import apps
 from django.conf import settings
+
+from grandchallenge.workspaces.models import (
+    Workspace,
+    WorkspaceKindChoices,
+    WorkspaceStatus,
+)
 
 
 @shared_task
 def create_workspace(*, workspace_pk):
-    Workspace = apps.get_model(  # noqa: N806
-        app_label="workspaces", model_name="Workspace"
-    )
-
     workspace = Workspace.objects.get(pk=workspace_pk)
 
     with requests.Session() as s:
@@ -34,7 +35,7 @@ def create_workspace(*, workspace_pk):
         # TODO - use models.WorkbenchProject
         project = _get_project(s)
 
-        new_workspace = _create_workspace(
+        instance = _create_workspace(
             client=s,
             cidr=f"{ip_address}/32",
             description=f"Created at {workspace.created}",
@@ -45,10 +46,76 @@ def create_workspace(*, workspace_pk):
             study_ids=[],
         )
 
-        workspace.status = new_workspace["status"]
-        workspace.service_catalog_id = new_workspace["id"]
+        workspace.status = instance["status"]
+        workspace.service_catalog_id = instance["id"]
         workspace.full_clean()
         workspace.save()
+
+        tasks = wait_for_workspace_to_start.signature(
+            kwargs={"workspace_pk": workspace.pk}, immutable=True
+        )
+
+        if (
+            workspace.configuration.kind
+            == WorkspaceKindChoices.SAGEMAKER_NOTEBOOK
+        ):
+            tasks |= get_workspace_url.signature(
+                kwargs={"workspace_pk": workspace.pk}, immutable=True
+            )
+
+        tasks.apply_async()
+
+
+@shared_task(bind=True, max_retries=20)
+def wait_for_workspace_to_start(self, *, workspace_pk):
+    """Checks if the workspace is up for up to 10 minutes."""
+    workspace = Workspace.objects.get(pk=workspace_pk)
+
+    if workspace.status != WorkspaceStatus.PENDING:
+        # Nothing to do
+        return
+
+    with requests.Session() as s:
+        _authorise(client=s, auth=workspace.user.workbench_token)
+
+        instance = _get_workspace(s, workspace_id=workspace.service_catalog_id)
+
+        if instance["status"] == WorkspaceStatus.PENDING:
+            # Raises celery.exceptions.Retry
+            self.retry(countdown=30)
+            # TODO catch MaxRetriesExceeded?
+        else:
+            workspace.status = instance["status"]
+            workspace.full_clean()
+            workspace.save()
+
+
+@shared_task
+def get_workspace_url(*, workspace_pk):
+    workspace = Workspace.objects.get(pk=workspace_pk)
+
+    if workspace.configuration.kind != WorkspaceKindChoices.SAGEMAKER_NOTEBOOK:
+        raise ValueError("URLs can only be generated for SageMaker Notebooks")
+
+    with requests.Session() as s:
+        _authorise(client=s, auth=workspace.user.workbench_token)
+
+        instance = _get_workspace(s, workspace_id=workspace.service_catalog_id)
+
+        if instance["status"] != WorkspaceStatus.COMPLETED:
+            raise RuntimeError("Workspace was not running")
+        else:
+            connection = _get_workspace_connection(
+                s, workspace_id=workspace.service_catalog_id
+            )
+            url = _create_workspace_url(
+                s,
+                workspace_id=workspace.service_catalog_id,
+                connection_id=connection["id"],
+            )
+            workspace.notebook_url = url
+            workspace.full_clean()
+            workspace.save()
 
 
 def _authorise(*, client, auth):
@@ -190,3 +257,41 @@ def _create_workspace(
     response = client.post(f"{settings.WORKBENCH_API_URL}{uri}", data=payload)
     response.raise_for_status()
     return response.json()
+
+
+def _get_workspace(client, workspace_id):
+    uri = f"api/workspaces/service-catalog/{workspace_id}"
+    response = client.get(f"{settings.WORKBENCH_API_URL}{uri}")
+    response.raise_for_status()
+    return response.json()
+
+
+def _get_workspace_connections(client, workspace_id):
+    uri = f"api/workspaces/service-catalog/{workspace_id}/connections"
+    response = client.get(f"{settings.WORKBENCH_API_URL}{uri}")
+    response.raise_for_status()
+    return response.json()
+
+
+def _get_workspace_connection(
+    client, workspace_id, connection_type="SageMaker"
+):
+    connections = _get_workspace_connections(client, workspace_id)
+
+    workspace_connections = [
+        c for c in connections if c["type"] == connection_type
+    ]
+
+    if len(workspace_connections) != 1:
+        raise RuntimeError(
+            f"Connection '{connection_type}' not found for {workspace_id}"
+        )
+
+    return workspace_connections[0]
+
+
+def _create_workspace_url(client, workspace_id, connection_id):
+    uri = f"api/workspaces/service-catalog/{workspace_id}/connections/{connection_id}/url"
+    response = client.post(f"{settings.WORKBENCH_API_URL}{uri}")
+    response.raise_for_status()
+    return response.json()["url"]
