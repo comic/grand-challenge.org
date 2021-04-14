@@ -3,10 +3,32 @@ from celery import shared_task
 from django.conf import settings
 
 from grandchallenge.workspaces.models import (
+    WorkbenchToken,
     Workspace,
     WorkspaceKindChoices,
     WorkspaceStatus,
+    WorkspaceTypeConfiguration,
 )
+
+
+@shared_task
+def create_workspace_type_configuration(*, workspace_type_configuration_pk):
+    configuration = WorkspaceTypeConfiguration.objects.get(
+        pk=workspace_type_configuration_pk
+    )
+    auth = WorkbenchToken.objects.get(
+        user__username=settings.WORKBENCH_ADMIN_USERNAME
+    )
+
+    with requests.Session() as s:
+        _authorise(client=s, auth=auth)
+
+        # TODO - use models.WorkspaceType
+        env_type_id = _get_env_type_id(s, name="SageMaker Notebook-v1")
+
+        _add_configuration(
+            client=s, env_type_id=env_type_id, configuration=configuration
+        )
 
 
 @shared_task
@@ -24,14 +46,6 @@ def create_workspace(*, workspace_pk):
         # TODO - use models.WorkspaceType
         env_type_id = _get_env_type_id(s, name="SageMaker Notebook-v1")
 
-        # TODO - use models.WorkspaceTypeConfiguration
-        configuration = _get_configuration(
-            s,
-            env_type_id=env_type_id,
-            configuration_id="FIX ME",  # TODO
-            instance_type=workspace.configuration.instance_type,
-        )
-
         # TODO - use models.WorkbenchProject
         project = _get_project(s)
 
@@ -39,7 +53,7 @@ def create_workspace(*, workspace_pk):
             client=s,
             cidr=f"{ip_address}/32",
             description=f"Created at {workspace.created}",
-            env_type_config_id=configuration["id"],
+            env_type_config_id=workspace.configuration.pk,
             env_type_id=env_type_id,
             name=f"Workspace-{str(workspace.pk)}",
             project_id=project["id"],
@@ -47,7 +61,7 @@ def create_workspace(*, workspace_pk):
         )
 
         workspace.status = instance["status"]
-        workspace.service_catalog_id = instance["id"]
+        workspace.service_workbench_id = instance["id"]
         workspace.full_clean()
         workspace.save()
 
@@ -78,7 +92,9 @@ def wait_for_workspace_to_start(self, *, workspace_pk):
     with requests.Session() as s:
         _authorise(client=s, auth=workspace.user.workbench_token)
 
-        instance = _get_workspace(s, workspace_id=workspace.service_catalog_id)
+        instance = _get_workspace(
+            s, workspace_id=workspace.service_workbench_id
+        )
 
         if instance["status"] == WorkspaceStatus.PENDING:
             # Raises celery.exceptions.Retry
@@ -100,17 +116,19 @@ def get_workspace_url(*, workspace_pk):
     with requests.Session() as s:
         _authorise(client=s, auth=workspace.user.workbench_token)
 
-        instance = _get_workspace(s, workspace_id=workspace.service_catalog_id)
+        instance = _get_workspace(
+            s, workspace_id=workspace.service_workbench_id
+        )
 
         if instance["status"] != WorkspaceStatus.COMPLETED:
             raise RuntimeError("Workspace was not running")
         else:
             connection = _get_workspace_connection(
-                s, workspace_id=workspace.service_catalog_id
+                s, workspace_id=workspace.service_workbench_id
             )
             url = _create_workspace_url(
                 s,
-                workspace_id=workspace.service_catalog_id,
+                workspace_id=workspace.service_workbench_id,
                 connection_id=connection["id"],
             )
             workspace.notebook_url = url
@@ -185,40 +203,23 @@ def _get_env_type_id(client, name):
     return f"{workspace_type['product']['productId']}-{workspace_type['provisioningArtifact']['id']}"
 
 
-def _get_configurations(client, env_type_id, include="all"):
+def _add_configuration(
+    client, env_type_id, configuration, allow_role_ids=("researcher",)
+):
     uri = f"api/workspace-types/{env_type_id}/configurations"
-    response = client.get(
-        f"{settings.WORKBENCH_API_URL}{uri}", params={"include": include}
+    response = client.post(
+        f"{settings.WORKBENCH_API_URL}{uri}",
+        json={
+            "id": str(configuration.pk),
+            "name": configuration.name,
+            "allowRoleIds": allow_role_ids,
+            "denyRoleIds": [],
+            "params": configuration.params,
+            "tags": [],
+        },
     )
     response.raise_for_status()
     return response.json()
-
-
-def _get_configuration(client, env_type_id, configuration_id, instance_type):
-    # TODO, bug in https://github.com/awslabs/service-workbench-on-aws/blob/fd7c3ffaa32099a1cf393cb47620b70c6928ec9f/addons/addon-environment-sc-api/packages/environment-type-mgmt-api/lib/controllers/env-type-configs-controller.js#L65
-    # Get does not work
-    # uri = f"api/workspace-types/{env_type_id}/configurations/{configuration_id}"
-    # response = client.get(f"{base_uri()}{uri}")
-    # response.raise_for_status()
-    # return response
-
-    configurations = _get_configurations(client, env_type_id=env_type_id)
-
-    # TODO use configuration ids
-    # workspace_configurations = [c for c in configurations if c["id"] == configuration_id]
-
-    workspace_configurations = [
-        c
-        for c in configurations
-        if {"key": "InstanceType", "value": instance_type} in c["params"]
-    ]
-
-    if len(workspace_configurations) != 1:
-        raise RuntimeError(
-            f"Configuration id {configuration_id} not found for environment {env_type_id}"
-        )
-
-    return workspace_configurations[0]
 
 
 def _get_project(client):

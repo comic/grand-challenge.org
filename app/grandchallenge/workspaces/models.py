@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from config.celery import app
@@ -71,7 +72,9 @@ class WorkspaceType(models.Model):
 
 
 class WorkspaceTypeConfiguration(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    service_workbench_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
     instance_type = models.CharField(max_length=16)
     auto_stop_time = models.PositiveSmallIntegerField(default=10)
     kind = models.PositiveSmallIntegerField(
@@ -83,6 +86,16 @@ class WorkspaceTypeConfiguration(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            app.signature(
+                "grandchallenge.workspaces.tasks.create_workspace_type_configuration"
+            ).apply_async(kwargs={"workspace_type_configuration_pk": self.pk})
 
     @property
     def name(self):
@@ -114,6 +127,50 @@ class WorkspaceTypeConfiguration(models.Model):
         else:
             raise NotImplementedError
 
+    ALLOWED_INSTANCE_TYPES = {
+        # From https://aws.amazon.com/sagemaker/pricing/
+        WorkspaceKindChoices.SAGEMAKER_NOTEBOOK: {
+            "ml.t3.medium",
+            "ml.t3.large",
+            "ml.t3.xlarge",
+            "ml.t3.2xlarge",
+            "ml.m5.xlarge",
+            "ml.m5.2xlarge",
+            "ml.m5.4xlarge",
+            "ml.m5.12xlarge",
+            "ml.m5.24xlarge",
+            "ml.c5.xlarge",
+            "ml.c5.2xlarge",
+            "ml.c5.4xlarge",
+            "ml.c5.9xlarge",
+            "ml.c5.18xlarge",
+            "ml.c5d.xlarge",
+            "ml.c5d.2xlarge",
+            "ml.c5d.4xlarge",
+            "ml.c5d.9xlarge",
+            "ml.c5d.18xlarge",
+            "ml.p3.2xlarge",
+            "ml.p3.8xlarge",
+            "ml.p3.16xlarge",
+            "ml.p2.xlarge",
+            "ml.p2.8xlarge",
+            "ml.p2.16xlarge",
+        }
+    }
+
+    def clean(self):
+        super().clean()
+
+        if self.kind != WorkspaceKindChoices.SAGEMAKER_NOTEBOOK:
+            raise ValidationError(
+                f"{self.get_kind_display()} is not yet supported"
+            )
+
+        if self.instance_type not in self.ALLOWED_INSTANCE_TYPES[self.kind]:
+            raise ValidationError(
+                f"Instance type for {self.get_kind_display()} must be one of {self.ALLOWED_INSTANCE_TYPES[self.kind]}"
+            )
+
 
 class WorkspaceStatus(models.TextChoices):
     QUEUED = "QUEUED", "Queued"
@@ -133,7 +190,7 @@ class WorkspaceStatus(models.TextChoices):
 
 
 class Workspace(UUIDModel):
-    service_catalog_id = models.UUIDField(
+    service_workbench_id = models.UUIDField(
         editable=False, null=True, default=None
     )
     user = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)

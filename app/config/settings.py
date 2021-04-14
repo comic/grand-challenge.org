@@ -817,6 +817,7 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 
 WORKBENCH_SECRET_KEY = os.environ.get("WORKBENCH_SECRET_KEY")
 WORKBENCH_API_URL = os.environ.get("WORKBENCH_API_URL")
+WORKBENCH_ADMIN_USERNAME = os.environ.get("WORKBENCH_ADMIN_USERNAME", "demo")
 
 ###############################################################################
 #
