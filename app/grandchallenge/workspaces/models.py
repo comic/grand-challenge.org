@@ -4,8 +4,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.transaction import on_commit
 
-from config.celery import app
+from config.celery import celery_app
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.evaluation.models import Phase
 from grandchallenge.subdomains.utils import reverse
@@ -93,9 +94,13 @@ class WorkspaceTypeConfiguration(models.Model):
         super().save(*args, **kwargs)
 
         if adding:
-            app.signature(
-                "grandchallenge.workspaces.tasks.create_workspace_type_configuration"
-            ).apply_async(kwargs={"workspace_type_configuration_pk": self.pk})
+            on_commit(
+                lambda: celery_app.signature(
+                    "grandchallenge.workspaces.tasks.create_workspace_type_configuration"
+                ).apply_async(
+                    kwargs={"workspace_type_configuration_pk": self.pk}
+                )
+            )
 
     @property
     def name(self):
@@ -215,9 +220,11 @@ class Workspace(UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            app.signature(
-                "grandchallenge.workspaces.tasks.create_workspace"
-            ).apply_async(kwargs={"workspace_pk": self.pk})
+            on_commit(
+                lambda: celery_app.signature(
+                    "grandchallenge.workspaces.tasks.create_workspace"
+                ).apply_async(kwargs={"workspace_pk": self.pk})
+            )
 
     @property
     def animate(self):
