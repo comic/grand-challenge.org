@@ -24,7 +24,14 @@
 
     <dl class="row">
         <dt class="col-sm-3">Status</dt>
-        <dd class="col-sm-9">{{ object.get_status_display }}</dd>
+        <dd class="col-sm-9">
+            <span class="badge badge-{{ object.status_context }}">
+                {% if object.animate %}
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                {% endif %}
+                {{ object.get_status_display }}
+            </span>
+        </dd>
 
         <dt class="col-sm-3">ID</dt>
         <dd class="col-sm-9">{{ object.pk }}</dd>
@@ -42,7 +49,16 @@
         <dd class="col-sm-9">{{ object.configuration }}</dd>
     </dl>
 
-    {% if object.notebook_url %}
-        <a class="btn btn-primary" href="{{ object.notebook_url }}">Connect to Workspace</a>
+    {% if object.can_connect %}
+        <a class="btn btn-success" href="{{ object.notebook_url }}">Connect to Workspace</a>
     {% endif %}
+
+    {% if object.can_stop %}
+        <a class="btn btn-primary" href="">Stop Workspace</a>
+    {% endif %}
+
+    {% if object.can_terminate %}
+        <a class="btn btn-danger" href="">Terminate Workspace</a>
+    {% endif %}
+
 {% endblock %}

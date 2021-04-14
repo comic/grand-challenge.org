@@ -219,6 +219,72 @@ class Workspace(UUIDModel):
                 "grandchallenge.workspaces.tasks.create_workspace"
             ).apply_async(kwargs={"workspace_pk": self.pk})
 
+    @property
+    def animate(self):
+        return self.status in {
+            WorkspaceStatus.PENDING,
+            WorkspaceStatus.STARTING,
+            WorkspaceStatus.STOPPING,
+            WorkspaceStatus.TERMINATING,
+        }
+
+    @property
+    def can_terminate(self):
+        return self.status in {
+            WorkspaceStatus.TAINTED,
+            WorkspaceStatus.FAILED,
+            WorkspaceStatus.COMPLETED,
+            WorkspaceStatus.STARTING,
+            WorkspaceStatus.STARTING_FAILED,
+            WorkspaceStatus.STOPPED,
+            WorkspaceStatus.STOPPING_FAILED,
+            WorkspaceStatus.STOPPING,
+            WorkspaceStatus.TERMINATING_FAILED,
+        }
+
+    @property
+    def can_connect(self):
+        return (
+            self.status
+            in {
+                WorkspaceStatus.TAINTED,
+                WorkspaceStatus.COMPLETED,
+                WorkspaceStatus.TERMINATING_FAILED,
+            }
+            and self.notebook_url
+        )
+
+    @property
+    def can_stop(self):
+        return self.status in {WorkspaceStatus.COMPLETED}
+
+    @property
+    def can_start(self):
+        return self.status in {WorkspaceStatus.STOPPED}
+
+    @property
+    def status_context(self):
+        if self.status == WorkspaceStatus.COMPLETED:
+            return "success"
+        elif self.status in {
+            WorkspaceStatus.PENDING,
+            WorkspaceStatus.STOPPED,
+            WorkspaceStatus.STOPPING,
+            WorkspaceStatus.STARTING,
+            WorkspaceStatus.TAINTED,
+        }:
+            return "warning"
+        elif self.status in {
+            WorkspaceStatus.FAILED,
+            WorkspaceStatus.TERMINATING,
+            WorkspaceStatus.TERMINATING_FAILED,
+        }:
+            return "danger"
+        elif self.status in {WorkspaceStatus.QUEUED}:
+            return "info"
+        else:
+            return "secondary"
+
     def get_absolute_url(self):
         return reverse(
             "workspaces:detail",
