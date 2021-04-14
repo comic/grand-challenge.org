@@ -26,8 +26,6 @@ def strtobool(val) -> bool:
 
 DEBUG = strtobool(os.environ.get("DEBUG", "True"))
 
-ATOMIC_REQUESTS = strtobool(os.environ.get("ATOMIC_REQUESTS", "True"))
-
 COMMIT_ID = os.environ.get("COMMIT_ID", "unknown")
 
 ADMINS = (
@@ -71,6 +69,9 @@ DATABASES = {
                 SITE_ROOT, "config", "certs", "rds-ca-2019-root.pem"
             ),
         },
+        "ATOMIC_REQUESTS": strtobool(
+            os.environ.get("ATOMIC_REQUESTS", "True")
+        ),
     }
 }
 
