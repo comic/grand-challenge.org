@@ -264,15 +264,86 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
 class WindowPreset(TitleSlugDescriptionModel):
     width = models.PositiveIntegerField(
-        validators=[MinValueValidator(limit_value=1)]
+        blank=True, null=True, validators=[MinValueValidator(limit_value=1)]
     )
-    center = models.IntegerField()
+    center = models.IntegerField(blank=True, null=True)
+
+    lower_percentile = models.PositiveSmallIntegerField(
+        blank=True, null=True, validators=[MaxValueValidator(limit_value=100)]
+    )
+
+    upper_percentile = models.PositiveSmallIntegerField(
+        blank=True, null=True, validators=[MaxValueValidator(limit_value=100)]
+    )
+
+    def _validate_percentile(self):
+        if self.upper_percentile <= self.lower_percentile:
+            raise ValidationError(
+                f"Upper percentile ({self.upper_percentile}%) should be below the "
+                f"lower percentile ({self.lower_percentile}%)"
+            )
+
+    def _validate_fixed(self):
+        pass
+
+    def clean(self):
+        super().clean()
+        window_center_all = None not in {self.width, self.center}
+        window_center_none = all(v is None for v in {self.width, self.center})
+        percentile_all = None not in {
+            self.lower_percentile,
+            self.upper_percentile,
+        }
+        percentile_none = all(
+            v is None for v in {self.lower_percentile, self.upper_percentile}
+        )
+
+        if window_center_all and percentile_none:
+            self._validate_fixed()
+        elif percentile_all and window_center_none:
+            self._validate_percentile()
+        else:
+            raise ValidationError(
+                "Either (upper and lower percentiles) or (width and center) should be entered"
+            )
 
     class Meta(TitleSlugDescriptionModel.Meta):
         ordering = ("title",)
+        constraints = [
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_either_fixed_or_percentile",
+                check=(
+                    models.Q(
+                        center__isnull=False,
+                        width__isnull=False,
+                        lower_percentile__isnull=True,
+                        upper_percentile__isnull=True,
+                    )
+                    | models.Q(
+                        center__isnull=True,
+                        width__isnull=True,
+                        lower_percentile__isnull=False,
+                        upper_percentile__isnull=False,
+                    )
+                ),
+            ),
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_upper_gt_lower_percentile",
+                check=models.Q(
+                    upper_percentile__gt=models.F("lower_percentile")
+                ),
+            ),
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_width_gt_0",
+                check=models.Q(width__gt=0) | models.Q(width__isnull=True),
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.title} (center {self.center}, width {self.width})"
+        if None not in {self.center, self.width}:
+            return f"{self.title} (center {self.center}, width {self.width})"
+        else:
+            return f"{self.title} ({self.lower_percentile}%-{self.upper_percentile}%)"
 
 
 class LookUpTable(TitleSlugDescriptionModel):
@@ -327,6 +398,7 @@ class LookUpTable(TitleSlugDescriptionModel):
         return f"{self.title}"
 
     def clean(self):
+        super().clean()
         color_points = len(self.color.split(","))
         alpha_points = len(self.alpha.split(","))
         if color_points != alpha_points:

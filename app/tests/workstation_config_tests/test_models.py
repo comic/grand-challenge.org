@@ -1,7 +1,8 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
-from grandchallenge.workstation_configs.models import LookUpTable
+from grandchallenge.workstation_configs.models import LookUpTable, WindowPreset
 from tests.workstation_config_tests.legacy_luts import LEGACY_LUTS, LegacyLUT
 
 
@@ -78,3 +79,50 @@ def test_color_alpha_validation(lut):
     lut.clean_fields()
     with pytest.raises(ValidationError):
         lut.full_clean()
+
+
+window_presets_tests = [
+    ({"width": 2000, "center": 0}, True),
+    ({"width": 0, "center": 0}, False),
+    ({"lower_percentile": 15, "upper_percentile": 85}, True,),
+    ({"lower_percentile": 15, "upper_percentile": 15}, False),
+    ({"lower_percentile": 15, "upper_percentile": 16}, True),
+    ({"width": -2000, "center": 0}, False),
+    ({}, False),
+    ({"width": 1}, False),
+    ({"center": 1}, False),
+    ({"lower_percentile": 1}, False),
+    ({"upper_percentile": 1}, False),
+    ({"width": 1, "lower_percentile": 1}, False),
+    ({"center": 1, "lower_percentile": 1}, False),
+    ({"width": 1, "upper_percentile": 1}, False),
+    ({"center": 1, "upper_percentile": 1}, False),
+    ({"lower_percentile": 85, "upper_percentile": 15}, False),
+]
+
+ids = [f"{p[0]} -> valid:{p[1]}" for p in window_presets_tests]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "config, expected_valid", window_presets_tests, ids=ids
+)
+def test_window_presets_db_integrity(config, expected_valid):
+    preset = WindowPreset(title="foo", **config)
+    if expected_valid:
+        preset.save()
+    else:
+        with pytest.raises(IntegrityError):
+            preset.save()
+
+
+@pytest.mark.parametrize(
+    "config, expected_valid", window_presets_tests, ids=ids
+)
+def test_window_presets_form(config, expected_valid):
+    preset = WindowPreset(title="foo", **config)
+    if expected_valid:
+        preset.full_clean()
+    else:
+        with pytest.raises(ValidationError):
+            preset.full_clean()
