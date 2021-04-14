@@ -129,6 +129,10 @@ ul.socialaccount_providers > li {
 
 .nav-tabs > .nav-item > .nav-link {
     color: #000;
+    border-top: 0px transparent;
+    border-right: 0px transparent;
+    border-left: 0px transparent;
+    border-bottom: 4px transparent;
 }
 .nav-tabs > .nav-item > .nav-link:hover {
     border: inherit;
