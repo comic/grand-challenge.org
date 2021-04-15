@@ -82,7 +82,7 @@ def add_images_to_component_interface_value(
 
     build_images(upload_session_pk=upload_pk)
 
-    if session.image_set.count() > 1:
+    if session.image_set.count() != 1:
         error_message = "Image imports should result in a single image"
         session.status = RawImageUploadSession.FAILURE
         session.error_message = error_message
