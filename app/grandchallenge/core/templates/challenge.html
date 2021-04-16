@@ -37,7 +37,7 @@
     {% if challenge %}
         <div class="row mb-3 mx-0 border-bottom">
             <div class="d-none d-lg-block col-md-10 col-sm-8 col-6 px-0">
-                <div class="nav nav-tabs border-0" role="tablist">
+                <ul class="nav nav-tabs border-0">
                     <li class="nav-item">
                         <! -- Todo: Adjust the view_name before merging with master (include the page_title slug)-->
                         <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
@@ -84,7 +84,7 @@
                             </li>
                         {% endif %}
                     {% endif %}
-                </div>
+                </ul>
             </div>
 
             <div class="d-block d-lg-none col-md-10 col-sm-8 col-6 px-0 pb-1">
