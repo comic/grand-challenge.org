@@ -39,59 +39,59 @@
         <div class="row mb-3 mx-0 border-bottom">
             <div class="col-md-10 col-sm-8 col-6 px-0">
                 <div class="nav-tab-dropdown-container">
-                <a class="d-lg-none btn btn-outline-dark mb-1"
-                           data-toggle="dropdown"
-                           href="#"
-                           role="button"
-                           aria-expanded="false"><i class="fas fa-bars"></i></a>
-                <ul class="nav nav-tabs border-0">
-                    <li class="nav-item">
-                        <! -- Todo: Adjust the view_name before merging with master (include the page_title slug)-->
-                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
-                           href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
-                            Info
-                        </a>
-                    </li>
-
-                    {% if challenge.display_forum_link %}
+                    <a class="d-lg-none btn btn-outline-dark mb-1"
+                       data-toggle="dropdown"
+                       href="#"
+                       role="button"
+                       aria-expanded="false"><i class="fas fa-bars"></i></a>
+                    <ul class="nav nav-tabs border-0">
                         <li class="nav-item">
-                            <a class="nav-link"
-                               href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
-                                Forum
+                            <! -- Todo: Adjust the view_name before merging with master (include the page_title slug)-->
+                            <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
+                               href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
+                                Info
                             </a>
                         </li>
-                    {% endif %}
 
-                    {% if challenge.use_evaluation %}
-                        {% if challenge.use_teams %}
+                        {% if challenge.display_forum_link %}
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
+                                    Forum
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% if challenge.use_evaluation %}
+                            {% if challenge.use_teams %}
+                                {% if "change_challenge" in challenge_perms or user_is_participant %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.resolver_match.view_name == 'teams:list' %}active{% endif %}"
+                                           href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a>
+                                    </li>
+                                {% endif %}
+                            {% endif %}
+
                             {% if "change_challenge" in challenge_perms or user_is_participant %}
                                 <li class="nav-item">
-                                    <a class="nav-link {% if request.resolver_match.view_name == 'teams:list' %}active{% endif %}"
-                                       href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a>
+                                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+                                       href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                        Submit</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
+                                       href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                        Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
+                                </li>
+                            {% elif not challenge.hidden %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
+                                       href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
+                                        Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                                 </li>
                             {% endif %}
                         {% endif %}
-
-                        {% if "change_challenge" in challenge_perms or user_is_participant %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
-                                   href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
-                                    Submit</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
-                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
-                                    Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
-                            </li>
-                        {% elif not challenge.hidden %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
-                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
-                                    Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
-                            </li>
-                        {% endif %}
-                    {% endif %}
-                </ul>
+                    </ul>
                 </div>
             </div>
 
@@ -125,14 +125,20 @@
                             <h6 class="dropdown-header">Users</h6>
                             <a class="dropdown-item"
                                href="{% url 'admins:list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-user fa-fw"></i>&nbsp;Admins <span class="badge badge-pill badge-secondary align-middle">{{ challenge.get_admins.count }}</span> </a>
+                                <i class="fas fa-user fa-fw"></i>&nbsp;Admins <span
+                                    class="badge badge-pill badge-secondary align-middle">{{ challenge.get_admins.count }}</span>
+                            </a>
                             <a class="dropdown-item"
                                href="{% url 'participants:list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-users fa-fw"></i>&nbsp;Participants <span class="badge badge-pill badge-secondary align-middle">{{ challenge.get_participants.count }}</span></a>
+                                <i class="fas fa-users fa-fw"></i>&nbsp;Participants <span
+                                    class="badge badge-pill badge-secondary align-middle">{{ challenge.get_participants.count }}</span></a>
                             <a class="dropdown-item"
                                href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-question fa-fw"></i>&nbsp;Participation Requests {% if challenge.require_participant_review %} {% with num_requests=pending_requests.count %} <span
-                                    class="badge badge-pill badge-secondary align-middle">{{ num_requests }}</span>{% endwith %}{% endif %}</a>
+                                <i class="fas fa-question fa-fw"></i>&nbsp;Participation Requests
+                                {% if challenge.require_participant_review %}
+                                    {% with num_requests=pending_requests.count %} <span
+                                            class="badge badge-pill badge-secondary align-middle">{{ num_requests }}</span>
+                                    {% endwith %}{% endif %}</a>
                             <hr>
                             <h6 class="dropdown-header">Phases</h6>
                             {% if challenge.use_evaluation %}
