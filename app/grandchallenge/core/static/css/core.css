@@ -129,24 +129,31 @@ ul.socialaccount_providers > li {
 
 .nav-tabs > .nav-item > .nav-link {
     color: #000;
-    border-top: 0px transparent;
-    border-right: 0px transparent;
-    border-left: 0px transparent;
+    border-top: 0 transparent;
+    border-right: 0 transparent;
+    border-left: 0 transparent;
     border-bottom: 4px transparent;
 }
+
 .nav-tabs > .nav-item > .nav-link:hover {
     border: inherit;
     border-bottom: 4px solid #f0f0f0;
 }
+
 .nav-tabs > .nav-item > .nav-link.active {
     border: inherit;
     font-weight: bold;
     border-bottom: 4px solid #2c3e50;
 }
 
+.challengeDropdown {
+    padding: 0;
+}
+
 .challengeDropdown > .nav-link {
     color: #000;
 }
+
 .challengeDropdown:hover {
     background-color: #f0f0f0;
 }
@@ -157,5 +164,7 @@ ul.socialaccount_providers > li {
     padding-top: 3px;
     padding-bottom: 3px;
 }
+
 .phaseButton:focus, .phaseButton:hover {
-    box-shadow:none !important;}
+    box-shadow:none !important;
+}
