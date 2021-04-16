@@ -19,15 +19,17 @@ function navs_to_dropdown(reverse = false) {
 
     // Change the classes
     for (let container of containers) {
-        container.classList.add("dropdown");
-
         let ul  = container.querySelector("ul");
 
         if (reverse === true) {
+            container.classList.remove("dropdown");
+
             ul.classList.add(...ulTabClasses);
             ul.classList.remove(...ulDropdownClasses);
         }
         else {
+            container.classList.add("dropdown");
+
             ul.classList.add(...ulDropdownClasses);
             ul.classList.remove(...ulTabClasses);
         }
