@@ -17,7 +17,7 @@ function navs_to_dropdown(reverse = false) {
     const ulTabClasses = ["nav", "nav-tabs", "border-0"];
     const itemDropdownClasses = ["dropdown-item", "challengeDropdown"];
     const itemTabPillClasses = ["nav-item"];
-    const ulPillClasses = ["nav", "nav-pills", "col-12", "pl-3", "mb-3"];
+    const ulPillClasses = ["nav", "nav-pills", "col-12", "mb-3"];
 
     // Change the classes
     for (let container of containers) {
