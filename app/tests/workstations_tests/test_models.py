@@ -106,8 +106,9 @@ def test_session_start(http_image, docker_client, settings):
         assert len(networks) == 1
         assert settings.WORKSTATIONS_NETWORK_NAME in networks
 
-        s.user_finished = True
-        s.save()
+        with capture_on_commit_callbacks(execute=True):
+            s.user_finished = True
+            s.save()
 
         with pytest.raises(NotFound):
             # noinspection PyStatementEffect
@@ -129,10 +130,11 @@ def test_correct_session_stopped(http_image, docker_client, settings):
     settings.task_always_eager = (True,)
 
     try:
-        s1, s2 = (
-            SessionFactory(workstation_image=wsi),
-            SessionFactory(workstation_image=wsi),
-        )
+        with capture_on_commit_callbacks(execute=True):
+            s1, s2 = (
+                SessionFactory(workstation_image=wsi),
+                SessionFactory(workstation_image=wsi),
+            )
 
         assert s1.service.container
         assert s2.service.container
@@ -140,8 +142,9 @@ def test_correct_session_stopped(http_image, docker_client, settings):
         s2.refresh_from_db()
         auth_token_pk = s2.auth_token.pk
 
-        s2.user_finished = True
-        s2.save()
+        with capture_on_commit_callbacks(execute=True):
+            s2.user_finished = True
+            s2.save()
 
         assert s1.service.container
         with pytest.raises(NotFound):
