@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from docker.errors import NotFound
 from knox.models import AuthToken
 
@@ -82,7 +83,8 @@ def test_session_start(http_image, docker_client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    s = SessionFactory(workstation_image=wsi)
+    with capture_on_commit_callbacks(execute=True):
+        s = SessionFactory(workstation_image=wsi)
 
     try:
         assert s.service.container
@@ -169,20 +171,21 @@ def test_session_cleanup(http_image, docker_client, settings):
     default_region = "eu-nl-1"
 
     try:
-        s1, s2, s3 = (
-            SessionFactory(workstation_image=wsi, region=default_region),
-            SessionFactory(
-                workstation_image=wsi,
-                maximum_duration=timedelta(seconds=0),
-                region=default_region,
-            ),
-            # An expired service in a different region
-            SessionFactory(
-                workstation_image=wsi,
-                maximum_duration=timedelta(seconds=0),
-                region="us-east-1",
-            ),
-        )
+        with capture_on_commit_callbacks(execute=True):
+            s1, s2, s3 = (
+                SessionFactory(workstation_image=wsi, region=default_region),
+                SessionFactory(
+                    workstation_image=wsi,
+                    maximum_duration=timedelta(seconds=0),
+                    region=default_region,
+                ),
+                # An expired service in a different region
+                SessionFactory(
+                    workstation_image=wsi,
+                    maximum_duration=timedelta(seconds=0),
+                    region="us-east-1",
+                ),
+            )
 
         assert s1.service.container
         assert s2.service.container
@@ -217,7 +220,9 @@ def test_workstation_ready(http_image, docker_client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    s = SessionFactory(workstation_image=wsi)
+    with capture_on_commit_callbacks(execute=True):
+        s = SessionFactory(workstation_image=wsi)
+
     s.refresh_from_db()
 
     assert s.status == s.FAILED
@@ -237,17 +242,20 @@ def test_session_limit(http_image, docker_client, settings):
     settings.task_always_eager = (True,)
 
     try:
-        s1 = SessionFactory(workstation_image=wsi)
+        with capture_on_commit_callbacks(execute=True):
+            s1 = SessionFactory(workstation_image=wsi)
         s1.refresh_from_db()
         assert s1.status == s1.STARTED
 
-        s2 = SessionFactory(workstation_image=wsi)
+        with capture_on_commit_callbacks(execute=True):
+            s2 = SessionFactory(workstation_image=wsi)
         s2.refresh_from_db()
         assert s2.status == s2.FAILED
 
         s1.stop()
 
-        s3 = SessionFactory(workstation_image=wsi)
+        with capture_on_commit_callbacks(execute=True):
+            s3 = SessionFactory(workstation_image=wsi)
         s3.refresh_from_db()
         assert s3.status == s3.STARTED
     finally:

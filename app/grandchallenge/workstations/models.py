@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 from django.db.models.signals import post_delete
+from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
@@ -534,10 +535,16 @@ class Session(UUIDModel):
 
         if created:
             self.assign_permissions()
-            start_service.apply_async(
-                kwargs=self.task_kwargs, queue=f"workstations-{self.region}"
+            on_commit(
+                lambda: start_service.apply_async(
+                    kwargs=self.task_kwargs,
+                    queue=f"workstations-{self.region}",
+                )
             )
         elif self.user_finished and self.status != self.STOPPED:
-            stop_service.apply_async(
-                kwargs=self.task_kwargs, queue=f"workstations-{self.region}"
+            on_commit(
+                lambda: stop_service.apply_async(
+                    kwargs=self.task_kwargs,
+                    queue=f"workstations-{self.region}",
+                )
             )
