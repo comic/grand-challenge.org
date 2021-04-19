@@ -3,6 +3,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from django.test import TestCase
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
@@ -160,18 +162,19 @@ class TestCreateAlgorithmJobs:
         assert Job.objects.count() == 6
 
 
-@pytest.mark.django_db
-class TestCreateJobsWorkflow:
+class TestCreateJobsWorkflow(TestCase):
     def test_no_jobs_workflow(self):
         ai = AlgorithmImageFactory()
-        workflow = execute_jobs(algorithm_image=ai, images=[])
-        assert workflow is None
+        with capture_on_commit_callbacks() as callbacks:
+            execute_jobs(algorithm_image=ai, images=[])
+        assert len(callbacks) == 0
 
     def test_jobs_workflow(self):
         ai = AlgorithmImageFactory()
         images = [ImageFactory(), ImageFactory()]
-        workflow = execute_jobs(algorithm_image=ai, images=images)
-        assert workflow is not None
+        with capture_on_commit_callbacks() as callbacks:
+            execute_jobs(algorithm_image=ai, images=images)
+        assert len(callbacks) == 1
 
 
 @pytest.mark.django_db
@@ -196,7 +199,10 @@ def test_algorithm(client, algorithm_image, settings):
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
-    execute_jobs(algorithm_image=alg, images=[image_file.image])
+
+    with capture_on_commit_callbacks(execute=True):
+        execute_jobs(algorithm_image=alg, images=[image_file.image])
+
     jobs = Job.objects.filter(algorithm_image=alg).all()
 
     # There should be a single, successful job
@@ -238,7 +244,9 @@ def test_algorithm(client, algorithm_image, settings):
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
 
-    execute_jobs(algorithm_image=alg, images=[image_file.image])
+    with capture_on_commit_callbacks(execute=True):
+        execute_jobs(algorithm_image=alg, images=[image_file.image])
+
     jobs = Job.objects.filter(
         algorithm_image=alg, inputs__image=image_file.image
     ).all()
@@ -280,7 +288,9 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
 
-    execute_jobs(algorithm_image=alg, images=[image_file.image])
+    with capture_on_commit_callbacks(execute=True):
+        execute_jobs(algorithm_image=alg, images=[image_file.image])
+
     jobs = Job.objects.filter(
         algorithm_image=alg, inputs__image=image_file.image, status=Job.FAILURE
     ).all()
@@ -344,9 +354,12 @@ def test_algorithm_multiple_inputs(
             )
             expected.append("test")
 
-    run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks=[])
+    # Nested on_commits created by these tasks
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks=[])
 
-    job = Job.objects.first()
+    job = Job.objects.get()
     assert job.status == job.SUCCESS
     assert {x[0] for x in job.input_files} == set(
         job.outputs.first().value.keys()
@@ -391,7 +404,10 @@ def test_algorithm_input_image_multiple_files(
     job.inputs.add(civ)
 
     with pytest.raises(ValueError):
-        run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks={civ.pk: us.pk})
+        with capture_on_commit_callbacks(execute=True):
+            run_algorithm_job_for_inputs(
+                job_pk=job.pk, upload_pks={civ.pk: us.pk}
+            )
 
     # TODO: celery errorhandling with the .on_error seems to not work when
     # TASK_ALWAYS_EAGER is set to True. The error function does get called
