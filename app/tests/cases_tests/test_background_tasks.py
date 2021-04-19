@@ -9,6 +9,7 @@ import pytest
 from billiard.exceptions import SoftTimeLimitExceeded
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from panimg.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,
     EXPECTED_HEADERS,
@@ -55,7 +56,9 @@ def create_raw_upload_image_session(
         ).delete()
 
     upload_session.save()
-    upload_session.process_images(linked_task=linked_task)
+
+    with capture_on_commit_callbacks(execute=True):
+        upload_session.process_images(linked_task=linked_task)
 
     return upload_session, uploaded_images
 

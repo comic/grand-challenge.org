@@ -10,6 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_delete
+from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
@@ -111,7 +112,7 @@ class RawImageUploadSession(UUIDModel):
             linked_task.kwargs.update(kwargs)
             workflow |= linked_task
 
-        workflow.apply_async()
+        on_commit(workflow.apply_async)
 
     def get_absolute_url(self):
         return reverse(

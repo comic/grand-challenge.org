@@ -1,5 +1,6 @@
 import pytest
 from django.test import Client
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.cases.models import RawImageUploadSession
 from tests.cases_tests import RESOURCE_PATH
@@ -35,14 +36,17 @@ def test_upload_some_images(client: Client, challenge_set, settings):
     assert RawImageUploadSession.objects.count() == 0
 
     file1 = create_file_from_filepath(RESOURCE_PATH / "image10x10x10.mha")
-    response = get_view_for_user(
-        data={"files": f"{file1.uuid}"},
-        client=client,
-        viewname="reader-studies:add-images",
-        user=user,
-        reverse_kwargs={"slug": rs.slug},
-        method=client.post,
-    )
+
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            data={"files": f"{file1.uuid}"},
+            client=client,
+            viewname="reader-studies:add-images",
+            user=user,
+            reverse_kwargs={"slug": rs.slug},
+            method=client.post,
+        )
+
     assert response.status_code == 302
     assert rs.images.count() == 1
     sessions = RawImageUploadSession.objects.all()
