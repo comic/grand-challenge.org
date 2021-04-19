@@ -1,4 +1,5 @@
 from django.db.models.signals import m2m_changed
+from django.db.transaction import on_commit
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -44,11 +45,13 @@ def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
         op("view_image", archive.users_group, images)
 
     if "add" in action:
-        create_algorithm_jobs_for_archive.apply_async(
-            kwargs={
-                "archive_pks": list(archive_pks),
-                "image_pks": list(image_pks),
-            },
+        on_commit(
+            lambda: create_algorithm_jobs_for_archive.apply_async(
+                kwargs={
+                    "archive_pks": list(archive_pks),
+                    "image_pks": list(image_pks),
+                },
+            )
         )
 
 
@@ -67,9 +70,11 @@ def on_archive_algorithms_changed(
         archive_pks = [instance.pk]
         algorithm_pks = pk_set
 
-    create_algorithm_jobs_for_archive.apply_async(
-        kwargs={
-            "archive_pks": list(archive_pks),
-            "algorithm_pks": list(algorithm_pks),
-        },
+    on_commit(
+        lambda: create_algorithm_jobs_for_archive.apply_async(
+            kwargs={
+                "archive_pks": list(archive_pks),
+                "algorithm_pks": list(algorithm_pks),
+            },
+        )
     )
