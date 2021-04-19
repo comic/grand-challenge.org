@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.transaction import on_commit
 from django.utils.text import get_valid_filename
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
@@ -402,7 +403,9 @@ class Phase(UUIDModel):
             self.set_default_interfaces()
             self.assign_permissions()
 
-        calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
+        on_commit(
+            lambda: calculate_ranks.apply_async(kwargs={"phase_pk": self.pk})
+        )
 
     def set_default_interfaces(self):
         self.inputs.set(
@@ -594,8 +597,10 @@ class Submission(UUIDModel):
         evaluation = Evaluation.objects.create(submission=self, method=method)
 
         if self.algorithm_image:
-            create_algorithm_jobs_for_evaluation.apply_async(
-                kwargs={"evaluation_pk": evaluation.pk}
+            on_commit(
+                lambda: create_algorithm_jobs_for_evaluation.apply_async(
+                    kwargs={"evaluation_pk": evaluation.pk}
+                )
             )
         else:
             mimetype = get_file_mimetype(self.predictions_file)
@@ -623,7 +628,7 @@ class Submission(UUIDModel):
                     )
                 ]
             )
-            evaluation.signature.apply_async()
+            on_commit(evaluation.signature.apply_async)
 
     @property
     def latest_ready_method(self):
@@ -717,8 +722,10 @@ class Evaluation(UUIDModel, ComponentJob):
 
         self.assign_permissions()
 
-        calculate_ranks.apply_async(
-            kwargs={"phase_pk": self.submission.phase.pk}
+        on_commit(
+            lambda: calculate_ranks.apply_async(
+                kwargs={"phase_pk": self.submission.phase.pk}
+            )
         )
 
     @property

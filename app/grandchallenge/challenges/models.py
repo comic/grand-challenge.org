@@ -10,6 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_slug
 from django.db import models
 from django.db.models.signals import post_delete
+from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import format_html
@@ -353,8 +354,10 @@ class Challenge(ChallengeBase):
             send_challenge_created_email(self)
 
         if adding or self.hidden != self._hidden_orig:
-            assign_evaluation_permissions.apply_async(
-                kwargs={"challenge_pk": self.pk}
+            on_commit(
+                lambda: assign_evaluation_permissions.apply_async(
+                    kwargs={"challenge_pk": self.pk}
+                )
             )
             self.update_user_forum_permissions()
 
