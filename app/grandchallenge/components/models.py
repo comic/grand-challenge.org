@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
 from django.db.models import Avg, F, QuerySet
+from django.db.transaction import on_commit
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
@@ -555,12 +556,14 @@ class ComponentImage(models.Model):
         super().save(*args, **kwargs)
 
         if adding:
-            validate_docker_image.apply_async(
-                kwargs={
-                    "app_label": self._meta.app_label,
-                    "model_name": self._meta.model_name,
-                    "pk": self.pk,
-                }
+            on_commit(
+                lambda: validate_docker_image.apply_async(
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "pk": self.pk,
+                    }
+                )
             )
 
     class Meta:
