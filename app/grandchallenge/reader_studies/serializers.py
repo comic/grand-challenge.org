@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db.transaction import on_commit
 from rest_framework.fields import CharField, ReadOnlyField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
@@ -122,13 +123,15 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         )
 
         if self.instance:
-            add_scores.apply_async(
-                kwargs={
-                    "instance_pk": str(self.instance.pk),
-                    "pk_set": list(
-                        map(str, images.values_list("pk", flat=True))
-                    ),
-                }
+            on_commit(
+                lambda: add_scores.apply_async(
+                    kwargs={
+                        "instance_pk": str(self.instance.pk),
+                        "pk_set": list(
+                            map(str, images.values_list("pk", flat=True))
+                        ),
+                    }
+                )
             )
         return attrs if not self.instance else {"answer": answer}
 
