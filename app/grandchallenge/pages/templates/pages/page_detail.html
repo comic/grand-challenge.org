@@ -26,7 +26,7 @@
 {% endblock %}
 
 {% block topbar2 %}
-    <div class="nav nav-pills pl-0 mb-3 d-flex d-sm-none">
+    <div class="nav nav-pills pl-0 mb-3 d-flex d-md-none">
         {% for page in pages %}
             {% if not page.hidden %}
                 <li class="nav-item">
@@ -43,7 +43,7 @@
 {% endblock %}
 
 {% block sidebar %}
-      <div class="nav nav-pills col-12 col-md-3 col-lg-2 pl-3 d-none d-sm-block">
+      <div class="nav nav-pills col-12 col-md-4 col-lg-3 pl-3 d-none d-md-block">
         {% for page in pages %}
             {% if not page.hidden %}
                 <li class="nav-item">
