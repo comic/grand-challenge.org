@@ -3,6 +3,7 @@ import posixpath
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
 from django.db.models import Q
+from django.db.transaction import on_commit
 from django.http import Http404, HttpResponseRedirect
 from django.utils._os import safe_join
 from guardian.shortcuts import get_objects_for_user
@@ -51,8 +52,10 @@ def serve_images(request, *, pk, path, pa="", pb=""):
         user = request.user
 
     if user.has_perm("view_image", image):
-        create_download.apply_async(
-            kwargs={"creator_id": user.pk, "image_id": image.pk}
+        on_commit(
+            lambda: create_download.apply_async(
+                kwargs={"creator_id": user.pk, "image_id": image.pk}
+            )
         )
         return protected_storage_redirect(name=name)
 
@@ -66,11 +69,13 @@ def serve_submissions(request, *, submission_pk, **_):
         raise Http404("Submission not found.")
 
     if request.user.has_perm("view_submission", submission):
-        create_download.apply_async(
-            kwargs={
-                "creator_id": request.user.pk,
-                "submission_id": submission.pk,
-            }
+        on_commit(
+            lambda: create_download.apply_async(
+                kwargs={
+                    "creator_id": request.user.pk,
+                    "submission_id": submission.pk,
+                }
+            )
         )
         return protected_storage_redirect(
             name=submission.predictions_file.name
