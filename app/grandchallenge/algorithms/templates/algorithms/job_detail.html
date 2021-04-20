@@ -172,13 +172,26 @@
                     <dd class="col-sm-9">
                         <ul class="list-unstyled mb-0">
                             {% for output in object.outputs.all %}
-                                {% if output.file %}
-                                  <li>
-                                    <a class="badge badge-primary"
-                                       href="{{ output.file.url }}">
-                                        <i class="fa fa-download"></i> {{ output.interface.title }}
-                                    </a>
-                                </li>
+                                {% if output.value is not None %}
+                                    <li>
+                                        <a href="#resultInfoModal"
+                                           data-toggle="modal"
+                                           data-target="#resultInfoModal"
+                                           data-title="Result Info"
+                                           data-output="{{ output.value }}"
+                                           data-pk="{{ object.pk }}"
+                                           class="badge badge-primary">
+                                            <i class="fa fa-download"></i>
+                                            {{ output.interface.title }}
+                                        </a>
+                                    </li>
+                                {% elif output.file %}
+                                    <li>
+                                        <a class="badge badge-primary"
+                                           href="{{ output.file.url }}">
+                                            <i class="fa fa-download"></i> {{ output.interface.title }}
+                                        </a>
+                                    </li>
                                 {% elif output.image %}
                                     {% for file in output.image.files.all %}
                                         <li>
@@ -277,4 +290,40 @@
             </div>
         {% endif %}
     </div>
+
+    <div class="modal fade" id="resultInfoModal" tabindex="-1" role="dialog"
+         aria-labelledby="resultInfoModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-job-output"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script type="text/javascript">
+        $('#resultInfoModal').on('show.bs.modal', function (event) {
+            let button = $(event.relatedTarget);
+            let modal = $(this);
+            const json_element = document.getElementById(button.data('pk'));
+            if (json_element) {
+                modal.find('.modal-job-output').html(JSON.parse(json_element.textContent));
+            } else {
+                modal.find('.modal-job-output').text(button.data('output'));
+            }
+            modal.find('.modal-title').text(button.data('title'));
+        })
+    </script>
 {% endblock %}
