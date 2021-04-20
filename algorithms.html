@@ -100,6 +100,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#results-json">results.json</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#frequently-asked-questions">Frequently Asked Questions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-resources-are-available">What resources are available?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#where-can-i-write-data">Where can I write data?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#time-limit-exceeded-errors-with-pytorch">Time limit exceeded errors with PyTorch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="components.html">Components</a></li>
@@ -213,6 +219,28 @@ You can find a list of the <a class="reference external" href="https://grand-cha
 <div class="section" id="results-json">
 <h3>results.json<a class="headerlink" href="#results-json" title="Permalink to this headline">¶</a></h3>
 <p>If one of the defined outputs for the algorithms is a <code class="docutils literal notranslate"><span class="pre">results.json</span></code> file, the contents of this file will be parsed and shown on the algorithm’s result page. You can provide a jinja template to an algorithm for the rendering of these results.</p>
+</div>
+</div>
+<div class="section" id="frequently-asked-questions">
+<h2>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="what-resources-are-available">
+<h3>What resources are available?<a class="headerlink" href="#what-resources-are-available" title="Permalink to this headline">¶</a></h3>
+<p>Currently algorithms are run with 1 NVidia T4 GPU with CUDA 10 and 16GB GPU memory.
+Algorithms are allowed to use 200% CPU, 24GB system memory and 512 threads.
+The algorithms are run without any access to the network.
+All container privileges are dropped.</p>
+</div>
+<div class="section" id="where-can-i-write-data">
+<h3>Where can I write data?<a class="headerlink" href="#where-can-i-write-data" title="Permalink to this headline">¶</a></h3>
+<p>The container filesystem and output directories are writable, the input directory is read only.</p>
+</div>
+<div class="section" id="time-limit-exceeded-errors-with-pytorch">
+<h3>Time limit exceeded errors with PyTorch<a class="headerlink" href="#time-limit-exceeded-errors-with-pytorch" title="Permalink to this headline">¶</a></h3>
+<p>Algorithms have a wall time limit of 2 hours.
+Sometimes, the algorithm will produce little to no output in the logs.
+Often, this is due to using PyTorch <code class="docutils literal notranslate"><span class="pre">DataLoaders</span></code>.
+These require using shared memory, which is not enabled on grand-challenge.org.
+To resolve this, set <code class="docutils literal notranslate"><span class="pre">num_workers</span></code> to <code class="docutils literal notranslate"><span class="pre">0</span></code> when initialising your <a href="#id1"><span class="problematic" id="id2">``</span></a>DataLoader <a href="#id3"><span class="problematic" id="id4">``</span></a>.</p>
 </div>
 </div>
 </div>

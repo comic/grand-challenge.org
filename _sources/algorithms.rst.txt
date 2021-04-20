@@ -55,4 +55,29 @@ results.json
 
 If one of the defined outputs for the algorithms is a ``results.json`` file, the contents of this file will be parsed and shown on the algorithm's result page. You can provide a jinja template to an algorithm for the rendering of these results.
 
+Frequently Asked Questions
+==========================
+
+What resources are available?
+-----------------------------
+
+Currently algorithms are run with 1 NVidia T4 GPU with CUDA 10 and 16GB GPU memory.
+Algorithms are allowed to use 200% CPU, 24GB system memory and 512 threads.
+The algorithms are run without any access to the network.
+All container privileges are dropped.
+
+Where can I write data?
+-----------------------
+
+The container filesystem and output directories are writable, the input directory is read only.
+
+Time limit exceeded errors with PyTorch
+---------------------------------------
+
+Algorithms have a wall time limit of 2 hours.
+Sometimes, the algorithm will produce little to no output in the logs.
+Often, this is due to using PyTorch ``DataLoaders``.
+These require using shared memory, which is not enabled on grand-challenge.org.
+To resolve this, set ``num_workers`` to ``0`` when initialising your ``DataLoader ``.
+
 .. _`currently available interfaces`: https://grand-challenge.org/algorithms/interfaces/
