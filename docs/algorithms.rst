@@ -78,6 +78,6 @@ Algorithms have a wall time limit of 2 hours.
 Sometimes, the algorithm will produce little to no output in the logs.
 Often, this is due to using PyTorch ``DataLoaders``.
 These require using shared memory, which is not enabled on grand-challenge.org.
-To resolve this, set ``num_workers`` to ``0`` when initialising your ``DataLoader ``.
+To resolve this, set ``num_workers`` to ``0`` when initialising your ``DataLoader``.
 
 .. _`currently available interfaces`: https://grand-challenge.org/algorithms/interfaces/
