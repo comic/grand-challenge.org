@@ -18,6 +18,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
@@ -423,7 +424,11 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
     serializer_class = ArchiveSerializer
     queryset = Archive.objects.all()
     permission_classes = (DjangoObjectOnlyPermissions,)
-    filter_backends = (ObjectPermissionsFilter,)
+    filter_backends = (
+        DjangoFilterBackend,
+        ObjectPermissionsFilter,
+    )
+    filterset_fields = ("slug",)
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
