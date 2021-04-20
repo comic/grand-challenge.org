@@ -172,25 +172,22 @@
                     <dd class="col-sm-9">
                         <ul class="list-unstyled mb-0">
                             {% for output in object.outputs.all %}
-                                {% for file in output.image.files.all %}
-                                    <li>
-                                        <a class="badge badge-primary"
-                                           href="{{ file.file.url }}">
-                                            <i class="fa fa-download"></i>
-                                            Output {{ forloop.parentloop.counter }} {{ file.image.name|stem }}
-                                            ({{ file.file|suffix }})
-                                        </a>
-                                    </li>
-                                {% endfor %}
                                 {% if output.file %}
-                                    <li>
-                                        <a class="badge badge-primary"
-                                           href="{{ output.file.url }}" download="{{ output.file.name|name }}">
-                                            <i class="fa fa-download"></i>
-                                            Output {{ forloop.parentloop.counter }} {{ output.file.name|stem }}
-                                            ({{ output.file|suffix }})
-                                        </a>
-                                    </li>
+                                  <li>
+                                    <a class="badge badge-primary"
+                                       href="{{ output.file.url }}">
+                                        <i class="fa fa-download"></i> {{ output.interface.title }}
+                                    </a>
+                                </li>
+                                {% elif output.image %}
+                                    {% for file in output.image.files.all %}
+                                        <li>
+                                            <a class="badge badge-primary" href="{{ file.file.url }}">
+                                                <i class="fa fa-download"></i>
+                                                {{ output.interface.title }}{% if forloop.first and forloop.last %}{%else %} ({{forloop.counter }}){% endif %}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
                                 {% endif %}
                             {% empty %}
                                 <li>
