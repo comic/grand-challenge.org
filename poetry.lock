@@ -407,6 +407,17 @@ nested = ["django-nested-admin (>=3.0.21)"]
 tags = ["django-taggit"]
 
 [[package]]
+name = "django-capture-on-commit-callbacks"
+version = "1.4.0"
+description = "Capture and make assertions on transaction.on_commit() callbacks."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+Django = ">=2.2"
+
+[[package]]
 name = "django-celery-beat"
 version = "2.2.0"
 description = "Database-backed Periodic Tasks."
@@ -2114,7 +2125,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "494e46c127dfd20deb60a38277ac2f776d0f625bb7a3815c9b489a8f4fab03d8"
+content-hash = "678bcbbd3281e5be7bae6cb14d20d61b6ac92acf2c04a33016b02a2a978fb7de"
 
 [metadata.files]
 alabaster = [
@@ -2354,6 +2365,10 @@ django-appconf = [
 ]
 django-autocomplete-light = [
     {file = "django-autocomplete-light-3.8.1.tar.gz", hash = "sha256:4e84a6d95d272b0d7221614332e2bd54ffff15ec06e78947279398f6507ce225"},
+]
+django-capture-on-commit-callbacks = [
+    {file = "django-capture-on-commit-callbacks-1.4.0.tar.gz", hash = "sha256:03c8213286eafebbcaa306394434e4bb5178953e59f19481006e697daaacdad3"},
+    {file = "django_capture_on_commit_callbacks-1.4.0-py3-none-any.whl", hash = "sha256:4628cc795b6ba0ba970ecf07004cf7b9250136f910eb620f6981bcec73152c0d"},
 ]
 django-celery-beat = [
     {file = "django-celery-beat-2.2.0.tar.gz", hash = "sha256:b8a13afb15e7c53fc04f4f847ac71a6d32088959aba701eb7c4a59f0c28ba543"},

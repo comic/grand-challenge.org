@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.reader_studies.models import Answer, Question
 from tests.cases_tests.factories import (
@@ -1048,15 +1049,16 @@ def test_assign_answer_image(client, settings, answer_type):
     )
     RawImageFileFactory(upload_session=us, staged_file_id=f.file_id)
 
-    response = get_view_for_user(
-        viewname="api:upload-session-process-images",
-        reverse_kwargs={"pk": us.pk},
-        user=reader,
-        client=client,
-        method=client.patch,
-        data={"answer": str(answer.pk)},
-        content_type="application/json",
-    )
+    with capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:upload-session-process-images",
+            reverse_kwargs={"pk": us.pk},
+            user=reader,
+            client=client,
+            method=client.patch,
+            data={"answer": str(answer.pk)},
+            content_type="application/json",
+        )
 
     assert response.status_code == 200
 

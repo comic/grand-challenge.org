@@ -3,6 +3,7 @@ from statistics import mean, median
 
 from celery import shared_task
 from django.apps import apps
+from django.db.transaction import on_commit
 
 from grandchallenge.evaluation.utils import Metric, rank_results
 
@@ -61,7 +62,7 @@ def set_evaluation_inputs(evaluation_pk, job_pks):
         )
 
         evaluation.inputs.set([civ])
-        evaluation.signature.apply_async()
+        on_commit(evaluation.signature.apply_async)
 
 
 def filter_by_creators_most_recent(*, evaluations):

@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.tasks import validate_docker_image
@@ -36,9 +37,10 @@ def test_submission_evaluation(
         _ = method.image.url
 
     # This will create an evaluation, and we'll wait for it to be executed
-    submission = SubmissionFactory(
-        predictions_file__from_path=submission_file, phase=method.phase
-    )
+    with capture_on_commit_callbacks(execute=True):
+        submission = SubmissionFactory(
+            predictions_file__from_path=submission_file, phase=method.phase
+        )
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
@@ -56,12 +58,13 @@ def test_submission_evaluation(
     )
 
     # Try with a csv file
-    submission = SubmissionFactory(
-        predictions_file__from_path=Path(__file__).parent
-        / "resources"
-        / "submission.csv",
-        phase=method.phase,
-    )
+    with capture_on_commit_callbacks(execute=True):
+        submission = SubmissionFactory(
+            predictions_file__from_path=Path(__file__).parent
+            / "resources"
+            / "submission.csv",
+            phase=method.phase,
+        )
 
     assert len(submission.evaluation_set.all()) == 1
     assert (

@@ -1,4 +1,5 @@
 from django.db.models.signals import m2m_changed
+from django.db.transaction import on_commit
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -50,9 +51,12 @@ def update_image_permissions(instance, action, reverse, model, pk_set, **_):
 def assign_score(instance, action, reverse, model, pk_set, **_):
     if action != "post_add":
         return
-    add_scores.apply_async(
-        kwargs={
-            "instance_pk": str(instance.pk),
-            "pk_set": list(map(str, pk_set)),
-        }
+
+    on_commit(
+        lambda: add_scores.apply_async(
+            kwargs={
+                "instance_pk": str(instance.pk),
+                "pk_set": list(map(str, pk_set)),
+            }
+        )
     )

@@ -3,6 +3,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
+from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -42,7 +43,7 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
             group(on_chord_error.s(job_pk=job_pk))
         )
 
-    start_jobs.apply_async()
+    on_commit(start_jobs.apply_async)
 
 
 @shared_task(bind=True)
@@ -69,7 +70,7 @@ def on_chord_error(self, task_id, *args, **kwargs):
         status=job.FAILURE, error_message=error_message,
     )
 
-    linked_task.apply_async()
+    on_commit(linked_task.apply_async)
 
 
 @shared_task
@@ -116,12 +117,10 @@ def execute_algorithm_job_for_inputs(*, job_pk):
                 f" {list(c.interface.title for c in missing_inputs)}"
             ),
         )
-        linked_task.apply_async()
-        return
-
-    workflow = job.signature | linked_task
-
-    return workflow.apply_async()
+        on_commit(linked_task.apply_async)
+    else:
+        workflow = job.signature | linked_task
+        on_commit(workflow.apply_async)
 
 
 @shared_task
@@ -234,7 +233,7 @@ def execute_jobs(
             linked_task.kwargs.update({"job_pks": [j.pk for j in jobs]})
             workflow |= linked_task
 
-        return workflow.apply_async()
+        on_commit(workflow.apply_async)
 
 
 def create_algorithm_job_with_inputs(

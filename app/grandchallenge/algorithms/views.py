@@ -10,6 +10,7 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.core.files import File
+from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -487,7 +488,7 @@ class AlgorithmExperimentCreate(
             kwargs={"job_pk": job.pk, "upload_pks": upload_pks},
             immutable=True,
         )
-        run_job.apply_async()
+        on_commit(run_job.apply_async)
 
         return HttpResponseRedirect(
             reverse(

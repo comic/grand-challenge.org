@@ -1,6 +1,7 @@
 from unittest.mock import call
 
 import pytest
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
 from tests.algorithms_tests.factories import AlgorithmFactory
@@ -91,8 +92,9 @@ def test_adding_images_triggers_task(reverse, mocker):
 
     arch_set = TwoArchives()
 
-    arch_set.arch1.images.add(ImageFactory())
-    arch_set.arch2.images.add(ImageFactory())
+    with capture_on_commit_callbacks(execute=True):
+        arch_set.arch1.images.add(ImageFactory())
+        arch_set.arch2.images.add(ImageFactory())
 
     create_algorithm_jobs_for_archive.apply_async.assert_has_calls(
         [
@@ -120,7 +122,9 @@ def test_adding_images_triggers_task(reverse, mocker):
     )
 
     if not reverse:
-        arch_set.arch1.images.add(im1, im2, im3, im4)
+        with capture_on_commit_callbacks(execute=True):
+            arch_set.arch1.images.add(im1, im2, im3, im4)
+
         kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
             "kwargs"
         ]
@@ -129,12 +133,16 @@ def test_adding_images_triggers_task(reverse, mocker):
         assert {*kwargs["image_pks"]} == {im1.pk, im2.pk, im3.pk, im4.pk}
         create_algorithm_jobs_for_archive.apply_async.reset_mock()
 
-        arch_set.arch1.images.remove(im3, im4)
-        arch_set.arch1.images.clear()
+        with capture_on_commit_callbacks(execute=True):
+            arch_set.arch1.images.remove(im3, im4)
+            arch_set.arch1.images.clear()
+
         create_algorithm_jobs_for_archive.apply_async.assert_not_called()
     else:
         for im in [im1, im2, im3, im4]:
-            im.archive_set.add(arch_set.arch1, arch_set.arch2)
+            with capture_on_commit_callbacks(execute=True):
+                im.archive_set.add(arch_set.arch1, arch_set.arch2)
+
             kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
                 "kwargs"
             ]
@@ -145,11 +153,14 @@ def test_adding_images_triggers_task(reverse, mocker):
             }
             assert {*kwargs["image_pks"]} == {im.pk}
             create_algorithm_jobs_for_archive.apply_async.reset_mock()
-        for im in [im3, im4]:
-            im.archive_set.remove(arch_set.arch1, arch_set.arch2)
-        for im in [im1, im2]:
-            im.archive_set.remove(arch_set.arch2)
-        im1.archive_set.clear()
+
+        with capture_on_commit_callbacks(execute=True):
+            for im in [im3, im4]:
+                im.archive_set.remove(arch_set.arch1, arch_set.arch2)
+            for im in [im1, im2]:
+                im.archive_set.remove(arch_set.arch2)
+            im1.archive_set.clear()
+
         create_algorithm_jobs_for_archive.apply_async.assert_not_called()
 
 
@@ -163,8 +174,9 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
 
     arch_set = TwoArchives()
 
-    arch_set.arch1.algorithms.add(AlgorithmFactory())
-    arch_set.arch2.algorithms.add(AlgorithmFactory())
+    with capture_on_commit_callbacks(execute=True):
+        arch_set.arch1.algorithms.add(AlgorithmFactory())
+        arch_set.arch2.algorithms.add(AlgorithmFactory())
 
     create_algorithm_jobs_for_archive.apply_async.assert_has_calls(
         [
@@ -191,7 +203,9 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
     )
 
     if not reverse:
-        arch_set.arch1.algorithms.add(*algorithms)
+        with capture_on_commit_callbacks(execute=True):
+            arch_set.arch1.algorithms.add(*algorithms)
+
         kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
             "kwargs"
         ]
@@ -200,12 +214,16 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
         assert {*kwargs["algorithm_pks"]} == {a.pk for a in algorithms}
         create_algorithm_jobs_for_archive.apply_async.reset_mock()
 
-        arch_set.arch1.algorithms.remove(algorithms[0], algorithms[1])
-        arch_set.arch1.algorithms.clear()
+        with capture_on_commit_callbacks(execute=True):
+            arch_set.arch1.algorithms.remove(algorithms[0], algorithms[1])
+            arch_set.arch1.algorithms.clear()
+
         create_algorithm_jobs_for_archive.apply_async.assert_not_called()
     else:
         for alg in algorithms:
-            alg.archive_set.add(arch_set.arch1, arch_set.arch2)
+            with capture_on_commit_callbacks(execute=True):
+                alg.archive_set.add(arch_set.arch1, arch_set.arch2)
+
             kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
                 "kwargs"
             ]
@@ -216,9 +234,12 @@ def test_adding_algorithms_triggers_task(reverse, mocker):
             }
             assert {*kwargs["algorithm_pks"]} == {alg.pk}
             create_algorithm_jobs_for_archive.apply_async.reset_mock()
-        for im in algorithms[-2:]:
-            im.archive_set.remove(arch_set.arch1, arch_set.arch2)
-        for im in algorithms[:2]:
-            im.archive_set.remove(arch_set.arch2)
-        algorithms[0].archive_set.clear()
+
+        with capture_on_commit_callbacks(execute=True):
+            for im in algorithms[-2:]:
+                im.archive_set.remove(arch_set.arch1, arch_set.arch2)
+            for im in algorithms[:2]:
+                im.archive_set.remove(arch_set.arch2)
+            algorithms[0].archive_set.clear()
+
         create_algorithm_jobs_for_archive.apply_async.assert_not_called()

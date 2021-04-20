@@ -1,4 +1,5 @@
 from django.test import TestCase, override_settings
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import AlgorithmImageFactory
@@ -19,9 +20,10 @@ class TestSubmission(TestCase):
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_algorithm_submission_creates_one_job_per_test_set_image(self):
-        SubmissionFactory(
-            phase=self.method.phase, algorithm_image=self.algorithm_image,
-        )
+        with capture_on_commit_callbacks(execute=True):
+            SubmissionFactory(
+                phase=self.method.phase, algorithm_image=self.algorithm_image,
+            )
 
         assert Job.objects.count() == 2
         assert [
@@ -30,9 +32,10 @@ class TestSubmission(TestCase):
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_create_evaluation_is_idempotent(self):
-        s = SubmissionFactory(
-            phase=self.method.phase, algorithm_image=self.algorithm_image,
-        )
-        s.create_evaluation()
+        with capture_on_commit_callbacks(execute=True):
+            s = SubmissionFactory(
+                phase=self.method.phase, algorithm_image=self.algorithm_image,
+            )
+            s.create_evaluation()
 
         assert Job.objects.count() == 2

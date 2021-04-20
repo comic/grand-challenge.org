@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.factories import ImageFactory, UserFactory
@@ -178,10 +179,11 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
     r1, r2 = rs.readers_group.user_set.all()
     e = rs.editors_group.user_set.first()
 
-    for question in rs.questions.all():
-        for im in rs.images.all():
-            ans = AnswerFactory(question=question, creator=r1, answer=True)
-            ans.images.add(im)
+    with capture_on_commit_callbacks(execute=True):
+        for question in rs.questions.all():
+            for im in rs.images.all():
+                ans = AnswerFactory(question=question, creator=r1, answer=True)
+                ans.images.add(im)
 
     leaderboard = rs.leaderboard
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
@@ -193,12 +195,13 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
     assert user_score["score__sum"] == 6.0
     assert user_score["score__avg"] == 1.0
 
-    for i, question in enumerate(rs.questions.all()):
-        for j, im in enumerate(rs.images.all()):
-            ans = AnswerFactory(
-                question=question, creator=r2, answer=(i + j) % 2 == 0
-            )
-            ans.images.add(im)
+    with capture_on_commit_callbacks(execute=True):
+        for i, question in enumerate(rs.questions.all()):
+            for j, im in enumerate(rs.images.all()):
+                ans = AnswerFactory(
+                    question=question, creator=r2, answer=(i + j) % 2 == 0
+                )
+                ans.images.add(im)
 
     del rs.scores_by_user
     del rs.leaderboard
@@ -213,10 +216,11 @@ def test_leaderboard(reader_study_with_gt, settings):  # noqa: C901
         assert user_score["score__sum"] == 3.0
         assert user_score["score__avg"] == 0.5
 
-    for question in rs.questions.all():
-        for im in rs.images.all():
-            ans = AnswerFactory(question=question, creator=e, answer=True)
-            ans.images.add(im)
+    with capture_on_commit_callbacks(execute=True):
+        for question in rs.questions.all():
+            for im in rs.images.all():
+                ans = AnswerFactory(question=question, creator=e, answer=True)
+                ans.images.add(im)
 
     del rs.scores_by_user
     del rs.leaderboard
@@ -242,10 +246,11 @@ def test_statistics(reader_study_with_gt, settings):
 
     rs_questions = rs.questions.values_list("question_text", flat=True)
 
-    for question in rs.questions.all():
-        for im in rs.images.all():
-            ans = AnswerFactory(question=question, creator=r1, answer=True)
-            ans.images.add(im)
+    with capture_on_commit_callbacks(execute=True):
+        for question in rs.questions.all():
+            for im in rs.images.all():
+                ans = AnswerFactory(question=question, creator=r1, answer=True)
+                ans.images.add(im)
 
     statistics = rs.statistics
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
@@ -268,11 +273,14 @@ def test_statistics(reader_study_with_gt, settings):
         assert score["score__avg"] == 1.0
     assert images == set()
 
-    for question in rs.questions.all():
-        for im in rs.images.all():
-            answer = question.question_text == "q1" and im.name == "im1"
-            ans = AnswerFactory(question=question, creator=r2, answer=answer)
-            ans.images.add(im)
+    with capture_on_commit_callbacks(execute=True):
+        for question in rs.questions.all():
+            for im in rs.images.all():
+                answer = question.question_text == "q1" and im.name == "im1"
+                ans = AnswerFactory(
+                    question=question, creator=r2, answer=answer
+                )
+                ans.images.add(im)
 
     del rs.statistics
     statistics = rs.statistics
@@ -306,12 +314,13 @@ def test_score_for_user(reader_study_with_gt, settings):
     rs = reader_study_with_gt
     r1 = rs.readers_group.user_set.first()
 
-    for i, question in enumerate(rs.questions.all()):
-        for j, im in enumerate(rs.images.all()):
-            ans = AnswerFactory(
-                question=question, creator=r1, answer=(i + j) % 2 == 0
-            )
-            ans.images.add(im)
+    with capture_on_commit_callbacks(execute=True):
+        for i, question in enumerate(rs.questions.all()):
+            for j, im in enumerate(rs.images.all()):
+                ans = AnswerFactory(
+                    question=question, creator=r1, answer=(i + j) % 2 == 0
+                )
+                ans.images.add(im)
 
     score = rs.score_for_user(r1)
     assert Answer.objects.filter(is_ground_truth=False).count() == 6

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.transaction import on_commit
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.algorithms.models import (
@@ -21,7 +22,7 @@ def requeue_jobs(modeladmin, request, queryset):
     """
     queryset.update(status=Job.RETRY)
     for job in queryset:
-        job.signature.apply_async()
+        on_commit(job.signature.apply_async)
 
 
 requeue_jobs.short_description = "Requeue selected jobs"

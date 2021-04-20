@@ -2,6 +2,7 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.test import TestCase
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import get_groups_with_perms, get_users_with_perms
 
 from grandchallenge.evaluation.models import (
@@ -197,8 +198,9 @@ class TestEvaluationPermissions:
         settings.task_eager_propagates = (True,)
         settings.task_always_eager = (True,)
 
-        e.submission.phase.challenge.hidden = True
-        e.submission.phase.challenge.save()
+        with capture_on_commit_callbacks(execute=True):
+            e.submission.phase.challenge.hidden = True
+            e.submission.phase.challenge.save()
 
         assert get_groups_with_set_perms(e) == {
             e.submission.phase.challenge.admins_group: {
@@ -232,8 +234,9 @@ class TestEvaluationPermissions:
         settings.task_eager_propagates = (True,)
         settings.task_always_eager = (True,)
 
-        e.submission.phase.challenge.hidden = False
-        e.submission.phase.challenge.save()
+        with capture_on_commit_callbacks(execute=True):
+            e.submission.phase.challenge.hidden = False
+            e.submission.phase.challenge.save()
 
         assert get_groups_with_set_perms(e) == {
             e.submission.phase.challenge.admins_group: {
