@@ -1,20 +1,20 @@
 
-function handle_nav_tab_dropdown() {
+function handleNavTabDropdown() {
     if (window.innerWidth < 576) {
         // 576 px is the bootstrap breakpoint for sm
-        navs_to_dropdown(false, true);
+        navsToDropdown(false, true);
     } else if (window.innerWidth < 992) {
         // 992 px is the bootstrap breakpoint for lg
-        navs_to_dropdown();
+        navsToDropdown();
     } else {
-        navs_to_dropdown(true);
-        }
+        navsToDropdown(true);
+    }
 }
 
-function navs_to_dropdown(reverse = false, horiz_page_pills = false) {
+function navsToDropdown(reverse = false, horizPagePills = false) {
     // Get all elements that need to change class
     const containers = document.querySelectorAll('.nav-tab-dropdown-container,.nav-pill-dropdown-container');
-    const page_containers = document.getElementsByClassName("nav-pill-pages-container");
+    const pageContainers = document.getElementsByClassName("nav-pill-pages-container");
 
     const ulDropdownClasses = ["dropdown-menu", "dropdown-menu-left"];
     const ulTabClasses = ["nav", "nav-tabs", "border-0"];
@@ -24,21 +24,21 @@ function navs_to_dropdown(reverse = false, horiz_page_pills = false) {
     const ulHorizPagePillClasses = ["d-flex", "align-items-stretch", "mb-3"];
     const ulVertPagePillClasses = ["flex-column"];
 
-    for (let page_container of page_containers) {
-        let ul_pages  = page_container.querySelector("ul");
+    for (const pageContainer of pageContainers) {
+        const ulPages  = pageContainer.querySelector("ul");
 
-        if (horiz_page_pills === true) {
-            ul_pages.classList.remove(...ulVertPagePillClasses);
-            ul_pages.classList.add(...ulHorizPagePillClasses);
+        if (horizPagePills === true) {
+            ulPages.classList.remove(...ulVertPagePillClasses);
+            ulPages.classList.add(...ulHorizPagePillClasses);
         } else {
-            ul_pages.classList.add(...ulVertPagePillClasses);
-            ul_pages.classList.remove(...ulHorizPagePillClasses);
+            ulPages.classList.add(...ulVertPagePillClasses);
+            ulPages.classList.remove(...ulHorizPagePillClasses);
         }
     }
 
     // Change the classes
-    for (let container of containers) {
-        let ul  = container.querySelector("ul");
+    for (const container of containers) {
+        const ul  = container.querySelector("ul");
 
         if (reverse === true) {
             container.classList.remove("dropdown");
@@ -49,8 +49,7 @@ function navs_to_dropdown(reverse = false, horiz_page_pills = false) {
             } else if (container.classList.contains("nav-pill-dropdown-container")) {
                 ul.classList.add(...ulPillClasses);
             }
-        }
-        else {
+        } else {
             container.classList.add("dropdown");
             ul.classList.add(...ulDropdownClasses);
 
@@ -61,9 +60,9 @@ function navs_to_dropdown(reverse = false, horiz_page_pills = false) {
             }
         }
 
-        let items = container.querySelectorAll("li");
+        const items = container.querySelectorAll("li");
 
-        for (let item of items) {
+        for (const item of items) {
             if (reverse === true) {
                 item.classList.add(...itemTabPillClasses);
                 item.classList.remove(...itemDropdownClasses);
@@ -73,9 +72,8 @@ function navs_to_dropdown(reverse = false, horiz_page_pills = false) {
             }
         }
     }
-
 }
 
-window.addEventListener('resize', handle_nav_tab_dropdown);
+window.addEventListener('resize', handleNavTabDropdown);
 
-handle_nav_tab_dropdown();
+handleNavTabDropdown();
