@@ -46,7 +46,6 @@
                        aria-expanded="false"><i class="fas fa-bars"></i></a>
                     <ul class="nav nav-tabs border-0">
                         <li class="nav-item">
-                            <! -- Todo: Adjust the view_name before merging with master (include the page_title slug)-->
                             <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
                                href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
                                 Info
