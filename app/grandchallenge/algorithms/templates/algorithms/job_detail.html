@@ -319,7 +319,7 @@
             let modal = $(this);
             const json_element = document.getElementById(button.data('pk'));
             if (json_element) {
-                modal.find('.modal-job-output').html(JSON.parse(json_element.textContent));
+                modal.find('.modal-job-output').text(json_element.textContent);
             } else {
                 modal.find('.modal-job-output').text(button.data('output'));
             }
