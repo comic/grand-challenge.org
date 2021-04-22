@@ -390,7 +390,6 @@ class EvaluationList(
         phase_list = []
         for eval in self.object_list:
             phase_list.append(eval.submission.phase.slug)
-
         context.update({"phase_list": phase_list})
         return context
 
