@@ -385,6 +385,15 @@ class EvaluationList(
                 Q(submission__creator__pk=self.request.user.pk)
             )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        phase_list = []
+        for eval in self.object_list:
+            phase_list.append(eval.submission.phase.slug)
+
+        context.update({"phase_list": phase_list})
+        return context
+
 
 class EvaluationDetail(ObjectPermissionRequiredMixin, DetailView):
     model = Evaluation
