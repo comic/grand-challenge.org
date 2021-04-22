@@ -191,6 +191,10 @@ class ContactPage(TemplateView):
     template_name = "products/contact.html"
 
 
+class ProjectAirPage(TemplateView):
+    template_name = "products/project_air.html"
+
+
 class ImportDataView(PermissionRequiredMixin, FormView):
     template_name = "products/import_data.html"
     form_class = ImportForm

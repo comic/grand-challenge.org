@@ -8,6 +8,7 @@ from grandchallenge.products.views import (
     ImportDataView,
     ProductDetail,
     ProductList,
+    ProjectAirPage,
 )
 
 app_name = "products"
@@ -17,6 +18,7 @@ urlpatterns = [
     path("companies/", CompanyList.as_view(), name="company-list"),
     path("about/", AboutPage.as_view(), name="about"),
     path("contact/", ContactPage.as_view(), name="contact"),
+    path("project-air/", ProjectAirPage.as_view(), name="project-air"),
     path("product/<slug>/", ProductDetail.as_view(), name="product-detail"),
     path("company/<slug>/", CompanyDetail.as_view(), name="company-detail"),
     path("import-data/", ImportDataView.as_view(), name="import-data"),

@@ -19,7 +19,7 @@
         <ul class="navbar-nav mr-auto">
           {% for item in items %}
             <li class="nav-item">
-              <a href="{% url 'products:'|add:item.url %}" class="nav-link {% if item.active %}text-radboud{% endif %}"><i class="fa {{ item.icon }} fa-fw mr-1"></i>{{ item.title }}</a>
+              <a href="{% url 'products:'|add:item.url %}" class="nav-link mr-4 {% if item.active %}text-radboud{% endif %}">{{ item.title }}</a>
             </li>
           {% endfor %}
         </ul>
