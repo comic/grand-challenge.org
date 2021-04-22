@@ -13,9 +13,7 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a
-                href="{% url 'challenges:list' %}">Challenges</a>
-        </li>
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
@@ -27,42 +25,62 @@
     </ol>
 {% endblock %}
 
+{% block sidebar %}
+    <div class="nav-pill-pages-container col-12 col-sm-5 col-md-4 col-lg-3 pl-3">
+          <ul class="nav nav-pills flex-column">
+            {% for page in pages %}
+                {% if not page.hidden %}
+                    <li class="nav-item">
+                        <a class="nav-link px-4 py-1 mb-1 {% if page == currentpage %}active{% endif %}"
+                           href="{{ page.get_absolute_url }}">
+                            {% filter title %}
+                                {% firstof page.display_title page.title %}
+                            {% endfilter %}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+          </ul>
+    </div>
+{% endblock %}
+
 {% block content %}
-    {% if challenge.disclaimer %}
-        <div class="disclaimer alert alert-warning" role="alert">
-            {{ challenge.disclaimer|clean }}
-        </div>
-    {% endif %}
+    <div class="mx-3">
+        {% if challenge.disclaimer %}
+            <div class="disclaimer alert alert-warning" role="alert">
+                {{ challenge.disclaimer|clean }}
+            </div>
+        {% endif %}
 
-    <div id=pageContainer>{{ currentpage.cleaned_html }}</div>
+        <div id=pageContainer>{{ currentpage.cleaned_html }}</div>
 
-    {% if not currentpage.is_error_page %}
-        {% if currentpage.pk %}
-            {% if "change_challenge" in challenge_perms %}
-                <br>
-                <a class="btn btn-primary"
-                   href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}"
-                   title="Edit this page"
-                >
-                    <i class="fas fa-edit"></i>
-                </a>
+        {% if not currentpage.is_error_page %}
+            {% if currentpage.pk %}
+                {% if "change_challenge" in challenge_perms %}
+                    <br>
+                    <a class="btn btn-primary"
+                       href="{% url 'pages:update' challenge_short_name=currentpage.challenge.short_name page_title=currentpage.title %}"
+                       title="Edit this page"
+                    >
+                        <i class="fas fa-edit"></i>
+                    </a>
+                {% endif %}
             {% endif %}
         {% endif %}
-    {% endif %}
+    </div>
 {% endblock %}
+
 
 {% block script %}
     {{ block.super }}
     {# For displaying equations on the site, the safe config is important #}
     <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
             async></script>
-
     {# geocharts #}
     <script type="text/javascript"
             src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript"
             src="{% static "js/render_geocharts.js" %}"></script>
-
     {# make the tables sortable #}
     <script type="text/javascript"
             src="{% static "js/sort_tables.js" %}"></script>

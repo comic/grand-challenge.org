@@ -20,8 +20,33 @@
     </ol>
 {% endblock %}
 
-{% block content %}
+{% block topbar2 %}
+    <div class="nav-pill-dropdown-container">
+        <a class="d-lg-none btn btn-outline-dark dropdown-toggle phaseButton mr-1 mb-3 px-4"
+           data-toggle="dropdown"
+           href="#"
+           role="button"
+           aria-expanded="false">
+            Choose a Phase</a>
+        {% if "change_challenge" in challenge_perms or user_is_participant %}
+            <ul class="nav nav-pills col-12 mb-3">
+                {% for phase in challenge.phase_set.all %}
+                    <li class="nav-item">
+                        <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:submission-create-legacy' and request.resolver_match.kwargs.slug == phase.slug%}active{% endif %}"
+                           href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+                    </li>
+                {% endfor %}
+                <li class="nav-item">
+                    <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+                       href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Your Submissions
+                    </a>
+                </li>
+            </ul>
+        {% endif %}
+    </div>
+{% endblock %}
 
+{% block content %}
     <h2>{{ phase.title }} Submission</h2>
 
     {{ phase.submission_page_html|clean }}
@@ -84,12 +109,4 @@
         {% endif %}
 
     {% endif %}
-
-    <h3>View your submissions</h3>
-
-    <p>
-        <a href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Click
-            here</a>
-        to view your current submissions to this challenge.</p>
-
 {% endblock %}
