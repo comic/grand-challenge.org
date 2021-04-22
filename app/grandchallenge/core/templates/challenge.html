@@ -65,7 +65,7 @@
                             {% if challenge.use_teams %}
                                 {% if "change_challenge" in challenge_perms or user_is_participant %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if request.resolver_match.view_name == 'teams:list' or request.resolver_match.view_name == 'teams:create' or request.resolver_match.view_name == 'teams:detail' or request.resolver_match.view_name == 'teams:update' or request.resolver_match.view_name == 'teams:delete'%}active{% endif %}"
+                                        <a class="nav-link {% if request.resolver_match.app_name == 'teams' %}active{% endif %}"
                                            href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a>
                                     </li>
                                 {% endif %}
