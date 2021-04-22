@@ -98,6 +98,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_window_level_tool",
             "show_reset_tool",
             "enabled_preprocessors",
+            "client_rendered_sidebar",
         ]
 
     def get_enabled_preprocessors(self, obj):

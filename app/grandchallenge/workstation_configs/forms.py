@@ -35,6 +35,7 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
             "show_window_level_tool",
             "show_reset_tool",
             "enable_contrast_enhancement",
+            "client_rendered_sidebar",
         )
         widgets = {
             "overlay_segments": JSONEditorWidget(

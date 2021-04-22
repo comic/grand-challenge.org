@@ -240,6 +240,9 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         default=False,
         verbose_name="Enable contrast enhancement preprocessing (fundus)",
     )
+    client_rendered_sidebar = models.BooleanField(
+        default=True, help_text="Use client side rendering for the side bar"
+    )
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")
