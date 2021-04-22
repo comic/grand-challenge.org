@@ -65,7 +65,7 @@
                             {% if challenge.use_teams %}
                                 {% if "change_challenge" in challenge_perms or user_is_participant %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if request.resolver_match.view_name == 'teams:list' %}active{% endif %}"
+                                        <a class="nav-link {% if request.resolver_match.app_name == 'teams' %}active{% endif %}"
                                            href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">Teams</a>
                                     </li>
                                 {% endif %}
@@ -78,13 +78,13 @@
                                         Submit</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
+                                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
                                        href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
                                         Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                                 </li>
                             {% elif not challenge.hidden %}
                                 <li class="nav-item">
-                                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' %}active{% endif %}"
+                                    <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
                                        href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
                                         Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                                 </li>

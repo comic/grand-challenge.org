@@ -132,7 +132,7 @@ ul.socialaccount_providers > li {
     border-top: 0 transparent;
     border-right: 0 transparent;
     border-left: 0 transparent;
-    border-bottom: 4px transparent;
+    border-bottom: 4px solid transparent;
 }
 
 .nav-tabs > .nav-item > .nav-link:hover {
