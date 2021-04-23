@@ -183,7 +183,7 @@ class Command(BaseCommand):
             short_name="demo",
             description="demo project",
             creator=self.users["demo"],
-            use_evaluation=True,
+            use_workspaces=True,
             hidden=False,
             display_forum_link=True,
         )

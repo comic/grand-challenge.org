@@ -288,8 +288,9 @@ class Challenge(ChallengeBase):
             "a data usage agreement here. You can use HTML markup here."
         ),
     )
+    use_workspaces = models.BooleanField(default=False)
     use_evaluation = models.BooleanField(
-        default=False,
+        default=True,
         help_text=(
             "If true, use the automated evaluation system. See the evaluation "
             "page created in the Challenge site."

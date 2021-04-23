@@ -13,8 +13,8 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workspaces.crypters import FernetCrypter
 
 
-class ProviderChoices(models.IntegerChoices):
-    INTERNAL = 0, "internal"  # Lower case as this is the provider id
+class ProviderChoices(models.TextChoices):
+    INTERNAL = "INTERNAL", "Internal"
 
 
 class WorkbenchToken(models.Model):
@@ -26,7 +26,8 @@ class WorkbenchToken(models.Model):
     )
     email = models.EmailField(editable=False)
     _token = models.TextField(db_column="token", editable=False)
-    provider = models.PositiveSmallIntegerField(
+    provider = models.CharField(
+        max_length=8,
         choices=ProviderChoices.choices,
         default=ProviderChoices.INTERNAL,
         editable=False,
@@ -54,17 +55,17 @@ class WorkbenchToken(models.Model):
             raise RuntimeError("WORKBENCH_SECRET_KEY is not set")
 
 
-class WorkspaceKindChoices(models.IntegerChoices):
-    SAGEMAKER_NOTEBOOK = 0, "SageMaker Notebook"
-    EC2_LINUX = 1, "EC2 Linux"
+class WorkspaceKindChoices(models.TextChoices):
+    SAGEMAKER_NOTEBOOK = "SAGEMAKER_NOTEBOOK", "SageMaker Notebook"
+    EC2_LINUX = "EC2_LINUX", "EC2 Linux"
 
 
 class WorkspaceType(models.Model):
     name = models.CharField(max_length=32)
     product_id = models.CharField(max_length=32)
     provisioning_artefact_id = models.CharField(max_length=32)
-    kind = models.PositiveSmallIntegerField(
-        choices=WorkspaceKindChoices.choices
+    kind = models.CharField(
+        max_length=18, choices=WorkspaceKindChoices.choices
     )
 
     @property
@@ -78,8 +79,8 @@ class WorkspaceTypeConfiguration(models.Model):
     )
     instance_type = models.CharField(max_length=16)
     auto_stop_time = models.PositiveSmallIntegerField(default=10)
-    kind = models.PositiveSmallIntegerField(
-        choices=WorkspaceKindChoices.choices
+    kind = models.CharField(
+        max_length=18, choices=WorkspaceKindChoices.choices
     )
     enabled_phases = models.ManyToManyField(
         Phase, blank=True, related_name="enabled_workspace_type_configurations"

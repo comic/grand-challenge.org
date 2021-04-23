@@ -18,6 +18,10 @@
     </ol>
 {% endblock %}
 
+{% block topbar2 %}
+    {% include "evaluation/partials/phase_navbar.html" with workspaces_nav=True %}
+{% endblock %}
+
 {% block content %}
     <h2>Create a Workspace</h2>
 

@@ -144,9 +144,7 @@ def _authorise(*, client, auth):
     configs = response.json()
 
     # get the auth provider url
-    auth_configs = [
-        c for c in configs if c["id"] == auth.get_provider_display()
-    ]
+    auth_configs = [c for c in configs if c["id"] == auth.provider.lower()]
 
     if len(auth_configs) != 1:
         raise ValueError(
