@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.transaction import on_commit
+from guardian.shortcuts import assign_perm
 
 from config.celery import celery_app
 from grandchallenge.core.models import UUIDModel
@@ -213,6 +214,7 @@ class Workspace(UUIDModel):
                     "grandchallenge.workspaces.tasks.create_workspace"
                 ).apply_async(kwargs={"workspace_pk": self.pk})
             )
+            assign_perm("view_workspace", self, self.user)
 
     @property
     def animate(self):

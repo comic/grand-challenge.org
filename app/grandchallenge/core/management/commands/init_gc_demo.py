@@ -16,6 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile, File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.management import BaseCommand
+from guardian.shortcuts import assign_perm
 from knox import crypto
 from knox.models import AuthToken
 from knox.settings import CONSTANTS
@@ -202,6 +203,9 @@ class Command(BaseCommand):
         Phase.objects.create(challenge=demo, title="Phase 2")
 
         for phase_num, phase in enumerate(demo.phase_set.all()):
+
+            assign_perm("create_phase_workspace", self.users["demop"], phase)
+
             phase.score_title = "Accuracy ± std"
             phase.score_jsonpath = "acc.mean"
             phase.score_error_jsonpath = "acc.std"
