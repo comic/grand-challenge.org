@@ -1,0 +1,34 @@
+{% extends "challenge.html" %}
+{% load guardian_tags %}
+{% load url %}
+{% load bleach %}
+{% load static %}
+
+{% block title %}
+        Admin
+    - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">
+            Admin
+        </li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    <div class="nav-pill-pages-container col-12 col-sm-5 col-md-4 col-lg-3 pl-3">
+          <ul class="nav nav-pills flex-column">
+              <li class="nav-item">
+                  <a class="nav-link px-4 py-1 mb-1"
+                     href="{{ page.get_absolute_url }}">
+                  </a>
+              </li>
+          </ul>
+    </div>
+{% endblock %}
