@@ -37,7 +37,7 @@
 {% block topbar %}
     {% if challenge %}
         <div class="row mb-3 mx-0 border-bottom">
-            <div class="col-md-10 col-sm-8 col-6 px-0">
+            <div class="col-11 px-0">
                 <div class="nav-tab-dropdown-container">
                     <a class="d-lg-none btn btn-outline-dark mb-1"
                        data-toggle="dropdown"
@@ -92,7 +92,7 @@
                         {% endif %}
                         {% if "change_challenge" in challenge_perms %}
                             <div class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.view_name == 'pages:admin' or request.resolver_match.view_name == 'update' or request.resolver_match.view_name == 'pages:list' or request.resolver_match.view_name == 'admins:list' or request.resolver_match.view_name == 'participants:list' or request.resolver_match.view_name == 'participants:registration-list' or request.resolver_match.view_name == 'evaluation:phase-update' or request.resolver_match.view_name == 'evaluation:create' or request.resolver_match.view_name == 'evaluation:method-list' or request.resolver_match.view_name == 'evaluation:method-create' %}active{% endif %}"
+                            <a class="nav-link {% if request.resolver_match.view_name == 'pages:admin' or request.resolver_match.view_name == 'pages:update' or request.resolver_match.view_name == 'pages:delete' or request.resolver_match.view_name == 'pages:create' or request.resolver_match.view_name == 'update' or request.resolver_match.view_name == 'pages:list' or request.resolver_match.view_name == 'admins:list' or request.resolver_match.view_name == 'admins:update' or request.resolver_match.view_name == 'participants:list' or request.resolver_match.view_name == 'participants:registration-list' or request.resolver_match.view_name == 'evaluation:phase-update' or request.resolver_match.view_name == 'evaluation:create' or request.resolver_match.view_name == 'evaluation:method-list' or request.resolver_match.view_name == 'evaluation:method-create' %}active{% endif %}"
                                href="{% url 'pages:admin' challenge_short_name=challenge.short_name %}">
                                 <i class="fas fa-cog fa-fw"></i>
                                 Admin
@@ -103,7 +103,7 @@
                 </div>
             </div>
 
-            <div class="col-md-2 col-sm-4 col-6 py-0 px-0 d-flex justify-content-end">
+            <div class="col-1 py-0 px-0 d-flex justify-content-end">
                 {% if challenge.use_registration_page %}
                     <div>
                         <a class="btn btn-success"
