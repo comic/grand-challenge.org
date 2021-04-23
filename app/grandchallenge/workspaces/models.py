@@ -60,19 +60,6 @@ class WorkspaceKindChoices(models.TextChoices):
     EC2_LINUX = "EC2_LINUX", "EC2 Linux"
 
 
-class WorkspaceType(models.Model):
-    name = models.CharField(max_length=32)
-    product_id = models.CharField(max_length=32)
-    provisioning_artefact_id = models.CharField(max_length=32)
-    kind = models.CharField(
-        max_length=18, choices=WorkspaceKindChoices.choices
-    )
-
-    @property
-    def env_type_id(self):
-        return f"{self.product_id}-{self.provisioning_artefact_id}"
-
-
 class WorkspaceTypeConfiguration(models.Model):
     service_workbench_id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False

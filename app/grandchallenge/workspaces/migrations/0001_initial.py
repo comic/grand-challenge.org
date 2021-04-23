@@ -17,33 +17,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="WorkspaceType",
-            fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("name", models.CharField(max_length=32)),
-                ("product_id", models.CharField(max_length=32)),
-                ("provisioning_artefact_id", models.CharField(max_length=32)),
-                (
-                    "kind",
-                    models.CharField(
-                        choices=[
-                            ("SAGEMAKER_NOTEBOOK", "SageMaker Notebook"),
-                            ("EC2_LINUX", "EC2 Linux"),
-                        ],
-                        max_length=18,
-                    ),
-                ),
-            ],
-        ),
-        migrations.CreateModel(
             name="WorkspaceTypeConfiguration",
             fields=[
                 (
