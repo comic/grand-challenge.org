@@ -79,8 +79,8 @@ class ChallengeHome(PageDetail):
         return page
 
 
-class AdminHome(TemplateView):
-    template_name = "pages/admin_home.html"
+class ChallengeSettingsBase(TemplateView):
+    template_name = "pages/challenge-settings-base.html"
 
 
 class PageUpdate(
