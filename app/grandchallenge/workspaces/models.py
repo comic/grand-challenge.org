@@ -214,7 +214,7 @@ class Workspace(UUIDModel):
                     "grandchallenge.workspaces.tasks.create_workspace"
                 ).apply_async(kwargs={"workspace_pk": self.pk})
             )
-            assign_perm("view_workspace", self, self.user)
+            assign_perm("view_workspace", self.user, self)
 
     @property
     def animate(self):
