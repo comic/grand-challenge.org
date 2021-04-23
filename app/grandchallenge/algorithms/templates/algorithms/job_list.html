@@ -70,7 +70,10 @@
             let modal = $(this);
             const json_element = document.getElementById(button.data('pk'));
             if (json_element) {
-                modal.find('.modal-job-output').text(json_element.textContent);
+                {% comment %}
+                    json_element is created with the json_script filter and should be safe to set with the .html function
+                {% endcomment %}
+                modal.find('.modal-job-output').html(JSON.parse(json_element.textContent));
             } else {
                 modal.find('.modal-job-output').text(button.data('output'));
             }
