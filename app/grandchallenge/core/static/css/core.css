@@ -121,7 +121,7 @@ ul.socialaccount_providers > li {
 .nav-pills > li > .nav-link:hover {
     border-radius: 25px;
     color: #000;
-    background-color: #f0f0f0;
+    background-color: #ecf0f1;
 }
 .nav-pills > li > .nav-link.active {
     border-radius: 25px;
