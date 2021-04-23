@@ -5,6 +5,7 @@ from django.views.generic import (
     DeleteView,
     DetailView,
     ListView,
+    TemplateView,
     UpdateView,
 )
 
@@ -76,6 +77,10 @@ class ChallengeHome(PageDetail):
             )
 
         return page
+
+
+class ChallengeSettingsBase(TemplateView):
+    template_name = "pages/challenge-settings-base.html"
 
 
 class PageUpdate(
