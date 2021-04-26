@@ -176,6 +176,12 @@ class ChallengeUpdate(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    def get_success_url(self):
+        return reverse(
+            "update",
+            kwargs={"challenge_short_name": self.request.challenge.short_name},
+        )
+
 
 class ExternalChallengeCreate(
     UserIsStaffMixin, SuccessMessageMixin, CreateView
