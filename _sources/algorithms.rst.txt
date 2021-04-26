@@ -80,4 +80,22 @@ Often, this is due to using PyTorch ``DataLoaders``.
 These require using shared memory, which is not enabled on grand-challenge.org.
 To resolve this, set ``num_workers`` to ``0`` when initialising your ``DataLoader``.
 
+pthread_setaffinity_np failed errors with ONNX Runtime
+------------------------------------------------------
+
+Algorithms are limited to a select number of CPUs.
+Because of that ONNX Runtime does not have the permissions to automatically set the CPU affinities.
+To solve this create an InferenceSession by explicitly providing the number of threads via a SessionOptions instance. E.g.:
+
+.. code-block:: python
+
+    import onnxruntime
+
+    so = onnxruntime.SessionOptions()
+    so.inter_op_num_threads = 4
+    so.intra_op_num_threads = 2
+
+    session = onnxruntime.InferenceSession(model_file, sess_options=so)
+
+
 .. _`currently available interfaces`: https://grand-challenge.org/algorithms/interfaces/

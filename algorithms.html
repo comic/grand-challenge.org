@@ -104,6 +104,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#what-resources-are-available">What resources are available?</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#where-can-i-write-data">Where can I write data?</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#time-limit-exceeded-errors-with-pytorch">Time limit exceeded errors with PyTorch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pthread-setaffinity-np-failed-errors-with-onnx-runtime">pthread_setaffinity_np failed errors with ONNX Runtime</a></li>
 </ul>
 </li>
 </ul>
@@ -241,6 +242,21 @@ Sometimes, the algorithm will produce little to no output in the logs.
 Often, this is due to using PyTorch <code class="docutils literal notranslate"><span class="pre">DataLoaders</span></code>.
 These require using shared memory, which is not enabled on grand-challenge.org.
 To resolve this, set <code class="docutils literal notranslate"><span class="pre">num_workers</span></code> to <code class="docutils literal notranslate"><span class="pre">0</span></code> when initialising your <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code>.</p>
+</div>
+<div class="section" id="pthread-setaffinity-np-failed-errors-with-onnx-runtime">
+<h3>pthread_setaffinity_np failed errors with ONNX Runtime<a class="headerlink" href="#pthread-setaffinity-np-failed-errors-with-onnx-runtime" title="Permalink to this headline">¶</a></h3>
+<p>Algorithms are limited to a select number of CPUs.
+Because of that ONNX Runtime does not have the permissions to automatically set the CPU affinities.
+To solve this create an InferenceSession by explicitly providing the number of threads via a SessionOptions instance. E.g.:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">onnxruntime</span>
+
+<span class="n">so</span> <span class="o">=</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">SessionOptions</span><span class="p">()</span>
+<span class="n">so</span><span class="o">.</span><span class="n">inter_op_num_threads</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">so</span><span class="o">.</span><span class="n">intra_op_num_threads</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span><span class="n">model_file</span><span class="p">,</span> <span class="n">sess_options</span><span class="o">=</span><span class="n">so</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>
