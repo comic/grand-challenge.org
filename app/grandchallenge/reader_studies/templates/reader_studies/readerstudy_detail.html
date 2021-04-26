@@ -22,7 +22,7 @@
              aria-orientation="vertical">
             <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
                href="#v-pills-home" role="tab" aria-controls="v-pills-home"
-               aria-selected="true"><i
+               aria-selected="false" aria-expanded="false"><i
                     class="fas fa-info fa-fw"></i>&nbsp;Information
             </a>
             {% if "change_readerstudy" in readerstudy_perms %}
@@ -144,7 +144,7 @@
 
     <div class="tab-content" id="v-pills-tabContent">
 
-        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
+        <div class="tab-pane fade show" id="v-pills-home" role="tabpanel"
              aria-labelledby="v-pills-home-tab">
 
             <h2>{{ object.title }}</h2>
@@ -478,6 +478,10 @@
             csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
         };
 
+        if (window.location.hash == "" || window.location.hash == '#v-pills-home') {
+            $('#v-pills-home').addClass('active');
+        }
+
         $('#v-pills-tab a').click(function () {
             $(this).siblings().removeClass('active');
             $(this).tab('active');
@@ -487,12 +491,12 @@
         $("ul.nav-pills > a").on("shown.bs.tab", function (e) {
             var id = $(e.target).attr("href").substr(1);
             window.location.hash = id;
-        });
+         });
 
         // on load of the page: switch to the currently selected tab
         var hash = window.location.hash;
-        $('#v-pills-tab a[href="' + hash + '"]').tab('show');
         $('#v-pills-tab a[href="' + hash + '"]').siblings().removeClass('active');
+        $('#v-pills-tab a[href="' + hash + '"]').tab('show');
 
         $(document).ready(() => {
 
