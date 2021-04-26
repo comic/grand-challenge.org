@@ -443,6 +443,7 @@ LOCAL_APPS = [
     "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
     "grandchallenge.workstations",
+    "grandchallenge.workspaces",
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
@@ -807,6 +808,22 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 # The name of the group whose members will be able to create reader studies
 READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
+
+###############################################################################
+#
+# workspaces
+#
+###############################################################################
+
+WORKBENCH_SECRET_KEY = os.environ.get("WORKBENCH_SECRET_KEY")
+WORKBENCH_API_URL = os.environ.get("WORKBENCH_API_URL")
+WORKBENCH_ADMIN_USERNAME = os.environ.get("WORKBENCH_ADMIN_USERNAME", "demo")
+
+###############################################################################
+#
+# workstations
+#
+###############################################################################
 
 # The workstation that is accessible by all authorised users
 DEFAULT_WORKSTATION_SLUG = os.environ.get(
