@@ -11,6 +11,7 @@ from django.views.generic import (
     UpdateView,
 )
 from guardian.mixins import (
+    LoginRequiredMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
@@ -31,7 +32,7 @@ from grandchallenge.core.permissions.mixins import (
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ChallengeCreate(UserIsNotAnonMixin, SuccessMessageMixin, CreateView):
@@ -159,6 +160,7 @@ class UsersChallengeList(UserIsNotAnonMixin, PaginatedTableListView):
 
 
 class ChallengeUpdate(
+    LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     ChallengeSubdomainObjectMixin,
@@ -171,6 +173,8 @@ class ChallengeUpdate(
     success_message = "Challenge successfully updated"
     template_name_suffix = "_update"
     permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
 
 
 class ExternalChallengeCreate(
