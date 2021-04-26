@@ -2,14 +2,23 @@ from dal import autocomplete
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import FormView, ListView
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
 from grandchallenge.admins.forms import AdminsForm
-from grandchallenge.core.permissions.mixins import UserIsChallengeAdminMixin
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
-class AdminsList(UserIsChallengeAdminMixin, ListView):
+class AdminsList(LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView):
     template_name = "admins/admins_list.html"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -29,8 +38,17 @@ class AdminsList(UserIsChallengeAdminMixin, ListView):
 
 
 class AdminsUpdateAutocomplete(
-    UserIsChallengeAdminMixin, autocomplete.Select2QuerySetView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    autocomplete.Select2QuerySetView,
 ):
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
+
     def get_queryset(self):
         qs = get_user_model().objects.all().order_by("username")
 
@@ -40,10 +58,21 @@ class AdminsUpdateAutocomplete(
         return qs
 
 
-class AdminsUpdate(UserIsChallengeAdminMixin, SuccessMessageMixin, FormView):
+class AdminsUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
     form_class = AdminsForm
     template_name = "admins/admins_form.html"
     success_message = "Admins successfully updated"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_success_url(self):
         return reverse(

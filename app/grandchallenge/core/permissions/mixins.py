@@ -72,21 +72,6 @@ class UserIsNotAnonMixin(UserAuthAndTestMixin):
         return self.request.user != get_anonymous_user()
 
 
-class UserIsChallengeAdminMixin(UserAuthAndTestMixin):
-    """
-    A mixin that determines if a user is an admin for this challenge
-
-    Requires that grandchallenge.core.middleware.project is installed
-
-    NOTE: YOU CANNOT INCLUDE MORE THAN ONE OF THESE MIXINS IN A CLASS!
-    See https://docs.djangoproject.com/en/1.11/topics/auth/default/#django.contrib.auth.mixins.UserPassesTestMixin
-    """
-
-    def test_func(self):
-        challenge = self.request.challenge
-        return challenge.is_admin(self.request.user)
-
-
 class UserIsChallengeParticipantOrAdminMixin(UserAuthAndTestMixin):
     """
     A mixin that determines if a user is a participant or an admin for this

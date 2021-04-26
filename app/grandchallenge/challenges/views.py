@@ -10,6 +10,9 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
+from guardian.mixins import (
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
 from grandchallenge.challenges.filters import ChallengeFilter
 from grandchallenge.challenges.forms import (
@@ -22,7 +25,6 @@ from grandchallenge.challenges.models import (
     ExternalChallenge,
 )
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin,
     UserIsNotAnonMixin,
     UserIsStaffMixin,
 )
@@ -157,7 +159,7 @@ class UsersChallengeList(UserIsNotAnonMixin, PaginatedTableListView):
 
 
 class ChallengeUpdate(
-    UserIsChallengeAdminMixin,
+    ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     ChallengeSubdomainObjectMixin,
     UpdateView,
@@ -168,6 +170,7 @@ class ChallengeUpdate(
     form_class = ChallengeUpdateForm
     success_message = "Challenge successfully updated"
     template_name_suffix = "_update"
+    permission_required = "change_challenge"
 
 
 class ExternalChallengeCreate(

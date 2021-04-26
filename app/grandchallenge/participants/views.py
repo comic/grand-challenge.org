@@ -7,22 +7,31 @@ from django.core.exceptions import (
 from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.views.generic import CreateView, ListView, UpdateView
-
-from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin,
-    UserIsNotAnonMixin,
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+
+from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.participants.emails import (
     send_participation_request_accepted_email,
     send_participation_request_notification_email,
     send_participation_request_rejected_email,
 )
 from grandchallenge.participants.models import RegistrationRequest
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
-class ParticipantsList(UserIsChallengeAdminMixin, ListView):
+class ParticipantsList(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+):
     template_name = "participants/participants_list.html"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_queryset(self):
         challenge = self.request.challenge
@@ -74,8 +83,16 @@ class RegistrationRequestCreate(
         return context
 
 
-class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
+class RegistrationRequestList(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+):
     model = RegistrationRequest
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -84,11 +101,20 @@ class RegistrationRequestList(UserIsChallengeAdminMixin, ListView):
 
 
 class RegistrationRequestUpdate(
-    UserIsChallengeAdminMixin, SuccessMessageMixin, UpdateView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
 ):
     model = RegistrationRequest
     fields = ("status",)
     success_message = "Registration successfully updated"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_success_url(self):
         return reverse(

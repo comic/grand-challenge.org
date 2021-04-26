@@ -8,14 +8,15 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
-
-from grandchallenge.core.permissions.mixins import (
-    UserAuthAndTestMixin,
-    UserIsChallengeAdminMixin,
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+
+from grandchallenge.core.permissions.mixins import UserAuthAndTestMixin
 from grandchallenge.pages.forms import PageCreateForm, PageUpdateForm
 from grandchallenge.pages.models import ErrorPage, Page
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ChallengeFilteredQuerysetMixin:
@@ -32,10 +33,19 @@ class ChallengeFormKwargsMixin:
 
 
 class PageCreate(
-    UserIsChallengeAdminMixin, ChallengeFormKwargsMixin, CreateView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    ChallengeFormKwargsMixin,
+    CreateView,
 ):
     model = Page
     form_class = PageCreateForm
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def form_valid(self, form):
         form.instance.challenge = self.request.challenge
@@ -43,9 +53,18 @@ class PageCreate(
 
 
 class PageList(
-    UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin, ListView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    ChallengeFilteredQuerysetMixin,
+    ListView,
 ):
     model = Page
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
 
 class PageDetail(
@@ -79,12 +98,21 @@ class ChallengeHome(PageDetail):
         return page
 
 
-class ChallengeSettingsBase(UserIsChallengeAdminMixin, TemplateView):
-    template_name = "pages/challenge-settings-base.html"
+class ChallengeSettingsBase(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, TemplateView
+):
+    template_name = "pages/challenge_settings_base.html"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
 
 class PageUpdate(
-    UserIsChallengeAdminMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
     ChallengeFilteredQuerysetMixin,
     ChallengeFormKwargsMixin,
     UpdateView,
@@ -93,6 +121,12 @@ class PageUpdate(
     form_class = PageUpdateForm
     slug_url_kwarg = "page_title"
     slug_field = "title__iexact"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -101,12 +135,21 @@ class PageUpdate(
 
 
 class PageDelete(
-    UserIsChallengeAdminMixin, ChallengeFilteredQuerysetMixin, DeleteView
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    ChallengeFilteredQuerysetMixin,
+    DeleteView,
 ):
     model = Page
     slug_url_kwarg = "page_title"
     slug_field = "title__iexact"
     success_message = "Page was successfully deleted"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_success_url(self):
         return reverse(
