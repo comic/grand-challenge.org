@@ -79,7 +79,7 @@ class ChallengeHome(PageDetail):
         return page
 
 
-class ChallengeSettingsBase(TemplateView):
+class ChallengeSettingsBase(UserIsChallengeAdminMixin, TemplateView):
     template_name = "pages/challenge-settings-base.html"
 
 
