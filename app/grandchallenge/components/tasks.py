@@ -234,7 +234,7 @@ def mark_long_running_jobs_failed(
 
     for j in jobs_to_mark:
         j.update_status(
-            status=Job.FAILURE, error_message="Evaluation timed out."
+            status=Job.FAILURE, error_message="Time limit exceeded."
         )
 
     return [j.pk for j in jobs_to_mark]
