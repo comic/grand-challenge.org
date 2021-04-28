@@ -24,6 +24,8 @@ urlpatterns = [
     path("company/<slug>/", CompanyDetail.as_view(), name="company-detail"),
     path("import-data/", ImportDataView.as_view(), name="import-data"),
     path(
-        "project-air-files/", ProjectAirForm.as_view(), name="project-air-form"
+        "project-air-files/",
+        ProjectAirForm.as_view(),
+        name="project-air-files",
     ),
 ]
