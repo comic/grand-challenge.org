@@ -5,10 +5,15 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Q
 from django.shortcuts import reverse
 from django.views.generic import DetailView, ListView, TemplateView
-from django.views.generic.edit import FormView
+from django.views.generic.edit import CreateView, FormView
 
 from grandchallenge.products.forms import ImportForm
-from grandchallenge.products.models import Company, Product, Status
+from grandchallenge.products.models import (
+    Company,
+    Product,
+    ProjectAirFiles,
+    Status,
+)
 from grandchallenge.products.utils import DataImporter
 
 
@@ -221,3 +226,9 @@ class ImportDataView(PermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse("products:product-list")
+
+
+class ProjectAirForm(PermissionRequiredMixin, CreateView):
+    model = ProjectAirFiles
+    fields = ["title", "file"]
+    permission_required = f"{ProjectAirFiles._meta.app_label}.add_{ProjectAirFiles._meta.model_name}"
