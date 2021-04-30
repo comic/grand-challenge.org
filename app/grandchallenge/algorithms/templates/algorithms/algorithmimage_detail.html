@@ -63,6 +63,9 @@
 
         <dt>Requires GPU</dt>
         <dd>{{ object.requires_gpu }}</dd>
+
+        <dt>Requires Memory</dt>
+        <dd>{{ object.requires_memory_gb }}g</dd>
     </dl>
 
     {% get_obj_perms request.user for object as "algorithm_image_perms" %}
