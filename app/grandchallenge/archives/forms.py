@@ -29,11 +29,12 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["logo"].required = True
         self.fields["workstation"].required = True
-        self.fields[
-            "algorithms"
-        ].queryset = self.instance.algorithms.all() | get_objects_for_user(
-            kwargs["user"], "execute_algorithm", Algorithm
-        )
+        self.fields["algorithms"].queryset = (
+            self.instance.algorithms.all()
+            | get_objects_for_user(
+                kwargs["user"], "execute_algorithm", Algorithm
+            )
+        ).distinct()
 
     class Meta:
         model = Archive
