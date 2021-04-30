@@ -10,7 +10,7 @@ An algorithm is a container image that is executed on a set of inputs, producing
 Algorithm Inputs
 ================
 
-Inputs to an algorithm are available in the container in the ``/input`` directory. 
+Inputs to an algorithm are available in the container in the ``/input`` directory.
 You can add :ref:`component interfaces <components>` that will provide the inputs to your algorithm.
 You can find a list of the `currently available interfaces`_ on grand challenge.
 
@@ -22,7 +22,7 @@ You can read and parse these with
 .. code-block:: python
 
     import json
-    
+
     with open("/input/{relative_path}") as f:
         val = json.loads(f.read())
 
@@ -46,7 +46,7 @@ If an algorithm does not properly run, it should exit with a non zero exit code.
 Algorithm Outputs
 =================
 
-Outputs of an algorithm must be stored in the directory ``/output/``. 
+Outputs of an algorithm must be stored in the directory ``/output/``.
 As with the inputs, a ``ComponentInterface`` needs to be defined for each of the expected outputs.
 You can find a list of the `currently available interfaces`_ on grand challenge.
 

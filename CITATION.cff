@@ -1,12 +1,12 @@
 # YAML 1.2
 ---
 abstract: "A framework to objectively evaluate the performance of machine learning algorithms in biomedical imaging."
-authors: 
+authors:
   - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
     family-names: Meakin
     given-names: James
   - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
-    family-names: van Zeeland 
+    family-names: van Zeeland
     given-names: Harm
   - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
     family-names: Koek
@@ -18,16 +18,16 @@ authors:
     family-names: de Dobbelaer
     given-names: Bart
   - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
-    family-names: Pinkaerts 
+    family-names: Pinkaerts
     given-names: Hans
   - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
-    family-names: Shneider 
+    family-names: Shneider
     given-names: Carl
   - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
     family-names: Bhattacharya
     given-names: Haimasree
   - affiliation: "Netherlands eScience Center, Science Park 140, 1098 XG, Amsterdam, The Netherlands"
-    family-names: Zinkstock 
+    family-names: Zinkstock
     given-names: Roel
   - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
     family-names: Sogancioglu
@@ -42,7 +42,7 @@ authors:
     family-names: Köhn
     given-names: Alexander
   - affiliation: "Department of Radiology and Nuclear Medicine, Radboud University Medical Center, Nijmegen, Netherlands"
-    family-names: Groeneveld 
+    family-names: Groeneveld
     given-names: Miriam
   - affiliation: "Netherlands eScience Center, Science Park 140, 1098 XG, Amsterdam, The Netherlands"
     family-names: Klaver
@@ -59,7 +59,7 @@ authors:
     orcid: "https://orcid.org/0000-0003-2028-8972"
 cff-version: "1.1.0"
 doi: "10.5281/zenodo.3356819"
-identifiers: 
+identifiers:
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/comic/grand-challenge.org"
