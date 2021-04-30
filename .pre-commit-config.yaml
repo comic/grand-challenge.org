@@ -5,6 +5,7 @@ repos:
     rev: v3.4.0
     hooks:
       - id: check-docstring-first
+      - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.10.1
