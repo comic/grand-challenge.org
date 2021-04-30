@@ -266,6 +266,8 @@ class AlgorithmImageCreate(
         form.instance.creator = self.request.user
         form.instance.algorithm = self.algorithm
 
+        form.instance.required_memory_gb = 24
+
         uploaded_file = form.cleaned_data["chunked_upload"][0]
         form.instance.staged_image_uuid = uploaded_file.uuid
 
