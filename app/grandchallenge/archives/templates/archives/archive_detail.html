@@ -5,6 +5,7 @@
 {% load profiles %}
 {% load meta_attr %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -24,9 +25,9 @@
     {% get_obj_perms request.user for object as "object_perms" %}
 
     <div class="col-12 col-md-4 col-lg-3 mb-3">
-        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+        <ul class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
              aria-orientation="vertical">
-            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
+            <a class="nav-link" id="v-pills-home-tab" data-toggle="pill"
                href="#v-pills-home" role="tab" aria-controls="v-pills-home"
                aria-selected="true"><i
                     class="fas fa-info fa-fw"></i>&nbsp;Information
@@ -73,7 +74,7 @@
                    aria-selected="false"><i class="fas fa-file-download fa-fw"></i>&nbsp;Export
                 </a>
             {% endif %}
-        </div>
+        </ul>
     </div>
 {% endblock %}
 
@@ -81,7 +82,7 @@
     {% get_obj_perms request.user for object as "object_perms" %}
 
     <div class="tab-content" id="v-pills-tabContent">
-        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
+        <div class="tab-pane fade show" id="v-pills-home" role="tabpanel"
              aria-labelledby="v-pills-home-tab">
 
             <h2>{{ object.title }}</h2>
@@ -213,4 +214,9 @@
         {% endif %}
 
     </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script src="{% static "js/refresh_sidebar.js" %}"></script>
 {% endblock %}
