@@ -5,7 +5,6 @@ from django.views.generic import (
     DeleteView,
     DetailView,
     ListView,
-    TemplateView,
     UpdateView,
 )
 from guardian.mixins import (
@@ -96,18 +95,6 @@ class ChallengeHome(PageDetail):
             )
 
         return page
-
-
-class ChallengeSettingsBase(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, TemplateView
-):
-    template_name = "pages/challenge_settings_base.html"
-    permission_required = "change_challenge"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.request.challenge
 
 
 class PageUpdate(
