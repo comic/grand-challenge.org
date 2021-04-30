@@ -1,0 +1,95 @@
+{% extends "challenge.html" %}
+{% load guardian_tags %}
+{% load url %}
+{% load bleach %}
+{% load static %}
+
+{% block title %}
+        Admin
+    - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">
+            Challenge Admin
+        </li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    <div class="col-12 col-sm-5 col-md-4 col-lg-3 pl-3">
+          <ul class="nav nav-pills flex-column">
+              <li class="nav-item">
+                  <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'update' %} active {% endif %}"
+                    href="{% url 'update' challenge_short_name=challenge.short_name %}">
+                      <i class="fas fa-cog fa-fw"></i> General Settings</a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'pages:list' or request.resolver_match.view_name == 'pages:create' or request.resolver_match.view_name == 'pages:update' or request.resolver_match.view_name == 'pages:delete' %}active{% endif %}"
+                    href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">
+                      <i class="far fa-file fa-fw"></i> Pages</a>
+              </li>
+              <li class="navbar-header rounded bg-light pl-3 py-1 mt-2 mb-1"><a>Users</a></li>
+              <li class="nav-item">
+                <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'admins:list' or request.resolver_match.view_name == 'admins:update' %}active{% endif %}"
+                    href="{% url 'admins:list' challenge_short_name=challenge.short_name %}">
+                    <i class="fas fa-user fa-fw"></i>&nbsp;Admins
+                    <span class="badge badge-pill badge-secondary align-middle">{{ challenge.get_admins.count }}</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:list' %}active{% endif %}"
+                    href="{% url 'participants:list' challenge_short_name=challenge.short_name %}">
+                    <i class="fas fa-users fa-fw"></i>&nbsp;Participants
+                      <span class="badge badge-pill badge-secondary align-middle">{{ challenge.get_participants.count }}</span>
+                  </a>
+              </li>
+              <li class="nav-item">
+                 <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-list' %}active{% endif %}"
+                    href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">
+                    <i class="fas fa-question fa-fw"></i>&nbsp;Participation Requests
+                        {% if challenge.require_participant_review %}
+                            {% with num_requests=pending_requests.count %} <span
+                              class="badge badge-pill badge-secondary align-middle">{{ num_requests }}</span>
+                            {% endwith %}
+                        {% endif %}
+                 </a>
+              </li>
+              <li class="navbar-header rounded bg-light pl-3 py-1 mt-2 mb-1"><a>Phases</a></li>
+              {% if challenge.use_evaluation %}
+                  {% for phase in challenge.phase_set.all %}
+                      <li class="nav-item">
+                        <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:phase-update' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                            href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                            <i class="fas fa-cog fa-fw"></i> {{ phase.title }} Evaluation Settings</a>
+                      </li>
+                  {% endfor %}
+                  <li class="nav-item">
+                    <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:phase-create' %}active{% endif %}"
+                        href="{% url 'evaluation:phase-create' challenge_short_name=challenge.short_name %}">
+                        <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:method-list' or request.resolver_match.view_name == 'evaluation:method-create' %}active{% endif %}"
+                        href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
+                          Methods</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+                        href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
+                        Submissions</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'evaluation:list' %}active{% endif %}"
+                        href="{% url 'evaluation:list' challenge_short_name=challenge.short_name %}">
+                        Evaluations</a>
+                  </li>
+              {% endif %}
+          </ul>
+    </div>
+{% endblock %}

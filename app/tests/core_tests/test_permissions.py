@@ -4,9 +4,12 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.test import RequestFactory
 from django.views.generic import View
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
     UserIsStaffMixin,
 )
@@ -19,7 +22,15 @@ class EmptyResponseView(View):
         return HttpResponse()
 
 
-class AdminOnlyView(UserIsChallengeAdminMixin, EmptyResponseView):
+class AdminOnlyView(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, EmptyResponseView
+):
+    permission_required = "change_challenge"
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.request.challenge
+
     pass
 
 

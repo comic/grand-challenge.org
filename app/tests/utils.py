@@ -277,34 +277,3 @@ def validate_staff_only_view(
         assert_viewname_status(
             code=200, client=client, user=staff_user, **kwargs
         )
-
-
-def validate_admin_only_text_in_page(
-    *, expected_text, two_challenge_set, client: Client, **kwargs
-):
-    tests = [
-        (False, None),
-        (False, two_challenge_set.challenge_set_1.non_participant),
-        (False, two_challenge_set.challenge_set_1.participant),
-        (False, two_challenge_set.challenge_set_1.participant1),
-        (True, two_challenge_set.challenge_set_1.creator),
-        (True, two_challenge_set.challenge_set_1.admin),
-        (False, two_challenge_set.challenge_set_2.non_participant),
-        (False, two_challenge_set.challenge_set_2.participant),
-        (False, two_challenge_set.challenge_set_2.participant1),
-        (False, two_challenge_set.challenge_set_2.creator),
-        (False, two_challenge_set.challenge_set_2.admin),
-        (True, two_challenge_set.admin12),
-        (False, two_challenge_set.participant12),
-        (True, two_challenge_set.admin1participant2),
-    ]
-
-    for test in tests:
-        response = assert_viewname_status(
-            code=200,
-            challenge=two_challenge_set.challenge_set_1.challenge,
-            client=client,
-            user=test[1],
-            **kwargs,
-        )
-        assert (expected_text in str(response.content)) == test[0]

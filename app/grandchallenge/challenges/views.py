@@ -10,6 +10,10 @@ from django.views.generic import (
     TemplateView,
     UpdateView,
 )
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
 from grandchallenge.challenges.filters import ChallengeFilter
 from grandchallenge.challenges.forms import (
@@ -22,14 +26,13 @@ from grandchallenge.challenges.models import (
     ExternalChallenge,
 )
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin,
     UserIsNotAnonMixin,
     UserIsStaffMixin,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ChallengeCreate(UserIsNotAnonMixin, SuccessMessageMixin, CreateView):
@@ -157,7 +160,8 @@ class UsersChallengeList(UserIsNotAnonMixin, PaginatedTableListView):
 
 
 class ChallengeUpdate(
-    UserIsChallengeAdminMixin,
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     ChallengeSubdomainObjectMixin,
     UpdateView,
@@ -168,6 +172,15 @@ class ChallengeUpdate(
     form_class = ChallengeUpdateForm
     success_message = "Challenge successfully updated"
     template_name_suffix = "_update"
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_success_url(self):
+        return reverse(
+            "update",
+            kwargs={"challenge_short_name": self.request.challenge.short_name},
+        )
 
 
 class ExternalChallengeCreate(

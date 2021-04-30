@@ -37,7 +37,7 @@
 {% block topbar %}
     {% if challenge %}
         <div class="row mb-3 mx-0 border-bottom">
-            <div class="col-md-10 col-sm-8 col-6 px-0">
+            <div class="col-11 px-0">
                 <div class="nav-tab-dropdown-container">
                     <a class="d-lg-none btn btn-outline-dark mb-1"
                        data-toggle="dropdown"
@@ -97,11 +97,20 @@
                                 </li>
                             {% endif %}
                         {% endif %}
+                        {% if "change_challenge" in challenge_perms %}
+                            <div class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'pages:update' or request.resolver_match.view_name == 'pages:delete' or request.resolver_match.view_name == 'pages:create' or request.resolver_match.view_name == 'update' or request.resolver_match.view_name == 'pages:list' or request.resolver_match.app_name == 'admins' or request.resolver_match.view_name == 'participants:list' or request.resolver_match.view_name == 'participants:registration-list' or request.resolver_match.view_name == 'evaluation:phase-update' or request.resolver_match.view_name == 'evaluation:create' or request.resolver_match.view_name == 'evaluation:method-list' or request.resolver_match.view_name == 'evaluation:method-create' %}active{% endif %}"
+                                   href="{% url 'update' challenge_short_name=challenge.short_name %}">
+                                    <i class="fas fa-cog fa-fw"></i>
+                                    Admin
+                                </a>
+                            </div>
+                        {% endif %}
                     </ul>
                 </div>
             </div>
 
-            <div class="col-md-2 col-sm-4 col-6 py-0 px-0 d-flex justify-content-end">
+            <div class="col-1 py-0 px-0 d-flex justify-content-end">
                 {% if challenge.use_registration_page %}
                     <div>
                         <a class="btn btn-success"
@@ -109,70 +118,6 @@
                            role="button">
                             Join
                         </a>
-                    </div>
-                {% endif %}
-
-                {% if "change_challenge" in challenge_perms %}
-                    <div class="dropdown px-1">
-                        <a class="btn btn-dark dropdown-toggle"
-                           data-toggle="dropdown"
-                           href="#"
-                           role="button"
-                           aria-expanded="false"> <i class="fas fa-cog fa-fw"></i>&nbsp;&nbsp;Admin</a>
-                        <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="admin">
-                            <h6 class="dropdown-header">{% firstof challenge.title challenge.short_name %}</h6>
-                            <a class="dropdown-item"
-                               href="{% url 'update' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-cog fa-fw"></i> General Settings</a>
-                            <a class="dropdown-item"
-                               href="{% url 'pages:list' challenge_short_name=challenge.short_name %}">
-                                <i class="far fa-file fa-fw"></i> Pages</a>
-                            <hr>
-                            <h6 class="dropdown-header">Users</h6>
-                            <a class="dropdown-item"
-                               href="{% url 'admins:list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-user fa-fw"></i>&nbsp;Admins <span
-                                    class="badge badge-pill badge-secondary align-middle">{{ challenge.get_admins.count }}</span>
-                            </a>
-                            <a class="dropdown-item"
-                               href="{% url 'participants:list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-users fa-fw"></i>&nbsp;Participants <span
-                                    class="badge badge-pill badge-secondary align-middle">{{ challenge.get_participants.count }}</span></a>
-                            <a class="dropdown-item"
-                               href="{% url 'participants:registration-list' challenge_short_name=challenge.short_name %}">
-                                <i class="fas fa-question fa-fw"></i>&nbsp;Participation Requests
-                                {% if challenge.require_participant_review %}
-                                    {% with num_requests=pending_requests.count %} <span
-                                            class="badge badge-pill badge-secondary align-middle">{{ num_requests }}</span>
-                                    {% endwith %}{% endif %}</a>
-                            <hr>
-                            <h6 class="dropdown-header">Phases</h6>
-                            {% if challenge.use_evaluation %}
-                                {% for phase in challenge.phase_set.all %}
-                                    <a class="dropdown-item"
-                                       href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
-                                        <i class="fas fa-cog fa-fw"></i> {{ phase.title }} Evaluation Settings
-                                    </a>
-                                {% endfor %}
-                                <a class="dropdown-item"
-                                   href="{% url 'evaluation:phase-create' challenge_short_name=challenge.short_name %}">
-                                    <i class="fas fa-plus fa-fw"></i>&nbsp;Add a new Phase
-                                </a>
-                                <hr>
-                                <a class="dropdown-item"
-                                   href="{% url 'evaluation:method-list' challenge_short_name=challenge.short_name %}">
-                                    Methods
-                                </a>
-                                <a class="dropdown-item"
-                                   href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
-                                    Submissions
-                                </a>
-                                <a class="dropdown-item"
-                                   href="{% url 'evaluation:list' challenge_short_name=challenge.short_name %}">
-                                    Evaluations
-                                </a>
-                            {% endif %}
-                        </ul>
                     </div>
                 {% endif %}
             </div>
