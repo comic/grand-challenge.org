@@ -150,7 +150,7 @@ NON_ALGORITHM_INTERFACES = [
 class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
         ),
         widget=Select2MultipleWidget,
         help_text=format_lazy(
