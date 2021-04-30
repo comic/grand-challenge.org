@@ -32,7 +32,7 @@ http {
 
   sendfile ${SENDFILE_STATUS};
   sendfile_max_chunk 512k;
-  
+
   large_client_header_buffers 4 16k;
 
   # SSL

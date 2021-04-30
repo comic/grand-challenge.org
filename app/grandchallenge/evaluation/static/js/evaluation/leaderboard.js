@@ -68,8 +68,8 @@ $(document).ready(function () {
 
     if (allowEvaluationComparison === true) {
         document.getElementById('compare-buttons-group').innerHTML = `
-            <button type="button" id="compare-results-button" class="btn btn-secondary" 
-                    onclick="updateEvaluationComparisonModal()" data-toggle="modal" data-target="#observableModal" 
+            <button type="button" id="compare-results-button" class="btn btn-secondary"
+                    onclick="updateEvaluationComparisonModal()" data-toggle="modal" data-target="#observableModal"
                     disabled title="${SELECT_TEXT}">
                 <i class="fas fa-balance-scale-right"></i>
             </button>
@@ -133,7 +133,7 @@ $(document).ready(function () {
 
     if (allowEvaluationNavigation === true) {
         document.getElementById('compare-buttons-group').innerHTML += `
-            <button type="button" id="browse-evaluations-button" class="btn btn-secondary" 
+            <button type="button" id="browse-evaluations-button" class="btn btn-secondary"
                     onclick="updateEvaluationNavigationModal()" data-toggle="modal" data-target="#observableModal"
                     title="Browse through these results">
                 <i class="fas fa-chart-bar"></i>
@@ -143,7 +143,7 @@ $(document).ready(function () {
 
     if (displayLeaderboardDateButton === true) {
         document.getElementById('compare-buttons-group').innerHTML += `
-            <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#leaderboardDateModal" 
+            <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#leaderboardDateModal"
                     title="Leaderboard history">
                 <i class="fas fa-history"></i>
             </button>
@@ -177,7 +177,7 @@ function updateEvaluationNavigationModal() {
 
     modelLabel.textContent = "Browse Results"
     notebook.src = `${observableDetailURL}?${search.toString()}`;
-    
+
     const observableEditLink = document.getElementById("observableEditLink")
     if (observableEditLink !== null) {
         observableEditLink.href = `${observableDetailEditURL}?${search.toString()}`;

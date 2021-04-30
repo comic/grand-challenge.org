@@ -1,3 +1,5 @@
+"""Settings overrides for tests"""
+
 import logging
 import os
 
@@ -6,8 +8,6 @@ os.environ["PROTECTED_S3_CUSTOM_DOMAIN"] = "testserver/media"
 
 # noinspection PyUnresolvedReferences
 from config.settings import *  # noqa: F401, F403, E402
-
-""" Settings overrides for tests """
 
 SESSION_COOKIE_DOMAIN = ".testserver"
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
