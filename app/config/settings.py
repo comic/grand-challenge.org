@@ -777,6 +777,12 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
 else:
     CELERY_BROKER_URL = os.environ.get("BROKER_URL", "redis://redis:6379/0")
 
+# Keep results of sent emails
+CELERY_EMAIL_CHUNK_SIZE = 1
+CELERY_EMAIL_TASK_CONFIG = {
+    "ignore_result": False,
+}
+
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )
