@@ -254,6 +254,12 @@ class AlgorithmImageForm(ModelForm):
             "https://docs.docker.com/engine/reference/commandline/save/"
         ),
     )
+    requires_memory_gb = IntegerField(
+        min_value=1,
+        max_value=24,
+        initial=4,
+        help_text="The maximum system memory required by the algorithm in gigabytes.",
+    )
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -262,13 +268,19 @@ class AlgorithmImageForm(ModelForm):
 
     class Meta:
         model = AlgorithmImage
-        fields = ("requires_gpu", "chunked_upload")
+        fields = ("requires_gpu", "requires_memory_gb", "chunked_upload")
 
 
 class AlgorithmImageUpdateForm(SaveFormInitMixin, ModelForm):
+    requires_memory_gb = IntegerField(
+        min_value=1,
+        max_value=24,
+        help_text="The maximum system memory required by the algorithm in gigabytes.",
+    )
+
     class Meta:
         model = AlgorithmImage
-        fields = ("requires_gpu",)
+        fields = ("requires_gpu", "requires_memory_gb")
 
 
 class UsersForm(UserGroupForm):
