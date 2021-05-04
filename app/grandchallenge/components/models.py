@@ -268,6 +268,7 @@ class InterfaceKind:
                     ],
                     "sub_type": "brush",
                     "groups": []
+                }
                 ],
                 "version": { "major": 1, "minor": 0 }
             }

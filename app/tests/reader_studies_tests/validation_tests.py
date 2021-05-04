@@ -155,7 +155,22 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "version": {"major": 1, "minor": 0},
         "type": "2D bounding box",
         "name": "test_name",
-        "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 0, 0]],
+        "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
+        "probability": 0.2,
+    },
+    "M2DB": {
+        "type": "Multiple 2D bounding boxes",
+        "boxes": [
+            {
+                "name": "foo",
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
+            },
+            {
+                "corners": [[0, 0, 0], [10, 0, 0], [10, 20, 0], [0, 20, 0]],
+                "probability": 0.2,
+            },
+        ],
+        "version": {"major": 1, "minor": 0},
     },
     "DIST": {
         "version": {"major": 1, "minor": 0},
@@ -163,19 +178,15 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "name": "test_name",
         "start": [0, 0, 0],
         "end": [10, 0, 0],
+        "probability": 1.0,
     },
     "MDIS": {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple distance measurements",
         "name": "test_name",
         "lines": [
-            {
-                "type": "object",
-                "name": "segment1",
-                "start": [0, 0, 0],
-                "end": [10, 0, 0],
-            },
-            {"start": [0, 0, 0], "end": [10, 0, 0]},
+            {"name": "segment1", "start": [0, 0, 0], "end": [10, 0, 0]},
+            {"start": [0, 0, 0], "end": [10, 0, 0], "probability": 0.5},
         ],
     },
     "POIN": {
@@ -183,12 +194,16 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "type": "Point",
         "name": "test_name",
         "point": [0, 0, 0],
+        "probability": 0.41,
     },
     "MPOI": {
         "version": {"major": 1, "minor": 0},
         "type": "Multiple points",
         "name": "test_name",
-        "points": [{"point": [0, 0, 0]}],
+        "points": [
+            {"point": [0, 0, 0]},
+            {"point": [0, 0, 0], "probability": 0.2},
+        ],
     },
     "POLY": {
         "version": {"major": 1, "minor": 0},
@@ -198,6 +213,7 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
         "path_points": [[0, 0, 0], [0, 0, 0]],
         "sub_type": "poly",
         "groups": ["a", "b"],
+        "probability": 0.3,
     },
     "MPOL": {
         "version": {"major": 1, "minor": 0},
@@ -210,7 +226,15 @@ ANSWER_TYPE_NAMES_AND_ANSWERS = {
                 "path_points": [[0, 0, 0], [0, 0, 0]],
                 "sub_type": "poly",
                 "groups": ["a", "b"],
-            }
+            },
+            {
+                "name": "test_name",
+                "seed_point": [0, 0, 0],
+                "path_points": [[0, 0, 0], [0, 0, 0]],
+                "sub_type": "poly",
+                "groups": ["a", "b"],
+                "probability": 0.54,
+            },
         ],
     },
 }
