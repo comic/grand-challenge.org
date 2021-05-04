@@ -872,6 +872,7 @@ ANSWER_TYPE_SCHEMA = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Distance measurement"]},
                 "start": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -893,6 +894,7 @@ ANSWER_TYPE_SCHEMA = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Point"]},
                 "point": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -908,6 +910,7 @@ ANSWER_TYPE_SCHEMA = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Polygon"]},
                 "seed_point": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -1070,6 +1073,7 @@ ANSWER_TYPE_SCHEMA = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["2D bounding box"]},
                 "corners": {
                     "type": "array",
                     "items": {
