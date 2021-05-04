@@ -206,7 +206,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 
     execute_jobs(
         algorithm_image=evaluation.submission.algorithm_image,
-        images=evaluation.submission.phase.archive.items.values_list(
+        civs=evaluation.submission.phase.archive.items.values_list(
             "values", flat=True
         ),
         creator=None,

@@ -4,6 +4,7 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
+from grandchallenge.components.models import ComponentInterfaceValue
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.utils import TwoArchives
 from tests.factories import ImageFactory
@@ -95,19 +96,22 @@ def test_adding_images_triggers_task(reverse, mocker):
     with capture_on_commit_callbacks(execute=True):
         arch_set.arch1.images.add(ImageFactory())
         arch_set.arch2.images.add(ImageFactory())
-
     create_algorithm_jobs_for_archive.apply_async.assert_has_calls(
         [
             call(
                 kwargs={
                     "archive_pks": [arch_set.arch1.pk],
-                    "image_pks": [arch_set.arch1.images.first().pk],
+                    "civ_pks": list(
+                        arch_set.arch1.items.values_list("values", flat=True)
+                    ),
                 }
             ),
             call(
                 kwargs={
                     "archive_pks": [arch_set.arch2.pk],
-                    "image_pks": [arch_set.arch2.images.first().pk],
+                    "civ_pks": list(
+                        arch_set.arch2.items.values_list("values", flat=True)
+                    ),
                 }
             ),
         ]
@@ -130,7 +134,13 @@ def test_adding_images_triggers_task(reverse, mocker):
         ]
         create_algorithm_jobs_for_archive.apply_async.assert_called_once()
         assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
-        assert {*kwargs["image_pks"]} == {im1.pk, im2.pk, im3.pk, im4.pk}
+        assert {*kwargs["civ_pks"]} == set(
+            list(
+                ComponentInterfaceValue.objects.filter(
+                    image__in=[im1, im2, im3, im4]
+                ).values_list("pk", flat=True)
+            )
+        )
         create_algorithm_jobs_for_archive.apply_async.reset_mock()
 
         with capture_on_commit_callbacks(execute=True):
@@ -151,7 +161,13 @@ def test_adding_images_triggers_task(reverse, mocker):
                 arch_set.arch1.pk,
                 arch_set.arch2.pk,
             }
-            assert {*kwargs["image_pks"]} == {im.pk}
+            assert {*kwargs["civ_pks"]} == set(
+                list(
+                    ComponentInterfaceValue.objects.filter(
+                        image=im
+                    ).values_list("pk", flat=True)
+                )
+            )
             create_algorithm_jobs_for_archive.apply_async.reset_mock()
 
         with capture_on_commit_callbacks(execute=True):
