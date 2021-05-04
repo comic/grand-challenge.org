@@ -310,6 +310,11 @@ def create_algorithm_jobs(  # noqa: C901
             ]
 
     for civ in civs:
+        civ_obj = ComponentInterfaceValue.objects.get(pk=civ)
+        if civ_obj.algorithms_jobs_as_input.filter(
+            algorithm_image=algorithm_image, creator=creator
+        ).exists():
+            continue
         j = Job.objects.create(
             creator=creator, algorithm_image=algorithm_image
         )
