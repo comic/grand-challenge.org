@@ -364,17 +364,18 @@ class ArchiveCasesList(
         return context
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        return (
-            qs.filter(archive=self.archive)
-            .prefetch_related(
-                "files",
-                "componentinterfacevalue_set__algorithms_jobs_as_input__algorithm_image__algorithm",
+        qs = Image.objects.none()
+        for item in self.archive.items.all():
+            qs |= Image.objects.filter(
+                pk__in=item.values.filter(image__isnull=False).values_list(
+                    "image", flat=True
+                )
             )
-            .select_related(
-                "origin__creator__user_profile",
-                "origin__creator__verification",
-            )
+        return qs.prefetch_related(
+            "files",
+            "componentinterfacevalue_set__algorithms_jobs_as_input__algorithm_image__algorithm",
+        ).select_related(
+            "origin__creator__user_profile", "origin__creator__verification",
         )
 
 
