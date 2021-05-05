@@ -2,10 +2,11 @@ from django.test import TestCase, override_settings
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.archives.tasks import add_images_to_archive
 from tests.algorithms_tests.factories import AlgorithmImageFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.evaluation_tests.factories import MethodFactory, SubmissionFactory
-from tests.factories import ImageFactory
+from tests.factories import ImageFactory, UploadSessionFactory
 
 
 class TestSubmission(TestCase):
@@ -15,8 +16,15 @@ class TestSubmission(TestCase):
         )
         self.algorithm_image = AlgorithmImageFactory()
 
-        self.images = ImageFactory.create_batch(3)
-        self.method.phase.archive.images.set(self.images[:2])
+        us = UploadSessionFactory()
+        self.images = [
+            ImageFactory(origin=us),
+            ImageFactory(origin=us),
+            ImageFactory(),
+        ]
+        add_images_to_archive(
+            archive_pk=self.method.phase.archive.pk, upload_session_pk=us.pk
+        )
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_algorithm_submission_creates_one_job_per_test_set_image(self):
