@@ -485,9 +485,9 @@ class Image(UUIDModel):
             editors_of_readerstudy__images__id__exact=self.pk
         ) | Q(readers_of_readerstudy__images__id__exact=self.pk)
         archive_groups = (
-            Q(editors_of_archive__images__id__exact=self.pk)
-            | Q(uploaders_of_archive__images__id__exact=self.pk)
-            | Q(users_of_archive__images__id__exact=self.pk)
+            Q(editors_of_archive__items__values__image__pk=self.pk)
+            | Q(uploaders_of_archive__items__values__image__pk=self.pk)
+            | Q(users_of_archive__items__values__image__pk=self.pk)
         )
 
         expected_groups = {

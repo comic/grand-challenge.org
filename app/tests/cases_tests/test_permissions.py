@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms
 
+from grandchallenge.archives.tasks import add_images_to_archive
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -147,7 +148,9 @@ def test_view_permission_when_reused(in_archive, in_rs, in_job):
     archive = ArchiveFactory()
 
     if in_archive:
-        archive.images.add(im)
+        add_images_to_archive(
+            archive_pk=archive.pk, upload_session_pk=im.origin.pk
+        )
     if in_rs:
         rs.images.add(im)
     if in_job:
