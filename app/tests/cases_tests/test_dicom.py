@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from dataclasses import asdict
 from pathlib import Path
 from unittest import mock
@@ -13,6 +14,7 @@ from panimg.image_builders.dicom import (
     image_builder_dicom,
 )
 from panimg.image_builders.metaio_utils import parse_mh_header
+from panimg.panimg import _build_files
 from pydicom.pixel_data_handlers.gdcm_handler import (
     is_available as gdcm_is_available,
 )
@@ -29,7 +31,7 @@ def test_gdcm_is_available():
 
 def test_get_headers_by_study():
     files = [Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]]
-    studies, _ = _get_headers_by_study(files)
+    studies = _get_headers_by_study(files, defaultdict(list))
     assert len(studies) == 1
     for key in studies:
         assert [str(x["file"]) for x in studies[key]["headers"]] == [
@@ -40,13 +42,13 @@ def test_get_headers_by_study():
         files = [Path(root).joinpath(f) for f in files]
         break
 
-    studies, _ = _get_headers_by_study(files)
+    studies = _get_headers_by_study(files, defaultdict(list))
     assert len(studies) == 0
 
 
 def test_validate_dicom_files():
     files = [Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]]
-    studies, _ = _validate_dicom_files(files)
+    studies = _validate_dicom_files(files, defaultdict(list))
     assert len(studies) == 1
     for study in studies:
         headers = study.headers
@@ -54,22 +56,24 @@ def test_validate_dicom_files():
         assert study.n_slices == 4
     with mock.patch(
         "panimg.image_builders.dicom._get_headers_by_study",
-        return_value=(
-            {"foo": {"headers": headers[1:], "file": "bar", "index": 1}},
-            {},
-        ),
+        return_value={
+            "foo": {"headers": headers[1:], "file": "bar", "index": 1},
+        },
     ):
-        studies, errors = _validate_dicom_files(files)
+        errors = defaultdict(list)
+        studies = _validate_dicom_files(files, errors)
         assert len(studies) == 0
         for header in headers[1:]:
-            assert errors[header["file"]] == format_error(
-                "Number of slices per time point differs"
-            )
+            assert errors[header["file"]] == [
+                format_error("Number of slices per time point differs")
+            ]
 
 
 def test_image_builder_dicom_4dct(tmpdir):
     files = {Path(d[0]).joinpath(f) for d in os.walk(DICOM_DIR) for f in d[2]}
-    result = image_builder_dicom(files=files, output_directory=tmpdir)
+    result = _build_files(
+        builder=image_builder_dicom, files=files, output_directory=tmpdir
+    )
     assert result.consumed_files == {
         Path(DICOM_DIR).joinpath(f"{x}.dcm") for x in range(1, 77)
     }
@@ -127,7 +131,9 @@ def test_dicom_rescaling(folder, element_type, tmpdir):
         for d in os.walk(RESOURCE_PATH / folder)
         for f in d[2]
     ]
-    result = image_builder_dicom(files=files, output_directory=tmpdir)
+    result = _build_files(
+        builder=image_builder_dicom, files=files, output_directory=tmpdir
+    )
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [
@@ -144,7 +150,9 @@ def test_dicom_window_level(tmpdir):
         for d in os.walk(RESOURCE_PATH / "dicom")
         for f in d[2]
     }
-    result = image_builder_dicom(files=files, output_directory=tmpdir)
+    result = _build_files(
+        builder=image_builder_dicom, files=files, output_directory=tmpdir
+    )
 
     assert len(result.new_image_files) == 1
     mha_file_obj = [

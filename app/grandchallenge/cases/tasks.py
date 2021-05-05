@@ -26,7 +26,7 @@ from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
 from panimg import convert
-from panimg.types import PanimgResult
+from panimg.models import PanImgResult
 
 from grandchallenge.cases.emails import send_failed_file_import
 from grandchallenge.cases.log import logger
@@ -387,14 +387,12 @@ def import_images(
         any file errors
 
     """
-    created_image_prefix = str(origin.pk)[:8] if origin is not None else ""
 
     with TemporaryDirectory() as output_directory:
         panimg_result = convert(
             input_directory=input_directory,
             output_directory=output_directory,
             builders=builders,
-            created_image_prefix=created_image_prefix,
         )
 
         _check_all_ids(panimg_result=panimg_result)
@@ -415,7 +413,7 @@ def import_images(
     )
 
 
-def _check_all_ids(*, panimg_result: PanimgResult):
+def _check_all_ids(*, panimg_result: PanImgResult):
     """
     Check the integrity of the conversion job.
 
@@ -444,7 +442,7 @@ class ConversionResult:
 
 
 def _convert_panimg_to_django(
-    *, panimg_result: PanimgResult
+    *, panimg_result: PanImgResult
 ) -> ConversionResult:
     new_images = {Image(**asdict(im)) for im in panimg_result.new_images}
     new_image_files = {
