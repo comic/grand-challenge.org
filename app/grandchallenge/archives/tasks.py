@@ -16,8 +16,12 @@ def add_images_to_archive(*, upload_session_pk, archive_pk):
     interface = ComponentInterface.objects.get(slug="generic-medical-image")
 
     for image in images:
-        civ = ComponentInterfaceValue.objects.create(
+        civ, _ = ComponentInterfaceValue.objects.get_or_create(
             interface=interface, image=image
         )
+        if ArchiveItem.objects.filter(
+            archive=archive, values__in=[civ.pk]
+        ).exists():
+            continue
         item = ArchiveItem.objects.create(archive=archive)
         item.values.set([civ])
