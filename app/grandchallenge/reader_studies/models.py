@@ -862,13 +862,17 @@ ANSWER_TYPE_SCHEMA = {
                     "maxItems": 4,
                 },
                 "name": {"type": "string"},
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["version", "type", "corners"],
+            "additionalProperties": False,
         },
         "line-object": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Distance measurement"]},
                 "start": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -881,26 +885,32 @@ ANSWER_TYPE_SCHEMA = {
                     "minItems": 3,
                     "maxItems": 3,
                 },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["start", "end"],
+            "additionalProperties": False,
         },
         "point-object": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Point"]},
                 "point": {
                     "type": "array",
                     "items": {"type": "number"},
                     "minItems": 3,
                     "maxItems": 3,
                 },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["point"],
+            "additionalProperties": False,
         },
         "polygon-object": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Polygon"]},
                 "seed_point": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -918,14 +928,10 @@ ANSWER_TYPE_SCHEMA = {
                 },
                 "sub_type": {"type": "string"},
                 "groups": {"type": "array", "items": {"type": "string"}},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": [
-                "name",
-                "seed_point",
-                "path_points",
-                "sub_type",
-                "groups",
-            ],
+            "required": ["seed_point", "path_points", "sub_type", "groups"],
+            "additionalProperties": False,
         },
         "DIST": {
             "type": "object",
@@ -944,8 +950,11 @@ ANSWER_TYPE_SCHEMA = {
                     "minItems": 3,
                     "maxItems": 3,
                 },
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["version", "type", "start", "end"],
+            "additionalProperties": False,
         },
         "MDIS": {
             "type": "object",
@@ -958,8 +967,10 @@ ANSWER_TYPE_SCHEMA = {
                         "allOf": [{"$ref": "#/definitions/line-object"}]
                     },
                 },
+                "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["version", "type", "lines"],
+            "additionalProperties": False,
         },
         "POIN": {
             "type": "object",
@@ -972,8 +983,11 @@ ANSWER_TYPE_SCHEMA = {
                     "minItems": 3,
                     "maxItems": 3,
                 },
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["version", "type", "point"],
+            "additionalProperties": False,
         },
         "MPOI": {
             "type": "object",
@@ -986,13 +1000,16 @@ ANSWER_TYPE_SCHEMA = {
                         "allOf": [{"$ref": "#/definitions/point-object"}]
                     },
                 },
+                "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["version", "type", "points"],
+            "additionalProperties": False,
         },
         "POLY": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Polygon"]},
                 "seed_point": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -1010,15 +1027,17 @@ ANSWER_TYPE_SCHEMA = {
                 },
                 "sub_type": {"type": "string"},
                 "groups": {"type": "array", "items": {"type": "string"}},
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": [
-                "name",
                 "seed_point",
                 "path_points",
                 "sub_type",
                 "groups",
                 "version",
             ],
+            "additionalProperties": False,
         },
         "PIMG": {
             "type": "object",
@@ -1026,6 +1045,7 @@ ANSWER_TYPE_SCHEMA = {
                 "upload_session_pk": {"type": "string", "format": "uuid"}
             },
             "required": ["upload_session_pk"],
+            "additionalProperties": False,
         },
         "MPOL": {
             "type": "object",
@@ -1036,8 +1056,10 @@ ANSWER_TYPE_SCHEMA = {
                     "type": "array",
                     "items": {"$ref": "#/definitions/polygon-object"},
                 },
+                "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["type", "version", "polygons"],
+            "additionalProperties": False,
         },
         "MPIM": {
             "type": "object",
@@ -1045,11 +1067,13 @@ ANSWER_TYPE_SCHEMA = {
                 "upload_session_pk": {"type": "string", "format": "uuid"}
             },
             "required": ["upload_session_pk"],
+            "additionalProperties": False,
         },
         "2D-bounding-box-object": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["2D bounding box"]},
                 "corners": {
                     "type": "array",
                     "items": {
@@ -1061,8 +1085,10 @@ ANSWER_TYPE_SCHEMA = {
                     "minItems": 4,
                     "maxItems": 4,
                 },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["corners"],
+            "additionalProperties": False,
         },
         "M2DB": {
             "type": "object",
@@ -1077,16 +1103,20 @@ ANSWER_TYPE_SCHEMA = {
                         ]
                     },
                 },
+                "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["version", "type", "boxes"],
+            "additionalProperties": False,
         },
-    },
-    "properties": {
-        "version": {
+        "version-object": {
             "type": "object",
-            "additionalProperties": {"type": "number"},
+            "properties": {
+                "major": {"type": "number", "minimum": 0, "multipleOf": 1.0},
+                "minor": {"type": "number", "minimum": 0, "multipleOf": 1.0},
+            },
             "required": ["major", "minor"],
-        }
+            "additionalProperties": False,
+        },
     },
     # anyOf should exist, check Question.is_answer_valid
     "anyOf": [
