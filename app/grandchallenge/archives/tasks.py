@@ -27,7 +27,7 @@ def add_images_to_archive(*, upload_session_pk, archive_pk):
             archive=archive, values__in=[civ.pk]
         ).exists():
             continue
-        civs.append(civ)
+        civs.append(civ.pk)
         item = ArchiveItem.objects.create(archive=archive)
         item.values.set([civ])
 

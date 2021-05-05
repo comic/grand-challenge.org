@@ -4,39 +4,37 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
+from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.components.models import ComponentInterfaceValue
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.utils import TwoArchives
-from tests.factories import ImageFactory
+from tests.factories import ImageFactory, UploadSessionFactory
 from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("reverse", [True, False])
-def test_user_can_download_images(client, reverse):  # noqa: C901
+def test_user_can_download_images(client):  # noqa: C901
     arch_set = TwoArchives()
-
+    us = UploadSessionFactory()
     im1, im2, im3, im4 = (
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
+        ImageFactory(origin=us),
+        ImageFactory(origin=us),
+        ImageFactory(origin=us),
+        ImageFactory(origin=us),
     )
 
     images = {im1, im2, im3, im4}
 
-    if reverse:
-        for im in [im1, im2, im3, im4]:
-            im.archive_set.add(arch_set.arch1, arch_set.arch2)
-        for im in [im3, im4]:
-            im.archive_set.remove(arch_set.arch1, arch_set.arch2)
-        for im in [im1, im2]:
-            im.archive_set.remove(arch_set.arch2)
-    else:
-        # Test that adding images works
-        arch_set.arch1.images.add(im1, im2, im3, im4)
-        # Test that removing images works
-        arch_set.arch1.images.remove(im3, im4)
+    # Test that adding images works
+    add_images_to_archive(
+        archive_pk=arch_set.arch1.pk, upload_session_pk=us.pk
+    )
+    # Test that removing images works
+    im3.refresh_from_db()
+    im4.refresh_from_db()
+    im3.componentinterfacevalue_set.first().archive_items.first().delete()
+    im4.componentinterfacevalue_set.first().archive_items.first().delete()
 
     tests = (
         (None, 200, set()),
@@ -67,11 +65,8 @@ def test_user_can_download_images(client, reverse):  # noqa: C901
             assert str(pk) not in pks
 
     # Test clearing
-    if reverse:
-        im1.archive_set.clear()
-        im2.archive_set.clear()
-    else:
-        arch_set.arch1.images.clear()
+    for item in ArchiveItem.objects.all():
+        item.delete()
 
     response = get_view_for_user(
         viewname="api:image-list",
@@ -84,8 +79,7 @@ def test_user_can_download_images(client, reverse):  # noqa: C901
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("reverse", [True, False])
-def test_adding_images_triggers_task(reverse, mocker):
+def test_adding_images_triggers_task(mocker):
     mocker.patch(
         "grandchallenge.algorithms.tasks.create_algorithm_jobs_for_archive.apply_async"
     )
@@ -94,8 +88,15 @@ def test_adding_images_triggers_task(reverse, mocker):
     arch_set = TwoArchives()
 
     with capture_on_commit_callbacks(execute=True):
-        arch_set.arch1.images.add(ImageFactory())
-        arch_set.arch2.images.add(ImageFactory())
+        add_images_to_archive(
+            archive_pk=arch_set.arch1.pk,
+            upload_session_pk=ImageFactory().origin.pk,
+        )
+        add_images_to_archive(
+            archive_pk=arch_set.arch2.pk,
+            upload_session_pk=ImageFactory().origin.pk,
+        )
+
     create_algorithm_jobs_for_archive.apply_async.assert_has_calls(
         [
             call(
@@ -118,66 +119,32 @@ def test_adding_images_triggers_task(reverse, mocker):
     )
     create_algorithm_jobs_for_archive.apply_async.reset_mock()
 
+    us = UploadSessionFactory()
     im1, im2, im3, im4 = (
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
+        ImageFactory(origin=us),
+        ImageFactory(origin=us),
+        ImageFactory(origin=us),
+        ImageFactory(origin=us),
     )
 
-    if not reverse:
-        with capture_on_commit_callbacks(execute=True):
-            arch_set.arch1.images.add(im1, im2, im3, im4)
-
-        kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
-            "kwargs"
-        ]
-        create_algorithm_jobs_for_archive.apply_async.assert_called_once()
-        assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
-        assert {*kwargs["civ_pks"]} == set(
-            list(
-                ComponentInterfaceValue.objects.filter(
-                    image__in=[im1, im2, im3, im4]
-                ).values_list("pk", flat=True)
-            )
+    with capture_on_commit_callbacks(execute=True):
+        add_images_to_archive(
+            archive_pk=arch_set.arch1.pk, upload_session_pk=us.pk
         )
-        create_algorithm_jobs_for_archive.apply_async.reset_mock()
 
-        with capture_on_commit_callbacks(execute=True):
-            arch_set.arch1.images.remove(im3, im4)
-            arch_set.arch1.images.clear()
-
-        create_algorithm_jobs_for_archive.apply_async.assert_not_called()
-    else:
-        for im in [im1, im2, im3, im4]:
-            with capture_on_commit_callbacks(execute=True):
-                im.archive_set.add(arch_set.arch1, arch_set.arch2)
-
-            kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
-                "kwargs"
-            ]
-            create_algorithm_jobs_for_archive.apply_async.assert_called_once()
-            assert {*kwargs["archive_pks"]} == {
-                arch_set.arch1.pk,
-                arch_set.arch2.pk,
-            }
-            assert {*kwargs["civ_pks"]} == set(
-                list(
-                    ComponentInterfaceValue.objects.filter(
-                        image=im
-                    ).values_list("pk", flat=True)
-                )
-            )
-            create_algorithm_jobs_for_archive.apply_async.reset_mock()
-
-        with capture_on_commit_callbacks(execute=True):
-            for im in [im3, im4]:
-                im.archive_set.remove(arch_set.arch1, arch_set.arch2)
-            for im in [im1, im2]:
-                im.archive_set.remove(arch_set.arch2)
-            im1.archive_set.clear()
-
-        create_algorithm_jobs_for_archive.apply_async.assert_not_called()
+    kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
+        "kwargs"
+    ]
+    create_algorithm_jobs_for_archive.apply_async.assert_called_once()
+    assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
+    assert {*kwargs["civ_pks"]} == set(
+        list(
+            ComponentInterfaceValue.objects.filter(
+                image__in=[im1, im2, im3, im4]
+            ).values_list("pk", flat=True)
+        )
+    )
+    create_algorithm_jobs_for_archive.apply_async.reset_mock()
 
 
 @pytest.mark.django_db

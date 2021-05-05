@@ -273,6 +273,17 @@ class ArchiveItem(UUIDModel):
         ComponentInterfaceValue, blank=True, related_name="archive_items"
     )
 
+    def delete(self, *args, **kwargs):
+        image_pks = self.values.filter(image__isnull=False).values_list(
+            "image", flat=True
+        )
+        images = Image.objects.filter(pk__in=image_pks)
+        remove_perm("view_image", self.archive.editors_group, images)
+        remove_perm("view_image", self.archive.uploaders_group, images)
+        remove_perm("view_image", self.archive.users_group, images)
+
+        super().delete(*args, **kwargs)
+
 
 class ArchivePermissionRequest(RequestBase):
     """
