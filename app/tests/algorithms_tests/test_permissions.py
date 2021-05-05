@@ -15,6 +15,7 @@ from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs_for_evaluation,
     create_algorithm_jobs_for_session,
 )
+from grandchallenge.archives.tasks import add_images_to_archive
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -302,7 +303,7 @@ class TestJobPermissions(TestCase):
         im = ImageFactory()
         s.image_set.set([im])
 
-        archive.images.set([im])
+        add_images_to_archive(archive_pk=archive.pk, upload_session_pk=s.pk)
         archive.algorithms.set([ai.algorithm])
 
         create_algorithm_jobs_for_archive(archive_pks=[archive.pk])
@@ -340,8 +341,7 @@ class TestJobPermissions(TestCase):
         s = UploadSessionFactory(creator=u)
         im = ImageFactory()
         s.image_set.set([im])
-
-        archive.images.set([im])
+        add_images_to_archive(archive_pk=archive.pk, upload_session_pk=s.pk)
 
         create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
 
