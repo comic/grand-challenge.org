@@ -17,7 +17,7 @@ from typing import (
     Tuple,
 )
 
-from billiard.exceptions import SoftTimeLimitExceeded
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -305,7 +305,7 @@ def build_images(*, upload_session_pk):
             upload_session.status = upload_session.FAILURE
             upload_session.save()
             return
-        except SoftTimeLimitExceeded:
+        except (SoftTimeLimitExceeded, TimeLimitExceeded):
             upload_session.error_message = "Time limit exceeded."
             upload_session.status = upload_session.FAILURE
             upload_session.save()
