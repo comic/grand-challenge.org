@@ -64,6 +64,35 @@ def test_archive_item_permissions_signal(client, reverse):  # noqa: C901
 
 
 @pytest.mark.django_db
+def test_deleting_archive_item_removes_permissions():
+    ai = ArchiveItemFactory()
+    im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
+
+    ai.values.set([civ])
+
+    ai2 = ArchiveItemFactory()
+    ai2.values.set([civ])
+
+    assert get_groups_with_set_perms(im) == {
+        ai.archive.editors_group: {"view_image"},
+        ai.archive.uploaders_group: {"view_image"},
+        ai.archive.users_group: {"view_image"},
+        ai2.archive.editors_group: {"view_image"},
+        ai2.archive.uploaders_group: {"view_image"},
+        ai2.archive.users_group: {"view_image"},
+    }
+
+    ai.delete()
+
+    assert get_groups_with_set_perms(im) == {
+        ai2.archive.editors_group: {"view_image"},
+        ai2.archive.uploaders_group: {"view_image"},
+        ai2.archive.users_group: {"view_image"},
+    }
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("reverse", [True, False])
 def test_adding_images_triggers_task(reverse, mocker):
     mocker.patch(
