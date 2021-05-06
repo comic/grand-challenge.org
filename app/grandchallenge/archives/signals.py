@@ -1,4 +1,4 @@
-from django.db.models.signals import m2m_changed, pre_delete
+from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
@@ -51,21 +51,18 @@ def update_permissions_on_archive_item_changed(
 
 
 @receiver(pre_delete, sender=ArchiveItem)
-def remove_view_image_permissions(*_, instance: ArchiveItem, **__):
-    """
-    Remove view_images perm when the archive item is deleted
-
-    Note that this will remove permissions regardless of whether
-    the image is included in an archive via another archive item.
-    """
+@receiver(post_save, sender=ArchiveItem)
+def update_view_image_permissions(*_, instance: ArchiveItem, **__):
     # TODO: this should be the same as [civ.image for civ in instance.items.all()], double check this
-    images = Image.objects.filter(
-        componentinterfacevalue__archive_items=instance
+    images = list(
+        Image.objects.filter(componentinterfacevalue__archive_items=instance)
     )
 
-    remove_perm("view_image", instance.archive.editors_group, images)
-    remove_perm("view_image", instance.archive.uploaders_group, images)
-    remove_perm("view_image", instance.archive.users_group, images)
+    def update_permissions():
+        for image in images:
+            image.update_viewer_groups_permissions()
+
+    on_commit(update_permissions)
 
 
 @receiver(m2m_changed, sender=Archive.images.through)

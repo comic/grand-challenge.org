@@ -6,7 +6,7 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
 from grandchallenge.components.models import ComponentInterfaceValue
 from tests.algorithms_tests.factories import AlgorithmFactory
-from tests.archives_tests.factories import ArchiveItemFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.archives_tests.utils import TwoArchives
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
@@ -83,12 +83,41 @@ def test_deleting_archive_item_removes_permissions():
         ai2.archive.users_group: {"view_image"},
     }
 
-    ai.delete()
+    with capture_on_commit_callbacks(execute=True):
+        ai.delete()
 
     assert get_groups_with_set_perms(im) == {
         ai2.archive.editors_group: {"view_image"},
         ai2.archive.uploaders_group: {"view_image"},
         ai2.archive.users_group: {"view_image"},
+    }
+
+
+@pytest.mark.django_db
+def test_changing_archive_updates_permissions():
+    ai = ArchiveItemFactory()
+    im = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=im)
+
+    ai.values.set([civ])
+
+    assert get_groups_with_set_perms(im) == {
+        ai.archive.editors_group: {"view_image"},
+        ai.archive.uploaders_group: {"view_image"},
+        ai.archive.users_group: {"view_image"},
+    }
+
+    a2 = ArchiveFactory()
+
+    ai.archive = a2
+
+    with capture_on_commit_callbacks(execute=True):
+        ai.save()
+
+    assert get_groups_with_set_perms(im) == {
+        a2.editors_group: {"view_image"},
+        a2.uploaders_group: {"view_image"},
+        a2.users_group: {"view_image"},
     }
 
 
