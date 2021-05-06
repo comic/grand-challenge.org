@@ -310,18 +310,18 @@ def create_algorithm_jobs(  # noqa: C901
             ]
 
     for archive_item in archive_items:
+        job_inputs = archive_item.values.filter(interface__in=input_interfaces)
+
         # TODO: check that this filter works
         if not Job.objects.filter(
-            inputs__in=archive_item.values.all(),
+            inputs__in=job_inputs,
             algorithm_image=algorithm_image,
             creator=creator,
         ).exists():
             j = Job.objects.create(
                 creator=creator, algorithm_image=algorithm_image
             )
-            j.inputs.set(
-                archive_item.values.filter(interface__in=input_interfaces)
-            )
+            j.inputs.set(job_inputs)
 
             if extra_viewer_groups is not None:
                 j.viewer_groups.add(*extra_viewer_groups)
