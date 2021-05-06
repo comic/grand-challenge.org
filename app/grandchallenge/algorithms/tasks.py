@@ -149,7 +149,7 @@ def create_algorithm_jobs_for_session(
 
 @shared_task
 def create_algorithm_jobs_for_archive(
-    *, archive_pks, civ_pks=None, algorithm_pks=None
+    *, archive_pks, archive_item_pks=None, algorithm_pks=None
 ):
     # Send an email to the algorithm editors on job failure
     linked_task = send_failed_jobs_email.signature(kwargs={}, immutable=True)
@@ -166,12 +166,10 @@ def create_algorithm_jobs_for_archive(
         else:
             algorithms = archive.algorithms.all()
 
-        # TODO: when other types of civ can be added to algotihms this would
-        # need to be grouped by ArchiveItem
-        if civ_pks is not None:
-            civs = ComponentInterfaceValue.objects.filter(pk__in=civ_pks).all()
+        if archive_item_pks is not None:
+            archive_items = archive.items.filter(pk__in=archive_item_pks)
         else:
-            civs = archive.items.values_list("values", flat=True)
+            archive_items = archive.items.all()
 
         for algorithm in algorithms:
             # Editors group should be able to view archive jobs for debugging
@@ -179,7 +177,7 @@ def create_algorithm_jobs_for_archive(
 
             execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
-                civs=civs,
+                archive_items=archive_items,
                 creator=None,
                 extra_viewer_groups=groups,
                 linked_task=linked_task,
@@ -206,9 +204,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 
     execute_jobs(
         algorithm_image=evaluation.submission.algorithm_image,
-        civs=evaluation.submission.phase.archive.items.values_list(
-            "values", flat=True
-        ),
+        archive_items=evaluation.submission.phase.archive.items.all(),
         creator=None,
         extra_viewer_groups=groups,
         linked_task=linked_task,
@@ -219,7 +215,7 @@ def execute_jobs(
     *,
     algorithm_image,
     images=None,
-    civs=None,
+    archive_items=None,
     creator=None,
     extra_viewer_groups=None,
     linked_task=None,
@@ -227,7 +223,7 @@ def execute_jobs(
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
         images=images,
-        civs=civs,
+        archive_items=archive_items,
         creator=creator,
         extra_viewer_groups=extra_viewer_groups,
     )
@@ -276,7 +272,7 @@ def create_algorithm_jobs(  # noqa: C901
     *,
     algorithm_image,
     images=None,
-    civs=None,
+    archive_items=None,
     creator=None,
     extra_viewer_groups=None,
 ):
@@ -285,13 +281,17 @@ def create_algorithm_jobs(  # noqa: C901
     )
 
     jobs = []
+
     if not images:
         images = []
-    if not civs:
-        civs = []
+
+    if not archive_items:
+        archive_items = []
 
     if not algorithm_image:
         return jobs
+
+    input_interfaces = algorithm_image.algorithm.inputs.all()
 
     if creator:
         if (
@@ -303,26 +303,30 @@ def create_algorithm_jobs(  # noqa: C901
                     creator=creator, algorithm_image=algorithm_image
                 )
             ]
-            civs = civs[
+            archive_items = archive_items[
                 : remaining_jobs(
                     creator=creator, algorithm_image=algorithm_image
                 )
             ]
 
-    for civ in civs:
-        civ_obj = ComponentInterfaceValue.objects.get(pk=civ)
-        if civ_obj.algorithms_jobs_as_input.filter(
-            algorithm_image=algorithm_image, creator=creator
+    for archive_item in archive_items:
+        # TODO: check that this filter works
+        if not Job.objects.filter(
+            inputs__in=archive_item.values.all(),
+            algorithm_image=algorithm_image,
+            creator=creator,
         ).exists():
-            continue
-        j = Job.objects.create(
-            creator=creator, algorithm_image=algorithm_image
-        )
-        j.inputs.set([civ])
+            j = Job.objects.create(
+                creator=creator, algorithm_image=algorithm_image
+            )
+            j.inputs.set(
+                archive_item.values.filter(interface__in=input_interfaces)
+            )
 
-        if extra_viewer_groups is not None:
-            j.viewer_groups.add(*extra_viewer_groups)
-        jobs.append(j)
+            if extra_viewer_groups is not None:
+                j.viewer_groups.add(*extra_viewer_groups)
+
+            jobs.append(j)
 
     for image in images:
         if not ComponentInterfaceValue.objects.filter(
