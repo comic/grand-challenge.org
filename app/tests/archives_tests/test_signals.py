@@ -6,81 +6,61 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
 from grandchallenge.components.models import ComponentInterfaceValue
 from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.archives_tests.factories import ArchiveItemFactory
 from tests.archives_tests.utils import TwoArchives
+from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
 from tests.factories import ImageFactory
-from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("reverse", [True, False])
-def test_user_can_download_images(client, reverse):  # noqa: C901
-    arch_set = TwoArchives()
+def test_archive_item_permissions_signal(client, reverse):  # noqa: C901
+    ai1, ai2 = ArchiveItemFactory.create_batch(2)
+    im1, im2, im3, im4 = ImageFactory.create_batch(4)
 
-    im1, im2, im3, im4 = (
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
+    civ1, civ2, civ3, civ4 = (
+        ComponentInterfaceValueFactory(image=im1),
+        ComponentInterfaceValueFactory(image=im2),
+        ComponentInterfaceValueFactory(image=im3),
+        ComponentInterfaceValueFactory(image=im4),
     )
-
-    images = {im1, im2, im3, im4}
 
     if reverse:
-        for im in [im1, im2, im3, im4]:
-            im.archive_set.add(arch_set.arch1, arch_set.arch2)
-        for im in [im3, im4]:
-            im.archive_set.remove(arch_set.arch1, arch_set.arch2)
-        for im in [im1, im2]:
-            im.archive_set.remove(arch_set.arch2)
+        for civ in [civ1, civ2, civ3, civ4]:
+            civ.archive_items.add(ai1, ai2)
+        for civ in [civ3, civ4]:
+            civ.archive_items.remove(ai1, ai2)
+        for civ in [civ1, civ2]:
+            civ.archive_items.remove(ai2)
     else:
         # Test that adding images works
-        arch_set.arch1.images.add(im1, im2, im3, im4)
+        ai1.values.add(civ1, civ2, civ3, civ4)
         # Test that removing images works
-        arch_set.arch1.images.remove(im3, im4)
+        ai1.values.remove(civ3, civ4)
 
-    tests = (
-        (None, 200, set()),
-        (arch_set.editor1, 200, {im1.pk, im2.pk}),
-        (arch_set.uploader1, 200, {im1.pk, im2.pk}),
-        (arch_set.user1, 200, {im1.pk, im2.pk}),
-        (arch_set.editor2, 200, set()),
-        (arch_set.uploader2, 200, set()),
-        (arch_set.user2, 200, set()),
-        (arch_set.u, 200, set()),
-    )
-
-    for test in tests:
-        response = get_view_for_user(
-            viewname="api:image-list",
-            client=client,
-            user=test[0],
-            content_type="application/json",
-        )
-        assert response.status_code == test[1]
-
-        pks = [obj["pk"] for obj in response.json()["results"]]
-
-        for pk in test[2]:
-            assert str(pk) in pks
-
-        for pk in images - test[2]:
-            assert str(pk) not in pks
+    assert get_groups_with_set_perms(im1) == {
+        ai1.archive.editors_group: {"view_image"},
+        ai1.archive.uploaders_group: {"view_image"},
+        ai1.archive.users_group: {"view_image"},
+    }
+    assert get_groups_with_set_perms(im2) == {
+        ai1.archive.editors_group: {"view_image"},
+        ai1.archive.uploaders_group: {"view_image"},
+        ai1.archive.users_group: {"view_image"},
+    }
+    assert get_groups_with_set_perms(im3) == {}
+    assert get_groups_with_set_perms(im4) == {}
 
     # Test clearing
     if reverse:
-        im1.archive_set.clear()
-        im2.archive_set.clear()
+        civ1.archive_items.clear()
+        civ2.archive_items.clear()
     else:
-        arch_set.arch1.images.clear()
+        ai1.values.clear()
 
-    response = get_view_for_user(
-        viewname="api:image-list",
-        client=client,
-        user=arch_set.user1,
-        content_type="application/json",
-    )
-    assert response.status_code == 200
-    assert response.json()["count"] == 0
+    assert get_groups_with_set_perms(im1) == {}
+    assert get_groups_with_set_perms(im2) == {}
 
 
 @pytest.mark.django_db

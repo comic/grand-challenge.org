@@ -1,6 +1,10 @@
 import factory
 
-from grandchallenge.archives.models import Archive, ArchivePermissionRequest
+from grandchallenge.archives.models import (
+    Archive,
+    ArchiveItem,
+    ArchivePermissionRequest,
+)
 from tests.factories import UserFactory
 
 
@@ -21,6 +25,13 @@ class ArchiveFactory(factory.django.DjangoModelFactory):
         # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
         if create and extracted:
             self.algorithms.set([*extracted])
+
+
+class ArchiveItemFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ArchiveItem
+
+    archive = factory.SubFactory(ArchiveFactory)
 
 
 class ArchivePermissionRequestFactory(factory.django.DjangoModelFactory):

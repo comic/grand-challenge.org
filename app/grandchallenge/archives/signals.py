@@ -12,6 +12,43 @@ from grandchallenge.components.models import (
 )
 
 
+@receiver(m2m_changed, sender=ArchiveItem.values.through)
+def update_permissions_on_archive_item_changed(
+    instance, action, reverse, model, pk_set, **_
+):
+    if action not in ["post_add", "post_remove", "pre_clear"]:
+        # nothing to do for the other actions
+        return
+
+    if reverse:
+        images = Image.objects.filter(componentinterfacevalue__pk=instance.pk)
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
+            archive_items = instance.archive_items.all()
+        else:
+            archive_items = model.objects.filter(pk__in=pk_set)
+    else:
+        archive_items = [instance]
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
+            images = Image.objects.filter(
+                componentinterfacevalue__archive_items=instance
+            )
+        else:
+            images = Image.objects.filter(
+                componentinterfacevalue__pk__in=pk_set
+            )
+
+    op = assign_perm if "add" in action else remove_perm
+
+    for archive_item in archive_items:
+        op("view_image", archive_item.archive.editors_group, images)
+        op("view_image", archive_item.archive.uploaders_group, images)
+        op("view_image", archive_item.archive.users_group, images)
+
+
 @receiver(m2m_changed, sender=Archive.images.through)
 def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
     if action not in ["post_add", "post_remove", "pre_clear"]:
