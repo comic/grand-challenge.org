@@ -9,6 +9,7 @@ from panimg.image_builders.fallback import (
     image_builder_fallback,
 )
 from panimg.models import ColorSpace
+from panimg.panimg import _build_files
 
 from tests.cases_tests import RESOURCE_PATH
 
@@ -28,7 +29,11 @@ def test_image_builder_fallback(tmpdir, src, colorspace):
     shutil.copy(str(src), str(dest))
     files = {Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]}
     with TemporaryDirectory() as output:
-        result = image_builder_fallback(files=files, output_directory=output)
+        result = _build_files(
+            builder=image_builder_fallback,
+            files=files,
+            output_directory=output,
+        )
     assert result.consumed_files == {dest}
     assert len(result.new_images) == 1
     image = result.new_images.pop()
@@ -45,9 +50,13 @@ def test_image_builder_fallback_corrupt_file(tmpdir):
 
     files = {Path(d[0]).joinpath(f) for d in os.walk(tmpdir) for f in d[2]}
     with TemporaryDirectory() as output:
-        result = image_builder_fallback(files=files, output_directory=output)
+        result = _build_files(
+            builder=image_builder_fallback,
+            files=files,
+            output_directory=output,
+        )
 
     assert result.file_errors == {
-        dest: format_error("Not a valid image file"),
+        dest: [format_error("Not a valid image file")],
     }
     assert result.consumed_files == set()
