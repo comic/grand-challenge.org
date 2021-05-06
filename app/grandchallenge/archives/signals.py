@@ -65,9 +65,7 @@ def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
             archives = model.objects.filter(pk__in=pk_set)
 
         archive_pks = archives.values_list("pk", flat=True)
-        archives = archives.select_related("users_group", "editors_group")
     else:
-        archives = [instance]
         archive_pks = [instance.pk]
         if pk_set is None:
             # When using a _clear action, pk_set is None
@@ -92,13 +90,6 @@ def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
             ).exists():
                 item = ArchiveItem.objects.create(archive=archive)
                 item.values.set([civ])
-
-    op = assign_perm if "add" in action else remove_perm
-
-    for archive in archives:
-        op("view_image", archive.editors_group, images)
-        op("view_image", archive.uploaders_group, images)
-        op("view_image", archive.users_group, images)
 
     if "add" in action:
         on_commit(
