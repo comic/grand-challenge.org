@@ -72,7 +72,11 @@
                     allowing you to upload {{ remaining_jobs }} image{{ remaining_jobs|pluralize }}.
                 </p>
             {% endif %}
-            {% crispy form %}
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <input type="submit" name="save" value="Submit" class="btn btn-primary" id="submit-id-save">
+            </form>
         {% endif %}
         <p>
             By running this algorithm you agree to the
