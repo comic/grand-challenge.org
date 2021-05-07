@@ -15,12 +15,6 @@ class ArchiveFactory(factory.django.DjangoModelFactory):
     title = factory.Sequence(lambda n: f"Archive {n}")
 
     @factory.post_generation
-    def images(self, create, extracted, **kwargs):
-        # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
-        if create and extracted:
-            self.images.set([*extracted])
-
-    @factory.post_generation
     def algorithms(self, create, extracted, **kwargs):
         # See https://factoryboy.readthedocs.io/en/latest/recipes.html#simple-many-to-many-relationship
         if create and extracted:

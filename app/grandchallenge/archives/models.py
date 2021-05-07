@@ -205,8 +205,15 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
             return protected_study_ids, protected_patient_ids
 
         images_to_remove = (
-            Image.objects.annotate(num_archives=Count("archive"))
-            .filter(archive=self, num_archives=1)
+            Image.objects.annotate(
+                num_archives=Count(
+                    "componentinterfacevalue__archive_items__archive"
+                )
+            )
+            .filter(
+                componentinterfacevalue__archive_items__archive=self,
+                num_archives=1,
+            )
             .order_by("name")
         )
 

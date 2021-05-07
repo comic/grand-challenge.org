@@ -31,6 +31,7 @@ from tests.annotations_tests.factories import (
     SinglePolygonAnnotationFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory
+from tests.archives_tests.test_models import create_archive_items_for_images
 from tests.cases_tests.factories import ImageFactoryWithoutImageFile
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import MethodFactory
@@ -619,10 +620,16 @@ def generate_archive_patient_study_image_set():
     images121 = ImageFactoryWithoutImageFile.create_batch(2, study=study121)
     images122 = ImageFactoryWithoutImageFile.create_batch(3, study=study122)
     images211 = ImageFactoryWithoutImageFile.create_batch(4, study=None)
-    archive1 = ArchiveFactory.create(
-        images=[*images111, *images112, *images113, *images121, *images122]
-    )
-    archive2 = ArchiveFactory.create(images=images211)
+
+    archive1, archive2 = ArchiveFactory.create_batch(2)
+
+    create_archive_items_for_images(images111, archive1)
+    create_archive_items_for_images(images112, archive1)
+    create_archive_items_for_images(images113, archive1)
+    create_archive_items_for_images(images121, archive1)
+    create_archive_items_for_images(images122, archive1)
+    create_archive_items_for_images(images211, archive2)
+
     return ArchivePatientStudyImageSet(
         archive1=archive1,
         patient11=patient11,

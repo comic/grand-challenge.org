@@ -1,11 +1,12 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 
-from tests.archives_tests.factories import ArchiveFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import (
     ImageFactoryWithImageFile,
     ImageFactoryWithoutImageFile,
 )
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.model_helpers import do_test_factory
 
 
@@ -21,6 +22,13 @@ def test_str():
 @pytest.mark.parametrize("factory", (ArchiveFactory,))
 def test_factory_creation(factory):
     do_test_factory(factory)
+
+
+def create_archive_items_for_images(images, archive):
+    for image in images:
+        civ = ComponentInterfaceValueFactory(image=image)
+        ai = ArchiveItemFactory(archive=archive)
+        ai.values.add(civ)
 
 
 @pytest.mark.django_db
@@ -39,10 +47,10 @@ def test_removes_all_related_models(
         4, study=None
     )
     dual_archive_images = ImageFactoryWithoutImageFile.create_batch(4)
-    apsi_set.archive1.images.add(image_with_files)
-    apsi_set.archive1.images.add(*archive_only_images)
-    apsi_set.archive1.images.add(*dual_archive_images)
-    apsi_set.archive2.images.add(*dual_archive_images)
+    create_archive_items_for_images([image_with_files], apsi_set.archive1)
+    create_archive_items_for_images(archive_only_images, apsi_set.archive1)
+    create_archive_items_for_images(dual_archive_images, apsi_set.archive1)
+    create_archive_items_for_images(dual_archive_images, apsi_set.archive2)
     apsi_set.archive1.delete()
     all_deleted_models = (
         apsi_set.archive1,
