@@ -26,18 +26,19 @@ def test_archive_item_permissions_signal(client, reverse):  # noqa: C901
         ComponentInterfaceValueFactory(image=im4),
     )
 
-    if reverse:
-        for civ in [civ1, civ2, civ3, civ4]:
-            civ.archive_items.add(ai1, ai2)
-        for civ in [civ3, civ4]:
-            civ.archive_items.remove(ai1, ai2)
-        for civ in [civ1, civ2]:
-            civ.archive_items.remove(ai2)
-    else:
-        # Test that adding images works
-        ai1.values.add(civ1, civ2, civ3, civ4)
-        # Test that removing images works
-        ai1.values.remove(civ3, civ4)
+    with capture_on_commit_callbacks(execute=True):
+        if reverse:
+            for civ in [civ1, civ2, civ3, civ4]:
+                civ.archive_items.add(ai1, ai2)
+            for civ in [civ3, civ4]:
+                civ.archive_items.remove(ai1, ai2)
+            for civ in [civ1, civ2]:
+                civ.archive_items.remove(ai2)
+        else:
+            # Test that adding images works
+            ai1.values.add(civ1, civ2, civ3, civ4)
+            # Test that removing images works
+            ai1.values.remove(civ3, civ4)
 
     assert get_groups_with_set_perms(im1) == {
         ai1.archive.editors_group: {"view_image"},
@@ -53,11 +54,12 @@ def test_archive_item_permissions_signal(client, reverse):  # noqa: C901
     assert get_groups_with_set_perms(im4) == {}
 
     # Test clearing
-    if reverse:
-        civ1.archive_items.clear()
-        civ2.archive_items.clear()
-    else:
-        ai1.values.clear()
+    with capture_on_commit_callbacks(execute=True):
+        if reverse:
+            civ1.archive_items.clear()
+            civ2.archive_items.clear()
+        else:
+            ai1.values.clear()
 
     assert get_groups_with_set_perms(im1) == {}
     assert get_groups_with_set_perms(im2) == {}
@@ -65,26 +67,25 @@ def test_archive_item_permissions_signal(client, reverse):  # noqa: C901
 
 @pytest.mark.django_db
 def test_deleting_archive_item_removes_permissions():
-    ai = ArchiveItemFactory()
+    ai1, ai2 = ArchiveItemFactory.create_batch(2)
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
 
-    ai.values.set([civ])
-
-    ai2 = ArchiveItemFactory()
-    ai2.values.set([civ])
+    with capture_on_commit_callbacks(execute=True):
+        ai1.values.set([civ])
+        ai2.values.set([civ])
 
     assert get_groups_with_set_perms(im) == {
-        ai.archive.editors_group: {"view_image"},
-        ai.archive.uploaders_group: {"view_image"},
-        ai.archive.users_group: {"view_image"},
+        ai1.archive.editors_group: {"view_image"},
+        ai1.archive.uploaders_group: {"view_image"},
+        ai1.archive.users_group: {"view_image"},
         ai2.archive.editors_group: {"view_image"},
         ai2.archive.uploaders_group: {"view_image"},
         ai2.archive.users_group: {"view_image"},
     }
 
     with capture_on_commit_callbacks(execute=True):
-        ai.delete()
+        ai1.delete()
 
     assert get_groups_with_set_perms(im) == {
         ai2.archive.editors_group: {"view_image"},
@@ -99,7 +100,8 @@ def test_changing_archive_updates_permissions():
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
 
-    ai.values.set([civ])
+    with capture_on_commit_callbacks(execute=True):
+        ai.values.set([civ])
 
     assert get_groups_with_set_perms(im) == {
         ai.archive.editors_group: {"view_image"},
