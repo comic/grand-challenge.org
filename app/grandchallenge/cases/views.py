@@ -103,7 +103,6 @@ class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = HyperlinkedImageSerializer
     queryset = Image.objects.all().prefetch_related(
         "files",
-        "archive_set",
         "componentinterfacevalue_set__algorithms_jobs_as_input",
         "readerstudies",
     )
@@ -115,7 +114,9 @@ class ImageViewSet(ReadOnlyModelViewSet):
     filterset_fields = (
         "study",
         "origin",
-        "archive",
+        # TODO JM: Add algorithm jobs here and remove from serializer
+        # TODO JM: Shorten this!
+        "componentinterfacevalue__archive_items__archive",
         "readerstudies",
         "name",
     )
