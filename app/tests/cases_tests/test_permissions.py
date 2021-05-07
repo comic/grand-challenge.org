@@ -1,10 +1,11 @@
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import get_perms
 
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.archives_tests.factories import ArchiveFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
@@ -147,13 +148,14 @@ def test_view_permission_when_reused(in_archive, in_rs, in_job):
     archive = ArchiveFactory()
 
     if in_archive:
-        archive.images.add(im)
+        civ = ComponentInterfaceValueFactory(image=im)
+        ai = ArchiveItemFactory(archive=archive)
+        with capture_on_commit_callbacks(execute=True):
+            ai.values.add(civ)
     if in_rs:
         rs.images.add(im)
     if in_job:
-        civ = ComponentInterfaceValueFactory()
-        civ.image = im
-        civ.save()
+        civ = ComponentInterfaceValueFactory(image=im)
         job.inputs.add(civ)
 
     assert ("view_image" in get_perms(archive.editors_group, im)) is in_archive
