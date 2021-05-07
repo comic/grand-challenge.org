@@ -127,8 +127,8 @@ class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
             ReaderStudy,
         ).order_by("title")
         self.fields["images"].queryset = Image.objects.filter(
-            archive=self.archive
-        )
+            componentinterfacevalue__archive_items__archive=self.archive
+        ).distinct()
         self.fields["images"].initial = self.fields["images"].queryset
 
     def clean_reader_study(self):

@@ -53,7 +53,7 @@ def update_view_image_permissions(*_, instance: ArchiveItem, **__):
     on_commit(update_permissions)
 
 
-@receiver(m2m_changed, sender=Archive.images.through)
+# @receiver(m2m_changed, sender=Archive.images.through)
 def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
     if action not in ["post_add", "post_remove", "pre_clear"]:
         # nothing to do for the other actions

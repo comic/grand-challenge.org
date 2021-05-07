@@ -123,6 +123,7 @@ def test_changing_archive_updates_permissions():
     }
 
 
+@pytest.mark.xfail(reason="Archive.images deprecated")
 @pytest.mark.django_db
 @pytest.mark.parametrize("reverse", [True, False])
 def test_adding_images_triggers_task(reverse, mocker):

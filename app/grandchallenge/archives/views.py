@@ -146,7 +146,7 @@ class ArchiveDetail(
                 "editor_remove_form": editor_remove_form,
                 "now": now().isoformat(),
                 "limit": limit,
-                "offsets": range(0, context["object"].images.count(), limit),
+                "offsets": range(0, context["object"].items.count(), limit),
             }
         )
 

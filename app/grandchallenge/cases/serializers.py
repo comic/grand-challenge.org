@@ -27,9 +27,6 @@ class ImageFileSerializer(serializers.ModelSerializer):
 class HyperlinkedImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
     job_set = SerializerMethodField()
-    archive_set = HyperlinkedRelatedField(
-        read_only=True, many=True, view_name="api:archive-detail"
-    )
     reader_study_set = HyperlinkedRelatedField(
         source="readerstudies",
         read_only=True,
@@ -52,7 +49,6 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "study",
             "files",
             "reader_study_set",
-            "archive_set",
             "job_set",
             "width",
             "height",
