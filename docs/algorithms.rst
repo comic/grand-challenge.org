@@ -55,7 +55,6 @@ results.json
 
 If one of the defined outputs for the algorithms is a ``results.json`` file, the contents of this file will be parsed and shown on the algorithm's result page. You can provide a jinja template to an algorithm for the rendering of these results.
 
-
 Frequently Asked Questions
 ==========================
 
@@ -97,7 +96,6 @@ To solve this create an InferenceSession by explicitly providing the number of t
     so.intra_op_num_threads = 2
 
     session = onnxruntime.InferenceSession(model_file, sess_options=so)
-    
 
 Output overlay not visible or incorrectly placed on input image
 ---------------------------------------------------------------
