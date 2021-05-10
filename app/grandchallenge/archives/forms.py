@@ -141,7 +141,9 @@ class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
 
     def clean_images(self):
         images = self.cleaned_data["images"]
-        images = images.filter(archive=self.archive)
+        images = images.filter(
+            componentinterfacevalue__archive_items__archive=self.archive
+        )
         return images
 
     def clean(self):
