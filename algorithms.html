@@ -105,6 +105,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#where-can-i-write-data">Where can I write data?</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#time-limit-exceeded-errors-with-pytorch">Time limit exceeded errors with PyTorch</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pthread-setaffinity-np-failed-errors-with-onnx-runtime">pthread_setaffinity_np failed errors with ONNX Runtime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-overlay-not-visible-or-incorrectly-placed-on-input-image">Output overlay not visible or incorrectly placed on input image</a></li>
 </ul>
 </li>
 </ul>
@@ -189,10 +190,10 @@
 <div class="section" id="algorithm-inputs">
 <h2>Algorithm Inputs<a class="headerlink" href="#algorithm-inputs" title="Permalink to this headline">¶</a></h2>
 <p>Inputs to an algorithm are available in the container in the <code class="docutils literal notranslate"><span class="pre">/input</span></code> directory.
-You can add <a class="reference internal" href="components.html#components"><span class="std std-ref">component interfaces</span></a> that will provide the inputs to your algorithm.
+You can specify <a class="reference internal" href="components.html#components"><span class="std std-ref">component interfaces</span></a> that will provide the inputs to your algorithm in the “Inputs” field on the create/update algorithm form.
 You can find a list of the <a class="reference external" href="https://grand-challenge.org/algorithms/interfaces/">currently available interfaces</a> on grand challenge.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">relative_path</span></code> property on the <code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code> is used to determine where the input value will be placed inside the container.</p>
-<p>The most types get written to a json file, located in <code class="docutils literal notranslate"><span class="pre">/input/{relative_path}</span></code> in the container.
+<p>Most types get written to a json file, located in <code class="docutils literal notranslate"><span class="pre">/input/{relative_path}</span></code> in the container.
 You can read and parse these with</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
 
@@ -215,7 +216,7 @@ You can read and parse these with</p>
 <div class="section" id="algorithm-outputs">
 <h2>Algorithm Outputs<a class="headerlink" href="#algorithm-outputs" title="Permalink to this headline">¶</a></h2>
 <p>Outputs of an algorithm must be stored in the directory <code class="docutils literal notranslate"><span class="pre">/output/</span></code>.
-As with the inputs, a <code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code> needs to be defined for each of the expected outputs.
+As with the inputs, a <code class="docutils literal notranslate"><span class="pre">ComponentInterface</span></code> needs to be defined for each of the expected outputs in the “Outputs” field on the create/update algorithm form.
 You can find a list of the <a class="reference external" href="https://grand-challenge.org/algorithms/interfaces/">currently available interfaces</a> on grand challenge.</p>
 <div class="section" id="results-json">
 <h3>results.json<a class="headerlink" href="#results-json" title="Permalink to this headline">¶</a></h3>
@@ -257,6 +258,10 @@ To solve this create an InferenceSession by explicitly providing the number of t
 <span class="n">session</span> <span class="o">=</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span><span class="n">model_file</span><span class="p">,</span> <span class="n">sess_options</span><span class="o">=</span><span class="n">so</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="output-overlay-not-visible-or-incorrectly-placed-on-input-image">
+<h3>Output overlay not visible or incorrectly placed on input image<a class="headerlink" href="#output-overlay-not-visible-or-incorrectly-placed-on-input-image" title="Permalink to this headline">¶</a></h3>
+<p>It is important to specify the correct voxel spacing, origin, and direction for image outputs that should be shown as overlays on the input images. When using <code class="docutils literal notranslate"><span class="pre">output_sitk_img</span> <span class="pre">=</span> <span class="pre">SimpleITK.GetImageFromArray(numpy_array)</span></code> SimpleITK will set default values that might not correspond with the input image resulting in an incorrectly placed overlay. Use <code class="docutils literal notranslate"><span class="pre">output_sitk_img.CopyInformation(input_sitk_img)</span></code> to copy the origin, spacing and direction values from the input image to the output image to ensure they correspond.</p>
 </div>
 </div>
 </div>
