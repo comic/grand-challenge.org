@@ -11,12 +11,12 @@ Algorithm Inputs
 ================
 
 Inputs to an algorithm are available in the container in the ``/input`` directory.
-You can add :ref:`component interfaces <components>` that will provide the inputs to your algorithm.
+You can specify :ref:`component interfaces <components>` that will provide the inputs to your algorithm in the "Inputs" field on the create/update algorithm form.
 You can find a list of the `currently available interfaces`_ on grand challenge.
 
 The ``relative_path`` property on the ``ComponentInterface`` is used to determine where the input value will be placed inside the container.
 
-The most types get written to a json file, located in ``/input/{relative_path}`` in the container.
+Most types get written to a json file, located in ``/input/{relative_path}`` in the container.
 You can read and parse these with
 
 .. code-block:: python
@@ -47,7 +47,7 @@ Algorithm Outputs
 =================
 
 Outputs of an algorithm must be stored in the directory ``/output/``.
-As with the inputs, a ``ComponentInterface`` needs to be defined for each of the expected outputs.
+As with the inputs, a ``ComponentInterface`` needs to be defined for each of the expected outputs in the "Outputs" field on the create/update algorithm form.
 You can find a list of the `currently available interfaces`_ on grand challenge.
 
 results.json
@@ -97,5 +97,9 @@ To solve this create an InferenceSession by explicitly providing the number of t
 
     session = onnxruntime.InferenceSession(model_file, sess_options=so)
 
+Output overlay not visible or incorrectly placed on input image
+---------------------------------------------------------------
+
+It is important to specify the correct voxel spacing, origin, and direction for image outputs that should be shown as overlays on the input images. When using ``output_sitk_img = SimpleITK.GetImageFromArray(numpy_array)`` SimpleITK will set default values that might not correspond with the input image resulting in an incorrectly placed overlay. Use ``output_sitk_img.CopyInformation(input_sitk_img)`` to copy the origin, spacing and direction values from the input image to the output image to ensure they correspond.
 
 .. _`currently available interfaces`: https://grand-challenge.org/algorithms/interfaces/
