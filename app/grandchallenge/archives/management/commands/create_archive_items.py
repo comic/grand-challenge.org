@@ -14,9 +14,13 @@ class Command(BaseCommand):
         )
         for archive in Archive.objects.all():
             for image in archive.images.all():
-                civ, _ = ComponentInterfaceValue.objects.get_or_create(
+                civ = ComponentInterfaceValue.objects.filter(
                     interface=interface, image=image
-                )
+                ).first()
+                if civ is None:
+                    civ = ComponentInterfaceValue.objects.create(
+                        interface=interface, image=image
+                    )
                 if not ArchiveItem.objects.filter(
                     archive=archive, values__in=[civ.pk]
                 ).exists():
