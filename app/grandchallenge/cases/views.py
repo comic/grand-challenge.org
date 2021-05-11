@@ -24,6 +24,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.archives.tasks import add_images_to_archive
+from grandchallenge.cases.filters import ImageFilterSet
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
@@ -111,15 +112,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
         DjangoFilterBackend,
         ObjectPermissionsFilter,
     )
-    filterset_fields = (
-        "study",
-        "origin",
-        # TODO JM: Add algorithm jobs here and remove from serializer
-        # TODO JM: Shorten this!
-        "componentinterfacevalue__archive_items__archive",
-        "readerstudies",
-        "name",
-    )
+    filterset_class = ImageFilterSet
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
