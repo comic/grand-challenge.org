@@ -44,8 +44,6 @@ class TestRetinaImageSerializers:
                     "voxel_width_mm",
                     "voxel_height_mm",
                     "voxel_depth_mm",
-                    "job_set",
-                    "reader_study_set",
                     "api_url",
                 ),
                 "no_valid_check": True,
