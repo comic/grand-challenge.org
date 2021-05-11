@@ -7,7 +7,7 @@ from grandchallenge.components.models import (
 )
 
 
-class ComponentInterfaceSerialzer(serializers.ModelSerializer):
+class ComponentInterfaceSerializer(serializers.ModelSerializer):
     kind = serializers.CharField(source="get_kind_display", read_only=True)
 
     class Meta:
@@ -35,7 +35,7 @@ class SimpleImageSerializer(serializers.ModelSerializer):
 class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
     # Serializes images in place rather than with hyperlinks for internal usage
     image = SimpleImageSerializer()
-    interface = ComponentInterfaceSerialzer()
+    interface = ComponentInterfaceSerializer()
 
     class Meta:
         model = ComponentInterfaceValue
