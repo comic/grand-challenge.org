@@ -60,7 +60,13 @@ function getJobsForImages(imageUrls) {
 
     Promise.all(imageUrls.map(url => fetch(url).then(response => response.json()))
     ).then(images => {
-        getJobStatus(images.map(i => i.job_set).flat());
+        let params = new URLSearchParams();
+        images.forEach(i => params.append("input_image", i.pk));
+        let jobUrl = `/api/v1/algorithms/jobs/?${params.toString()}`;
+
+        fetch(jobUrl)
+            .then(response => response.json())
+            .then(jobs => handleJobStatus(jobs.results))
     });
 }
 

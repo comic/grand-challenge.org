@@ -102,11 +102,7 @@ class OSDImageDetail(
 
 class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = HyperlinkedImageSerializer
-    queryset = Image.objects.all().prefetch_related(
-        "files",
-        "componentinterfacevalue_set__algorithms_jobs_as_input",
-        "readerstudies",
-    )
+    queryset = Image.objects.all().prefetch_related("files")
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (
         DjangoFilterBackend,
