@@ -162,9 +162,13 @@ class UploadImage(generics.CreateAPIView):
                     interface = ComponentInterface.objects.get(
                         slug="generic-medical-image"
                     )
-                    civ, _ = ComponentInterfaceValue.objects.get_or_create(
+                    civ = ComponentInterfaceValue.objects.filter(
                         interface=interface, image=img
-                    )
+                    ).first()
+                    if civ is None:
+                        civ = ComponentInterfaceValue.objects.create(
+                            interface=interface, image=img
+                        )
                     item = ArchiveItem.objects.create(archive=archive)
                     item.values.set([civ])
                 image_created = True
