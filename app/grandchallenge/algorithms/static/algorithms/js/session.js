@@ -9,6 +9,7 @@ const cards = {
 };
 
 const averageJobDuration = moment.duration(JSON.parse(document.getElementById("averageJobDuration").textContent));
+const jobListApiUrl = JSON.parse(document.getElementById("jobListApiUrl").textContent);
 
 // Set anything less than 1s to "a few seconds"
 moment.relativeTimeThreshold('ss', 1);
@@ -62,7 +63,7 @@ function getJobsForImages(imageUrls) {
     ).then(images => {
         let params = new URLSearchParams();
         images.forEach(i => params.append("input_image", i.pk));
-        let jobUrl = `/api/v1/algorithms/jobs/?${params.toString()}`;
+        let jobUrl = `${jobListApiUrl}?${params.toString()}`;
 
         fetch(jobUrl)
             .then(response => response.json())
