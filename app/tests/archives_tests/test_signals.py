@@ -4,7 +4,6 @@ import pytest
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
-from grandchallenge.components.models import ComponentInterfaceValue
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.archives_tests.utils import TwoArchives
@@ -123,7 +122,6 @@ def test_changing_archive_updates_permissions():
     }
 
 
-@pytest.mark.xfail(reason="Archive.images deprecated")
 @pytest.mark.django_db
 @pytest.mark.parametrize("reverse", [True, False])
 def test_adding_images_triggers_task(reverse, mocker):
@@ -135,88 +133,77 @@ def test_adding_images_triggers_task(reverse, mocker):
     arch_set = TwoArchives()
 
     with capture_on_commit_callbacks(execute=True):
-        arch_set.arch1.images.add(ImageFactory())
-        arch_set.arch2.images.add(ImageFactory())
+        ai1, ai2 = (
+            ArchiveItemFactory(archive=arch_set.arch1),
+            ArchiveItemFactory(archive=arch_set.arch2),
+        )
+        ai1.values.set([ComponentInterfaceValueFactory()])
+        ai2.values.set([ComponentInterfaceValueFactory()])
     create_algorithm_jobs_for_archive.apply_async.assert_has_calls(
         [
             call(
                 kwargs={
                     "archive_pks": [arch_set.arch1.pk],
-                    "civ_pks": list(
-                        arch_set.arch1.items.values_list("values", flat=True)
-                    ),
+                    "archive_item_pks": [ai1.pk],
                 }
             ),
             call(
                 kwargs={
                     "archive_pks": [arch_set.arch2.pk],
-                    "civ_pks": list(
-                        arch_set.arch2.items.values_list("values", flat=True)
-                    ),
+                    "archive_item_pks": [ai2.pk],
                 }
             ),
         ]
     )
     create_algorithm_jobs_for_archive.apply_async.reset_mock()
-
-    im1, im2, im3, im4 = (
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
-        ImageFactory(),
+    ai1, ai2, ai3, ai4 = (
+        ArchiveItemFactory(archive=arch_set.arch1),
+        ArchiveItemFactory(archive=arch_set.arch1),
+        ArchiveItemFactory(archive=arch_set.arch1),
+        ArchiveItemFactory(archive=arch_set.arch1),
+    )
+    civ1, civ2, civ3, civ4 = (
+        ComponentInterfaceValueFactory(),
+        ComponentInterfaceValueFactory(),
+        ComponentInterfaceValueFactory(),
+        ComponentInterfaceValueFactory(),
     )
 
     if not reverse:
-        with capture_on_commit_callbacks(execute=True):
-            arch_set.arch1.images.add(im1, im2, im3, im4)
-
-        kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
-            "kwargs"
-        ]
-        create_algorithm_jobs_for_archive.apply_async.assert_called_once()
-        assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
-        assert {*kwargs["civ_pks"]} == set(
-            list(
-                ComponentInterfaceValue.objects.filter(
-                    image__in=[im1, im2, im3, im4]
-                ).values_list("pk", flat=True)
-            )
-        )
-        create_algorithm_jobs_for_archive.apply_async.reset_mock()
-
-        with capture_on_commit_callbacks(execute=True):
-            arch_set.arch1.images.remove(im3, im4)
-            arch_set.arch1.images.clear()
-
-        create_algorithm_jobs_for_archive.apply_async.assert_not_called()
-    else:
-        for im in [im1, im2, im3, im4]:
+        for ai, civ in [(ai1, civ1), (ai2, civ2), (ai3, civ3), (ai4, civ4)]:
             with capture_on_commit_callbacks(execute=True):
-                im.archive_set.add(arch_set.arch1, arch_set.arch2)
+                ai.values.set([civ])
 
             kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
                 "kwargs"
             ]
             create_algorithm_jobs_for_archive.apply_async.assert_called_once()
-            assert {*kwargs["archive_pks"]} == {
-                arch_set.arch1.pk,
-                arch_set.arch2.pk,
-            }
-            assert {*kwargs["civ_pks"]} == set(
-                list(
-                    ComponentInterfaceValue.objects.filter(
-                        image=im
-                    ).values_list("pk", flat=True)
-                )
-            )
+            assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
+            assert {*kwargs["archive_item_pks"]} == {ai.pk}
+            create_algorithm_jobs_for_archive.apply_async.reset_mock()
+
+            with capture_on_commit_callbacks(execute=True):
+                ai.values.remove(civ)
+                ai.values.clear()
+
+            create_algorithm_jobs_for_archive.apply_async.assert_not_called()
+    else:
+        for ai in [ai1, ai2, ai3, ai4]:
+            with capture_on_commit_callbacks(execute=True):
+                civ = ComponentInterfaceValueFactory()
+                civ.archive_items.add(ai)
+
+            kwargs = create_algorithm_jobs_for_archive.apply_async.call_args.kwargs[
+                "kwargs"
+            ]
+            create_algorithm_jobs_for_archive.apply_async.assert_called_once()
+            assert {*kwargs["archive_pks"]} == {arch_set.arch1.pk}
+            assert {*kwargs["archive_item_pks"]} == {ai.pk}
             create_algorithm_jobs_for_archive.apply_async.reset_mock()
 
         with capture_on_commit_callbacks(execute=True):
-            for im in [im3, im4]:
-                im.archive_set.remove(arch_set.arch1, arch_set.arch2)
-            for im in [im1, im2]:
-                im.archive_set.remove(arch_set.arch2)
-            im1.archive_set.clear()
+            civ3.archive_items.remove(ai3)
+            civ1.archive_items.clear()
 
         create_algorithm_jobs_for_archive.apply_async.assert_not_called()
 
