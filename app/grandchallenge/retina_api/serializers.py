@@ -82,7 +82,6 @@ class TreeImageSerializer(TreeObjectSerializer):
     eye_choice = serializers.CharField()
     modality = ImagingModalitySerializer()
     study = TreeStudySerializer(required=False)
-    archive_set = TreeArchiveSerializer(many=True)
     voxel_width_mm = serializers.FloatField()
     voxel_height_mm = serializers.FloatField()
     voxel_depth_mm = serializers.FloatField()

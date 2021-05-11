@@ -525,7 +525,12 @@ class AlgorithmExecutionSessionDetail(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "job_list_api_url": reverse("api:algorithms-job-list"),
+            }
+        )
         return context
 
 

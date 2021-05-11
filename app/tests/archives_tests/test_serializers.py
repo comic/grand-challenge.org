@@ -17,14 +17,7 @@ from tests.serializer_helpers import (
                 "unique": True,
                 "factory": ArchiveFactory,
                 "serializer": ArchiveSerializer,
-                "fields": (
-                    "id",
-                    "name",
-                    "images",
-                    "title",
-                    "api_url",
-                    "algorithms",
-                ),
+                "fields": ("id", "name", "title", "api_url", "algorithms",),
             },
         )
     ),

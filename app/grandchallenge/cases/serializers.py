@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField, SerializerMethodField
+from rest_framework.fields import CharField
 from rest_framework.relations import (
     HyperlinkedRelatedField,
     PrimaryKeyRelatedField,
@@ -26,23 +26,6 @@ class ImageFileSerializer(serializers.ModelSerializer):
 
 class HyperlinkedImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
-    job_set = SerializerMethodField()
-    archive_set = HyperlinkedRelatedField(
-        read_only=True, many=True, view_name="api:archive-detail"
-    )
-    reader_study_set = HyperlinkedRelatedField(
-        source="readerstudies",
-        read_only=True,
-        many=True,
-        view_name="api:reader-study-detail",
-    )
-
-    def get_job_set(self, obj):
-        return [
-            job.api_url
-            for civ in obj.componentinterfacevalue_set.all()
-            for job in civ.algorithms_jobs_as_input.all()
-        ]
 
     class Meta:
         model = Image
@@ -51,9 +34,6 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "name",
             "study",
             "files",
-            "reader_study_set",
-            "archive_set",
-            "job_set",
             "width",
             "height",
             "depth",

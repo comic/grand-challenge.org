@@ -8,6 +8,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -204,8 +205,15 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
             return protected_study_ids, protected_patient_ids
 
         images_to_remove = (
-            Image.objects.annotate(num_archives=Count("archive"))
-            .filter(archive=self, num_archives=1)
+            Image.objects.annotate(
+                num_archives=Count(
+                    "componentinterfacevalue__archive_items__archive"
+                )
+            )
+            .filter(
+                componentinterfacevalue__archive_items__archive=self,
+                num_archives=1,
+            )
             .order_by("name")
         )
 
@@ -262,6 +270,15 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
     @property
     def api_url(self):
         return reverse("api:archive-detail", kwargs={"pk": self.pk})
+
+
+class ArchiveItem(UUIDModel):
+    archive = models.ForeignKey(
+        Archive, related_name="items", on_delete=models.CASCADE
+    )
+    values = models.ManyToManyField(
+        ComponentInterfaceValue, blank=True, related_name="archive_items"
+    )
 
 
 class ArchivePermissionRequest(RequestBase):

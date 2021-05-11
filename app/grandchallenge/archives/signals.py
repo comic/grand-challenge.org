@@ -1,55 +1,79 @@
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
-from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image
 
 
-@receiver(m2m_changed, sender=Archive.images.through)
+@receiver(m2m_changed, sender=ArchiveItem.values.through)
+def update_permissions_on_archive_item_changed(
+    instance, action, reverse, pk_set, **_
+):
+    if action not in ["post_add", "post_remove", "pre_clear"]:
+        # nothing to do for the other actions
+        return
+
+    if reverse:
+        images = Image.objects.filter(componentinterfacevalue__pk=instance.pk)
+    else:
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
+            images = [
+                civ.image
+                for civ in instance.values.filter(image__isnull=False)
+            ]
+        else:
+            images = Image.objects.filter(
+                componentinterfacevalue__pk__in=pk_set
+            )
+
+    def update_permissions():
+        for image in images:
+            image.update_viewer_groups_permissions()
+
+    on_commit(update_permissions)
+
+
+@receiver(pre_delete, sender=ArchiveItem)
+@receiver(post_save, sender=ArchiveItem)
+def update_view_image_permissions(*_, instance: ArchiveItem, **__):
+    images = [civ.image for civ in instance.values.filter(image__isnull=False)]
+
+    def update_permissions():
+        for image in images:
+            image.update_viewer_groups_permissions()
+
+    on_commit(update_permissions)
+
+
+@receiver(m2m_changed, sender=ArchiveItem.values.through)
 def on_archive_images_changed(instance, action, reverse, model, pk_set, **_):
     if action not in ["post_add", "post_remove", "pre_clear"]:
         # nothing to do for the other actions
         return
 
     if reverse:
-        images = Image.objects.filter(pk=instance.pk)
-        image_pks = [instance.pk]
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            archives = instance.archive_set.all()
+            archive_items = model.objects.filter(values=instance)
         else:
-            archives = model.objects.filter(pk__in=pk_set)
+            archive_items = model.objects.filter(pk__in=pk_set)
 
-        archive_pks = archives.values_list("pk", flat=True)
-        archives = archives.select_related("users_group", "editors_group")
+        archive_item_pks = archive_items.values_list("pk", flat=True)
+        archive_pks = archive_items.values_list("archive_id", flat=True)
     else:
-        archives = [instance]
-        archive_pks = [instance.pk]
-        if pk_set is None:
-            # When using a _clear action, pk_set is None
-            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            images = instance.images.all()
-        else:
-            images = model.objects.filter(pk__in=pk_set)
-        image_pks = images.values_list("pk", flat=True)
-
-    op = assign_perm if "add" in action else remove_perm
-
-    for archive in archives:
-        op("view_image", archive.editors_group, images)
-        op("view_image", archive.uploaders_group, images)
-        op("view_image", archive.users_group, images)
-
+        archive_pks = [instance.archive_id]
+        archive_item_pks = [instance.pk]
     if "add" in action:
         on_commit(
             lambda: create_algorithm_jobs_for_archive.apply_async(
                 kwargs={
                     "archive_pks": list(archive_pks),
-                    "image_pks": list(image_pks),
+                    "archive_item_pks": list(archive_item_pks),
                 },
             )
         )

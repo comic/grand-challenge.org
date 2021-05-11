@@ -9,10 +9,14 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http.response import JsonResponse
 from rest_framework import generics, parsers, status
 
-from grandchallenge.archives.models import Archive
+from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.cases.serializers import HyperlinkedImageSerializer
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.patients.models import Patient
 from grandchallenge.patients.serializers import PatientSerializer
@@ -155,7 +159,18 @@ class UploadImage(generics.CreateAPIView):
 
                 # Link images to archive
                 if archive is not None:
-                    archive.images.add(img)
+                    interface = ComponentInterface.objects.get(
+                        slug="generic-medical-image"
+                    )
+                    civ = ComponentInterfaceValue.objects.filter(
+                        interface=interface, image=img
+                    ).first()
+                    if civ is None:
+                        civ = ComponentInterfaceValue.objects.create(
+                            interface=interface, image=img
+                        )
+                    item = ArchiveItem.objects.create(archive=archive)
+                    item.values.set([civ])
                 image_created = True
 
                 # Set correct permissions for retina image
