@@ -146,7 +146,15 @@ class ArchiveDetail(
                 "editor_remove_form": editor_remove_form,
                 "now": now().isoformat(),
                 "limit": limit,
-                "offsets": range(0, context["object"].items.count(), limit),
+                "offsets": range(
+                    0,
+                    Image.objects.filter(
+                        componentinterfacevalue__archive_items__archive=context[
+                            "object"
+                        ]
+                    ).count(),
+                    limit,
+                ),
             }
         )
 
@@ -364,13 +372,9 @@ class ArchiveCasesList(
         return context
 
     def get_queryset(self):
-        qs = Image.objects.none()
-        for item in self.archive.items.all():
-            qs |= Image.objects.filter(
-                pk__in=item.values.filter(image__isnull=False).values_list(
-                    "image", flat=True
-                )
-            )
+        qs = Image.objects.filter(
+            componentinterfacevalue__archive_items__archive=self.archive
+        )
         return qs.prefetch_related(
             "files",
             "componentinterfacevalue_set__algorithms_jobs_as_input__algorithm_image__algorithm",
