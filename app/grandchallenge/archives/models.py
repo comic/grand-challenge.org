@@ -4,6 +4,7 @@ from django.db import models, transaction
 from django.db.models import Count
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
+from stdimage import JPEGField
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
@@ -27,14 +28,17 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
     """Model for archive. Contains a collection of images."""
 
     detail_page_markdown = models.TextField(blank=True)
-    logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage, null=True
+    logo = JPEGField(
+        upload_to=get_logo_path,
+        storage=public_s3_storage,
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = models.ImageField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this archive which is displayed when you post the link to this archive on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
     editors_group = models.OneToOneField(
         Group,

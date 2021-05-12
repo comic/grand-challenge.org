@@ -133,11 +133,12 @@ class ChallengeBase(models.Model):
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
         variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = models.ImageField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this challenge which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
     hidden = models.BooleanField(
         default=True,
@@ -251,7 +252,7 @@ class ChallengeBase(models.Model):
 
 
 class Challenge(ChallengeBase):
-    banner = models.ImageField(
+    banner = JPEGField(
         upload_to=get_banner_path,
         storage=public_s3_storage,
         blank=True,
@@ -259,6 +260,12 @@ class Challenge(ChallengeBase):
             "Image that gets displayed at the top of each page. "
             "Recommended resolution 2200x440 px."
         ),
+        variations={
+            "full": (None, None, False),
+            "x20": (2220, 440, False),
+            "x15": (1665, 330, False),
+            "x10": (1110, 220, False),
+        },
     )
     disclaimer = models.CharField(
         max_length=2048,

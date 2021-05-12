@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from django_countries.fields import CountryField
 from guardian.shortcuts import assign_perm
+from stdimage import JPEGField
 
 from grandchallenge.core.models import (
     TitleSlugDescriptionModel,
@@ -12,8 +14,10 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class Organization(TitleSlugDescriptionModel, UUIDModel):
-    logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage
+    logo = JPEGField(
+        upload_to=get_logo_path,
+        storage=public_s3_storage,
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
     location = CountryField()
     website = models.URLField()
