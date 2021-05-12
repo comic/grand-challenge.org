@@ -260,12 +260,7 @@ class Challenge(ChallengeBase):
             "Image that gets displayed at the top of each page. "
             "Recommended resolution 2200x440 px."
         ),
-        variations={
-            "full": (None, None, False),
-            "x20": (2220, 440, False),
-            "x15": (1665, 330, False),
-            "x10": (1110, 220, False),
-        },
+        variations=settings.STDIMAGE_BANNER_VARIATIONS,
     )
     disclaimer = models.CharField(
         max_length=2048,

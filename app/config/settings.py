@@ -508,7 +508,6 @@ LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/users/profile/"
 
-
 ##############################################################################
 #
 # stdimage
@@ -526,6 +525,12 @@ STDIMAGE_SOCIAL_VARIATIONS = {
     "x20": (1280, 640, False),
     "x15": (960, 480, False),
     "x10": (640, 320, False),
+}
+STDIMAGE_BANNER_VARIATIONS = {
+    "full": (None, None, False),
+    "x20": (2220, 440, False),
+    "x15": (1665, 330, False),
+    "x10": (1110, 220, False),
 }
 
 ##############################################################################
