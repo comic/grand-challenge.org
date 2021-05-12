@@ -36,7 +36,10 @@
                              loading="lazy"
                              alt="{{ challenge.short_name }} logo"
                                 {% if challenge.logo %}
-                             src="{{ challenge.logo.url }}"
+                             src="{{ challenge.logo.x20.url }}"
+                             srcset="{{ challenge.logo.x10.url }} 1x,
+                                     {{ challenge.logo.x15.url }} 1.5x,
+                                     {{ challenge.logo.x20.url }} 2x"
                                 {% else %}
                              src="{% static 'images/3697E1-0.8.png' %}"
                                 {% endif %}

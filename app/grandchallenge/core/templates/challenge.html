@@ -24,7 +24,10 @@
                    href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
                     <img alt="{% firstof challenge.title challenge.short_name %} Banner"
                          class="rounded w-100"
-                         src="{{ challenge.banner.url }}"
+                         src="{{ challenge.banner.x20.url }}"
+                         srcset="{{ challenge.banner.x10.url }} 1x,
+                                 {{ challenge.banner.x15.url }} 1.5x,
+                                 {{ challenge.banner.x20.url }} 2x"
                     >
                 </a>
             </div>
