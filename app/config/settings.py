@@ -515,7 +515,6 @@ LOGIN_REDIRECT_URL = "/users/profile/"
 #
 ##############################################################################
 
-PROFILES_MUGSHOT_SIZE = 460
 STDIMAGE_LOGO_VARIATIONS = {
     "full": (None, None, False),
     "x20": (640, 640, True),

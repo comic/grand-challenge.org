@@ -9,8 +9,8 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
-from easy_thumbnails.fields import ThumbnailerImageField
 from guardian.shortcuts import assign_perm
+from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
@@ -26,20 +26,12 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
     )
 
-    MUGSHOT_SETTINGS = {
-        "size": (
-            settings.PROFILES_MUGSHOT_SIZE,
-            settings.PROFILES_MUGSHOT_SIZE,
-        ),
-        "crop": settings.PROFILES_MUGSHOT_SIZE,
-    }
-
-    mugshot = ThumbnailerImageField(
+    mugshot = JPEGField(
         _("mugshot"),
         blank=True,
         upload_to=get_mugshot_path,
-        resize_source=MUGSHOT_SETTINGS,
         help_text=_("A personal image displayed in your profile."),
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
 
     institution = models.CharField(max_length=100)
@@ -91,9 +83,7 @@ class UserProfile(models.Model):
                 + md5(self.user.email.lower().encode("utf-8")).hexdigest()
                 + "?"
             )
-            gravatar_url += urlencode(
-                {"d": "identicon", "s": str(settings.PROFILES_MUGSHOT_SIZE)}
-            )
+            gravatar_url += urlencode({"d": "identicon", "s": "640"})
             return gravatar_url
 
     @property
