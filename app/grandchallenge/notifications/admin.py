@@ -2,6 +2,8 @@ from actstream.models import Follow
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
+from grandchallenge.notifications.models import Notification
+
 
 class FollowAdmin(ModelAdmin):
     list_display = (
@@ -18,3 +20,4 @@ class FollowAdmin(ModelAdmin):
 
 admin.site.unregister(Follow)
 admin.site.register(Follow, FollowAdmin)
+admin.site.register(Notification)
