@@ -16,6 +16,7 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
 from jinja2.exceptions import TemplateError
+from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
@@ -58,14 +59,17 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         editable=False,
         related_name="users_of_algorithm",
     )
-    logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage
+    logo = JPEGField(
+        upload_to=get_logo_path,
+        storage=public_s3_storage,
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = models.ImageField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this algorithm which is displayed when you post the link for this algorithm on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.CASCADE

@@ -388,6 +388,7 @@ THIRD_PARTY_APPS = [
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
+    "stdimage",
     "django_filters",
     "drf_spectacular",
     "allauth",
@@ -507,7 +508,30 @@ LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/users/profile/"
 
-PROFILES_MUGSHOT_SIZE = 460
+##############################################################################
+#
+# stdimage
+#
+##############################################################################
+
+STDIMAGE_LOGO_VARIATIONS = {
+    "full": (None, None, False),
+    "x20": (640, 640, True),
+    "x15": (480, 480, True),
+    "x10": (320, 320, True),
+}
+STDIMAGE_SOCIAL_VARIATIONS = {
+    "full": (None, None, False),
+    "x20": (1280, 640, False),
+    "x15": (960, 480, False),
+    "x10": (640, 320, False),
+}
+STDIMAGE_BANNER_VARIATIONS = {
+    "full": (None, None, False),
+    "x20": (2220, 440, False),
+    "x15": (1665, 330, False),
+    "x10": (1110, 220, False),
+}
 
 ##############################################################################
 #

@@ -18,6 +18,7 @@ from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
 from simple_history.models import HistoricalRecords
 from sklearn.metrics import accuracy_score
+from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
@@ -227,14 +228,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "study's readers group in order to do that."
         ),
     )
-    logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage
+    logo = JPEGField(
+        upload_to=get_logo_path,
+        storage=public_s3_storage,
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = models.ImageField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
     help_text_markdown = models.TextField(blank=True)
 
