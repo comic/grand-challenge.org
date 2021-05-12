@@ -22,6 +22,7 @@ from machina.apps.forum_permission.models import (
     GroupForumPermission,
     UserForumPermission,
 )
+from stdimage import JPEGField
 from tldextract import extract
 
 from grandchallenge.anatomy.models import BodyStructure
@@ -125,11 +126,12 @@ class ChallengeBase(models.Model):
             "used."
         ),
     )
-    logo = models.ImageField(
+    logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
         blank=True,
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
     social_image = models.ImageField(
         upload_to=get_social_image_path,

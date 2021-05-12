@@ -90,6 +90,7 @@ numpy = "*"
 Pillow = "*"
 panimg = "*"
 django-activity-stream = "*"
+django-stdimage = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
