@@ -517,16 +517,16 @@ LOGIN_REDIRECT_URL = "/users/profile/"
 
 PROFILES_MUGSHOT_SIZE = 460
 STDIMAGE_LOGO_VARIATIONS = {
-    "full": (None, None),
+    "full": (None, None, False),
     "x20": (640, 640, True),
     "x15": (480, 480, True),
     "x10": (320, 320, True),
 }
 STDIMAGE_SOCIAL_VARIATIONS = {
     "full": (None, None, False),
-    "x20": (1280, 640, True),
-    "x15": (960, 480, True),
-    "x10": (640, 320, True),
+    "x20": (1280, 640, False),
+    "x15": (960, 480, False),
+    "x10": (640, 320, False),
 }
 
 ##############################################################################
