@@ -67,7 +67,6 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         blank=True,
         on_delete=models.SET_NULL,
     )
-    images = models.ManyToManyField(Image)
     algorithms = models.ManyToManyField(
         Algorithm,
         blank=True,
