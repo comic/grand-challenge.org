@@ -519,6 +519,7 @@ STDIMAGE_LOGO_VARIATIONS = {
     "x20": (640, 640, True),
     "x15": (480, 480, True),
     "x10": (320, 320, True),
+    "x02": (64, 64, True),
 }
 STDIMAGE_SOCIAL_VARIATIONS = {
     "full": (None, None, False),
