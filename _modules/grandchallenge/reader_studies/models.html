@@ -178,6 +178,7 @@
 <span class="kn">from</span> <span class="nn">numpy.random.mtrand</span> <span class="kn">import</span> <span class="n">RandomState</span>
 <span class="kn">from</span> <span class="nn">simple_history.models</span> <span class="kn">import</span> <span class="n">HistoricalRecords</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
+<span class="kn">from</span> <span class="nn">stdimage</span> <span class="kn">import</span> <span class="n">JPEGField</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.anatomy.models</span> <span class="kn">import</span> <span class="n">BodyStructure</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span>
@@ -387,14 +388,17 @@
             <span class="s2">&quot;study&#39;s readers group in order to do that.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">logo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ImageField</span><span class="p">(</span>
-        <span class="n">upload_to</span><span class="o">=</span><span class="n">get_logo_path</span><span class="p">,</span> <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span>
+    <span class="n">logo</span> <span class="o">=</span> <span class="n">JPEGField</span><span class="p">(</span>
+        <span class="n">upload_to</span><span class="o">=</span><span class="n">get_logo_path</span><span class="p">,</span>
+        <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
+        <span class="n">variations</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">STDIMAGE_LOGO_VARIATIONS</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">social_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ImageField</span><span class="p">(</span>
+    <span class="n">social_image</span> <span class="o">=</span> <span class="n">JPEGField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">get_social_image_path</span><span class="p">,</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).&quot;</span><span class="p">,</span>
+        <span class="n">variations</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">STDIMAGE_SOCIAL_VARIATIONS</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">help_text_markdown</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
