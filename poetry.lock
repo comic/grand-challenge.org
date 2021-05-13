@@ -796,18 +796,6 @@ PyYAML = ">=5.1"
 uritemplate = ">=2.0.0"
 
 [[package]]
-name = "easy-thumbnails"
-version = "2.7.1"
-description = "Easy thumbnails for Django"
-category = "main"
-optional = false
-python-versions = ">=3.5"
-
-[package.dependencies]
-django = ">=1.11,<4.0"
-pillow = "*"
-
-[[package]]
 name = "et-xmlfile"
 version = "1.0.1"
 description = "An implementation of lxml.xmlfile for the standard library"
@@ -2139,7 +2127,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "046393fc4214e446701dfbe935472dc2a5161189f7d040484fe55ee9dc4a9fcc"
+content-hash = "a53735b2645665d4337fd84a41505544d800984b33da054ce2f434e11458d09d"
 
 [metadata.files]
 alabaster = [
@@ -2504,9 +2492,6 @@ docutils = [
 drf-spectacular = [
     {file = "drf-spectacular-0.13.2.tar.gz", hash = "sha256:3e79a838960f27dc8a8ea955eac0c1c7335a94c0fba9657b85258ae6ac22d6ab"},
     {file = "drf_spectacular-0.13.2-py2.py3-none-any.whl", hash = "sha256:0572019a7ae3c00aa1706e803f1182ef434da680a167900fae53e65a2dac9bbf"},
-]
-easy-thumbnails = [
-    {file = "easy-thumbnails-2.7.1.tar.gz", hash = "sha256:f862949208d9066cd3d84ffcf9c2dbe9c7344ea6152b741e440f861eca46855c"},
 ]
 et-xmlfile = [
     {file = "et_xmlfile-1.0.1.tar.gz", hash = "sha256:614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b"},

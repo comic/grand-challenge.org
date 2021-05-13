@@ -76,14 +76,14 @@ class UserProfile(models.Model):
 
     def get_mugshot_url(self):
         if self.mugshot:
-            return self.mugshot.url
+            return self.mugshot.x02.url
         else:
             gravatar_url = (
                 "https://www.gravatar.com/avatar/"
                 + md5(self.user.email.lower().encode("utf-8")).hexdigest()
                 + "?"
             )
-            gravatar_url += urlencode({"d": "identicon", "s": "640"})
+            gravatar_url += urlencode({"d": "identicon", "s": "64"})
             return gravatar_url
 
     @property

@@ -179,4 +179,4 @@ def test_social_image_meta_tag(client):
     assert response.status_code == 200
 
     archive = Archive.objects.get(title="foo bar")
-    assert str(archive.social_image.url) in response.content.decode()
+    assert str(archive.social_image.x20.url) in response.content.decode()

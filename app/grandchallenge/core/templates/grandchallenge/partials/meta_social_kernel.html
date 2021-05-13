@@ -18,9 +18,9 @@
     <meta property="og:description" content="{{ meta_info.description }}">
 
     {% if meta_info.social_image %}
-        <meta property="og:image" content="{{ meta_info.social_image.url }}">
+        <meta property="og:image" content="{{ meta_info.social_image.x20.url }}">
     {% elif meta_info.logo %}
-        <meta property="og:image" content="{{ meta_info.logo.url }}">
+        <meta property="og:image" content="{{ meta_info.logo.x20.url }}">
     {% endif %}
 {% else %}
     <meta name="title" content="{{ request.site.name }}">

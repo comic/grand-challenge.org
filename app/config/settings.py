@@ -376,7 +376,6 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
     "guardian",  # per object permissions
-    "easy_thumbnails",  # for mugshots
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
     "crispy_forms",  # bootstrap forms

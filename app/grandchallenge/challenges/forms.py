@@ -96,7 +96,7 @@ class ChallengeUpdateForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        if not cleaned_data["hidden"] and not cleaned_data["logo"]:
+        if not cleaned_data["hidden"] and not cleaned_data.get("logo"):
             raise ValidationError("A logo is required for public challenges")
 
         return cleaned_data

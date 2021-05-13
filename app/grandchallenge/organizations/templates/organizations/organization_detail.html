@@ -76,7 +76,10 @@
                                 {% if object.logo %}
                                     <img class="card-img-top embed-responsive-item"
                                          loading="lazy"
-                                         src="{{ object.logo.url }}"
+                                         src="{{ object.logo.x20.url }}"
+                                         srcset="{{ object.logo.x10.url }} 1x,
+                                                 {{ object.logo.x15.url }} 1.5x,
+                                                 {{ object.logo.x20.url }} 2x"
                                          alt="{{ object }} Logo">
                                 {% endif %}
                             </div>
