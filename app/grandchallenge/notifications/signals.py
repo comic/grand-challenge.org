@@ -34,13 +34,6 @@ def create_topic_action(sender, *, instance, created, **_):
                 target=instance.forum,
             )
 
-        for follower in followers(instance.forum):
-            # only send notifications to followers other than the poster
-            if follower is not instance.poster:
-                Notification(
-                    user=follower, action=Action.objects.first()
-                ).save()
-
 
 @receiver(post_save, sender=Post)
 def create_post_action(sender, *, instance, created, **_):
@@ -56,9 +49,11 @@ def create_post_action(sender, *, instance, created, **_):
             sender=instance.poster, verb="replied to", target=instance.topic,
         )
 
-        for follower in followers(instance.topic):
-            # only send notifications to followers other than the poster
-            if follower != instance.poster:
-                Notification(
-                    user=follower, action=Action.objects.first()
-                ).save()
+
+@receiver(post_save, sender=Action)
+def create_notification(sender, *, instance, created, **_):
+    follower_group = followers(instance.target)
+    for follower in follower_group:
+        # only send notifications to followers other than the poster
+        if follower != instance.actor:
+            Notification(user=follower, action=instance).save()
