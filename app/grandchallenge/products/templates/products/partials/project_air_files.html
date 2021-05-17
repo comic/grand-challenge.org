@@ -1,34 +1,7 @@
-<ul class="list-group-flush">
-    <li class="list-group-item border-top d-flex justify-content-between align-items-center">Summary presentation for vendors
-        <span href="{% url 'products:product-list' %}" class="btn-sm btn-square btn-radboud">Download</span>
-    </li>
-
-    <li class="list-group-item d-flex justify-content-between align-items-center">Summary presentation for radiologists and radiology departments
-        <span href="{% url 'products:product-list' %}" class="btn-sm btn-square btn-radboud">Download</span>
-    </li>
-
-    <li class="list-group-item d-flex justify-content-between align-items-center">General study protocol
-        <span href="{% url 'products:product-list' %}" class="btn-sm btn-square btn-radboud">Download</span>
-    </li>
-
-    <li class="list-group-item d-flex justify-content-between align-items-center">Study protocol: Bone age prediction hand radiographs
-        <span href="{% url 'products:product-list' %}" class="btn-sm btn-square btn-radboud">Download</span>
-    </li>
-
-    <li class="list-group-item d-flex justify-content-between align-items-center">Study protocol: Lung nodule detection chest radiographs
-        <span href="{% url 'products:product-list' %}" class="btn-sm btn-square btn-radboud">Download</span>
-    </li>
-
-    <li class="list-group-item border-bottom d-flex justify-content-between align-items-center">Study protocol: Large vessel occlusion detection brain CTA
-        <span href="{% url 'products:product-list' %}" class="btn-sm btn-square btn-radboud">Download</span>
-    </li>
-</ul> 
-
-
-<ul class="list-group-flush">
-    {% for ProjectAirFile in ProjectAirFiles %}
-        <li class="list-group-item border-top d-flex justify-content-between align-items-center">{{ ProjectAirFile.title }}
-            <span href="{{ ProjectAirFile.study_file.url }}" class="btn-sm btn-square btn-radboud">Download</span>
+<ul class="list-group list-group-flush">
+    {% for project_air_file in project_air_files %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">{{ project_air_file.title }}
+            <a href="{{ project_air_file.study_file.url }}" class="btn-sm btn-square btn-radboud" target="_blank" download>Download</a>
         </li>
     {% endfor %}
 </ul> 

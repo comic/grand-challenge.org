@@ -196,8 +196,15 @@ class ContactPage(TemplateView):
     template_name = "products/contact.html"
 
 
-class ProjectAirPage(TemplateView):
+class ProjectAirPage(ListView):
     template_name = "products/project_air.html"
+    model = ProjectAirFiles
+    context_object_name = "project_air_files"
+    queryset = ProjectAirFiles.objects.all()
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        return context
 
 
 class ImportDataView(PermissionRequiredMixin, FormView):
