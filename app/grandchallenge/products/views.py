@@ -233,5 +233,12 @@ class ProjectAirForm(PermissionRequiredMixin, FormView):
     form_class = ProjectAirFilesForm
     permission_required = f"{ProjectAirFiles._meta.app_label}.add_{ProjectAirFiles._meta.model_name}"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        return kwargs
+
+    def form_valid(self, form):
+        return super().form_valid(form)
+
     def get_success_url(self):
         return reverse("products:project-air")
