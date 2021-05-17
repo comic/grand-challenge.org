@@ -337,7 +337,7 @@ dev = ["check-manifest"]
 
 [[package]]
 name = "django"
-version = "3.1.9"
+version = "3.1.11"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
@@ -2351,8 +2351,8 @@ disposable-email-domains = [
     {file = "disposable_email_domains-0.0.64-py2.py3-none-any.whl", hash = "sha256:f3b061bb80fe5923978e64d7fc20e0dc06173163b8e4d1da008e8557c8e3ad76"},
 ]
 django = [
-    {file = "Django-3.1.9-py3-none-any.whl", hash = "sha256:f5c3f1ce2473abf2f35d992c46d5534e53bd3397867689bde28fd29e856b46b7"},
-    {file = "Django-3.1.9.tar.gz", hash = "sha256:296d10092561a1cf16100885b935dc56cf09c8ccb114e64004554941677c6342"},
+    {file = "Django-3.1.11-py3-none-any.whl", hash = "sha256:c79245c488411d1ae300b8f7a08ac18a496380204cf3035aff97ad917a8de999"},
+    {file = "Django-3.1.11.tar.gz", hash = "sha256:9a0a2f3d34c53032578b54db7ec55929b87dda6fec27a06cc2587afbea1965e5"},
 ]
 django-activity-stream = [
     {file = "django-activity-stream-0.10.0.tar.gz", hash = "sha256:2cec600bb5a543dd402747afeeec237e9848993385049adfedc16ec97a6d86f2"},
