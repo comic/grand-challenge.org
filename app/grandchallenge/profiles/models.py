@@ -1,10 +1,8 @@
 from hashlib import md5
 from urllib.parse import urlencode
 
-from actstream.models import user_stream
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -15,6 +13,7 @@ from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
+from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -90,21 +89,13 @@ class UserProfile(models.Model):
 
     @property
     def unread_notifications(self):
-        return self.notifications.exclude(
-            timestamp__lt=self.notifications_last_read_at
-        )
+        return self.notifications.filter(read=False)
 
     @property
     def notifications(self):
-        notifications = user_stream(obj=self.user)
-
-        # Workaround for
-        # https://github.com/justquick/django-activity-stream/issues/482
-        notifications = notifications.exclude(
-            actor_content_type=ContentType.objects.get_for_model(self.user),
-            actor_object_id=self.user.pk,
+        notifications = Notification.objects.filter(
+            user__username=self.user.username
         )
-
         return notifications
 
 
