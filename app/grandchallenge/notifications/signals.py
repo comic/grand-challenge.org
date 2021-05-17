@@ -1,8 +1,11 @@
 from actstream import action
 from actstream.actions import follow
+from actstream.models import Action, followers
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from machina.apps.forum_conversation.models import Post, Topic
+
+from grandchallenge.notifications.models import Notification
 
 
 @receiver(post_save, sender=Topic)
@@ -31,6 +34,13 @@ def create_topic_action(sender, *, instance, created, **_):
                 target=instance.forum,
             )
 
+        for follower in followers(instance.forum):
+            # only send notifications to followers other than the poster
+            if follower is not instance.poster:
+                Notification(
+                    user=follower, action=Action.objects.first()
+                ).save()
+
 
 @receiver(post_save, sender=Post)
 def create_post_action(sender, *, instance, created, **_):
@@ -45,3 +55,10 @@ def create_post_action(sender, *, instance, created, **_):
         action.send(
             sender=instance.poster, verb="replied to", target=instance.topic,
         )
+
+        for follower in followers(instance.topic):
+            # only send notifications to followers other than the poster
+            if follower != instance.poster:
+                Notification(
+                    user=follower, action=Action.objects.first()
+                ).save()
