@@ -146,4 +146,5 @@ def get_response_status(client, reverse_name, data, user="anonymous"):
     auth_header = get_auth_token_header(user)
     url = reverse(reverse_name)
     response = client.post(url, data=data, **auth_header)
+    breakpoint()
     return response.status_code

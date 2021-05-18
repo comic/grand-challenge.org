@@ -55,8 +55,8 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     hanging_list_images = SerializerMethodField()
     help_text = ReadOnlyField()
     case_text = ReadOnlyField(source="cleaned_case_text")
-    logo = URLField(source="logo.x20.url")
-    url = URLField(source="get_absolute_url")
+    logo = URLField(source="logo.x20.url", read_only=True)
+    url = URLField(source="get_absolute_url", read_only=True)
 
     class Meta:
         model = ReaderStudy

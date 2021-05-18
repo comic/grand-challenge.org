@@ -20,8 +20,8 @@ from grandchallenge.components.serializers import (
 
 class AlgorithmSerializer(serializers.ModelSerializer):
     average_duration = SerializerMethodField()
-    logo = URLField(source="logo.x20.url")
-    url = URLField(source="get_absolute_url")
+    logo = URLField(source="logo.x20.url", read_only=True)
+    url = URLField(source="get_absolute_url", read_only=True)
 
     class Meta:
         model = Algorithm

@@ -16,11 +16,23 @@ def init_reader_study_creators_group(*_, **__):
     )
 
 
+def init_answer_create_permissions(*_, **__):
+    from django.contrib.auth.models import Group
+    from guardian.shortcuts import assign_perm
+    from grandchallenge.reader_studies.models import Answer
+
+    g, _ = Group.objects.get_or_create(
+        name=settings.REGISTERED_USERS_GROUP_NAME
+    )
+    assign_perm(f"{Answer._meta.app_label}.add_{Answer._meta.model_name}", g)
+
+
 class ReaderStudiesConfig(AppConfig):
     name = "grandchallenge.reader_studies"
 
     def ready(self):
         post_migrate.connect(init_reader_study_creators_group, sender=self)
+        post_migrate.connect(init_answer_create_permissions, sender=self)
 
         # noinspection PyUnresolvedReferences
         import grandchallenge.reader_studies.signals  # noqa: F401
