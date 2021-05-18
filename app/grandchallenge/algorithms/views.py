@@ -10,7 +10,6 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.core.files import File
-from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404

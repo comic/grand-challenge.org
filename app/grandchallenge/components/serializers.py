@@ -67,8 +67,8 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 )
 
         def validate_annotations():
-            value = attrs["value"]
-            # validate with json schema?
+            pass
+            # TODO: validate with json schema
 
         if interface.kind in InterfaceKind.interface_type_simple():
             validate_simple()

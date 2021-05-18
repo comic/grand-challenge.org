@@ -12,9 +12,9 @@ from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
+    ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
-    ComponentInterfaceValuePostSerializer,
 )
 
 
