@@ -31,6 +31,9 @@ class Notification(models.Model):
         if adding:
             self._assign_permissions()
 
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
     def _assign_permissions(self):
         assign_perm("change_notification", self.user, self)
         assign_perm("view_notification", self.user, self)
