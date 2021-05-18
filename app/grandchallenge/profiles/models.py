@@ -85,13 +85,11 @@ class UserProfile(models.Model):
 
     @property
     def has_unread_notifications(self):
-        return self.unread_notifications is not None
+        return self.unread_notifications.exists()
 
     @property
     def unread_notifications(self):
-        for notification in self.user.notification_set.all():
-            if not notification.read:
-                return True
+        return self.user.notification_set.filter(read=False)
 
     def update_notifications_last_read_timestep(self):
         self.notifications_last_read_at = timezone.now()

@@ -1,8 +1,8 @@
 import pytest
 from actstream import action
 from actstream.actions import follow
-from django.utils.timezone import now
 
+from grandchallenge.notifications.models import Notification
 from tests.factories import UserFactory
 
 
@@ -32,8 +32,9 @@ def test_notifications_filtered():
     assert u2.user_profile.has_unread_notifications is False
     assert u1.user_profile.has_unread_notifications is True
 
-    u1.user_profile.notifications_last_read_at = now()
-    u1.user_profile.save()
+    n = Notification.objects.filter(user=u1).get()
+    n.read = True
+    n.save()
 
     assert u1.user_profile.has_unread_notifications is False
     assert str(u1.notification_set.get().action).startswith(f"{u2} says hi")
