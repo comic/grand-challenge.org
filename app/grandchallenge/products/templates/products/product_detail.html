@@ -164,8 +164,9 @@
                     {{product.get_ce_status_display}},
                     {% if product.ce_class %}
                         {{product.ce_class}}
-                        <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_CE_class.html" %}></i>
+                        <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_CE_class.html" %}></i>,
                     {% endif %}
+                    {{product.ce_under}}
                 </div>
             </td>
           </tr>

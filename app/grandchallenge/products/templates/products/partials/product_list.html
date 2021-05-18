@@ -44,8 +44,9 @@
                 <div class="h6 pr-2">
                   <a href="#" data-toggle="tooltip" data-placement="top"
                     title= {% include "products/partials/tooltip_CE_class.html" %}>
-                    {{product.ce_class}}
+                    {{product.ce_class}},
                   </a>
+                  {{product.ce_under}}
                 </div>
               {% endif %}
               <img src="{% icon product 'ce_status' %}" alt="Logo" style="width:10%; height:10%">
