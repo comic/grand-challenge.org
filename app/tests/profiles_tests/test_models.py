@@ -36,4 +36,4 @@ def test_notifications_filtered():
     u1.user_profile.save()
 
     assert u1.user_profile.has_unread_notifications is False
-    assert str(u1.user_profile.notifications.get()).startswith(f"{u2} says hi")
+    assert str(u1.notification_set.get().action).startswith(f"{u2} says hi")

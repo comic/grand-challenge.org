@@ -52,8 +52,15 @@ def create_post_action(sender, *, instance, created, **_):
 
 @receiver(post_save, sender=Action)
 def create_notification(sender, *, instance, created, **_):
-    follower_group = followers(instance.target)
-    for follower in follower_group:
-        # only send notifications to followers other than the poster
-        if follower != instance.actor:
-            Notification(user=follower, action=instance).save()
+    if instance.target:
+        follower_group = followers(instance.target)
+        for follower in follower_group:
+            # only send notifications to followers other than the poster
+            if follower != instance.actor:
+                Notification(user=follower, action=instance).save()
+    else:
+        follower_group = followers(instance.actor)
+        for follower in follower_group:
+            # only send notifications to followers other than the poster
+            if follower != instance.actor:
+                Notification(user=follower, action=instance).save()

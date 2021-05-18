@@ -18,8 +18,6 @@ class Notification(models.Model):
         on_delete=models.CASCADE,
     )
 
-    read = models.BooleanField(default=False,)
-
     def __str__(self):
         return f"Notification for {self.user}"
 
@@ -35,3 +33,8 @@ class Notification(models.Model):
         assign_perm("change_notification", self.user, self)
         assign_perm("view_notification", self.user, self)
         assign_perm("delete_notification", self.user, self)
+
+    @property
+    def read(self):
+        last_read = self.user.user_profile.notifications_last_read_at
+        return last_read is not None and last_read > self.action.timestamp

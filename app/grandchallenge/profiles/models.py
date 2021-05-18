@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import post_save
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from easy_thumbnails.fields import ThumbnailerImageField
@@ -12,7 +13,6 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
-from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -97,18 +97,17 @@ class UserProfile(models.Model):
 
     @property
     def has_unread_notifications(self):
-        return self.unread_notifications.exists()
+        return self.unread_notifications is not None
 
     @property
     def unread_notifications(self):
-        return self.notifications.filter(read=False)
+        for notification in self.user.notification_set.all():
+            if not notification.read:
+                return True
 
-    @property
-    def notifications(self):
-        notifications = Notification.objects.filter(
-            user__username=self.user.username
-        )
-        return notifications
+    def update_notifications_last_read_timestep(self):
+        self.notifications_last_read_at = timezone.now()
+        self.save()
 
 
 @disable_for_loaddata
