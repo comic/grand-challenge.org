@@ -200,7 +200,7 @@ def test_wrong_upload_headers(client):
         method="put",
         extra_headers={"HTTP_AUTHORIZATION": f"Bearer {token}"},
     )
-    assert response.status_code == 405
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db

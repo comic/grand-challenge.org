@@ -1,17 +1,15 @@
 import pytest
 from lxml.html.diff import html_escape
 
-from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.factories import (
-    SUPER_SECURE_TEST_PASSWORD,
     UserFactory,
     WorkstationFactory,
 )
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
-from tests.utils import get_http_host, get_view_for_user
+from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -51,9 +49,6 @@ class TestGroupManagementViews:
                 user=admin,
                 data={"q": u.username.lower()},
             )
-
-        response = get_user_autocomplete()
-        assert response.status_code == 403
 
         o.add_editor(admin)
 
@@ -160,28 +155,3 @@ class TestAutocompleteViews:
         assert response.status_code == 200
 
         assert str(user.pk) in response.json()["results"][0]["id"]
-
-    def test_autocomplete_num_queries(self, client, django_assert_num_queries):
-        archive = ArchiveFactory()
-        admin = UserFactory()
-        archive.add_editor(admin)
-
-        user = UserFactory()
-
-        url = reverse("users-autocomplete", kwargs={})
-
-        client.login(
-            username=admin.username, password=SUPER_SECURE_TEST_PASSWORD
-        )
-
-        method = client.get
-
-        url, kwargs = get_http_host(
-            url=url, kwargs={"data": {"q": user.username}}
-        )
-
-        try:
-            with django_assert_num_queries(14):
-                method(url, **kwargs)
-        finally:
-            client.logout()
