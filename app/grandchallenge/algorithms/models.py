@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Min, Sum
 from django.db.models.signals import post_delete
+from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -538,6 +539,18 @@ class Job(UUIDModel, ComponentJob):
 
     def remove_viewer(self, user):
         return user.groups.remove(self.viewers)
+
+    def run_job(self, upload_pks=None):
+        # Local import to avoid circular dependency
+        from grandchallenge.algorithms.tasks import (
+            run_algorithm_job_for_inputs,
+        )
+
+        run_job = run_algorithm_job_for_inputs.signature(
+            kwargs={"job_pk": self.pk, "upload_pks": upload_pks},
+            immutable=True,
+        )
+        on_commit(run_job.apply_async)
 
 
 @receiver(post_delete, sender=Job)

@@ -32,8 +32,16 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.mixins import (
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+)
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
@@ -57,11 +65,10 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
     HyperlinkedJobSerializer,
+    JobPostSerializer,
+    JobRunSerializer,
 )
-from grandchallenge.algorithms.tasks import (
-    create_algorithm_jobs_for_session,
-    run_algorithm_job_for_inputs,
-)
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.components.models import (
@@ -483,12 +490,7 @@ class AlgorithmExperimentCreate(
                 civs.append(civ)
 
         job.inputs.add(*civs)
-
-        run_job = run_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": job.pk, "upload_pks": upload_pks},
-            immutable=True,
-        )
-        on_commit(run_job.apply_async)
+        job.run_job(upload_pks=upload_pks)
 
         return HttpResponseRedirect(
             reverse(
@@ -647,16 +649,50 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     filterset_fields = ["algorithm"]
 
 
-class JobViewSet(ReadOnlyModelViewSet):
+class JobViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
     queryset = (
         Job.objects.all()
         .prefetch_related("outputs__interface", "inputs__interface")
         .select_related("algorithm_image__algorithm")
     )
-    serializer_class = HyperlinkedJobSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_class = JobViewsetFilter
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return JobPostSerializer
+        elif self.action == "start_job":
+            return JobRunSerializer
+        else:
+            return HyperlinkedJobSerializer
+
+    @action(detail=True, methods=["patch"], serializer_class=JobRunSerializer)
+    def start_job(self, request, pk=None):
+        job: Job = self.get_object()
+
+        serializer = self.get_serializer(job, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            upload_pks = serializer.validated_data.get("upload_pks", None)
+            if upload_pks:
+                # create dictionary of civ_pks and upload_pks
+                ul = {}
+                for key, value in upload_pks.items():
+                    # key is interface title
+                    ci = job.algorithm_image.algorithm.inputs.get(title=key)
+                    civ = job.inputs.get(interface=ci)
+                    ul[civ.pk] = value
+                upload_pks = ul
+
+            job.run_job(upload_pks=upload_pks)
+            return Response("Job queued.", status=status.HTTP_200_OK)
+        else:
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class AlgorithmPermissionRequestCreate(
