@@ -1,7 +1,7 @@
 from typing import Optional
 
 from rest_framework import serializers
-from rest_framework.fields import CharField, SerializerMethodField
+from rest_framework.fields import CharField, SerializerMethodField, URLField
 from rest_framework.relations import (
     HyperlinkedRelatedField,
     StringRelatedField,
@@ -20,14 +20,18 @@ from grandchallenge.components.serializers import (
 
 class AlgorithmSerializer(serializers.ModelSerializer):
     average_duration = SerializerMethodField()
+    logo = URLField(source="logo.x20.url")
+    url = URLField(source="get_absolute_url")
 
     class Meta:
         model = Algorithm
         fields = [
             "api_url",
+            "url",
             "description",
             "pk",
             "title",
+            "logo",
             "slug",
             "average_duration",
         ]

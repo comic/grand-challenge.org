@@ -162,7 +162,7 @@ def test_api_rs_list_permissions(client):
     rs_set = TwoReaderStudies()
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (rs_set.creator, 200, []),
         (rs_set.editor1, 200, [rs_set.rs1.pk]),
         (rs_set.reader1, 200, [rs_set.rs1.pk]),
@@ -195,7 +195,7 @@ def test_api_rs_patch_permissions(client):
     rs_set = TwoReaderStudies()
 
     tests = (
-        (None, 401),
+        (None, 404),
         (rs_set.creator, 404),
         (rs_set.editor1, 200),
         (rs_set.reader1, 403),
@@ -226,7 +226,7 @@ def test_api_rs_detail_permissions(client):
     rs_set = TwoReaderStudies()
 
     tests = (
-        (None, 401),
+        (None, 404),
         (rs_set.creator, 404),
         (rs_set.editor1, 200),
         (rs_set.reader1, 200),

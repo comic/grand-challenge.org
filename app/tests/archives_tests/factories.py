@@ -13,6 +13,7 @@ class ArchiveFactory(factory.django.DjangoModelFactory):
         model = Archive
 
     title = factory.Sequence(lambda n: f"Archive {n}")
+    logo = factory.django.ImageField()
 
     @factory.post_generation
     def algorithms(self, create, extracted, **kwargs):

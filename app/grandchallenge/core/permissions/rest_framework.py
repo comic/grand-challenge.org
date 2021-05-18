@@ -31,6 +31,10 @@ class DjangoObjectOnlyPermissions(DjangoObjectPermissions):
         return True
 
 
+class DjangoObjectOnlyPermissionsAndAnonReadOnly(DjangoObjectOnlyPermissions):
+    authenticated_users_only = False
+
+
 class DjangoObjectOnlyWithCustomPostPermissions(DjangoObjectOnlyPermissions):
     """Grant all authenticated users POST permissions."""
 

@@ -54,7 +54,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.permissions.rest_framework import (
-    DjangoObjectOnlyPermissions,
+    DjangoObjectOnlyPermissionsAndAnonReadOnly,
     DjangoObjectOnlyWithCustomPostPermissions,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -804,7 +804,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     queryset = ReaderStudy.objects.all().prefetch_related(
         "images", "questions__options"
     )
-    permission_classes = [DjangoObjectOnlyPermissions]
+    permission_classes = [DjangoObjectOnlyPermissionsAndAnonReadOnly]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["slug"]
     change_permission = (
