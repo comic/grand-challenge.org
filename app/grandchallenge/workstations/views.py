@@ -20,15 +20,13 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from rest_framework.decorators import action
+from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 from ua_parser.user_agent_parser import ParseUserAgent
 
-from grandchallenge.core.permissions.rest_framework import (
-    DjangoObjectOnlyPermissions,
-)
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.workstations.forms import (
@@ -51,7 +49,7 @@ from grandchallenge.workstations.utils import (
 class SessionViewSet(ReadOnlyModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
-    permission_classes = (DjangoObjectOnlyPermissions,)
+    permission_classes = (DjangoObjectPermissions,)
     filter_backends = (ObjectPermissionsFilter,)
 
     @action(detail=True, methods=["patch"])
