@@ -14,43 +14,50 @@
     <h2>Notifications</h2>
         <ul class="list-group">
             {% for object in object_list %}
-                    <li class="list-group-item {% if object.data.context_class %}list-group-item-{{ object.data.context_class }}{% endif %}">
-                        {% if not object.read %}
-                            <span class="text-primary align-middle mr-2"><i class="fa fa-circle"></i></span>
-                        {% endif %}
-                        {{ object.action.actor|user_profile_link }}{{ object.action.verb }}
-                        {% if object.action.action_object %}
-                            <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
-                            {% if object.action.target %}
-                                in
-                            {% endif %}
-                        {% endif %}
-                        {% if object.action.target %}
-                            <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
-                        {% endif %}
-                        <form method="post" action="{% url 'notifications:update' pk=object.id %}">
-                            {% csrf_token %}
-                            <input name="notification" type="hidden" value="{{ object.id }}">
-                            {% if not object.read %}
-                                <input name="action" type="hidden" value="{{ mark_as_read_action }}">
-                                <button type="submit" class="btn btn-xs btn-primary">
-                                    Mark as read
-                                </button>
-                            {% else %}
-                                <input name="action" type="hidden" value="{{ mark_as_unread_action }}">
-                                <button type="submit" class="btn btn-xs btn-primary">
-                                    Mark as unread
-                                </button>
-                            {% endif %}
-                        </form>
-                        <form method="post" action="{% url 'notifications:update' pk=object.id %}">
-                            {% csrf_token %}
-                            <input name="notification" type="hidden" value="{{ object.id }}">
-                            <input name="action" type="hidden" value="{{ delete_notification }}">
-                            <button type="submit" class="btn btn-xs btn-danger">
-                                Delete notification
-                            </button>
-                        </form>
+                    <li class="list-group-item {% if object.data.context_class %}list-group-item-{{ object.data.context_class }}{% endif %} p-0">
+                        <div class="d-flex justify-content-between">
+                            <div class="pt-3 pl-3">
+                                {% if not object.read %}
+                                    <span class="text-primary align-middle mr-2"><i class="fa fa-circle"></i></span>
+                                {% endif %}
+                                {{ object.action.actor|user_profile_link }}{{ object.action.verb }}
+                                {% if object.action.action_object %}
+                                    <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
+                                    {% if object.action.target %}
+                                        in
+                                    {% endif %}
+                                {% endif %}
+                                {% if object.action.target %}
+                                    <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
+                                {% endif %}
+                                {{ object.action.timestamp|naturaltime }}
+                            </div>
+                            <div  class="d-inline-flex p-2">
+                                <form method="post" action="{% url 'notifications:update' pk=object.id %}">
+                                    {% csrf_token %}
+                                    <input name="notification" type="hidden" value="{{ object.id }}">
+                                    {% if not object.read %}
+                                        <input name="action" type="hidden" value="{{ mark_as_read_action }}">
+                                        <button type="submit" class="btn btn-xs btn-primary mx-1">
+                                            Mark as read
+                                        </button>
+                                    {% else %}
+                                        <input name="action" type="hidden" value="{{ mark_as_unread_action }}">
+                                        <button type="submit" class="btn btn-xs btn-primary mx-1">
+                                            Mark as unread
+                                        </button>
+                                    {% endif %}
+                                </form>
+                                <form method="post" action="{% url 'notifications:update' pk=object.id %}">
+                                    {% csrf_token %}
+                                    <input name="notification" type="hidden" value="{{ object.id }}">
+                                    <input name="action" type="hidden" value="{{ delete_notification }}">
+                                    <button type="submit" class="btn btn-xs btn-danger mx-1">
+                                        Delete notification
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </li>
                 {% empty %}
                 <li class="list-group-item">You have no notifications</li>

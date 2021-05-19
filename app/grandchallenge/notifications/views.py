@@ -1,9 +1,9 @@
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import FormView, ListView
+from guardian.mixins import (
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
 from grandchallenge.notifications.forms import NotificationForm
 from grandchallenge.notifications.models import Notification
@@ -51,7 +51,9 @@ class NotificationUpdate(
     login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
-        return self.request.notification
+        form = self.get_form()
+        form.full_clean()
+        return form.cleaned_data["notification"]
 
     def get_success_url(self):
         return reverse("notifications:list",)
