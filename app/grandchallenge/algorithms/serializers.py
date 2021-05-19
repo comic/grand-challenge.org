@@ -23,7 +23,6 @@ from grandchallenge.components.serializers import (
 class AlgorithmSerializer(serializers.ModelSerializer):
     average_duration = SerializerMethodField()
     inputs = ComponentInterfaceSerializer(many=True)
-    latest_ready_image = SerializerMethodField()
 
     class Meta:
         model = Algorithm
@@ -35,16 +34,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "slug",
             "average_duration",
             "inputs",
-            "latest_ready_image",
         ]
-
-    def get_latest_ready_image(self, obj: Algorithm):
-        """Used by latest_container_image SerializerMethodField."""
-        ci = obj.latest_ready_image
-        if ci:
-            return ci.pk
-        else:
-            return None
 
     def get_average_duration(self, obj: Algorithm) -> Optional[float]:
         """The average duration of successful jobs in seconds"""
