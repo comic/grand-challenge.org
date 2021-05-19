@@ -1382,6 +1382,9 @@ class Question(UUIDModel):
             self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
         ]
 
+    def get_absolute_url(self):
+        return self.reader_study.get_absolute_url() + "#questions"
+
 
 class CategoricalOption(models.Model):
     question = models.ForeignKey(
