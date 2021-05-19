@@ -62,6 +62,14 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         attrs.pop("interface_title")
         attrs["interface_id"] = interface.id
 
+        def get_value():
+            value = attrs.get("value", None)
+            if not value:
+                raise serializers.ValidationError(
+                    f"Value is required for interface kind {interface.kind}"
+                )
+            return value
+
         def validate_simple():
             kind_to_type = {
                 ComponentInterface.Kind.INTEGER: int,
@@ -69,14 +77,14 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 ComponentInterface.Kind.BOOL: bool,
                 ComponentInterface.Kind.FLOAT: float,
             }
-            value = attrs["value"]
+            value = get_value()
             if not isinstance(value, kind_to_type.get(interface.kind)):
                 raise serializers.ValidationError(
                     f"Type of {value} does not match interface kind {interface.kind}"
                 )
 
         def validate_annotations():
-            value = attrs["value"]
+            value = get_value()
             allowed_types = [{"$ref": f"#/definitions/{interface.kind}"}]
 
             JSONSchemaValidator(
