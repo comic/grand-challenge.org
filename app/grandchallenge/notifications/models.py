@@ -36,5 +36,3 @@ class Notification(models.Model):
 
     def _assign_permissions(self):
         assign_perm("change_notification", self.user, self)
-        assign_perm("view_notification", self.user, self)
-        assign_perm("delete_notification", self.user, self)
