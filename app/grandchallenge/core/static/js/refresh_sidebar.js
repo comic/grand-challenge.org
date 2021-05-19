@@ -1,6 +1,6 @@
-if (window.location.hash == "" || window.location.hash == '#v-pills-home') {
-  $('#v-pills-home').addClass('active');
-  $('#v-pills-home-tab').addClass('active');
+if (window.location.hash == "" || window.location.hash == '#information') {
+  $('#information').addClass('active');
+  $('#v-pills-information-tab').addClass('active');
 }
 
 $('#v-pills-tab a').click(function () {

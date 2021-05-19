@@ -433,9 +433,6 @@ class QuestionUpdate(
     def form_valid(self, form):
         return self.validate_options(form, super())
 
-    def get_success_url(self):
-        return self.object.reader_study.get_absolute_url()
-
 
 class BaseAddObjectToReaderStudyMixin(
     LoginRequiredMixin, ObjectPermissionRequiredMixin
@@ -473,9 +470,6 @@ class AddObjectToReaderStudyMixin(BaseAddObjectToReaderStudyMixin, CreateView):
         form.instance.creator = self.request.user
         form.instance.reader_study = self.reader_study
         return super().form_valid(form)
-
-    def get_success_url(self):
-        return self.object.reader_study.get_absolute_url()
 
 
 class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
@@ -603,9 +597,6 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
             }
         )
         return kwargs
-
-    def get_success_url(self):
-        return self.object.get_absolute_url()
 
 
 class AddQuestionToReaderStudy(
