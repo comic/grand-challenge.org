@@ -4,7 +4,6 @@ from rest_framework import serializers
 from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import (
     HyperlinkedRelatedField,
-    PrimaryKeyRelatedField,
     StringRelatedField,
 )
 
@@ -105,53 +104,48 @@ class HyperlinkedJobSerializer(JobSerializer):
 
 
 class JobPostSerializer(JobSerializer):
-    algorithm_image = PrimaryKeyRelatedField(
-        queryset=AlgorithmImage.objects.all()
-    )
+    algorithm_title = CharField(write_only=True)
     inputs = ComponentInterfaceValuePostSerializer(many=True)
 
     class Meta:
         model = Job
-        fields = ["pk", "algorithm_image", "inputs", "algorithm_title"]
+        fields = ["pk", "algorithm_title", "inputs", "status"]
+
+    def validate(self, data):
+        alg = Algorithm.objects.get(title=data.pop("algorithm_title"))
+        if not alg.latest_ready_image:
+            raise serializers.ValidationError("Algorithm image is not ready to be used")
+
+        data["algorithm_image"] = alg.latest_ready_image
+        return data
 
     def create(self, validated_data):
         inputs_data = validated_data.pop("inputs")
         job = Job.objects.create(**validated_data)
         component_interface_values = []
-
+        upload_pks = {}
+        algorithm_inputs = job.algorithm_image.algorithm.inputs.all()
         for input_data in inputs_data:
-            # make sure interface is defined for algorithm
-            ci = job.algorithm_image.algorithm.inputs.get(
-                title=input_data["interface_title"]
-            )
-            # replace interface_title with interface_id
-            input_data["interface_id"] = ci.id
-            input_data.pop("interface_title")
-            component_interface_values.append(
-                ComponentInterfaceValue.objects.create(**input_data)
-            )
+            # check for upload_pk in input
+            upload_pk = input_data.pop("upload_pk", None)
+            civ = ComponentInterfaceValue.objects.create(**input_data)
+            component_interface_values.append(civ)
+            if upload_pk:
+                upload_pks[civ.pk] = str(upload_pk)
 
-        # TODO: use default if not provided. Should we add defaults now or when job is attempted to start?
-        # for input_interface in job.algorithm_image.algorithm.inputs.all():
-        #     if input_interface.title not in (
-        #         input_data["interface"] for input_data in inputs_data
-        #     ):
-        #         if input_interface.default_value:
-        #             civs.append(
-        #                 ComponentInterfaceValue.objects.create(
-        #                     interface_id=input_interface.id,
-        #                     value=input_interface.default_value,
-        #                 )
-        #             )
+        # use interface defaults if no value was provided
+        for input_interface in algorithm_inputs:
+            if input_interface.default_value is not None and input_interface.id not in (
+                input_data["interface_id"] for input_data in inputs_data
+            ):
+                component_interface_values.append(
+                    ComponentInterfaceValue.objects.create(
+                        interface_id=input_interface.id,
+                        value=input_interface.default_value,
+                    )
+                )
+
         job.inputs.add(*component_interface_values)
         job.save()
+        job.run_job(upload_pks=upload_pks)
         return job
-
-
-class JobRunSerializer(JobSerializer):
-    algorithm_image = StringRelatedField()
-    upload_pks = serializers.JSONField()
-
-    class Meta:
-        model = Job
-        fields = ["pk", "upload_pks"]

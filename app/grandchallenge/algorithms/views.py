@@ -31,15 +31,12 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
-from rest_framework import status
-from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
@@ -65,7 +62,6 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
     HyperlinkedJobSerializer,
     JobPostSerializer,
-    JobRunSerializer,
 )
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
@@ -663,35 +659,8 @@ class JobViewSet(
     def get_serializer_class(self):
         if self.action == "create":
             return JobPostSerializer
-        elif self.action == "start_job":
-            return JobRunSerializer
         else:
             return HyperlinkedJobSerializer
-
-    @action(detail=True, methods=["patch"], serializer_class=JobRunSerializer)
-    def start_job(self, request, pk=None):
-        job: Job = self.get_object()
-
-        serializer = self.get_serializer(job, data=request.data, partial=True)
-
-        if serializer.is_valid():
-            upload_pks = serializer.validated_data.get("upload_pks", None)
-            if upload_pks:
-                # create dictionary of civ_pks and upload_pks
-                ul = {}
-                for key, value in upload_pks.items():
-                    # key is interface title
-                    ci = job.algorithm_image.algorithm.inputs.get(title=key)
-                    civ = job.inputs.get(interface=ci)
-                    ul[civ.pk] = value
-                upload_pks = ul
-
-            job.run_job(upload_pks=upload_pks)
-            return Response("Job queued.", status=status.HTTP_200_OK)
-        else:
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
 
 
 class AlgorithmPermissionRequestCreate(

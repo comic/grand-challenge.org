@@ -1,11 +1,13 @@
 from rest_framework import serializers
 
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
 )
+from grandchallenge.core.validators import JSONSchemaValidator
+from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
@@ -38,44 +40,89 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
     )
 
     interface_title = serializers.CharField(write_only=True)
+    interface = ComponentInterfaceSerializer(read_only=True)
+    upload_pk = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = ComponentInterfaceValue
-        fields = ["interface_title", "value", "file", "image", "pk"]
+        fields = [
+            "interface_title",
+            "interface",
+            "value",
+            "file",
+            "image",
+            "pk",
+            "upload_pk",
+        ]
 
-    def validate(self, attrs):
+    def validate(self, attrs):  # noqa: C901
         interface = ComponentInterface.objects.get(
             title=attrs["interface_title"]
         )
-
-        def kind_to_type(kind):
-            if kind == ComponentInterface.Kind.INTEGER:
-                return int
-            if kind == ComponentInterface.Kind.STRING:
-                return str
-            if kind == ComponentInterface.Kind.BOOL:
-                return bool
-            if kind == ComponentInterface.Kind.FLOAT:
-                return float
-            return any
+        attrs.pop("interface_title")
+        attrs["interface_id"] = interface.id
 
         def validate_simple():
+            kind_to_type = {
+                ComponentInterface.Kind.INTEGER: int,
+                ComponentInterface.Kind.STRING: str,
+                ComponentInterface.Kind.BOOL: bool,
+                ComponentInterface.Kind.FLOAT: float,
+            }
             value = attrs["value"]
-            if not isinstance(value, kind_to_type(interface.kind)):
+            if not isinstance(value, kind_to_type.get(interface.kind)):
                 raise serializers.ValidationError(
-                    f"{value} does not match interface kind {interface.kind}"
+                    f"Type of {value} does not match interface kind {interface.kind}"
                 )
 
         def validate_annotations():
-            pass
-            # TODO: validate with json schema
+            value = attrs["value"]
+            allowed_types = [{"$ref": f"#/definitions/{interface.kind}"}]
+
+            JSONSchemaValidator(
+                schema={**ANSWER_TYPE_SCHEMA, "anyOf": allowed_types}
+            )(value)
+
+        def validate_image():
+            # either image or upload_pk should be provided
+            if not any(key in attrs for key in ("upload_pk", "image")):
+                raise serializers.ValidationError(
+                    f"upload_pk or image are required for interface kind {interface.kind}"
+                )
 
         if interface.kind in InterfaceKind.interface_type_simple():
             validate_simple()
         if interface.kind in InterfaceKind.interface_type_annotation():
             validate_annotations()
+        if interface.kind in InterfaceKind.interface_type_image():
+            validate_image()
 
         return attrs
+
+    def validate_upload_pk(self, value):
+        session = RawImageUploadSession.objects.get(pk=value)
+
+        user = self.context.get("request").user
+
+        if not user.has_perm("view_rawimageuploadsession", session):
+            raise serializers.ValidationError(
+                f"User does not have permission to use raw image upload session {value}"
+            )
+
+        if session.status is not RawImageUploadSession.PENDING:
+            raise serializers.ValidationError(
+                f"Upload session {value} is not ready to be used"
+            )
+        return value
+
+    def validate_image(self, value):
+        user = self.context.get("request").user
+
+        if not user.has_perm("view_image", value):
+            raise serializers.ValidationError(
+                f"User does not have permission to use image {value}"
+            )
+        return value
 
 
 class ComponentInterfaceValueSerializer(serializers.ModelSerializer):
