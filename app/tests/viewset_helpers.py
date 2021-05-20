@@ -1,7 +1,6 @@
 import json
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
 from rest_framework import status
 from rest_framework.test import force_authenticate
@@ -97,11 +96,6 @@ def get_response_status_viewset(  # noqa: C901
     elif user == "admin":
         staff_user = UserFactory(is_staff=True)
         force_authenticate(request, user=staff_user)
-    elif user == "retina_importer":
-        retina_import_user = get_user_model().objects.get(
-            username=settings.RETINA_IMPORT_USER_NAME
-        )
-        force_authenticate(request, user=retina_import_user)
 
     # get response
     if action_name == "list" or action_name == "create":
@@ -133,7 +127,6 @@ def batch_test_viewset_endpoints(
             (None, False),
             ("user", False),
             ("admin", False),
-            ("retina_importer", True),
         ):
             test_method = create_test_method(
                 viewset,
