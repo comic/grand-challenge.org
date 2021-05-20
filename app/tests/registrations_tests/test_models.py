@@ -1,6 +1,5 @@
 import pytest
 
-from tests.model_helpers import do_test_factory
 from tests.registrations_tests.factories import OctObsRegistrationFactory
 
 
@@ -14,4 +13,4 @@ class TestRegistrationModels:
 @pytest.mark.parametrize("factory", (OctObsRegistrationFactory,))
 class TestFactories:
     def test_factory_creation(self, factory):
-        do_test_factory(factory)
+        assert factory()

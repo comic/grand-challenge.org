@@ -23,7 +23,6 @@ from tests.cases_tests.factories import (
     ImageFileFactoryWithRAWFile2D,
 )
 from tests.factories import ImageFileFactory
-from tests.model_helpers import do_test_factory
 
 
 @pytest.mark.django_db
@@ -32,13 +31,6 @@ class TestRetinaImagesModels:
     def test_retina_image_str(self):
         model = ImageFactory()
         assert str(model) == f"Image {model.name} {model.shape_without_color}"
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("factory", (ImageFactory,))
-class TestFactories:
-    def test_factory_creation(self, factory):
-        do_test_factory(factory)
 
 
 @pytest.mark.django_db

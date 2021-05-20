@@ -3,22 +3,9 @@ from django.db import IntegrityError
 from guardian.shortcuts import get_perms
 
 from tests.annotations_tests.factories import (
-    BooleanClassificationAnnotationFactory,
-    CoordinateListAnnotationFactory,
     ETDRSGridAnnotationFactory,
-    ImagePathologyAnnotationFactory,
-    ImageQualityAnnotationFactory,
-    ImageTextAnnotationFactory,
-    IntegerClassificationAnnotationFactory,
-    LandmarkAnnotationSetFactory,
     MeasurementAnnotationFactory,
-    OctRetinaImagePathologyAnnotationFactory,
-    PolygonAnnotationSetFactory,
-    RetinaImagePathologyAnnotationFactory,
-    SingleLandmarkAnnotationFactory,
-    SinglePolygonAnnotationFactory,
 )
-from tests.model_helpers import do_test_factory
 from tests.viewset_helpers import get_user_from_user_type
 
 
@@ -98,28 +85,3 @@ class TestPermissions:
                 assert f"{permission_type}_polygonannotationset" not in perms
             else:
                 assert f"{permission_type}_polygonannotationset" in perms
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "factory",
-    (
-        ETDRSGridAnnotationFactory,
-        MeasurementAnnotationFactory,
-        BooleanClassificationAnnotationFactory,
-        IntegerClassificationAnnotationFactory,
-        CoordinateListAnnotationFactory,
-        PolygonAnnotationSetFactory,
-        SinglePolygonAnnotationFactory,
-        LandmarkAnnotationSetFactory,
-        SingleLandmarkAnnotationFactory,
-        ImageQualityAnnotationFactory,
-        ImagePathologyAnnotationFactory,
-        RetinaImagePathologyAnnotationFactory,
-        OctRetinaImagePathologyAnnotationFactory,
-        ImageTextAnnotationFactory,
-    ),
-)
-class TestFactories:
-    def test_factory_creation(self, factory):
-        do_test_factory(factory)
