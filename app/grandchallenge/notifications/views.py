@@ -1,5 +1,8 @@
+from actstream.models import Follow
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models.query_utils import Q
 from django.views.generic import FormView, ListView
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
@@ -65,3 +68,42 @@ class NotificationUpdate(
     def form_valid(self, form):
         form.update()
         return super().form_valid(form)
+
+
+class SubscriptionListView(LoginRequiredMixin, ListView):
+    model = Follow
+
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "followed_topics": Follow.objects.filter(
+                    Q(user=self.request.user)
+                    & Q(
+                        content_type=ContentType.objects.get(
+                            app_label="forum_conversation", model="topic"
+                        ).id
+                    )
+                ),
+                "followed_forums": Follow.objects.filter(
+                    Q(user=self.request.user)
+                    & Q(
+                        content_type=ContentType.objects.get(
+                            app_label="forum", model="forum"
+                        ).id
+                    )
+                ),
+                "followed_users": Follow.objects.filter(
+                    Q(user=self.request.user)
+                    & Q(
+                        content_type=ContentType.objects.get(
+                            app_label="auth", model="user"
+                        ).id
+                    )
+                ),
+            }
+        )
+        return context
