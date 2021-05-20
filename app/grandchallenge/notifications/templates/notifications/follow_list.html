@@ -28,7 +28,22 @@
     <ul class="list-group">
         {% for topic in followed_topics %}
             <li class="list-group-item">
-                <a href="{{ topic.follow_object.get_absolute_url }}">{{ topic.follow_object }}</a>
+                 <div class="d-flex justify-content-between">
+                     <div class="pt-3 pl-3">
+                        <a href="{{ topic.follow_object.get_absolute_url }}">{{ topic.follow_object }}</a>
+                     </div>
+                      <div  class="d-inline-flex p-2">
+                        <form method="post" action="{% url 'notifications:subscription-update' pk=topic.follow_object.id %}">
+                            {% csrf_token %}
+                            <input name="subscription_object" type="hidden" value="{{ topic.id }}">
+                            <input name="user" type="hidden" value="{{ topic.user.id }}">
+                            <input name="action" type="hidden" value="{{ unfollow_topic }}">
+                            <button type="submit" class="btn btn-xs btn-primary mx-1">
+                                Unsubscribe
+                            </button>
+                        </form>
+                      </div>
+                 </div>
             </li>
         {% empty %}
             <li class="list-group-item">You are not subscribed to any topics.</li>

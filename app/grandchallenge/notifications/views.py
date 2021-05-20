@@ -8,7 +8,10 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.notifications.forms import NotificationForm
+from grandchallenge.notifications.forms import (
+    NotificationForm,
+    SubscriptionForm,
+)
 from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -104,6 +107,33 @@ class SubscriptionListView(LoginRequiredMixin, ListView):
                         ).id
                     )
                 ),
+                "unfollow_topic": SubscriptionForm.UNFOLLOW,
             }
         )
         return context
+
+
+class SubscriptionUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = SubscriptionForm
+    template_name = "notifications/subscription_update_form.html"
+    success_message = "Subscription successfully updated"
+    permission_required = "change_follow"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        form = self.get_form()
+        form.full_clean()
+        return form.cleaned_data["subscription_object"]
+
+    def get_success_url(self):
+        return reverse("notifications:subscriptions-list")
+
+    def form_valid(self, form):
+        form.update()
+        return super().form_valid(form)
