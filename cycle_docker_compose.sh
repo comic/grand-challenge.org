@@ -13,7 +13,7 @@ make build_http
 
 trap 'docker-compose down ; echo Stopped ; exit 0' SIGINT
 
-docker-compose run --rm web python manage.py migrate
+make development_fixtures
 
 docker-compose up &
 

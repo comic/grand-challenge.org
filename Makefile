@@ -5,11 +5,6 @@ GDCM_VERSION_TAG = 3.0.6
 POETRY_HASH = $(shell shasum -a 512 poetry.lock | cut -c 1-8)
 
 
-create_io_algorithm:
-	docker build -t algorithm_io app/tests/resources/gc_demo_algorithm/
-	docker save algorithm_io -o app/tests/resources/gc_demo_algorithm/algorithm_io.tar
-	chmod a+r app/tests/resources/gc_demo_algorithm/algorithm_io.tar
-
 build_web_test:
 	@docker pull grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
 		docker build \
@@ -78,6 +73,18 @@ push: push_web_base push_web_test_base push_web push_http
 
 migrations:
 	docker-compose run -u $(USER_ID) --rm web python manage.py makemigrations
+
+development_fixtures:
+	docker-compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
+		--rm \
+		web \
+		bash -c "python manage.py migrate && python manage.py runscript development_fixtures"
+
+create_io_algorithm:
+	docker build -t algorithm_io app/tests/resources/gc_demo_algorithm/
+	docker save algorithm_io -o app/tests/resources/gc_demo_algorithm/algorithm_io.tar
+	chmod a+r app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 
 .PHONY: docs
 docs:

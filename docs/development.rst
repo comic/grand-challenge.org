@@ -201,7 +201,7 @@ with the service running in the docker container.
 
     $ cd app
     $ python manage.py migrate
-    $ python manage.py init_gc_demo
+    $ python manage.py runscript development_fixtures
 
 7. You can now start the server using ``python manage.py runserver_plus``.
 
@@ -277,7 +277,7 @@ If you want to run this in a production environment you will need to make severa
 
 1. Use ``gunicorn`` rather than run ``runserver_plus`` to run the web process
 2. `Disable mounting of the docker socket <https://docs.docker.com/engine/security/https/>`_
-3. Removing the users that are created by ``init_gc_demo``
+3. Removing the users that are created by ``development_fixtures``
 
 .. _Docker: https://docs.docker.com/install/
 .. _`Docker Compose`: https://docs.docker.com/compose/install/
