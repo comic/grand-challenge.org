@@ -115,15 +115,15 @@ class JobPostSerializer(JobSerializer):
 
         # validate that no inputs are provided that are not configured for the
         # algorithm and that all interfaces without defaults are provided
-        algorithm_input_ids = set(a.id for a in alg.inputs.all())
-        input_ids = set(i["interface_id"] for i in data["inputs"])
+        algorithm_input_ids = {a.id for a in alg.inputs.all()}
+        input_ids = {i["interface_id"] for i in data["inputs"]}
 
         # surplus inputs: provided but interfaces not configured for the algorithm
         surplus = ComponentInterface.objects.filter(
             id__in=list(input_ids - algorithm_input_ids)
         )
         if surplus:
-            titles = ", ".join((ci.title for ci in surplus))
+            titles = ", ".join(ci.title for ci in surplus)
             raise serializers.ValidationError(
                 f"Provided inputs(s) {titles} are not defined for this algorithm"
             )
@@ -134,7 +134,7 @@ class JobPostSerializer(JobSerializer):
             default_value__isnull=True,
         )
         if missing:
-            titles = ", ".join((ci.title for ci in missing))
+            titles = ", ".join(ci.title for ci in missing)
             raise serializers.ValidationError(
                 f"Interface(s) {titles} do not have a default value and should be provided."
             )
@@ -146,10 +146,10 @@ class JobPostSerializer(JobSerializer):
         job = Job.objects.create(**validated_data)
         component_interface_values = []
         upload_pks = {}
-        algorithm_input_ids = set(
+        algorithm_input_ids = {
             a.id for a in job.algorithm_image.algorithm.inputs.all()
-        )
-        input_ids = set(i["interface_id"] for i in inputs_data)
+        }
+        input_ids = {i["interface_id"] for i in inputs_data}
 
         for input_data in inputs_data:
             # check for upload_pk in input
