@@ -1,4 +1,5 @@
 from actstream.actions import unfollow
+from actstream.models import Follow
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models.query_utils import Q
@@ -74,3 +75,25 @@ class NotificationForm(forms.Form):
                     )
                     & Q(user_id=self.cleaned_data["user"])
                 ).delete()
+
+
+class SubscriptionForm(forms.Form):
+    UNFOLLOW = "UNFOLLOW"
+    CHOICES = ((UNFOLLOW, "Unfollow"),)
+    user = forms.ModelChoiceField(
+        queryset=get_user_model().objects.all(), widget=forms.HiddenInput()
+    )
+    subscription_object = forms.ModelChoiceField(
+        queryset=Follow.objects.all(), widget=forms.HiddenInput()
+    )
+    action = forms.ChoiceField(choices=CHOICES, widget=forms.HiddenInput())
+
+    def update(self):
+        if self.cleaned_data["action"] == SubscriptionForm.UNFOLLOW:
+            if isinstance(
+                self.cleaned_data["subscription_object"].follow_object, Topic
+            ):
+                unfollow(
+                    self.cleaned_data["user"],
+                    self.cleaned_data["subscription_object"].follow_object,
+                )

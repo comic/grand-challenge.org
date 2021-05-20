@@ -4,6 +4,7 @@ from grandchallenge.notifications.views import (
     NotificationList,
     NotificationUpdate,
     SubscriptionListView,
+    SubscriptionUpdate,
 )
 
 app_name = "notifications"
@@ -17,5 +18,10 @@ urlpatterns = [
             template_name="notifications/follow_list.html"
         ),
         name="subscriptions-list",
+    ),
+    path(
+        "subscriptions/<int:pk>/update",
+        SubscriptionUpdate.as_view(),
+        name="subscription-update",
     ),
 ]
