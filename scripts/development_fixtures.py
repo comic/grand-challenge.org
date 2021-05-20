@@ -63,7 +63,7 @@ DEFAULT_USERS = [
 
 def run():
     """Creates the main project, demo user and demo challenge."""
-    print("Creating development fixtures")
+    print("🔨 Creating development fixtures 🔨")
 
     if not settings.DEBUG:
         raise RuntimeError(
@@ -91,7 +91,7 @@ def run():
     _create_user_tokens(users)
     _setup_public_storage()
 
-    print("Development fixtures successfully created")
+    print("✨ Development fixtures successfully created ✨")
 
 
 def _create_flatpages(site):
