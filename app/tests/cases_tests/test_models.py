@@ -7,9 +7,6 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.files import File
 
-from grandchallenge.core.management.commands.init_gc_demo import (
-    get_temporary_image,
-)
 from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
@@ -216,12 +213,12 @@ class TestImageSpacing:
 
 
 @pytest.mark.django_db
-def test_image_file_cleanup():
+def test_image_file_cleanup(uploaded_image):
     filename = f"{uuid.uuid4()}.zraw"
 
     i = ImageFactory()
     f = ImageFileFactory(image=i)
-    f.file.save(filename, File(get_temporary_image()))
+    f.file.save(filename, File(uploaded_image()))
 
     storage = f.file.storage
     filepath = f.file.name
