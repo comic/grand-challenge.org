@@ -14,7 +14,7 @@
     <h2>Notifications</h2>
         <ul class="list-group">
             {% for object in object_list %}
-                    <li class="list-group-item {% if object.data.context_class %}list-group-item-{{ object.data.context_class }}{% endif %} p-0">
+                    <li class="list-group-item {% if object.context_class %}list-group-item-{{ object.context_class }}{% endif %} p-0">
                         <div class="d-flex justify-content-between">
                             <div class="pt-3 pl-3">
                                 {% if not object.read %}
