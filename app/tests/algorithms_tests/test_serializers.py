@@ -27,9 +27,11 @@ from tests.serializer_helpers import (
                 "serializer": AlgorithmSerializer,
                 "fields": (
                     "api_url",
+                    "url",
                     "description",
                     "pk",
                     "title",
+                    "logo",
                     "slug",
                     "average_duration",
                 ),

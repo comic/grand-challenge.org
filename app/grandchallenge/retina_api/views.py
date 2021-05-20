@@ -122,6 +122,7 @@ class ArchiveAPIView(APIView):
 
 class B64ThumbnailAPIView(RetrieveAPIView):
     permission_classes = (DjangoObjectPermissions, RetinaAPIPermission)
+    filters = (filters.ObjectPermissionsFilter,)
     queryset = Image.objects.all()
     serializer_class = B64ImageSerializer
 

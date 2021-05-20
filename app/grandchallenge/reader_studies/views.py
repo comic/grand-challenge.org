@@ -53,10 +53,6 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
-from grandchallenge.core.permissions.rest_framework import (
-    DjangoObjectOnlyPermissions,
-    DjangoObjectOnlyWithCustomPostPermissions,
-)
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
@@ -795,7 +791,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     queryset = ReaderStudy.objects.all().prefetch_related(
         "images", "questions__options"
     )
-    permission_classes = [DjangoObjectOnlyPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["slug"]
     change_permission = (
@@ -894,7 +890,7 @@ class AnswerViewSet(
         .select_related("creator", "question__reader_study")
         .prefetch_related("images")
     )
-    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["question__reader_study"]
     renderer_classes = (
