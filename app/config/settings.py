@@ -440,7 +440,6 @@ LOCAL_APPS = [
     "grandchallenge.registrations",
     "grandchallenge.annotations",
     "grandchallenge.retina_core",
-    "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
     "grandchallenge.workstations",
     "grandchallenge.workspaces",
@@ -1044,7 +1043,6 @@ RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 # Retina specific settings
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
-RETINA_IMPORT_USER_NAME = "retina_import_user"
 
 ENABLE_DEBUG_TOOLBAR = False
 

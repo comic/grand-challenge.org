@@ -10,6 +10,7 @@ from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from guardian.shortcuts import assign_perm
+from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
@@ -63,10 +64,7 @@ class UserProfile(models.Model):
             self.assign_permissions()
 
     def assign_permissions(self):
-        if self.user.username not in [
-            settings.RETINA_IMPORT_USER_NAME,
-            settings.ANONYMOUS_USER_NAME,
-        ]:
+        if self.user != get_anonymous_user():
             assign_perm("change_userprofile", self.user, self)
 
     def get_absolute_url(self):

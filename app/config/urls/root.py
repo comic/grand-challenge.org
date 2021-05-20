@@ -119,12 +119,6 @@ urlpatterns = [
         include("grandchallenge.retina_core.urls", namespace="retina"),
     ),
     path(
-        "registrations/",
-        include(
-            "grandchallenge.registrations.urls", namespace="registrations"
-        ),
-    ),
-    path(
         "aiforradiology/",
         include("grandchallenge.products.urls", namespace="products"),
     ),
