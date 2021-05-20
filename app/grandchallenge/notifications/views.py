@@ -18,6 +18,11 @@ class NotificationList(LoginRequiredMixin, ListView):
             super()
             .get_queryset()
             .filter(user=self.request.user)
+            .prefetch_related(
+                "action__actor__user_profile",
+                "action__actor__verification",
+                "action__target__forum",
+            )
             .order_by("-action__timestamp")
         )
 
