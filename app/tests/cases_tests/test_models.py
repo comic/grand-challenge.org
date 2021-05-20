@@ -26,11 +26,9 @@ from tests.factories import ImageFileFactory
 
 
 @pytest.mark.django_db
-class TestRetinaImagesModels:
-    # test functions are added dynamically to this class
-    def test_retina_image_str(self):
-        model = ImageFactory()
-        assert str(model) == f"Image {model.name} {model.shape_without_color}"
+def test_retina_image_str():
+    model = ImageFactory()
+    assert str(model) == f"Image {model.name} {model.shape_without_color}"
 
 
 @pytest.mark.django_db
