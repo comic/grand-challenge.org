@@ -1,4 +1,5 @@
 import pytest
+from actstream.actions import is_following
 from django.conf import settings
 from django.urls import reverse
 
@@ -6,6 +7,7 @@ from grandchallenge.notifications.forms import NotificationForm
 from grandchallenge.notifications.models import Notification
 from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import (
+    PostFactory,
     Topic,
     TopicFactory,
 )
@@ -52,6 +54,7 @@ def test_notification_mark_as_read_or_unread(client):
         client=client,
         method=client.post,
         data={
+            "user": user2.id,
             "notification": notification.id,
             "action": NotificationForm.MARK_READ,
         },
@@ -66,6 +69,7 @@ def test_notification_mark_as_read_or_unread(client):
         client=client,
         method=client.post,
         data={
+            "user": user2.id,
             "notification": notification.id,
             "action": NotificationForm.MARK_UNREAD,
         },
@@ -92,6 +96,7 @@ def test_notification_deletion(client):
         client=client,
         method=client.post,
         data={
+            "user": user2.id,
             "notification": notification.id,
             "action": NotificationForm.REMOVE,
         },
@@ -103,12 +108,53 @@ def test_notification_deletion(client):
 
 
 @pytest.mark.django_db
+def test_unfollow_topic(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    c = ChallengeFactory(creator=user1)
+    c.add_participant(user=user2)
+    t1 = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_POST)
+    t2 = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_POST)
+    _ = PostFactory(topic=t1, poster=user2)
+    _ = PostFactory(topic=t2, poster=user2)
+
+    assert is_following(user=user2, obj=t1)
+    assert is_following(user=user2, obj=t2)
+    assert len(Notification.objects.filter(user=user2)) == 2
+    notification = Notification.objects.filter(user=user2).first()
+
+    # unsubscribe from topic t1
+    response = get_view_for_user(
+        viewname="notifications:update",
+        client=client,
+        method=client.post,
+        data={
+            "user": user2.id,
+            "notification": notification.id,
+            "action": NotificationForm.UNFOLLOW,
+        },
+        reverse_kwargs={"pk": notification.id},
+        user=user2,
+    )
+    assert response.status_code == 302
+    assert not is_following(user=user2, obj=t1)
+    assert is_following(user=user2, obj=t2)
+
+    assert len(Notification.objects.filter(user=user2)) == 1
+    assert str(t1) not in str(
+        Notification.objects.filter(user=user2).get().action
+    )
+    assert str(t2) in str(Notification.objects.filter(user=user2).get().action)
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "action",
     (
         NotificationForm.MARK_READ,
         NotificationForm.MARK_UNREAD,
         NotificationForm.REMOVE,
+        NotificationForm.UNFOLLOW,
     ),
 )
 def test_notification_update_permissions(client, action):
@@ -124,7 +170,11 @@ def test_notification_update_permissions(client, action):
         viewname="notifications:update",
         client=client,
         method=client.post,
-        data={"notification": notification.id, "action": action},
+        data={
+            "user": user2.id,
+            "notification": notification.id,
+            "action": action,
+        },
         reverse_kwargs={"pk": notification.id},
         user=user1,
     )
@@ -134,7 +184,11 @@ def test_notification_update_permissions(client, action):
         viewname="notifications:update",
         client=client,
         method=client.post,
-        data={"notification": notification.id, "action": action},
+        data={
+            "user": user2.id,
+            "notification": notification.id,
+            "action": action,
+        },
         reverse_kwargs={"pk": notification.id},
         user=user2,
     )
