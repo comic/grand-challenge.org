@@ -16,7 +16,7 @@ class ProductList(ListView):
     model = Product
     context_object_name = "products"
     queryset = Product.objects.filter(ce_status=Status.CERTIFIED).order_by(
-        "-verified", "-ce_verified", "product_name"
+        "-ce_under", "-verified", "-ce_verified", "product_name"
     )
 
     def get_queryset(self):
@@ -58,7 +58,7 @@ class ProductList(ListView):
             queryset = queryset.filter(Q(modality__icontains=modality_query))
 
         if ce_under_query and ce_under_query != "All":
-            queryset = queryset.filter(Q(ce_under=ce_under_query))
+            queryset = queryset.filter(Q(ce_under__icontains=ce_under_query))
 
         if ce_class_query and ce_class_query != "All":
             queryset = queryset.filter(Q(ce_class=ce_class_query))

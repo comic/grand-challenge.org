@@ -45,13 +45,13 @@
                   {% if product.ce_class %}
                     <a href="#" data-toggle="tooltip" data-placement="top"
                       title= {% include "products/partials/tooltip_CE_class.html" %}>
-                      {{product.ce_class}},
+                      {{product.ce_class}}
                     </a>
                   {% endif %}
                   {% if product.ce_under %}
                     <a href="#" data-toggle="tooltip" data-placement="top"
                       title= {% include "products/partials/tooltip_CE_MDD_MDR.html" %}>
-                      {{product.ce_under}}
+                      - {{product.ce_under}}
                     </a>
                   {% endif %}
                 </div>
