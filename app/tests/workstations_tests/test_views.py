@@ -3,9 +3,6 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.utils.text import slugify
 
-from grandchallenge.core.management.commands.init_gc_demo import (
-    get_temporary_image,
-)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
@@ -27,7 +24,9 @@ def workstation_creator():
 
 
 @pytest.mark.django_db
-def test_workstation_create_detail(client, workstation_creator):
+def test_workstation_create_detail(
+    client, workstation_creator, uploaded_image
+):
     user = workstation_creator
 
     title = "my Workstation"
@@ -46,7 +45,7 @@ def test_workstation_create_detail(client, workstation_creator):
         data={
             "title": title,
             "description": description,
-            "logo": get_temporary_image(),
+            "logo": uploaded_image(),
         },
     )
     assert response.status_code == 302

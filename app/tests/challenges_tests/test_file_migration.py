@@ -7,9 +7,6 @@ from django.core.management import call_command
 from django.utils.text import get_valid_filename
 
 from grandchallenge.cases.models import image_file_path
-from grandchallenge.core.management.commands.init_gc_demo import (
-    get_temporary_image,
-)
 from tests.factories import ImageFactory, ImageFileFactory
 
 
@@ -22,12 +19,12 @@ def original_image_file_path(instance, filename):
 
 
 @pytest.mark.django_db
-def test_image_file_migration():
+def test_image_file_migration(uploaded_image):
     filename = f"{uuid.uuid4()}.zraw"
 
     i = ImageFactory()
     f = ImageFileFactory(image=i)
-    f.file.save(filename, File(get_temporary_image()))
+    f.file.save(filename, File(uploaded_image()))
 
     old_name = image_file_path(f, filename)
     new_name = original_image_file_path(f, filename)

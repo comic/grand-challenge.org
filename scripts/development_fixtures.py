@@ -30,9 +30,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.core.management.commands.init_gc_demo import (
-    get_temporary_image,
-)
 from grandchallenge.core.storage import public_s3_storage
 from grandchallenge.evaluation.models import (
     Evaluation,
@@ -45,6 +42,7 @@ from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.workstations.models import Workstation
+from tests.conftest import create_uploaded_image
 
 logger = logging.getLogger(__name__)
 
@@ -292,7 +290,7 @@ def _create_external_challenge(users):
 def _create_io_algorithm(users):
     algorithm = Algorithm.objects.create(
         title="Test Algorithm IO",
-        logo=get_temporary_image(),
+        logo=create_uploaded_image(),
         use_flexible_inputs=True,
     )
     algorithm.editors_group.user_set.add(users["algorithm"], users["demo"])
@@ -323,7 +321,7 @@ def _create_algorithm_demo(users):
     cases_image.save()
 
     algorithm = Algorithm.objects.create(
-        title="Test Algorithm", logo=get_temporary_image()
+        title="Test Algorithm", logo=create_uploaded_image()
     )
     algorithm.editors_group.user_set.add(users["algorithm"], users["demo"])
     algorithm.users_group.user_set.add(users["algorithmuser"])
@@ -418,7 +416,7 @@ def _create_job_result(users, algorithm_image, cases_image, result, detection):
 def _create_workstation(users):
     w = Workstation.objects.create(
         title=settings.DEFAULT_WORKSTATION_SLUG,
-        logo=get_temporary_image(),
+        logo=create_uploaded_image(),
         public=True,
     )
     w.add_editor(user=users["workstation"])
@@ -428,7 +426,7 @@ def _create_reader_studies(users):
     reader_study = ReaderStudy.objects.create(
         title="Reader Study",
         workstation=Workstation.objects.last(),
-        logo=get_temporary_image(),
+        logo=create_uploaded_image(),
         description="Test reader study",
     )
     reader_study.editors_group.user_set.add(users["readerstudy"])

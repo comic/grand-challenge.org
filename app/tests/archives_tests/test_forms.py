@@ -5,9 +5,6 @@ from grandchallenge.archives.models import (
     Archive,
     ArchivePermissionRequest,
 )
-from grandchallenge.core.management.commands.init_gc_demo import (
-    get_temporary_image,
-)
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchivePermissionRequestFactory,
@@ -108,7 +105,7 @@ def test_user_update_form(client):
 
 
 @pytest.mark.django_db
-def test_archive_create(client):
+def test_archive_create(client, uploaded_image):
     # The archive creator should automatically get added to the editors group
     creator = UserFactory()
     add_archive_perm = Permission.objects.get(
@@ -125,7 +122,7 @@ def test_archive_create(client):
             method=client.post,
             data={
                 "title": "foo bar",
-                "logo": get_temporary_image(),
+                "logo": uploaded_image(),
                 "workstation": ws.pk,
             },
             follow=True,
@@ -150,7 +147,7 @@ def test_archive_create(client):
 
 
 @pytest.mark.django_db
-def test_social_image_meta_tag(client):
+def test_social_image_meta_tag(client, uploaded_image):
     creator = UserFactory()
     add_archive_perm = Permission.objects.get(
         codename=f"add_{Archive._meta.model_name}"
@@ -167,8 +164,8 @@ def test_social_image_meta_tag(client):
             method=client.post,
             data={
                 "title": "foo bar",
-                "logo": get_temporary_image(),
-                "social_image": get_temporary_image(),
+                "logo": uploaded_image(),
+                "social_image": uploaded_image(),
                 "workstation": ws.pk,
             },
             follow=True,
