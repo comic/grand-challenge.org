@@ -11,7 +11,10 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Notifications</h2>
+    <div class="d-flex justify-content-between">
+        <h2>Notifications</h2>
+        <a class="btn btn-primary my-3" href="{% url 'notifications:subscriptions-list' %}" role="button">Manage your subscriptions</a>
+    </div>
         <ul class="list-group">
             {% for object in object_list %}
                     <li class="list-group-item {% if object.context_class %}list-group-item-{{ object.context_class }}{% endif %} p-0">
