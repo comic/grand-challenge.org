@@ -1,15 +1,17 @@
 import json
 
 import pytest
+from django.conf import settings
 from rest_framework import status
 
 from grandchallenge.subdomains.utils import reverse
+from tests.archives_tests.factories import ArchiveFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFile
+from tests.factories import ImagingModalityFactory
 from tests.retina_importers_tests.helpers import (
     create_upload_image_invalid_test_data,
     create_upload_image_test_data,
     get_auth_token_header,
-    get_response_status,
 )
 
 
@@ -49,6 +51,19 @@ class TestCustomUploadEndpoints:
         valid,
         mha,
     ):
+        # Create necessary modalities and archives
+        ImagingModalityFactory(modality=settings.MODALITY_CF)
+        archives = [
+            ArchiveFactory(title="Test archive"),
+            ArchiveFactory(title="Test kappa archive"),
+            ArchiveFactory(title="AREDS 2014"),
+        ]
+
+        user, auth_header = get_auth_token_header(user)
+
+        for archive in archives:
+            archive.add_uploader(user)
+
         data_type = endpoint_type.replace("upload_image_", "")
         if valid:
             data = create_upload_image_test_data(data_type=data_type, mha=mha)
@@ -57,11 +72,13 @@ class TestCustomUploadEndpoints:
                 data_type=data_type, mha=mha
             )
 
-        response_status = get_response_status(client, reverse_name, data, user)
+        url = reverse(reverse_name)
+        response = client.post(url, data=data, **auth_header)
+
         if valid:
-            assert response_status == status_valid
+            assert response.status_code == status_valid
         else:
-            assert response_status == status_invalid
+            assert response.status_code == status_invalid
 
 
 @pytest.mark.django_db
@@ -76,7 +93,7 @@ class TestCustomUploadEndpoints:
 )
 class TestCheckImageEndpoint:
     def test_non_existing_image(self, client, user, expected_status, access):
-        auth_header = get_auth_token_header(user)
+        _, auth_header = get_auth_token_header(user)
         url = reverse("retina:importers:check-image")
 
         data = json.dumps(create_upload_image_test_data(with_image=False))
@@ -91,7 +108,7 @@ class TestCheckImageEndpoint:
             assert not data["exists"]
 
     def test_existing_image(self, client, user, expected_status, access):
-        auth_header = get_auth_token_header(user)
+        _, auth_header = get_auth_token_header(user)
         url = reverse("retina:importers:check-image")
 
         image = ImageFactoryWithImageFile()

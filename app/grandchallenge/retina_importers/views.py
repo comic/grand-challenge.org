@@ -7,7 +7,9 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http.response import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, parsers, status
+from rest_framework.exceptions import PermissionDenied
 
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.archives.serializers import ArchiveSerializer
@@ -79,12 +81,15 @@ class UploadImage(generics.CreateAPIView):
             if archive_name is not None:
                 archive_dict = {"title": archive_name}
                 self.validate_model(archive_dict, ArchiveSerializer)
-                archive, archive_created = Archive.objects.get_or_create(
-                    **archive_dict
-                )
+
+                archive = get_object_or_404(Archive, **archive_dict)
+
+                if not request.user.has_perm("upload_archive", archive):
+                    raise PermissionDenied
+
                 response_obj.update(
                     {
-                        "archive_created": archive_created,
+                        "archive_created": False,
                         "archive": ArchiveSerializer(
                             archive, context={"request": request}
                         ).data,
@@ -209,11 +214,12 @@ class UploadImage(generics.CreateAPIView):
             color_space = Image.COLOR_SPACE_RGB
 
         # Set modality
-        if modality == "FUN" or modality == "OBS":
+        if modality == "FUN" or modality == "OBS" or modality == "CF":
             modality = settings.MODALITY_CF
         if modality == "HRA":
             modality = settings.MODALITY_IR
-        modality, _ = ImagingModality.objects.get_or_create(modality=modality)
+
+        modality = get_object_or_404(ImagingModality, modality=modality)
 
         optional_values = {}
         stereoscopic_choice = request.data.get("image_stereoscopic_choice")

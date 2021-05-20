@@ -5,51 +5,53 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from guardian.utils import get_anonymous_user
 from knox.models import AuthToken
 
-from grandchallenge.subdomains.utils import reverse
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UserFactory
 
 
-def get_retina_user_with_token(is_retina_user=True, **user_kwargs):
+def get_retina_user_with_token(**user_kwargs):
     user = UserFactory(**user_kwargs)
-    if is_retina_user:
-        grader_group, group_created = Group.objects.get_or_create(
-            name=settings.RETINA_GRADERS_GROUP_NAME
-        )
-        grader_group.user_set.add(user)
+
+    grader_group, group_created = Group.objects.get_or_create(
+        name=settings.RETINA_GRADERS_GROUP_NAME
+    )
+    grader_group.user_set.add(user)
 
     _, token = AuthToken.objects.create(user=user)
     return user, token
 
 
-def get_auth_token_header(user, token=None):
+def get_auth_token_header(username):
     """
     Retrieve auth token that can be inserted into client request for
     authentication
 
     :param user:
         "staff" for staff user, "normal" for normal user, else AnonymousUser
-    :param token:
-        (optional) authentication token, `user` is not used if this is defined
     """
-    if token is None:
-        if user == "staff":
-            _, token = get_retina_user_with_token(is_staff=True)
-        elif user == "normal":
-            _, token = get_retina_user_with_token()
-        elif user == "import_user":
-            user = get_user_model().objects.get(
-                username=settings.RETINA_IMPORT_USER_NAME
-            )
-            _, token = AuthToken.objects.create(user=user)
+    if username == "staff":
+        user, token = get_retina_user_with_token(is_staff=True)
+    elif username == "normal":
+        user, token = get_retina_user_with_token()
+    elif username == "import_user":
+        user = get_user_model().objects.get(
+            username=settings.RETINA_IMPORT_USER_NAME
+        )
+        _, token = AuthToken.objects.create(user=user)
+    elif username == "anonymous":
+        user = get_anonymous_user()
+        token = None
+    else:
+        raise ValueError("User not defined")
 
     auth_header = {}
     if token:
         auth_header.update({"HTTP_AUTHORIZATION": f"Bearer {token}"})
 
-    return auth_header
+    return user, auth_header
 
 
 # helper functions
@@ -131,19 +133,3 @@ def create_upload_image_invalid_test_data(data_type="default", mha=False):
     else:
         data.update({"image_hd": files["mhd"], "image_raw": files["zraw"]})
     return data
-
-
-def remove_test_image(response):
-    # Remove uploaded test image from filesystem
-    response_obj = json.loads(response.content)
-    full_path_to_image = settings.APPS_DIR / Path(
-        response_obj["image"]["image"][1:]
-    )
-    Path.unlink(full_path_to_image)
-
-
-def get_response_status(client, reverse_name, data, user="anonymous"):
-    auth_header = get_auth_token_header(user)
-    url = reverse(reverse_name)
-    response = client.post(url, data=data, **auth_header)
-    return response.status_code
