@@ -1,7 +1,7 @@
 from typing import Optional
 
 from rest_framework import serializers
-from rest_framework.fields import CharField, SerializerMethodField
+from rest_framework.fields import CharField, SerializerMethodField, SlugField
 from rest_framework.relations import (
     HyperlinkedRelatedField,
     StringRelatedField,
@@ -23,6 +23,7 @@ from grandchallenge.components.serializers import (
 class AlgorithmSerializer(serializers.ModelSerializer):
     average_duration = SerializerMethodField()
     inputs = ComponentInterfaceSerializer(many=True)
+    outputs = ComponentInterfaceSerializer(many=True)
 
     class Meta:
         model = Algorithm
@@ -34,6 +35,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "slug",
             "average_duration",
             "inputs",
+            "outputs",
         ]
 
     def get_average_duration(self, obj: Algorithm) -> Optional[float]:
@@ -97,15 +99,22 @@ class HyperlinkedJobSerializer(JobSerializer):
 
 
 class JobPostSerializer(JobSerializer):
-    algorithm_title = CharField(write_only=True)
+    algorithm_slug = SlugField(write_only=True)
     inputs = ComponentInterfaceValuePostSerializer(many=True)
 
     class Meta:
         model = Job
-        fields = ["pk", "algorithm_title", "inputs", "status"]
+        fields = ["pk", "algorithm_slug", "inputs", "status"]
 
     def validate(self, data):
-        alg = Algorithm.objects.get(title=data.pop("algorithm_title"))
+        alg = Algorithm.objects.get(slug=data.pop("algorithm_slug"))
+        user = self.context.get("request").user
+
+        if not user.has_perm("change_algorithm", alg):
+            raise serializers.ValidationError(
+                f"User does not have permission to use algorithm {alg}"
+            )
+
         if not alg.latest_ready_image:
             raise serializers.ValidationError(
                 "Algorithm image is not ready to be used"

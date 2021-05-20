@@ -15,7 +15,14 @@ class ComponentInterfaceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComponentInterface
-        fields = ["title", "description", "slug", "kind", "pk"]
+        fields = [
+            "title",
+            "description",
+            "slug",
+            "kind",
+            "pk",
+            "default_value",
+        ]
 
 
 class SimpleImageSerializer(serializers.ModelSerializer):
@@ -60,7 +67,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             title=attrs["interface_title"]
         )
         attrs.pop("interface_title")
-        attrs["interface_id"] = interface.id
+        attrs["interface_pk"] = interface.pk
 
         def get_value():
             value = attrs.get("value", None)

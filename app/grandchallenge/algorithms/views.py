@@ -629,7 +629,7 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):
-    queryset = Algorithm.objects.all()
+    queryset = Algorithm.objects.all().prefetch_related("outputs", "inputs")
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]

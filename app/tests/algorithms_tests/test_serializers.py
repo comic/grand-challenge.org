@@ -32,6 +32,8 @@ from tests.serializer_helpers import (
                     "title",
                     "slug",
                     "average_duration",
+                    "inputs",
+                    "outputs",
                 ),
             },
             {
