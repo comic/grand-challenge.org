@@ -358,7 +358,7 @@ with the service running in the docker container.</p>
 </ol>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">cd</span> app
 <span class="gp">$ </span>python manage.py migrate
-<span class="gp">$ </span>python manage.py init_gc_demo
+<span class="gp">$ </span>python manage.py runscript development_fixtures
 </pre></div>
 </div>
 <ol class="arabic simple" start="7">
@@ -422,7 +422,7 @@ If you want to run this in a production environment you will need to make severa
 <ol class="arabic simple">
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">gunicorn</span></code> rather than run <code class="docutils literal notranslate"><span class="pre">runserver_plus</span></code> to run the web process</p></li>
 <li><p><a class="reference external" href="https://docs.docker.com/engine/security/https/">Disable mounting of the docker socket</a></p></li>
-<li><p>Removing the users that are created by <code class="docutils literal notranslate"><span class="pre">init_gc_demo</span></code></p></li>
+<li><p>Removing the users that are created by <code class="docutils literal notranslate"><span class="pre">development_fixtures</span></code></p></li>
 </ol>
 </div>
 </div>
