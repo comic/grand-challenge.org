@@ -60,7 +60,7 @@ class NotificationUpdate(
         return form.cleaned_data["notification"]
 
     def get_success_url(self):
-        return reverse("notifications:list",)
+        return reverse("notifications:list")
 
     def form_valid(self, form):
         form.update()

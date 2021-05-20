@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db.models.query_utils import Q
 
 from grandchallenge.notifications.models import Notification
+from tests.notifications_tests.factories import Topic
 
 
 class NotificationForm(forms.Form):
@@ -15,7 +16,7 @@ class NotificationForm(forms.Form):
         (MARK_READ, "Mark as read"),
         (MARK_UNREAD, "Mark as unread"),
         (REMOVE, "Remove notification"),
-        (UNFOLLOW, "Unfollow notification target"),
+        (UNFOLLOW, "Unfollow topic"),
     )
     user = forms.ModelChoiceField(
         queryset=get_user_model().objects.all(), widget=forms.HiddenInput()
@@ -43,17 +44,33 @@ class NotificationForm(forms.Form):
                 id=self.cleaned_data["notification"].id
             ).delete()
         elif self.cleaned_data["action"] == NotificationForm.UNFOLLOW:
-            # user will no longer receive notifications for this target in future
-            unfollow(
-                self.cleaned_data["user"],
-                self.cleaned_data["notification"].action.target,
-            )
-            # delete all notifications relating to this target for this user
-            Notification.objects.filter(
-                Q(
-                    action__target_object_id=self.cleaned_data[
-                        "notification"
-                    ].action.target.id
+            if isinstance(
+                self.cleaned_data["notification"].action.target, Topic
+            ):
+                unfollow(
+                    self.cleaned_data["user"],
+                    self.cleaned_data["notification"].action.target,
                 )
-                & Q(user_id=self.cleaned_data["user"])
-            ).delete()
+                Notification.objects.filter(
+                    Q(
+                        action__target_object_id=self.cleaned_data[
+                            "notification"
+                        ].action.target.id
+                    )
+                    & Q(user_id=self.cleaned_data["user"])
+                ).delete()
+            elif isinstance(
+                self.cleaned_data["notification"].action.action_object, Topic
+            ):
+                unfollow(
+                    self.cleaned_data["user"],
+                    self.cleaned_data["notification"].action.action_object,
+                )
+                Notification.objects.filter(
+                    Q(
+                        action__action_object_object_id=self.cleaned_data[
+                            "notification"
+                        ].action.action_object.id
+                    )
+                    & Q(user_id=self.cleaned_data["user"])
+                ).delete()
