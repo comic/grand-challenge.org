@@ -36,7 +36,7 @@ class SimpleImageSerializer(serializers.ModelSerializer):
 class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
     """
     Serializes images with hyperlinks for external usage
-    Expects interface_title, to allow creating a ComponentInterfaceValue with an
+    Expects interface_slug, to allow creating a ComponentInterfaceValue with an
     existing ComponentInterface
     """
 
@@ -46,14 +46,14 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         required=False,
     )
 
-    interface_title = serializers.CharField(write_only=True)
+    interface_slug = serializers.CharField(write_only=True)
     interface = ComponentInterfaceSerializer(read_only=True)
     upload_pk = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = ComponentInterfaceValue
         fields = [
-            "interface_title",
+            "interface_slug",
             "interface",
             "value",
             "file",
@@ -64,9 +64,9 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):  # noqa: C901
         interface = ComponentInterface.objects.get(
-            title=attrs["interface_title"]
+            slug=attrs["interface_slug"]
         )
-        attrs.pop("interface_title")
+        attrs.pop("interface_slug")
         attrs["interface_pk"] = interface.pk
 
         def get_value():
