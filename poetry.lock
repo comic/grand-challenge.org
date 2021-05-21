@@ -1363,18 +1363,6 @@ toml = "*"
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
 
 [[package]]
-name = "pytest-cache"
-version = "1.0"
-description = "pytest plugin with mechanisms for caching across test runs"
-category = "dev"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-execnet = ">=1.1.dev1"
-pytest = ">=2.2"
-
-[[package]]
 name = "pytest-cov"
 version = "2.11.1"
 description = "Pytest plugin for measuring coverage."
@@ -2139,7 +2127,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "ac5f0a16837c9dbfb752aaf60cdd3393a5be086dbefbb7c4b21e91f3ea6c20d2"
+content-hash = "95501a9dcf0d9d1d90066afc173f8967ad7b7a97d200f153d61d9414ce01fa6f"
 
 [metadata.files]
 alabaster = [
@@ -2928,9 +2916,6 @@ pyswot = [
 pytest = [
     {file = "pytest-6.2.4-py3-none-any.whl", hash = "sha256:91ef2131a9bd6be8f76f1f08eac5c5317221d6ad1e143ae03894b862e8976890"},
     {file = "pytest-6.2.4.tar.gz", hash = "sha256:50bcad0a0b9c5a72c8e4e7c9855a3ad496ca6a881a3641b4260605450772c54b"},
-]
-pytest-cache = [
-    {file = "pytest-cache-1.0.tar.gz", hash = "sha256:be7468edd4d3d83f1e844959fd6e3fd28e77a481440a7118d430130ea31b07a9"},
 ]
 pytest-cov = [
     {file = "pytest-cov-2.11.1.tar.gz", hash = "sha256:359952d9d39b9f822d9d29324483e7ba04a3a17dd7d05aa6beb7ea01e359e5f7"},

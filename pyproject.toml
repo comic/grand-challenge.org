@@ -108,4 +108,3 @@ sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
 sphinxcontrib-django = "*"
 django-capture-on-commit-callbacks = "*"  # Backport from Django 3.2, can be removed
-pytest-cache = "*"
