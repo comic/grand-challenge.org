@@ -110,7 +110,7 @@ class JobPostSerializer(JobSerializer):
         alg = Algorithm.objects.get(slug=data.pop("algorithm_slug"))
         user = self.context.get("request").user
 
-        if not user.has_perm("change_algorithm", alg):
+        if not user.has_perm("execute_algorithm", alg):
             raise serializers.ValidationError(
                 f"User does not have permission to use algorithm {alg}"
             )
