@@ -7,7 +7,6 @@ from tests.cases_tests.factories import (
     ImageFactoryWithoutImageFile,
 )
 from tests.components_tests.factories import ComponentInterfaceValueFactory
-from tests.model_helpers import do_test_factory
 
 
 @pytest.mark.django_db
@@ -16,12 +15,6 @@ def test_str():
     assert str(model) == "<{} {}>".format(
         model.__class__.__name__, model.title
     )
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("factory", (ArchiveFactory,))
-def test_factory_creation(factory):
-    do_test_factory(factory)
 
 
 def create_archive_items_for_images(images, archive):
