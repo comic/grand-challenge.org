@@ -39,7 +39,6 @@
                                 <form method="post" action="{% url 'notifications:update' pk=object.id %}">
                                     {% csrf_token %}
                                     <input name="notification" type="hidden" value="{{ object.id }}">
-                                    <input name="user" type="hidden" value="{{ object.user.id }}">
                                     {% if not object.read %}
                                         <input name="action" type="hidden" value="{{ mark_as_read_action }}">
                                         <button type="submit" class="btn btn-xs btn-primary mx-1">
@@ -55,16 +54,6 @@
                                 <form method="post" action="{% url 'notifications:update' pk=object.id %}">
                                     {% csrf_token %}
                                     <input name="notification" type="hidden" value="{{ object.id }}">
-                                    <input name="user" type="hidden" value="{{ object.user.id }}">
-                                    <input name="action" type="hidden" value="{{ unfollow_notification_target }}">
-                                    <button type="submit" class="btn btn-xs btn-primary mx-1">
-                                        Unsubscribe from topic
-                                    </button>
-                                </form>
-                                <form method="post" action="{% url 'notifications:update' pk=object.id %}">
-                                    {% csrf_token %}
-                                    <input name="notification" type="hidden" value="{{ object.id }}">
-                                    <input name="user" type="hidden" value="{{ object.user.id }}">
                                     <input name="action" type="hidden" value="{{ delete_notification }}">
                                     <button type="submit" class="btn btn-xs btn-danger mx-1">
                                         Delete notification

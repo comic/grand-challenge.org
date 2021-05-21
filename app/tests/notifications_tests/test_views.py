@@ -1,6 +1,7 @@
 import pytest
 from actstream.actions import follow, is_following
 from actstream.models import Follow
+from actstream.signals import action
 from django.conf import settings
 from django.urls import reverse
 from machina.apps.forum.models import Forum
@@ -114,53 +115,12 @@ def test_notification_deletion(client):
 
 
 @pytest.mark.django_db
-def test_unfollow_topic(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    c = ChallengeFactory(creator=user1)
-    c.add_participant(user=user2)
-    t1 = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_POST)
-    t2 = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_POST)
-    _ = PostFactory(topic=t1, poster=user2)
-    _ = PostFactory(topic=t2, poster=user2)
-
-    assert is_following(user=user2, obj=t1)
-    assert is_following(user=user2, obj=t2)
-    assert len(Notification.objects.filter(user=user2)) == 2
-    notification = Notification.objects.filter(user=user2).first()
-
-    # unsubscribe from topic t1
-    response = get_view_for_user(
-        viewname="notifications:update",
-        client=client,
-        method=client.post,
-        data={
-            "user": user2.id,
-            "notification": notification.id,
-            "action": NotificationForm.UNFOLLOW,
-        },
-        reverse_kwargs={"pk": notification.id},
-        user=user2,
-    )
-    assert response.status_code == 302
-    assert not is_following(user=user2, obj=t1)
-    assert is_following(user=user2, obj=t2)
-
-    assert len(Notification.objects.filter(user=user2)) == 1
-    assert str(t1) not in str(
-        Notification.objects.filter(user=user2).get().action
-    )
-    assert str(t2) in str(Notification.objects.filter(user=user2).get().action)
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "action",
     (
         NotificationForm.MARK_READ,
         NotificationForm.MARK_UNREAD,
         NotificationForm.REMOVE,
-        NotificationForm.UNFOLLOW,
     ),
 )
 def test_notification_update_permissions(client, action):
@@ -176,11 +136,7 @@ def test_notification_update_permissions(client, action):
         viewname="notifications:update",
         client=client,
         method=client.post,
-        data={
-            "user": user2.id,
-            "notification": notification.id,
-            "action": action,
-        },
+        data={"notification": notification.id, "action": action},
         reverse_kwargs={"pk": notification.id},
         user=user1,
     )
@@ -190,11 +146,7 @@ def test_notification_update_permissions(client, action):
         viewname="notifications:update",
         client=client,
         method=client.post,
-        data={
-            "user": user2.id,
-            "notification": notification.id,
-            "action": action,
-        },
+        data={"notification": notification.id, "action": action},
         reverse_kwargs={"pk": notification.id},
         user=user2,
     )
@@ -252,3 +204,109 @@ def test_subscription_update_permissions(client, action):
         user=user1,
     )
     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_unsubscribe_from_topic(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    t1 = TopicFactory(forum=f, poster=user2, type=Topic.TOPIC_POST)
+    t2 = TopicFactory(forum=f, poster=user2, type=Topic.TOPIC_POST)
+
+    assert is_following(user=user2, obj=t1)
+    assert is_following(user=user2, obj=t2)
+
+    _ = PostFactory(topic=t1, poster=user1)
+    assert len(Notification.objects.filter(user=user2)) == 1
+    Notification.objects.all().delete()
+
+    # unsubscribe from topic t1
+    response = get_view_for_user(
+        viewname="notifications:subscription-update",
+        client=client,
+        method=client.post,
+        data={
+            "user": user2.id,
+            "subscription_object": Follow.objects.filter(user=user2)
+            .first()
+            .id,
+            "action": SubscriptionForm.UNFOLLOW_TOPIC,
+        },
+        reverse_kwargs={"pk": Follow.objects.filter(user=user2).first().id},
+        user=user2,
+    )
+    assert response.status_code == 302
+    assert not is_following(user=user2, obj=t1)
+    assert is_following(user=user2, obj=t2)
+
+    _ = PostFactory(topic=t1, poster=user1)
+    assert len(Notification.objects.filter(user=user2)) == 0
+
+
+@pytest.mark.django_db
+def test_unsubscribe_from_forum(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f1 = ForumFactory(type=Forum.FORUM_POST)
+    f2 = ForumFactory(type=Forum.FORUM_POST)
+    follow(user2, f1)
+    follow(user2, f2)
+
+    _ = TopicFactory(forum=f1, poster=user1, type=Topic.TOPIC_POST)
+    assert len(Notification.objects.filter(user=user2)) == 1
+    Notification.objects.all().delete()
+
+    # unsubscribe from topic f1
+    response = get_view_for_user(
+        viewname="notifications:subscription-update",
+        client=client,
+        method=client.post,
+        data={
+            "user": user2.id,
+            "subscription_object": Follow.objects.filter(user=user2)
+            .first()
+            .id,
+            "action": SubscriptionForm.UNFOLLOW_FORUM,
+        },
+        reverse_kwargs={"pk": Follow.objects.filter(user=user2).first().id},
+        user=user2,
+    )
+    assert response.status_code == 302
+    assert not is_following(user=user2, obj=f1)
+    assert is_following(user=user2, obj=f2)
+
+    _ = TopicFactory(forum=f1, poster=user1, type=Topic.TOPIC_POST)
+    assert len(Notification.objects.filter(user=user2)) == 0
+
+
+@pytest.mark.django_db
+def test_unsubscribe_from_user(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    follow(user2, user1)
+
+    action.send(sender=user1, verb="says hi")
+    assert len(Notification.objects.filter(user=user2)) == 1
+    Notification.objects.all().delete()
+
+    # unsubscribe from user1
+    response = get_view_for_user(
+        viewname="notifications:subscription-update",
+        client=client,
+        method=client.post,
+        data={
+            "user": user2.id,
+            "subscription_object": Follow.objects.filter(user=user2)
+            .first()
+            .id,
+            "action": SubscriptionForm.UNFOLLOW_USER,
+        },
+        reverse_kwargs={"pk": Follow.objects.filter(user=user2).first().id},
+        user=user2,
+    )
+    assert response.status_code == 302
+    assert not is_following(user=user2, obj=user1)
+
+    action.send(sender=user1, verb="says hi")
+    assert len(Notification.objects.filter(user=user2)) == 0
