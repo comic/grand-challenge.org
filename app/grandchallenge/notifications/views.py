@@ -107,7 +107,9 @@ class SubscriptionListView(LoginRequiredMixin, ListView):
                         ).id
                     )
                 ),
-                "unfollow_topic": SubscriptionForm.UNFOLLOW,
+                "unfollow_topic": SubscriptionForm.UNFOLLOW_TOPIC,
+                "unfollow_forum": SubscriptionForm.UNFOLLOW_FORUM,
+                "unfollow_user": SubscriptionForm.UNFOLLOW_USER,
             }
         )
         return context

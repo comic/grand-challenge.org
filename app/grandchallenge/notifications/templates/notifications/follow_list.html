@@ -6,6 +6,7 @@
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="{% url 'notifications:list' %}">Notifications</a></li>
         <li class="breadcrumb-item active" aria-current="page">Subscriptions</li>
     </ol>
 {% endblock %}
@@ -14,10 +15,25 @@
     <h2>Your subscriptions</h2>
     <br>
     <h4>Forums you follow</h4>
-    <ul class="list-group">
+    <ul class="list-group list-group-flush ml-4">
         {% for forum in followed_forums %}
-            <li class="list-group-item">
-                <a href="{{ forum.follow_object.get_absolute_url }}">{{ forum.follow_object }}</a>
+            <li class="list-group-item p-0">
+                <div class="d-flex justify-content-between">
+                    <div class="pt-3 pl-0">
+                        <a href="{{ forum.follow_object.get_absolute_url }}">{{ forum.follow_object }}</a>
+                    </div>
+                    <div  class="d-inline-flex p-2">
+                        <form method="post" action="{% url 'notifications:subscription-update' pk=forum.follow_object.id %}">
+                            {% csrf_token %}
+                            <input name="subscription_object" type="hidden" value="{{ forum.id }}">
+                            <input name="user" type="hidden" value="{{ forum.user.id }}">
+                            <input name="action" type="hidden" value="{{ unfollow_forum }}">
+                            <button type="submit" class="btn btn-xs btn-primary mx-1">
+                                Unsubscribe
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </li>
         {% empty %}
             <li class="list-group-item">You are not subscribed to any forums.</li>
@@ -25,11 +41,11 @@
     </ul>
     <br>
     <h4>Topics you follow</h4>
-    <ul class="list-group">
+    <ul class="list-group list-group-flush ml-4">
         {% for topic in followed_topics %}
-            <li class="list-group-item">
+            <li class="list-group-item p-0">
                  <div class="d-flex justify-content-between">
-                     <div class="pt-3 pl-3">
+                     <div class="pt-3 pl-0">
                         <a href="{{ topic.follow_object.get_absolute_url }}">{{ topic.follow_object }}</a>
                      </div>
                       <div  class="d-inline-flex p-2">
@@ -51,10 +67,25 @@
     </ul>
     <br>
     <h4>Users you follow</h4>
-    <ul class="list-group">
+    <ul class="list-group list-group-flush ml-4">
         {% for user in followed_users %}
-            <li class="list-group-item">
-                {{ user.follow_object|user_profile_link }}
+            <li class="list-group-item p-0">
+                <div class="d-flex justify-content-between">
+                    <div class="pt-3 pl-0">
+                        {{ user.follow_object|user_profile_link }}
+                    </div>
+                    <div  class="d-inline-flex p-2">
+                        <form method="post" action="{% url 'notifications:subscription-update' pk=user.follow_object.id %}">
+                            {% csrf_token %}
+                            <input name="subscription_object" type="hidden" value="{{ user.id }}">
+                            <input name="user" type="hidden" value="{{ user.user.id }}">
+                            <input name="action" type="hidden" value="{{ unfollow_user }}">
+                            <button type="submit" class="btn btn-xs btn-primary mx-1">
+                                Unsubscribe
+                            </button>
+                        </form>
+                    </div>
+                 </div>
             </li>
         {% empty %}
             <li class="list-group-item">You are not subscribed to any users.</li>

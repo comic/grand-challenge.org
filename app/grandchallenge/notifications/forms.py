@@ -78,8 +78,14 @@ class NotificationForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
-    UNFOLLOW = "UNFOLLOW"
-    CHOICES = ((UNFOLLOW, "Unfollow"),)
+    UNFOLLOW_TOPIC = "UNFOLLOW_TOPIC"
+    UNFOLLOW_FORUM = "UNFOLLOW_FORUM"
+    UNFOLLOW_USER = "UNFOLLOW_USER"
+    CHOICES = (
+        (UNFOLLOW_TOPIC, "Unfollow topic"),
+        (UNFOLLOW_FORUM, "Unfollow forum"),
+        (UNFOLLOW_USER, "Unfollow user"),
+    )
     user = forms.ModelChoiceField(
         queryset=get_user_model().objects.all(), widget=forms.HiddenInput()
     )
@@ -89,11 +95,27 @@ class SubscriptionForm(forms.Form):
     action = forms.ChoiceField(choices=CHOICES, widget=forms.HiddenInput())
 
     def update(self):
-        if self.cleaned_data["action"] == SubscriptionForm.UNFOLLOW:
-            if isinstance(
-                self.cleaned_data["subscription_object"].follow_object, Topic
-            ):
-                unfollow(
-                    self.cleaned_data["user"],
-                    self.cleaned_data["subscription_object"].follow_object,
-                )
+        if self.cleaned_data["action"] == SubscriptionForm.UNFOLLOW_TOPIC:
+            # if isinstance(
+            #     self.cleaned_data["subscription_object"].follow_object, Topic
+            # ):
+            unfollow(
+                self.cleaned_data["user"],
+                self.cleaned_data["subscription_object"].follow_object,
+            )
+        if self.cleaned_data["action"] == SubscriptionForm.UNFOLLOW_FORUM:
+            # if isinstance(
+            #     self.cleaned_data["subscription_object"].follow_object, Forum
+            # ):
+            unfollow(
+                self.cleaned_data["user"],
+                self.cleaned_data["subscription_object"].follow_object,
+            )
+        if self.cleaned_data["action"] == SubscriptionForm.UNFOLLOW_USER:
+            # if isinstance(
+            #     self.cleaned_data["subscription_object"].follow_object, User
+            # ):
+            unfollow(
+                self.cleaned_data["user"],
+                self.cleaned_data["subscription_object"].follow_object,
+            )
