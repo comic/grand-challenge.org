@@ -1,12 +1,18 @@
 import pytest
-from actstream.actions import is_following
+from actstream.actions import follow, is_following
+from actstream.models import Follow
 from django.conf import settings
 from django.urls import reverse
+from machina.apps.forum.models import Forum
 
-from grandchallenge.notifications.forms import NotificationForm
+from grandchallenge.notifications.forms import (
+    NotificationForm,
+    SubscriptionForm,
+)
 from grandchallenge.notifications.models import Notification
 from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import (
+    ForumFactory,
     PostFactory,
     Topic,
     TopicFactory,
@@ -191,5 +197,58 @@ def test_notification_update_permissions(client, action):
         },
         reverse_kwargs={"pk": notification.id},
         user=user2,
+    )
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "action",
+    (
+        SubscriptionForm.UNFOLLOW_TOPIC,
+        SubscriptionForm.UNFOLLOW_FORUM,
+        SubscriptionForm.UNFOLLOW_USER,
+    ),
+)
+def test_subscription_update_permissions(client, action):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+
+    if action == SubscriptionForm.UNFOLLOW_TOPIC:
+        t = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
+        assert is_following(user1, t)
+    elif action == SubscriptionForm.UNFOLLOW_FORUM:
+        follow(user1, f)
+        assert is_following(user1, f)
+    elif action == SubscriptionForm.UNFOLLOW_USER:
+        follow(user1, user2)
+        assert is_following(user1, user2)
+
+    response = get_view_for_user(
+        viewname="notifications:subscription-update",
+        client=client,
+        method=client.post,
+        data={
+            "user": user1.id,
+            "subscription_object": Follow.objects.get().id,
+            "action": action,
+        },
+        reverse_kwargs={"pk": Follow.objects.get().id},
+        user=user2,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="notifications:subscription-update",
+        client=client,
+        method=client.post,
+        data={
+            "user": user2.id,
+            "subscription_object": Follow.objects.get().id,
+            "action": action,
+        },
+        reverse_kwargs={"pk": Follow.objects.get().id},
+        user=user1,
     )
     assert response.status_code == 302
