@@ -39,7 +39,6 @@ class NotificationList(LoginRequiredMixin, ListView):
                 "mark_as_read_action": NotificationForm.MARK_READ,
                 "mark_as_unread_action": NotificationForm.MARK_UNREAD,
                 "delete_notification": NotificationForm.REMOVE,
-                "unfollow_notification_target": NotificationForm.UNFOLLOW,
             }
         )
         # TODO side-effect, not nice
