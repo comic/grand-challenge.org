@@ -662,6 +662,12 @@ class JobViewSet(
         else:
             return HyperlinkedJobSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        user = context["request"].user
+        context.update({"user": user})
+        return context
+
 
 class AlgorithmPermissionRequestCreate(
     UserIsNotAnonMixin, SuccessMessageMixin, CreateView

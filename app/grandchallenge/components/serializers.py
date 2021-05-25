@@ -67,7 +67,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             slug=attrs["interface_slug"]
         )
         attrs.pop("interface_slug")
-        attrs["interface_pk"] = interface.pk
+        attrs["interface"] = interface
 
         def get_value():
             value = attrs.get("value", None)
@@ -102,7 +102,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             # either image or upload_pk should be provided
             if not any(key in attrs for key in ("upload_pk", "image")):
                 raise serializers.ValidationError(
-                    f"upload_pk or image are required for interface kind {interface.kind}"
+                    f"Upload_pk or image are required for interface kind {interface.kind}"
                 )
 
         if interface.kind in InterfaceKind.interface_type_simple():
@@ -117,7 +117,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
     def validate_upload_pk(self, value):
         session = RawImageUploadSession.objects.get(pk=value)
 
-        user = self.context.get("request").user
+        user = self.context.get("user")
 
         if not user.has_perm("view_rawimageuploadsession", session):
             raise serializers.ValidationError(
@@ -131,11 +131,11 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         return value
 
     def validate_image(self, value):
-        user = self.context.get("request").user
+        user = self.context.get("user")
 
         if not user.has_perm("view_image", value):
             raise serializers.ValidationError(
-                f"User does not have permission to use image {value}"
+                f"User does not have permission to use {value}"
             )
         return value
 

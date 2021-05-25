@@ -117,7 +117,7 @@ class JobPostSerializer(JobSerializer):
 
     def validate(self, data):
         alg = Algorithm.objects.get(slug=data.pop("algorithm_slug"))
-        user = self.context.get("request").user
+        user = self.context.get("user")
 
         if not user.has_perm("execute_algorithm", alg):
             raise serializers.ValidationError(
@@ -133,12 +133,12 @@ class JobPostSerializer(JobSerializer):
 
         # validate that no inputs are provided that are not configured for the
         # algorithm and that all interfaces without defaults are provided
-        algorithm_input_ids = {a.id for a in alg.inputs.all()}
-        input_ids = {i["interface_id"] for i in data["inputs"]}
+        algorithm_input_pks = {a.pk for a in alg.inputs.all()}
+        input_pks = {i["interface"].pk for i in data["inputs"]}
 
         # surplus inputs: provided but interfaces not configured for the algorithm
         surplus = ComponentInterface.objects.filter(
-            id__in=list(input_ids - algorithm_input_ids)
+            id__in=list(input_pks - algorithm_input_pks)
         )
         if surplus:
             titles = ", ".join(ci.title for ci in surplus)
@@ -148,7 +148,7 @@ class JobPostSerializer(JobSerializer):
 
         # missing inputs
         missing = alg.inputs.filter(
-            id__in=list(algorithm_input_ids - input_ids),
+            id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=True,
         )
         if missing:
@@ -164,10 +164,10 @@ class JobPostSerializer(JobSerializer):
         job = Job.objects.create(**validated_data)
         component_interface_values = []
         upload_pks = {}
-        algorithm_input_ids = {
-            a.id for a in job.algorithm_image.algorithm.inputs.all()
+        algorithm_input_pks = {
+            a.pk for a in job.algorithm_image.algorithm.inputs.all()
         }
-        input_ids = {i["interface_id"] for i in inputs_data}
+        input_pks = {i["interface"].pk for i in inputs_data}
 
         for input_data in inputs_data:
             # check for upload_pk in input
@@ -179,7 +179,7 @@ class JobPostSerializer(JobSerializer):
 
         # use interface defaults if no value was provided
         defaults = job.algorithm_image.algorithm.inputs.filter(
-            id__in=list(algorithm_input_ids - input_ids),
+            id__in=list(algorithm_input_pks - input_pks),
             default_value__isnull=False,
         )
 
