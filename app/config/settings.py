@@ -440,7 +440,6 @@ LOCAL_APPS = [
     "grandchallenge.registrations",
     "grandchallenge.annotations",
     "grandchallenge.retina_core",
-    "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
     "grandchallenge.workstations",
     "grandchallenge.workspaces",
@@ -1022,12 +1021,6 @@ DISALLOWED_EMAIL_DOMAINS = {
     *blocklist,
 }
 
-# Modality name constants
-MODALITY_OCT = "OCT"  # Optical coherence tomography
-MODALITY_CF = "Fundus Photography"  # Color fundus photography
-MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
-MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
-
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 
@@ -1044,7 +1037,6 @@ RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 # Retina specific settings
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
-RETINA_IMPORT_USER_NAME = "retina_import_user"
 
 ENABLE_DEBUG_TOOLBAR = False
 

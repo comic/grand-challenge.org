@@ -24,6 +24,7 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
@@ -44,9 +45,6 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
-from grandchallenge.core.permissions.rest_framework import (
-    DjangoObjectOnlyPermissions,
-)
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
@@ -433,7 +431,7 @@ class ArchiveCasesToReaderStudyUpdate(
 class ArchiveViewSet(ReadOnlyModelViewSet):
     serializer_class = ArchiveSerializer
     queryset = Archive.objects.all()
-    permission_classes = (DjangoObjectOnlyPermissions,)
+    permission_classes = (DjangoObjectPermissions,)
     filter_backends = (
         DjangoFilterBackend,
         ObjectPermissionsFilter,

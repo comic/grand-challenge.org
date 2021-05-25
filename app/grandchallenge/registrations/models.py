@@ -5,6 +5,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.core.models import UUIDModel
 
 
+# TODO JM: This appears to be unused
 class OctObsRegistration(UUIDModel):
     """Model for registration of Topcon OCT to OBS files."""
 
