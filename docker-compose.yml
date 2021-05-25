@@ -105,6 +105,9 @@ services:
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+      - type: volume
+        source: pytest-cache
+        target: /tmp/.pytest_cache
     group_add:
       - ${DOCKER_GID-1001} # The docker group is only needed for testing
 
@@ -283,3 +286,6 @@ services:
 networks:
   default:
   workstations:
+
+volumes:
+  pytest-cache:
