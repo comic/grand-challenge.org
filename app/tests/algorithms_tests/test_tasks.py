@@ -343,13 +343,14 @@ def test_algorithm_multiple_inputs(
                     file__from_path=Path(__file__).parent
                     / "resources"
                     / "test.json",
+                    image=None,
                 )
             )
             expected.append("json")
         else:
             job.inputs.add(
                 ComponentInterfaceValueFactory(
-                    interface=ci, value="test", file=None
+                    interface=ci, value="test", file=None, image=None
                 )
             )
             expected.append("test")
@@ -430,7 +431,7 @@ def test_add_images_to_component_interface_value():
     ImageFactory(origin=us), ImageFactory(origin=us)
     ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
 
-    civ = ComponentInterfaceValueFactory(interface=ci)
+    civ = ComponentInterfaceValueFactory(interface=ci, image=None)
 
     with pytest.raises(ValueError) as err:
         add_images_to_component_interface_value(
@@ -441,7 +442,7 @@ def test_add_images_to_component_interface_value():
 
     us2 = RawImageUploadSessionFactory()
     image = ImageFactory(origin=us2)
-    civ2 = ComponentInterfaceValueFactory(interface=ci)
+    civ2 = ComponentInterfaceValueFactory(interface=ci, image=None)
     add_images_to_component_interface_value(
         component_interface_value_pk=civ2.pk, upload_pk=us2.pk
     )

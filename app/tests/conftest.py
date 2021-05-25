@@ -729,7 +729,7 @@ def image_with_image_level_annotations():
 
 @pytest.fixture
 def component_interfaces():
-    civs = [
+    interfaces = [
         {
             "title": "Boolean",
             "kind": ComponentInterface.Kind.BOOL,
@@ -792,7 +792,7 @@ def component_interfaces():
         },
     ]
 
-    return [ComponentInterfaceFactory(**civ) for civ in civs]
+    return [ComponentInterfaceFactory(**interface) for interface in interfaces]
 
 
 def create_uploaded_image():
