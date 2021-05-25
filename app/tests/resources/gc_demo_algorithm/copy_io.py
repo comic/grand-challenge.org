@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from shutil import copy
 from warnings import warn
 
 if __name__ == "__main__":
@@ -15,6 +16,9 @@ if __name__ == "__main__":
             val = "file"
 
         res[str(file.absolute()).replace("/input/", "")] = val
+
+        copy(file, Path("/output/") / file.relative_to("/input/"))
+
     with open("/output/results.json", "w") as f:
         res = json.dumps(res, ensure_ascii=True, indent=2)
         f.write(res)
