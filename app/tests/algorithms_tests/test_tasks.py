@@ -352,6 +352,9 @@ def test_algorithm_multiple_inputs(
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())
+    alg.algorithm.outputs.set(
+        [ComponentInterface.objects.get(slug="results-json-file")]
+    )
     # create the job
     job = Job.objects.create(creator=creator, algorithm_image=alg)
 

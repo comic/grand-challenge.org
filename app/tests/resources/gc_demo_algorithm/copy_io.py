@@ -17,7 +17,10 @@ if __name__ == "__main__":
 
         res[str(file.absolute()).replace("/input/", "")] = val
 
-        copy(file, Path("/output/") / file.relative_to("/input/"))
+        # Copy all the input files to output
+        new_file = Path("/output/") / file.relative_to("/input/")
+        new_file.parent.mkdir(exist_ok=True)
+        copy(file, new_file)
 
     with open("/output/results.json", "w") as f:
         res = json.dumps(res, ensure_ascii=True, indent=2)
