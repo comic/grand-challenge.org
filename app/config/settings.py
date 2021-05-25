@@ -1018,6 +1018,7 @@ DISALLOWED_CHALLENGE_NAMES = {
 DISALLOWED_EMAIL_DOMAINS = {
     "qq.com",
     "gm.uit.edu.vn",
+    "wust.edu.cn",
     *blocklist,
 }
 
