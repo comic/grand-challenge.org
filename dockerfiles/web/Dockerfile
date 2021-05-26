@@ -1,6 +1,5 @@
 # Build args used in FROM
 ARG PYTHON_VERSION
-ARG GDCM_VERSION_TAG
 ARG POETRY_HASH
 ARG GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI
 ARG GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI
@@ -19,7 +18,7 @@ RUN npm install && npm run build
 ##################
 # Test Container #
 ##################
-FROM ${GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${GDCM_VERSION_TAG}-${POETRY_HASH} as test
+FROM ${GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${POETRY_HASH} as test
 
 COPY --chown=django:django setup.cfg /home/django
 
@@ -32,7 +31,7 @@ COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 ##################
 # Dist Container #
 ##################
-FROM ${GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${GDCM_VERSION_TAG}-${POETRY_HASH} as dist
+FROM ${GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${POETRY_HASH} as dist
 
 USER django:django
 WORKDIR /app
