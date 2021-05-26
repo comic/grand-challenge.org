@@ -40,14 +40,23 @@
                    title= {% include "products/partials/tooltip_CE.html" %}>
                    CE:
                 </a>
-              {% if product.ce_class %}
+
                 <div class="h6 pr-2">
-                  <a href="#" data-toggle="tooltip" data-placement="top"
-                    title= {% include "products/partials/tooltip_CE_class.html" %}>
-                    {{product.ce_class}}
-                  </a>
+                  {% if product.ce_class %}
+                    <a href="#" data-toggle="tooltip" data-placement="top"
+                      title= {% include "products/partials/tooltip_CE_class.html" %}>
+                      {{product.ce_class}}
+                    </a>
+                  {% endif %}
+                  {% if product.ce_under %}
+                    -
+                    <a href="#" data-toggle="tooltip" data-placement="top"
+                      title= {% include "products/partials/tooltip_CE_MDD_MDR.html" %}>
+                      {{product.ce_under}}
+                    </a>
+                  {% endif %}
                 </div>
-              {% endif %}
+
               <img src="{% icon product 'ce_status' %}" alt="Logo" style="width:10%; height:10%">
             </div>
             <div class="d-flex justify-content-between">

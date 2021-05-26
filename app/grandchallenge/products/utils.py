@@ -27,6 +27,12 @@ STATUS_MAPPING = {
     "No": Status.NO,
 }
 
+CE_MAPPING = {
+    "Medical Devices Directive (MDD)": "MDD",
+    "Medical Device Regulation (MDR)": "MDR",
+    "Medical Devices Directive (MDD), Medical Device Regulation (MDR)": "MDD/MDR",
+}
+
 
 class DataImporter:
     def __init__(self):
@@ -104,6 +110,7 @@ class DataImporter:
         p.file_format_output = row["File format of output data"]
         p.key_features = row["Key-feature(s)"]
         p.ce_status = STATUS_MAPPING.get(row["CE-certified"], Status.UNKNOWN)
+        p.ce_under = CE_MAPPING.get(row["CE-certified under"], "")
         p.ce_class = row["If CE-certified, what class"]
         p.fda_status = STATUS_MAPPING.get(
             row["FDA approval/clearance"], Status.UNKNOWN
