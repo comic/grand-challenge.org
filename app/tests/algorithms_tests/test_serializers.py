@@ -1,4 +1,5 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.serializers import (
@@ -13,8 +14,9 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
 )
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
-from tests.factories import UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.serializer_helpers import (
     do_test_serializer_fields,
     do_test_serializer_valid,
@@ -184,3 +186,55 @@ def test_algorithm_job_post_serializer_validations(
         job = Job.objects.first()
         assert job.status == job.PENDING
         assert len(job.inputs.all()) == 2
+
+
+@pytest.mark.django_db
+def test_algorithm_job_post_serializer_create(rf):
+    # setup
+    user = UserFactory()
+    upload, upload_2 = (
+        RawImageUploadSessionFactory(creator=user),
+        RawImageUploadSessionFactory(creator=user),
+    )
+    image = ImageFactory()
+    upload_2.image_set.set([image])
+    assign_perm("view_image", user, image)
+    assert user.has_perm("view_image", image)
+    algorithm_image = AlgorithmImageFactory(ready=True)
+    interfaces = {
+        ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING,
+            title="TestInterface 1",
+            default_value="default",
+        ),
+        ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.IMAGE, title="TestInterface 2"
+        ),
+        ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.IMAGE, title="TestInterface 3"
+        ),
+    }
+    algorithm_image.algorithm.inputs.set(interfaces)
+    algorithm_image.algorithm.add_editor(user)
+
+    algorithm_image.algorithm.save()
+
+    job = {"algorithm_slug": algorithm_image.algorithm.slug, "inputs": []}
+    job["inputs"].append(
+        {"interface_slug": "testinterface-2", "upload_session": upload.api_url}
+    )
+    job["inputs"].append(
+        {"interface_slug": "testinterface-3", "image": image.api_url}
+    )
+
+    # test
+    serializer = JobPostSerializer(
+        data=job, context={"request": rf.get("/foo"), "user": user}
+    )
+
+    # verify
+    assert serializer.is_valid()
+    serializer.create(serializer.validated_data)
+    assert len(Job.objects.all()) == 1
+    job = Job.objects.first()
+    assert len(job.inputs.all()) == 3
