@@ -1,5 +1,5 @@
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
+from rest_framework.relations import SlugRelatedField
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
@@ -47,8 +47,9 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         required=False,
     )
 
-    interface_slug = serializers.CharField(write_only=True)
-    interface = ComponentInterfaceSerializer(read_only=True)
+    interface = SlugRelatedField(
+        slug_field="slug", queryset=ComponentInterface.objects.all()
+    )
     upload_session = serializers.HyperlinkedRelatedField(
         queryset=RawImageUploadSession.objects.all(),
         view_name="api:upload-session-detail",
@@ -59,7 +60,6 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComponentInterfaceValue
         fields = [
-            "interface_slug",
             "interface",
             "value",
             "file",
@@ -69,17 +69,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):  # noqa: C901
-        try:
-            interface = ComponentInterface.objects.get(
-                slug=attrs["interface_slug"]
-            )
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError(
-                f"Component interface {attrs['interface_slug']} does not exist."
-            )
-
-        attrs.pop("interface_slug")
-        attrs["interface"] = interface
+        interface = attrs["interface"]
 
         def get_value():
             value = attrs.get("value", None)
