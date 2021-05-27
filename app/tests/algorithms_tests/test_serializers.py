@@ -77,7 +77,7 @@ def test_algorithm_title_on_job_serializer(rf):
     "add_user, "
     "image_ready, "
     "algorithm_interface_titles, "
-    "job_interface_titles, "
+    "job_interface_slugs, "
     "error_message",
     (
         (
@@ -85,7 +85,7 @@ def test_algorithm_title_on_job_serializer(rf):
             False,
             False,
             ("TestInterface 1",),
-            ("TestInterface 1",),
+            ("testinterface-1",),
             "User does not have permission to use algorithm algorithm1",
         ),
         (
@@ -93,15 +93,23 @@ def test_algorithm_title_on_job_serializer(rf):
             True,
             False,
             ("TestInterface 1",),
-            ("TestInterface 1",),
+            ("testinterface-1",),
             "Algorithm image is not ready to be used",
         ),
         (
             "algorithm1",
             True,
             True,
-            ("TestInterface 1", "TestInterface 2"),
             ("TestInterface 1",),
+            ("testinterface-3",),
+            "Component interface testinterface-3 does not exist.",
+        ),
+        (
+            "algorithm1",
+            True,
+            True,
+            ("TestInterface 1", "TestInterface 2"),
+            ("testinterface-1",),
             "Interface(s) TestInterface 2 do not have a default value and should be provided.",
         ),
         (
@@ -109,7 +117,7 @@ def test_algorithm_title_on_job_serializer(rf):
             True,
             True,
             ("TestInterface 1",),
-            ("TestInterface 1", "TestInterface 2"),
+            ("testinterface-1", "testinterface-2"),
             "Provided inputs(s) TestInterface 2 are not defined for this algorithm",
         ),
         (
@@ -117,7 +125,7 @@ def test_algorithm_title_on_job_serializer(rf):
             True,
             True,
             ("TestInterface 1", "TestInterface 2"),
-            ("TestInterface 1", "TestInterface 2"),
+            ("testinterface-1", "testinterface-2"),
             None,
         ),
     ),
@@ -127,7 +135,7 @@ def test_algorithm_job_post_serializer_validations(
     add_user,
     image_ready,
     algorithm_interface_titles,
-    job_interface_titles,
+    job_interface_slugs,
     error_message,
     rf,
 ):
@@ -151,20 +159,15 @@ def test_algorithm_job_post_serializer_validations(
 
     algorithm_image.algorithm.save()
 
-    job_interfaces = [interfaces[title] for title in job_interface_titles]
     job = {
         "algorithm_slug": algorithm_image.algorithm.slug,
         "inputs": [
-            {
-                "interface_pk": interface.pk,
-                "interface_slug": interface.slug,
-                "value": "dummy",
-            }
-            for interface in job_interfaces
+            {"interface_slug": interface, "value": "dummy"}
+            for interface in job_interface_slugs
         ],
     }
 
-    # actual test
+    # test
     serializer = JobPostSerializer(
         data=job, context={"request": rf.get("/foo"), "user": user}
     )
@@ -172,4 +175,4 @@ def test_algorithm_job_post_serializer_validations(
     # verify
     assert serializer.is_valid() == (error_message is None)
     if error_message:
-        assert error_message in serializer.errors["non_field_errors"]
+        assert error_message in str(serializer.errors)

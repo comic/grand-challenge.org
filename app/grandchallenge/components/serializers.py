@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
@@ -48,7 +49,12 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
     interface_slug = serializers.CharField(write_only=True)
     interface = ComponentInterfaceSerializer(read_only=True)
-    upload_pk = serializers.CharField(write_only=True, required=False)
+    upload_session = serializers.HyperlinkedRelatedField(
+        queryset=RawImageUploadSession.objects.all(),
+        view_name="api:upload-session-detail",
+        required=False,
+        write_only=True,
+    )
 
     class Meta:
         model = ComponentInterfaceValue
@@ -59,13 +65,19 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             "file",
             "image",
             "pk",
-            "upload_pk",
+            "upload_session",
         ]
 
     def validate(self, attrs):  # noqa: C901
-        interface = ComponentInterface.objects.get(
-            slug=attrs["interface_slug"]
-        )
+        try:
+            interface = ComponentInterface.objects.get(
+                slug=attrs["interface_slug"]
+            )
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError(
+                f"Component interface {attrs['interface_slug']} does not exist."
+            )
+
         attrs.pop("interface_slug")
         attrs["interface"] = interface
 
@@ -99,10 +111,10 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             )(value)
 
         def validate_image():
-            # either image or upload_pk should be provided
-            if not any(key in attrs for key in ("upload_pk", "image")):
+            # either image or upload_session should be provided
+            if not any(key in attrs for key in ("upload_session", "image")):
                 raise serializers.ValidationError(
-                    f"Upload_pk or image are required for interface kind {interface.kind}"
+                    f"Upload_session or image are required for interface kind {interface.kind}"
                 )
 
         if interface.kind in InterfaceKind.interface_type_simple():
@@ -114,19 +126,17 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def validate_upload_pk(self, value):
-        session = RawImageUploadSession.objects.get(pk=value)
-
+    def validate_upload_session(self, value):
         user = self.context.get("user")
 
-        if not user.has_perm("view_rawimageuploadsession", session):
+        if not user.has_perm("view_rawimageuploadsession", value):
             raise serializers.ValidationError(
-                f"User does not have permission to use raw image upload session {value}"
+                f"User does not have permission to use {value}"
             )
 
-        if session.status is not RawImageUploadSession.PENDING:
+        if value.status is not RawImageUploadSession.PENDING:
             raise serializers.ValidationError(
-                f"Upload session {value} is not ready to be used"
+                f"{value} is not ready to be used"
             )
         return value
 

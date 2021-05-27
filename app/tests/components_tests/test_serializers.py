@@ -105,6 +105,31 @@ TEST_DATA = {
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
+    "civ, error_message",
+    (
+        (
+            (
+                {
+                    "interface_slug": "interface-does-not-exist",
+                    "value": "dummy",
+                },
+                "Component interface interface-does-not-exist does not exist.",
+            ),
+        )
+    ),
+)
+def test_civ_post_objects_do_not_exist(civ, error_message):
+
+    # test
+    serializer = ComponentInterfaceValuePostSerializer(data=civ)
+
+    # verify
+    assert not serializer.is_valid()
+    assert error_message in str(serializer.errors)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
     "kind,",
     (
         InterfaceKind.InterfaceKindChoices.STRING,
@@ -184,7 +209,7 @@ def test_civ_post_image_or_upload_required_validation(kind):
     # verify
     assert not serializer.is_valid()
     assert (
-        f"Upload_pk or image are required for interface kind {kind}"
+        f"Upload_session or image are required for interface kind {kind}"
         in serializer.errors["non_field_errors"]
     )
 
@@ -220,7 +245,7 @@ def test_civ_post_upload_permission_validation(kind, rf):
     upload = UploadSessionFactory()
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug, "upload_pk": str(upload.pk)}
+    civ = {"interface_slug": interface.slug, "upload_session": upload.api_url}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(
@@ -230,8 +255,8 @@ def test_civ_post_upload_permission_validation(kind, rf):
     # verify
     assert not serializer.is_valid()
     assert (
-        f"User does not have permission to use raw image upload session {upload.pk}"
-        in serializer.errors["upload_pk"]
+        f"User does not have permission to use {upload}"
+        in serializer.errors["upload_session"]
     )
 
 
@@ -245,7 +270,7 @@ def test_civ_post_image_not_ready_validation(kind, rf):
     )
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug, "upload_pk": str(upload.pk)}
+    civ = {"interface_slug": interface.slug, "upload_session": upload.api_url}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(
@@ -255,8 +280,8 @@ def test_civ_post_image_not_ready_validation(kind, rf):
     # verify
     assert not serializer.is_valid()
     assert (
-        f"Upload session {upload.pk} is not ready to be used"
-        in serializer.errors["upload_pk"]
+        f"{upload} is not ready to be used"
+        in serializer.errors["upload_session"]
     )
 
 
@@ -270,7 +295,7 @@ def test_civ_post_image_valid(kind, rf):
     )
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug, "upload_pk": str(upload.pk)}
+    civ = {"interface_slug": interface.slug, "upload_session": upload.api_url}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(
