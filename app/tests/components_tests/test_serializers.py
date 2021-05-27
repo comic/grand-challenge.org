@@ -109,10 +109,7 @@ TEST_DATA = {
     (
         (
             (
-                {
-                    "interface_slug": "interface-does-not-exist",
-                    "value": "dummy",
-                },
+                {"interface": "interface-does-not-exist", "value": "dummy"},
                 "Component interface interface-does-not-exist does not exist.",
             ),
         )
@@ -151,7 +148,7 @@ def test_civ_post_value_validation(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
     for test in TEST_DATA:
-        civ = {"interface_slug": interface.slug, "value": TEST_DATA[test]}
+        civ = {"interface": interface.slug, "value": TEST_DATA[test]}
 
         # test
         serializer = ComponentInterfaceValuePostSerializer(data=civ)
@@ -182,7 +179,7 @@ def test_civ_post_value_required(kind):
     # setup
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug}
+    civ = {"interface": interface.slug}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(data=civ)
@@ -201,7 +198,7 @@ def test_civ_post_image_or_upload_required_validation(kind):
     # setup
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug}
+    civ = {"interface": interface.slug}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(data=civ)
@@ -222,7 +219,7 @@ def test_civ_post_image_permission_validation(kind, rf):
     image = ImageFactory()
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug, "image": image.api_url}
+    civ = {"interface": interface.slug, "image": image.api_url}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(
@@ -245,7 +242,7 @@ def test_civ_post_upload_permission_validation(kind, rf):
     upload = UploadSessionFactory()
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug, "upload_session": upload.api_url}
+    civ = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(
@@ -270,7 +267,7 @@ def test_civ_post_image_not_ready_validation(kind, rf):
     )
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug, "upload_session": upload.api_url}
+    civ = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(
@@ -295,7 +292,7 @@ def test_civ_post_image_valid(kind, rf):
     )
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface_slug": interface.slug, "upload_session": upload.api_url}
+    civ = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
     serializer = ComponentInterfaceValuePostSerializer(

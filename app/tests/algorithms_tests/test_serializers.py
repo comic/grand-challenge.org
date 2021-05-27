@@ -165,7 +165,7 @@ def test_algorithm_job_post_serializer_validations(
     job = {
         "algorithm_slug": algorithm_image.algorithm.slug,
         "inputs": [
-            {"interface_slug": interface, "value": "dummy"}
+            {"interface": interface, "value": "dummy"}
             for interface in job_interface_slugs
         ],
     }
@@ -221,10 +221,10 @@ def test_algorithm_job_post_serializer_create(rf):
 
     job = {"algorithm_slug": algorithm_image.algorithm.slug, "inputs": []}
     job["inputs"].append(
-        {"interface_slug": "testinterface-2", "upload_session": upload.api_url}
+        {"interface": "testinterface-2", "upload_session": upload.api_url}
     )
     job["inputs"].append(
-        {"interface_slug": "testinterface-3", "image": image.api_url}
+        {"interface": "testinterface-3", "image": image.api_url}
     )
 
     # test
