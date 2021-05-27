@@ -110,7 +110,7 @@ TEST_DATA = {
         (
             (
                 {"interface": "interface-does-not-exist", "value": "dummy"},
-                "Component interface interface-does-not-exist does not exist.",
+                "Object with slug=testinterface-3 does not exist.",
             ),
         )
     ),

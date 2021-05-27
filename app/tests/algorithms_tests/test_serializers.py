@@ -105,7 +105,7 @@ def test_algorithm_title_on_job_serializer(rf):
             True,
             ("TestInterface 1",),
             ("testinterface-3",),
-            "Component interface testinterface-3 does not exist.",
+            "Object with slug=testinterface-3 does not exist.",
         ),
         (
             "algorithm1",
