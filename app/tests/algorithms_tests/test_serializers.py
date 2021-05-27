@@ -1,5 +1,6 @@
 import pytest
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
@@ -176,3 +177,10 @@ def test_algorithm_job_post_serializer_validations(
     assert serializer.is_valid() == (error_message is None)
     if error_message:
         assert error_message in str(serializer.errors)
+    else:
+        assert len(Job.objects.all()) == 0
+        serializer.create(serializer.validated_data)
+        assert len(Job.objects.all()) == 1
+        job = Job.objects.first()
+        assert job.status == job.PENDING
+        assert len(job.inputs.all()) == 2

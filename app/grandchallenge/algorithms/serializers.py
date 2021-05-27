@@ -170,12 +170,12 @@ class JobPostSerializer(JobSerializer):
         input_pks = {i["interface"].pk for i in inputs_data}
 
         for input_data in inputs_data:
-            # check for upload_pk in input
-            upload_pk = input_data.pop("upload_pk", None)
+            # check for upload_session in input
+            upload_session = input_data.pop("upload_session", None)
             civ = ComponentInterfaceValue.objects.create(**input_data)
             component_interface_values.append(civ)
-            if upload_pk:
-                upload_pks[civ.pk] = upload_pk
+            if upload_session:
+                upload_pks[civ.pk] = upload_session.pk
 
         # use interface defaults if no value was provided
         defaults = job.algorithm_image.algorithm.inputs.filter(
