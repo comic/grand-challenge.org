@@ -86,7 +86,6 @@ def run():
     _create_external_challenge(users)
     _create_workstation(users)
     _create_algorithm_demo(users)
-    _create_io_algorithm(users)
     _create_reader_studies(users)
     _create_user_tokens(users)
     _setup_public_storage()
@@ -286,29 +285,6 @@ def _create_external_challenge(users):
     ex_challenge.modalities.add(mr_modality)
     ex_challenge.series.add(s)
     ex_challenge.save()
-
-
-def _create_io_algorithm(users):
-    algorithm = Algorithm.objects.create(
-        title="Test Algorithm IO",
-        logo=create_uploaded_image(),
-        use_flexible_inputs=True,
-    )
-    algorithm.editors_group.user_set.add(users["algorithm"], users["demo"])
-    algorithm.users_group.user_set.add(users["algorithmuser"])
-
-    algorithm_image = AlgorithmImage(
-        creator=users["algorithm"], algorithm=algorithm, ready=True
-    )
-    algorithm_image_path = "tests/resources/gc_demo_algorithm/algorithm_io.tar"
-    if os.path.exists(algorithm_image_path):
-        with open(
-            os.path.join(settings.SITE_ROOT, algorithm_image_path,), "rb",
-        ) as f:
-            container = File(f)
-            algorithm_image.image.save("algorithm_io.tar", container)
-
-    algorithm_image.save()
 
 
 def _create_algorithm_demo(users):

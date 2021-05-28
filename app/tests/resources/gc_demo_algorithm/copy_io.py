@@ -22,6 +22,6 @@ if __name__ == "__main__":
         new_file.parent.mkdir(exist_ok=True)
         copy(file, new_file)
 
-    with open("/output/results.json", "w") as f:
-        res = json.dumps(res, ensure_ascii=True, indent=2)
-        f.write(res)
+    for output_filename in ["results", "metrics"]:
+        with open(f"/output/{output_filename}.json", "w") as f:
+            f.write(json.dumps(res))
