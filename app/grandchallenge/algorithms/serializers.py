@@ -4,7 +4,6 @@ from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
     SerializerMethodField,
-    SlugField,
     URLField,
 )
 from rest_framework.relations import (
@@ -108,15 +107,19 @@ class HyperlinkedJobSerializer(JobSerializer):
 
 
 class JobPostSerializer(JobSerializer):
-    algorithm_slug = SlugField(write_only=True)
+    algorithm = HyperlinkedRelatedField(
+        queryset=Algorithm.objects.all(),
+        view_name="api:algorithm-detail",
+        write_only=True,
+    )
     inputs = ComponentInterfaceValuePostSerializer(many=True)
 
     class Meta:
         model = Job
-        fields = ["pk", "algorithm_slug", "inputs", "status"]
+        fields = ["pk", "algorithm", "inputs", "status"]
 
     def validate(self, data):
-        alg = Algorithm.objects.get(slug=data.pop("algorithm_slug"))
+        alg = data.pop("algorithm")
         user = self.context.get("user")
 
         if not user.has_perm("execute_algorithm", alg):
