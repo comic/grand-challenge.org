@@ -1,5 +1,4 @@
 USER_ID = $(shell id -u)
-export DOCKER_BUILDKIT = 1
 PYTHON_VERSION = 3.8
 GDCM_VERSION_TAG = 3.0.6
 POETRY_HASH = $(shell shasum -a 512 poetry.lock | cut -c 1-8)
@@ -7,7 +6,7 @@ POETRY_HASH = $(shell shasum -a 512 poetry.lock | cut -c 1-8)
 
 build_web_test:
 	@docker pull grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
-		docker build \
+		docker buildx build \
 			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 			--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
 			--target test-base \
@@ -15,7 +14,7 @@ build_web_test:
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
-	docker build \
+	docker buildx build\
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
@@ -28,7 +27,7 @@ build_web_test:
 
 build_web_dist:
 	@docker pull grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
-		docker build \
+		docker buildx build \
 			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 			--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
 			--target base \
@@ -36,7 +35,7 @@ build_web_dist:
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
-	docker build \
+	docker buildx build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
@@ -48,7 +47,7 @@ build_web_dist:
 		.
 
 build_http:
-	docker build \
+	docker buildx build \
 		-t grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
 		-t grandchallenge/http:latest \
 		dockerfiles/http
@@ -85,7 +84,7 @@ development_fixtures:
 		bash -c "python manage.py migrate && python manage.py runscript development_fixtures"
 
 create_io_algorithm:
-	docker build -t algorithm_io app/tests/resources/gc_demo_algorithm/
+	docker buildx build -t algorithm_io app/tests/resources/gc_demo_algorithm/
 	docker save algorithm_io -o app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 	chmod a+r app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 
