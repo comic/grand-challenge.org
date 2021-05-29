@@ -42,7 +42,7 @@ from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.workstations.models import Workstation
-from tests.conftest import create_uploaded_image
+from tests.fixtures import create_uploaded_image
 
 logger = logging.getLogger(__name__)
 

@@ -1,18 +1,15 @@
 import os
 import zipfile
 from collections import namedtuple
-from io import BytesIO
 from pathlib import Path
 from subprocess import call
 from typing import List, NamedTuple
 
 import docker
 import pytest
-from PIL import Image as PILImage
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
-from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterface
@@ -43,6 +40,7 @@ from tests.factories import (
     ImageFactory,
     UserFactory,
 )
+from tests.fixtures import create_uploaded_image
 from tests.patients_tests.factories import PatientFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -793,19 +791,6 @@ def component_interfaces():
     ]
 
     return [ComponentInterfaceFactory(**civ) for civ in civs]
-
-
-def create_uploaded_image():
-    io = BytesIO()
-    size = (1, 1)
-    color = (255, 0, 0)
-    image = PILImage.new("RGB", size, color)
-    image.save(io, format="JPEG")
-    image_file = InMemoryUploadedFile(
-        io, None, "foo.jpg", "jpeg", image.size, None
-    )
-    image_file.seek(0)
-    return image_file
 
 
 @pytest.fixture
