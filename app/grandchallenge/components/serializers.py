@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.fields import SerializerMethodField
 from rest_framework.relations import SlugRelatedField
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
@@ -13,6 +14,7 @@ from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
     kind = serializers.CharField(source="get_kind_display", read_only=True)
+    super_kind = SerializerMethodField()
 
     class Meta:
         model = ComponentInterface
@@ -23,7 +25,11 @@ class ComponentInterfaceSerializer(serializers.ModelSerializer):
             "kind",
             "pk",
             "default_value",
+            "super_kind",
         ]
+
+    def get_super_kind(self, obj: ComponentInterface) -> str:
+        return obj.super_kind.label
 
 
 class SimpleImageSerializer(serializers.ModelSerializer):

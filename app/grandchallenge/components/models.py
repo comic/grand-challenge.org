@@ -81,6 +81,11 @@ class InterfaceKind:
         CSV = "CSV", _("CSV file")
         ZIP = "ZIP", _("ZIP file")
 
+    class InterfaceSuperKindChoices(models.TextChoices):
+        IMAGE = "I", "Image"
+        FILE = "F", "File"
+        VALUE = "v", "Value"
+
     @staticmethod
     def interface_type_file():
         """Interface kinds that are files:
@@ -305,6 +310,14 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
         )
 
+    @staticmethod
+    def super_kind(kind):
+        if kind in InterfaceKind.interface_type_image():
+            return InterfaceKind.InterfaceSuperKindChoices.IMAGE
+        if kind in InterfaceKind.interface_type_file():
+            return InterfaceKind.InterfaceSuperKindChoices.FILE
+        return InterfaceKind.InterfaceSuperKindChoices.VALUE
+
 
 class ComponentInterface(models.Model):
     Kind = InterfaceKind.InterfaceKindChoices
@@ -365,6 +378,10 @@ class ComponentInterface(models.Model):
     @property
     def is_image_kind(self):
         return self.kind in InterfaceKind.interface_type_image()
+
+    @property
+    def super_kind(self):
+        return InterfaceKind.super_kind(self.kind)
 
     @property
     def save_in_object_store(self):
