@@ -52,13 +52,13 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
     )
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_workstation",
     )
     users_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="users_of_workstation",
     )
@@ -190,7 +190,7 @@ class WorkstationImage(UUIDModel, ComponentImage):
         workstation
     """
 
-    workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE)
+    workstation = models.ForeignKey(Workstation, on_delete=models.PROTECT)
     http_port = models.PositiveIntegerField(
         default=8080, validators=[MaxValueValidator(2 ** 16 - 1)]
     )
@@ -328,7 +328,7 @@ class Session(UUIDModel):
         AuthToken, null=True, on_delete=models.SET_NULL
     )
     workstation_image = models.ForeignKey(
-        WorkstationImage, on_delete=models.CASCADE
+        WorkstationImage, on_delete=models.PROTECT
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)

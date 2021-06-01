@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import ProtectedError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from docker.errors import NotFound
 from knox.models import AuthToken
@@ -293,16 +294,8 @@ def test_group_deletion_reverse(group):
     assert users_group
     assert editors_group
 
-    getattr(ws, group).delete()
-
-    with pytest.raises(ObjectDoesNotExist):
-        users_group.refresh_from_db()
-
-    with pytest.raises(ObjectDoesNotExist):
-        editors_group.refresh_from_db()
-
-    with pytest.raises(ObjectDoesNotExist):
-        ws.refresh_from_db()
+    with pytest.raises(ProtectedError):
+        getattr(ws, group).delete()
 
 
 @pytest.mark.django_db

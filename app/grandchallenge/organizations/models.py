@@ -26,13 +26,13 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
 
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_organization",
     )
     members_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="members_of_organization",
     )

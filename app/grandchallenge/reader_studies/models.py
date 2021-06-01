@@ -197,13 +197,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_readerstudy",
     )
     readers_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="readers_of_readerstudy",
     )
@@ -211,7 +211,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "cases.Image", related_name="readerstudies"
     )
     workstation = models.ForeignKey(
-        "workstations.Workstation", on_delete=models.CASCADE
+        "workstations.Workstation", on_delete=models.PROTECT
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
@@ -1195,7 +1195,7 @@ class Question(UUIDModel):
     }
 
     reader_study = models.ForeignKey(
-        ReaderStudy, on_delete=models.CASCADE, related_name="questions"
+        ReaderStudy, on_delete=models.PROTECT, related_name="questions"
     )
     question_text = models.TextField()
     help_text = models.TextField(blank=True)
@@ -1403,14 +1403,14 @@ class Answer(UUIDModel):
     ``ReaderStudy``.
     """
 
-    creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
+    question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = models.JSONField(
         null=True, validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
     answer_image = models.ForeignKey(
-        "cases.Image", null=True, on_delete=models.SET_NULL
+        "cases.Image", null=True, on_delete=models.PROTECT
     )
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)

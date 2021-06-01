@@ -1,14 +1,12 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.db import models, transaction
-from django.db.models import Count
+from django.db import models
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -18,9 +16,7 @@ from grandchallenge.core.storage import (
 )
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
-from grandchallenge.patients.models import Patient
 from grandchallenge.publications.models import Publication
-from grandchallenge.studies.models import Study
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -42,19 +38,19 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
     )
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_archive",
     )
     uploaders_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="uploaders_of_archive",
     )
     users_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="users_of_archive",
     )
@@ -174,72 +170,6 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         else:
             remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
 
-    def delete(self, *args, **kwargs):
-        """
-        Remove all patients, studies, images, imagefiles and annotations that
-        belong exclusively to this archive.
-        """
-
-        def find_protected_studies_and_patients(images):
-            """
-            Returns a tuple containing a set of Study ids and a set of Patient
-            ids that are "protected". Where "protected" means that these Study
-            and Patient objects contain images that are not in the given list
-            of images. Therefore, when deleting an archive and it's related
-            objects, these Study and Patient objects should not be deleted
-            since that would also delete other images, because of the cascading
-            delete behavior of the many-to-one relation.
-
-            :param images: list of image objects that are going to be removed
-            :return: tuple containing a set of Study ids and a set of Patient
-            ids that should not be removed
-            """
-            protected_study_ids = set()
-            protected_patient_ids = set()
-            for image in images:
-                if image.study is None:
-                    continue
-                for other_study_image in image.study.image_set.all():
-                    if other_study_image not in images_to_remove:
-                        protected_study_ids.add(image.study.id)
-                        protected_patient_ids.add(image.study.patient.id)
-                        break
-
-            return protected_study_ids, protected_patient_ids
-
-        images_to_remove = (
-            Image.objects.annotate(
-                num_archives=Count(
-                    "componentinterfacevalue__archive_items__archive"
-                )
-            )
-            .filter(
-                componentinterfacevalue__archive_items__archive=self,
-                num_archives=1,
-            )
-            .order_by("name")
-        )
-
-        (
-            protected_study_ids,
-            protected_patient_ids,
-        ) = find_protected_studies_and_patients(images_to_remove)
-
-        with transaction.atomic():
-            Patient.objects.filter(
-                study__image__in=images_to_remove
-            ).distinct().exclude(pk__in=protected_patient_ids).delete(
-                *args, **kwargs
-            )
-            Study.objects.filter(
-                image__in=images_to_remove
-            ).distinct().exclude(pk__in=protected_study_ids).delete(
-                *args, **kwargs
-            )
-            images_to_remove.delete(*args, **kwargs)
-
-            super().delete(*args, **kwargs)
-
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
@@ -277,7 +207,7 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
 
 class ArchiveItem(UUIDModel):
     archive = models.ForeignKey(
-        Archive, related_name="items", on_delete=models.CASCADE
+        Archive, related_name="items", on_delete=models.PROTECT
     )
     values = models.ManyToManyField(
         ComponentInterfaceValue, blank=True, related_name="archive_items"
