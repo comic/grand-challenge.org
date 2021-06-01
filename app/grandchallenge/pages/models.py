@@ -6,6 +6,7 @@ from django.db.models import Count, Max
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
+from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.utils.query import index
@@ -59,6 +60,7 @@ class Page(models.Model):
         default=False, help_text="Do not display this page in site menu"
     )
     html = models.TextField(blank=True, default="")
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.title
@@ -77,6 +79,8 @@ class Page(models.Model):
                 self.order = max_order["order__max"] + 1
             except TypeError:
                 self.order = 1
+
+        self.html = clean(self.html)
 
         super().save(*args, **kwargs)
 
@@ -120,16 +124,6 @@ class Page(models.Model):
 
         if "project_statistics" in out:
             out = self._substitute_geochart(html=out)
-
-        if "google_group" in out:
-            s = Substitution(
-                tag_name="google_group",
-                replacement=render_to_string(
-                    "grandchallenge/partials/google_group.html"
-                ),
-                use_arg=True,
-            )
-            out = s.sub(out)
 
         return out
 

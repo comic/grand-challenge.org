@@ -1,7 +1,6 @@
 import pytest
 from django.utils.safestring import SafeString, mark_safe
 
-from grandchallenge.pages.models import Page
 from grandchallenge.pages.substitutions import Substitution
 from tests.factories import PageFactory
 
@@ -62,12 +61,6 @@ def test_argument_substitution(inp, output):
     )
     assert s.sub(inp) == output
     assert isinstance(s.sub(inp), type(inp))
-
-
-def test_google_group():
-    p = Page(html="{% google_group 'my-group' %}")
-    rendered = p.cleaned_html()
-    assert 'data-groupname="my-group"' in rendered
 
 
 @pytest.mark.django_db
