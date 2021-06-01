@@ -394,7 +394,7 @@ class ArchiveEditArchiveItem(
         context.update({"archive": self.archive})
         return context
 
-    def form_valid(self, form):
+    def form_valid(self, form):  # noqa: C901
         def create_upload(image_files):
             raw_files = []
             upload_session = RawImageUploadSession.objects.create(
@@ -415,10 +415,15 @@ class ArchiveEditArchiveItem(
         civ_pks = set(self.archive_item.values.values_list("pk", flat=True))
 
         for slug, value in form.cleaned_data.items():
-            if not value:
+            if value is None:
                 continue
             ci = ComponentInterface.objects.get(slug=slug)
             civ = self.archive_item.values.filter(interface=ci).first()
+            if civ and civ.value is not None:
+                if civ.value == value:
+                    continue
+                civ_pks.remove(civ.pk)
+                civ = None
             if not civ:
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
             if ci.kind in InterfaceKind.interface_type_image():

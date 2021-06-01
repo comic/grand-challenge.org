@@ -510,7 +510,7 @@ class ComponentInterfaceValue(models.Model):
 
     @property
     def title(self):
-        if self.value:
+        if self.value is not None:
             return str(self.value)
         if self.file:
             return self.file.name

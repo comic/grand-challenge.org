@@ -1,11 +1,17 @@
 import pytest
 from django.contrib.auth.models import Permission
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import (
     Archive,
     ArchivePermissionRequest,
 )
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+)
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
@@ -186,7 +192,11 @@ def test_social_image_meta_tag(client, uploaded_image):
 
 
 @pytest.mark.django_db
-def test_archive_item_form(client):
+def test_archive_item_form(client, settings):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
 
     editor = UserFactory()
@@ -195,7 +205,9 @@ def test_archive_item_form(client):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.BOOL
     )
-    civ = ComponentInterfaceValueFactory(interface=ci, value=True)
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, value=True, file=None, image=None
+    )
     ai = ArchiveItemFactory(archive=archive)
     ai.values.add(civ)
 
@@ -213,3 +225,47 @@ def test_archive_item_form(client):
         assert _ci.slug in response.rendered_content
 
     assert f'id="id_{ci.slug}" checked' in response.rendered_content
+
+    assert Job.objects.count() == 0
+
+    alg = AlgorithmFactory()
+    AlgorithmImageFactory(algorithm=alg, ready=True)
+    alg.inputs.add(ci)
+    with capture_on_commit_callbacks(execute=True):
+        archive.algorithms.add(alg)
+
+    assert Job.objects.count() == 1
+
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={"slug": archive.slug, "id": ai.pk},
+                data={ci.slug: False},
+                follow=True,
+                user=editor,
+            )
+
+    assert ai.values.filter(pk=civ.pk).count() == 0
+
+    # A new job should have been created, because the value for 'bool'
+    # has changed
+    assert Job.objects.count() == 2
+
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="archives:item-edit",
+                client=client,
+                method=client.post,
+                reverse_kwargs={"slug": archive.slug, "id": ai.pk},
+                data={ci.slug: True},
+                follow=True,
+                user=editor,
+            )
+
+    # No new jobs should have been created, because the value for 'bool'
+    # has changed to a value for which a job already exists
+    assert Job.objects.count() == 2
