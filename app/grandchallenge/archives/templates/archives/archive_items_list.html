@@ -1,0 +1,18 @@
+{% extends "datatables/list_base.html" %}
+{% load guardian_tags %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a></li>
+        <li class="breadcrumb-item"><a href="{{ archive.get_absolute_url }}">{{ archive.title }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Items</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Items for {{ archive.title }}</h2>
+
+    {% get_obj_perms request.user for archive as "archive_perms" %}
+
+    {{ block.super }}
+{% endblock %}
