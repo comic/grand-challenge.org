@@ -312,16 +312,18 @@ def create_algorithm_jobs(  # noqa: C901
     for archive_item in archive_items:
         job_inputs = archive_item.values.filter(interface__in=input_interfaces)
 
-        # Check if a JOb with identical inputs already exists
+        # Check if a Job with identical inputs already exists
         skip = False
         for job in Job.objects.filter(
             inputs__in=job_inputs,
             algorithm_image=algorithm_image,
             creator=creator,
         ):
-            if job.inputs.order_by("pk").values(
-                "value", "image", "file"
-            ) == job_inputs.order_by("pk").values("value", "image", "file"):
+            if list(
+                job.inputs.order_by("pk").values("value", "image", "file")
+            ) == list(
+                job_inputs.order_by("pk").values("value", "image", "file")
+            ):
                 skip = True
                 break
         if skip:
