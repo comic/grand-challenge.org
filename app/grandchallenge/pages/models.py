@@ -36,7 +36,7 @@ class Page(models.Model):
     challenge = models.ForeignKey(
         "challenges.Challenge",
         help_text="Which challenge does this page belong to?",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
     permission_level = models.CharField(
         max_length=3, choices=PERMISSIONS_CHOICES, default=ALL

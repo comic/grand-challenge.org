@@ -49,13 +49,13 @@ JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_algorithm",
     )
     users_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="users_of_algorithm",
     )
@@ -72,7 +72,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
     workstation = models.ForeignKey(
-        "workstations.Workstation", on_delete=models.CASCADE
+        "workstations.Workstation", on_delete=models.PROTECT
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
@@ -328,7 +328,7 @@ def delete_algorithm_groups_hook(*_, instance: Algorithm, using, **__):
 class AlgorithmImage(UUIDModel, ComponentImage):
     algorithm = models.ForeignKey(
         Algorithm,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="algorithm_container_images",
     )
     queue_override = models.CharField(max_length=128, blank=True)
@@ -388,7 +388,7 @@ class JobQuerySet(models.QuerySet):
 
 class Job(UUIDModel, ComponentJob):
     algorithm_image = models.ForeignKey(
-        AlgorithmImage, on_delete=models.CASCADE
+        AlgorithmImage, on_delete=models.PROTECT
     )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -410,7 +410,7 @@ class Job(UUIDModel, ComponentJob):
     )
     viewers = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="viewers_of_algorithm_job",
     )
     credits_set = JobQuerySet.as_manager()

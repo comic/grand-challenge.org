@@ -42,19 +42,19 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
     )
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_archive",
     )
     uploaders_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="uploaders_of_archive",
     )
     users_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="users_of_archive",
     )
@@ -277,7 +277,7 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
 
 class ArchiveItem(UUIDModel):
     archive = models.ForeignKey(
-        Archive, related_name="items", on_delete=models.CASCADE
+        Archive, related_name="items", on_delete=models.PROTECT
     )
     values = models.ManyToManyField(
         ComponentInterfaceValue, blank=True, related_name="archive_items"

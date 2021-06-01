@@ -310,17 +310,17 @@ class Challenge(ChallengeBase):
     admins_group = models.OneToOneField(
         Group,
         editable=False,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="admins_of_challenge",
     )
     participants_group = models.OneToOneField(
         Group,
         editable=False,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="participants_of_challenge",
     )
     forum = models.OneToOneField(
-        Forum, editable=False, on_delete=models.CASCADE
+        Forum, editable=False, on_delete=models.PROTECT
     )
     display_forum_link = models.BooleanField(
         default=False,

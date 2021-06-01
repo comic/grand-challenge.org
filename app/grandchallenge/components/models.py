@@ -485,7 +485,7 @@ class ComponentInterfaceValue(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     interface = models.ForeignKey(
-        to=ComponentInterface, on_delete=models.CASCADE
+        to=ComponentInterface, on_delete=models.PROTECT
     )
     value = models.JSONField(null=True, blank=True, default=None)
     file = models.FileField(
@@ -505,7 +505,7 @@ class ComponentInterfaceValue(models.Model):
         ],
     )
     image = models.ForeignKey(
-        to=Image, null=True, blank=True, on_delete=models.CASCADE
+        to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
     @property
