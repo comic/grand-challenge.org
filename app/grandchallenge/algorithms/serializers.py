@@ -131,7 +131,7 @@ class JobPostSerializer(JobSerializer):
             raise serializers.ValidationError(
                 "Algorithm image is not ready to be used"
             )
-
+        data["creator"] = user
         data["algorithm_image"] = alg.latest_ready_image
 
         # validate that no inputs are provided that are not configured for the

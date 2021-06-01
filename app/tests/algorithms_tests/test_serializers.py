@@ -237,4 +237,5 @@ def test_algorithm_job_post_serializer_create(rf):
     serializer.create(serializer.validated_data)
     assert len(Job.objects.all()) == 1
     job = Job.objects.first()
+    assert job.creator == user
     assert len(job.inputs.all()) == 3
