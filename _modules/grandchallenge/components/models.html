@@ -241,6 +241,11 @@
         <span class="n">CSV</span> <span class="o">=</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;CSV file&quot;</span><span class="p">)</span>
         <span class="n">ZIP</span> <span class="o">=</span> <span class="s2">&quot;ZIP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;ZIP file&quot;</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="InterfaceKind.InterfaceSuperKindChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.InterfaceSuperKindChoices">[docs]</a>    <span class="k">class</span> <span class="nc">InterfaceSuperKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+        <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span>
+        <span class="n">FILE</span> <span class="o">=</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;File&quot;</span>
+        <span class="n">VALUE</span> <span class="o">=</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span></div>
+
 <div class="viewcode-block" id="InterfaceKind.interface_type_file"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_file</span><span class="p">():</span>
         <span class="sd">&quot;&quot;&quot;Interface kinds that are files:</span>
@@ -463,7 +468,15 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">super_kind</span><span class="p">(</span><span class="n">kind</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">IMAGE</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">FILE</span>
+        <span class="k">return</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">VALUE</span></div>
 
 
 <div class="viewcode-block" id="ComponentInterface"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a><span class="k">class</span> <span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
@@ -525,6 +538,10 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">is_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">save_in_object_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
