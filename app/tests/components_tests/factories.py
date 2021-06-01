@@ -5,6 +5,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from tests.factories import ImageFactory
 
 
 class ComponentInterfaceFactory(factory.django.DjangoModelFactory):
@@ -24,3 +25,4 @@ class ComponentInterfaceValueFactory(factory.django.DjangoModelFactory):
     pk = factory.Sequence(lambda n: n + 9999999)
     interface = factory.SubFactory(ComponentInterfaceFactory)
     file = factory.django.FileField()
+    image = factory.SubFactory(ImageFactory)
