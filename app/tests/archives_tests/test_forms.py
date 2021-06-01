@@ -5,9 +5,15 @@ from grandchallenge.archives.models import (
     Archive,
     ArchivePermissionRequest,
 )
+from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from tests.archives_tests.factories import (
     ArchiveFactory,
+    ArchiveItemFactory,
     ArchivePermissionRequestFactory,
+)
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
 )
 from tests.factories import UserFactory, WorkstationFactory
 from tests.utils import get_view_for_user
@@ -177,3 +183,33 @@ def test_social_image_meta_tag(client, uploaded_image):
 
     archive = Archive.objects.get(title="foo bar")
     assert str(archive.social_image.x20.url) in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_archive_item_form(client):
+    archive = ArchiveFactory()
+
+    editor = UserFactory()
+    archive.editors_group.user_set.add(editor)
+
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci, value=True)
+    ai = ArchiveItemFactory(archive=archive)
+    ai.values.add(civ)
+
+    response = get_view_for_user(
+        viewname="archives:item-edit",
+        client=client,
+        method=client.get,
+        reverse_kwargs={"slug": archive.slug, "id": ai.pk},
+        follow=True,
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    for _ci in ComponentInterface.objects.all():
+        assert _ci.slug in response.rendered_content
+
+    assert f'id="id_{ci.slug}" checked' in response.rendered_content
