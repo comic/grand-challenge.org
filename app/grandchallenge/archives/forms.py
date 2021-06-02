@@ -173,7 +173,7 @@ class ArchiveCasesToReaderStudyForm(SaveFormInitMixin, Form):
 class AddCasesForm(UploadRawImagesForm):
     interface = ModelChoiceField(
         queryset=ComponentInterface.objects.filter(
-            kind=InterfaceKind.InterfaceKindChoices.IMAGE
+            kind__in=InterfaceKind.interface_type_image()
         )
     )
 
