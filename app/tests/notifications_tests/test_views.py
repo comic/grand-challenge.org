@@ -153,6 +153,36 @@ def test_notification_update_permissions(client, action):
     assert response.status_code == 302
 
 
+# @pytest.mark.django_db
+# def test_notification_update_permissions(client):
+#     user1 = UserFactory()
+#     user2 = UserFactory()
+#     c = ChallengeFactory(creator=user1)
+#     c.add_participant(user=user2)
+#     _ = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_POST)
+#
+#     notification = Notification.objects.get()
+#
+#     response = get_view_for_user(
+#         viewname="notifications:list",
+#         client=client,
+#         method=client.post,
+#         data={"checkbox": notification.id, "delete": True},
+#         user=user1,
+#     )
+#     assert response.status_code == 403
+#
+#     response = get_view_for_user(
+#         viewname="notifications:list",
+#         client=client,
+#         method=client.post,
+#         data={"checkbox": notification.id, "delete": True},
+#         user=user2,
+#     )
+#     breakpoint()
+#     assert response.status_code == 302
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "action",
