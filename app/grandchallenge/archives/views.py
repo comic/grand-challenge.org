@@ -55,6 +55,7 @@ from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.archives.tasks import (
     add_images_to_archive,
     add_values_to_archive_item,
+    clear_values_from_archive_item,
 )
 from grandchallenge.cases.models import (
     Image,
@@ -440,12 +441,18 @@ class ArchiveEditArchiveItem(
                 civ.save()
                 civ_pks.add(civ.pk)
 
-        tasks = add_values_to_archive_item.signature(
-            kwargs={
-                "archive_item_pk": self.archive_item.pk,
-                "civ_pks": list(civ_pks),
-            },
-            immutable=True,
+        tasks = chord(
+            clear_values_from_archive_item.signature(
+                kwargs={"archive_item_pk": self.archive_item.pk},
+                immutable=True,
+            ),
+            add_values_to_archive_item.signature(
+                kwargs={
+                    "archive_item_pk": self.archive_item.pk,
+                    "civ_pks": list(civ_pks),
+                },
+                immutable=True,
+            ),
         )
         if len(upload_pks) > 0:
             image_tasks = group(
