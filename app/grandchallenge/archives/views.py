@@ -509,7 +509,7 @@ class ArchiveItemsList(
 
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.filter(archive=self.archive)
+        return qs.filter(archive=self.archive).prefetch_related("values")
 
 
 class ArchiveCasesList(
