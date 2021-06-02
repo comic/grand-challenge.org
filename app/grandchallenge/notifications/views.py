@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models.query_utils import Q
+from django.http import HttpResponseRedirect
 from django.views.generic import FormView, ListView
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
@@ -44,6 +45,35 @@ class NotificationList(LoginRequiredMixin, ListView):
         # TODO side-effect, not nice
         profile.update_notifications_last_read_timestep()
         return context
+
+    def post(self, request, *args, **kwargs):
+        if "delete" in request.POST:
+            action = "delete"
+        elif "mark_read" in request.POST:
+            action = "mark_read"
+        elif "mark_unread" in request.POST:
+            action = "mark_unread"
+
+        selected_notifications = request.POST.getlist("checkbox")
+        if action == "delete":
+            Notification.objects.filter(
+                user=request.user, id__in=selected_notifications
+            ).delete()
+        elif action == "mark_read":
+            notifications = Notification.objects.filter(
+                user=request.user, id__in=selected_notifications
+            ).all()
+            for notification in notifications:
+                notification.read = True
+                notification.save()
+        elif action == "mark_unread":
+            notifications = Notification.objects.filter(
+                user=request.user, id__in=selected_notifications
+            ).all()
+            for notification in notifications:
+                notification.read = False
+                notification.save()
+        return HttpResponseRedirect(reverse("notifications:list"))
 
 
 class NotificationUpdate(
