@@ -14,6 +14,10 @@ from grandchallenge.notifications.forms import (
     SubscriptionForm,
 )
 from grandchallenge.notifications.models import Notification
+from grandchallenge.notifications.utils import (
+    prefetch_generic_foreign_key_objects,
+    prefetch_notification_action,
+)
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
@@ -21,13 +25,10 @@ class NotificationList(LoginRequiredMixin, ListView):
     model = Notification
 
     def get_queryset(self):
-        return (
+        return prefetch_notification_action(
             super()
             .get_queryset()
             .filter(user=self.request.user)
-            .prefetch_related(
-                "action__actor__user_profile", "action__actor__verification",
-            )
             .order_by("-action__timestamp")
         )
 
@@ -112,29 +113,35 @@ class SubscriptionListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(*args, **kwargs)
         context.update(
             {
-                "followed_topics": Follow.objects.filter(
-                    Q(user=self.request.user)
-                    & Q(
-                        content_type=ContentType.objects.get(
-                            app_label="forum_conversation", model="topic"
-                        ).id
-                    )
+                "followed_topics": prefetch_generic_foreign_key_objects(
+                    Follow.objects.filter(
+                        Q(user=self.request.user)
+                        & Q(
+                            content_type=ContentType.objects.get(
+                                app_label="forum_conversation", model="topic"
+                            ).id
+                        )
+                    ).select_related("user")
                 ),
-                "followed_forums": Follow.objects.filter(
-                    Q(user=self.request.user)
-                    & Q(
-                        content_type=ContentType.objects.get(
-                            app_label="forum", model="forum"
-                        ).id
-                    )
+                "followed_forums": prefetch_generic_foreign_key_objects(
+                    Follow.objects.filter(
+                        Q(user=self.request.user)
+                        & Q(
+                            content_type=ContentType.objects.get(
+                                app_label="forum", model="forum"
+                            ).id
+                        )
+                    ).select_related("user")
                 ),
-                "followed_users": Follow.objects.filter(
-                    Q(user=self.request.user)
-                    & Q(
-                        content_type=ContentType.objects.get(
-                            app_label="auth", model="user"
-                        ).id
-                    )
+                "followed_users": prefetch_generic_foreign_key_objects(
+                    Follow.objects.filter(
+                        Q(user=self.request.user)
+                        & Q(
+                            content_type=ContentType.objects.get(
+                                app_label="auth", model="user"
+                            ).id
+                        )
+                    ).select_related("user")
                 ),
                 "unfollow_topic": SubscriptionForm.UNFOLLOW_TOPIC,
                 "unfollow_forum": SubscriptionForm.UNFOLLOW_FORUM,
