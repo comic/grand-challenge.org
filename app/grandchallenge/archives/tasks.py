@@ -38,10 +38,5 @@ def add_images_to_archive(*, upload_session_pk, archive_pk, interface_pk=None):
 @shared_task
 def add_values_to_archive_item(*, archive_item_pk, civ_pks):
     archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
-    archive_item.values.add(*civ_pks)
-
-
-@shared_task
-def clear_values_from_archive_item(*, archive_item_pk):
-    archive_item = ArchiveItem.objects.get(pk=archive_item_pk)
     archive_item.values.clear()
+    archive_item.values.add(*civ_pks)
