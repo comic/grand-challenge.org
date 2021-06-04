@@ -277,10 +277,10 @@ def test_create_experiment_json_input_field_validation(
 @pytest.mark.parametrize(
     "slug, content_parts",
     (
-        (None, ['class="invalid-feedback"', "Not a valid UUID: %(string)s"]),
+        (None, ['class="invalid-feedback"', "This field is required."]),
         (
             "generic-overlay",
-            ['class="invalid-feedback"', "Not a valid UUID: %(string)s"],
+            ['class="invalid-feedback"', "This field is required."],
         ),
         ("string", ['class="invalid-feedback"', "This field is required."]),
         ("integer", ['class="invalid-feedback"', "This field is required."]),

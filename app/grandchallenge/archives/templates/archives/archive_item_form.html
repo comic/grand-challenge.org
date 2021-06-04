@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load url %}
+{% load get_obj_perms from guardian_tags %}
+{% load bleach %}
+{% load random_encode %}
+{% load static %}
+
+{% block title %}
+    Edit item for {{ archive }} - {{ block.super }}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'archives:list' %}">Archives</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ archive.get_absolute_url }}">{{ archive.title }}
+        </a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Edit item
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% get_obj_perms request.user for archive as "archive_perms" %}
+    <h2>Edit item</h2>
+
+
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <input type="submit" name="save" value="Submit" class="btn btn-primary" id="submit-id-save">
+            </form>
+
+{% endblock %}

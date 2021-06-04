@@ -5,7 +5,9 @@ from grandchallenge.archives.views import (
     ArchiveCasesToReaderStudyUpdate,
     ArchiveCreate,
     ArchiveDetail,
+    ArchiveEditArchiveItem,
     ArchiveEditorsUpdate,
+    ArchiveItemsList,
     ArchiveList,
     ArchivePermissionRequestCreate,
     ArchivePermissionRequestList,
@@ -54,10 +56,16 @@ urlpatterns = [
         name="permission-request-update",
     ),
     path("<slug>/cases/", ArchiveCasesList.as_view(), name="cases-list"),
+    path("<slug>/items/", ArchiveItemsList.as_view(), name="items-list"),
     path(
         "<slug>/cases/add/",
         ArchiveUploadSessionCreate.as_view(),
         name="cases-create",
+    ),
+    path(
+        "<slug>/items/<id>/edit",
+        ArchiveEditArchiveItem.as_view(),
+        name="item-edit",
     ),
     path(
         "<slug>/cases/reader-study/update/",

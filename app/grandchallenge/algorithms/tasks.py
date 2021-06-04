@@ -279,7 +279,6 @@ def create_algorithm_jobs(  # noqa: C901
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
     )
-
     jobs = []
 
     if not images:
@@ -312,21 +311,31 @@ def create_algorithm_jobs(  # noqa: C901
     for archive_item in archive_items:
         job_inputs = archive_item.values.filter(interface__in=input_interfaces)
 
-        # TODO: check that this filter works
-        if not Job.objects.filter(
-            inputs__in=job_inputs,
+        # Check if a Job with identical inputs already exists
+        skip = False
+        for job in Job.objects.filter(
+            inputs__interface__in=input_interfaces,
             algorithm_image=algorithm_image,
             creator=creator,
-        ).exists():
-            j = Job.objects.create(
-                creator=creator, algorithm_image=algorithm_image
-            )
-            j.inputs.set(job_inputs)
+        ):
+            if list(
+                job.inputs.order_by("pk").values("value", "image", "file")
+            ) == list(
+                job_inputs.order_by("pk").values("value", "image", "file")
+            ):
+                skip = True
+                break
+        if skip:
+            continue
+        j = Job.objects.create(
+            creator=creator, algorithm_image=algorithm_image
+        )
+        j.inputs.set(job_inputs)
 
-            if extra_viewer_groups is not None:
-                j.viewer_groups.add(*extra_viewer_groups)
+        if extra_viewer_groups is not None:
+            j.viewer_groups.add(*extra_viewer_groups)
 
-            jobs.append(j)
+        jobs.append(j)
 
     for image in images:
         if not ComponentInterfaceValue.objects.filter(
