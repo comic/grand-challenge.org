@@ -143,15 +143,12 @@ class SubscriptionListView(LoginRequiredMixin, ListView):
                         )
                     ).select_related("user")
                 ),
-                "unfollow_topic": SubscriptionForm.UNFOLLOW_TOPIC,
-                "unfollow_forum": SubscriptionForm.UNFOLLOW_FORUM,
-                "unfollow_user": SubscriptionForm.UNFOLLOW_USER,
             }
         )
         return context
 
 
-class SubscriptionUpdate(
+class SubscriptionDelete(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
@@ -159,7 +156,7 @@ class SubscriptionUpdate(
 ):
     form_class = SubscriptionForm
     template_name = "notifications/subscription_update_form.html"
-    success_message = "Subscription successfully updated"
+    success_message = "Subscription successfully deleted"
     permission_required = "change_follow"
     raise_exception = True
     login_url = reverse_lazy("account_login")
@@ -173,5 +170,21 @@ class SubscriptionUpdate(
         return reverse("notifications:subscriptions-list")
 
     def form_valid(self, form):
-        form.update()
+        form.unfollow()
+        return super().form_valid(form)
+
+
+class SubscriptionCreate(
+    LoginRequiredMixin, SuccessMessageMixin, FormView,
+):
+    form_class = SubscriptionForm
+    template_name = "notifications/subscription_update_form.html"
+    success_message = "Subscription successfully added"
+    login_url = reverse_lazy("account_login")
+
+    def get_success_url(self):
+        return reverse("notifications:subscriptions-list")
+
+    def form_valid(self, form):
+        form.follow()
         return super().form_valid(form)
