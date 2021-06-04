@@ -54,8 +54,7 @@ from grandchallenge.archives.models import (
 from grandchallenge.archives.serializers import ArchiveSerializer
 from grandchallenge.archives.tasks import (
     add_images_to_archive,
-    add_values_to_archive_item,
-    clear_values_from_archive_item,
+    update_archive_item_values,
 )
 from grandchallenge.cases.models import (
     Image,
@@ -413,47 +412,49 @@ class ArchiveEditArchiveItem(
             return upload_session.pk
 
         upload_pks = {}
-        civ_pks = set(self.archive_item.values.values_list("pk", flat=True))
+        civ_pks_to_remove = set()
+        civ_pks_to_add = set()
 
         for slug, value in form.cleaned_data.items():
+
             if value is None:
                 continue
+
             ci = ComponentInterface.objects.get(slug=slug)
             civ = self.archive_item.values.filter(interface=ci).first()
+
             if civ and civ.value is not None:
                 if civ.value == value:
                     continue
-                civ_pks.remove(civ.pk)
+                civ_pks_to_remove.add(civ.pk)
                 civ = None
+
             if not civ:
                 civ = ComponentInterfaceValue.objects.create(interface=ci)
+
             if ci.kind in InterfaceKind.interface_type_image():
-                civ_pks.add(civ.pk)
+                civ_pks_to_add.add(civ.pk)
                 upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
                 name = get_valid_filename(value[0].name)
                 with value[0].open() as f:
                     civ.file = File(f, name=name)
                     civ.save()
-                civ_pks.add(civ.pk)
+                civ_pks_to_add.add(civ.pk)
             else:
                 civ.value = value
                 civ.save()
-                civ_pks.add(civ.pk)
+                civ_pks_to_add.add(civ.pk)
 
-        tasks = chord(
-            clear_values_from_archive_item.signature(
-                kwargs={"archive_item_pk": self.archive_item.pk},
-                immutable=True,
-            ),
-            add_values_to_archive_item.signature(
-                kwargs={
-                    "archive_item_pk": self.archive_item.pk,
-                    "civ_pks": list(civ_pks),
-                },
-                immutable=True,
-            ),
+        tasks = update_archive_item_values.signature(
+            kwargs={
+                "archive_item_pk": self.archive_item.pk,
+                "civ_pks_to_add": list(civ_pks_to_add),
+                "civ_pks_to_remove": list(civ_pks_to_remove),
+            },
+            immutable=True,
         )
+
         if len(upload_pks) > 0:
             image_tasks = group(
                 add_images_to_component_interface_value.signature(
