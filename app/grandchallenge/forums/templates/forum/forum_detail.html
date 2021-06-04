@@ -46,7 +46,7 @@
                 {% trans "Unsubscribe" %}
             </button>
         </form>
-    {% elif user_can_subscribe_to_forum and not request.user|is_following:forum %}
+    {% else %}
         <form style="display: inline;" method="post" action="{% url 'notifications:subscription-create' %}">
             {% csrf_token %}
             <input name="forum" type="hidden" value="{{ forum.id }}">

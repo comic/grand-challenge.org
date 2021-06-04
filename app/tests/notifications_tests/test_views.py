@@ -6,10 +6,7 @@ from django.conf import settings
 from django.urls import reverse
 from machina.apps.forum.models import Forum
 
-from grandchallenge.notifications.forms import (
-    NotificationForm,
-    SubscriptionForm,
-)
+from grandchallenge.notifications.forms import NotificationForm
 from grandchallenge.notifications.models import Notification
 from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import (
@@ -184,37 +181,20 @@ def test_notification_update_permissions(client, action):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "action",
-    (
-        SubscriptionForm.UNFOLLOW_TOPIC,
-        SubscriptionForm.UNFOLLOW_FORUM,
-        SubscriptionForm.UNFOLLOW_USER,
-    ),
-)
-def test_subscription_update_permissions(client, action):
+def test_subscription_delete_permission(client):
     user1 = UserFactory()
     user2 = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
-
-    if action == SubscriptionForm.UNFOLLOW_TOPIC:
-        t = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
-        assert is_following(user1, t)
-    elif action == SubscriptionForm.UNFOLLOW_FORUM:
-        follow(user1, f)
-        assert is_following(user1, f)
-    elif action == SubscriptionForm.UNFOLLOW_USER:
-        follow(user1, user2)
-        assert is_following(user1, user2)
+    t = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
+    assert is_following(user1, t)
 
     response = get_view_for_user(
-        viewname="notifications:subscription-update",
+        viewname="notifications:subscription-delete",
         client=client,
         method=client.post,
         data={
             "user": user1.id,
             "subscription_object": Follow.objects.get().id,
-            "action": action,
         },
         reverse_kwargs={"pk": Follow.objects.get().id},
         user=user2,
@@ -222,13 +202,12 @@ def test_subscription_update_permissions(client, action):
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname="notifications:subscription-update",
+        viewname="notifications:subscription-delete",
         client=client,
         method=client.post,
         data={
             "user": user2.id,
             "subscription_object": Follow.objects.get().id,
-            "action": action,
         },
         reverse_kwargs={"pk": Follow.objects.get().id},
         user=user1,
@@ -248,12 +227,13 @@ def test_unsubscribe_from_topic(client):
     assert is_following(user=user2, obj=t2)
 
     _ = PostFactory(topic=t1, poster=user1)
+    # check that a notification was created after a reply was posted in subscribed topic
     assert len(Notification.objects.filter(user=user2)) == 1
     Notification.objects.all().delete()
 
     # unsubscribe from topic t1
     response = get_view_for_user(
-        viewname="notifications:subscription-update",
+        viewname="notifications:subscription-delete",
         client=client,
         method=client.post,
         data={
@@ -261,7 +241,6 @@ def test_unsubscribe_from_topic(client):
             "subscription_object": Follow.objects.filter(user=user2)
             .first()
             .id,
-            "action": SubscriptionForm.UNFOLLOW_TOPIC,
         },
         reverse_kwargs={"pk": Follow.objects.filter(user=user2).first().id},
         user=user2,
@@ -269,7 +248,7 @@ def test_unsubscribe_from_topic(client):
     assert response.status_code == 302
     assert not is_following(user=user2, obj=t1)
     assert is_following(user=user2, obj=t2)
-
+    # check that user no longer gets a notification when a reply is posted in topic
     _ = PostFactory(topic=t1, poster=user1)
     assert len(Notification.objects.filter(user=user2)) == 0
 
@@ -284,12 +263,13 @@ def test_unsubscribe_from_forum(client):
     follow(user2, f2)
 
     _ = TopicFactory(forum=f1, poster=user1, type=Topic.TOPIC_POST)
+    # check that notification is created when someone posts a topic in the forum
     assert len(Notification.objects.filter(user=user2)) == 1
     Notification.objects.all().delete()
 
     # unsubscribe from topic f1
     response = get_view_for_user(
-        viewname="notifications:subscription-update",
+        viewname="notifications:subscription-delete",
         client=client,
         method=client.post,
         data={
@@ -297,7 +277,6 @@ def test_unsubscribe_from_forum(client):
             "subscription_object": Follow.objects.filter(user=user2)
             .first()
             .id,
-            "action": SubscriptionForm.UNFOLLOW_FORUM,
         },
         reverse_kwargs={"pk": Follow.objects.filter(user=user2).first().id},
         user=user2,
@@ -305,7 +284,7 @@ def test_unsubscribe_from_forum(client):
     assert response.status_code == 302
     assert not is_following(user=user2, obj=f1)
     assert is_following(user=user2, obj=f2)
-
+    # check that user no longer receives a notification when someone posts a topic in the forum
     _ = TopicFactory(forum=f1, poster=user1, type=Topic.TOPIC_POST)
     assert len(Notification.objects.filter(user=user2)) == 0
 
@@ -317,12 +296,13 @@ def test_unsubscribe_from_user(client):
     follow(user2, user1)
 
     action.send(sender=user1, verb="says hi")
+    # check that notification is created when user1 does something
     assert len(Notification.objects.filter(user=user2)) == 1
     Notification.objects.all().delete()
 
     # unsubscribe from user1
     response = get_view_for_user(
-        viewname="notifications:subscription-update",
+        viewname="notifications:subscription-delete",
         client=client,
         method=client.post,
         data={
@@ -330,13 +310,12 @@ def test_unsubscribe_from_user(client):
             "subscription_object": Follow.objects.filter(user=user2)
             .first()
             .id,
-            "action": SubscriptionForm.UNFOLLOW_USER,
         },
         reverse_kwargs={"pk": Follow.objects.filter(user=user2).first().id},
         user=user2,
     )
     assert response.status_code == 302
     assert not is_following(user=user2, obj=user1)
-
+    # check that no notification is created when user1 does something
     action.send(sender=user1, verb="says hi")
     assert len(Notification.objects.filter(user=user2)) == 0
