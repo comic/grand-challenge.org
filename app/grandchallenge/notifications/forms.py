@@ -1,7 +1,9 @@
-from actstream.actions import unfollow
+from actstream.actions import follow, unfollow
 from actstream.models import Follow
 from django import forms
 from django.contrib.auth import get_user_model
+from machina.apps.forum.models import Forum
+from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.notifications.models import Notification
 
@@ -40,35 +42,37 @@ class NotificationForm(forms.Form):
 
 
 class SubscriptionForm(forms.Form):
-    UNFOLLOW_TOPIC = "UNFOLLOW_TOPIC"
-    UNFOLLOW_FORUM = "UNFOLLOW_FORUM"
-    UNFOLLOW_USER = "UNFOLLOW_USER"
-    CHOICES = (
-        (UNFOLLOW_TOPIC, "Unfollow topic"),
-        (UNFOLLOW_FORUM, "Unfollow forum"),
-        (UNFOLLOW_USER, "Unfollow user"),
-    )
     user = forms.ModelChoiceField(
         queryset=get_user_model().objects.all(), widget=forms.HiddenInput()
     )
     subscription_object = forms.ModelChoiceField(
-        queryset=Follow.objects.all(), widget=forms.HiddenInput()
+        queryset=Follow.objects.all(),
+        widget=forms.HiddenInput(),
+        required=False,
     )
-    action = forms.ChoiceField(choices=CHOICES, widget=forms.HiddenInput())
+    topic = forms.ModelChoiceField(
+        queryset=Topic.objects.all(),
+        widget=forms.HiddenInput(),
+        required=False,
+    )
+    forum = forms.ModelChoiceField(
+        queryset=Forum.objects.all(),
+        widget=forms.HiddenInput(),
+        required=False,
+    )
 
-    def update(self):
-        if self.cleaned_data["action"] == SubscriptionForm.UNFOLLOW_TOPIC:
-            unfollow(
-                self.cleaned_data["user"],
-                self.cleaned_data["subscription_object"].follow_object,
+    def unfollow(self):
+        unfollow(
+            self.cleaned_data["user"],
+            self.cleaned_data["subscription_object"].follow_object,
+        )
+
+    def follow(self):
+        if self.cleaned_data["topic"]:
+            follow(
+                self.cleaned_data["user"], self.cleaned_data["topic"],
             )
-        if self.cleaned_data["action"] == SubscriptionForm.UNFOLLOW_FORUM:
-            unfollow(
-                self.cleaned_data["user"],
-                self.cleaned_data["subscription_object"].follow_object,
-            )
-        if self.cleaned_data["action"] == SubscriptionForm.UNFOLLOW_USER:
-            unfollow(
-                self.cleaned_data["user"],
-                self.cleaned_data["subscription_object"].follow_object,
+        elif self.cleaned_data["forum"]:
+            follow(
+                self.cleaned_data["user"], self.cleaned_data["forum"],
             )

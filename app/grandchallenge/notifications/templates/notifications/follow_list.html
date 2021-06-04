@@ -23,11 +23,10 @@
                         <a href="{{ forum.follow_object.get_absolute_url }}">{{ forum.follow_object }}</a>
                     </div>
                     <div  class="d-inline-flex p-2">
-                        <form method="post" action="{% url 'notifications:subscription-update' pk=forum.follow_object.id %}">
+                        <form method="post" action="{% url 'notifications:subscription-delete' pk=forum.follow_object.id %}">
                             {% csrf_token %}
                             <input name="subscription_object" type="hidden" value="{{ forum.id }}">
                             <input name="user" type="hidden" value="{{ forum.user.id }}">
-                            <input name="action" type="hidden" value="{{ unfollow_forum }}">
                             <button type="submit" class="btn btn-xs btn-primary mx-1">
                                 Unsubscribe
                             </button>
@@ -49,11 +48,10 @@
                         <a href="{{ topic.follow_object.get_absolute_url }}">{{ topic.follow_object }}</a>
                      </div>
                       <div  class="d-inline-flex p-2">
-                        <form method="post" action="{% url 'notifications:subscription-update' pk=topic.follow_object.id %}">
+                        <form method="post" action="{% url 'notifications:subscription-delete' pk=topic.follow_object.id %}">
                             {% csrf_token %}
                             <input name="subscription_object" type="hidden" value="{{ topic.id }}">
                             <input name="user" type="hidden" value="{{ topic.user.id }}">
-                            <input name="action" type="hidden" value="{{ unfollow_topic }}">
                             <button type="submit" class="btn btn-xs btn-primary mx-1">
                                 Unsubscribe
                             </button>
@@ -75,11 +73,10 @@
                         {{ user.follow_object|user_profile_link }}
                     </div>
                     <div  class="d-inline-flex p-2">
-                        <form method="post" action="{% url 'notifications:subscription-update' pk=user.follow_object.id %}">
+                        <form method="post" action="{% url 'notifications:subscription-delete' pk=user.follow_object.id %}">
                             {% csrf_token %}
                             <input name="subscription_object" type="hidden" value="{{ user.id }}">
                             <input name="user" type="hidden" value="{{ user.user.id }}">
-                            <input name="action" type="hidden" value="{{ unfollow_user }}">
                             <button type="submit" class="btn btn-xs btn-primary mx-1">
                                 Unsubscribe
                             </button>
