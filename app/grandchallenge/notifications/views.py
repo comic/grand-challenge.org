@@ -133,16 +133,6 @@ class SubscriptionListView(LoginRequiredMixin, ListView):
                         )
                     ).select_related("user")
                 ),
-                "followed_users": prefetch_generic_foreign_key_objects(
-                    Follow.objects.filter(
-                        Q(user=self.request.user)
-                        & Q(
-                            content_type=ContentType.objects.get(
-                                app_label="auth", model="user"
-                            ).id
-                        )
-                    ).select_related("user")
-                ),
             }
         )
         return context

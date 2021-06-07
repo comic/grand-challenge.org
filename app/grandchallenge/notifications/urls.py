@@ -16,7 +16,7 @@ urlpatterns = [
     path(
         "subscriptions/",
         SubscriptionListView.as_view(
-            template_name="notifications/follow_list.html"
+            template_name="notifications/subscription_list.html"
         ),
         name="subscriptions-list",
     ),
