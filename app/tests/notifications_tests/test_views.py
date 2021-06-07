@@ -199,7 +199,7 @@ def test_subscribe_to_forum(client):
     # check that user gets a notification when a topic is posted in forum
     user2 = UserFactory()
     _ = TopicFactory(forum=f, poster=user2, type=Topic.TOPIC_POST)
-    assert len(Notification.objects.filter(user=user1)) == 0
+    assert len(Notification.objects.filter(user=user1)) == 1
 
 
 @pytest.mark.django_db
