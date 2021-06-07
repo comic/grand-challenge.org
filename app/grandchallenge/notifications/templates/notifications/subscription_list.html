@@ -64,28 +64,4 @@
         {% endfor %}
     </ul>
     <br>
-    <h4>Users you follow</h4>
-    <ul class="list-group list-group-flush ml-4">
-        {% for user in followed_users %}
-            <li class="list-group-item p-0">
-                <div class="d-flex justify-content-between">
-                    <div class="pt-3 pl-0">
-                        {{ user.follow_object|user_profile_link }}
-                    </div>
-                    <div  class="d-inline-flex p-2">
-                        <form method="post" action="{% url 'notifications:subscription-delete' pk=user.follow_object.id %}">
-                            {% csrf_token %}
-                            <input name="subscription_object" type="hidden" value="{{ user.id }}">
-                            <input name="user" type="hidden" value="{{ user.user.id }}">
-                            <button type="submit" class="btn btn-xs btn-primary mx-1">
-                                Unsubscribe
-                            </button>
-                        </form>
-                    </div>
-                 </div>
-            </li>
-        {% empty %}
-            <li class="list-group-item">You are not subscribed to any users.</li>
-        {% endfor %}
-    </ul>
 {% endblock %}
