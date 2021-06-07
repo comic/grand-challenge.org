@@ -1,7 +1,6 @@
 import pytest
 from actstream.actions import follow, is_following
 from actstream.models import Follow
-from actstream.signals import action
 from django.conf import settings
 from django.urls import reverse
 from machina.apps.forum.models import Forum
@@ -167,6 +166,7 @@ def test_notification_update_permissions(client, action):
 #         data={"checkbox": notification.id, "delete": True},
 #         user=user1,
 #     )
+#     breakpoint()
 #     assert response.status_code == 403
 #
 #     response = get_view_for_user(
@@ -178,6 +178,48 @@ def test_notification_update_permissions(client, action):
 #     )
 #     breakpoint()
 #     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_subscribe_to_forum(client):
+    user1 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+
+    assert not is_following(user1, f)
+
+    response = get_view_for_user(
+        viewname="notifications:subscription-create",
+        client=client,
+        method=client.post,
+        data={"user": user1.id, "forum": f.id},
+        user=user1,
+    )
+    assert response.status_code == 302
+    assert is_following(user1, f)
+    # check that user gets a notification when a topic is posted in forum
+    user2 = UserFactory()
+    _ = TopicFactory(forum=f, poster=user2, type=Topic.TOPIC_POST)
+    assert len(Notification.objects.filter(user=user1)) == 0
+
+
+@pytest.mark.django_db
+def test_subscribe_to_topic(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    t = TopicFactory(forum=f, poster=user2, type=Topic.TOPIC_POST)
+
+    assert not is_following(user1, t)
+
+    response = get_view_for_user(
+        viewname="notifications:subscription-create",
+        client=client,
+        method=client.post,
+        data={"user": user1.id, "topic": t.id},
+        user=user1,
+    )
+    assert response.status_code == 302
+    assert is_following(user1, t)
 
 
 @pytest.mark.django_db
@@ -286,36 +328,4 @@ def test_unsubscribe_from_forum(client):
     assert is_following(user=user2, obj=f2)
     # check that user no longer receives a notification when someone posts a topic in the forum
     _ = TopicFactory(forum=f1, poster=user1, type=Topic.TOPIC_POST)
-    assert len(Notification.objects.filter(user=user2)) == 0
-
-
-@pytest.mark.django_db
-def test_unsubscribe_from_user(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    follow(user2, user1)
-
-    action.send(sender=user1, verb="says hi")
-    # check that notification is created when user1 does something
-    assert len(Notification.objects.filter(user=user2)) == 1
-    Notification.objects.all().delete()
-
-    # unsubscribe from user1
-    response = get_view_for_user(
-        viewname="notifications:subscription-delete",
-        client=client,
-        method=client.post,
-        data={
-            "user": user2.id,
-            "subscription_object": Follow.objects.filter(user=user2)
-            .first()
-            .id,
-        },
-        reverse_kwargs={"pk": Follow.objects.filter(user=user2).first().id},
-        user=user2,
-    )
-    assert response.status_code == 302
-    assert not is_following(user=user2, obj=user1)
-    # check that no notification is created when user1 does something
-    action.send(sender=user1, verb="says hi")
     assert len(Notification.objects.filter(user=user2)) == 0

@@ -52,7 +52,7 @@ def create_post_action(sender, *, instance, created, **_):
 
 
 @receiver(post_save, sender=Action)
-def create_notification(sender, *, instance, created, **_):
+def create_notification(*, instance, **_):
     if instance.target:
         follower_group = followers(instance.target)
         for follower in follower_group:
