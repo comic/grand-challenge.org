@@ -26,6 +26,7 @@ class UserProfileForm(forms.ModelForm):
             "country",
             "website",
             "display_organizations",
+            "receive_notification_emails",
         )
 
     def __init__(self, *args, **kwargs):

@@ -898,7 +898,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "send_unread_notification_emails": {
         "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
-        "schedule": timedelta(days=7),
+        "schedule": timedelta(days=1),
     },
     "cleanup_stale_uploads": {
         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
