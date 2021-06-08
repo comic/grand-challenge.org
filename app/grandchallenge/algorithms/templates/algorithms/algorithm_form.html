@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    Create An Algorithm - {{ block.super }}
+        {{ object|yesno:"Update,Create"}} Algorithm - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
