@@ -61,18 +61,24 @@ class SubscriptionForm(forms.Form):
         required=False,
     )
 
-    def unfollow(self):
+    def unsubscribe(self):
         unfollow(
             self.cleaned_data["user"],
             self.cleaned_data["subscription_object"].follow_object,
         )
 
-    def follow(self):
+    def subscribe(self):
         if self.cleaned_data["topic"]:
             follow(
-                self.cleaned_data["user"], self.cleaned_data["topic"],
+                user=self.cleaned_data["user"],
+                obj=self.cleaned_data["topic"],
+                actor_only=False,
+                send_action=False,
             )
         elif self.cleaned_data["forum"]:
             follow(
-                self.cleaned_data["user"], self.cleaned_data["forum"],
+                user=self.cleaned_data["user"],
+                obj=self.cleaned_data["forum"],
+                actor_only=False,
+                send_action=False,
             )

@@ -160,7 +160,7 @@ class SubscriptionDelete(
         return reverse("notifications:subscriptions-list")
 
     def form_valid(self, form):
-        form.unfollow()
+        form.unsubscribe()
         return super().form_valid(form)
 
 
@@ -176,5 +176,5 @@ class SubscriptionCreate(
         return reverse("notifications:subscriptions-list")
 
     def form_valid(self, form):
-        form.follow()
+        form.subscribe()
         return super().form_valid(form)
