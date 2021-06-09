@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load profiles %}
+{% load forums %}
 {% load humanize %}
 
 {% block title %}Subscriptions - {{ block.super }}{% endblock %}
@@ -14,20 +15,21 @@
 {% block content %}
     <h2>Your subscriptions</h2>
     <br>
-    <h4>Forums you follow</h4>
-    <ul class="list-group list-group-flush ml-4">
+    <h4>Forums</h4>
+    <ul class="list-group">
         {% for forum in followed_forums %}
-            <li class="list-group-item p-0">
+            <li class="list-group-item p-1 pl-3">
                 <div class="d-flex justify-content-between">
-                    <div class="pt-3 pl-0">
-                        <a href="{{ forum.follow_object.get_absolute_url }}">{{ forum.follow_object }}</a>
+                    <div class="mt-1 pt-2 p-0">
+                        {{ forum.follow_object|forum_link }}
+                        <span class="text-truncate font-italic text-muted align-middle mx-2">subscribed since {{ forum.started|date:'F j, Y' }} | last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}</span>
                     </div>
-                    <div  class="d-inline-flex p-2">
-                        <form method="post" action="{% url 'notifications:subscription-delete' pk=forum.follow_object.id %}">
+                    <div  class="d-inline-flex p-1" style="align-items: center">
+                        <form style="height:fit-content" method="post" action="{% url 'notifications:subscription-delete' pk=forum.follow_object.id %}">
                             {% csrf_token %}
                             <input name="subscription_object" type="hidden" value="{{ forum.id }}">
                             <input name="user" type="hidden" value="{{ forum.user.id }}">
-                            <button type="submit" class="btn btn-xs btn-primary mx-1">
+                            <button type="submit" class="btn btn-xs btn-primary align-middle">
                                 Unsubscribe
                             </button>
                         </form>
@@ -35,33 +37,46 @@
                 </div>
             </li>
         {% empty %}
-            <li class="list-group-item">You are not subscribed to any forums.</li>
+            <br>You are not subscribed to any forums.<br><br>
         {% endfor %}
     </ul>
     <br>
-    <h4>Topics you follow</h4>
-    <ul class="list-group list-group-flush ml-4">
-        {% for topic in followed_topics %}
-            <li class="list-group-item p-0">
-                 <div class="d-flex justify-content-between">
-                     <div class="pt-3 pl-0">
-                        <a href="{{ topic.follow_object.get_absolute_url }}">{{ topic.follow_object }}</a>
-                     </div>
-                      <div  class="d-inline-flex p-2">
-                        <form method="post" action="{% url 'notifications:subscription-delete' pk=topic.follow_object.id %}">
-                            {% csrf_token %}
-                            <input name="subscription_object" type="hidden" value="{{ topic.id }}">
-                            <input name="user" type="hidden" value="{{ topic.user.id }}">
-                            <button type="submit" class="btn btn-xs btn-primary mx-1">
-                                Unsubscribe
-                            </button>
-                        </form>
-                      </div>
-                 </div>
-            </li>
-        {% empty %}
-            <li class="list-group-item">You are not subscribed to any topics.</li>
+    <h4>Topics</h4>
+    {% if not followed_topics %}
+        <br>You are not subscribed to any topics.<br><br>
+    {% else %}
+        <br>
+        <ul class="list-group">
+        {% for forum in followed_forums %}
+            {% get_forum_topics followed_topics forum as forum_topics %}
+            {% if forum_topics %}
+                <h6>Topics from {{ forum.follow_object|forum_link }}</h6>
+                <ul class="list-group">
+                    {% for topic in forum_topics %}
+                            <li class="list-group-item p-1 pl-3">
+                                 <div class="d-flex justify-content-between">
+                                     <div class="mt-1 pt-2 p-0">
+                                        <a href="{{ topic.follow_object.get_absolute_url }}">{{ topic.follow_object }}</a>
+                                        <span class="text-muted text-truncate font-italic align-middle mx-2">subscribed since {{ topic.started|date:'F j, Y'  }} | last activity on {{ topic.follow_object.last_post_on|date:'F j, Y, P' }}</span>
+                                     </div>
+                                      <div  class="d-inline-flex p-1" style="align-items: center">
+                                        <form style="height:fit-content" method="post" action="{% url 'notifications:subscription-delete' pk=topic.follow_object.id %}">
+                                            {% csrf_token %}
+                                            <input name="subscription_object" type="hidden" value="{{ topic.id }}">
+                                            <input name="user" type="hidden" value="{{ topic.user.id }}">
+                                            <button type="submit" class="btn btn-xs btn-primary align-middle">
+                                                Unsubscribe
+                                            </button>
+                                        </form>
+                                      </div>
+                                 </div>
+                            </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <br>
         {% endfor %}
-    </ul>
-    <br>
+        </ul>
+        <br>
+    {% endif %}
 {% endblock %}
