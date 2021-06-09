@@ -23,7 +23,14 @@ class AnswersAdmin(GuardedModelAdmin):
     )
     list_filter = ("question__reader_study__slug",)
     list_select_related = ("question__reader_study",)
-    readonly_fields = ("images", "creator", "answer", "question", "score")
+    readonly_fields = (
+        "images",
+        "creator",
+        "answer",
+        "answer_image",
+        "question",
+        "score",
+    )
     search_fields = ("creator__username",)
 
 
