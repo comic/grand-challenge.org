@@ -18,8 +18,8 @@
     <form action="{% url 'notifications:list' %}" method="post">
         <div class="row">
         <div class="col-6">
-            <input class="checkbox-inline ml-3 mt-3" type="checkbox" id="flexCheckDefault" onClick="toggleCheckboxes(this)"/>
-            <label class="form-check-label ml-1" for="flexCheckDefault">
+            <input class="checkbox-inline ml-3 mt-3" type="checkbox" id="SelectCheckboxes" onClick="toggleCheckboxes(this)"/>
+            <label class="form-check-label ml-1" id="LabelSelectAll" for="SelectCheckboxes">
                 Select all
             </label>
         </div>
@@ -95,6 +95,12 @@
           for(var i=0, n=checkboxes.length;i<n;i++) {
             checkboxes[i].checked = source.checked;
             }
+          n_checked = $('input[name="checkbox"]:checked').length
+          if (n_checked == 0) {
+             document.getElementById('LabelSelectAll').innerHTML =  'Select all'
+          } else {
+             document.getElementById('LabelSelectAll').innerHTML = n_checked + ' selected'
+          }
         }
     </script>
 {% endblock %}
