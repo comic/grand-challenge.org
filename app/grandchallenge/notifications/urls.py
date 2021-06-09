@@ -2,7 +2,7 @@ from django.urls import path
 
 from grandchallenge.notifications.views import (
     NotificationList,
-    NotificationUpdate,
+    # NotificationUpdate,
     SubscriptionCreate,
     SubscriptionDelete,
     SubscriptionListView,
@@ -12,7 +12,7 @@ app_name = "notifications"
 
 urlpatterns = [
     path("", NotificationList.as_view(), name="list"),
-    path("<int:pk>/update", NotificationUpdate.as_view(), name="update"),
+    # path("<int:pk>/update", NotificationUpdate.as_view(), name="update"),
     path(
         "subscriptions/",
         SubscriptionListView.as_view(

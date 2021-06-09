@@ -10,7 +10,7 @@ from guardian.mixins import (
 )
 
 from grandchallenge.notifications.forms import (
-    NotificationForm,
+    # NotificationForm,
     SubscriptionForm,
 )
 from grandchallenge.notifications.models import Notification
@@ -38,9 +38,9 @@ class NotificationList(LoginRequiredMixin, ListView):
         context.update(
             {
                 "notifications_last_read_at": profile.notifications_last_read_at,
-                "mark_as_read_action": NotificationForm.MARK_READ,
-                "mark_as_unread_action": NotificationForm.MARK_UNREAD,
-                "delete_notification": NotificationForm.REMOVE,
+                # "mark_as_read_action": NotificationForm.MARK_READ,
+                # "mark_as_unread_action": NotificationForm.MARK_UNREAD,
+                # "delete_notification": NotificationForm.REMOVE,
             }
         )
         # TODO side-effect, not nice
@@ -77,30 +77,30 @@ class NotificationList(LoginRequiredMixin, ListView):
         return HttpResponseRedirect(reverse("notifications:list"))
 
 
-class NotificationUpdate(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    FormView,
-):
-    form_class = NotificationForm
-    template_name = "notifications/notification_update_form.html"
-    success_message = "Notification successfully updated"
-    permission_required = "change_notification"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        form = self.get_form()
-        form.full_clean()
-        return form.cleaned_data["notification"]
-
-    def get_success_url(self):
-        return reverse("notifications:list")
-
-    def form_valid(self, form):
-        form.update()
-        return super().form_valid(form)
+# class NotificationUpdate(
+#     LoginRequiredMixin,
+#     ObjectPermissionRequiredMixin,
+#     SuccessMessageMixin,
+#     FormView,
+# ):
+#     form_class = NotificationForm
+#     template_name = "notifications/notification_update_form.html"
+#     success_message = "Notification successfully updated"
+#     permission_required = "change_notification"
+#     raise_exception = True
+#     login_url = reverse_lazy("account_login")
+#
+#     def get_permission_object(self):
+#         form = self.get_form()
+#         form.full_clean()
+#         return form.cleaned_data["notification"]
+#
+#     def get_success_url(self):
+#         return reverse("notifications:list")
+#
+#     def form_valid(self, form):
+#         form.update()
+#         return super().form_valid(form)
 
 
 class SubscriptionListView(LoginRequiredMixin, ListView):
