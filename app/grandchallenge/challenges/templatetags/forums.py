@@ -53,9 +53,18 @@ def forum_link(forum: Union[Forum, None]) -> str:
 
 
 @register.simple_tag
-def get_forum_topics(followed_topics, forum):
+def get_forum_specific_topics(followed_topics, forum):
     topics_for_forum = []
     for topic in followed_topics:
-        if topic.follow_object.forum == forum.follow_object:
+        if topic.follow_object.forum == forum:
             topics_for_forum.append(topic)
     return topics_for_forum
+
+
+@register.filter
+def get_forums(followed_topics):
+    forums = []
+    for topic in followed_topics:
+        if topic.follow_object.forum not in forums:
+            forums.append(topic.follow_object.forum)
+    return forums

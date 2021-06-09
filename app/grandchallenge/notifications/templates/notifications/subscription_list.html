@@ -40,17 +40,16 @@
             <br>You are not subscribed to any forums.<br><br>
         {% endfor %}
     </ul>
-    <br>
-    <h4>Topics</h4>
+    <br><br>
+    <h4 class="pb-2 text-primary">Topics</h4>
     {% if not followed_topics %}
         <br>You are not subscribed to any topics.<br><br>
     {% else %}
-        <br>
         <ul class="list-group">
-        {% for forum in followed_forums %}
-            {% get_forum_topics followed_topics forum as forum_topics %}
+        {% for forum in followed_topics|get_forums %}
+            {% get_forum_specific_topics followed_topics forum as forum_topics %}
             {% if forum_topics %}
-                <h6>Topics from {{ forum.follow_object|forum_link }}</h6>
+                <h6>Topics from {{ forum|forum_link }}</h6>
                 <ul class="list-group">
                     {% for topic in forum_topics %}
                             <li class="list-group-item p-1 pl-3">
