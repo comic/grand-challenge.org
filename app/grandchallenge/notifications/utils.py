@@ -7,22 +7,21 @@ from django.db.models.fields.related_descriptors import (
 )
 
 
-def _queryset_foreign_keys(queryset):
+# Code in this file was adapted from https://djangosnippets.org/snippets/2492/
+# and https://andrew.hawker.io/writings/2020/11/18/django-activity-stream-prefetch-generic-foreign-key/
+
+
+def _queryset_foreign_keys(queryset, generic_fk):
     fks = {}
-    for name, fk in queryset.model.__dict__.items():
-        if not isinstance(fk, ForwardManyToOneDescriptor):
-            continue
-        fks[name] = fk
-    return fks
-
-
-def _queryset_generic_foreign_keys(queryset):
-    gfks = {}
     for name, field in queryset.model.__dict__.items():
-        if not isinstance(field, GenericForeignKey):
+        if not generic_fk and not isinstance(
+            field, ForwardManyToOneDescriptor
+        ):
             continue
-        gfks[name] = field
-    return gfks
+        elif generic_fk and not isinstance(field, GenericForeignKey):
+            continue
+        fks[name] = field
+    return fks
 
 
 def _content_type_to_content_mapping_for_nested_gfks(queryset, fks):
@@ -34,19 +33,11 @@ def _content_type_to_content_mapping_for_nested_gfks(queryset, fks):
                 if not isinstance(fk, GenericForeignKey):
                     continue
                 gfks[name] = fk
-                related_content_type_id = getattr(
-                    weak_model.action,
-                    fk_field.field.related_model._meta.get_field(
-                        fk.ct_field
-                    ).get_attname(),
-                )
-                if not related_content_type_id:
-                    continue
-                related_content_type = ContentType.objects.get_for_id(
-                    related_content_type_id
-                )
-                related_object_id = int(
-                    getattr(weak_model.action, fk.fk_field)
+                (
+                    related_content_type,
+                    related_object_id,
+                ) = _get_related_content_type_and_related_object_pk(
+                    weak_model.action, fk_field.field.related_model, fk
                 )
                 data[related_content_type].append(related_object_id)
     return data, gfks
@@ -54,7 +45,6 @@ def _content_type_to_content_mapping_for_nested_gfks(queryset, fks):
 
 def _content_type_to_content_mapping_for_gfks(queryset, gfks):
     data = collections.defaultdict(list)
-
     for (
         _model,
         _field_name,
@@ -62,31 +52,38 @@ def _content_type_to_content_mapping_for_gfks(queryset, gfks):
         object_pk,
     ) in _queryset_gfk_content_generator(queryset, gfks):
         data[content_type].append(object_pk)
-
     return data
+
+
+def _get_related_content_type_and_related_object_pk(model, fk_field, fk):
+    related_content_type_id = getattr(
+        model, fk_field._meta.get_field(fk.ct_field).get_attname(),
+    )
+    related_object_id = int(getattr(model, fk.fk_field))
+    try:
+        related_content_type = ContentType.objects.get_for_id(
+            related_content_type_id
+        )
+    except Exception:
+        related_content_type = None
+
+    return related_content_type, related_object_id
 
 
 def _queryset_gfk_content_generator(queryset, gfks):
     for model in queryset:
         for field_name, field in gfks.items():
-            content_type_id = getattr(
-                model,
-                field.model._meta.get_field(field.ct_field).get_attname(),
+            (
+                content_type,
+                object_pk,
+            ) = _get_related_content_type_and_related_object_pk(
+                model, field.model, field
             )
-            if not content_type_id:
-                continue
-
-            content_type = ContentType.objects.get_for_id(content_type_id)
-            object_pk = str(getattr(model, field.fk_field))
-
             yield (model, field_name, content_type, object_pk)
 
 
 def prefetch_notification_action(queryset):
-    # adapted from https://djangosnippets.org/snippets/2492/
-    # and https://andrew.hawker.io/writings/2020/11/18/django-activity-stream-prefetch-generic-foreign-key/
-
-    fks = _queryset_foreign_keys(queryset)
+    fks = _queryset_foreign_keys(queryset, generic_fk=False)
     data, gfks = _content_type_to_content_mapping_for_nested_gfks(
         queryset, fks
     )
@@ -99,33 +96,23 @@ def prefetch_notification_action(queryset):
         for model in models:
             for weak_model in queryset:
                 for gfk_name, gfk_field in gfks.items():
-                    related_content_type_id = getattr(
-                        weak_model.action,
-                        gfk_field.model._meta.get_field(
-                            gfk_field.ct_field
-                        ).get_attname(),
+                    (
+                        related_content_type,
+                        related_object_id,
+                    ) = _get_related_content_type_and_related_object_pk(
+                        weak_model.action, gfk_field.model, gfk_field
                     )
-                    if not related_content_type_id:
-                        continue
-                    related_content_type = ContentType.objects.get_for_id(
-                        related_content_type_id
-                    )
-                    related_object_id = int(
-                        getattr(weak_model.action, gfk_field.fk_field)
-                    )
-
                     if related_object_id != model.pk:
                         continue
                     if related_content_type != content_type:
                         continue
-
                     setattr(weak_model.action, gfk_name, model)
+
     return queryset
 
 
 def prefetch_generic_foreign_key_objects(queryset):
-    gfks = _queryset_generic_foreign_keys(queryset)
-
+    gfks = _queryset_foreign_keys(queryset, generic_fk=True)
     gfks_data = _content_type_to_content_mapping_for_gfks(queryset, gfks)
 
     for content_type, object_pks in gfks_data.items():
