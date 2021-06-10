@@ -123,7 +123,7 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
         return any(k for k in self.request.GET if k.lower() != "page")
 
     def _get_page(self):
-        int_qs = Algorithm.objects.filter().order_by("-created")
+        int_qs = super().get_queryset().order_by("-created")
         self.int_filter = AlgorithmFilter(self.request.GET, int_qs,)
 
         total_count = int_qs.count()
