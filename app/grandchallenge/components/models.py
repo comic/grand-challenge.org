@@ -82,14 +82,13 @@ class InterfaceKindChoices(models.TextChoices):
 class InterfaceSuperKindChoices(models.TextChoices):
     IMAGE = "I", "Image"
     FILE = "F", "File"
-    VALUE = "v", "Value"
+    VALUE = "V", "Value"
 
 
 class InterfaceKind:
     """Interface kind."""
 
     InterfaceKindChoices = InterfaceKindChoices
-    InterfaceSuperKindChoices = InterfaceSuperKindChoices
 
     @staticmethod
     def interface_type_file():
@@ -380,11 +379,11 @@ class ComponentInterface(models.Model):
     def super_kind(self):
         if self.save_in_object_store:
             if self.is_image_kind:
-                return InterfaceKind.InterfaceSuperKindChoices.IMAGE
+                return InterfaceSuperKindChoices.IMAGE
             else:
-                return InterfaceKind.InterfaceSuperKindChoices.FILE
+                return InterfaceSuperKindChoices.FILE
         else:
-            return InterfaceKind.InterfaceSuperKindChoices.VALUE
+            return InterfaceSuperKindChoices.VALUE
 
     @property
     def save_in_object_store(self):
