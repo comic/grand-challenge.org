@@ -11,7 +11,6 @@ from django.core.exceptions import (
 )
 from django.core.paginator import EmptyPage, Paginator
 from django.db import transaction
-from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.http import (
     Http404,
@@ -107,10 +106,7 @@ class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
         return any(k for k in self.request.GET if k.lower() != "page")
 
     def _get_page(self):
-        int_qs = ReaderStudy.objects.filter(
-            Q(readers_group__in=self.request.user.groups.all())
-            | Q(editors_group__in=self.request.user.groups.all())
-        ).order_by("-created")
+        int_qs = super().get_queryset().order_by("-created")
         self.int_filter = ReaderStudyFilter(self.request.GET, int_qs)
 
         total_count = int_qs.count()
