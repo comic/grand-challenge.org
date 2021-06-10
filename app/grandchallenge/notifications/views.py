@@ -3,9 +3,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models.query_utils import Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.views.generic import FormView, ListView
 from guardian.mixins import (
+    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
@@ -21,15 +22,13 @@ from grandchallenge.notifications.utils import (
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
-class NotificationList(LoginRequiredMixin, ListView):
+class NotificationList(PermissionListMixin, ListView):
     model = Notification
+    permission_required = "change_notification"
 
     def get_queryset(self):
         return prefetch_notification_action(
-            super()
-            .get_queryset()
-            .filter(user=self.request.user)
-            .order_by("-action__timestamp")
+            super().get_queryset().order_by("-action__timestamp")
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -56,25 +55,25 @@ class NotificationList(LoginRequiredMixin, ListView):
             action = "mark_unread"
 
         selected_notifications = request.POST.getlist("checkbox")
-        if action == "delete":
-            Notification.objects.filter(
-                user=request.user, id__in=selected_notifications
-            ).delete()
-        elif action == "mark_read":
-            notifications = Notification.objects.filter(
-                user=request.user, id__in=selected_notifications
-            ).all()
+        notifications = Notification.objects.filter(
+            user=request.user, id__in=selected_notifications
+        ).all()
+
+        if not notifications:
+            return HttpResponseForbidden()
+        else:
             for notification in notifications:
-                notification.read = True
-                notification.save()
-        elif action == "mark_unread":
-            notifications = Notification.objects.filter(
-                user=request.user, id__in=selected_notifications
-            ).all()
-            for notification in notifications:
-                notification.read = False
-                notification.save()
-        return HttpResponseRedirect(reverse("notifications:list"))
+                if notification.user != self.request.user:
+                    return HttpResponseForbidden()
+                if action == "delete":
+                    notification.delete()
+                elif action == "mark_read":
+                    notification.read = True
+                    notification.save()
+                elif action == "mark_unread":
+                    notification.read = False
+                    notification.save()
+            return HttpResponseRedirect(reverse("notifications:list"))
 
 
 # class NotificationUpdate(
