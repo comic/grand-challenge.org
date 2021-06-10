@@ -4,9 +4,12 @@ import pytest
 from django.utils import timezone
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+    InterfaceSuperKindChoices,
+)
 from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import EvaluationFactory
 
 
@@ -70,27 +73,49 @@ def test_average_duration_filtering():
     ).average_duration() == timedelta(minutes=5)
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
-    "kind,object_store_required",
+    "kind,object_store_required,is_image",
     (
-        (InterfaceKind.InterfaceKindChoices.CSV, True),
-        (InterfaceKind.InterfaceKindChoices.ZIP, True),
-        (InterfaceKind.InterfaceKindChoices.JSON, False),
-        (InterfaceKind.InterfaceKindChoices.SEGMENTATION, True),
-        (InterfaceKind.InterfaceKindChoices.IMAGE, True),
-        (InterfaceKind.InterfaceKindChoices.HEAT_MAP, True),
-        (InterfaceKind.InterfaceKindChoices.BOOL, False),
+        (InterfaceKindChoices.CSV, True, False),
+        (InterfaceKindChoices.ZIP, True, False),
+        (InterfaceKindChoices.JSON, False, False),
+        (InterfaceKindChoices.IMAGE, True, True),
+        (InterfaceKindChoices.HEAT_MAP, True, True),
+        (InterfaceKindChoices.SEGMENTATION, True, True),
+        (InterfaceKindChoices.STRING, False, False),
+        (InterfaceKindChoices.INTEGER, False, False),
+        (InterfaceKindChoices.FLOAT, False, False),
+        (InterfaceKindChoices.BOOL, False, False),
+        (InterfaceKindChoices.CHOICE, False, False),
+        (InterfaceKindChoices.MULTIPLE_CHOICE, False, False),
+        (InterfaceKindChoices.TWO_D_BOUNDING_BOX, False, False),
+        (InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES, False, False),
+        (InterfaceKindChoices.DISTANCE_MEASUREMENT, False, False),
+        (InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS, False, False),
+        (InterfaceKindChoices.POINT, False, False),
+        (InterfaceKindChoices.MULTIPLE_POINTS, False, False),
+        (InterfaceKindChoices.POLYGON, False, False),
+        (InterfaceKindChoices.MULTIPLE_POLYGONS, False, False),
     ),
 )
-def test_save_in_object_store(kind, object_store_required):
-    ci = ComponentInterfaceFactory(kind=kind, store_in_database=True)
+def test_save_in_object_store(kind, object_store_required, is_image):
+    ci = ComponentInterface(kind=kind, store_in_database=True)
 
     if object_store_required:
         assert ci.save_in_object_store is True
+        if is_image:
+            assert ci.super_kind == InterfaceSuperKindChoices.IMAGE
+        else:
+            assert ci.super_kind == InterfaceSuperKindChoices.FILE
         ci.store_in_database = False
-        assert ci.save_in_object_store is True
     else:
         assert ci.save_in_object_store is False
+        assert is_image is False  # Shouldn't happen!
+        assert ci.super_kind == InterfaceSuperKindChoices.VALUE
         ci.store_in_database = False
-        assert ci.save_in_object_store is True
+
+    assert ci.save_in_object_store is True
+    if is_image:
+        assert ci.super_kind == InterfaceSuperKindChoices.IMAGE
+    else:
+        assert ci.super_kind == InterfaceSuperKindChoices.FILE
