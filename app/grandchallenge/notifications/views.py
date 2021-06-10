@@ -22,7 +22,7 @@ from grandchallenge.notifications.utils import (
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
-class NotificationList(PermissionListMixin, ListView):
+class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Notification
     permission_required = "change_notification"
 
