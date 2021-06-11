@@ -203,48 +203,52 @@
 <span class="n">DEFAULT_OUTPUT_INTERFACE_SLUG</span> <span class="o">=</span> <span class="s2">&quot;generic-overlay&quot;</span>
 
 
+<div class="viewcode-block" id="InterfaceKindChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKindChoices">[docs]</a><span class="k">class</span> <span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Interface kind choices.&quot;&quot;&quot;</span>
+
+    <span class="n">STRING</span> <span class="o">=</span> <span class="s2">&quot;STR&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;String&quot;</span><span class="p">)</span>
+    <span class="n">INTEGER</span> <span class="o">=</span> <span class="s2">&quot;INT&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Integer&quot;</span><span class="p">)</span>
+    <span class="n">FLOAT</span> <span class="o">=</span> <span class="s2">&quot;FLT&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Float&quot;</span><span class="p">)</span>
+    <span class="n">BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Bool&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Annotation Types</span>
+    <span class="n">TWO_D_BOUNDING_BOX</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;2D bounding box&quot;</span><span class="p">)</span>
+    <span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span> <span class="o">=</span> <span class="s2">&quot;M2DB&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">)</span>
+    <span class="n">DISTANCE_MEASUREMENT</span> <span class="o">=</span> <span class="s2">&quot;DIST&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Distance measurement&quot;</span><span class="p">)</span>
+    <span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;MDIS&quot;</span><span class="p">,</span>
+        <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Point&quot;</span><span class="p">)</span>
+    <span class="n">MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple points&quot;</span><span class="p">)</span>
+    <span class="n">POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Polygon&quot;</span><span class="p">)</span>
+    <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple polygons&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Choice Types</span>
+    <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Choice&quot;</span><span class="p">)</span>
+    <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple choice&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Image types</span>
+    <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;IMG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Image&quot;</span><span class="p">)</span>
+    <span class="n">SEGMENTATION</span> <span class="o">=</span> <span class="s2">&quot;SEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Segmentation&quot;</span><span class="p">)</span>
+    <span class="n">HEAT_MAP</span> <span class="o">=</span> <span class="s2">&quot;HMAP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Heat Map&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Legacy support</span>
+    <span class="n">JSON</span> <span class="o">=</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;JSON file&quot;</span><span class="p">)</span>
+    <span class="n">CSV</span> <span class="o">=</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;CSV file&quot;</span><span class="p">)</span>
+    <span class="n">ZIP</span> <span class="o">=</span> <span class="s2">&quot;ZIP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;ZIP file&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InterfaceSuperKindChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceSuperKindChoices">[docs]</a><span class="k">class</span> <span class="nc">InterfaceSuperKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span>
+    <span class="n">FILE</span> <span class="o">=</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;File&quot;</span>
+    <span class="n">VALUE</span> <span class="o">=</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span></div>
+
+
 <div class="viewcode-block" id="InterfaceKind"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind">[docs]</a><span class="k">class</span> <span class="nc">InterfaceKind</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Interface kind.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="InterfaceKind.InterfaceKindChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.InterfaceKindChoices">[docs]</a>    <span class="k">class</span> <span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Interface kind choices.&quot;&quot;&quot;</span>
-
-        <span class="n">STRING</span> <span class="o">=</span> <span class="s2">&quot;STR&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;String&quot;</span><span class="p">)</span>
-        <span class="n">INTEGER</span> <span class="o">=</span> <span class="s2">&quot;INT&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Integer&quot;</span><span class="p">)</span>
-        <span class="n">FLOAT</span> <span class="o">=</span> <span class="s2">&quot;FLT&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Float&quot;</span><span class="p">)</span>
-        <span class="n">BOOL</span> <span class="o">=</span> <span class="s2">&quot;BOOL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Bool&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Annotation Types</span>
-        <span class="n">TWO_D_BOUNDING_BOX</span> <span class="o">=</span> <span class="s2">&quot;2DBB&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;2D bounding box&quot;</span><span class="p">)</span>
-        <span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span> <span class="o">=</span> <span class="s2">&quot;M2DB&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple 2D bounding boxes&quot;</span><span class="p">)</span>
-        <span class="n">DISTANCE_MEASUREMENT</span> <span class="o">=</span> <span class="s2">&quot;DIST&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Distance measurement&quot;</span><span class="p">)</span>
-        <span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot;MDIS&quot;</span><span class="p">,</span>
-            <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple distance measurements&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">POINT</span> <span class="o">=</span> <span class="s2">&quot;POIN&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Point&quot;</span><span class="p">)</span>
-        <span class="n">MULTIPLE_POINTS</span> <span class="o">=</span> <span class="s2">&quot;MPOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple points&quot;</span><span class="p">)</span>
-        <span class="n">POLYGON</span> <span class="o">=</span> <span class="s2">&quot;POLY&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Polygon&quot;</span><span class="p">)</span>
-        <span class="n">MULTIPLE_POLYGONS</span> <span class="o">=</span> <span class="s2">&quot;MPOL&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple polygons&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Choice Types</span>
-        <span class="n">CHOICE</span> <span class="o">=</span> <span class="s2">&quot;CHOI&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Choice&quot;</span><span class="p">)</span>
-        <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple choice&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Image types</span>
-        <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;IMG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Image&quot;</span><span class="p">)</span>
-        <span class="n">SEGMENTATION</span> <span class="o">=</span> <span class="s2">&quot;SEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Segmentation&quot;</span><span class="p">)</span>
-        <span class="n">HEAT_MAP</span> <span class="o">=</span> <span class="s2">&quot;HMAP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Heat Map&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Legacy support</span>
-        <span class="n">JSON</span> <span class="o">=</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;JSON file&quot;</span><span class="p">)</span>
-        <span class="n">CSV</span> <span class="o">=</span> <span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;CSV file&quot;</span><span class="p">)</span>
-        <span class="n">ZIP</span> <span class="o">=</span> <span class="s2">&quot;ZIP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;ZIP file&quot;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="InterfaceKind.InterfaceSuperKindChoices"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.InterfaceSuperKindChoices">[docs]</a>    <span class="k">class</span> <span class="nc">InterfaceSuperKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
-        <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span>
-        <span class="n">FILE</span> <span class="o">=</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;File&quot;</span>
-        <span class="n">VALUE</span> <span class="o">=</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span></div>
+    <span class="n">InterfaceKindChoices</span> <span class="o">=</span> <span class="n">InterfaceKindChoices</span>
 
 <div class="viewcode-block" id="InterfaceKind.interface_type_file"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">interface_type_file</span><span class="p">():</span>
@@ -468,15 +472,7 @@
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-        <span class="p">)</span></div>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">super_kind</span><span class="p">(</span><span class="n">kind</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">IMAGE</span>
-        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">FILE</span>
-        <span class="k">return</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">VALUE</span></div>
+        <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ComponentInterface"><a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface">[docs]</a><span class="k">class</span> <span class="nc">ComponentInterface</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
@@ -541,7 +537,13 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_in_object_store</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">IMAGE</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">FILE</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">VALUE</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">save_in_object_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
