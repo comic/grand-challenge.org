@@ -10,7 +10,6 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.core.files import File
-from django.core.paginator import EmptyPage, Paginator
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -76,7 +75,10 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.core.views import (
+    PaginatedListView,
+    PermissionRequestUpdate,
+)
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
@@ -105,7 +107,7 @@ class AlgorithmCreate(
         return response
 
 
-class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
+class AlgorithmList(FilterMixin, PermissionListMixin, PaginatedListView):
     model = Algorithm
     permission_required = {
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
@@ -114,47 +116,11 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     filter_class = AlgorithmFilter
     paginate_by = 40
 
-    @property
-    def _current_page(self):
-        return int(self.request.GET.get("page", 1))
-
-    @property
-    def _filters_applied(self):
-        return any(k for k in self.request.GET if k.lower() != "page")
-
-    def _get_page(self):
-        int_qs = super().get_queryset().order_by("-created")
-        self.int_filter = AlgorithmFilter(self.request.GET, int_qs,)
-
-        total_count = int_qs.count()
-
-        int_paginator = Paginator(self.int_filter.qs, self.paginate_by)
-
-        num_pages = int_paginator.num_pages
-        num_results = int_paginator.count
-
-        try:
-            int_page = int_paginator.page(self._current_page)
-        except EmptyPage:
-            int_page = []
-
-        return int_page, num_pages, num_results, total_count
-
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        page_obj, num_pages, num_results, total_count = self._get_page()
 
         context.update(
             {
-                "filter": self.int_filter,
-                "filters_applied": self._filters_applied,
-                "page_obj": page_obj,
-                "num_pages": num_pages,
-                "num_results": num_results,
-                "total_count": total_count,
-                "current_page": self._current_page,
-                "next_page": self._current_page + 1,
-                "previous_page": self._current_page - 1,
                 "jumbotron_title": "Algorithms",
                 "jumbotron_description": format_html(
                     (
