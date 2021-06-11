@@ -3,12 +3,22 @@
 {% block title %}Blogs - {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active">Blogs</li>
-    </ol>
+    {% if tag %}
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'blogs:list' %}">Blogs</a></li>
+            <li class="breadcrumb-item active">Tag: {{ tag }}</li>
+        </ol>
+    {% else %}
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active">Blogs</li>
+        </ol>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
+
+    {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
+
     {% for object in object_list %}
         <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
             <div class="col-lg-6 py-5">

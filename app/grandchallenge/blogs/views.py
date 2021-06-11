@@ -1,24 +1,17 @@
-from django.db.models import Q
 from django.views.generic import DetailView, ListView
 
+from grandchallenge.blogs.filters import BlogFilter
 from grandchallenge.blogs.models import Post
+from grandchallenge.core.filters import FilterMixin
 
 
-class PostList(ListView):
+class PostList(FilterMixin, ListView):
     model = Post
+    filter_class = BlogFilter
 
     def get_queryset(self):
         qs = super().get_queryset()
         qs = qs.filter(published=True)
-        return qs
-
-
-class PostTagList(ListView):
-    model = Post
-
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset(*args, **kwargs)
-        qs = qs.filter(Q(published=True) & Q(tags__slug=self.kwargs["slug"]))
         return qs
 
 
