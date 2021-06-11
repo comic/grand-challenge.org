@@ -43,48 +43,52 @@ logger = logging.getLogger(__name__)
 DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
+class InterfaceKindChoices(models.TextChoices):
+    """Interface kind choices."""
+
+    STRING = "STR", _("String")
+    INTEGER = "INT", _("Integer")
+    FLOAT = "FLT", _("Float")
+    BOOL = "BOOL", _("Bool")
+
+    # Annotation Types
+    TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
+    MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
+    DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
+    MULTIPLE_DISTANCE_MEASUREMENTS = (
+        "MDIS",
+        _("Multiple distance measurements"),
+    )
+    POINT = "POIN", _("Point")
+    MULTIPLE_POINTS = "MPOI", _("Multiple points")
+    POLYGON = "POLY", _("Polygon")
+    MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
+
+    # Choice Types
+    CHOICE = "CHOI", _("Choice")
+    MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
+
+    # Image types
+    IMAGE = "IMG", _("Image")
+    SEGMENTATION = "SEG", _("Segmentation")
+    HEAT_MAP = "HMAP", _("Heat Map")
+
+    # Legacy support
+    JSON = "JSON", _("JSON file")
+    CSV = "CSV", _("CSV file")
+    ZIP = "ZIP", _("ZIP file")
+
+
+class InterfaceSuperKindChoices(models.TextChoices):
+    IMAGE = "I", "Image"
+    FILE = "F", "File"
+    VALUE = "V", "Value"
+
+
 class InterfaceKind:
     """Interface kind."""
 
-    class InterfaceKindChoices(models.TextChoices):
-        """Interface kind choices."""
-
-        STRING = "STR", _("String")
-        INTEGER = "INT", _("Integer")
-        FLOAT = "FLT", _("Float")
-        BOOL = "BOOL", _("Bool")
-
-        # Annotation Types
-        TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
-        MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
-        DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
-        MULTIPLE_DISTANCE_MEASUREMENTS = (
-            "MDIS",
-            _("Multiple distance measurements"),
-        )
-        POINT = "POIN", _("Point")
-        MULTIPLE_POINTS = "MPOI", _("Multiple points")
-        POLYGON = "POLY", _("Polygon")
-        MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
-
-        # Choice Types
-        CHOICE = "CHOI", _("Choice")
-        MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
-
-        # Image types
-        IMAGE = "IMG", _("Image")
-        SEGMENTATION = "SEG", _("Segmentation")
-        HEAT_MAP = "HMAP", _("Heat Map")
-
-        # Legacy support
-        JSON = "JSON", _("JSON file")
-        CSV = "CSV", _("CSV file")
-        ZIP = "ZIP", _("ZIP file")
-
-    class InterfaceSuperKindChoices(models.TextChoices):
-        IMAGE = "I", "Image"
-        FILE = "F", "File"
-        VALUE = "v", "Value"
+    InterfaceKindChoices = InterfaceKindChoices
 
     @staticmethod
     def interface_type_file():
@@ -310,14 +314,6 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
         )
 
-    @staticmethod
-    def super_kind(kind):
-        if kind in InterfaceKind.interface_type_image():
-            return InterfaceKind.InterfaceSuperKindChoices.IMAGE
-        if kind in InterfaceKind.interface_type_file():
-            return InterfaceKind.InterfaceSuperKindChoices.FILE
-        return InterfaceKind.InterfaceSuperKindChoices.VALUE
-
 
 class ComponentInterface(models.Model):
     Kind = InterfaceKind.InterfaceKindChoices
@@ -381,7 +377,13 @@ class ComponentInterface(models.Model):
 
     @property
     def super_kind(self):
-        return InterfaceKind.super_kind(self.kind)
+        if self.save_in_object_store:
+            if self.is_image_kind:
+                return InterfaceSuperKindChoices.IMAGE
+            else:
+                return InterfaceSuperKindChoices.FILE
+        else:
+            return InterfaceSuperKindChoices.VALUE
 
     @property
     def save_in_object_store(self):
