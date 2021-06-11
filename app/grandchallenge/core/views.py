@@ -8,11 +8,10 @@ from django.core.exceptions import (
     NON_FIELD_ERRORS,
     ValidationError,
 )
-from django.core.paginator import EmptyPage, Paginator
 from django.forms.utils import ErrorList
 from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
-from django.views.generic import ListView, TemplateView, UpdateView
+from django.views.generic import TemplateView, UpdateView
 from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
@@ -204,48 +203,3 @@ class PermissionRequestUpdate(
             f"{self.redirect_namespace}:permission-request-list",
             kwargs={"slug": self.base_object.slug},
         )
-
-
-class PaginatedListView(ListView):
-    @property
-    def _current_page(self):
-        return int(self.request.GET.get("page", 1))
-
-    @property
-    def _filters_applied(self):
-        return any(k for k in self.request.GET if k.lower() != "page")
-
-    def _get_page(self):
-        int_qs = self.get_queryset().order_by("-created")
-        self.int_filter = self.filter_class(self.request.GET, int_qs,)
-
-        total_count = int_qs.count()
-
-        int_paginator = Paginator(self.int_filter.qs, self.paginate_by)
-
-        num_pages = int_paginator.num_pages
-        num_results = int_paginator.count
-
-        try:
-            int_page = int_paginator.page(self._current_page)
-        except EmptyPage:
-            int_page = []
-
-        return int_page, num_pages, num_results, total_count
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        page_obj, num_pages, num_results, total_count = self._get_page()
-
-        context.update(
-            {
-                "page_obj": page_obj,
-                "num_pages": num_pages,
-                "num_results": num_results,
-                "total_count": total_count,
-                "current_page": self._current_page,
-                "next_page": self._current_page + 1,
-                "previous_page": self._current_page - 1,
-            }
-        )
-        return context

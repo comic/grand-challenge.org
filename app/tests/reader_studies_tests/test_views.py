@@ -217,3 +217,23 @@ def test_question_delete_disabled_for_questions_with_answers(client):
     )
     assert response.status_code == 302
     assert Question.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_reader_study_list_view_filter(client):
+    user = UserFactory()
+    rs1, rs2, pubrs = (
+        ReaderStudyFactory(),
+        ReaderStudyFactory(),
+        ReaderStudyFactory(public=True),
+    )
+    rs1.add_reader(user)
+
+    response = get_view_for_user(
+        viewname="reader-studies:list", client=client, user=user
+    )
+
+    assert response.status_code == 200
+    assert rs1.get_absolute_url() in response.rendered_content
+    assert rs2.get_absolute_url() not in response.rendered_content
+    assert pubrs.get_absolute_url() in response.rendered_content

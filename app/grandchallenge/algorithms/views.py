@@ -75,10 +75,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
-from grandchallenge.core.views import (
-    PaginatedListView,
-    PermissionRequestUpdate,
-)
+from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
@@ -107,7 +104,7 @@ class AlgorithmCreate(
         return response
 
 
-class AlgorithmList(FilterMixin, PermissionListMixin, PaginatedListView):
+class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     model = Algorithm
     permission_required = {
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
