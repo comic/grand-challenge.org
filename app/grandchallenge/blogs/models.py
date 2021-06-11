@@ -36,7 +36,7 @@ class Post(models.Model):
         variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
 
-    tags = models.ManyToManyField(to=Tag, related_name="blog_tags")
+    tags = models.ManyToManyField(to=Tag, related_name="posts")
 
     published = models.BooleanField(default=False)
 

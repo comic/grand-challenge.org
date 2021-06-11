@@ -14,12 +14,12 @@
 
 {% block content %}
     <div class="row mb-3">
-        <div class="col-lg-9">
+        <div class="col-lg-8">
             <h2>{{ object.title }}</h2>
             <p>Published {{ object.created|date:"j N Y" }}</p>
             {{ object.content|md2html }}
         </div>
-        <div class="col-lg-3">
+        <div class="col-lg-4">
             <div class="row mb-1">
                 <h3>Authors</h3>
             </div>
