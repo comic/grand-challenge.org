@@ -86,6 +86,7 @@ class ArchiveList(FilterMixin, PermissionListMixin, ListView):
     )
     ordering = "-created"
     filter_class = ArchiveFilter
+    paginate_by = 40
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
