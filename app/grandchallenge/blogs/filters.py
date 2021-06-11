@@ -1,7 +1,7 @@
 from functools import reduce
 from operator import or_
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django_filters import CharFilter, FilterSet, ModelMultipleChoiceFilter
 from django_select2.forms import Select2MultipleWidget
@@ -16,9 +16,10 @@ class BlogFilter(FilterSet):
         queryset=Tag.objects.all(), widget=Select2MultipleWidget, label="Tags",
     )
     authors = ModelMultipleChoiceFilter(
-        queryset=User.objects.filter(
-            blog_authors__in=Post.objects.all()
-        ).all(),
+        queryset=get_user_model()
+        .objects.filter(blog_authors__isnull=False)
+        .distinct()
+        .order_by("username"),
         widget=Select2MultipleWidget,
         label="Authors",
     )
