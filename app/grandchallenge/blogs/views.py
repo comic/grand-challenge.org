@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.views.generic import DetailView, ListView
 
 from grandchallenge.blogs.models import Post
@@ -9,6 +10,15 @@ class PostList(ListView):
     def get_queryset(self):
         qs = super().get_queryset()
         qs = qs.filter(published=True)
+        return qs
+
+
+class PostTagList(ListView):
+    model = Post
+
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+        qs = qs.filter(Q(published=True) & Q(tags__slug=self.kwargs["slug"]))
         return qs
 
 
