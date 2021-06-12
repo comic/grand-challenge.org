@@ -1,10 +1,9 @@
-import json
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from django_countries import countries
 from guardian.shortcuts import assign_perm, remove_perm
 from simple_history.models import HistoricalRecords
 
@@ -142,9 +141,13 @@ class Page(models.Model):
             "grandchallenge/partials/geochart.html",
             {
                 "user_count": users.count(),
-                "country_data": json.dumps(
-                    [["Country", "#Participants"]] + list(country_data)
-                ),
+                "country_data": [
+                    {
+                        "id": countries.numeric(c[0], padded=True),
+                        "participants": c[1],
+                    }
+                    for c in country_data
+                ],
             },
         )
 

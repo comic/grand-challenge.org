@@ -1,4 +1,3 @@
-import json
 from datetime import timedelta
 
 import prometheus_client
@@ -7,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.db.models import Count, Sum
 from django.utils import timezone
 from django.views.generic import TemplateView
+from django_countries import countries
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -52,9 +52,13 @@ class StatisticsDetail(TemplateView):
             "days": days,
             "max_num_results": max_num_results,
             "number_of_users": User.objects.filter(is_active=True).count(),
-            "country_data": json.dumps(
-                [["Country", "#Participants"]] + list(country_data)
-            ),
+            "country_data": [
+                {
+                    "id": countries.numeric(c[0], padded=True),
+                    "participants": c[1],
+                }
+                for c in country_data
+            ],
             "new_users_period": (
                 User.objects.filter(date_joined__gt=time_period).count()
             ),
