@@ -31,7 +31,7 @@ var spec = {
         "color": {
             "field": "participants",
             "type": "quantitative",
-            "scale": {"scheme": "viridis", "domainMin": 0},
+            "scale": {"scheme": "viridis", "domainMin": 1, "type": "log"},
             "legend": {"title": null, "type": "gradient"},
             "condition": {"test": "datum['participants'] === 0.01", "value": "#eee"}
         },
