@@ -15,7 +15,9 @@ def test_get_statistics(client):
 
     response = get_view_for_user(client=client, viewname="statistics:detail")
     assert response.status_code == 200
-    assert f"[&quot;NL&quot;, {n_dutch}]" in response.rendered_content
+    # String country IDs are used in the topojson file we download
+    # 528 is the ISO ID for the Netherlands
+    assert '{"id": "528", "participants": 3}' in response.rendered_content
 
 
 @pytest.mark.django_db

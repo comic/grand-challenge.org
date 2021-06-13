@@ -67,4 +67,4 @@ def test_argument_substitution(inp, output):
 def test_project_statistics():
     p = PageFactory(html="{% project_statistics %}")
     html = p.cleaned_html()
-    assert "data-geochart" in html
+    assert "participantsGeoChart" in html
