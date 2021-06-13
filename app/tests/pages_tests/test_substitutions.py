@@ -66,5 +66,6 @@ def test_argument_substitution(inp, output):
 @pytest.mark.django_db
 def test_project_statistics():
     p = PageFactory(html="{% project_statistics %}")
-    html = p.cleaned_html()
-    assert "participantsGeoChart" in html
+    context = p.detail_context
+    assert "participantsGeoChart" in context["cleaned_html"]
+    assert context["includes_geochart"] is True

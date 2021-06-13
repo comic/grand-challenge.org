@@ -118,13 +118,19 @@ class Page(models.Model):
         else:
             return user.has_perm(f"view_{self._meta.model_name}", self)
 
-    def cleaned_html(self):
-        out = clean(self.html)
+    @property
+    def detail_context(self):
+        context = {}
 
-        if "project_statistics" in out:
-            out = self._substitute_geochart(html=out)
+        cleaned_html = clean(self.html)
 
-        return out
+        if "project_statistics" in cleaned_html:
+            cleaned_html = self._substitute_geochart(html=cleaned_html)
+            context["includes_geochart"] = True
+
+        context["cleaned_html"] = cleaned_html
+
+        return context
 
     def _substitute_geochart(self, *, html):
         users = self.challenge.get_participants().select_related(
