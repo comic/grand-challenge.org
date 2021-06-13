@@ -22,11 +22,25 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from grandchallenge.statistics import metrics
 from grandchallenge.statistics.renderers import PrometheusRenderer
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 
 
 class StatisticsDetail(TemplateView):
     template_name = "statistics/statistics_detail.html"
+
+    @staticmethod
+    def _challenge_qs_to_list_with_url(challenge_list):
+        return [
+            {
+                **c,
+                "absolute_url": reverse(
+                    "pages:home",
+                    kwargs={"challenge_short_name": c["short_name"]},
+                ),
+            }
+            for c in challenge_list
+        ]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -83,7 +97,7 @@ class StatisticsDetail(TemplateView):
                 .first()
             ),
             "challenge_registrations_period": (
-                list(
+                self._challenge_qs_to_list_with_url(
                     public_challenges.filter(
                         registrationrequest__created__gt=time_period
                     )
@@ -104,7 +118,7 @@ class StatisticsDetail(TemplateView):
                 .first()
             ),
             "challenge_submissions_period": (
-                list(
+                self._challenge_qs_to_list_with_url(
                     public_challenges.filter(
                         phase__submission__created__gt=time_period
                     )
