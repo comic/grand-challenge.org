@@ -1,7 +1,5 @@
-"use strict";
-
-var countryParticipants = JSON.parse(document.getElementById("countryParticipants").textContent);
-var spec = {
+const countryParticipants = JSON.parse(document.getElementById("countryParticipants").textContent);
+const spec = {
     "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
     "width": "container",
     "height": "container",
@@ -32,7 +30,7 @@ var spec = {
             "field": "participants",
             "type": "quantitative",
             "scale": {"scheme": "viridis", "domainMin": 1, "type": "log"},
-            "legend": {"title": null, "type": "gradient"},
+            "legend": null,
             "condition": {"test": "datum['participants'] === 0.01", "value": "#eee"}
         },
         "tooltip": [

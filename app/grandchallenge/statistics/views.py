@@ -83,13 +83,18 @@ class StatisticsDetail(TemplateView):
                 .first()
             ),
             "challenge_registrations_period": (
-                public_challenges.filter(
-                    registrationrequest__created__gt=time_period
+                list(
+                    public_challenges.filter(
+                        registrationrequest__created__gt=time_period
+                    )
+                    .annotate(
+                        num_registrations_period=Count("registrationrequest")
+                    )
+                    .order_by("-num_registrations_period")
+                    .values("short_name", "num_registrations_period")[
+                        :max_num_results
+                    ]
                 )
-                .annotate(
-                    num_registrations_period=Count("registrationrequest")
-                )
-                .order_by("-num_registrations_period")[:max_num_results]
             ),
             "mp_challenge_submissions": (
                 public_challenges.annotate(
@@ -99,11 +104,18 @@ class StatisticsDetail(TemplateView):
                 .first()
             ),
             "challenge_submissions_period": (
-                public_challenges.filter(
-                    phase__submission__created__gt=time_period
+                list(
+                    public_challenges.filter(
+                        phase__submission__created__gt=time_period
+                    )
+                    .annotate(
+                        num_submissions_period=Count("phase__submission")
+                    )
+                    .order_by("-num_submissions_period")
+                    .values("short_name", "num_submissions_period")[
+                        :max_num_results
+                    ]
                 )
-                .annotate(num_submissions_period=Count("phase__submission"))
-                .order_by("-num_submissions_period")[:max_num_results]
             ),
             "latest_result": (
                 EvaluationJob.objects.filter(

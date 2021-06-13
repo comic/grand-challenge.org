@@ -1,28 +1,36 @@
+const challengeRegistrations = JSON.parse(document.getElementById("challengeRegistrations").textContent);
+const challengeSubmissions = JSON.parse(document.getElementById("challengeSubmissions").textContent);
+const days = JSON.parse(document.getElementById("days").textContent);
 
-var chartData = JSON.parse(document.getElementById("chartData").textContent);
 
-var spec = {
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "description": "A simple bar chart with embedded data.",
-  "data": {
-    "values": chartData
-  },
-  "mark": "bar",
-  "encoding": {
-    "color": {
-            "field": "a",
-            "type": "nominal",
-            "legend": null,
-            "scale": {"scheme": {"name": "viridis", "extent": [1, 0]}}
+createStackedBarChart(challengeRegistrations, "num_registrations_period", `Number of registrations last ${days} days`, "#registrationsChart");
+createStackedBarChart(challengeSubmissions, "num_submissions_period", `Number of submissions last ${days} days`, "#submissionsChart");
+
+function createStackedBarChart(chartData, statisticLookup, statisticTitle, displayID) {
+    const challengeNameLookup = "short_name";
+    const spec = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "width": "container",
+        "padding": 0,
+        "data": {
+            "values": chartData
         },
-        "tooltip": [
-            {"field": "a", "type": "nominal", "title": "Challenge"},
-            {"field": "b", "type": "quantitative", "title": "Number of Participants", "format": ".0f"}
-        ],
-    "y": {"field": "a", "type": "nominal", "axis": {"labelAngle": 0}, "title": null},
-    "x": {"field": "b", "type": "quantitative", "title": "Number of Participants"}
-  }
-}
+        "mark": "bar",
+        "encoding": {
+            "color": {
+                "field": challengeNameLookup,
+                "type": "nominal",
+                "legend": null,
+                "scale": {"scheme": {"name": "viridis", "extent": [1, 0]}}
+            },
+            "tooltip": [
+                {"field": challengeNameLookup, "type": "nominal", "title": "Challenge"},
+                {"field": statisticLookup, "type": "quantitative", "title": statisticTitle, "format": ".0f"}
+            ],
+            "y": {"field": challengeNameLookup, "type": "nominal", "axis": {"labelAngle": 0}, "title": null},
+            "x": {"field": statisticLookup, "type": "quantitative", "title": statisticTitle}
+        }
+    }
 
-// TODO Update this and the source data
-vegaEmbed('#participantsGeoChart', spec, {"actions": false});
+    vegaEmbed(displayID, spec, {"actions": false});
+}
