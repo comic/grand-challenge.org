@@ -1,10 +1,9 @@
-import json
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Count, Max
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from django_countries import countries
 from guardian.shortcuts import assign_perm, remove_perm
 from simple_history.models import HistoricalRecords
 
@@ -119,13 +118,19 @@ class Page(models.Model):
         else:
             return user.has_perm(f"view_{self._meta.model_name}", self)
 
-    def cleaned_html(self):
-        out = clean(self.html)
+    @property
+    def detail_context(self):
+        context = {}
 
-        if "project_statistics" in out:
-            out = self._substitute_geochart(html=out)
+        cleaned_html = clean(self.html)
 
-        return out
+        if "project_statistics" in cleaned_html:
+            cleaned_html = self._substitute_geochart(html=cleaned_html)
+            context["includes_geochart"] = True
+
+        context["cleaned_html"] = cleaned_html
+
+        return context
 
     def _substitute_geochart(self, *, html):
         users = self.challenge.get_participants().select_related(
@@ -142,9 +147,13 @@ class Page(models.Model):
             "grandchallenge/partials/geochart.html",
             {
                 "user_count": users.count(),
-                "country_data": json.dumps(
-                    [["Country", "#Participants"]] + list(country_data)
-                ),
+                "country_data": [
+                    {
+                        "id": countries.numeric(c[0], padded=True),
+                        "participants": c[1],
+                    }
+                    for c in country_data
+                ],
             },
         )
 

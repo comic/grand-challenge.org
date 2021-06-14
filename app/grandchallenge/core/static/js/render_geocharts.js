@@ -1,49 +1,43 @@
-"use strict";
-
-$(document).ready(function () {
-    google.charts.load('current', {'packages': ['geochart']});
-    google.charts.setOnLoadCallback(drawGeoCharts);
-
-    function drawGeoCharts() {
-        google.visualization.mapsApiKey = '{{ geochart_api_key }}';
-        var charts = document.querySelectorAll('[data-geochart]');
-
-        for (var i = 0; i < charts.length; i++) {
-            try {
-                drawGeoChart(charts[i]);
-            } catch (err) {
-                console.log(err);
-            }
-        }
-    }
-
-    function drawGeoChart(element) {
-        var array = JSON.parse(element.dataset['geochart']);
-        var data = google.visualization.arrayToDataTable(array);
-        var options = {
-            colorAxis: {
-                colors: [
-                    '#440154',
-                    '#32658e',
-                    '#20a486',
-                    '#63cb5f',
-                    '#a8db34',
-                    '#d0e11c',
-                    '#e7e419',
-                    '#f1e51d',
-                    '#f8e621',
-                    '#fbe723',
-                    '#fbe723',
-                    '#fde725',
-                    '#fde725',
-                    '#fde725',
-                    '#fde725',
-                    '#fde725'
-                ]
+const countryParticipants = JSON.parse(document.getElementById("countryParticipants").textContent);
+const spec = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "width": "container",
+    "height": "container",
+    "padding": 0,
+    "view": {
+        "stroke": "transparent",
+        "fill": "#c9eeff"
+    },
+    "data": {
+        "url": "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json",
+        "format": {"type": "topojson", "feature": "countries"}
+    },
+    "transform": [
+        {
+            "lookup": "id",
+            "from": {
+                "data": {"values": countryParticipants},
+                "key": "id",
+                "fields": ["participants"]
             },
-            backgroundColor: '#c9eeff'
-        };
-        var chart = new google.visualization.GeoChart(element);
-        chart.draw(data, options);
+            "default": 0.01
+        }
+    ],
+    "projection": {"type": "equalEarth"},
+    "mark": {"type": "geoshape", "stroke": "#757575", "strokeWidth": 0.5},
+    "encoding": {
+        "color": {
+            "field": "participants",
+            "type": "quantitative",
+            "scale": {"scheme": "viridis", "domainMin": 1, "type": "log"},
+            "legend": null,
+            "condition": {"test": "datum['participants'] === 0.01", "value": "#eee"}
+        },
+        "tooltip": [
+            {"field": "properties.name", "type": "nominal", "title": "Country"},
+            {"field": "participants", "type": "quantitative", "title": "Participants", "format": ".0f"}
+        ]
     }
-});
+};
+
+vegaEmbed('#participantsGeoChart', spec, {"actions": false});

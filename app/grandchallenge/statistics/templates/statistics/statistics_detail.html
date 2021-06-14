@@ -60,7 +60,7 @@
     <h4>Registrations to public challenges in the past {{ days }} days
         (top {{ max_num_results }})</h4>
 
-    <canvas id="registrationsChart"></canvas>
+    <div class="w-100" id="registrationsChart"></div>
 
     <br>
 
@@ -96,7 +96,7 @@
     <h4>Submissions to public challenges in the past {{ days }} days
         (top {{ max_num_results }})</h4>
 
-    <canvas id="submissionsChart"></canvas>
+    <div class="w-100" id="submissionsChart"></div>
 
     <br>
 
@@ -160,82 +160,24 @@
 
 {% block script %}
     {{ block.super }}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"
-            integrity="sha256-CfcERD4Ov4+lKbWbYqXD6aFM9M51gN4GUEtDhkWABMo="
-            crossorigin="anonymous"></script>
 
-    <script type="text/javascript"
-            src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript"
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.20.2/vega.min.js"
+            integrity="sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-lite/5.1.0/vega-lite.min.js"
+            integrity="sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.17.0/vega-embed.min.js"
+            integrity="sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script type="module"
             src="{% static "js/render_geocharts.js" %}"></script>
 
-    <script>
-        var ctx = document.getElementById("registrationsChart");
+    {{ challenge_registrations_period|json_script:"challengeRegistrations" }}
+    {{ challenge_submissions_period|json_script:"challengeSubmissions" }}
+    {{ days|json_script:"days" }}
 
-        var colormap = [
-            '#440154',
-            '#482979',
-            '#3e4c8a',
-            '#306a8e',
-            '#25858e',
-            '#1fa188',
-            '#3bbb75',
-            '#77d153',
-            '#c2df23',
-            '#fde725'
-        ].reverse();
-
-        var options = {
-            scales: {
-                xAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        };
-
-        var registrationsChart = new Chart(ctx, {
-            type: 'horizontalBar',
-            data: {
-                labels: [
-                    {% for challenge in challenge_registrations_period %}
-                        "{{ challenge }}",
-                    {% endfor %}
-                ],
-                datasets: [{
-                    label: '# of Registrations (past {{ days }} days)',
-                    data: [
-                        {% for challenge in challenge_registrations_period %}
-                            {{ challenge.num_registrations_period }},
-                        {% endfor %}
-                    ],
-                    backgroundColor: colormap
-                }]
-            },
-            options: options
-        });
-
-        ctx = document.getElementById("submissionsChart");
-        var submissionsChart = new Chart(ctx, {
-            type: 'horizontalBar',
-            data: {
-                labels: [
-                    {% for challenge in challenge_submissions_period %}
-                        "{{ challenge }}",
-                    {% endfor %}
-                ],
-                datasets: [{
-                    label: '# of Submissions (past {{ days }} days)',
-                    data: [
-                        {% for challenge in challenge_submissions_period %}
-                            {{ challenge.num_submissions_period }},
-                        {% endfor %}
-                    ],
-                    backgroundColor: colormap
-                }]
-            },
-            options: options
-        });
-    </script>
+    <script type="module"
+            src="{% static "js/statistics/render_barchart.js" %}"></script>
 {% endblock %}
