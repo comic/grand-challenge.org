@@ -32,18 +32,20 @@
                     {% endfor %}
                 </ul>
             </div>
-            <div class="row mb-1">
-                <h3>Tags</h3><br>
-            </div>
-            <div class="row mb-3">
-                <ul class="list-group list-group-flush">
-                    {% for tag in object.tags.all %}
-                        <li class="list-group-item border-0">
-                            <a href="{% url 'blogs:list'%}?tag={{ tag.pk }}"><i class="fa fa-tags" aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+            {% if object.tags.count != 0 %}
+                <div class="row mb-1">
+                    <h3>Tags</h3>
+                </div>
+                <div class="row mb-3">
+                    <ul class="list-group list-group-flush">
+                        {% for tag in object.tags.all %}
+                            <li class="list-group-item border-0">
+                                <a href="{% url 'blogs:list'%}?tag={{ tag.pk }}"><i class="fa fa-tags" aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
