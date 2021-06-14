@@ -260,6 +260,25 @@ SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
 )
 
+PERMISSIONS_POLICY = {
+    "accelerometer": [],
+    "ambient-light-sensor": [],
+    "autoplay": [],
+    "camera": [],
+    "display-capture": [],
+    "document-domain": [],
+    "encrypted-media": [],
+    "fullscreen": [],
+    "geolocation": [],
+    "gyroscope": [],
+    "interest-cohort": [],
+    "magnetometer": [],
+    "microphone": [],
+    "midi": [],
+    "payment": [],
+    "usb": [],
+}
+
 IPWARE_META_PRECEDENCE_ORDER = (
     # Set by nginx
     "HTTP_X_FORWARDED_FOR",
@@ -333,6 +352,7 @@ MIDDLEWARE = (
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
+    "django_permissions_policy.PermissionsPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

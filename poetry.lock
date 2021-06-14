@@ -609,6 +609,17 @@ Django = ">=1.11"
 django-js-asset = "*"
 
 [[package]]
+name = "django-permissions-policy"
+version = "4.1.0"
+description = "Set the draft security HTTP header Permissions-Policy (previously Feature-Policy) on your Django app."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+Django = ">=2.2"
+
+[[package]]
 name = "django-redis"
 version = "4.12.1"
 description = "Full featured redis cache backend for Django."
@@ -2180,7 +2191,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "95501a9dcf0d9d1d90066afc173f8967ad7b7a97d200f153d61d9414ce01fa6f"
+content-hash = "58555e3eec3d9f243dee0aa5e8afe5a4ace4490c448fcb246fcf18e741221d26"
 
 [metadata.files]
 alabaster = [
@@ -2489,6 +2500,10 @@ django-markdownx = [
 django-mptt = [
     {file = "django-mptt-0.11.0.tar.gz", hash = "sha256:dfdb3af75ad27cdd4458b0544ec8574174f2b90f99bc2cafab6a15b4bc1895a8"},
     {file = "django_mptt-0.11.0-py2.py3-none-any.whl", hash = "sha256:90eb236eb4f1a92124bd7c37852bbe09c0d21158477cc237556d59842a91c509"},
+]
+django-permissions-policy = [
+    {file = "django-permissions-policy-4.1.0.tar.gz", hash = "sha256:30df0dfe6579f60743d181378c7cbbb44526a5df469aa633251234387d3819f1"},
+    {file = "django_permissions_policy-4.1.0-py3-none-any.whl", hash = "sha256:774ca81646c84793c8c5645e581ecd4d08a88d492cf90c8983648d8fddcbb3c8"},
 ]
 django-redis = [
     {file = "django-redis-4.12.1.tar.gz", hash = "sha256:306589c7021e6468b2656edc89f62b8ba67e8d5a1c8877e2688042263daa7a63"},
