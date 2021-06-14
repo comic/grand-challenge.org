@@ -6,7 +6,6 @@ from django.db.models.query_utils import Q
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.views.generic import FormView, ListView
 from guardian.mixins import (
-    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
@@ -22,13 +21,15 @@ from grandchallenge.notifications.utils import (
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
-class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
+class NotificationList(LoginRequiredMixin, ListView):
     model = Notification
-    permission_required = "change_notification"
 
     def get_queryset(self):
         return prefetch_notification_action(
-            super().get_queryset().order_by("-action__timestamp")
+            super()
+            .get_queryset()
+            .filter(user=self.request.user)
+            .order_by("-action__timestamp")
         )
 
     def get_context_data(self, *args, **kwargs):
