@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import post_save
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from easy_thumbnails.fields import ThumbnailerImageField
@@ -57,9 +56,6 @@ class UserProfile(models.Model):
     notification_email_last_sent_at = models.DateTimeField(
         default=None, null=True, editable=False
     )
-    notifications_last_read_at = models.DateTimeField(
-        auto_now_add=True, editable=False
-    )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -102,10 +98,6 @@ class UserProfile(models.Model):
     @property
     def unread_notifications(self):
         return self.user.notification_set.filter(read=False)
-
-    def update_notifications_last_read_timestep(self):
-        self.notifications_last_read_at = timezone.now()
-        self.save()
 
 
 @disable_for_loaddata

@@ -13,7 +13,7 @@
 {% block content %}
     <div class="d-flex justify-content-between">
         <h2>Notifications</h2>
-        <a class="btn btn-primary my-3" href="{% url 'notifications:subscriptions-list' %}" role="button">Manage your subscriptions</a>
+        <a class="btn btn-primary my-3" href="{% url 'notifications:follow-list' %}" role="button">Manage your subscriptions</a>
     </div>
     <form action="{% url 'notifications:list' %}" method="post">
         <div class="row">
@@ -53,31 +53,6 @@
                             {% endif %}
                             {{ object.action.timestamp|naturaltime }}
                         </div>
-{#                        <div class="d-inline-flex p-2">#}
-{#                            <form method="post" action="{% url 'notifications:update' pk=object.id %}">#}
-{#                                {% csrf_token %}#}
-{#                                <input name="notification" type="hidden" value="{{ object.id }}">#}
-{#                                {% if not object.read %}#}
-{#                                    <input name="action" type="hidden" value="{{ mark_as_read_action }}">#}
-{#                                    <button type="submit" class="btn btn-xs btn-primary mx-1">#}
-{#                                        Mark as read#}
-{#                                    </button>#}
-{#                                {% else %}#}
-{#                                    <input name="action" type="hidden" value="{{ mark_as_unread_action }}">#}
-{#                                    <button type="submit" class="btn btn-xs btn-primary mx-1">#}
-{#                                        Mark as unread#}
-{#                                    </button>#}
-{#                                {% endif %}#}
-{#                            </form>#}
-{#                            <form method="post" action="{% url 'notifications:update' pk=object.id %}">#}
-{#                                {% csrf_token %}#}
-{#                                <input name="notification" type="hidden" value="{{ object.id }}">#}
-{#                                <input name="action" type="hidden" value="{{ delete_notification }}">#}
-{#                                <button type="submit" class="btn btn-xs btn-danger mx-1">#}
-{#                                    Delete notification#}
-{#                                </button>#}
-{#                            </form>#}
-{#                        </div>#}
                     </div>
                 </li>
                 {% empty %}

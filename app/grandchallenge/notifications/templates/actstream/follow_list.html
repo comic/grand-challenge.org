@@ -25,7 +25,7 @@
                         <span class="text-truncate font-italic text-muted align-middle mx-2">subscribed to since {{ forum.started|date:'F j, Y' }} | last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}</span>
                     </div>
                     <div  class="d-inline-flex p-1" style="align-items: center">
-                        <form style="height:fit-content" method="post" action="{% url 'notifications:subscription-delete' pk=forum.follow_object.id %}">
+                        <form style="height:fit-content" method="post" action="{% url 'notifications:follow-delete' pk=forum.follow_object.id %}">
                             {% csrf_token %}
                             <input name="subscription_object" type="hidden" value="{{ forum.id }}">
                             <input name="user" type="hidden" value="{{ forum.user.id }}">
@@ -59,7 +59,7 @@
                                         <span class="text-muted text-truncate font-italic align-middle mx-2">subscribed to since {{ topic.started|date:'F j, Y'  }} | last activity on {{ topic.follow_object.last_post_on|date:'F j, Y, P' }}</span>
                                      </div>
                                       <div  class="d-inline-flex p-1" style="align-items: center">
-                                        <form style="height:fit-content" method="post" action="{% url 'notifications:subscription-delete' pk=topic.follow_object.id %}">
+                                        <form style="height:fit-content" method="post" action="{% url 'notifications:follow-delete' pk=topic.follow_object.id %}">
                                             {% csrf_token %}
                                             <input name="subscription_object" type="hidden" value="{{ topic.id }}">
                                             <input name="user" type="hidden" value="{{ topic.user.id }}">

@@ -21,29 +21,12 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Notification
+    permission_required = "view_notification"
 
     def get_queryset(self):
         return prefetch_notification_action(
-            super()
-            .get_queryset()
-            .filter(user=self.request.user)
-            .order_by("-action__timestamp")
+            super().get_queryset().order_by("-created")
         )
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        profile = self.request.user.user_profile
-        context.update(
-            {
-                "notifications_last_read_at": profile.notifications_last_read_at,
-                # "mark_as_read_action": NotificationForm.MARK_READ,
-                # "mark_as_unread_action": NotificationForm.MARK_UNREAD,
-                # "delete_notification": NotificationForm.REMOVE,
-            }
-        )
-        # TODO side-effect, not nice
-        profile.update_notifications_last_read_timestep()
-        return context
 
     def post(self, request, *args, **kwargs):
         if "delete" in request.POST:
@@ -117,7 +100,9 @@ class FollowDelete(
     FormView,
 ):
     form_class = SubscriptionForm
-    template_name = "notifications/subscription_update_form.html"
+    template_name = (
+        "notifications/templates/actstream/subscription_update_form.html"
+    )
     success_message = "Subscription successfully deleted"
     permission_required = "change_follow"
     raise_exception = True
@@ -140,7 +125,9 @@ class FollowCreate(
     LoginRequiredMixin, SuccessMessageMixin, FormView,
 ):
     form_class = SubscriptionForm
-    template_name = "notifications/subscription_update_form.html"
+    template_name = (
+        "notifications/templates/actstream/subscription_update_form.html"
+    )
     success_message = "Subscription successfully added"
     login_url = reverse_lazy("account_login")
 
