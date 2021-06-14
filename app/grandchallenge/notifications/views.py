@@ -1,18 +1,16 @@
 from actstream.models import Follow
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models.query_utils import Q
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.views.generic import FormView, ListView
 from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.notifications.forms import (
-    # NotificationForm,
-    SubscriptionForm,
-)
+from grandchallenge.notifications.forms import SubscriptionForm
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
@@ -21,7 +19,7 @@ from grandchallenge.notifications.utils import (
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
-class NotificationList(LoginRequiredMixin, ListView):
+class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Notification
 
     def get_queryset(self):
@@ -77,33 +75,7 @@ class NotificationList(LoginRequiredMixin, ListView):
             return HttpResponseRedirect(reverse("notifications:list"))
 
 
-# class NotificationUpdate(
-#     LoginRequiredMixin,
-#     ObjectPermissionRequiredMixin,
-#     SuccessMessageMixin,
-#     FormView,
-# ):
-#     form_class = NotificationForm
-#     template_name = "notifications/notification_update_form.html"
-#     success_message = "Notification successfully updated"
-#     permission_required = "change_notification"
-#     raise_exception = True
-#     login_url = reverse_lazy("account_login")
-#
-#     def get_permission_object(self):
-#         form = self.get_form()
-#         form.full_clean()
-#         return form.cleaned_data["notification"]
-#
-#     def get_success_url(self):
-#         return reverse("notifications:list")
-#
-#     def form_valid(self, form):
-#         form.update()
-#         return super().form_valid(form)
-
-
-class SubscriptionListView(LoginRequiredMixin, ListView):
+class FollowList(LoginRequiredMixin, ListView):
     model = Follow
 
     def get_queryset(self):
@@ -138,7 +110,7 @@ class SubscriptionListView(LoginRequiredMixin, ListView):
         return context
 
 
-class SubscriptionDelete(
+class FollowDelete(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
@@ -164,7 +136,7 @@ class SubscriptionDelete(
         return super().form_valid(form)
 
 
-class SubscriptionCreate(
+class FollowCreate(
     LoginRequiredMixin, SuccessMessageMixin, FormView,
 ):
     form_class = SubscriptionForm

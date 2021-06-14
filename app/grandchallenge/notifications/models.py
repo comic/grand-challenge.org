@@ -3,8 +3,10 @@ from django.conf import settings
 from django.db import models
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.core.models import UUIDModel
 
-class Notification(models.Model):
+
+class Notification(UUIDModel):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -31,8 +33,7 @@ class Notification(models.Model):
         if adding:
             self._assign_permissions()
 
-    def delete(self, *args, **kwargs):
-        super().delete(*args, **kwargs)
-
     def _assign_permissions(self):
+        assign_perm("view_notification", self.user, self)
+        assign_perm("delete_notification", self.user, self)
         assign_perm("change_notification", self.user, self)

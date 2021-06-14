@@ -1,33 +1,23 @@
 from django.urls import path
 
 from grandchallenge.notifications.views import (
+    FollowCreate,
+    FollowDelete,
+    FollowList,
     NotificationList,
-    # NotificationUpdate,
-    SubscriptionCreate,
-    SubscriptionDelete,
-    SubscriptionListView,
 )
 
 app_name = "notifications"
 
 urlpatterns = [
     path("", NotificationList.as_view(), name="list"),
-    # path("<int:pk>/update", NotificationUpdate.as_view(), name="update"),
+    path("subscriptions/", FollowList.as_view(), name="follow-list",),
     path(
-        "subscriptions/",
-        SubscriptionListView.as_view(
-            template_name="notifications/subscription_list.html"
-        ),
-        name="subscriptions-list",
+        "subscriptions/<int:pk>/delete",
+        FollowDelete.as_view(),
+        name="follow-delete",
     ),
     path(
-        "subscriptions/<int:pk>/update",
-        SubscriptionDelete.as_view(),
-        name="subscription-delete",
-    ),
-    path(
-        "subscriptions/create",
-        SubscriptionCreate.as_view(),
-        name="subscription-create",
+        "subscriptions/create", FollowCreate.as_view(), name="follow-create",
     ),
 ]

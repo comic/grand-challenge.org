@@ -18,6 +18,10 @@ class FollowAdmin(ModelAdmin):
     raw_id_fields = ("user", "content_type")
 
 
+class NotificationAdmin(ModelAdmin):
+    readonly_fields = ("user",)
+
+
 admin.site.unregister(Follow)
 admin.site.register(Follow, FollowAdmin)
-admin.site.register(Notification)
+admin.site.register(Notification, NotificationAdmin)
