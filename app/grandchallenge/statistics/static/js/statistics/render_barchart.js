@@ -18,7 +18,7 @@ function createStackedBarChart(chartData, statisticLookup, statisticTitle, displ
         "mark": "bar",
         "encoding": {
             "color": {
-                "field": challengeNameLookup,
+                "field": statisticLookup,
                 "type": "nominal",
                 "legend": null,
                 "scale": {"scheme": {"name": "viridis", "extent": [1, 0]}}
@@ -27,7 +27,13 @@ function createStackedBarChart(chartData, statisticLookup, statisticTitle, displ
                 {"field": challengeNameLookup, "type": "nominal", "title": "Challenge"},
                 {"field": statisticLookup, "type": "quantitative", "title": statisticTitle, "format": ".0f"}
             ],
-            "y": {"field": challengeNameLookup, "type": "nominal", "axis": {"labelAngle": 0}, "title": null},
+            "y": {
+                "field": challengeNameLookup,
+                "type": "nominal",
+                "axis": {"labelAngle": 0},
+                "title": null,
+                "sort": "-x"
+            },
             "x": {
                 "field": statisticLookup,
                 "type": "quantitative",
