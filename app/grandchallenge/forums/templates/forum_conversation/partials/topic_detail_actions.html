@@ -18,8 +18,6 @@
     {% get_follow_object_pk request.user topic as follow_object_pk %}
     <form style="display: inline;" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
         {% csrf_token %}
-        <input name="subscription_object" type="hidden" value="{{ follow_object_pk }}">
-        <input name="user" type="hidden" value="{{ request.user.id }}">
         <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
             {% trans "Unsubscribe" %}
         </button>
@@ -27,7 +25,9 @@
 {% elif user_can_add_post and not request.user|is_following:topic %}
     <form style="display: inline;" method="post" action="{% url 'notifications:follow-create' %}">
         {% csrf_token %}
-        <input name="topic" type="hidden" value="{{ topic.id }}">
+        <input name="content_type" type="hidden" value="{{ topic|get_content_type }}">
+        <input name="actor_only" type="hidden" value="False">
+        <input name="object_id" type="hidden" value="{{ topic.id }}">
         <input name="user" type="hidden" value="{{ request.user.id }}">
         <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
             {% trans "Subscribe" %}
