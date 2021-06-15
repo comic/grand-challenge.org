@@ -1,19 +1,23 @@
 from actstream.models import Follow
-from django.contrib.contenttypes.models import ContentType
+from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models.query_utils import Q
-from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.http import (
+    HttpResponseNotFound,
+    HttpResponseRedirect,
+)
+from django.template.defaultfilters import pluralize
 from django.views.generic import CreateView, DeleteView, ListView
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
+from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
-    prefetch_notification_action,
+    prefetch_nested_generic_foreign_key_objects,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -23,7 +27,7 @@ class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
     permission_required = "view_notification"
 
     def get_queryset(self):
-        return prefetch_notification_action(
+        return prefetch_nested_generic_foreign_key_objects(
             super().get_queryset().order_by("-created")
         )
 
@@ -36,24 +40,36 @@ class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
             action = "mark_unread"
 
         selected_notifications = request.POST.getlist("checkbox")
-        notifications = Notification.objects.filter(
-            user=request.user, id__in=selected_notifications
-        ).all()
-
+        notifications = get_objects_for_user(
+            request.user,
+            ["delete_notification", "change_notification"],
+            Notification,
+        ).filter(id__in=selected_notifications)
+        notifications_count = notifications.count()
         if not notifications:
-            return HttpResponseForbidden()
+            return HttpResponseNotFound()
         else:
-            for notification in notifications:
-                if notification.user != self.request.user:
-                    return HttpResponseForbidden()
-                if action == "delete":
-                    notification.delete()
-                elif action == "mark_read":
-                    notification.read = True
-                    notification.save()
-                elif action == "mark_unread":
-                    notification.read = False
-                    notification.save()
+            if action == "delete":
+                notifications.delete()
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    f"{notifications_count} notification{pluralize(notifications_count)} successfully deleted.",
+                )
+            elif action == "mark_read":
+                notifications.update(read=True)
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    f"{notifications_count} notificiation{pluralize(notifications_count)} successfully marked as read.",
+                )
+            elif action == "mark_unread":
+                notifications.update(read=False)
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    f"{notifications_count} notification{pluralize(notifications_count)} successfully marked as unread.",
+                )
             return HttpResponseRedirect(reverse("notifications:list"))
 
 
@@ -61,33 +77,10 @@ class FollowList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Follow
     permission_required = "view_follow"
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context.update(
-            {
-                "followed_topics": prefetch_generic_foreign_key_objects(
-                    Follow.objects.filter(
-                        Q(user=self.request.user)
-                        & Q(
-                            content_type=ContentType.objects.get(
-                                app_label="forum_conversation", model="topic"
-                            ).id
-                        )
-                    ).select_related("user")
-                ),
-                "followed_forums": prefetch_generic_foreign_key_objects(
-                    Follow.objects.filter(
-                        Q(user=self.request.user)
-                        & Q(
-                            content_type=ContentType.objects.get(
-                                app_label="forum", model="forum"
-                            ).id
-                        )
-                    ).select_related("user")
-                ),
-            }
+    def get_queryset(self, *args, **kwargs):
+        return prefetch_generic_foreign_key_objects(
+            super().get_queryset().select_related("user")
         )
-        return context
 
 
 class FollowDelete(
