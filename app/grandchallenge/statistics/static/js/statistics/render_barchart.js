@@ -21,7 +21,7 @@ function createStackedBarChart(chartData, statisticLookup, statisticTitle, displ
                 "field": statisticLookup,
                 "type": "nominal",
                 "legend": null,
-                "scale": {"scheme": {"name": "viridis", "extent": [1, 0]}}
+                "scale": {"scheme": {"name": "viridis", "extent": [0, 1]}}
             },
             "tooltip": [
                 {"field": challengeNameLookup, "type": "nominal", "title": "Challenge"},
