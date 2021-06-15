@@ -11,7 +11,7 @@ register = template.Library()
 @register.filter
 def forum_link(forum: Union[Forum, None]) -> str:
 
-    if forum.challenge.logo:
+    if forum.challenge and forum.challenge.logo:
         forum_name = forum.name
         forum_url = forum.get_absolute_url()
         challenge_logo = format_html(
