@@ -151,10 +151,9 @@ def create_algorithm_jobs_for_session(
 def create_algorithm_jobs_for_archive(
     *, archive_pks, archive_item_pks=None, algorithm_pks=None
 ):
-    # Send an email to the algorithm editors on job failure
-    linked_task = send_failed_jobs_email.signature(kwargs={}, immutable=True)
-
     for archive in Archive.objects.filter(pk__in=archive_pks).all():
+        # Only the archive groups should be able to view the job
+        # Can be shared with the algorithm editor if needed
         archive_groups = [
             archive.editors_group,
             archive.uploaders_group,
@@ -172,15 +171,14 @@ def create_algorithm_jobs_for_archive(
             archive_items = archive.items.all()
 
         for algorithm in algorithms:
-            # Editors group should be able to view archive jobs for debugging
-            groups = [*archive_groups, algorithm.editors_group]
-
             execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
                 archive_items=archive_items,
                 creator=None,
-                extra_viewer_groups=groups,
-                linked_task=linked_task,
+                extra_viewer_groups=archive_groups,
+                # NOTE: no emails in case the logs leak data
+                # to the algorithm editors
+                linked_task=None,
             )
 
 

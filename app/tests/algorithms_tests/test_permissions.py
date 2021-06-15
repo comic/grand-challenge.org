@@ -315,13 +315,14 @@ class TestJobPermissions(TestCase):
 
         job = Job.objects.get()
 
-        # The archive editors, users and uploaders, algorithm editors and job
-        # viewers should be able to view the job
+        # The archive editors, users and uploaders and job
+        # viewers should be able to view the job.
+        # NOTE: NOT THE ALGORITHM EDITORS, if they need
+        # access the job can be shared with them.
         assert get_groups_with_set_perms(job) == {
             archive.editors_group: {"view_job"},
             archive.users_group: {"view_job"},
             archive.uploaders_group: {"view_job"},
-            ai.algorithm.editors_group: {"view_job"},
             job.viewers: {"view_job"},
         }
         # No-one should be able to change the job
