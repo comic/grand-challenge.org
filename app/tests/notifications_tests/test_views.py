@@ -157,9 +157,9 @@ def test_subscribe_to_forum(client):
     f = ForumFactory(type=Forum.FORUM_POST)
 
     assert not is_following(user1, f)
-
+    breakpoint()
     response = get_view_for_user(
-        viewname="notifications:subscription-create",
+        viewname="notifications:follow-create",
         client=client,
         method=client.post,
         data={"user": user1.id, "forum": f.id},

@@ -3,20 +3,19 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models.query_utils import Q
 from django.http import HttpResponseForbidden, HttpResponseRedirect
-from django.views.generic import FormView, ListView
+from django.views.generic import CreateView, DeleteView, ListView
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 
-from grandchallenge.notifications.forms import SubscriptionForm
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
     prefetch_notification_action,
 )
-from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.subdomains.utils import reverse
 
 
 class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
@@ -58,11 +57,9 @@ class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
             return HttpResponseRedirect(reverse("notifications:list"))
 
 
-class FollowList(LoginRequiredMixin, ListView):
+class FollowList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Follow
-
-    def get_queryset(self):
-        return super().get_queryset().filter(user=self.request.user)
+    permission_required = "view_follow"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -97,43 +94,26 @@ class FollowDelete(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
-    FormView,
+    DeleteView,
 ):
-    form_class = SubscriptionForm
-    template_name = (
-        "notifications/templates/actstream/subscription_update_form.html"
-    )
+    model = Follow
     success_message = "Subscription successfully deleted"
-    permission_required = "change_follow"
+    permission_required = "delete_follow"
     raise_exception = True
-    login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
-        form = self.get_form()
-        form.full_clean()
-        return form.cleaned_data["subscription_object"]
+        return self.get_object()
 
     def get_success_url(self):
-        return reverse("notifications:subscriptions-list")
-
-    def form_valid(self, form):
-        form.unsubscribe()
-        return super().form_valid(form)
+        return reverse("notifications:follow-list")
 
 
 class FollowCreate(
-    LoginRequiredMixin, SuccessMessageMixin, FormView,
+    LoginRequiredMixin, SuccessMessageMixin, CreateView,
 ):
-    form_class = SubscriptionForm
-    template_name = (
-        "notifications/templates/actstream/subscription_update_form.html"
-    )
+    model = Follow
+    fields = ["user", "content_type", "object_id", "actor_only"]
     success_message = "Subscription successfully added"
-    login_url = reverse_lazy("account_login")
 
     def get_success_url(self):
-        return reverse("notifications:subscriptions-list")
-
-    def form_valid(self, form):
-        form.subscribe()
-        return super().form_valid(form)
+        return reverse("notifications:follow-list")

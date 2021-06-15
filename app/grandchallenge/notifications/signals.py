@@ -71,3 +71,5 @@ def create_notification(*, instance, **_):
 def add_permissions(*, instance, created, **_):
     if created:
         assign_perm("change_follow", instance.user, instance)
+        assign_perm("delete_follow", instance.user, instance)
+        assign_perm("view_follow", instance.user, instance)

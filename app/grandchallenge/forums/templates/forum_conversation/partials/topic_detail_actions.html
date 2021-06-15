@@ -15,17 +15,17 @@
 <a href="{% url 'forum_conversation:post_create' forum.slug forum.pk topic.slug topic.pk %}" class="btn btn-primary btn-sm"><i class="fa fa-comment fa-lg"></i>&nbsp;{% trans "Post reply" %}</a>
 {% endif %}
 {% if request.user|is_following:topic %}
-    {% get_follow_object_pk request.user topic as follow_object %}
-    <form style="display: inline;" method="post" action="{% url 'notifications:subscription-delete' pk=follow_object %}">
+    {% get_follow_object_pk request.user topic as follow_object_pk %}
+    <form style="display: inline;" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
         {% csrf_token %}
-        <input name="subscription_object" type="hidden" value="{{ follow_object }}">
+        <input name="subscription_object" type="hidden" value="{{ follow_object_pk }}">
         <input name="user" type="hidden" value="{{ request.user.id }}">
         <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
             {% trans "Unsubscribe" %}
         </button>
     </form>
 {% elif user_can_add_post and not request.user|is_following:topic %}
-    <form style="display: inline;" method="post" action="{% url 'notifications:subscription-create' %}">
+    <form style="display: inline;" method="post" action="{% url 'notifications:follow-create' %}">
         {% csrf_token %}
         <input name="topic" type="hidden" value="{{ topic.id }}">
         <input name="user" type="hidden" value="{{ request.user.id }}">
