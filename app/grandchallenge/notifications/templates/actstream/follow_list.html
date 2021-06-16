@@ -22,8 +22,8 @@
                 <li class="list-group-item p-1 pl-3">
                     <div class="d-flex justify-content-between">
                         <div class="mt-1 pt-2 p-0">
-                            {{ follow.follow_object|forum_link }}
-                            <span class="text-truncate font-italic text-muted align-middle mx-2">subscribed to since {{ follow.started|date:'F j, Y' }} | last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}</span>
+                            <a href="{{ follow.follow_object.get_absolute_url }}">{{ follow.follow_object }}</a>
+                            <span class="text-truncate font-italic text-muted align-middle mx-2">subscribed to since {{ follow.started|date:'F j, Y' }} {% if forum.follow_object.last_post_on %}| last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
                         </div>
                         <div  class="d-inline-flex p-1" style="align-items: center">
                             <form style="height:fit-content" method="post" action="{% url 'notifications:follow-delete' pk=follow.id %}">
@@ -42,20 +42,20 @@
         {% endfor %}
     </ul>
     <br><br>
-    <h4 class="pb-2 text-primary">Topics</h4>
+    <h4>Topics</h4>
     {% subset_by_content_type object_list "topic" "forum_conversation" as topic_follows %}
         {% if topic_follows %}
             {% for forum in topic_follows|get_forums %}
                 {% get_forum_specific_topic_follows topic_follows forum as forum_topic_follows %}
                 {% if forum_topic_follows %}
-                    <h6>Topics from&nbsp; {{ forum|forum_link }}</h6>
+                    <h6>Topics from {{ forum }}</h6>
                     <ul class="list-group">
                         {% for follow in forum_topic_follows %}
                                 <li class="list-group-item p-1 pl-3">
                                      <div class="d-flex justify-content-between">
                                          <div class="mt-1 pt-2 p-0">
                                             <a href="{{ follow.follow_object.get_absolute_url }}">{{ follow.follow_object }}</a>
-                                            <span class="text-muted text-truncate font-italic align-middle mx-2">subscribed to since {{ follow.started|date:'F j, Y'  }} | last activity on {{ topic.follow_object.last_post_on|date:'F j, Y, P' }}</span>
+                                            <span class="text-muted text-truncate font-italic align-middle mx-2">subscribed to since {{ follow.started|date:'F j, Y'  }} {% if topic.follow_object.last_post_on %}| last activity on {{ topic.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
                                          </div>
                                           <div  class="d-inline-flex p-1" style="align-items: center">
                                             <form style="height:fit-content" method="post" action="{% url 'notifications:follow-delete' pk=follow.id %}">
