@@ -29,8 +29,8 @@ def test_post_authors_permissions_signal(client, reverse):
         p1.authors.remove(u3, u4)
 
     assert get_users_with_set_perms(p1) == {
-        u1: {"change_post"},
-        u2: {"change_post"},
+        u1: {"change_post", "view_post"},
+        u2: {"change_post", "view_post"},
     }
     assert get_users_with_set_perms(p2) == {}
 

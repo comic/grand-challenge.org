@@ -34,4 +34,5 @@ def update_permissions_on_authors_changed(
     op = assign_perm if "add" in action else remove_perm
 
     for user in users:
+        op("view_post", user, posts)
         op("change_post", user, posts)
