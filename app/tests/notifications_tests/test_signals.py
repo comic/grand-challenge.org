@@ -1,13 +1,14 @@
 import pytest
+from actstream.actions import follow
 from actstream.models import Action, Follow
+from machina.apps.forum.models import Forum
+from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.notifications.models import Notification
-from tests.factories import ChallengeFactory, UserFactory
+from tests.factories import UserFactory
 from tests.notifications_tests.factories import (
-    Forum,
     ForumFactory,
     PostFactory,
-    Topic,
     TopicFactory,
 )
 
@@ -63,23 +64,19 @@ def test_follow_if_post_in_topic():
 
 
 @pytest.mark.django_db
-def test_notification_created_on_topic_or_post_creation():
+def test_notification_created_for_target_followers_on_action_creation():
     user1 = UserFactory()
     user2 = UserFactory()
-    c = ChallengeFactory(creator=user1)
-    c.add_participant(user=user2)
+    f = ForumFactory(type=Forum.FORUM_POST)
+    follow(user1, f, send_action=False)
+    follow(user2, f, send_action=False)
 
-    t = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_ANNOUNCE)
+    # creating a post creates an action automatically
+    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
+    assert len(Action.objects.all()) == 1
 
-    notification = Notification.objects.all()
-    assert len(notification) == 1
+    assert len(Notification.objects.all()) == 1
+    notification = Notification.objects.get()
     # check that the poster did not receive a notification
-    assert notification[0].user == user2
-    assert notification[0].user != user1
-
-    _ = PostFactory(topic=t, poster=user2)
-
-    notification = Notification.objects.all()
-    assert len(notification) == 2
-    assert notification[1].user == user1
-    assert notification[1].user != user2
+    assert notification.user == user2
+    assert notification.user != user1

@@ -1,19 +1,17 @@
 import pytest
-from actstream.actions import is_following
-from actstream.models import Follow
+from actstream.actions import follow, is_following
+from actstream.models import Action, Follow
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from machina.apps.forum.models import Forum
+from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.notifications.models import Notification
-from tests.factories import (
-    ChallengeFactory,
-    UserFactory,
-)
+from tests.factories import UserFactory
 from tests.notifications_tests.factories import (
     ForumFactory,
-    Topic,
+    NotificationFactory,
     TopicFactory,
 )
 from tests.utils import get_view_for_user
@@ -31,11 +29,10 @@ def test_logged_in_view(client):
 def test_notification_mark_as_read_or_unread(client):
     user1 = UserFactory()
     user2 = UserFactory()
-    c = ChallengeFactory(creator=user1)
-    c.add_participant(user=user2)
-    _ = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_POST)
+    f = ForumFactory(type=Forum.FORUM_POST)
+    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
+    notification = NotificationFactory(user=user2, action=Action.objects.get())
 
-    notification = Notification.objects.get()
     assert not notification.read
 
     response = get_view_for_user(
@@ -63,12 +60,9 @@ def test_notification_mark_as_read_or_unread(client):
 def test_notification_deletion(client):
     user1 = UserFactory()
     user2 = UserFactory()
-    c = ChallengeFactory(creator=user1)
-    c.add_participant(user=user2)
-    _ = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_POST)
-
-    assert len(Notification.objects.all()) == 1
-    notification = Notification.objects.get()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
+    notification = NotificationFactory(user=user2, action=Action.objects.get())
 
     response = get_view_for_user(
         viewname="notifications:list",
@@ -85,15 +79,10 @@ def test_notification_deletion(client):
 def test_notification_permissions(client):
     user1 = UserFactory()
     user2 = UserFactory()
-    c = ChallengeFactory(creator=user1)
-    c.add_participant(user=user2)
-    _ = TopicFactory(forum=c.forum, poster=user1, type=Topic.TOPIC_POST)
+    f = ForumFactory(type=Forum.FORUM_POST)
+    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
+    notification = NotificationFactory(user=user2, action=Action.objects.get())
 
-    notification = Notification.objects.get()
-    assert notification.user == user2
-    assert len(Notification.objects.all()) == 1
-
-    # user can only see notifications they are owners off and have permission to change
     response = get_view_for_user(
         viewname="notifications:list",
         client=client,
@@ -103,6 +92,7 @@ def test_notification_permissions(client):
     assert response.status_code == 200
     assert str(notification.action.action_object) in response.rendered_content
 
+    # user1 cannot see user2 notifications
     response = get_view_for_user(
         viewname="notifications:list",
         client=client,
@@ -115,7 +105,7 @@ def test_notification_permissions(client):
     )
     assert "You have no notifications" in response.rendered_content
 
-    # users can only delete notifications if they are the owner of the notification
+    # only owners of a notification can delete notification
     response = get_view_for_user(
         viewname="notifications:list",
         client=client,
@@ -138,9 +128,25 @@ def test_notification_permissions(client):
 @pytest.mark.django_db
 def test_forum_subscribe_and_unsubscribe(client):
     user1 = UserFactory()
-    c = ChallengeFactory(creator=user1)
+    f = ForumFactory(type=Forum.FORUM_POST)
+    assert not is_following(user1, f)
 
-    assert is_following(user1, c.forum)
+    response = get_view_for_user(
+        viewname="notifications:follow-create",
+        client=client,
+        method=client.post,
+        data={
+            "user": user1.id,
+            "content_type": ContentType.objects.get(
+                app_label=f._meta.app_label, model=f._meta.model_name,
+            ).id,
+            "object_id": f.id,
+            "actor_only": False,
+        },
+        user=user1,
+    )
+    assert response.status_code == 302
+    assert is_following(user1, f)
 
     response = get_view_for_user(
         viewname="notifications:follow-delete",
@@ -150,25 +156,7 @@ def test_forum_subscribe_and_unsubscribe(client):
         reverse_kwargs={"pk": Follow.objects.filter(user=user1).first().id},
     )
     assert response.status_code == 302
-    assert not is_following(user1, c.forum)
-
-    response = get_view_for_user(
-        viewname="notifications:follow-create",
-        client=client,
-        method=client.post,
-        data={
-            "user": user1.id,
-            "content_type": ContentType.objects.get(
-                app_label=c.forum._meta.app_label,
-                model=c.forum._meta.model_name,
-            ).id,
-            "object_id": c.forum.id,
-            "actor_only": False,
-        },
-        user=user1,
-    )
-    assert response.status_code == 302
-    assert is_following(user1, c.forum)
+    assert not is_following(user1, f)
 
 
 @pytest.mark.django_db
@@ -209,12 +197,11 @@ def test_topic_subscribe_and_unsubscribe(client):
 
 
 @pytest.mark.django_db
-def test_subscription_delete_permission(client):
+def test_follow_delete_permission(client):
     user1 = UserFactory()
     user2 = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
-    t = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
-    assert is_following(user1, t)
+    follow(user1, f)
 
     response = get_view_for_user(
         viewname="notifications:follow-delete",

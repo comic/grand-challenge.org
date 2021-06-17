@@ -48,7 +48,7 @@
             {% for forum in topic_follows|get_forums %}
                 {% get_forum_specific_topic_follows topic_follows forum as forum_topic_follows %}
                 {% if forum_topic_follows %}
-                    <h6>Topics from {{ forum }}</h6>
+                    <h6>Topics from <a href="{{ forum.get_absolute_url }}">{{ forum }}</a></h6>
                     <ul class="list-group">
                         {% for follow in forum_topic_follows %}
                                 <li class="list-group-item p-1 pl-3">

@@ -38,7 +38,11 @@ def create_topic_action(sender, *, instance, created, **_):
 
 @receiver(post_save, sender=Post)
 def create_post_action(sender, *, instance, created, **_):
-    if created and not instance.is_topic_head:
+    if (
+        created
+        and instance.topic.posts_count != 0
+        and not instance.is_topic_head
+    ):
         follow(
             user=instance.poster,
             obj=instance.topic,

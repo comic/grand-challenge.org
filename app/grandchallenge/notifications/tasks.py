@@ -30,7 +30,7 @@ def send_unread_notification_emails():
                 unread_notifications = Notification.objects.filter(
                     user=profile.user,
                     read=False,
-                    action__timestamp__gt=profile.notification_email_last_sent_at,
+                    created__gt=profile.notification_email_last_sent_at,
                 ).count()
                 if unread_notifications:
                     recipients[profile] = unread_notifications
