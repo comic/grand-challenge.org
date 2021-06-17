@@ -25,6 +25,7 @@ from grandchallenge.subdomains.utils import reverse
 class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
     model = Notification
     permission_required = "view_notification"
+    paginate_by = 50
 
     def get_queryset(self):
         return prefetch_nested_generic_foreign_key_objects(
