@@ -2,6 +2,7 @@
 {% load url %}
 {% load profiles %}
 {% load bleach %}
+{% load guardian_tags %}
 
 {% block title %}{{ object.title }} - Blogs - {{ block.super }}{% endblock %}
 
@@ -40,11 +41,26 @@
                     <ul class="list-group list-group-flush">
                         {% for tag in object.tags.all %}
                             <li class="list-group-item border-0">
-                                <a href="{% url 'blogs:list'%}?tags={{ tag.pk }}"><i class="fa fa-tags" aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}</a>
+                                <a href="{% url 'blogs:list' %}?tags={{ tag.pk }}"><i class="fa fa-tags"
+                                                                                      aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}
+                                </a>
                             </li>
                         {% endfor %}
                     </ul>
                 </div>
+            {% endif %}
+            {% get_obj_perms request.user for object as "object_perms" %}
+            {% if "change_post" in object_perms %}
+                <div class="alert alert-warning" role="alert">
+                    This post is currently unpublished.
+                    Please bookmark this URL in case you want to come back to edit it.
+                </div>
+                <p>
+                    <a href="{% url "blogs:update" slug=object.slug %}"
+                       class="btn btn-primary">
+                        <i class="fa fa-edit"></i> Edit post
+                    </a>
+                </p>
             {% endif %}
         </div>
     </div>

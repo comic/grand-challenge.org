@@ -7,7 +7,7 @@ from grandchallenge.blogs.models import Post, Tag
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 
 
-class PostForm(ModelForm):
+class AdminPostForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in [
@@ -24,7 +24,7 @@ class PostForm(ModelForm):
 
 
 class PostAdmin(MarkdownxModelAdmin):
-    form = PostForm
+    form = AdminPostForm
     list_display = (
         "pk",
         "title",
