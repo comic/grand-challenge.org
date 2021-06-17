@@ -3,7 +3,7 @@
 {% load url %}
 
 {% block title %}
-    New Archive - {{ block.super }}
+    {% if object %}Update{% else %}New{% endif %} Archive - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
