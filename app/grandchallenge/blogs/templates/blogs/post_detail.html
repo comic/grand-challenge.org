@@ -51,10 +51,12 @@
             {% endif %}
             {% get_obj_perms request.user for object as "object_perms" %}
             {% if "change_post" in object_perms %}
-                <div class="alert alert-warning" role="alert">
-                    This post is currently unpublished.
-                    Please bookmark this URL in case you want to come back to edit it.
-                </div>
+	        {% if not object.published %}
+                    <div class="alert alert-warning" role="alert">
+                        This post is currently unpublished.
+                        Please bookmark this URL in case you want to come back to edit it.
+                    </div>
+		{% endif %}
                 <p>
                     <a href="{% url "blogs:update" slug=object.slug %}"
                        class="btn btn-primary">
