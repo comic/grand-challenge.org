@@ -18,6 +18,15 @@
 
 {% block content %}
 
+    {% if perms.blogs.add_post %}
+        <p>
+            <a href="{% url "blogs:create" %}"
+               class="btn btn-primary">
+                <i class="fa fa-plus"></i> Add a new post
+            </a>
+        </p>
+    {% endif %}
+
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
 
     {% for object in object_list %}

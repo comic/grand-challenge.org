@@ -1,19 +1,25 @@
 from django import forms
-from django.contrib.auth import get_user_model
-from django_select2.forms import Select2Widget
+from django.core.exceptions import ValidationError
+from django_select2.forms import Select2MultipleWidget
+from guardian.utils import get_anonymous_user
 
 from grandchallenge.blogs.models import Post
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.widgets import MarkdownEditorWidget
 
 
 class PostForm(SaveFormInitMixin, forms.ModelForm):
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args, authors, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["authors"].queryset = get_user_model().objects.filter(
-            pk=user.pk
-        )
-        self.fields["authors"].initial = [user]
+        self.fields["authors"].queryset = authors
+        self.fields["authors"].initial = authors
+
+    def clean_authors(self):
+        authors = self.cleaned_data["authors"]
+        if get_anonymous_user() in authors:
+            raise ValidationError("You cannot add this user!")
+        return authors
 
     class Meta:
         model = Post
@@ -25,6 +31,15 @@ class PostForm(SaveFormInitMixin, forms.ModelForm):
             "tags",
         )
         widgets = {
-            "tags": Select2Widget,
+            "tags": Select2MultipleWidget,
             "authors": forms.MultipleHiddenInput,
+        }
+
+
+class PostUpdateForm(PostForm):
+    class Meta(PostForm.Meta):
+        fields = (*PostForm.Meta.fields, "published", "content")
+        widgets = {
+            **PostForm.Meta.widgets,
+            "content": MarkdownEditorWidget,
         }

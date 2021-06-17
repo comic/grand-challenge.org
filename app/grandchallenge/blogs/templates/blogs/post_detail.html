@@ -40,11 +40,21 @@
                     <ul class="list-group list-group-flush">
                         {% for tag in object.tags.all %}
                             <li class="list-group-item border-0">
-                                <a href="{% url 'blogs:list'%}?tags={{ tag.pk }}"><i class="fa fa-tags" aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}</a>
+                                <a href="{% url 'blogs:list' %}?tags={{ tag.pk }}"><i class="fa fa-tags"
+                                                                                      aria-hidden="true"></i>&nbsp;&nbsp;{{ tag.name }}
+                                </a>
                             </li>
                         {% endfor %}
                     </ul>
                 </div>
+            {% endif %}
+            {% if perms.blogs.change_post %}
+                <p>
+                    <a href="{% url "blogs:update" slug=object.slug %}"
+                       class="btn btn-primary">
+                        <i class="fa fa-edit"></i> Edit post
+                    </a>
+                </p>
             {% endif %}
         </div>
     </div>

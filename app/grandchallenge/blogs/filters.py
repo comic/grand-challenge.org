@@ -17,7 +17,9 @@ class BlogFilter(FilterSet):
     )
     authors = ModelMultipleChoiceFilter(
         queryset=get_user_model()
-        .objects.filter(blog_authors__isnull=False)
+        .objects.filter(
+            blog_authors__isnull=False, blog_authors__published=True
+        )
         .distinct()
         .order_by("username"),
         widget=Select2MultipleWidget,
@@ -27,7 +29,7 @@ class BlogFilter(FilterSet):
     class Meta:
         model = Post
         form = FilterForm
-        fields = ("tags", "authors", "search")
+        fields = ("search", "authors", "tags")
         search_fields = ("title", "content")
 
     def search_filter(self, queryset, name, value):
