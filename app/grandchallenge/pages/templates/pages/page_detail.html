@@ -27,7 +27,7 @@
 
 {% block sidebar %}
     <div class="nav-pill-pages-container col-12 col-sm-5 col-md-4 col-lg-3 pl-3">
-          <ul class="nav nav-pills flex-column">
+        <ul class="nav nav-pills flex-column">
             {% for page in pages %}
                 {% if not page.hidden %}
                     <li class="nav-item">
@@ -40,7 +40,7 @@
                     </li>
                 {% endif %}
             {% endfor %}
-          </ul>
+        </ul>
     </div>
 {% endblock %}
 
@@ -52,7 +52,7 @@
             </div>
         {% endif %}
 
-        <div id=pageContainer>{{ currentpage.cleaned_html }}</div>
+        <div id=pageContainer>{{ cleaned_html }}</div>
 
         {% if not currentpage.is_error_page %}
             {% if currentpage.pk %}
@@ -76,15 +76,21 @@
     {# For displaying equations on the site, the safe config is important #}
     <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML,Safe'
             async></script>
-    {# geocharts #}
-    <script type="text/javascript"
-            src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript"
-            src="{% static "js/render_geocharts.js" %}"></script>
     {# make the tables sortable #}
-    <script type="text/javascript"
+    <script type="module"
             src="{% static "js/sort_tables.js" %}"></script>
-    {# render embeddable google forums #}
-    <script type="text/javascript"
-            src="{% static "js/embed_forums.js" %}"></script>
+    {# geocharts #}
+    {% if includes_geochart %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vega/5.20.2/vega.min.js"
+                integrity="sha512-cNxHgXBzKj+J32O+EhaG4v7CuZTVe7p+jBzu1N+QlUxFe/m3y0r1rAHTbBSFcQR5XagrXm43g/DfcmkFvvfIQQ=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-lite/5.1.0/vega-lite.min.js"
+                integrity="sha512-1FlIGoVpDTGmUpnMqFvsedEILJNp0mkDQ1JSuZwLR1yllAHzSSIPTl0cMp8S3F6UrmWFIeS4/Zr7ivVFAxAAQw=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/vega-embed/6.17.0/vega-embed.min.js"
+                integrity="sha512-APNk3zkoYiQb+AhF+HOkt3cj1u+xIymun1KTqKP32YZDRWgnN/sNmCeUL5QxecitZSgS0b/Wp0/WF0uFv1GO2A=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script type="module"
+                src="{% static "js/render_geocharts.js" %}"></script>
+    {% endif %}
 {% endblock %}

@@ -143,21 +143,6 @@ class TestArchiveAPIView:
             assert response.status_code == status.HTTP_200_OK
             assert response.content == b'{"directories":[],"images":[]}'
 
-    def test_caching(self, client, archive_patient_study_image_set):
-        # Clear cache manually
-        cache.clear()
-        # Perform normal request
-        response = self.perform_request(client, "retina_user")
-        assert response.status_code == status.HTTP_200_OK
-        json_response = response.content.decode()
-        # Remove data
-        archive_patient_study_image_set.archive1.delete()
-        archive_patient_study_image_set.archive2.delete()
-        # Perform request again and expect unchanged response
-        response = self.perform_request(client, "retina_user")
-        assert response.status_code == status.HTTP_200_OK
-        assert response.content.decode() == json_response
-
 
 @pytest.mark.django_db
 class TestBase64ThumbnailView:

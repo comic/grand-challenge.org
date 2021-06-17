@@ -80,7 +80,6 @@ django-ipware = "*"
 pyswot = "*"
 django-redis = "*"
 django-allauth = "*"
-easy_thumbnails = "*"
 drf-spectacular = "*"
 jinja2 = "*"
 openpyxl = "*"
@@ -90,6 +89,8 @@ numpy = "*"
 Pillow = "*"
 panimg = "*"
 django-activity-stream = "*"
+django-stdimage = "*"
+django-permissions-policy = "^4.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"
@@ -107,4 +108,4 @@ sphinx-rtd-theme = "*"
 sphinxcontrib-plantuml = "*"
 pytest-randomly = "*"
 sphinxcontrib-django = "*"
-django-capture-on-commit-callbacks = "^1.4.0"  # Backport from Django 3.2, can be removed
+django-capture-on-commit-callbacks = "*"  # Backport from Django 3.2, can be removed

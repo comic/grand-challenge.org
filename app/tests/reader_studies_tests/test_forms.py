@@ -3,9 +3,6 @@ import html
 import pytest
 from django.contrib.auth.models import Permission
 
-from grandchallenge.core.management.commands.init_gc_demo import (
-    get_temporary_image,
-)
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests import RESOURCE_PATH
@@ -104,7 +101,7 @@ def test_reader_update_form(client):
 
 
 @pytest.mark.django_db
-def test_reader_study_create(client):
+def test_reader_study_create(client, uploaded_image):
     # The study creator should automatically get added to the editors group
     creator = get_rs_creator()
     ws = WorkstationFactory()
@@ -116,7 +113,7 @@ def test_reader_study_create(client):
             method=client.post,
             data={
                 "title": "foo bar",
-                "logo": get_temporary_image(),
+                "logo": uploaded_image(),
                 "workstation": ws.pk,
                 "allow_answer_modification": True,
                 "allow_case_navigation": allow_case_navigation,

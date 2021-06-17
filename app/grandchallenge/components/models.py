@@ -43,43 +43,52 @@ logger = logging.getLogger(__name__)
 DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
+class InterfaceKindChoices(models.TextChoices):
+    """Interface kind choices."""
+
+    STRING = "STR", _("String")
+    INTEGER = "INT", _("Integer")
+    FLOAT = "FLT", _("Float")
+    BOOL = "BOOL", _("Bool")
+
+    # Annotation Types
+    TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
+    MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
+    DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
+    MULTIPLE_DISTANCE_MEASUREMENTS = (
+        "MDIS",
+        _("Multiple distance measurements"),
+    )
+    POINT = "POIN", _("Point")
+    MULTIPLE_POINTS = "MPOI", _("Multiple points")
+    POLYGON = "POLY", _("Polygon")
+    MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
+
+    # Choice Types
+    CHOICE = "CHOI", _("Choice")
+    MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
+
+    # Image types
+    IMAGE = "IMG", _("Image")
+    SEGMENTATION = "SEG", _("Segmentation")
+    HEAT_MAP = "HMAP", _("Heat Map")
+
+    # Legacy support
+    JSON = "JSON", _("JSON file")
+    CSV = "CSV", _("CSV file")
+    ZIP = "ZIP", _("ZIP file")
+
+
+class InterfaceSuperKindChoices(models.TextChoices):
+    IMAGE = "I", "Image"
+    FILE = "F", "File"
+    VALUE = "V", "Value"
+
+
 class InterfaceKind:
     """Interface kind."""
 
-    class InterfaceKindChoices(models.TextChoices):
-        """Interface kind choices."""
-
-        STRING = "STR", _("String")
-        INTEGER = "INT", _("Integer")
-        FLOAT = "FLT", _("Float")
-        BOOL = "BOOL", _("Bool")
-
-        # Annotation Types
-        TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
-        MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
-        DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
-        MULTIPLE_DISTANCE_MEASUREMENTS = (
-            "MDIS",
-            _("Multiple distance measurements"),
-        )
-        POINT = "POIN", _("Point")
-        MULTIPLE_POINTS = "MPOI", _("Multiple points")
-        POLYGON = "POLY", _("Polygon")
-        MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
-
-        # Choice Types
-        CHOICE = "CHOI", _("Choice")
-        MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
-
-        # Image types
-        IMAGE = "IMG", _("Image")
-        SEGMENTATION = "SEG", _("Segmentation")
-        HEAT_MAP = "HMAP", _("Heat Map")
-
-        # Legacy support
-        JSON = "JSON", _("JSON file")
-        CSV = "CSV", _("CSV file")
-        ZIP = "ZIP", _("ZIP file")
+    InterfaceKindChoices = InterfaceKindChoices
 
     @staticmethod
     def interface_type_file():
@@ -367,6 +376,16 @@ class ComponentInterface(models.Model):
         return self.kind in InterfaceKind.interface_type_image()
 
     @property
+    def super_kind(self):
+        if self.save_in_object_store:
+            if self.is_image_kind:
+                return InterfaceSuperKindChoices.IMAGE
+            else:
+                return InterfaceSuperKindChoices.FILE
+        else:
+            return InterfaceSuperKindChoices.VALUE
+
+    @property
     def save_in_object_store(self):
         # CSV and ZIP should always be saved to S3, others are optional
         return (
@@ -485,7 +504,7 @@ class ComponentInterfaceValue(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     interface = models.ForeignKey(
-        to=ComponentInterface, on_delete=models.CASCADE
+        to=ComponentInterface, on_delete=models.PROTECT
     )
     value = models.JSONField(null=True, blank=True, default=None)
     file = models.FileField(
@@ -505,8 +524,18 @@ class ComponentInterfaceValue(models.Model):
         ],
     )
     image = models.ForeignKey(
-        to=Image, null=True, blank=True, on_delete=models.CASCADE
+        to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
+
+    @property
+    def title(self):
+        if self.value is not None:
+            return str(self.value)
+        if self.file:
+            return self.file.name
+        if self.image:
+            return self.image.name
+        return ""
 
     @property
     def has_value(self):

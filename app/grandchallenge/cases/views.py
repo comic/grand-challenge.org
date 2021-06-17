@@ -37,9 +37,6 @@ from grandchallenge.cases.serializers import (
     RawImageUploadSessionPatchSerializer,
     RawImageUploadSessionSerializer,
 )
-from grandchallenge.core.permissions.rest_framework import (
-    DjangoObjectOnlyWithCustomPostPermissions,
-)
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
@@ -119,7 +116,7 @@ class RawImageUploadSessionViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
     queryset = RawImageUploadSession.objects.all()
-    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
 
     def perform_create(self, serializer):
@@ -226,5 +223,5 @@ class RawImageFileViewSet(
 ):
     serializer_class = RawImageFileSerializer
     queryset = RawImageFile.objects.all()
-    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]

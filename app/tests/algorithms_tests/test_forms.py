@@ -5,9 +5,6 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
 )
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.management.commands.init_gc_demo import (
-    get_temporary_image,
-)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmPermissionRequestFactory,
@@ -109,7 +106,7 @@ def test_user_update_form(client):
 
 
 @pytest.mark.django_db
-def test_algorithm_create(client):
+def test_algorithm_create(client, uploaded_image):
     # The algorithm creator should automatically get added to the editors group
     creator = get_algorithm_creator()
 
@@ -123,7 +120,7 @@ def test_algorithm_create(client):
             method=client.post,
             data={
                 "title": "foo bar",
-                "logo": get_temporary_image(),
+                "logo": uploaded_image(),
                 "workstation": ws.pk,
                 "credits_per_job": 1,
                 "inputs": [ci.pk],
@@ -280,10 +277,10 @@ def test_create_experiment_json_input_field_validation(
 @pytest.mark.parametrize(
     "slug, content_parts",
     (
-        (None, ['class="invalid-feedback"', "Not a valid UUID: %(string)s"]),
+        (None, ['class="invalid-feedback"', "This field is required."]),
         (
             "generic-overlay",
-            ['class="invalid-feedback"', "Not a valid UUID: %(string)s"],
+            ['class="invalid-feedback"', "This field is required."],
         ),
         ("string", ['class="invalid-feedback"', "This field is required."]),
         ("integer", ['class="invalid-feedback"', "This field is required."]),

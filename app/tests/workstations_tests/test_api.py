@@ -99,6 +99,25 @@ def test_session_update_extends_timeout(client):
 
 
 @pytest.mark.django_db
+def test_session_only_patchable_by_creator(client):
+    user = UserFactory()
+    s = SessionFactory(creator=user)
+
+    assert s.maximum_duration == timedelta(minutes=10)
+
+    response = get_view_for_user(
+        client=client,
+        method=client.patch,
+        viewname="api:session-keep-alive",
+        reverse_kwargs={"pk": s.pk},
+        user=UserFactory(),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_session_keep_alive_limit(client, settings):
     user = UserFactory()
     s = SessionFactory(creator=user)

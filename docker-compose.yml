@@ -83,12 +83,7 @@ services:
       PYTHONDONTWRITEBYTECODE: 1
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
-    command: >-
-      bash -c "
-      python manage.py migrate
-      && python manage.py init_gc_demo
-      && python manage.py runserver_plus 0.0.0.0:8000 --nopin
-      "
+    command: python manage.py runserver_plus 0.0.0.0:8000 --nopin
     restart: always
     depends_on:
       postgres:
@@ -110,6 +105,9 @@ services:
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+      - type: volume
+        source: pytest-cache
+        target: /tmp/.pytest_cache
     group_add:
       - ${DOCKER_GID-1001} # The docker group is only needed for testing
 
@@ -288,3 +286,6 @@ services:
 networks:
   default:
   workstations:
+
+volumes:
+  pytest-cache:

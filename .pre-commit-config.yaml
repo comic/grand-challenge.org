@@ -5,6 +5,7 @@ repos:
     rev: v3.4.0
     hooks:
       - id: check-docstring-first
+      - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace

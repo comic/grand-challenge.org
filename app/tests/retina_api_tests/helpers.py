@@ -2,8 +2,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
-from tests.registrations_tests.factories import OctObsRegistrationFactory
-from tests.retina_core_tests.factories import create_some_datastructure_data
 from tests.viewset_helpers import TEST_USER_CREDENTIALS
 
 
@@ -44,24 +42,3 @@ def client_force_login(client, user=None):
     if user is not None and not isinstance(user, str):
         client.force_login(user=user)
     return client, user
-
-
-def create_datastructures_data(archive_pars=None):
-    datastructures = create_some_datastructure_data(archive_pars=archive_pars)
-    datastructures_aus = create_some_datastructure_data(
-        archive_pars={"title": "Australia"}
-    )
-    oct_obs_registration_aus = OctObsRegistrationFactory(
-        oct_image=datastructures_aus["image_oct"],
-        obs_image=datastructures_aus["image_obs"],
-    )
-    oct_obs_registration = OctObsRegistrationFactory(
-        oct_image=datastructures["image_oct"],
-        obs_image=datastructures["image_obs"],
-    )
-    return (
-        datastructures,
-        datastructures_aus,
-        oct_obs_registration,
-        oct_obs_registration_aus,
-    )

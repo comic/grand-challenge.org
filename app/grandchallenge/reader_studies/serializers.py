@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db.transaction import on_commit
-from rest_framework.fields import CharField, ReadOnlyField
+from rest_framework.fields import CharField, ReadOnlyField, URLField
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
 from rest_framework.serializers import (
     HyperlinkedModelSerializer,
@@ -55,12 +55,16 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     hanging_list_images = SerializerMethodField()
     help_text = ReadOnlyField()
     case_text = ReadOnlyField(source="cleaned_case_text")
+    logo = URLField(source="logo.x20.url", read_only=True)
+    url = URLField(source="get_absolute_url", read_only=True)
 
     class Meta:
         model = ReaderStudy
         fields = (
             "api_url",
+            "url",
             "slug",
+            "logo",
             "description",
             "help_text",
             "hanging_list_images",

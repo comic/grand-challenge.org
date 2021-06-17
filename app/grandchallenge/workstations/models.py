@@ -14,6 +14,7 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
 from simple_history.models import HistoricalRecords
+from stdimage import JPEGField
 
 from grandchallenge.components.backends.docker import (
     ComponentException,
@@ -44,18 +45,20 @@ logger = logging.getLogger(__name__)
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
     """Store the title and description of a workstation."""
 
-    logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage
+    logo = JPEGField(
+        upload_to=get_logo_path,
+        storage=public_s3_storage,
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_workstation",
     )
     users_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="users_of_workstation",
     )
@@ -187,7 +190,7 @@ class WorkstationImage(UUIDModel, ComponentImage):
         workstation
     """
 
-    workstation = models.ForeignKey(Workstation, on_delete=models.CASCADE)
+    workstation = models.ForeignKey(Workstation, on_delete=models.PROTECT)
     http_port = models.PositiveIntegerField(
         default=8080, validators=[MaxValueValidator(2 ** 16 - 1)]
     )
@@ -325,7 +328,7 @@ class Session(UUIDModel):
         AuthToken, null=True, on_delete=models.SET_NULL
     )
     workstation_image = models.ForeignKey(
-        WorkstationImage, on_delete=models.CASCADE
+        WorkstationImage, on_delete=models.PROTECT
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)

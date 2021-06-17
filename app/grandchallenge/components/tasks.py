@@ -66,7 +66,9 @@ def _validate_docker_image_manifest(*, model, instance) -> str:
     )
     config = json.loads(config)
 
-    if str(config["config"]["User"].lower()) in ["", "root", "0"]:
+    if "User" not in config["config"] or str(
+        config["config"]["User"].lower()
+    ) in ["", "root", "0"]:
         model.objects.filter(pk=instance.pk).update(
             status=(
                 "The container runs as root. Please add a user, group and "

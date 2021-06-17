@@ -19,10 +19,10 @@ IMAGE_UPLOAD_HELP_TEXT = (
     "cannot exceed 10 GB.<br>"
     "The following file formats are supported: "
     ".mha, .mhd, .raw, .zraw, .dcm, .nii, .nii.gz, "
-    ".tiff, .png, .jpeg and .jpg.<br>"
+    ".fda, .fds, .tiff, .png, .jpeg and .jpg.<br>"
     "The following file formats can be uploaded and will be converted to "
-    "tif: Aperio(.svs), Hamamatsu(.vms, .vmu, .ndpi), Leica(.scn), MIRAX"
-    "(.mrxs) and Ventana(.bif)."
+    "tif: Aperio (.svs), Hamamatsu (.vms, .vmu, .ndpi), Leica (.scn), "
+    "MIRAX (.mrxs) and Ventana (.bif)."
 )
 
 

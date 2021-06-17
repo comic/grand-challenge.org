@@ -162,7 +162,7 @@ def test_api_rs_list_permissions(client):
     rs_set = TwoReaderStudies()
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (rs_set.creator, 200, []),
         (rs_set.editor1, 200, [rs_set.rs1.pk]),
         (rs_set.reader1, 200, [rs_set.rs1.pk]),
@@ -179,15 +179,12 @@ def test_api_rs_list_permissions(client):
             content_type="application/json",
         )
         assert response.status_code == test[1]
+        assert response.json()["count"] == len(test[2])
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        pks = [obj["pk"] for obj in response.json()["results"]]
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
-
-            for pk in test[2]:
-                assert str(pk) in pks
+        for pk in test[2]:
+            assert str(pk) in pks
 
 
 @pytest.mark.django_db
@@ -226,7 +223,7 @@ def test_api_rs_detail_permissions(client):
     rs_set = TwoReaderStudies()
 
     tests = (
-        (None, 401),
+        (None, 404),
         (rs_set.creator, 404),
         (rs_set.editor1, 200),
         (rs_set.reader1, 200),
@@ -326,7 +323,7 @@ def test_api_rs_answer_list_permissions(client):
     )
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (rs_set.creator, 200, []),
         (rs_set.editor1, 200, [a1.pk, a11.pk]),
         (rs_set.reader1, 200, [a1.pk]),
@@ -345,14 +342,13 @@ def test_api_rs_answer_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        # We provided auth details and get a response
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
+        pks = [obj["pk"] for obj in response.json()["results"]]
 
-            for pk in test[2]:
-                assert str(pk) in pks
+        for pk in test[2]:
+            assert str(pk) in pks
 
 
 @pytest.mark.django_db
@@ -367,7 +363,7 @@ def test_api_rs_answer_detail_permissions(client):
     a1 = AnswerFactory(question=q1, creator=rs_set.reader1, answer="")
 
     tests = (
-        (None, 401),
+        (None, 404),
         (rs_set.creator, 404),
         (rs_set.editor1, 200),
         (rs_set.reader1, 200),
@@ -412,7 +408,7 @@ def test_api_rs_answer_mine_list_permissions(client):
     )
 
     tests = (
-        (None, 401, []),
+        (None, 200, []),
         (rs_set.creator, 200, []),
         (rs_set.editor1, 200, []),
         (rs_set.reader1, 200, [a1.pk]),
@@ -431,14 +427,13 @@ def test_api_rs_answer_mine_list_permissions(client):
         )
         assert response.status_code == test[1]
 
-        if test[1] != 401:
-            # We provided auth details and get a response
-            assert response.json()["count"] == len(test[2])
+        # We provided auth details and get a response
+        assert response.json()["count"] == len(test[2])
 
-            pks = [obj["pk"] for obj in response.json()["results"]]
+        pks = [obj["pk"] for obj in response.json()["results"]]
 
-            for pk in test[2]:
-                assert str(pk) in pks
+        for pk in test[2]:
+            assert str(pk) in pks
 
 
 @pytest.mark.django_db

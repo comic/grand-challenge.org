@@ -309,8 +309,8 @@ class StagedAjaxFile:
 
 class UploadedAjaxFileList(forms.Field):
     def to_python(self, value):
-        if value is None:
-            value = ""
+        if value is None or value == "None":
+            return
         allowed_characters = "0123456789abcdefABCDEF-,"
         if any(c for c in value if c not in allowed_characters):
             raise ValidationError("UUID list includes invalid characters")

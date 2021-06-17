@@ -7,9 +7,6 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.files import File
 
-from grandchallenge.core.management.commands.init_gc_demo import (
-    get_temporary_image,
-)
 from tests.cases_tests.factories import (
     ImageFactory,
     ImageFactoryWithImageFile,
@@ -26,22 +23,12 @@ from tests.cases_tests.factories import (
     ImageFileFactoryWithRAWFile2D,
 )
 from tests.factories import ImageFileFactory
-from tests.model_helpers import do_test_factory
 
 
 @pytest.mark.django_db
-class TestRetinaImagesModels:
-    # test functions are added dynamically to this class
-    def test_retina_image_str(self):
-        model = ImageFactory()
-        assert str(model) == f"Image {model.name} {model.shape_without_color}"
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("factory", (ImageFactory,))
-class TestFactories:
-    def test_factory_creation(self, factory):
-        do_test_factory(factory)
+def test_retina_image_str():
+    model = ImageFactory()
+    assert str(model) == f"Image {model.name} {model.shape_without_color}"
 
 
 @pytest.mark.django_db
@@ -216,12 +203,12 @@ class TestImageSpacing:
 
 
 @pytest.mark.django_db
-def test_image_file_cleanup():
+def test_image_file_cleanup(uploaded_image):
     filename = f"{uuid.uuid4()}.zraw"
 
     i = ImageFactory()
     f = ImageFileFactory(image=i)
-    f.file.save(filename, File(get_temporary_image()))
+    f.file.save(filename, File(uploaded_image()))
 
     storage = f.file.storage
     filepath = f.file.name

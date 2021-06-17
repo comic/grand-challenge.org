@@ -287,6 +287,17 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "construct"
+version = "2.10.67"
+description = "A powerful declarative symmetric parser/builder for binary data"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+extras = ["arrow", "cloudpickle", "enum34", "lz4", "numpy", "ruamel.yaml"]
+
+[[package]]
 name = "coverage"
 version = "5.4"
 description = "Code coverage measurement for Python"
@@ -337,7 +348,7 @@ dev = ["check-manifest"]
 
 [[package]]
 name = "django"
-version = "3.1.9"
+version = "3.1.11"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
@@ -598,6 +609,17 @@ Django = ">=1.11"
 django-js-asset = "*"
 
 [[package]]
+name = "django-permissions-policy"
+version = "4.1.0"
+description = "Set the draft security HTTP header Permissions-Policy (previously Feature-Policy) on your Django app."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+Django = ">=2.2"
+
+[[package]]
 name = "django-redis"
 version = "4.12.1"
 description = "Full featured redis cache backend for Django."
@@ -647,6 +669,21 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.dependencies]
 six = "*"
+
+[[package]]
+name = "django-stdimage"
+version = "5.3.0"
+description = "Django Standarized Image Field"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Django = ">=2.2"
+pillow = ">=2.5"
+
+[package.extras]
+progressbar = ["progressbar2 (>=3.0.0)"]
 
 [[package]]
 name = "django-storages"
@@ -779,18 +816,6 @@ inflection = ">=0.3.1"
 jsonschema = ">=2.6.0"
 PyYAML = ">=5.1"
 uritemplate = ">=2.0.0"
-
-[[package]]
-name = "easy-thumbnails"
-version = "2.7.1"
-description = "Easy thumbnails for Django"
-category = "main"
-optional = false
-python-versions = ">=3.5"
-
-[package.dependencies]
-django = ">=1.11,<4.0"
-pillow = "*"
 
 [[package]]
 name = "et-xmlfile"
@@ -1169,18 +1194,21 @@ test = ["pytest (>=5.0.1)", "pytest-xdist", "hypothesis (>=3.58)"]
 
 [[package]]
 name = "panimg"
-version = "0.2.2"
+version = "0.3.0"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
+click = "*"
+construct = "*"
 numpy = "*"
 openslide-python = "*"
 Pillow = "*"
 pydantic = "*"
 pydicom = "*"
+pylibjpeg = "*"
 pyvips = "*"
 SimpleITK = "*"
 tifffile = "*"
@@ -1313,6 +1341,45 @@ crypto = ["cryptography (>=3.3.1,<4.0.0)"]
 dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1,<4.0.0)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
 docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
 tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
+
+[[package]]
+name = "pylibjpeg"
+version = "1.3.0"
+description = "A Python framework for decoding JPEG and decoding/encoding DICOM RLE data, with a focus on supporting pydicom"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+numpy = "*"
+pylibjpeg-openjpeg = "*"
+pylibjpeg-rle = "*"
+
+[[package]]
+name = "pylibjpeg-openjpeg"
+version = "1.1.1"
+description = "A Python wrapper for openjpeg, with a focus on use as a plugin for for pylibjpeg"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
+name = "pylibjpeg-rle"
+version = "1.1.0"
+description = "Python bindings for a fast RLE decoder/encoder, with a focus on use as a plugin for pylibjpeg"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+benchmarks = ["pydicom", "numpy", "asv"]
+tests = ["pytest", "pydicom", "numpy"]
 
 [[package]]
 name = "pyparsing"
@@ -2098,17 +2165,16 @@ python-versions = ">=3.6.1"
 
 [[package]]
 name = "werkzeug"
-version = "1.0.1"
+version = "2.0.1"
 description = "The comprehensive WSGI web application library."
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.6"
 
 [package.dependencies]
 watchdog = {version = "*", optional = true, markers = "extra == \"watchdog\""}
 
 [package.extras]
-dev = ["pytest", "pytest-timeout", "coverage", "tox", "sphinx", "pallets-sphinx-themes", "sphinx-issues"]
 watchdog = ["watchdog"]
 
 [[package]]
@@ -2125,7 +2191,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "678bcbbd3281e5be7bae6cb14d20d61b6ac92acf2c04a33016b02a2a978fb7de"
+content-hash = "58555e3eec3d9f243dee0aa5e8afe5a4ace4490c448fcb246fcf18e741221d26"
 
 [metadata.files]
 alabaster = [
@@ -2280,6 +2346,9 @@ colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
+construct = [
+    {file = "construct-2.10.67.tar.gz", hash = "sha256:730235fedf4f2fee5cfadda1d14b83ef1bf23790fb1cc579073e10f70a050883"},
+]
 coverage = [
     {file = "coverage-5.4-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:6d9c88b787638a451f41f97446a1c9fd416e669b4d9717ae4615bd29de1ac135"},
     {file = "coverage-5.4-cp27-cp27m-manylinux1_i686.whl", hash = "sha256:66a5aae8233d766a877c5ef293ec5ab9520929c2578fd2069308a98b7374ea8c"},
@@ -2349,8 +2418,8 @@ disposable-email-domains = [
     {file = "disposable_email_domains-0.0.64-py2.py3-none-any.whl", hash = "sha256:f3b061bb80fe5923978e64d7fc20e0dc06173163b8e4d1da008e8557c8e3ad76"},
 ]
 django = [
-    {file = "Django-3.1.9-py3-none-any.whl", hash = "sha256:f5c3f1ce2473abf2f35d992c46d5534e53bd3397867689bde28fd29e856b46b7"},
-    {file = "Django-3.1.9.tar.gz", hash = "sha256:296d10092561a1cf16100885b935dc56cf09c8ccb114e64004554941677c6342"},
+    {file = "Django-3.1.11-py3-none-any.whl", hash = "sha256:c79245c488411d1ae300b8f7a08ac18a496380204cf3035aff97ad917a8de999"},
+    {file = "Django-3.1.11.tar.gz", hash = "sha256:9a0a2f3d34c53032578b54db7ec55929b87dda6fec27a06cc2587afbea1965e5"},
 ]
 django-activity-stream = [
     {file = "django-activity-stream-0.10.0.tar.gz", hash = "sha256:2cec600bb5a543dd402747afeeec237e9848993385049adfedc16ec97a6d86f2"},
@@ -2432,6 +2501,10 @@ django-mptt = [
     {file = "django-mptt-0.11.0.tar.gz", hash = "sha256:dfdb3af75ad27cdd4458b0544ec8574174f2b90f99bc2cafab6a15b4bc1895a8"},
     {file = "django_mptt-0.11.0-py2.py3-none-any.whl", hash = "sha256:90eb236eb4f1a92124bd7c37852bbe09c0d21158477cc237556d59842a91c509"},
 ]
+django-permissions-policy = [
+    {file = "django-permissions-policy-4.1.0.tar.gz", hash = "sha256:30df0dfe6579f60743d181378c7cbbb44526a5df469aa633251234387d3819f1"},
+    {file = "django_permissions_policy-4.1.0-py3-none-any.whl", hash = "sha256:774ca81646c84793c8c5645e581ecd4d08a88d492cf90c8983648d8fddcbb3c8"},
+]
 django-redis = [
     {file = "django-redis-4.12.1.tar.gz", hash = "sha256:306589c7021e6468b2656edc89f62b8ba67e8d5a1c8877e2688042263daa7a63"},
     {file = "django_redis-4.12.1-py3-none-any.whl", hash = "sha256:1133b26b75baa3664164c3f44b9d5d133d1b8de45d94d79f38d1adc5b1d502e5"},
@@ -2448,6 +2521,10 @@ django-select2 = [
 django-simple-history = [
     {file = "django-simple-history-2.12.0.tar.gz", hash = "sha256:3b7bf6bfbcf973afca123c5786c72b917ed4d92d7bf3b6cb70fe2e3850e763a3"},
     {file = "django_simple_history-2.12.0-py2.py3-none-any.whl", hash = "sha256:e7e830cb7a768dc90d6ba0507f8023f889bcb62fe31a08f18fac102c55eec539"},
+]
+django-stdimage = [
+    {file = "django-stdimage-5.3.0.tar.gz", hash = "sha256:95f2897f5a520f18e0d0097cc8cb1380db9127ead1abe66a5e048cd7bd4a2295"},
+    {file = "django_stdimage-5.3.0-py2.py3-none-any.whl", hash = "sha256:fb9d6bf86664873194fcc378193d81405aa4989eceadb4bcce6bb52588801934"},
 ]
 django-storages = [
     {file = "django-storages-1.11.1.tar.gz", hash = "sha256:c823dbf56c9e35b0999a13d7e05062b837bae36c518a40255d522fbe3750fbb4"},
@@ -2486,9 +2563,6 @@ docutils = [
 drf-spectacular = [
     {file = "drf-spectacular-0.13.2.tar.gz", hash = "sha256:3e79a838960f27dc8a8ea955eac0c1c7335a94c0fba9657b85258ae6ac22d6ab"},
     {file = "drf_spectacular-0.13.2-py2.py3-none-any.whl", hash = "sha256:0572019a7ae3c00aa1706e803f1182ef434da680a167900fae53e65a2dac9bbf"},
-]
-easy-thumbnails = [
-    {file = "easy-thumbnails-2.7.1.tar.gz", hash = "sha256:f862949208d9066cd3d84ffcf9c2dbe9c7344ea6152b741e440f861eca46855c"},
 ]
 et-xmlfile = [
     {file = "et_xmlfile-1.0.1.tar.gz", hash = "sha256:614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b"},
@@ -2767,8 +2841,8 @@ pandas = [
     {file = "pandas-1.2.2.tar.gz", hash = "sha256:14ed84b463e9b84c8ff9308a79b04bf591ae3122a376ee0f62c68a1bd917a773"},
 ]
 panimg = [
-    {file = "panimg-0.2.2-py3-none-any.whl", hash = "sha256:719b5b0a72dbb4763c0c3936332a46880e52eeae9bf8260591826f2249d8a43c"},
-    {file = "panimg-0.2.2.tar.gz", hash = "sha256:289d9065442be3d34fe7218393f5e7c89881aa9c8d6abcbcc1d7cc627c3797be"},
+    {file = "panimg-0.3.0-py3-none-any.whl", hash = "sha256:4b0f4929bdcab06a130c6a99f21ac89ddabf07ca4339d456284017973c04ea19"},
+    {file = "panimg-0.3.0.tar.gz", hash = "sha256:cddae415f7e05a49ce33371b6935df8a52382c7891ed561a91c4859d1bdfcba8"},
 ]
 pillow = [
     {file = "Pillow-8.1.2-cp36-cp36m-macosx_10_10_x86_64.whl", hash = "sha256:5cf03b9534aca63b192856aa601c68d0764810857786ea5da652581f3a44c2b0"},
@@ -2898,6 +2972,80 @@ pygments = [
 pyjwt = [
     {file = "PyJWT-2.1.0-py3-none-any.whl", hash = "sha256:934d73fbba91b0483d3857d1aff50e96b2a892384ee2c17417ed3203f173fca1"},
     {file = "PyJWT-2.1.0.tar.gz", hash = "sha256:fba44e7898bbca160a2b2b501f492824fc8382485d3a6f11ba5d0c1937ce6130"},
+]
+pylibjpeg = [
+    {file = "pylibjpeg-1.3.0-py3-none-any.whl", hash = "sha256:0436dfbe1141e9ef360b9e94546d95352257f96eabdcdab638fde31c0f816e18"},
+    {file = "pylibjpeg-1.3.0.tar.gz", hash = "sha256:5115ee908301737874312d28804db5891bb8e96ea8f9caf90d34621e8ca67879"},
+]
+pylibjpeg-openjpeg = [
+    {file = "pylibjpeg-openjpeg-1.1.1.tar.gz", hash = "sha256:e7adfd8e2c63661b75219d5ae381ac50381054df41ca94d0d01ddfbe362a66cc"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:a56cecea6a2b369c710d7c94e3e1bc04cb22cd47a2b73ae4e3e4e6f2e54a90c0"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:6294be5d5e843f7fdde0093395cb0a84e168671ea75264292358f371a56d2af4"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:3fa56d78a47bf671a6289aa60999820c9ae0784eb02bd167cfb19f2f0202faea"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:3b3183c1693e4e4fe5ef4a4655422cc0f5dba73579d0c082da6656a2e0108c4f"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:967393980e9e98afaa48285611059ae9087144b10e8bd901ee0950838cc04c8b"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp36-cp36m-win32.whl", hash = "sha256:5de056312d312f97e07923b37ed4f898c2a88188f2f0b42264d755b288ad20ce"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp36-cp36m-win_amd64.whl", hash = "sha256:84fd3744a7377cb66ab668314e6cd418862d9b56200d17cca2b5bba196b1cdca"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:5589f4a693ab36597e2391c0bb6287caed2bda7c86783b76b5de2f5bb8f2a4fb"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:4e63734beda93662315b9ff20623431c13954937d7608d0c30b512ae29ad34ec"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:39bdc743446a6ff97c188d66c1a747872e83d4eeb797b486f21037c5a361b40e"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:7d459af9e9f8b54e661d99eccd02fa5ee5b2496031eaaba18b1e705fe7137ef7"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:1530b80880e87c8cdf03d17617b9afb432120d7bf79ac00463784d3bb629823b"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp37-cp37m-win32.whl", hash = "sha256:6265937a9d4a9062b2fd6e1555c76be323cc1ae24df0f0924e010620c09de675"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp37-cp37m-win_amd64.whl", hash = "sha256:f2d73fc5d5a1f55625a1372fe38acf8691347d30cc68d0ed916c4af29cc6eda6"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:fb829f0732c0ddd847e0519da64bead5fc5e8bb2cb833bec70c35bed486c0958"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:ff7f4351c52b3460ce3486eaff8ebb82d49c26a8c7a6d26c39c6d39cdbba3aac"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:a0e892c36a0d43c5103b35f3d04e05118ace4922c5fcc6f52be279e1e563ba84"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:9d868aea9ab67a05c7588e30d5b2bac354444c89736e84bfa8ff7cddabaa3ecc"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:16ff4a24b91c7cf511fdc4355473c34bbdfdab835edf301b93c3b1581fdbe44b"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp38-cp38-win32.whl", hash = "sha256:4d4097aec59419dc7d2168ba5f52e81b61891b07ae4f078c941d5e0ac3997fea"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp38-cp38-win_amd64.whl", hash = "sha256:d0358ea255f767d02671bc8e5a3b6d84719316d36ff634cdb92067d90b54c45e"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:72622e1007a5a2acaf1ae383545e4e64b486e92a20d508e1e60f5603a4849ceb"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp39-cp39-manylinux1_i686.whl", hash = "sha256:f52f791ae4f22689987c350249836d91411b9ccbed9b1dd659004dca891ebe0a"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:c6ebe556d8d5090005236fbcdd5bda89177e2c8af586f7d44c5283c20bf5e1f4"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp39-cp39-manylinux2010_i686.whl", hash = "sha256:4e920b633a80a3f6d49062c8be7b60d11edd5fed4affbda12b60ffef4343610b"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:ed263f119fae700c0e23e4818284637f47d7972212c1598deea631b58178fca2"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp39-cp39-win32.whl", hash = "sha256:daf68f749b8ae9da991d35336aa9d38851268848a21cb9f002a533abd96ed472"},
+    {file = "pylibjpeg_openjpeg-1.1.1-cp39-cp39-win_amd64.whl", hash = "sha256:b86d518cf5f2d57b17934fca8b0e8ee0b2be7f6b997ee814c3593524c3db8a9a"},
+]
+pylibjpeg-rle = [
+    {file = "pylibjpeg-rle-1.1.0.tar.gz", hash = "sha256:aecbbf9abf6609e918174f12ada381bee21da5dd7947401d0d395e3bfa0f21be"},
+    {file = "pylibjpeg_rle-1.1.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:7f89a0130c119844a54a32bd4e2fd549df50453fa08cc5f2b990e38b542c5b17"},
+    {file = "pylibjpeg_rle-1.1.0-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:63227b0714f7ce10d25c433cf12b3c282e1e955215f944340e2f28613fc11d18"},
+    {file = "pylibjpeg_rle-1.1.0-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:be22f29c5e490b2fce48b6304f5c6ebc5a3e9ba6648bddf0a1448e92b8ddf1c1"},
+    {file = "pylibjpeg_rle-1.1.0-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:91846a615616d1f0bfb471d0aff498f9f2f6f2f13476f74bbb2166247a948ea7"},
+    {file = "pylibjpeg_rle-1.1.0-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:43be0a3cba51f8002cab001f5773fac45eafeec6f27e7f01c39295031d512cd8"},
+    {file = "pylibjpeg_rle-1.1.0-cp36-cp36m-win32.whl", hash = "sha256:25dd09c9fc34afe98017224f64de46f5b3b5f5d1cb37dc184dfdb1ece0f2f3ea"},
+    {file = "pylibjpeg_rle-1.1.0-cp36-cp36m-win_amd64.whl", hash = "sha256:73d147fee8c9231e9a14e1b2b36d7cd6de92cbded438601ee63a9a6701654049"},
+    {file = "pylibjpeg_rle-1.1.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:c69444f4d18b40133ed3a5f920dad49c6fd546bc9e7b6e6ef33d080f2a20a41f"},
+    {file = "pylibjpeg_rle-1.1.0-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:15198a6d29428ae67e081eda8df5a35ee09dd645659100253060d7cbc05c1532"},
+    {file = "pylibjpeg_rle-1.1.0-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:07bda527602eeea5e795ab4d83230f8d6c8ad31c3ca013a34a775e90b6d57078"},
+    {file = "pylibjpeg_rle-1.1.0-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:df811082c635e86082eab25f23df6c2ba2511a2720cbf0c151a185dc8e3e98e3"},
+    {file = "pylibjpeg_rle-1.1.0-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:a5fd2b6a2d9bd7abaee25a587a23b98981744bdcdebe6d62c589b2a3cde1c6cb"},
+    {file = "pylibjpeg_rle-1.1.0-cp37-cp37m-win32.whl", hash = "sha256:dc68d7fe4c2375427b12de01b91fa5bfcf9ef4a40521c9db3bc35603eae90433"},
+    {file = "pylibjpeg_rle-1.1.0-cp37-cp37m-win_amd64.whl", hash = "sha256:92ede6713425145853c1d88c79abc557f20cf42ed142d63acd108ff250b79c2b"},
+    {file = "pylibjpeg_rle-1.1.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:211876e3211a68ece7f757b53b5d36c3a8c799c5cf06baabf62e2e88e3b62b26"},
+    {file = "pylibjpeg_rle-1.1.0-cp38-cp38-manylinux1_i686.whl", hash = "sha256:151a9902a5832c8fef8eba40c51ff446acc3217ba18aa6bf8f861c1cb29eb6b1"},
+    {file = "pylibjpeg_rle-1.1.0-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:160c396630d512528ff424ea25289cb49db3ad9906f083956e4521d120f515bb"},
+    {file = "pylibjpeg_rle-1.1.0-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:055b17c30ffd02021a688930a7636e33b8a6b45105d44597ac71b609635eb3a1"},
+    {file = "pylibjpeg_rle-1.1.0-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:0ea5bd62ca71a37847ed8f8b184e07ea6e9b0deebf0c1667d34eeb69a4ddabe4"},
+    {file = "pylibjpeg_rle-1.1.0-cp38-cp38-win32.whl", hash = "sha256:4ffa2cd077e0bb9737a9f8ddf71489edd6edff85baab7a86994d650062d4bd02"},
+    {file = "pylibjpeg_rle-1.1.0-cp38-cp38-win_amd64.whl", hash = "sha256:93449d89e0b52b3a36a880316581653a4d464701a8f55cbcc9fe7ccdcd7c53e9"},
+    {file = "pylibjpeg_rle-1.1.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:365f5f7dd08b30f44c82511e8ac51f535b83c6fbbc07a347b051db405c87e638"},
+    {file = "pylibjpeg_rle-1.1.0-cp39-cp39-manylinux1_i686.whl", hash = "sha256:55a6074bf9858a9b872b7cc7cb3ec866b637a9f9d1a9c85aaf15e7af59e4f311"},
+    {file = "pylibjpeg_rle-1.1.0-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:0dea1ca52b5dbdb6af3a95ccd871dd59cf35e47ca7977c4cd691fd1e88ffb9f3"},
+    {file = "pylibjpeg_rle-1.1.0-cp39-cp39-manylinux2010_i686.whl", hash = "sha256:d741f533562323657c006ad28bb4448b8a6cf28aa547133fee9d60e532f12b74"},
+    {file = "pylibjpeg_rle-1.1.0-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:3b30a47186ed7c481d941abb818b96ab9addb812114c9c766f9d21bacec1cd4d"},
+    {file = "pylibjpeg_rle-1.1.0-cp39-cp39-win32.whl", hash = "sha256:c441cb56bf18984b0eae273563d6c2e1a919f35bfd7c193fb5a53a2278d443cd"},
+    {file = "pylibjpeg_rle-1.1.0-cp39-cp39-win_amd64.whl", hash = "sha256:bc2302be178fe0ec86c2aa2552057561e3ae56dea78b6a1f1163e426d46a1cba"},
+    {file = "pylibjpeg_rle-1.1.0-pp36-pypy36_pp73-macosx_10_9_x86_64.whl", hash = "sha256:852963024589b90ce303564e33e7c1b17320fbf19c1301c354a114bf20594c92"},
+    {file = "pylibjpeg_rle-1.1.0-pp36-pypy36_pp73-manylinux1_x86_64.whl", hash = "sha256:641cab22386c38fb465c3ba47646cc940423739c472b7d4e947f56fd9787640c"},
+    {file = "pylibjpeg_rle-1.1.0-pp36-pypy36_pp73-manylinux2010_x86_64.whl", hash = "sha256:55c0541956cadaf11457f5ff51d085f798d723bd3b25a88667233b3a38f63a6c"},
+    {file = "pylibjpeg_rle-1.1.0-pp36-pypy36_pp73-win32.whl", hash = "sha256:39a90e16c6e1cb2ea4f5302e04f0965efd38a7541720b0881d384cb66badb6be"},
+    {file = "pylibjpeg_rle-1.1.0-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:0e3d585163f1edfb44003240978f782ee49cd08a4d107ce63a885fb80bc26cd5"},
+    {file = "pylibjpeg_rle-1.1.0-pp37-pypy37_pp73-manylinux1_x86_64.whl", hash = "sha256:b616e137270adae7a3c0d2611de4a1e7895658bc63e1b5b7b43d69a8b53391f7"},
+    {file = "pylibjpeg_rle-1.1.0-pp37-pypy37_pp73-manylinux2010_x86_64.whl", hash = "sha256:89ed0ed5be8038ec0a4b2463ff6b04a58b472cad07b7a47f4d5be73676330629"},
+    {file = "pylibjpeg_rle-1.1.0-pp37-pypy37_pp73-win32.whl", hash = "sha256:10ec1917f46ba972cfb412c8c2d649335615117f1f4dafd2aff06897e5dbe020"},
 ]
 pyparsing = [
     {file = "pyparsing-2.4.7-py2.py3-none-any.whl", hash = "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"},
@@ -3334,8 +3482,8 @@ websockets = [
     {file = "websockets-8.1.tar.gz", hash = "sha256:5c65d2da8c6bce0fca2528f69f44b2f977e06954c8512a952222cea50dad430f"},
 ]
 werkzeug = [
-    {file = "Werkzeug-1.0.1-py2.py3-none-any.whl", hash = "sha256:2de2a5db0baeae7b2d2664949077c2ac63fbd16d98da0ff71837f7d1dea3fd43"},
-    {file = "Werkzeug-1.0.1.tar.gz", hash = "sha256:6c80b1e5ad3665290ea39320b91e1be1e0d5f60652b964a3070216de83d2e47c"},
+    {file = "Werkzeug-2.0.1-py3-none-any.whl", hash = "sha256:6c1ec500dcdba0baa27600f6a22f6333d8b662d22027ff9f6202e3367413caa8"},
+    {file = "Werkzeug-2.0.1.tar.gz", hash = "sha256:1de1db30d010ff1af14a009224ec49ab2329ad2cde454c8a708130642d579c42"},
 ]
 whitenoise = [
     {file = "whitenoise-5.2.0-py2.py3-none-any.whl", hash = "sha256:05d00198c777028d72d8b0bbd234db605ef6d60e9410125124002518a48e515d"},

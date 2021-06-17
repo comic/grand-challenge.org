@@ -75,7 +75,8 @@ class TestProfileViewSets:
         url = reverse("api:profiles-user-self")
         request = rf.get(url)
         response = UserProfileViewSet.as_view(actions={"get": "self"})(request)
-        assert response.status_code == 401
+        assert response.status_code == 200
+        assert response.data["user"] == {"username": "AnonymousUser"}
 
     def test_profile_self(self, rf):
         user = UserFactory()

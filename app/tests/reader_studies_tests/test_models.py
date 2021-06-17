@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import ProtectedError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -40,16 +41,8 @@ def test_group_deletion_reverse(group):
     assert readers_group
     assert editors_group
 
-    getattr(rs, group).delete()
-
-    with pytest.raises(ObjectDoesNotExist):
-        readers_group.refresh_from_db()
-
-    with pytest.raises(ObjectDoesNotExist):
-        editors_group.refresh_from_db()
-
-    with pytest.raises(ObjectDoesNotExist):
-        rs.refresh_from_db()
+    with pytest.raises(ProtectedError):
+        getattr(rs, group).delete()
 
 
 @pytest.mark.django_db

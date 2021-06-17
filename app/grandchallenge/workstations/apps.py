@@ -16,8 +16,22 @@ def init_workstation_creators_group(*_, **__):
     )
 
 
+def init_session_permissions(*_, **__):
+    from django.contrib.auth.models import Group
+    from guardian.shortcuts import assign_perm
+    from grandchallenge.workstations.models import Session
+
+    g, _ = Group.objects.get_or_create(
+        name=settings.REGISTERED_USERS_GROUP_NAME
+    )
+    assign_perm(
+        f"{Session._meta.app_label}.change_{Session._meta.model_name}", g,
+    )
+
+
 class WorkstationsConfig(AppConfig):
     name = "grandchallenge.workstations"
 
     def ready(self):
         post_migrate.connect(init_workstation_creators_group, sender=self)
+        post_migrate.connect(init_session_permissions, sender=self)

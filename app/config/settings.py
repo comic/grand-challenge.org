@@ -260,6 +260,25 @@ SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
 )
 
+PERMISSIONS_POLICY = {
+    "accelerometer": [],
+    "ambient-light-sensor": [],
+    "autoplay": [],
+    "camera": [],
+    "display-capture": [],
+    "document-domain": [],
+    "encrypted-media": [],
+    "fullscreen": [],
+    "geolocation": [],
+    "gyroscope": [],
+    "interest-cohort": [],
+    "magnetometer": [],
+    "microphone": [],
+    "midi": [],
+    "payment": [],
+    "usb": [],
+}
+
 IPWARE_META_PRECEDENCE_ORDER = (
     # Set by nginx
     "HTTP_X_FORWARDED_FOR",
@@ -333,6 +352,7 @@ MIDDLEWARE = (
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
+    "django_permissions_policy.PermissionsPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -376,7 +396,6 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
     "guardian",  # per object permissions
-    "easy_thumbnails",  # for mugshots
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
@@ -388,6 +407,7 @@ THIRD_PARTY_APPS = [
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
+    "stdimage",
     "django_filters",
     "drf_spectacular",
     "allauth",
@@ -440,7 +460,6 @@ LOCAL_APPS = [
     "grandchallenge.registrations",
     "grandchallenge.annotations",
     "grandchallenge.retina_core",
-    "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
     "grandchallenge.workstations",
     "grandchallenge.workspaces",
@@ -470,7 +489,6 @@ AUTHENTICATION_BACKENDS = [
     "guardian.backends.ObjectPermissionBackend",
 ]
 
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 
 ##############################################################################
@@ -507,7 +525,36 @@ LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/users/profile/"
 
-PROFILES_MUGSHOT_SIZE = 460
+##############################################################################
+#
+# stdimage
+#
+##############################################################################
+
+# Re-render the existing images if these values change
+# https://github.com/codingjoe/django-stdimage#re-rendering-variations
+STDIMAGE_LOGO_VARIATIONS = {
+    # Must be square
+    "full": (None, None, False),
+    "x20": (640, 640, True),
+    "x15": (480, 480, True),
+    "x10": (320, 320, True),
+    "x02": (64, 64, True),
+}
+STDIMAGE_SOCIAL_VARIATIONS = {
+    # Values from social sharing
+    "full": (None, None, False),
+    "x20": (1280, 640, False),
+    "x15": (960, 480, False),
+    "x10": (640, 320, False),
+}
+STDIMAGE_BANNER_VARIATIONS = {
+    # Fixed width, any height
+    "full": (None, None, False),
+    "x20": (2220, None, False),
+    "x15": (1665, None, False),
+    "x10": (1110, None, False),
+}
 
 ##############################################################################
 #
@@ -994,14 +1041,9 @@ DISALLOWED_CHALLENGE_NAMES = {
 DISALLOWED_EMAIL_DOMAINS = {
     "qq.com",
     "gm.uit.edu.vn",
+    "wust.edu.cn",
     *blocklist,
 }
-
-# Modality name constants
-MODALITY_OCT = "OCT"  # Optical coherence tomography
-MODALITY_CF = "Fundus Photography"  # Color fundus photography
-MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
-MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
@@ -1019,7 +1061,6 @@ RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 # Retina specific settings
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
-RETINA_IMPORT_USER_NAME = "retina_import_user"
 
 ENABLE_DEBUG_TOOLBAR = False
 

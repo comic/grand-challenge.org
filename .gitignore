@@ -82,7 +82,7 @@ docs/**/?/
 
 # Pytest cache
 .pytest_cache/
-
+app/scripts/
 app/celerybeat-schedule
 
 # No coverage files

@@ -1,0 +1,7 @@
+{% if product.ce_under == "MDD" %}
+    "This product has been CE marked under the Medical Devices Directive (MDD). From May 2021 manufacturers may no longer use this directive for getting a CE mark for their medical software. The Medical Device Regulations (MDR) have replaced the MDD. Products marked under the MDD may be sold until May 2024, if not expired or major changes have been made to the product."
+{% elif product.ce_under == "MDR" %}
+    "This product has been CE marked based on the most recent rules and regulations: the Medical Device Regulations (MDR). Since May 2021 the MDR have come into effect and have replaced the former Medical Devices Directive (MDD). Products marked under the former MDD may be sold until May 2024, if not expired or major changes have been made to the product."
+{% elif product.ce_under == "MDD/MDR" %}
+    "Some modules of this product have been CE marked based on the former Medical Devices Directive (MDD) and some modules based on the current Medical Device Regulations (MDR)."
+{% endif %}

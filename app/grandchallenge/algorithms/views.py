@@ -10,7 +10,6 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.core.files import File
-from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -32,8 +31,13 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
+from rest_framework.mixins import (
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+)
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
@@ -57,11 +61,9 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
     HyperlinkedJobSerializer,
+    JobPostSerializer,
 )
-from grandchallenge.algorithms.tasks import (
-    create_algorithm_jobs_for_session,
-    run_algorithm_job_for_inputs,
-)
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.components.models import (
@@ -109,6 +111,7 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     }
     ordering = "-created"
     filter_class = AlgorithmFilter
+    paginate_by = 40
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -483,12 +486,7 @@ class AlgorithmExperimentCreate(
                 civs.append(civ)
 
         job.inputs.add(*civs)
-
-        run_job = run_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": job.pk, "upload_pks": upload_pks},
-            immutable=True,
-        )
-        on_commit(run_job.apply_async)
+        job.run_job(upload_pks=upload_pks)
 
         return HttpResponseRedirect(
             reverse(
@@ -632,7 +630,7 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):
-    queryset = Algorithm.objects.all()
+    queryset = Algorithm.objects.all().prefetch_related("outputs", "inputs")
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -647,16 +645,29 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     filterset_fields = ["algorithm"]
 
 
-class JobViewSet(ReadOnlyModelViewSet):
+class JobViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
     queryset = (
         Job.objects.all()
         .prefetch_related("outputs__interface", "inputs__interface")
         .select_related("algorithm_image__algorithm")
     )
-    serializer_class = HyperlinkedJobSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_class = JobViewsetFilter
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return JobPostSerializer
+        else:
+            return HyperlinkedJobSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        user = context["request"].user
+        context.update({"user": user})
+        return context
 
 
 class AlgorithmPermissionRequestCreate(

@@ -40,6 +40,7 @@ from tests.factories import (
     ImageFactory,
     UserFactory,
 )
+from tests.fixtures import create_uploaded_image
 from tests.patients_tests.factories import PatientFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -726,7 +727,7 @@ def image_with_image_level_annotations():
 
 @pytest.fixture
 def component_interfaces():
-    civs = [
+    interfaces = [
         {
             "title": "Boolean",
             "kind": ComponentInterface.Kind.BOOL,
@@ -789,4 +790,9 @@ def component_interfaces():
         },
     ]
 
-    return [ComponentInterfaceFactory(**civ) for civ in civs]
+    return [ComponentInterfaceFactory(**interface) for interface in interfaces]
+
+
+@pytest.fixture
+def uploaded_image():
+    return create_uploaded_image

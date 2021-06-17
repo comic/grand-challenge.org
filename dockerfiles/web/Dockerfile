@@ -23,6 +23,7 @@ COPY --chown=django:django setup.cfg /home/django
 
 USER django:django
 WORKDIR /app
+RUN mkdir /tmp/.pytest_cache
 COPY --chown=django:django ./app/ /app/
 COPY --from=npm --chown=django:django /src/dist/ /opt/static/vendor/
 

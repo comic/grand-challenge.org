@@ -2,6 +2,7 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
@@ -91,6 +92,14 @@ class ChallengeUpdateForm(forms.ModelForm):
             "publications": Select2MultipleWidget,
             "registration_page_text": SummernoteInplaceWidget(),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if not cleaned_data["hidden"] and not cleaned_data.get("logo"):
+            raise ValidationError("A logo is required for public challenges")
+
+        return cleaned_data
 
 
 data_items = (

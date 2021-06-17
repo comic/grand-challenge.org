@@ -1,5 +1,4 @@
 import factory
-from django.conf import settings
 
 from grandchallenge.cases.models import (
     Image,
@@ -125,9 +124,7 @@ class ImageFactoryWithoutImageFile(ImageFactory):
     field_of_view = factory.Iterator([x[0] for x in Image.FOV_CHOICES])
     study = factory.SubFactory(StudyFactory)
     name = factory.Sequence(lambda n: f"RetinaImage {n}")
-    modality = factory.SubFactory(
-        ImagingModalityFactory, modality=settings.MODALITY_CF
-    )
+    modality = factory.SubFactory(ImagingModalityFactory, modality="CF")
     color_space = factory.Iterator([x[0] for x in Image.COLOR_SPACES])
 
 
@@ -160,9 +157,7 @@ class ImageFactoryWithImageFile3D(ImageFactoryWithImageFile):
             ImageFileFactoryWithMHDFile(image=self)
             ImageFileFactoryWithRAWFile(image=self)
 
-    modality = factory.SubFactory(
-        ImagingModalityFactory, modality=settings.MODALITY_OCT
-    )
+    modality = factory.SubFactory(ImagingModalityFactory, modality="OCT")
 
 
 class ImageFactoryWithImageFile4D(ImageFactoryWithImageFile):

@@ -151,10 +151,9 @@ def create_algorithm_jobs_for_session(
 def create_algorithm_jobs_for_archive(
     *, archive_pks, archive_item_pks=None, algorithm_pks=None
 ):
-    # Send an email to the algorithm editors on job failure
-    linked_task = send_failed_jobs_email.signature(kwargs={}, immutable=True)
-
     for archive in Archive.objects.filter(pk__in=archive_pks).all():
+        # Only the archive groups should be able to view the job
+        # Can be shared with the algorithm editor if needed
         archive_groups = [
             archive.editors_group,
             archive.uploaders_group,
@@ -172,15 +171,14 @@ def create_algorithm_jobs_for_archive(
             archive_items = archive.items.all()
 
         for algorithm in algorithms:
-            # Editors group should be able to view archive jobs for debugging
-            groups = [*archive_groups, algorithm.editors_group]
-
             execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
                 archive_items=archive_items,
                 creator=None,
-                extra_viewer_groups=groups,
-                linked_task=linked_task,
+                extra_viewer_groups=archive_groups,
+                # NOTE: no emails in case the logs leak data
+                # to the algorithm editors
+                linked_task=None,
             )
 
 
@@ -279,7 +277,6 @@ def create_algorithm_jobs(  # noqa: C901
     default_input_interface = ComponentInterface.objects.get(
         slug=DEFAULT_INPUT_INTERFACE_SLUG
     )
-
     jobs = []
 
     if not images:
@@ -312,21 +309,31 @@ def create_algorithm_jobs(  # noqa: C901
     for archive_item in archive_items:
         job_inputs = archive_item.values.filter(interface__in=input_interfaces)
 
-        # TODO: check that this filter works
-        if not Job.objects.filter(
-            inputs__in=job_inputs,
+        # Check if a Job with identical inputs already exists
+        skip = False
+        for job in Job.objects.filter(
+            inputs__interface__in=input_interfaces,
             algorithm_image=algorithm_image,
             creator=creator,
-        ).exists():
-            j = Job.objects.create(
-                creator=creator, algorithm_image=algorithm_image
-            )
-            j.inputs.set(job_inputs)
+        ):
+            if list(
+                job.inputs.order_by("pk").values("value", "image", "file")
+            ) == list(
+                job_inputs.order_by("pk").values("value", "image", "file")
+            ):
+                skip = True
+                break
+        if skip:
+            continue
+        j = Job.objects.create(
+            creator=creator, algorithm_image=algorithm_image
+        )
+        j.inputs.set(job_inputs)
 
-            if extra_viewer_groups is not None:
-                j.viewer_groups.add(*extra_viewer_groups)
+        if extra_viewer_groups is not None:
+            j.viewer_groups.add(*extra_viewer_groups)
 
-            jobs.append(j)
+        jobs.append(j)
 
     for image in images:
         if not ComponentInterfaceValue.objects.filter(

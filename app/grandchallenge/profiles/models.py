@@ -7,8 +7,9 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
-from easy_thumbnails.fields import ThumbnailerImageField
 from guardian.shortcuts import assign_perm
+from guardian.utils import get_anonymous_user
+from stdimage import JPEGField
 
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.utils import disable_for_loaddata
@@ -24,20 +25,12 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
     )
 
-    MUGSHOT_SETTINGS = {
-        "size": (
-            settings.PROFILES_MUGSHOT_SIZE,
-            settings.PROFILES_MUGSHOT_SIZE,
-        ),
-        "crop": settings.PROFILES_MUGSHOT_SIZE,
-    }
-
-    mugshot = ThumbnailerImageField(
+    mugshot = JPEGField(
         _("mugshot"),
         blank=True,
         upload_to=get_mugshot_path,
-        resize_source=MUGSHOT_SETTINGS,
         help_text=_("A personal image displayed in your profile."),
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
 
     institution = models.CharField(max_length=100)
@@ -66,10 +59,7 @@ class UserProfile(models.Model):
             self.assign_permissions()
 
     def assign_permissions(self):
-        if self.user.username not in [
-            settings.RETINA_IMPORT_USER_NAME,
-            settings.ANONYMOUS_USER_NAME,
-        ]:
+        if self.user != get_anonymous_user():
             assign_perm("change_userprofile", self.user, self)
 
     def get_absolute_url(self):
@@ -79,16 +69,14 @@ class UserProfile(models.Model):
 
     def get_mugshot_url(self):
         if self.mugshot:
-            return self.mugshot.url
+            return self.mugshot.x02.url
         else:
             gravatar_url = (
                 "https://www.gravatar.com/avatar/"
                 + md5(self.user.email.lower().encode("utf-8")).hexdigest()
                 + "?"
             )
-            gravatar_url += urlencode(
-                {"d": "identicon", "s": str(settings.PROFILES_MUGSHOT_SIZE)}
-            )
+            gravatar_url += urlencode({"d": "identicon", "s": "64"})
             return gravatar_url
 
     @property

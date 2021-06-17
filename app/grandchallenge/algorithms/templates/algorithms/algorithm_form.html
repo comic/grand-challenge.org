@@ -3,21 +3,24 @@
 {% load url %}
 
 {% block title %}
-    Create An Algorithm - {{ block.super }}
+        {{ object|yesno:"Update,Create"}} Algorithm - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a>
-        </li>
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">Create an algorithm</li>
+            aria-current="page">{{ object|yesno:"Update,Create"}}</li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Create An Algorithm</h2>
+    <h2>{{ object|yesno:"Update,Create" }} Algorithm</h2>
 
     {% crispy form %}
 

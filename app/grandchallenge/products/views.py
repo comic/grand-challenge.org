@@ -16,13 +16,14 @@ class ProductList(ListView):
     model = Product
     context_object_name = "products"
     queryset = Product.objects.filter(ce_status=Status.CERTIFIED).order_by(
-        "-verified", "-ce_verified", "product_name"
+        "-ce_under", "-verified", "-ce_verified", "product_name"
     )
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("company")
         subspeciality_query = self.request.GET.get("subspeciality")
         modality_query = self.request.GET.get("modality")
+        ce_under_query = self.request.GET.get("ce_under")
         ce_class_query = self.request.GET.get("ce_class")
         fda_class_query = self.request.GET.get("fda_class")
         search_query = self.request.GET.get("search")
@@ -56,6 +57,9 @@ class ProductList(ListView):
         if modality_query and modality_query != "All":
             queryset = queryset.filter(Q(modality__icontains=modality_query))
 
+        if ce_under_query and ce_under_query != "All":
+            queryset = queryset.filter(Q(ce_under__icontains=ce_under_query))
+
         if ce_class_query and ce_class_query != "All":
             queryset = queryset.filter(Q(ce_class=ce_class_query))
 
@@ -74,6 +78,7 @@ class ProductList(ListView):
         context = super().get_context_data(*args, **kwargs)
         subspeciality_query = self.request.GET.get("subspeciality", "All")
         modality_query = self.request.GET.get("modality", "All")
+        ce_under_query = self.request.GET.get("ce_under", "All")
         ce_class_query = self.request.GET.get("ce_class", "All")
         fda_class_query = self.request.GET.get("fda_class", "All")
         search_query = self.request.GET.get("search", "")
@@ -107,6 +112,8 @@ class ProductList(ListView):
             "Class III",
         ]
 
+        ce_mdd_mdr = ["All", "MDR", "MDD"]
+
         fda_classes = ["All", "Class I", "Class II", "Class III", "No FDA"]
 
         context.update(
@@ -114,10 +121,12 @@ class ProductList(ListView):
                 "q_search": search_query,
                 "subspecialities": subspecialities,
                 "modalities": modalities,
+                "ce_mdd_mdr": ce_mdd_mdr,
                 "ce_classes": ce_classes,
                 "fda_classes": fda_classes,
                 "selected_subspeciality": subspeciality_query,
                 "selected_modality": modality_query,
+                "selected_ce_under": ce_under_query,
                 "selected_ce_class": ce_class_query,
                 "selected_fda_class": fda_class_query,
                 "products_selected_page": True,

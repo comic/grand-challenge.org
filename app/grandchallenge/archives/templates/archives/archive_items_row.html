@@ -1,0 +1,18 @@
+{% load humanize %}
+{% load profiles %}
+{% load workstations %}
+{% load pathlib %}
+
+<ul class="list-unstyled mb-0">
+    {% for civ in object.values.all %}
+        <li>{{ civ.interface.title }}: {{ civ.title }}</li>
+    {% endfor %}
+</ul>
+<split></split>
+
+<a href="{% url 'archives:item-edit' slug=object.archive.slug id=object.pk %}">
+    <span class="badge badge-primary">
+        <i class="fa fa-edit"></i> Edit
+    </span>
+</a>
+<split></split>

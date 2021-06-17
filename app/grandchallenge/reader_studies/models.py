@@ -18,6 +18,7 @@ from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
 from simple_history.models import HistoricalRecords
 from sklearn.metrics import accuracy_score
+from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
@@ -196,13 +197,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_readerstudy",
     )
     readers_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="readers_of_readerstudy",
     )
@@ -210,7 +211,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "cases.Image", related_name="readerstudies"
     )
     workstation = models.ForeignKey(
-        "workstations.Workstation", on_delete=models.CASCADE
+        "workstations.Workstation", on_delete=models.PROTECT
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
@@ -227,14 +228,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "study's readers group in order to do that."
         ),
     )
-    logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage
+    logo = JPEGField(
+        upload_to=get_logo_path,
+        storage=public_s3_storage,
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = models.ImageField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
     help_text_markdown = models.TextField(blank=True)
 
@@ -1191,7 +1195,7 @@ class Question(UUIDModel):
     }
 
     reader_study = models.ForeignKey(
-        ReaderStudy, on_delete=models.CASCADE, related_name="questions"
+        ReaderStudy, on_delete=models.PROTECT, related_name="questions"
     )
     question_text = models.TextField()
     help_text = models.TextField(blank=True)
@@ -1378,6 +1382,9 @@ class Question(UUIDModel):
             self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
         ]
 
+    def get_absolute_url(self):
+        return self.reader_study.get_absolute_url() + "#questions"
+
 
 class CategoricalOption(models.Model):
     question = models.ForeignKey(
@@ -1396,14 +1403,14 @@ class Answer(UUIDModel):
     ``ReaderStudy``.
     """
 
-    creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
+    question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = models.JSONField(
         null=True, validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
     answer_image = models.ForeignKey(
-        "cases.Image", null=True, on_delete=models.SET_NULL
+        "cases.Image", null=True, on_delete=models.PROTECT
     )
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)
