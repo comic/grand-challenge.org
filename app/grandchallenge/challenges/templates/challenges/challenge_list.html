@@ -8,7 +8,7 @@
 {% block title %}Challenges - {{ block.super }}{% endblock %}
 
 {% block content %}
-    {% if request.user.is_staff %}
+    {% if perms.challenges.change_externalchallenge %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'challenges:external-create' %}"
@@ -133,16 +133,11 @@
                                         </span>
                         {% endif %}
 
-                        {% if not challenge.is_self_hosted and request.user.is_staff %}
+                        {% if not challenge.is_self_hosted and perms.challenges.change_externalchallenge %}
                             <a class="badge badge-primary above-stretched-link"
                                href="{% url 'challenges:external-update' challenge.short_name %}"
                                title="Edit Challenge">
                                 <i class="fas fa-edit fa-fw"></i>
-                            </a>
-                            <a class="badge badge-danger above-stretched-link"
-                               href="{% url 'challenges:external-delete' challenge.short_name %}"
-                               title="Delete Challenge">
-                                <i class="fas fa-trash fa-fw"></i>
                             </a>
                         {% endif %}
                     </div>

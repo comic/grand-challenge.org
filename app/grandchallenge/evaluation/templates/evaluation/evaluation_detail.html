@@ -153,15 +153,6 @@
             <dt>Comment:</dt>
             <dd>{{ object.submission.comment }}</dd>
         {% endif %}
-
-        {% if request.user.is_staff and object.submission.annotationset %}
-            <dt>Predictions</dt>
-            <dd>
-                <a class="btn btn-primary"
-                   href="{{ object.submission.annotationset.get_absolute_url }}">
-                    <i class="fa fa-eye"></i> View Predictions</a>
-            </dd>
-        {% endif %}
     </dl>
 
     {% if object.status == object.SUCCESS %}

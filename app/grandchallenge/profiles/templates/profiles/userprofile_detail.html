@@ -46,10 +46,6 @@
                         <h2 class="mb-3">{{ profile.user.username }}</h2>
                     {% endif %}
 
-                    {% if profile.user.is_staff %}
-                        <span class="btn btn-sm btn-outline-success disabled mb-3">STAFF</span>
-                    {% endif %}
-
                     {% if profile.user.verification.is_verified %}
                         <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified User"><i
                                 class="fas fa-user-check"></i></span>

@@ -1,11 +1,10 @@
-from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import Q
 from django.utils.html import format_html
 from django.views.generic import (
     CreateView,
-    DeleteView,
     ListView,
     TemplateView,
     UpdateView,
@@ -25,17 +24,13 @@ from grandchallenge.challenges.models import (
     Challenge,
     ExternalChallenge,
 )
-from grandchallenge.core.permissions.mixins import (
-    UserIsNotAnonMixin,
-    UserIsStaffMixin,
-)
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.subdomains.mixins import ChallengeSubdomainObjectMixin
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
-class ChallengeCreate(UserIsNotAnonMixin, SuccessMessageMixin, CreateView):
+class ChallengeCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Challenge
     form_class = ChallengeCreateForm
     success_message = "Challenge successfully created"
@@ -124,7 +119,7 @@ class ChallengeList(TemplateView):
         return context
 
 
-class UsersChallengeList(UserIsNotAnonMixin, PaginatedTableListView):
+class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
     model = Challenge
     template_name = "challenges/challenge_users_list.html"
     row_template = "challenges/challenge_users_row.html"
@@ -184,7 +179,10 @@ class ChallengeUpdate(
 
 
 class ExternalChallengeCreate(
-    UserIsStaffMixin, SuccessMessageMixin, CreateView
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
 ):
     model = ExternalChallenge
     form_class = ExternalChallengeUpdateForm
@@ -192,6 +190,8 @@ class ExternalChallengeCreate(
         "Your challenge has been successfully submitted. "
         "An admin will review your challenge before it is published."
     )
+    raise_exception = True
+    permission_required = "challenges.add_externalchallenge"
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
@@ -202,7 +202,10 @@ class ExternalChallengeCreate(
 
 
 class ExternalChallengeUpdate(
-    UserIsStaffMixin, SuccessMessageMixin, UpdateView
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
 ):
     model = ExternalChallenge
     slug_field = "short_name__iexact"
@@ -210,24 +213,16 @@ class ExternalChallengeUpdate(
     form_class = ExternalChallengeUpdateForm
     template_name_suffix = "_update"
     success_message = "Challenge updated"
+    raise_exception = True
+    permission_required = "challenges.change_externalchallenge"
 
     def get_success_url(self):
         return reverse("challenges:list")
 
 
-class ExternalChallengeList(UserIsStaffMixin, ListView):
+class ExternalChallengeList(
+    LoginRequiredMixin, PermissionRequiredMixin, ListView
+):
     model = ExternalChallenge
-
-
-class ExternalChallengeDelete(UserIsStaffMixin, DeleteView):
-    model = ExternalChallenge
-    slug_field = "short_name__iexact"
-    slug_url_kwarg = "short_name"
-    success_message = "External challenge was successfully deleted"
-
-    def get_success_url(self):
-        return reverse("challenges:external-list")
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, self.success_message)
-        return super().delete(request, *args, **kwargs)
+    raise_exception = True
+    permission_required = "challenges.view_externalchallenge"
