@@ -2,6 +2,7 @@
 {% load url %}
 {% load profiles %}
 {% load bleach %}
+{% load guardian_tags %}
 
 {% block title %}{{ object.title }} - Blogs - {{ block.super }}{% endblock %}
 
@@ -48,7 +49,8 @@
                     </ul>
                 </div>
             {% endif %}
-            {% if perms.blogs.change_post %}
+            {% get_obj_perms request.user for object as "object_perms" %}
+            {% if "change_post" in object_perms %}
                 <p>
                     <a href="{% url "blogs:update" slug=object.slug %}"
                        class="btn btn-primary">

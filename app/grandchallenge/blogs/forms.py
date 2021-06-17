@@ -15,6 +15,8 @@ class PostForm(SaveFormInitMixin, forms.ModelForm):
         self.fields["authors"].queryset = authors
         self.fields["authors"].initial = authors
 
+        self.fields["tags"].required = True
+
     def clean_authors(self):
         authors = self.cleaned_data["authors"]
         if get_anonymous_user() in authors:

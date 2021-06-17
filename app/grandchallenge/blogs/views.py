@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
 from grandchallenge.blogs.filters import BlogFilter
 from grandchallenge.blogs.forms import PostForm, PostUpdateForm
@@ -23,10 +27,16 @@ class AuthorFormKwargsMixin:
         return form_kwargs
 
 
-class PostCreate(PermissionRequiredMixin, AuthorFormKwargsMixin, CreateView):
+class PostCreate(
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    AuthorFormKwargsMixin,
+    CreateView,
+):
     model = Post
     form_class = PostForm
     permission_required = "blogs.add_post"
+    raise_exception = True
 
 
 class PostList(FilterMixin, ListView):
@@ -46,7 +56,13 @@ class PostDetail(DetailView):
         return qs
 
 
-class PostUpdate(PermissionRequiredMixin, AuthorFormKwargsMixin, UpdateView):
+class PostUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    AuthorFormKwargsMixin,
+    UpdateView,
+):
     model = Post
     form_class = PostUpdateForm
     permission_required = "blogs.change_post"
+    raise_exception = True
