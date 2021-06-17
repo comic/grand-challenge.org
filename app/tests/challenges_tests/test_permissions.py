@@ -1,11 +1,12 @@
 import pytest
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import ExternalChallengeFactory
+from tests.factories import ExternalChallengeFactory, UserFactory
 from tests.utils import (
+    get_view_for_user,
     validate_admin_only_view,
     validate_logged_in_view,
-    validate_staff_only_view,
 )
 
 
@@ -27,21 +28,36 @@ def test_challenge_update_permissions(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "view",
-    [
-        "challenges:external-list",
-        "challenges:external-create",
-        "challenges:external-update",
-        "challenges:external-delete",
-    ],
-)
-def test_external_challenges_staff_views(client, view):
-    if view in ["challenges:external-update", "challenges:external-delete"]:
-        reverse_kwargs = {"short_name": ExternalChallengeFactory().short_name}
-    else:
-        reverse_kwargs = {}
+class TestObjectPermissionRequiredViews:
+    def test_permission_required_views(self, client):
+        c = ExternalChallengeFactory()
+        u = UserFactory()
 
-    validate_staff_only_view(
-        client=client, viewname=view, reverse_kwargs=reverse_kwargs
-    )
+        for view_name, kwargs, permission, obj in [
+            ("create", {}, "challenges.add_externalchallenge", None),
+            ("list", {}, "challenges.view_externalchallenge", None),
+            (
+                "update",
+                {"short_name": c.short_name},
+                "challenges.change_externalchallenge",
+                None,  # NOTE: Using global perms
+            ),
+        ]:
+
+            def _get_view():
+                return get_view_for_user(
+                    client=client,
+                    viewname=f"challenges:external-{view_name}",
+                    reverse_kwargs=kwargs,
+                    user=u,
+                )
+
+            response = _get_view()
+            assert response.status_code == 403
+
+            assign_perm(permission, u, obj)
+
+            response = _get_view()
+            assert response.status_code == 200
+
+            remove_perm(permission, u, obj)

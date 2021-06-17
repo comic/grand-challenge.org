@@ -10,7 +10,7 @@ from django.views.generic import View
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
+from tests.factories import SUPER_SECURE_TEST_PASSWORD
 
 
 def assert_redirect(uri: str, *args):
@@ -253,27 +253,4 @@ def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
             client=client,
             user=test[1],
             **kwargs,
-        )
-
-
-def validate_staff_only_view(
-    *, client: Client, should_redirect=False, **kwargs
-):
-    assert_viewname_redirect(
-        redirect_url=settings.LOGIN_URL, client=client, **kwargs
-    )
-
-    user = UserFactory()
-    staff_user = UserFactory(is_staff=True)
-
-    assert_viewname_status(code=403, client=client, user=user, **kwargs)
-
-    if should_redirect:
-        staff_response = assert_viewname_status(
-            code=302, client=client, user=staff_user, **kwargs
-        )
-        assert settings.LOGIN_URL not in staff_response.url
-    else:
-        assert_viewname_status(
-            code=200, client=client, user=staff_user, **kwargs
         )
