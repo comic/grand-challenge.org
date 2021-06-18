@@ -37,16 +37,17 @@ class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
     def post(self, request, *args, **kwargs):
         if "delete" in request.POST:
             action = "delete"
+            required_permission = "delete_notification"
         elif "mark_read" in request.POST:
             action = "mark_read"
+            required_permission = "change_notification"
         elif "mark_unread" in request.POST:
             action = "mark_unread"
+            required_permission = "change_notification"
 
         selected_notifications = request.POST.getlist("checkbox")
         notifications = get_objects_for_user(
-            request.user,
-            ["delete_notification", "change_notification"],
-            Notification,
+            request.user, required_permission, Notification,
         ).filter(id__in=selected_notifications)
         notifications_count = notifications.count()
         if not notifications:
