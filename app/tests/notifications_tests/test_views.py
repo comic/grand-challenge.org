@@ -6,6 +6,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from machina.apps.forum.models import Forum
 from machina.apps.forum_conversation.models import Topic
+from machina.apps.forum_permission.models import (
+    ForumPermission,
+    UserForumPermission,
+)
 
 from grandchallenge.notifications.models import Notification
 from tests.factories import UserFactory
@@ -220,3 +224,69 @@ def test_follow_delete_permission(client):
         user=user1,
     )
     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_follow_create_permission(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+
+    # wrong user
+    response = get_view_for_user(
+        viewname="notifications:follow-create",
+        client=client,
+        method=client.post,
+        data={
+            "user": user1.id,
+            "content_type": ContentType.objects.get(
+                app_label=f._meta.app_label, model=f._meta.model_name,
+            ).id,
+            "object_id": f.id,
+            "actor_only": False,
+        },
+        user=user2,
+    )
+    assert response.status_code == 404
+
+    # correct user, but does not have permission to subscribe
+    response = get_view_for_user(
+        viewname="notifications:follow-create",
+        client=client,
+        method=client.post,
+        data={
+            "user": user1.id,
+            "content_type": ContentType.objects.get(
+                app_label=f._meta.app_label, model=f._meta.model_name,
+            ).id,
+            "object_id": f.id,
+            "actor_only": False,
+        },
+        user=user1,
+    )
+    assert response.status_code == 404
+    UserForumPermission.objects.create(
+        permission=ForumPermission.objects.filter(
+            codename="can_read_forum"
+        ).get(),
+        user=user1,
+        forum=f,
+        has_perm=True,
+    )
+
+    response = get_view_for_user(
+        viewname="notifications:follow-create",
+        client=client,
+        method=client.post,
+        data={
+            "user": user1.id,
+            "content_type": ContentType.objects.get(
+                app_label=f._meta.app_label, model=f._meta.model_name,
+            ).id,
+            "object_id": f.id,
+            "actor_only": False,
+        },
+        user=user1,
+    )
+    assert response.status_code == 302
+    assert is_following(user1, f)

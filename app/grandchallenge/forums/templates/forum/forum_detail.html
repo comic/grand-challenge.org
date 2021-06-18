@@ -33,10 +33,11 @@
 <div class="mt-4 mb-3 row">
   <div class="col-6 col-md-4 forum-actions-block">
     {% get_permission 'can_add_topic' forum request.user as user_can_add_topic %}
+    {% get_permission 'can_read_forum' forum request.user as user_can_read_forum %}
     {% if user_can_add_topic %}
     <a href="{% url 'forum_conversation:topic_create' forum.slug forum.pk %}" class="btn btn-primary btn-sm"><i class="fa fa-comments fa-lg"></i>&nbsp;{% trans "New topic" %}</a>
     {% endif %}
-    {% if request.user|is_following:forum %}
+    {% if user_can_read_forum and request.user|is_following:forum %}
         {% get_follow_object_pk request.user forum as follow_object_pk %}
         <form style="display: inline;" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
             {% csrf_token %}
@@ -44,7 +45,7 @@
                 {% trans "Unsubscribe" %}
             </button>
         </form>
-    {% else %}
+    {% elif user_can_read_forum and not request.user|is_following:forum %}
         <form style="display: inline;" method="post" action="{% url 'notifications:follow-create' %}">
             {% csrf_token %}
             <input name="content_type" type="hidden" value="{{ forum|get_content_type }}">

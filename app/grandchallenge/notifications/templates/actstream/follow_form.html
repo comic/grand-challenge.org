@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load profiles %}
 {% load humanize %}
+{% load crispy_forms_tags %}
 
 {% block title %}Subscriptions - {{ block.super }}{% endblock %}
 
@@ -13,7 +14,7 @@
 {% block content %}
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ form|crispy }}
         <input type="submit" value="Update">
     </form>
 {% endblock %}

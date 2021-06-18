@@ -1,6 +1,7 @@
 from actstream.models import Follow
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import ValidationError
 from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
@@ -14,6 +15,7 @@ from guardian.mixins import (
 )
 from guardian.shortcuts import get_objects_for_user
 
+from grandchallenge.notifications.forms import FollowForm
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
@@ -106,8 +108,15 @@ class FollowCreate(
     LoginRequiredMixin, SuccessMessageMixin, CreateView,
 ):
     model = Follow
-    fields = ["user", "content_type", "object_id", "actor_only"]
+    form_class = FollowForm
     success_message = "Subscription successfully added"
 
     def get_success_url(self):
         return reverse("notifications:follow-list")
+
+    def form_valid(self, form):
+        try:
+            form.check_permissions(self.request.user)
+            return super().form_valid(form)
+        except ValidationError:
+            return HttpResponseNotFound("You cannot add this subscription.")
