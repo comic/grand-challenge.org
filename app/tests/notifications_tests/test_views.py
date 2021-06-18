@@ -133,6 +133,14 @@ def test_notification_permissions(client):
 def test_forum_subscribe_and_unsubscribe(client):
     user1 = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
+    UserForumPermission.objects.create(
+        permission=ForumPermission.objects.filter(
+            codename="can_read_forum"
+        ).get(),
+        user=user1,
+        forum=f,
+        has_perm=True,
+    )
     assert not is_following(user1, f)
 
     response = get_view_for_user(
@@ -168,6 +176,14 @@ def test_topic_subscribe_and_unsubscribe(client):
     user1 = UserFactory()
     user2 = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
+    UserForumPermission.objects.create(
+        permission=ForumPermission.objects.filter(
+            codename="can_read_forum"
+        ).get(),
+        user=user1,
+        forum=f,
+        has_perm=True,
+    )
     t = TopicFactory(forum=f, poster=user2, type=Topic.TOPIC_POST)
 
     assert not is_following(user1, t)

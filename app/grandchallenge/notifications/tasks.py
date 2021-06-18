@@ -25,7 +25,6 @@ def send_unread_notification_emails():
             ):
                 recipients[profile] = profile.unread_notifications.count()
                 profile.notification_email_last_sent_at = current_time
-                profile.save()
             elif profile.notification_email_last_sent_at is not None:
                 unread_notifications = Notification.objects.filter(
                     user=profile.user,
@@ -35,6 +34,7 @@ def send_unread_notification_emails():
                 if unread_notifications:
                     recipients[profile] = unread_notifications
                     profile.notification_email_last_sent_at = current_time
-                    profile.save()
-
+        UserProfile.objects.bulk_update(
+            current_page_profiles, ["notification_email_last_sent_at"]
+        )
         send_unread_notifications_email(recipients)

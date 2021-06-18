@@ -34,6 +34,19 @@ def test_notification_email():
 
 
 @pytest.mark.django_db
+def test_notification_email_last_sent_at_updated():
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    _ = TopicFactory(forum=f, poster=user2, type=Topic.TOPIC_POST)
+    _ = NotificationFactory(user=user1, action=Action.objects.get())
+    assert not user1.user_profile.notification_email_last_sent_at
+    send_unread_notification_emails()
+    user1.refresh_from_db()
+    assert user1.user_profile.notification_email_last_sent_at
+
+
+@pytest.mark.django_db
 def test_notification_email_only_about_new_unread_notifications():
     user1 = UserFactory()
     user2 = UserFactory()
