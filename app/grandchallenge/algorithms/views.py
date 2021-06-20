@@ -182,7 +182,10 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             status=AlgorithmPermissionRequest.PENDING,
         ).count()
         context.update(
-            {"pending_permission_requests": pending_permission_requests}
+            {
+                "pending_permission_requests": pending_permission_requests,
+                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}",
+            }
         )
 
         return context
