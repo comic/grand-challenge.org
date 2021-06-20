@@ -15,7 +15,7 @@ from django.core.files.temp import NamedTemporaryFile
 @shared_task()
 def get_tarball(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
-        app_label="webhooks", model_name="GitHubWebhookMessage"
+        app_label="github", model_name="GitHubWebhookMessage"
     )
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
     payload = ghwm.payload

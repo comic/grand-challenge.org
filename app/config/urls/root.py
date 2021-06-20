@@ -14,11 +14,11 @@ from grandchallenge.blogs.sitemaps import PostsSitemap
 from grandchallenge.challenges.sitemaps import ChallengesSitemap
 from grandchallenge.core.sitemaps import CoreSitemap, FlatPagesSitemap
 from grandchallenge.core.views import HomeTemplate
+from grandchallenge.github.views import post_install_redirect
 from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
 from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
 from grandchallenge.reader_studies.sitemaps import ReaderStudiesSiteMap
-from grandchallenge.webhooks.views import post_install_redirect
 
 admin.autodiscover()
 admin.site.login = login_required(admin.site.login)

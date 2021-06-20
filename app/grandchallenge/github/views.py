@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from grandchallenge.webhooks.models import GitHubWebhookMessage
+from grandchallenge.github.models import GitHubWebhookMessage
 
 
 @csrf_exempt

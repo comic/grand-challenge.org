@@ -477,7 +477,7 @@ LOCAL_APPS = [
     "grandchallenge.datatables",
     "grandchallenge.organizations",
     "grandchallenge.groups",
-    "grandchallenge.webhooks",
+    "grandchallenge.github",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS

@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.transaction import on_commit
 
-from grandchallenge.webhooks.tasks import get_tarball
+from grandchallenge.github.tasks import get_tarball
 
 
 class GitHubWebhookMessage(models.Model):
