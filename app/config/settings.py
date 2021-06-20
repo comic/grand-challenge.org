@@ -900,9 +900,6 @@ WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
 WORKSTATIONS_SESSION_DURATION_LIMIT = int(
     os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
 )
-WORKSTATION_INTERNAL_NETWORK = strtobool(
-    os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
-)
 # Which regions are available for workstations to run in
 WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
     "WORKSTATIONS_ACTIVE_REGIONS", "eu-central-1"

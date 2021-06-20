@@ -388,7 +388,6 @@ class Session(UUIDModel):
             "GRAND_CHALLENGE_API_ROOT": unquote(reverse("api:api-root")),
             "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
             "WORKSTATION_SESSION_ID": str(self.pk),
-            "GRAND_CHALLENGE_INTERNAL": settings.WORKSTATION_INTERNAL_NETWORK,
         }
 
         if self.creator:
