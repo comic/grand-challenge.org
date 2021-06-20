@@ -18,6 +18,7 @@ from grandchallenge.pages.sitemaps import PagesSitemap
 from grandchallenge.policies.sitemaps import PoliciesSitemap
 from grandchallenge.products.sitemaps import CompaniesSitemap, ProductsSitemap
 from grandchallenge.reader_studies.sitemaps import ReaderStudiesSiteMap
+from grandchallenge.webhooks.views import post_install_redirect
 
 admin.autodiscover()
 admin.site.login = login_required(admin.site.login)
@@ -45,6 +46,7 @@ sitemaps = {
 
 urlpatterns = [
     path("", HomeTemplate.as_view(), name="home"),
+    path("github-install-complete", post_install_redirect),
     path(
         "robots.txt",
         TemplateView.as_view(

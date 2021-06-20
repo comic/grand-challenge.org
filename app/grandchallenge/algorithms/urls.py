@@ -1,6 +1,7 @@
 from django.urls import path
 
 from grandchallenge.algorithms.views import (
+    AlgorithmAddRepo,
     AlgorithmCreate,
     AlgorithmDetail,
     AlgorithmExecutionSessionCreate,
@@ -36,6 +37,7 @@ urlpatterns = [
     ),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
     path("<slug>/update/", AlgorithmUpdate.as_view(), name="update"),
+    path("<slug>/add-repo/", AlgorithmAddRepo.as_view(), name="add-repo"),
     path(
         "<slug>/images/create/",
         AlgorithmImageCreate.as_view(),
