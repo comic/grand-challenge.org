@@ -36,6 +36,7 @@ from grandchallenge.retina_api.views import (
     TextAnnotationViewSet,
 )
 from grandchallenge.statistics.views import MetricsAPIView
+from grandchallenge.webhooks.views import github_webhook
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
@@ -167,6 +168,7 @@ urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),
+    path("v1/github/", github_webhook, name="github-webhook"),
     path("v1/metrics/", MetricsAPIView.as_view(), name="metrics"),
     path(
         "",
