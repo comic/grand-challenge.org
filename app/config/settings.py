@@ -477,6 +477,7 @@ LOCAL_APPS = [
     "grandchallenge.datatables",
     "grandchallenge.organizations",
     "grandchallenge.groups",
+    "grandchallenge.webhooks",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -1040,6 +1041,14 @@ DISALLOWED_EMAIL_DOMAINS = {
     "wust.edu.cn",
     *blocklist,
 }
+
+# GitHub App
+GITHUB_APP_INSTALL_URL = os.environ.get("GITHUB_APP_INSTALL_URL", "")
+GITHUB_APP_ID = os.environ.get("GITHUB_APP_ID", "")
+GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+GITHUB_PRIVATE_KEY_PATH = os.environ.get("GITHUB_PRIVATE_KEY_PATH", "")
+GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
