@@ -95,7 +95,6 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
     class Meta:
         model = Algorithm
         fields = (
-            "repo_name",
             "title",
             "description",
             "publications",
@@ -241,7 +240,6 @@ class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, **kwargs):
         repos = kwargs.pop("repos")
         super().__init__(*args, **kwargs)
-        # import ipdb; ipdb.set_trace()
         self.fields["repo_name"].choices = [(repo, repo) for repo in repos]
 
     class Meta:

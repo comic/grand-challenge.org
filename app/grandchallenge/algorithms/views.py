@@ -772,15 +772,12 @@ class AlgorithmAddRepo(
     )
     raise_exception = True
 
-    # def get_success_url(self):
-    #     return self.object.get_absolute_url()
-
     def get_form_kwargs(self):
         """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
 
         code = self.request.GET.get("code")
-        repos = ["tst", "grandchallenge"]
+        repos = []
         if code is not None:
             headers = {"Accept": "application/vnd.github.v3+json"}
 
