@@ -9,9 +9,13 @@ from grandchallenge.profiles.models import UserProfile
 
 @shared_task
 def send_unread_notification_emails():
-    profiles = UserProfile.objects.filter(
-        receive_notification_emails=True
-    ).order_by("user")
+    profiles = (
+        UserProfile.objects.filter(
+            receive_notification_emails=True, user__notification__read=False,
+        )
+        .distinct()
+        .order_by("user")
+    )
     paginator = Paginator(profiles, 1000)
 
     for page_nr in paginator.page_range:
