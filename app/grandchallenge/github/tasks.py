@@ -38,6 +38,7 @@ def get_tarball(*, pk):
     resp = requests.post(
         f"https://api.github.com/app/installations/{installation_id}/access_tokens",
         headers=headers,
+        timeout=10,
     )
     access_token = json.loads(resp.content)["token"]
     full_name = payload["repository"]["full_name"]
@@ -45,7 +46,9 @@ def get_tarball(*, pk):
     tarball_url = (
         f"https://api.github.com/repos/{full_name}/tarball/{payload['ref']}"
     )
-    with requests.get(tarball_url, headers=headers, stream=True) as file:
+    with requests.get(
+        tarball_url, headers=headers, timeout=10, stream=True
+    ) as file:
         with NamedTemporaryFile(delete=True) as tmp_file:
             with open(tmp_file.name, "wb") as fd:
                 for chunk in file.iter_content(chunk_size=128):

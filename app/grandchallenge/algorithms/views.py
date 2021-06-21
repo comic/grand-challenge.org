@@ -788,6 +788,7 @@ class AlgorithmAddRepo(
                     "client_id": settings.GITHUB_CLIENT_ID,
                     "client_secret": settings.GITHUB_CLIENT_SECRET,
                 },
+                timeout=5,
                 headers=headers,
             )
 
@@ -800,6 +801,7 @@ class AlgorithmAddRepo(
             response = requests.get(
                 f"https://api.github.com/user/installations/{installations['installations'][0]['id']}/repositories",
                 headers=headers,
+                timeout=5,
             ).json()
 
             repos = [repo["full_name"] for repo in response["repositories"]]
