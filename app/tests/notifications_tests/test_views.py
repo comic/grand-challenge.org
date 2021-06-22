@@ -249,7 +249,7 @@ def test_follow_create_permission(client):
     f = ForumFactory(type=Forum.FORUM_POST)
 
     # wrong user
-    response = get_view_for_user(
+    _ = get_view_for_user(
         viewname="notifications:follow-create",
         client=client,
         method=client.post,
@@ -263,10 +263,10 @@ def test_follow_create_permission(client):
         },
         user=user2,
     )
-    assert response.status_code == 404
+    assert len(Follow.objects.all()) == 0
 
     # correct user, but does not have permission to subscribe
-    response = get_view_for_user(
+    _ = get_view_for_user(
         viewname="notifications:follow-create",
         client=client,
         method=client.post,
@@ -280,7 +280,8 @@ def test_follow_create_permission(client):
         },
         user=user1,
     )
-    assert response.status_code == 404
+    assert len(Follow.objects.all()) == 0
+
     UserForumPermission.objects.create(
         permission=ForumPermission.objects.filter(
             codename="can_read_forum"
