@@ -1,7 +1,6 @@
 from actstream.models import Follow
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ValidationError
 from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
@@ -112,12 +111,10 @@ class FollowCreate(
     form_class = FollowForm
     success_message = "Subscription successfully added"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
     def get_success_url(self):
         return reverse("notifications:follow-list")
-
-    def form_valid(self, form):
-        try:
-            form.check_permissions(self.request.user)
-            return super().form_valid(form)
-        except ValidationError:
-            return HttpResponseNotFound("You cannot add this subscription.")
