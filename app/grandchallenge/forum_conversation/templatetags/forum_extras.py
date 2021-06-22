@@ -2,6 +2,8 @@ from actstream.models import Follow
 from django import template
 from django.contrib.contenttypes.models import ContentType
 
+from grandchallenge.notifications.forms import FollowForm
+
 register = template.Library()
 
 
@@ -19,6 +21,18 @@ def get_follow_object_pk(user, follow_object):
         if obj.follow_object.id == follow_object.id:
             current_follow_object = obj.pk
     return current_follow_object
+
+
+@register.simple_tag
+def follow_form(*, user, object_id, content_type):
+    return FollowForm(
+        user=user,
+        initial={
+            "object_id": object_id,
+            "content_type": content_type,
+            "actor_only": False,
+        },
+    )
 
 
 @register.filter
