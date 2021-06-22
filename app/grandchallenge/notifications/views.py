@@ -1,27 +1,120 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.timezone import now
-from django.views.generic import TemplateView
+from actstream.models import Follow
+from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
+from django.http import (
+    HttpResponseNotFound,
+    HttpResponseRedirect,
+)
+from django.template.defaultfilters import pluralize
+from django.views.generic import CreateView, DeleteView, ListView
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionListMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
+from guardian.shortcuts import get_objects_for_user
 
-from grandchallenge.profiles.models import UserProfile
+from grandchallenge.notifications.forms import FollowForm
+from grandchallenge.notifications.models import Notification
+from grandchallenge.notifications.utils import (
+    prefetch_generic_foreign_key_objects,
+    prefetch_nested_generic_foreign_key_objects,
+)
+from grandchallenge.subdomains.utils import reverse
 
 
-class NotificationList(LoginRequiredMixin, TemplateView):
-    template_name = "notifications/notification_list.html"
+class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
+    model = Notification
+    permission_required = "view_notification"
+    paginate_by = 50
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        profile = self.request.user.user_profile
-
-        context.update(
-            {
-                "notifications_last_read_at": profile.notifications_last_read_at,
-                "object_list": profile.notifications,
-            }
+    def get_queryset(self):
+        return prefetch_nested_generic_foreign_key_objects(
+            super().get_queryset().order_by("-created")
         )
 
-        UserProfile.objects.filter(pk=profile.pk).update(
-            notifications_last_read_at=now()
+    def post(self, request, *args, **kwargs):
+        if "delete" in request.POST:
+            action = "delete"
+            required_permission = "delete_notification"
+        elif "mark_read" in request.POST:
+            action = "mark_read"
+            required_permission = "change_notification"
+        elif "mark_unread" in request.POST:
+            action = "mark_unread"
+            required_permission = "change_notification"
+
+        selected_notifications = request.POST.getlist("checkbox")
+        notifications = get_objects_for_user(
+            request.user, required_permission, Notification,
+        ).filter(id__in=selected_notifications)
+        notifications_count = notifications.count()
+        if not notifications:
+            return HttpResponseNotFound()
+        else:
+            if action == "delete":
+                notifications.delete()
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    f"{notifications_count} notification{pluralize(notifications_count)} successfully deleted.",
+                )
+            elif action == "mark_read":
+                notifications.update(read=True)
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    f"{notifications_count} notificiation{pluralize(notifications_count)} successfully marked as read.",
+                )
+            elif action == "mark_unread":
+                notifications.update(read=False)
+                messages.add_message(
+                    request,
+                    messages.SUCCESS,
+                    f"{notifications_count} notification{pluralize(notifications_count)} successfully marked as unread.",
+                )
+            return HttpResponseRedirect(reverse("notifications:list"))
+
+
+class FollowList(LoginRequiredMixin, PermissionListMixin, ListView):
+    model = Follow
+    permission_required = "view_follow"
+
+    def get_queryset(self, *args, **kwargs):
+        return prefetch_generic_foreign_key_objects(
+            super().get_queryset().select_related("user")
         )
 
-        return context
+
+class FollowDelete(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
+):
+    model = Follow
+    success_message = "Subscription successfully deleted"
+    permission_required = "delete_follow"
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.get_object()
+
+    def get_success_url(self):
+        return reverse("notifications:follow-list")
+
+
+class FollowCreate(
+    LoginRequiredMixin, SuccessMessageMixin, CreateView,
+):
+    model = Follow
+    form_class = FollowForm
+    success_message = "Subscription successfully added"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
+    def get_success_url(self):
+        return reverse("notifications:follow-list")

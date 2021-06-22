@@ -11,28 +11,73 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Notifications</h2>
+    <div class="d-flex justify-content-between">
+        <h2>Notifications</h2>
+        <a class="btn btn-primary my-3" href="{% url 'notifications:follow-list' %}" role="button">Manage your subscriptions</a>
+    </div>
+    <form action="{% url 'notifications:list' %}" method="post">
+        <div class="row">
+        <div class="col-6">
+            <input class="checkbox-inline ml-3 mt-3" type="checkbox" id="SelectCheckboxes" onClick="toggleCheckboxes(this)"/>
+            <label class="form-check-label ml-1" id="LabelSelectAll" for="SelectCheckboxes">
+                Select all
+            </label>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            <button class="btn btn-xs btn-danger mx-1 mb-3 mt-1" name="delete" type="submit"> Delete selected</button>
+            <button class="btn btn-xs btn-primary mx-1 mb-3 mt-1" name="mark_read" type="submit"> Mark as read</button>
+            <button class="btn btn-xs btn-primary mx-1 mb-3 mt-1" name="mark_unread" type="submit"> Mark as unread</button>
+        </div>
+        </div>
+        {% csrf_token %}
+        <ul class="list-group">
+            {% for object in object_list %}
+                <li class="list-group-item {% if object.context_class %}list-group-item-{{ object.context_class }}{% endif %} p-0">
+                    <div class="d-flex justify-content-between">
+                        <div class="py-2 pl-3">
+                            <input class="checkbox" name="checkbox" type="checkbox" id="checkbox_{{ object.id }}"
+                                   value="{{ object.id }}">
+                            {% if not object.read %}
+                                <span class="text-primary align-middle ml-2"><i class="fa fa-circle"></i></span>
+                            {% endif %}
+                            &nbsp;
+                            {{ object.action.actor|user_profile_link }}{{ object.action.verb }}
+                            {% if object.action.action_object %}
+                                <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
+                                {% if object.action.target %}
+                                    in
+                                {% endif %}
+                            {% endif %}
+                            {% if object.action.target %}
+                                <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
+                            {% endif %}
+                            {{ object.action.timestamp|naturaltime }}
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="list-group-item">You have no notifications</li>
+            {% endfor %}
+        </ul>
+    </form>
+    <br>
+    {% include "grandchallenge/partials/pagination.html"  %}
+{% endblock %}
 
-    <ul class="list-group">
-        {% for object in object_list %}
-            <li class="list-group-item {% if object.data.context_class %}list-group-item-{{ object.data.context_class }}{% endif %}">
-                {% if notifications_last_read_at is None or notifications_last_read_at < object.timestamp %}
-                    <span class="text-primary align-middle mr-2"><i class="fa fa-circle"></i></span>
-                {% endif %}
-                {{ object.actor|user_profile_link }}{{ object.verb }}
-                {% if object.action_object %}
-                    <a href="{{ object.action_object.get_absolute_url }}">{{ object.action_object }}</a>
-                    {% if object.target %}
-                        in
-                    {% endif %}
-                {% endif %}
-                {% if object.target %}
-                    <a href="{{ object.target.get_absolute_url }}">{{ object.target }}</a>
-                {% endif %}
-                {{ object.timestamp|naturaltime }}
-            </li>
-            {% empty %}
-            <li class="list-group-item">You have no notifications</li>
-        {% endfor %}
-    </ul>
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        function toggleCheckboxes(source) {
+          checkboxes = document.getElementsByName('checkbox');
+          for(var i=0, n=checkboxes.length;i<n;i++) {
+            checkboxes[i].checked = source.checked;
+            }
+          n_checked = $('input[name="checkbox"]:checked').length
+          if (n_checked == 0) {
+             document.getElementById('LabelSelectAll').innerHTML =  'Select all'
+          } else {
+             document.getElementById('LabelSelectAll').innerHTML = n_checked + ' selected'
+          }
+        }
+    </script>
 {% endblock %}

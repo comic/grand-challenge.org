@@ -1,10 +1,8 @@
 from hashlib import md5
 from urllib.parse import urlencode
 
-from actstream.models import user_stream
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -51,9 +49,6 @@ class UserProfile(models.Model):
     notification_email_last_sent_at = models.DateTimeField(
         default=None, null=True, editable=False
     )
-    notifications_last_read_at = models.DateTimeField(
-        auto_now_add=True, editable=False
-    )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -90,22 +85,7 @@ class UserProfile(models.Model):
 
     @property
     def unread_notifications(self):
-        return self.notifications.exclude(
-            timestamp__lt=self.notifications_last_read_at
-        )
-
-    @property
-    def notifications(self):
-        notifications = user_stream(obj=self.user)
-
-        # Workaround for
-        # https://github.com/justquick/django-activity-stream/issues/482
-        notifications = notifications.exclude(
-            actor_content_type=ContentType.objects.get_for_model(self.user),
-            actor_object_id=self.user.pk,
-        )
-
-        return notifications
+        return self.user.notification_set.filter(read=False)
 
 
 @disable_for_loaddata

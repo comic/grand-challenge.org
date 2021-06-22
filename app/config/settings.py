@@ -940,6 +940,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.publications.tasks.update_publication_metadata",
         "schedule": timedelta(days=1),
     },
+    "send_unread_notification_emails": {
+        "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
+        "schedule": timedelta(days=1),
+    },
     "cleanup_stale_uploads": {
         "task": "grandchallenge.jqfileupload.tasks.cleanup_stale_uploads",
         "schedule": timedelta(hours=1),
