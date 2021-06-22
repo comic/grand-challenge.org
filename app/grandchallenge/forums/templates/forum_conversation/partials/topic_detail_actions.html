@@ -2,6 +2,8 @@
 {% load forum_permission_tags %}
 {% load activity_tags %}
 {% load forum_extras %}
+{% load crispy_forms_tags %}
+
 
 {% get_permission 'can_add_post' topic request.user as user_can_add_post %}
 {% get_permission 'can_lock_topics' topic.forum request.user as user_can_lock_topics %}
@@ -16,23 +18,21 @@
 {% endif %}
 {% if request.user|is_following:topic %}
     {% get_follow_object_pk request.user topic as follow_object_pk %}
-    <form style="display: inline;" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
+    <form class="d-inline" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
             {% trans "Unsubscribe" %}
         </button>
     </form>
 {% elif user_can_add_post and not request.user|is_following:topic %}
-    <form style="display: inline;" method="post" action="{% url 'notifications:follow-create' %}">
-        {% csrf_token %}
-        <input name="content_type" type="hidden" value="{{ topic|get_content_type }}">
-        <input name="actor_only" type="hidden" value="False">
-        <input name="object_id" type="hidden" value="{{ topic.id }}">
-        <input name="user" type="hidden" value="{{ request.user.id }}">
-        <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
-            {% trans "Subscribe" %}
-        </button>
-    </form>
+{% follow_form user=request.user content_type=topic|get_content_type object_id=topic.id as follow_form %}
+        <form class="d-inline" method="post" action="{% url 'notifications:follow-create' %}">
+            {% csrf_token %}
+            {{ follow_form|crispy }}
+            <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
+                {% trans "Subscribe" %}
+            </button>
+        </form>
 {% endif %}
 {% if user_can_lock_topics and not topic.is_locked or user_can_move_topics or user_can_delete_topics %}
 <div class="btn-group moderation-dropdown">
