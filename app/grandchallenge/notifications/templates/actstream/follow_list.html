@@ -28,8 +28,6 @@
                         <div  class="d-inline-flex p-1" style="align-items: center">
                             <form style="height:fit-content" method="post" action="{% url 'notifications:follow-delete' pk=follow.id %}">
                                 {% csrf_token %}
-                                <input name="subscription_object" type="hidden" value="{{ follow.id }}">
-                                <input name="user" type="hidden" value="{{ follow.user.id }}">
                                 <button type="submit" class="btn btn-xs btn-primary align-middle">
                                     Unsubscribe
                                 </button>

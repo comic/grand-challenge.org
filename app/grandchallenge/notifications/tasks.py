@@ -3,7 +3,6 @@ from django.core.paginator import Paginator
 from django.utils.timezone import now
 
 from grandchallenge.notifications.emails import send_unread_notifications_email
-from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.models import UserProfile
 
 
@@ -14,7 +13,8 @@ def send_unread_notification_emails():
             receive_notification_emails=True, user__notification__read=False,
         )
         .distinct()
-        .order_by("user")
+        .prefetch_related("user__notification_set")
+        .order_by("pk")
     )
     paginator = Paginator(profiles, 1000)
 
@@ -23,21 +23,19 @@ def send_unread_notification_emails():
         current_time = now()
         recipients = {}
         for profile in current_page_profiles:
-            if (
-                profile.notification_email_last_sent_at is None
-                and profile.has_unread_notifications
-            ):
-                recipients[profile] = profile.unread_notifications.count()
+            unread_notifications = [
+                n
+                for n in profile.user.notification_set.all()
+                if not n.read
+                and (
+                    profile.notification_email_last_sent_at is None
+                    or n.created > profile.notification_email_last_sent_at
+                )
+            ]
+            if unread_notifications:
+                recipients[profile] = len(unread_notifications)
                 profile.notification_email_last_sent_at = current_time
-            elif profile.notification_email_last_sent_at is not None:
-                unread_notifications = Notification.objects.filter(
-                    user=profile.user,
-                    read=False,
-                    created__gt=profile.notification_email_last_sent_at,
-                ).count()
-                if unread_notifications:
-                    recipients[profile] = unread_notifications
-                    profile.notification_email_last_sent_at = current_time
+
         UserProfile.objects.bulk_update(
             current_page_profiles, ["notification_email_last_sent_at"]
         )
