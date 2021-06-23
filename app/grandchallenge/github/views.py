@@ -34,13 +34,11 @@ def github_webhook(request):
         )
 
     GitHubWebhookMessage.objects.filter(
-        received_at__lte=timezone.now() - timedelta(days=7)
+        created__lte=timezone.now() - timedelta(days=7)
     ).delete()
     payload = json.loads(request.body)
 
-    GitHubWebhookMessage.objects.create(
-        received_at=timezone.now(), payload=payload,
-    )
+    GitHubWebhookMessage.objects.create(payload=payload)
 
     return HttpResponse("ok", content_type="text/plain")
 
