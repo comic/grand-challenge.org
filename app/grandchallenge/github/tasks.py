@@ -1,3 +1,4 @@
+import base64
 import json
 from datetime import datetime
 
@@ -20,10 +21,12 @@ def get_tarball(*, pk):
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
     payload = ghwm.payload
     installation_id = payload["installation"]["id"]
-    with open(settings.GITHUB_PRIVATE_KEY_PATH, "rb") as key_file:
-        private_key = serialization.load_pem_private_key(
-            key_file.read(), password=None, backend=default_backend()
-        )
+    b64_key = settings.GITHUB_PRIVATE_KEY_BASE64
+    b64_bytes = b64_key.encode("ascii")
+    key_bytes = base64.b64decode(b64_bytes)
+    private_key = serialization.load_pem_private_key(
+        key_bytes, password=None, backend=default_backend()
+    )
     now = datetime.now()
     msg = {
         "iat": int(now.timestamp()) - 60,
