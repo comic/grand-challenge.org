@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load profiles %}
 {% load humanize %}
+{% load static %}
+{% load guardian_tags %}
+{% load url %}
+
 
 {% block title %}Notifications - {{ block.super }}{% endblock %}
 
@@ -15,7 +19,6 @@
         <h2>Notifications</h2>
         <a class="btn btn-primary my-3" href="{% url 'notifications:follow-list' %}" role="button">Manage your subscriptions</a>
     </div>
-    <form action="{% url 'notifications:list' %}" method="post">
         <div class="row">
         <div class="col-6">
             <input class="checkbox-inline ml-3 mt-3" type="checkbox" id="SelectCheckboxes" onClick="toggleCheckboxes(this)"/>
@@ -24,21 +27,21 @@
             </label>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            <button class="btn btn-xs btn-danger mx-1 mb-3 mt-1" name="delete" type="submit"> Delete selected</button>
-            <button class="btn btn-xs btn-primary mx-1 mb-3 mt-1" name="mark_read" type="submit"> Mark as read</button>
-            <button class="btn btn-xs btn-primary mx-1 mb-3 mt-1" name="mark_unread" type="submit"> Mark as unread</button>
+            <button class="btn btn-xs btn-danger mx-1 mb-3 mt-1" name="delete" type="button" id="delete"> Delete selected</button>
+            <button class="btn btn-xs btn-primary mx-1 mb-3 mt-1" name="mark_read" type="button" id="mark_read"> Mark as read</button>
+            <button class="btn btn-xs btn-primary mx-1 mb-3 mt-1" name="mark_unread" type="button" id="mark_unread"> Mark as unread</button>
         </div>
         </div>
-        {% csrf_token %}
+
         <ul class="list-group">
             {% for object in object_list %}
                 <li class="list-group-item {% if object.context_class %}list-group-item-{{ object.context_class }}{% endif %} p-0">
                     <div class="d-flex justify-content-between">
                         <div class="py-2 pl-3">
-                            <input class="checkbox" name="checkbox" type="checkbox" id="checkbox_{{ object.id }}"
-                                   value="{{ object.id }}">
+                            <input class="checkbox pr-1" name="checkbox" type="checkbox" id="{{ object.id }}"
+                                   value="{{ object.id }}" data-url="{% url 'api:notification-detail' pk=object.pk %}">
                             {% if not object.read %}
-                                <span class="text-primary align-middle ml-2"><i class="fa fa-circle"></i></span>
+                                <span class="text-primary align-middle ml-2"><i class="fa fa-circle pl-2"></i></span>
                             {% endif %}
                             &nbsp;
                             {{ object.action.actor|user_profile_link }}{{ object.action.verb }}
@@ -59,7 +62,6 @@
                 <li class="list-group-item">You have no notifications</li>
             {% endfor %}
         </ul>
-    </form>
     <br>
     {% include "grandchallenge/partials/pagination.html"  %}
 {% endblock %}
@@ -67,17 +69,11 @@
 {% block script %}
     {{ block.super }}
     <script type="text/javascript">
-        function toggleCheckboxes(source) {
-          checkboxes = document.getElementsByName('checkbox');
-          for(var i=0, n=checkboxes.length;i<n;i++) {
-            checkboxes[i].checked = source.checked;
-            }
-          n_checked = $('input[name="checkbox"]:checked').length
-          if (n_checked == 0) {
-             document.getElementById('LabelSelectAll').innerHTML =  'Select all'
-          } else {
-             document.getElementById('LabelSelectAll').innerHTML = n_checked + ' selected'
-          }
-        }
+        window.drf = {
+            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
     </script>
+    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+    <script src="{% static "js/notifications/bulk_delete_update.js" %}"></script>
 {% endblock %}

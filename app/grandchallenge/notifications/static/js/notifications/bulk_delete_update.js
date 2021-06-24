@@ -1,23 +1,19 @@
 function toggleCheckboxes(source) {
-    let checkboxes = document.getElementsByName('checkbox');
-    for (let i = 0, n = checkboxes.length; i < n; i++) {
-        checkboxes[i].checked = source.checked;
-    }
-    let n_checked = $('input[name="checkbox"]:checked').length
-    if (n_checked == 0) {
+    $('input[name="checkbox"]').each(function () {
+        this.checked = source.checked;
+    })
+    const nChecked = $('input[name="checkbox"]:checked').length
+    if (nChecked == 0) {
         document.getElementById('LabelSelectAll').innerHTML = 'Select all'
     } else {
-        document.getElementById('LabelSelectAll').innerHTML = n_checked + ' selected'
+        document.getElementById('LabelSelectAll').innerHTML = nChecked + ' selected'
     }
-    $('input[name="checkbox"]:checked').each(function () {
-        console.log($(this).data('url'))
-    })
 }
 
 $(document).ready(() => {
     $('#delete').on('click', () => {
         let arrayOfPromises = [];
-        $('input[name="checkbox"]:checked').each(function (e) {
+        $('input[name="checkbox"]:checked').each(function () {
             arrayOfPromises.push($.ajax({
                 type: 'DELETE',
                 url: $(this).data('url'),
@@ -32,7 +28,7 @@ $(document).ready(() => {
     });
     $('#mark_read').on('click', () => {
         let arrayOfPromises = [];
-        $('input[name="checkbox"]:checked').each(function (e) {
+        $('input[name="checkbox"]:checked').each(function () {
             arrayOfPromises.push($.ajax({
                 type: 'PATCH',
                 url: $(this).data('url'),
@@ -47,7 +43,7 @@ $(document).ready(() => {
     });
     $('#mark_unread').on('click', () => {
         let arrayOfPromises = [];
-        $('input[name="checkbox"]:checked').each(function (e) {
+        $('input[name="checkbox"]:checked').each(function () {
             arrayOfPromises.push($.ajax({
                 type: 'PATCH',
                 url: $(this).data('url'),
