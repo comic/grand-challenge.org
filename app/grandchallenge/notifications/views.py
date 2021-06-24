@@ -1,26 +1,59 @@
 from actstream.models import Follow
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
-from django.http import (
-    HttpResponseNotFound,
-    HttpResponseRedirect,
-)
-from django.template.defaultfilters import pluralize
 from django.views.generic import CreateView, DeleteView, ListView
 from guardian.mixins import (
     LoginRequiredMixin,
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from guardian.shortcuts import get_objects_for_user
+from rest_framework import status, viewsets
+from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.response import Response
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.notifications.forms import FollowForm
 from grandchallenge.notifications.models import Notification
+from grandchallenge.notifications.serializers import NotificationSerializer
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
     prefetch_nested_generic_foreign_key_objects,
 )
 from grandchallenge.subdomains.utils import reverse
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = (DjangoObjectPermissions,)
+    filter_backends = [ObjectPermissionsFilter]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        messages.add_message(
+            request, messages.SUCCESS, "Notifications successfully deleted.",
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        messages.add_message(
+            request, messages.SUCCESS, "Notifications successfully updated.",
+        )
+
+        if getattr(instance, "_prefetched_objects_cache", None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
 
 class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
@@ -32,48 +65,6 @@ class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
         return prefetch_nested_generic_foreign_key_objects(
             super().get_queryset().order_by("-created")
         )
-
-    def post(self, request, *args, **kwargs):
-        if "delete" in request.POST:
-            action = "delete"
-            required_permission = "delete_notification"
-        elif "mark_read" in request.POST:
-            action = "mark_read"
-            required_permission = "change_notification"
-        elif "mark_unread" in request.POST:
-            action = "mark_unread"
-            required_permission = "change_notification"
-
-        selected_notifications = request.POST.getlist("checkbox")
-        notifications = get_objects_for_user(
-            request.user, required_permission, Notification,
-        ).filter(id__in=selected_notifications)
-        notifications_count = notifications.count()
-        if not notifications:
-            return HttpResponseNotFound()
-        else:
-            if action == "delete":
-                notifications.delete()
-                messages.add_message(
-                    request,
-                    messages.SUCCESS,
-                    f"{notifications_count} notification{pluralize(notifications_count)} successfully deleted.",
-                )
-            elif action == "mark_read":
-                notifications.update(read=True)
-                messages.add_message(
-                    request,
-                    messages.SUCCESS,
-                    f"{notifications_count} notificiation{pluralize(notifications_count)} successfully marked as read.",
-                )
-            elif action == "mark_unread":
-                notifications.update(read=False)
-                messages.add_message(
-                    request,
-                    messages.SUCCESS,
-                    f"{notifications_count} notification{pluralize(notifications_count)} successfully marked as unread.",
-                )
-            return HttpResponseRedirect(reverse("notifications:list"))
 
 
 class FollowList(LoginRequiredMixin, PermissionListMixin, ListView):
