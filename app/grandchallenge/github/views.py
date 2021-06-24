@@ -33,9 +33,6 @@ def github_webhook(request):
             "Signatures do not match", content_type="text/plain",
         )
 
-    GitHubWebhookMessage.objects.filter(
-        created__lte=timezone.now() - timedelta(days=7)
-    ).delete()
     payload = json.loads(request.body)
 
     GitHubWebhookMessage.objects.create(payload=payload)
