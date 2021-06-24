@@ -1,7 +1,6 @@
 import hashlib
 import hmac
 import json
-from datetime import timedelta
 from secrets import compare_digest
 
 from django.conf import settings
@@ -9,7 +8,6 @@ from django.db.transaction import non_atomic_requests
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
