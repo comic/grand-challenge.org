@@ -20,10 +20,6 @@ def init_notification_permissions(*_, **__):
         f"{Notification._meta.app_label}.delete_{Notification._meta.model_name}",
         g,
     )
-    assign_perm(
-        f"{Notification._meta.app_label}.view_{Notification._meta.model_name}",
-        g,
-    )
 
 
 class NotificationsConfig(AppConfig):
