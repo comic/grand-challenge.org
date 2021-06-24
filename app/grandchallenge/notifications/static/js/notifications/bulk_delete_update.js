@@ -10,50 +10,30 @@ function toggleCheckboxes(source) {
     }
 }
 
+function sendAjaxCall(type, data) {
+    let arrayOfPromises = [];
+        $('input[name="checkbox"]:checked').each(function () {
+            arrayOfPromises.push($.ajax({
+                type: type,
+                url: $(this).data('url'),
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                accept: 'application/json',
+            }))
+        })
+        Promise.all(arrayOfPromises).then(function () {
+            window.location.replace(window.location.href);
+        });
+}
+
 $(document).ready(() => {
     $('#delete').on('click', () => {
-        let arrayOfPromises = [];
-        $('input[name="checkbox"]:checked').each(function () {
-            arrayOfPromises.push($.ajax({
-                type: 'DELETE',
-                url: $(this).data('url'),
-                data: {},
-                contentType: 'application/json',
-                accept: 'application/json',
-            }))
-        })
-        Promise.all(arrayOfPromises).then(function () {
-            window.location.replace(window.location.href);
-        });
+        sendAjaxCall('DELETE', {})
     });
     $('#mark_read').on('click', () => {
-        let arrayOfPromises = [];
-        $('input[name="checkbox"]:checked').each(function () {
-            arrayOfPromises.push($.ajax({
-                type: 'PATCH',
-                url: $(this).data('url'),
-                data: JSON.stringify({read: true}),
-                contentType: 'application/json',
-                accept: 'application/json',
-            }))
-        })
-        Promise.all(arrayOfPromises).then(function () {
-            window.location.replace(window.location.href);
-        })
+        sendAjaxCall('PATCH', {read: true})
     });
     $('#mark_unread').on('click', () => {
-        let arrayOfPromises = [];
-        $('input[name="checkbox"]:checked').each(function () {
-            arrayOfPromises.push($.ajax({
-                type: 'PATCH',
-                url: $(this).data('url'),
-                data: JSON.stringify({read: false}),
-                contentType: 'application/json',
-                accept: 'application/json',
-            }))
-        })
-        Promise.all(arrayOfPromises).then(function () {
-            window.location.replace(window.location.href);
-        });
+        sendAjaxCall('PATCH', {read: false})
     });
 });
