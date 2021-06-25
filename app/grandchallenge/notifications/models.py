@@ -20,7 +20,7 @@ class Notification(UUIDModel):
         on_delete=models.CASCADE,
     )
 
-    read = models.BooleanField(default=False)
+    read = models.BooleanField(default=False, db_index=True)
 
     def __str__(self):
         return f"Notification for {self.user}"

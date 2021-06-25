@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                 ),
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("modified", models.DateTimeField(auto_now=True)),
-                ("read", models.BooleanField(default=False)),
+                ("read", models.BooleanField(db_index=True, default=False)),
                 (
                     "action",
                     models.ForeignKey(
