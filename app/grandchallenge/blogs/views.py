@@ -19,7 +19,7 @@ class AuthorFormKwargsMixin:
         author_pks = {self.request.user.pk}
 
         if self.object:
-            author_pks.add(*[a.pk for a in self.object.authors.all()])
+            author_pks.update({a.pk for a in self.object.authors.all()})
 
         authors = get_user_model().objects.filter(pk__in=author_pks)
 
