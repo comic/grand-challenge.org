@@ -68,12 +68,13 @@
 
 {% block script %}
     {{ block.super }}
+    <script src="{% static "js/getCookie.js" %}"></script>
     <script type="text/javascript">
         window.drf = {
             csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
-            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+            csrfToken: getCookie('_csrftoken')
         };
     </script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
-    <script src="{% static "js/notifications/bulk_delete_update.js" %}"></script>
+    <script type="module" src="{% static "js/notifications/bulk_delete_update.js" %}"></script>
 {% endblock %}

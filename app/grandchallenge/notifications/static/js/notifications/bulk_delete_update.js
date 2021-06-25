@@ -1,4 +1,4 @@
-function toggleCheckboxes(source) {
+window.toggleCheckboxes = function toggleCheckboxes(source) {
     $('input[name="checkbox"]').each(function () {
         this.checked = source.checked;
     })
