@@ -16,6 +16,7 @@ from grandchallenge.cases.views import (
 )
 from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.jqfileupload.views import StagedFileViewSet
+from grandchallenge.notifications.views import NotificationViewSet
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
@@ -73,6 +74,9 @@ router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 router.register(
     r"evaluations", EvaluationViewSet, basename="evaluation",
 )
+
+# Notifications
+router.register(r"notifications", NotificationViewSet, basename="notification")
 
 # Profiles
 router.register(

@@ -40,23 +40,29 @@ def test_notification_mark_as_read_or_unread(client):
     assert not notification.read
 
     response = get_view_for_user(
-        viewname="notifications:list",
+        viewname="api:notification-detail",
         client=client,
-        method=client.post,
-        data={"checkbox": notification.id, "mark_read": True},
+        method=client.patch,
+        data={"read": True},
+        reverse_kwargs={"pk": notification.id},
+        content_type="application/json",
         user=user2,
     )
-    assert response.status_code == 302
+
+    assert response.status_code == 200
     assert Notification.objects.get().read
 
     response = get_view_for_user(
-        viewname="notifications:list",
+        viewname="api:notification-detail",
         client=client,
-        method=client.post,
-        data={"checkbox": notification.id, "mark_unread": True},
+        method=client.patch,
+        data={"read": False},
+        reverse_kwargs={"pk": notification.id},
+        content_type="application/json",
         user=user2,
     )
-    assert response.status_code == 302
+
+    assert response.status_code == 200
     assert not Notification.objects.get().read
 
 
@@ -69,18 +75,20 @@ def test_notification_deletion(client):
     notification = NotificationFactory(user=user2, action=Action.objects.get())
 
     response = get_view_for_user(
-        viewname="notifications:list",
+        viewname="api:notification-detail",
         client=client,
-        method=client.post,
-        data={"checkbox": notification.id, "delete": True},
+        method=client.delete,
+        reverse_kwargs={"pk": notification.id},
+        content_type="application/json",
         user=user2,
     )
-    assert response.status_code == 302
+
+    assert response.status_code == 204
     assert len(Notification.objects.all()) == 0
 
 
 @pytest.mark.django_db
-def test_notification_permissions(client):
+def test_notification_view_permissions(client):
     user1 = UserFactory()
     user2 = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
@@ -109,24 +117,48 @@ def test_notification_permissions(client):
     )
     assert "You have no notifications" in response.rendered_content
 
-    # only owners of a notification can delete notification
+
+@pytest.mark.parametrize(
+    "type, data",
+    [("delete", {}), ("patch", {"read": True}), ("patch", {"read": False})],
+)
+@pytest.mark.django_db
+def test_notification_update_and_delete_permissions(client, type, data):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
+    notification = NotificationFactory(user=user2, action=Action.objects.get())
+
+    if type == "delete":
+        method = client.delete
+    elif type == "patch":
+        method = client.patch
+
     response = get_view_for_user(
-        viewname="notifications:list",
+        viewname="api:notification-detail",
         client=client,
-        method=client.post,
-        data={"checkbox": notification.id, "delete": True},
+        method=method,
+        data=data,
+        reverse_kwargs={"pk": notification.id},
+        content_type="application/json",
         user=user1,
     )
     assert response.status_code == 404
 
     response = get_view_for_user(
-        viewname="notifications:list",
+        viewname="api:notification-detail",
         client=client,
-        method=client.post,
-        data={"checkbox": notification.id, "delete": True},
+        method=method,
+        data=data,
+        reverse_kwargs={"pk": notification.id},
+        content_type="application/json",
         user=user2,
     )
-    assert response.status_code == 302
+    if type == "delete":
+        assert response.status_code == 204
+    elif type == "patch":
+        assert response.status_code == 200
 
 
 @pytest.mark.django_db
