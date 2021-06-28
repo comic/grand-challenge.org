@@ -153,6 +153,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         help_text="The average duration of successful jobs.",
     )
     use_flexible_inputs = models.BooleanField(default=True)
+    repo_name = models.CharField(blank=True, max_length=512)
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

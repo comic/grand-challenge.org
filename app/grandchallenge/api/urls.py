@@ -15,6 +15,7 @@ from grandchallenge.cases.views import (
     RawImageUploadSessionViewSet,
 )
 from grandchallenge.evaluation.views.api import EvaluationViewSet
+from grandchallenge.github.views import github_webhook
 from grandchallenge.jqfileupload.views import StagedFileViewSet
 from grandchallenge.notifications.views import NotificationViewSet
 from grandchallenge.profiles.views import UserProfileViewSet
@@ -171,6 +172,7 @@ urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),
+    path("v1/github/", github_webhook, name="github-webhook"),
     path("v1/metrics/", MetricsAPIView.as_view(), name="metrics"),
     path(
         "",

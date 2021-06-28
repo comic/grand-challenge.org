@@ -2,6 +2,8 @@ import logging
 from datetime import timedelta
 from typing import Dict
 
+import requests
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
@@ -47,6 +49,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageUpdateForm,
     AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
+    AlgorithmRepoForm,
     JobForm,
     UsersForm,
     ViewersForm,
@@ -179,7 +182,10 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             status=AlgorithmPermissionRequest.PENDING,
         ).count()
         context.update(
-            {"pending_permission_requests": pending_permission_requests}
+            {
+                "pending_permission_requests": pending_permission_requests,
+                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}",
+            }
         )
 
         return context
@@ -753,3 +759,52 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
         context = super().get_context_data(**kwargs)
         context.update({"algorithm": self.base_object})
         return context
+
+
+class AlgorithmAddRepo(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView,
+):
+    model = Algorithm
+    form_class = AlgorithmRepoForm
+    template_name = "algorithms/algorithm_add_repo.html"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_form_kwargs(self):
+        """Return the keyword arguments for instantiating the form."""
+        kwargs = super().get_form_kwargs()
+
+        code = self.request.GET.get("code")
+        repos = []
+        if code is not None:
+            headers = {"Accept": "application/vnd.github.v3+json"}
+
+            resp = requests.post(
+                "https://github.com/login/oauth/access_token",
+                data={
+                    "code": code,
+                    "client_id": settings.GITHUB_CLIENT_ID,
+                    "client_secret": settings.GITHUB_CLIENT_SECRET,
+                },
+                timeout=5,
+                headers=headers,
+            )
+
+            payload = resp.json()
+            headers["Authorization"] = f"token {payload['access_token']}"
+            installations = requests.get(
+                "https://api.github.com/user/installations", headers=headers
+            ).json()
+
+            response = requests.get(
+                f"https://api.github.com/user/installations/{installations['installations'][0]['id']}/repositories",
+                headers=headers,
+                timeout=5,
+            ).json()
+
+            repos = [repo["full_name"] for repo in response["repositories"]]
+
+        kwargs.update({"repos": repos})
+        return kwargs

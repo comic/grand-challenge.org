@@ -1,6 +1,7 @@
 from crispy_forms.helper import FormHelper
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
+    ChoiceField,
     Form,
     IntegerField,
     ModelForm,
@@ -231,3 +232,16 @@ class JobForm(SaveFormInitMixin, ModelForm):
 class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
     class Meta(PermissionRequestUpdateForm.Meta):
         model = AlgorithmPermissionRequest
+
+
+class AlgorithmRepoForm(SaveFormInitMixin, ModelForm):
+    repo_name = ChoiceField()
+
+    def __init__(self, *args, **kwargs):
+        repos = kwargs.pop("repos")
+        super().__init__(*args, **kwargs)
+        self.fields["repo_name"].choices = [(repo, repo) for repo in repos]
+
+    class Meta:
+        model = Algorithm
+        fields = ("repo_name",)
