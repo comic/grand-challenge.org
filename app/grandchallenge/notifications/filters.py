@@ -2,7 +2,7 @@ from functools import reduce
 from operator import or_
 
 from django.db.models import Q
-from django_filters import BooleanFilter, CharFilter, FilterSet
+from django_filters import CharFilter, ChoiceFilter, FilterSet
 from machina.apps.forum.models import Forum
 from machina.apps.forum_conversation.models import Topic
 
@@ -10,10 +10,16 @@ from grandchallenge.core.filters import FilterForm
 from grandchallenge.notifications.models import Notification
 
 
+BOOLEAN_CHOICES = (
+    ("1", "Read"),
+    ("0", "Unread"),
+)
+
+
 class NotificationFilter(FilterSet):
     forum = CharFilter(method="search_filter", label="Forum")
     topic = CharFilter(method="search_filter", label="Forum post subject")
-    read = BooleanFilter()
+    read = ChoiceFilter(choices=BOOLEAN_CHOICES, label="Status")
 
     class Meta:
         model = Notification
