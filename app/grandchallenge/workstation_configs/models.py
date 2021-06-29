@@ -243,6 +243,10 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     client_rendered_sidebar = models.BooleanField(
         default=True, help_text="Use client side rendering for the side bar"
     )
+    auto_jump_center_of_gravity = models.BooleanField(
+        default=True,
+        help_text="Jump to center of gravity of first output when viewing algorithm results",
+    )
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")

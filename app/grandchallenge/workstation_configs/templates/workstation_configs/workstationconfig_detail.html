@@ -136,6 +136,12 @@
                 <i class="fas {% if object.client_rendered_sidebar %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
             </td>
         </tr>
+        <tr>
+            <td class="font-weight-bold">Jump to center of gravity of first output when viewing algorithm results</td>
+            <td>
+                <i class="fas {% if object.auto_jump_center_of_gravity %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            </td>
+        </tr>
     </table>
 
     {% if "change_workstationconfig" in config_perms %}

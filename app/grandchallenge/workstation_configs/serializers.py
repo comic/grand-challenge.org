@@ -47,10 +47,10 @@ class LookUpTableSerializer(ModelSerializer):
 class WorkstationConfigSerializer(ModelSerializer):
     creator = SlugRelatedField(read_only=True, slug_field="username")
     image_context = CharField(
-        source="get_image_context_display", read_only=True,
+        source="get_image_context_display", read_only=True
     )
     default_slab_render_method = CharField(
-        source="get_default_slab_render_method_display", read_only=True,
+        source="get_default_slab_render_method_display", read_only=True
     )
     default_orientation = CharField(
         source="get_default_orientation_display", read_only=True
@@ -61,7 +61,7 @@ class WorkstationConfigSerializer(ModelSerializer):
     overlay_luts = LookUpTableSerializer(many=True, read_only=True)
     default_overlay_lut = LookUpTableSerializer()
     default_overlay_interpolation = CharField(
-        source="get_default_overlay_interpolation_display", read_only=True,
+        source="get_default_overlay_interpolation_display", read_only=True
     )
     default_overlay_alpha = FloatField()
     default_zoom_scale = FloatField()
@@ -99,6 +99,7 @@ class WorkstationConfigSerializer(ModelSerializer):
             "show_reset_tool",
             "enabled_preprocessors",
             "client_rendered_sidebar",
+            "auto_jump_center_of_gravity",
         ]
 
     def get_enabled_preprocessors(self, obj):
