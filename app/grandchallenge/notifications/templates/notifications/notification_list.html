@@ -15,6 +15,7 @@
 {% endblock %}
 
 {% block content %}
+    {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
     <div class="d-flex justify-content-between">
         <h2>Notifications</h2>
         <a class="btn btn-primary my-3" href="{% url 'notifications:follow-list' %}" role="button">Manage your subscriptions</a>

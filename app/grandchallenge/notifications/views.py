@@ -11,6 +11,8 @@ from rest_framework import mixins, viewsets
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.core.filters import FilterMixin
+from grandchallenge.notifications.filters import NotificationFilter
 from grandchallenge.notifications.forms import FollowForm
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.serializers import NotificationSerializer
@@ -46,9 +48,12 @@ class NotificationViewSet(
         return response
 
 
-class NotificationList(LoginRequiredMixin, PermissionListMixin, ListView):
+class NotificationList(
+    LoginRequiredMixin, FilterMixin, PermissionListMixin, ListView
+):
     model = Notification
     permission_required = "view_notification"
+    filter_class = NotificationFilter
     paginate_by = 50
 
     def get_queryset(self):
