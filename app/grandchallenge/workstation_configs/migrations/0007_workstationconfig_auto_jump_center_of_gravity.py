@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             name="auto_jump_center_of_gravity",
             field=models.BooleanField(
                 default=True,
-                help_text="Jump to center of gravity of first output when loading algorithm results",
+                help_text="Jump to center of gravity of first output when viewing algorithm results",
             ),
         )
     ]
