@@ -62,9 +62,21 @@ push_web:
 	docker push grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
 	docker push grandchallenge/web:latest
 
+push_web_ecr:
+	docker tag grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+	docker tag grandchallenge/web:latest $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest
+	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest
+
 push_http:
 	docker push grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
 	docker push grandchallenge/http:latest
+
+push_http_ecr:
+	docker tag grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+	docker tag grandchallenge/http:latest $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest
+	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest
 
 build: build_web_test build_web_dist build_http
 

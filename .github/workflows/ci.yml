@@ -48,11 +48,9 @@ jobs:
         run: |
           make build
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT}
-          docker tag grandchallenge/web:latest ${GRAND_CHALLENGE_WEB_REPOSITORY_URI}:latest
-          docker push ${GRAND_CHALLENGE_WEB_REPOSITORY_URI}:latest
+          make push_web_ecr
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_HTTP_REGISTRY_ENDPOINT}
-          docker tag grandchallenge/http:latest ${GRAND_CHALLENGE_HTTP_REPOSITORY_URI}:latest
-          docker push ${GRAND_CHALLENGE_HTTP_REPOSITORY_URI}:latest
+          make push_http_ecr
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
