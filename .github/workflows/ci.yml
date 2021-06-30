@@ -44,8 +44,9 @@ jobs:
       - name: Build the test container
         run: |
           make build_web_test
-      - name: Login to ECR
+      - name: Build and push to ECR
         run: |
+          make build
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT}
           docker tag grand-challenge/web:latest ${GRAND_CHALLENGE_WEB_REPOSITORY_URI}:latest
           docker push ${GRAND_CHALLENGE_WEB_REPOSITORY_URI}:latest
