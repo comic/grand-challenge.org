@@ -1,5 +1,6 @@
 import base64
 import json
+import zipfile
 from datetime import datetime
 
 import jwt
@@ -11,6 +12,21 @@ from django.apps import apps
 from django.conf import settings
 from django.core import files
 from django.core.files.temp import NamedTemporaryFile
+from django.db.transaction import on_commit
+
+from grandchallenge.codebuild.tasks import create_algorithm_image
+from grandchallenge.codebuild.utils import get_buildspec_path
+
+
+def get_buildspec_zip(*, zfile, algorithm_name):
+    with zipfile.ZipFile(zfile, "a") as zipf:
+        folder_name = zipf.filelist[0].filename
+        source_path = get_buildspec_path(
+            algorithm_name=algorithm_name, folder_name=folder_name
+        )
+        destination = "buildspec.yml"
+        zipf.write(source_path, destination)
+    return zfile
 
 
 @shared_task()
@@ -30,7 +46,7 @@ def get_zipfile(*, pk):
     now = datetime.now()
     msg = {
         "iat": int(now.timestamp()) - 60,
-        "exp": int(now.timestamp()) + 60 * 10,
+        "exp": int(now.timestamp()) + 60 * 5,
         "iss": settings.GITHUB_APP_ID,
     }
     token = jwt.encode(msg, private_key, algorithm="RS256")
@@ -58,11 +74,14 @@ def get_zipfile(*, pk):
                     fd.write(chunk)
 
             tmp_file.flush()
-            temp_file = files.File(
-                tmp_file,
-                name=f"{full_name.replace('/', '-')}-{payload['ref']}.tar",
+            zfile = get_buildspec_zip(
+                zfile=tmp_file, algorithm_name=ghwm.project_name
             )
             temp_file = files.File(zfile, name=f"{ghwm.project_name}.zip",)
 
             ghwm.zipfile = temp_file
             ghwm.save()
+
+    on_commit(
+        lambda: create_algorithm_image.apply_async(kwargs={"pk": ghwm.pk})
+    )
