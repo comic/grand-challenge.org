@@ -100,6 +100,10 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push to ECR
         run: |
+          aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_BASE_REGISTRY_ENDPOINT}
+          make push_web_base_ecr
+          aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_TEST_BASE_REGISTRY_ENDPOINT}
+          make push_web_test_base_ecr
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT}
           make push_web_ecr
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_HTTP_REGISTRY_ENDPOINT}
@@ -112,3 +116,7 @@ jobs:
           GRAND_CHALLENGE_HTTP_REPOSITORY_URI: ${{ secrets.GRAND_CHALLENGE_HTTP_REPOSITORY_URI }}
           GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT: ${{ secrets.GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT }}
           GRAND_CHALLENGE_WEB_REPOSITORY_URI: ${{ secrets.GRAND_CHALLENGE_WEB_REPOSITORY_URI }}
+          GRAND_CHALLENGE_WEB_BASE_REGISTRY_ENDPOINT: ${{ secrets.GRAND_CHALLENGE_WEB_BASE_REGISTRY_ENDPOINT }}
+          GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI: ${{ secrets.GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI }}
+          GRAND_CHALLENGE_WEB_TEST_BASE_REGISTRY_ENDPOINT: ${{ secrets.GRAND_CHALLENGE_WEB_TEST_BASE_REGISTRY_ENDPOINT }}
+          GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI: ${{ secrets.GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI }}

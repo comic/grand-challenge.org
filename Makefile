@@ -55,8 +55,16 @@ build_http:
 push_web_base:
 	docker push grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
 
+push_web_base_ecr:
+	docker tag grandchallenge/web-base:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+	docker push $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+
 push_web_test_base:
 	docker push grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
+
+push_web_test_base_ecr:
+	docker tag grandchallenge/web-test-base:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+	docker push $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
 
 push_web:
 	docker push grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
