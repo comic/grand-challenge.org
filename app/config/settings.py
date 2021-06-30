@@ -478,6 +478,7 @@ LOCAL_APPS = [
     "grandchallenge.organizations",
     "grandchallenge.groups",
     "grandchallenge.github",
+    "grandchallenge.codebuild",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -1080,6 +1081,12 @@ RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 
 ENABLE_DEBUG_TOOLBAR = False
+
+CODEBUILD_ACCESS_KEY = os.environ.get("CODEBUILD_ACCESS_KEY", "")
+CODEBUILD_SECRET_KEY = os.environ.get("CODEBUILD_SECRET_KEY", "")
+CODEBUILD_SERVICE_ROLE = os.environ.get("CODEBUILD_SERVICE_ROLE", "")
+CODEBUILD_ENCRYPTION_KEY = os.environ.get("CODEBUILD_ENCRYPTION_KEY", "")
+DOCKER_SECRET_ARN = os.environ.get("DOCKER_SECRET_ARN", "")
 
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
