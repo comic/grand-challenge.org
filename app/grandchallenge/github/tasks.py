@@ -14,7 +14,7 @@ from django.core.files.temp import NamedTemporaryFile
 
 
 @shared_task()
-def get_tarball(*, pk):
+def get_zipfile(*, pk):
     GitHubWebhookMessage = apps.get_model(  # noqa: N806
         app_label="github", model_name="GitHubWebhookMessage"
     )
@@ -46,11 +46,11 @@ def get_tarball(*, pk):
     access_token = json.loads(resp.content)["token"]
     full_name = payload["repository"]["full_name"]
     headers["Authorization"] = f"token {access_token}"
-    tarball_url = (
-        f"https://api.github.com/repos/{full_name}/tarball/{payload['ref']}"
+    zipfile_url = (
+        f"https://api.github.com/repos/{full_name}/zipball/{payload['ref']}"
     )
     with requests.get(
-        tarball_url, headers=headers, timeout=10, stream=True
+        zipfile_url, headers=headers, timeout=10, stream=True
     ) as file:
         with NamedTemporaryFile(delete=True) as tmp_file:
             with open(tmp_file.name, "wb") as fd:
@@ -62,6 +62,7 @@ def get_tarball(*, pk):
                 tmp_file,
                 name=f"{full_name.replace('/', '-')}-{payload['ref']}.tar",
             )
+            temp_file = files.File(zfile, name=f"{ghwm.project_name}.zip",)
 
-            ghwm.tarball = temp_file
+            ghwm.zipfile = temp_file
             ghwm.save()
