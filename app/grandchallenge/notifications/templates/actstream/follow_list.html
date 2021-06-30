@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% load profiles %}
 {% load forums %}
+{% load forum_extras %}
 {% load humanize %}
+{% load static %}
+
 
 {% block title %}Subscriptions - {{ block.super }}{% endblock %}
 
@@ -13,63 +16,51 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Your subscriptions</h2>
-    <br>
-    <h4>Forums</h4>
+    {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied model_name="subscription" %}
+
+    <h2>Subscriptions</h2>
+
+    <div class="row">
+        <div class="col-6">
+            <input class="checkbox-inline ml-3 mt-3" type="checkbox" id="SelectCheckboxes" onClick="toggleCheckboxes(this)"/>
+            <label class="form-check-label ml-1" id="LabelSelectAll" for="SelectCheckboxes">
+                Select all
+            </label>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            <button class="btn btn-xs btn-danger mx-1 mb-3 mt-1" name="delete" type="button" id="delete"> Delete selected</button>
+        </div>
+        </div>
+
     <ul class="list-group">
-        {% subset_by_content_type object_list "forum" "forum" as forum_follows %}
-        {% for follow in forum_follows %}
+        {% for follow in object_list %}
+            {% get_content_type follow.follow_object as follow_ct %}
                 <li class="list-group-item p-1 pl-3">
                     <div class="d-flex justify-content-between">
                         <div class="mt-1 pt-2 p-0">
+                        <input class="checkbox mr-2" name="checkbox" type="checkbox" id="{{ follow.pk }}"
+                                   value="{{ follow.pk }}" data-url="{% url 'api:follow-detail' pk=follow.pk %}">
                             <a href="{{ follow.follow_object.get_absolute_url }}">{{ follow.follow_object }}</a>
-                            <span class="text-truncate font-italic text-muted align-middle mx-2">subscribed to since {{ follow.started|date:'F j, Y' }} {% if forum.follow_object.last_post_on %}| last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
-                        </div>
-                        <div  class="d-inline-flex p-1">
-                            <form style="height:fit-content" method="post" action="{% url 'notifications:follow-delete' pk=follow.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-xs btn-primary align-middle">
-                                    Unsubscribe
-                                </button>
-                            </form>
+                            <span class="text-truncate font-italic text-muted align-middle mx-2 ">{{ follow_ct.name }} | subscribed to since {{ follow.started|date:'F j, Y' }} {% if forum.follow_object.last_post_on %}| last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
                         </div>
                     </div>
                 </li>
         {% empty %}
-            <br>You are not subscribed to any forums.<br><br>
+            <br>You do not have any subscriptions.<br><br>
         {% endfor %}
     </ul>
-    <br><br>
-    <h4>Topics</h4>
-    {% subset_by_content_type object_list "topic" "forum_conversation" as topic_follows %}
-        {% if topic_follows %}
-            {% for forum in topic_follows|get_forums %}
-                {% get_forum_specific_topic_follows topic_follows forum as forum_topic_follows %}
-                {% if forum_topic_follows %}
-                    <h6>Topics from <a href="{{ forum.get_absolute_url }}">{{ forum }}</a></h6>
-                    <ul class="list-group">
-                        {% for follow in forum_topic_follows %}
-                                <li class="list-group-item p-1 pl-3">
-                                     <div class="d-flex justify-content-between">
-                                         <div class="mt-1 pt-2 p-0">
-                                            <a href="{{ follow.follow_object.get_absolute_url }}">{{ follow.follow_object }}</a>
-                                            <span class="text-muted text-truncate font-italic align-middle mx-2">subscribed to since {{ follow.started|date:'F j, Y'  }} {% if topic.follow_object.last_post_on %}| last activity on {{ topic.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
-                                         </div>
-                                          <div  class="d-inline-flex p-1">
-                                            <form method="post" action="{% url 'notifications:follow-delete' pk=follow.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-xs btn-primary align-middle">
-                                                    Unsubscribe
-                                                </button>
-                                            </form>
-                                          </div>
-                                     </div>
-                                </li>
-                        {% endfor %}
-                        </ul>
-                    {% endif %}
-                {% endfor %}
-        {% else %}
-            <br>You are not subscribed to any topics.<br><br>
-        {% endif %}
+    <br>
+    {% include "grandchallenge/partials/pagination.html"  %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        window.drf = {
+            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
+    </script>
+    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+    <script type="module" src="{% static "js/notifications/bulk_delete_update.js" %}"></script>
 {% endblock %}

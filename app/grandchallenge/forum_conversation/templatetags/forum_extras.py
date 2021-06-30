@@ -35,10 +35,10 @@ def follow_form(*, user, object_id, content_type):
     )
 
 
-@register.filter
+@register.simple_tag()
 def get_content_type(follow_object):
     ct = ContentType.objects.get(
         app_label=follow_object._meta.app_label,
         model=follow_object._meta.model_name,
-    ).id
+    )
     return ct
