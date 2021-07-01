@@ -67,7 +67,7 @@ services:
     restart: always
 
   web:
-    image: grandchallenge/web-test:latest
+    image: public.ecr.aws/m3y0m7n5/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
       <<: &private_storage_credentials
@@ -112,7 +112,7 @@ services:
       - ${DOCKER_GID-1001} # The docker group is only needed for testing
 
   http:
-    image: grandchallenge/http:latest
+    image: public.ecr.aws/m3y0m7n5/grand-challenge/http:latest
     environment:
       SERVER_NAME: gc.localhost
       SENDFILE_STATUS: 'off'
@@ -141,7 +141,7 @@ services:
       - "6379:6379" # Only required for running django locally
 
   celery_worker:
-    image: grandchallenge/web-test:latest
+    image: public.ecr.aws/m3y0m7n5/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
       <<: *private_storage_credentials
@@ -167,7 +167,7 @@ services:
         target: /app/
 
   celery_worker_evaluation:
-    image: grandchallenge/web-test:latest
+    image: public.ecr.aws/m3y0m7n5/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
       <<: *private_storage_credentials
@@ -198,7 +198,7 @@ services:
       - ${DOCKER_GID-1001}
 
   celery_beat:
-    image: grandchallenge/web-test:latest
+    image: public.ecr.aws/m3y0m7n5/grand-challenge/web-test:latest
     environment:
       <<: *postgresenv
     restart: always
