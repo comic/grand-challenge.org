@@ -1,3 +1,4 @@
+from actstream.actions import follow, unfollow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
@@ -108,7 +109,7 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         ]
 
     def __str__(self):
-        return f"<{self.__class__.__name__} {self.title}>"
+        return f"{self.title}"
 
     @property
     def name(self):
@@ -174,9 +175,11 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
     def add_editor(self, user):
+        follow(user=user, obj=self, actor_only=False, send_action=False)
         return user.groups.add(self.editors_group)
 
     def remove_editor(self, user):
+        unfollow(user=user, obj=self, send_action=False)
         return user.groups.remove(self.editors_group)
 
     def is_uploader(self, user):

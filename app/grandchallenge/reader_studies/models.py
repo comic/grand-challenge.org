@@ -3,6 +3,7 @@ import json
 from collections import Counter
 
 import numpy as np
+from actstream.actions import follow, unfollow
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -451,10 +452,12 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     def add_editor(self, user):
         """Adds ``user`` as an editor for this ``ReaderStudy``."""
+        follow(user=user, obj=self, actor_only=False, send_action=False)
         return user.groups.add(self.editors_group)
 
     def remove_editor(self, user):
         """Removes ``user`` as an editor for this ``ReaderStudy``."""
+        unfollow(user=user, obj=self, send_action=False)
         return user.groups.remove(self.editors_group)
 
     def is_reader(self, user):

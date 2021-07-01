@@ -3,6 +3,7 @@ import os
 from datetime import timedelta
 from itertools import chain
 
+from actstream.actions import follow, unfollow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
@@ -293,9 +294,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
     def add_editor(self, user):
+        follow(user=user, obj=self, actor_only=False, send_action=False)
         return user.groups.add(self.editors_group)
 
     def remove_editor(self, user):
+        unfollow(user=user, obj=self, send_action=False)
         return user.groups.remove(self.editors_group)
 
     def is_user(self, user):
