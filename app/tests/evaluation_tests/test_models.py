@@ -3,7 +3,11 @@ from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
 from tests.algorithms_tests.factories import AlgorithmImageFactory
-from tests.archives_tests.factories import ArchiveFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import MethodFactory, SubmissionFactory
 from tests.factories import ImageFactory
 
@@ -15,8 +19,17 @@ class TestSubmission(TestCase):
         )
         self.algorithm_image = AlgorithmImageFactory()
 
+        interface = ComponentInterfaceFactory()
+        self.algorithm_image.algorithm.inputs.set([interface])
+
         self.images = ImageFactory.create_batch(3)
-        self.method.phase.archive.images.set(self.images[:2])
+
+        for image in self.images[:2]:
+            civ = ComponentInterfaceValueFactory(
+                image=image, interface=interface
+            )
+            ai = ArchiveItemFactory(archive=self.method.phase.archive)
+            ai.values.add(civ)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_algorithm_submission_creates_one_job_per_test_set_image(self):

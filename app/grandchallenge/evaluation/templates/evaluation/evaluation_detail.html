@@ -19,6 +19,10 @@
     </ol>
 {% endblock %}
 
+{% block topbar2 %}
+    {% include "evaluation/partials/phase_navbar.html" %}
+{% endblock %}
+
 {% block content %}
 
     <h2>Evaluation</h2>
@@ -148,15 +152,6 @@
         {% if object.submission.phase.display_submission_comments %}
             <dt>Comment:</dt>
             <dd>{{ object.submission.comment }}</dd>
-        {% endif %}
-
-        {% if request.user.is_staff and object.submission.annotationset %}
-            <dt>Predictions</dt>
-            <dd>
-                <a class="btn btn-primary"
-                   href="{{ object.submission.annotationset.get_absolute_url }}">
-                    <i class="fa fa-eye"></i> View Predictions</a>
-            </dd>
         {% endif %}
     </dl>
 

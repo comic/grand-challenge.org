@@ -67,6 +67,7 @@ class DockerConnection:
         job_class: Model,
         exec_image: File,
         exec_image_sha256: str,
+        memory_limit: int = settings.COMPONENTS_MEMORY_LIMIT,
     ):
         super().__init__()
         self._job_id = job_id
@@ -92,12 +93,15 @@ class DockerConnection:
 
         self._labels = {"job": f"{self._job_label}", "traefik.enable": "false"}
 
+        # Do not allow a component to use more memory that the limit
+        memory_limit = min(memory_limit, settings.COMPONENTS_MEMORY_LIMIT)
+
         self._run_kwargs = {
             "init": True,
             "network_disabled": True,
-            "mem_limit": settings.COMPONENTS_MEMORY_LIMIT,
+            "mem_limit": f"{memory_limit}g",
             # Set to the same as mem_limit to avoid using swap
-            "memswap_limit": settings.COMPONENTS_MEMORY_LIMIT,
+            "memswap_limit": f"{memory_limit}g",
             "cpu_period": settings.COMPONENTS_CPU_PERIOD,
             "cpu_quota": settings.COMPONENTS_CPU_QUOTA,
             "cpu_shares": settings.COMPONENTS_CPU_SHARES,
@@ -317,7 +321,7 @@ class Executor(DockerConnection):
         if exit_code == 137:
             raise ComponentException(
                 "The container was killed as it exceeded the memory limit "
-                f"of {settings.COMPONENTS_MEMORY_LIMIT}."
+                f"of {self._run_kwargs['mem_limit']}."
             )
         elif exit_code != 0:
             raise ComponentException(user_error(self._stderr))

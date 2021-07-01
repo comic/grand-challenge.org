@@ -5,6 +5,7 @@
 {% load profiles %}
 {% load meta_attr %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -24,25 +25,25 @@
     {% get_obj_perms request.user for object as "object_perms" %}
 
     <div class="col-12 col-md-4 col-lg-3 mb-3">
-        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+        <ul class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
              aria-orientation="vertical">
-            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
-               href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+            <a class="nav-link" id="v-pills-information-tab" data-toggle="pill"
+               href="#information" role="tab" aria-controls="v-pills-information"
                aria-selected="true"><i
                     class="fas fa-info fa-fw"></i>&nbsp;Information
             </a>
 
             {% if "change_archive" in object_perms %}
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
-                   href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
+                   href="#editors" role="tab" aria-controls="v-pills-editors"
                    aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
                 </a>
                 <a class="nav-link" id="v-pills-uploaders-tab" data-toggle="pill"
-                   href="#v-pills-uploaders" role="tab" aria-controls="v-pills-uploaders"
+                   href="#uploaders" role="tab" aria-controls="v-pills-uploaders"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Uploaders
                 </a>
                 <a class="nav-link" id="v-pills-users-tab" data-toggle="pill"
-                   href="#v-pills-users" role="tab" aria-controls="v-pills-users"
+                   href="#users" role="tab" aria-controls="v-pills-users"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Users
                 </a>
                 <a class="nav-link"
@@ -65,15 +66,19 @@
                 ><i class="fas fa-eye fa-fw"></i>&nbsp;View Cases
                 </a>
                 <a class="nav-link"
+                   href="{% url 'archives:items-list' slug=object.slug %}"
+                ><i class="fas fa-eye fa-fw"></i>&nbsp;View Items
+                </a>
+                <a class="nav-link"
                    href="{% url 'archives:cases-reader-study-update' slug=object.slug %}"
                 ><i class="fas fa-plus fa-fw"></i>&nbsp;Add to Reader Study
                 </a>
                 <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
-                   href="#v-pills-export" role="tab" aria-controls="v-pills-export"
+                   href="#export" role="tab" aria-controls="v-pills-export"
                    aria-selected="false"><i class="fas fa-file-download fa-fw"></i>&nbsp;Export
                 </a>
             {% endif %}
-        </div>
+        </ul>
     </div>
 {% endblock %}
 
@@ -81,8 +86,8 @@
     {% get_obj_perms request.user for object as "object_perms" %}
 
     <div class="tab-content" id="v-pills-tabContent">
-        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
-             aria-labelledby="v-pills-home-tab">
+        <div class="tab-pane fade show" id="information" role="tabpanel"
+             aria-labelledby="v-pills-information-tab">
 
             <h2>{{ object.title }}</h2>
 
@@ -123,7 +128,7 @@
         </div>
 
         {% if "change_archive" in object_perms %}
-            <div class="tab-pane fade" id="v-pills-editors" role="tabpanel"
+            <div class="tab-pane fade" id="editors" role="tabpanel"
                  aria-labelledby="v-pills-editors-tab">
 
                 <h2>Editors</h2>
@@ -143,7 +148,7 @@
                 </p>
             </div>
 
-            <div class="tab-pane fade" id="v-pills-uploaders" role="tabpanel"
+            <div class="tab-pane fade" id="uploaders" role="tabpanel"
                  aria-labelledby="v-pills-uploaders-tab">
 
                 <h2>Uploaders</h2>
@@ -163,7 +168,7 @@
                 </p>
             </div>
 
-            <div class="tab-pane fade" id="v-pills-users" role="tabpanel"
+            <div class="tab-pane fade" id="users" role="tabpanel"
                  aria-labelledby="v-pills-editors-tab">
 
                 <h2>Users</h2>
@@ -185,7 +190,7 @@
         {% endif %}
 
         {% if "use_archive" in object_perms %}
-            <div class="tab-pane fade" id="v-pills-export" role="tabpanel"
+            <div class="tab-pane fade" id="export" role="tabpanel"
                  aria-labelledby="v-pills-export-tab">
 
                 <h2>Export</h2>
@@ -213,4 +218,9 @@
         {% endif %}
 
     </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script src="{% static "js/refresh_sidebar.js" %}"></script>
 {% endblock %}

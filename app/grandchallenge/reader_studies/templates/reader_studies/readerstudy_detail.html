@@ -18,24 +18,24 @@
 {% block sidebar %}
     {% get_obj_perms request.user for object as "readerstudy_perms" %}
     <div class="col-12 col-md-4 col-lg-3 mb-3">
-        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+        <ul class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
              aria-orientation="vertical">
-            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
-               href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+            <a class="nav-link" id="v-pills-information-tab" data-toggle="pill"
+               href="#information" role="tab" aria-controls="v-pills-information"
                aria-selected="true"><i
                     class="fas fa-info fa-fw"></i>&nbsp;Information
             </a>
             {% if "change_readerstudy" in readerstudy_perms %}
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
-                   href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
+                   href="#editors" role="tab" aria-controls="v-pills-editors"
                    aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
                 </a>
                 <a class="nav-link" id="v-pills-readers-tab" data-toggle="pill"
-                   href="#v-pills-readers" role="tab" aria-controls="v-pills-readers"
+                   href="#readers" role="tab" aria-controls="v-pills-readers"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Readers&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ num_readers }}</span>
                 </a>
-                <a class="nav-link" id="v-pills-readers-tab"
+                <a class="nav-link"
                    href="{% url 'reader-studies:users-progress' slug=object.slug %}"
                 ><i class="fas fa-tasks fa-fw"></i>&nbsp;Users Progress
                 </a>
@@ -45,18 +45,18 @@
                         class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
                 </a>
                 <a class="nav-link" id="v-pills-cases-tab" data-toggle="pill"
-                   href="#v-pills-cases" role="tab" aria-controls="v-pills-cases"
+                   href="#cases" role="tab" aria-controls="v-pills-cases"
                    aria-selected="false"><i class="fas fa-image fa-fw"></i>&nbsp;Cases&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ object.images.all.count }}</span>
                 </a>
                 <a class="nav-link" id="v-pills-questions-tab" data-toggle="pill"
-                   href="#v-pills-questions" role="tab"
+                   href="#questions" role="tab"
                    aria-controls="v-pills-questions"
                    aria-selected="false"><i class="fas fa-question fa-fw"></i>&nbsp;Questions&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ object.questions.all.count }}</span>
                 </a>
                 <a class="nav-link" id="v-pills-ground-truth-tab" data-toggle="pill"
-                   href="#v-pills-ground-truth" role="tab"
+                   href="#ground-truth" role="tab"
                    aria-controls="v-pills-ground-truth"
                    aria-selected="false"><i class="fas fa-check fa-fw"></i>&nbsp;Ground
                     Truth
@@ -70,12 +70,12 @@
                         class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
                 </a>
                 <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
-                   href="#v-pills-export" role="tab" aria-controls="v-pills-export"
+                   href="#export" role="tab" aria-controls="v-pills-export"
                    aria-selected="false"><i class="fas fa-download fa-fw"></i>&nbsp;Export
                 </a>
                 {% if perms.reader_studies.add_readerstudy %}
                     <a class="nav-link" id="v-pills-copy-tab" data-toggle="pill"
-                       href="#v-pills-copy" role="tab" aria-controls="v-pills-copy"
+                       href="#copy" role="tab" aria-controls="v-pills-copy"
                        aria-selected="false"><i class="fas fa-copy fa-fw"></i>&nbsp;Copy
                     </a>
                 {% endif %}
@@ -87,7 +87,7 @@
                     <i class="fa fa-question fa-fw"></i>&nbsp;Request Access
                 </a>
             {% endif %}
-        </div>
+        </ul>
     </div>
 {% endblock %}
 
@@ -143,8 +143,8 @@
 
     <div class="tab-content" id="v-pills-tabContent">
 
-        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
-             aria-labelledby="v-pills-home-tab">
+        <div class="tab-pane fade show" id="information" role="tabpanel"
+             aria-labelledby="v-pills-information-tab">
 
             <h2>{{ object.title }}</h2>
 
@@ -213,7 +213,7 @@
 
         {% if "change_readerstudy" in readerstudy_perms %}
             <div class="tab-pane fade"
-                 id="v-pills-editors"
+                 id="editors"
                  role="tabpanel"
                  aria-labelledby="v-pills-editors-tab">
 
@@ -230,7 +230,7 @@
             </div>
 
             <div class="tab-pane fade"
-                 id="v-pills-cases"
+                 id="cases"
                  role="tabpanel"
                  aria-labelledby="v-pills-cases-tab">
 
@@ -255,7 +255,7 @@
             </div>
 
             <div class="tab-pane fade"
-                 id="v-pills-questions"
+                 id="questions"
                  role="tabpanel"
                  aria-labelledby="v-pills-questions-tab">
                 <h2>Questions</h2>
@@ -299,7 +299,7 @@
             </div>
 
             <div class="tab-pane fade"
-                 id="v-pills-readers"
+                 id="readers"
                  role="tabpanel"
                  aria-labelledby="v-pills-readers-tab">
 
@@ -316,7 +316,7 @@
             </div>
 
             <div class="tab-pane fade"
-                 id="v-pills-ground-truth"
+                 id="ground-truth"
                  role="tabpanel"
                  aria-labelledby="v-pills-ground-truth-tab">
 
@@ -362,7 +362,7 @@
             </div>
 
             <div class="tab-pane fade"
-                 id="v-pills-export"
+                 id="export"
                  role="tabpanel"
                  aria-labelledby="v-pills-export-tab">
 
@@ -394,7 +394,7 @@
                 {% for offset in image_offsets %}
                     <p>
                         <a class="btn btn-primary"
-                           href="{% url 'api:image-list' %}?format=csv&readerstudies={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
+                           href="{% url 'api:image-list' %}?format=csv&reader_study={{ object.pk }}&offset={{ offset }}&limit={{ limit }}"
                            download="reader_study_{{ object.slug }}_images_{{ offset|add:1 }}_{{ offset|add:limit }}_{{ now }}.csv">
                             <i class="fas fa-file-csv"></i> Images ({{ offset|add:1 }} to {{ offset|add:limit }})
                         </a>
@@ -415,7 +415,7 @@
 
             {% if perms.reader_studies.add_readerstudy %}
                 <div class="tab-pane fade"
-                     id="v-pills-copy"
+                     id="copy"
                      role="tabpanel"
                      aria-labelledby="v-pills-copy-tab">
 
@@ -505,4 +505,5 @@
         });
     </script>
     <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+    <script src="{% static "js/refresh_sidebar.js" %}"></script>
 {% endblock %}

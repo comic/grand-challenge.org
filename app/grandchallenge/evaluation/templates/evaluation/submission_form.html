@@ -20,8 +20,13 @@
     </ol>
 {% endblock %}
 
-{% block content %}
+{% block topbar2 %}
+    {% if "change_challenge" in challenge_perms or user_is_participant %}
+        {% include "evaluation/partials/phase_navbar.html" with submission_nav=True %}
+    {% endif %}
+{% endblock %}
 
+{% block content %}
     <h2>{{ phase.title }} Submission</h2>
 
     {{ phase.submission_page_html|clean }}
@@ -84,12 +89,4 @@
         {% endif %}
 
     {% endif %}
-
-    <h3>View your submissions</h3>
-
-    <p>
-        <a href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Click
-            here</a>
-        to view your current submissions to this challenge.</p>
-
 {% endblock %}

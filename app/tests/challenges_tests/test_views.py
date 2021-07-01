@@ -1,4 +1,5 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.subdomains.utils import reverse
 from tests.factories import ChallengeFactory, UserFactory
@@ -24,10 +25,10 @@ def test_external_challenge_buttons(client):
     assert create_url not in response.rendered_content
     assert list_url not in response.rendered_content
 
-    staff_user = UserFactory(is_staff=True)
+    assign_perm("challenges.change_externalchallenge", user)
 
     response = get_view_for_user(
-        client=client, viewname="challenges:list", user=staff_user
+        client=client, viewname="challenges:list", user=user
     )
 
     assert create_url in response.rendered_content

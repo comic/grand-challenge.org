@@ -1,0 +1,38 @@
+{% load url %}
+{% load profiles %}
+{% load evaluation_extras %}
+
+<div class="nav-pill-dropdown-container">
+    <a class="d-lg-none btn btn-outline-dark dropdown-toggle phaseButton mr-1 mb-3 px-4"
+       data-toggle="dropdown"
+       href="#"
+       role="button"
+       aria-expanded="false">
+        Choose a Phase</a>
+    <ul class="nav nav-pills col-12 mb-3">
+        {% for phase in challenge.phase_set.all %}
+            <li class="nav-item">
+                {% if leaderboard_nav %}
+                    <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+                {% elif submission_nav %}
+                    <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:submission-create-legacy' and request.resolver_match.kwargs.slug == phase.slug%}active{% endif %}"
+                           href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+                {% elif workspaces_nav %}
+                    <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.kwargs.slug == phase.slug%}active{% endif %}"
+                           href="{% url 'workspaces:create' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+                {% else %}
+                    <a class="nav-link mr-1 px-4 py-1 "
+                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{{ phase.title }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    {% if submission_nav %}
+        <li class="nav-item">
+            <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+               href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">Your Submissions
+            </a>
+        </li>
+    {% endif %}
+    </ul>
+</div>

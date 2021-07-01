@@ -30,6 +30,16 @@ def get_groups_with_set_perms(*args, **kwargs):
     return {k: {*v} for k, v in get_groups_with_perms(*args, **kwargs).items()}
 
 
+def get_users_with_set_perms(*args, **kwargs):
+    """
+    Executes get_users_with_perms with attach_perms=True, and converts the
+    resulting list for each group to a set for easier comparison in tests as
+    the ordering of permissions is not always consistent.
+    """
+    kwargs.update({"attach_perms": True})
+    return {k: {*v} for k, v in get_users_with_perms(*args, **kwargs).items()}
+
+
 class TestPhasePermissions(TestCase):
     def test_phase_permissions(self):
         """Only challenge admins should be able to view and change phases."""

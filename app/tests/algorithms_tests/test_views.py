@@ -141,7 +141,10 @@ def test_algorithm_image_create_detail(client):
         viewname="algorithms:image-create",
         reverse_kwargs={"slug": algorithm.slug},
         user=user,
-        data={"chunked_upload": algorithm_image.file_id},
+        data={
+            "chunked_upload": algorithm_image.file_id,
+            "requires_memory_gb": 24,
+        },
     )
     assert response.status_code == 302
 

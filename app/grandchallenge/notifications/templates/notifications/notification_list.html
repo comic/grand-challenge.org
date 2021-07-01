@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load profiles %}
 {% load humanize %}
+{% load static %}
+{% load guardian_tags %}
+{% load url %}
+
 
 {% block title %}Notifications - {{ block.super }}{% endblock %}
 
@@ -11,28 +15,66 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Notifications</h2>
+    {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
+    <div class="d-flex justify-content-between">
+        <h2>Notifications</h2>
+        <a class="btn btn-primary my-3" href="{% url 'notifications:follow-list' %}" role="button">Manage your subscriptions</a>
+    </div>
+        <div class="row">
+        <div class="col-6">
+            <input class="checkbox-inline ml-3 mt-3" type="checkbox" id="SelectCheckboxes" onClick="toggleCheckboxes(this)"/>
+            <label class="form-check-label ml-1" id="LabelSelectAll" for="SelectCheckboxes">
+                Select all
+            </label>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            <button class="btn btn-xs btn-danger mx-1 mb-3 mt-1" name="delete" type="button" id="delete"> Delete selected</button>
+            <button class="btn btn-xs btn-primary mx-1 mb-3 mt-1" name="mark_read" type="button" id="mark_read"> Mark as read</button>
+            <button class="btn btn-xs btn-primary mx-1 mb-3 mt-1" name="mark_unread" type="button" id="mark_unread"> Mark as unread</button>
+        </div>
+        </div>
 
-    <ul class="list-group">
-        {% for object in object_list %}
-            <li class="list-group-item {% if object.data.context_class %}list-group-item-{{ object.data.context_class }}{% endif %}">
-                {% if notifications_last_read_at is None or notifications_last_read_at < object.timestamp %}
-                    <span class="text-primary align-middle mr-2"><i class="fa fa-circle"></i></span>
-                {% endif %}
-                {{ object.actor|user_profile_link }}{{ object.verb }}
-                {% if object.action_object %}
-                    <a href="{{ object.action_object.get_absolute_url }}">{{ object.action_object }}</a>
-                    {% if object.target %}
-                        in
-                    {% endif %}
-                {% endif %}
-                {% if object.target %}
-                    <a href="{{ object.target.get_absolute_url }}">{{ object.target }}</a>
-                {% endif %}
-                {{ object.timestamp|naturaltime }}
-            </li>
-            {% empty %}
-            <li class="list-group-item">You have no notifications</li>
-        {% endfor %}
-    </ul>
+        <ul class="list-group">
+            {% for object in object_list %}
+                <li class="list-group-item {% if object.context_class %}list-group-item-{{ object.context_class }}{% endif %} p-0">
+                    <div class="d-flex justify-content-between">
+                        <div class="py-2 pl-3">
+                            <input class="checkbox pr-1" name="checkbox" type="checkbox" id="{{ object.id }}"
+                                   value="{{ object.id }}" data-url="{% url 'api:notification-detail' pk=object.pk %}">
+                            {% if not object.read %}
+                                <span class="text-primary align-middle ml-2"><i class="fa fa-circle pl-2"></i></span>
+                            {% endif %}
+                            &nbsp;
+                            {{ object.action.actor|user_profile_link }}{{ object.action.verb }}
+                            {% if object.action.action_object %}
+                                <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
+                                {% if object.action.target %}
+                                    in
+                                {% endif %}
+                            {% endif %}
+                            {% if object.action.target %}
+                                <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
+                            {% endif %}
+                            {{ object.action.timestamp|naturaltime }}
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="list-group-item">You have no notifications</li>
+            {% endfor %}
+        </ul>
+    <br>
+    {% include "grandchallenge/partials/pagination.html"  %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript">
+        window.drf = {
+            csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+            csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
+    </script>
+    <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+    <script type="module" src="{% static "js/notifications/bulk_delete_update.js" %}"></script>
 {% endblock %}

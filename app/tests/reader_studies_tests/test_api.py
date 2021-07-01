@@ -607,7 +607,7 @@ def test_answer_creator_is_reader(client):
                     }
                 ],
             },
-            400,
+            201,
         ),
         (Question.AnswerType.SINGLE_LINE_TEXT, None, 400),
         (Question.AnswerType.MULTI_LINE_TEXT, None, 400),

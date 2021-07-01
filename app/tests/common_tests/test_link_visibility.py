@@ -1,30 +1,31 @@
 import pytest
 
-from grandchallenge.subdomains.utils import reverse
-from tests.utils import validate_admin_only_text_in_page
+from tests.utils import validate_admin_only_view
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "view",
-    ["participants:registration-list", "participants:list", "admins:list"],
+    [
+        "update",
+        "pages:list",
+        "admins:list",
+        "participants:list",
+        "participants:registration-list",
+        "evaluation:phase-update",
+        "evaluation:phase-create",
+    ],
 )
 def test_admins_see_links(view, client, two_challenge_sets):
-    url = reverse(
-        "pages:home",
-        kwargs={
-            "challenge_short_name": two_challenge_sets.challenge_set_1.challenge.short_name
-        },
-    )
-    expected = reverse(
-        view,
-        kwargs={
-            "challenge_short_name": two_challenge_sets.challenge_set_1.challenge.short_name
-        },
-    )
-    validate_admin_only_text_in_page(
-        url=url,
-        expected_text=f'"{str(expected)}"',
+    if view == "evaluation:phase-update":
+        reverse_kwargs = {
+            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.get().slug,
+        }
+    else:
+        reverse_kwargs = {}
+    validate_admin_only_view(
+        viewname=view,
         two_challenge_set=two_challenge_sets,
         client=client,
+        reverse_kwargs=reverse_kwargs,
     )

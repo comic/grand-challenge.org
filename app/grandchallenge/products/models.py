@@ -113,6 +113,7 @@ class Product(models.Model):
     ce_status = models.CharField(
         choices=CEStatus.choices, max_length=3, default=CEStatus.NO
     )
+    ce_under = models.CharField(max_length=10, blank=True)
     ce_class = models.CharField(max_length=500, default="unknown")
     fda_status = models.CharField(
         choices=FDAStatus.choices, max_length=3, default=FDAStatus.UNKNOWN

@@ -24,6 +24,7 @@ from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.archives.tasks import add_images_to_archive
+from grandchallenge.cases.filters import ImageFilterSet
 from grandchallenge.cases.models import (
     Image,
     ImageFile,
@@ -35,9 +36,6 @@ from grandchallenge.cases.serializers import (
     RawImageFileSerializer,
     RawImageUploadSessionPatchSerializer,
     RawImageUploadSessionSerializer,
-)
-from grandchallenge.core.permissions.rest_framework import (
-    DjangoObjectOnlyWithCustomPostPermissions,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -101,24 +99,13 @@ class OSDImageDetail(
 
 class ImageViewSet(ReadOnlyModelViewSet):
     serializer_class = HyperlinkedImageSerializer
-    queryset = Image.objects.all().prefetch_related(
-        "files",
-        "archive_set",
-        "componentinterfacevalue_set__algorithms_jobs_as_input",
-        "readerstudies",
-    )
+    queryset = Image.objects.all().prefetch_related("files")
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (
         DjangoFilterBackend,
         ObjectPermissionsFilter,
     )
-    filterset_fields = (
-        "study",
-        "origin",
-        "archive",
-        "readerstudies",
-        "name",
-    )
+    filterset_class = ImageFilterSet
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
@@ -129,7 +116,7 @@ class RawImageUploadSessionViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
     queryset = RawImageUploadSession.objects.all()
-    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]
 
     def perform_create(self, serializer):
@@ -236,5 +223,5 @@ class RawImageFileViewSet(
 ):
     serializer_class = RawImageFileSerializer
     queryset = RawImageFile.objects.all()
-    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [ObjectPermissionsFilter]

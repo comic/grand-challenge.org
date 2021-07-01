@@ -8,6 +8,7 @@
 {% load humanize %}
 {% load remove_whitespace %}
 {% load naturaldelta %}
+{% load static %}
 
 {% block title %}
     {{ object.title }} - {{ block.super }}
@@ -27,17 +28,17 @@
     {% get_obj_perms request.user for object as "algorithm_perms" %}
 
     <div class="col-12 col-md-4 col-lg-3 mb-3">
-        <div class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
+        <ul class="nav nav-pills flex-column" id="v-pills-tab" role="tablist"
              aria-orientation="vertical">
-            <a class="nav-link active" id="v-pills-home-tab" data-toggle="pill"
-               href="#v-pills-home" role="tab" aria-controls="v-pills-home"
+            <a class="nav-link" id="v-pills-information-tab" data-toggle="pill"
+               href="#information" role="tab" aria-controls="v-pills-information"
                aria-selected="true"><i
                     class="fas fa-info fa-fw"></i>&nbsp;Information
             </a>
 
             {% if "change_algorithm" in algorithm_perms %}
                 <a class="nav-link" id="v-pills-containers-tab" data-toggle="pill"
-                   href="#v-pills-containers" role="tab"
+                   href="#containers" role="tab"
                    aria-controls="v-pills-containers"
                    aria-selected="false">
                     {# @formatter:off #}
@@ -45,11 +46,11 @@
                     {# @formatter:on #}
                 </a>
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
-                   href="#v-pills-editors" role="tab" aria-controls="v-pills-editors"
+                   href="#editors" role="tab" aria-controls="v-pills-editors"
                    aria-selected="false"><i class="fas fa-user fa-fw"></i>&nbsp;Editors
                 </a>
                 <a class="nav-link" id="v-pills-users-tab" data-toggle="pill"
-                   href="#v-pills-users" role="tab" aria-controls="v-pills-users"
+                   href="#users" role="tab" aria-controls="v-pills-users"
                    aria-selected="false"><i class="fas fa-users fa-fw"></i>&nbsp;Users
                 </a>
                 <a class="nav-link"
@@ -85,15 +86,15 @@
                     <i class="fa fa-question fa-fw"></i>&nbsp;Request Access
                 </a>
             {% endif %}
-        </div>
+        </ul>
     </div>
 {% endblock %}
 
 {% block content %}
     {% get_obj_perms request.user for object as "algorithm_perms" %}
     <div class="tab-content" id="v-pills-tabContent">
-        <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
-             aria-labelledby="v-pills-home-tab">
+        <div class="tab-pane fade show" id="information" role="tabpanel"
+             aria-labelledby="v-pills-information-tab">
 
             <h2>{{ object.title }}</h2>
             {% comment %}
@@ -147,11 +148,23 @@
                         <i class="fa fa-cog"></i> Update Settings
                     </a>
                 </p>
+
+                {% comment %}
+                Enable this to add a button to add a GitHub repo to the algorithm
+
+                 <p>
+                    <a class="btn btn-success"
+                       href="{{ github_app_install_url }}">
+                        <i class="fa fa-code-branch"></i> Add GitHub repo
+                    </a>
+                </p>
+
+                {% endcomment %}
             {% endif %}
         </div>
 
         {% if "change_algorithm" in algorithm_perms %}
-            <div class="tab-pane fade" id="v-pills-editors" role="tabpanel"
+            <div class="tab-pane fade" id="editors" role="tabpanel"
                  aria-labelledby="v-pills-editors-tab">
 
                 <h2>Editors</h2>
@@ -171,7 +184,7 @@
                 </p>
             </div>
 
-            <div class="tab-pane fade" id="v-pills-users" role="tabpanel"
+            <div class="tab-pane fade" id="users" role="tabpanel"
                  aria-labelledby="v-pills-editors-tab">
 
                 <h2>Users</h2>
@@ -188,7 +201,7 @@
                 </p>
             </div>
 
-            <div class="tab-pane fade" id="v-pills-requests" role="tabpanel"
+            <div class="tab-pane fade" id="requests" role="tabpanel"
                  aria-labelledby="v-pills-requests-tab">
 
                 <h2>Permission Requests</h2>
@@ -204,7 +217,7 @@
 
             </div>
 
-            <div class="tab-pane fade" id="v-pills-containers" role="tabpanel"
+            <div class="tab-pane fade" id="containers" role="tabpanel"
                  aria-labelledby="v-pills-containers">
 
                 <h2>Containers</h2>
@@ -241,4 +254,9 @@
             </div>
         {% endif %}
     </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script src="{% static "js/refresh_sidebar.js" %}"></script>
 {% endblock %}

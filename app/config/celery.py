@@ -4,6 +4,6 @@ from celery import Celery
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
-app = Celery("grandchallenge")
-app.config_from_object("django.conf:settings", namespace="CELERY_")
-app.autodiscover_tasks()
+celery_app = Celery("grandchallenge")
+celery_app.config_from_object("django.conf:settings", namespace="CELERY_")
+celery_app.autodiscover_tasks()

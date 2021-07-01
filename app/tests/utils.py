@@ -10,7 +10,7 @@ from django.views.generic import View
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import SUPER_SECURE_TEST_PASSWORD, UserFactory
+from tests.factories import SUPER_SECURE_TEST_PASSWORD
 
 
 def assert_redirect(uri: str, *args):
@@ -254,57 +254,3 @@ def validate_logged_in_view(*, challenge_set, client: Client, **kwargs):
             user=test[1],
             **kwargs,
         )
-
-
-def validate_staff_only_view(
-    *, client: Client, should_redirect=False, **kwargs
-):
-    assert_viewname_redirect(
-        redirect_url=settings.LOGIN_URL, client=client, **kwargs
-    )
-
-    user = UserFactory()
-    staff_user = UserFactory(is_staff=True)
-
-    assert_viewname_status(code=403, client=client, user=user, **kwargs)
-
-    if should_redirect:
-        staff_response = assert_viewname_status(
-            code=302, client=client, user=staff_user, **kwargs
-        )
-        assert settings.LOGIN_URL not in staff_response.url
-    else:
-        assert_viewname_status(
-            code=200, client=client, user=staff_user, **kwargs
-        )
-
-
-def validate_admin_only_text_in_page(
-    *, expected_text, two_challenge_set, client: Client, **kwargs
-):
-    tests = [
-        (False, None),
-        (False, two_challenge_set.challenge_set_1.non_participant),
-        (False, two_challenge_set.challenge_set_1.participant),
-        (False, two_challenge_set.challenge_set_1.participant1),
-        (True, two_challenge_set.challenge_set_1.creator),
-        (True, two_challenge_set.challenge_set_1.admin),
-        (False, two_challenge_set.challenge_set_2.non_participant),
-        (False, two_challenge_set.challenge_set_2.participant),
-        (False, two_challenge_set.challenge_set_2.participant1),
-        (False, two_challenge_set.challenge_set_2.creator),
-        (False, two_challenge_set.challenge_set_2.admin),
-        (True, two_challenge_set.admin12),
-        (False, two_challenge_set.participant12),
-        (True, two_challenge_set.admin1participant2),
-    ]
-
-    for test in tests:
-        response = assert_viewname_status(
-            code=200,
-            challenge=two_challenge_set.challenge_set_1.challenge,
-            client=client,
-            user=test[1],
-            **kwargs,
-        )
-        assert (expected_text in str(response.content)) == test[0]

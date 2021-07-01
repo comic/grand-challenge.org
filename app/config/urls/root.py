@@ -66,6 +66,7 @@ urlpatterns = [
     # Do not change the api namespace without updating the view names in
     # all of the serializers
     path("api/", include("grandchallenge.api.urls", namespace="api")),
+    path("github/", include("grandchallenge.github.urls", namespace="github")),
     path("users/", include("grandchallenge.profiles.urls")),
     path(
         "notifications/",
@@ -117,12 +118,6 @@ urlpatterns = [
     path(
         "retina/",
         include("grandchallenge.retina_core.urls", namespace="retina"),
-    ),
-    path(
-        "registrations/",
-        include(
-            "grandchallenge.registrations.urls", namespace="registrations"
-        ),
     ),
     path(
         "aiforradiology/",

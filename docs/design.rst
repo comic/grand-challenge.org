@@ -2,7 +2,7 @@ Design decisions
 ================
 
 This section contains extra information about design decisions that have
-been made during the development of grand-challenge.org. This section is 
+been made during the development of grand-challenge.org. This section is
 intended for software developers who want to contribute to the codebase. It is
 a summary of large scale decisions made by the development team and will help
 (we hope) to guide future developments so that all the overall design of

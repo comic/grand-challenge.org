@@ -43,43 +43,52 @@ logger = logging.getLogger(__name__)
 DEFAULT_OUTPUT_INTERFACE_SLUG = "generic-overlay"
 
 
+class InterfaceKindChoices(models.TextChoices):
+    """Interface kind choices."""
+
+    STRING = "STR", _("String")
+    INTEGER = "INT", _("Integer")
+    FLOAT = "FLT", _("Float")
+    BOOL = "BOOL", _("Bool")
+
+    # Annotation Types
+    TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
+    MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
+    DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
+    MULTIPLE_DISTANCE_MEASUREMENTS = (
+        "MDIS",
+        _("Multiple distance measurements"),
+    )
+    POINT = "POIN", _("Point")
+    MULTIPLE_POINTS = "MPOI", _("Multiple points")
+    POLYGON = "POLY", _("Polygon")
+    MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
+
+    # Choice Types
+    CHOICE = "CHOI", _("Choice")
+    MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
+
+    # Image types
+    IMAGE = "IMG", _("Image")
+    SEGMENTATION = "SEG", _("Segmentation")
+    HEAT_MAP = "HMAP", _("Heat Map")
+
+    # Legacy support
+    JSON = "JSON", _("JSON file")
+    CSV = "CSV", _("CSV file")
+    ZIP = "ZIP", _("ZIP file")
+
+
+class InterfaceSuperKindChoices(models.TextChoices):
+    IMAGE = "I", "Image"
+    FILE = "F", "File"
+    VALUE = "V", "Value"
+
+
 class InterfaceKind:
     """Interface kind."""
 
-    class InterfaceKindChoices(models.TextChoices):
-        """Interface kind choices."""
-
-        STRING = "STR", _("String")
-        INTEGER = "INT", _("Integer")
-        FLOAT = "FLT", _("Float")
-        BOOL = "BOOL", _("Bool")
-
-        # Annotation Types
-        TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
-        MULTIPLE_TWO_D_BOUNDING_BOXES = "M2DB", _("Multiple 2D bounding boxes")
-        DISTANCE_MEASUREMENT = "DIST", _("Distance measurement")
-        MULTIPLE_DISTANCE_MEASUREMENTS = (
-            "MDIS",
-            _("Multiple distance measurements"),
-        )
-        POINT = "POIN", _("Point")
-        MULTIPLE_POINTS = "MPOI", _("Multiple points")
-        POLYGON = "POLY", _("Polygon")
-        MULTIPLE_POLYGONS = "MPOL", _("Multiple polygons")
-
-        # Choice Types
-        CHOICE = "CHOI", _("Choice")
-        MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
-
-        # Image types
-        IMAGE = "IMG", _("Image")
-        SEGMENTATION = "SEG", _("Segmentation")
-        HEAT_MAP = "HMAP", _("Heat Map")
-
-        # Legacy support
-        JSON = "JSON", _("JSON file")
-        CSV = "CSV", _("CSV file")
-        ZIP = "ZIP", _("ZIP file")
+    InterfaceKindChoices = InterfaceKindChoices
 
     @staticmethod
     def interface_type_file():
@@ -111,7 +120,8 @@ class InterfaceKind:
 
     @staticmethod
     def interface_type_annotation():
-        """Interface kinds that are annotations.
+        """Interface kinds that are annotations:
+
 
         * 2D bounding box
         * Multiple 2D bounding boxes
@@ -121,6 +131,157 @@ class InterfaceKind:
         * Multiple points
         * Polygon
         * Multiple polygons
+
+        Example json for 2D bounding box annotation
+
+        .. code-block:: json
+
+            {
+                "type": "2D bounding box",
+                "corners": [
+                    [ 130.80001831054688, 148.86666870117188, 0.5009999871253967],
+                    [ 69.73332977294922, 148.86666870117188, 0.5009999871253967],
+                    [ 69.73332977294922, 73.13333129882812, 0.5009999871253967 ],
+                    [ 130.80001831054688, 73.13333129882812, 0.5009999871253967]
+                ],
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Multiple 2D bounding boxes annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Multiple 2D bounding boxes",
+                "boxes": [
+                    {
+                    "corners": [
+                        [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],
+                        [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],
+                        [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],
+                        [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]
+                    ]},
+                    {
+                    "corners": [
+                        [ 92.66666412353516, 136.06668090820312, 0.5009999871253967],
+                        [ 54.79999923706055, 136.06668090820312, 0.5009999871253967],
+                        [ 54.79999923706055, 95.53333282470703, 0.5009999871253967],
+                        [ 92.66666412353516, 95.53333282470703, 0.5009999871253967]
+                    ]}
+                ],
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Distance measurement annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Distance measurement",
+                "start": [ 59.79176712036133, 78.76753997802734, 0.5009999871253967 ],
+                "end": [ 69.38014221191406, 143.75546264648438, 0.5009999871253967 ],
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Multiple distance measurement annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Multiple distance measurements",
+                "lines": [
+                    {
+                        "start": [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],
+                        "end": [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ]
+                    },
+                    {
+                        "start": [ 49.733333587646484, 103.26667022705078, 0.5009999871253967 ],
+                        "end": [ 55.06666564941406, 139.26666259765625, 0.5009999871253967 ]
+                    }
+                ],
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Point annotation
+
+        .. code-block:: json
+
+            {
+                "point": [ 152.13333129882812, 111.0, 0.5009999871253967 ],
+                "type": "Point",
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Multiple points annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Multiple points",
+                "points": [
+                    {
+                        "point": [
+                            96.0145263671875, 79.83292388916016, 0.5009999871253967
+                        ],
+                    },
+                    {
+                        "point": [
+                            130.10653686523438, 115.52300262451172, 0.5009999871253967
+                        ],
+                    }
+                ],
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Polygon annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Polygon",
+                "seed_point": [ 76.413756408691, 124.014717102050, 0.5009999871253967 ],
+                "path_points": [
+                    [ 76.41375842260106, 124.01471710205078, 0.5009999871253967 ],
+                    [ 76.41694876387268, 124.0511828696491, 0.5009999871253967 ],
+                    [ 76.42642285078242, 124.0865406433515, 0.5009999871253967 ]
+                ],
+                "sub_type": "brush",
+                "groups": [],
+                "version": { "major": 1, "minor": 0 }
+            }
+
+        Example json for Multiple polygon annotation
+
+        .. code-block:: json
+
+            {
+                "type": "Multiple polygons",
+                "polygons": [
+                    {
+                        "seed_point": [ 55.82666793823242, 90.46666717529297, 0.5009999871253967 ],
+                        "path_points": [
+                            [ 55.82667599387105, 90.46666717529297, 0.5009999871253967 ],
+                            [ 55.93921357544119, 90.88666314747366, 0.5009999871253967 ],
+                            [ 56.246671966051736, 91.1941215380842, 0.5009999871253967 ],
+                            [ 56.66666793823242, 91.30665911965434, 0.5009999871253967 ]
+                        ],
+                        "sub_type": "brush",
+                        "groups": [ "manual"],
+                    },
+                    {
+                        "seed_point": [ 90.22666564941406, 96.06666564941406, 0.5009999871253967 ],
+                        "path_points": [
+                            [ 90.22667370505269, 96.06666564941406, 0.5009999871253967 ],
+                            [ 90.33921128662283, 96.48666162159475, 0.5009999871253967 ],
+                            [ 90.64666967723338, 96.7941200122053, 0.5009999871253967 ]
+                        ],
+                        "sub_type": "brush",
+                        "groups": []
+                    }
+                ],
+                "version": { "major": 1, "minor": 0 }
+            }
+
         """
         return (
             InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
@@ -213,6 +374,16 @@ class ComponentInterface(models.Model):
     @property
     def is_image_kind(self):
         return self.kind in InterfaceKind.interface_type_image()
+
+    @property
+    def super_kind(self):
+        if self.save_in_object_store:
+            if self.is_image_kind:
+                return InterfaceSuperKindChoices.IMAGE
+            else:
+                return InterfaceSuperKindChoices.FILE
+        else:
+            return InterfaceSuperKindChoices.VALUE
 
     @property
     def save_in_object_store(self):
@@ -333,7 +504,7 @@ class ComponentInterfaceValue(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     interface = models.ForeignKey(
-        to=ComponentInterface, on_delete=models.CASCADE
+        to=ComponentInterface, on_delete=models.PROTECT
     )
     value = models.JSONField(null=True, blank=True, default=None)
     file = models.FileField(
@@ -353,8 +524,18 @@ class ComponentInterfaceValue(models.Model):
         ],
     )
     image = models.ForeignKey(
-        to=Image, null=True, blank=True, on_delete=models.CASCADE
+        to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
+
+    @property
+    def title(self):
+        if self.value is not None:
+            return str(self.value)
+        if self.file:
+            return self.file.name
+        if self.image:
+            return self.image.name
+        return ""
 
     @property
     def has_value(self):
@@ -401,7 +582,7 @@ class ComponentJob(models.Model):
     )
 
     status = models.PositiveSmallIntegerField(
-        choices=STATUS_CHOICES, default=PENDING, db_index=True,
+        choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
     stdout = models.TextField()
     stderr = models.TextField(default="")

@@ -2,6 +2,7 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.test import TestCase
+from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from guardian.shortcuts import (
     assign_perm,
     get_group_perms,
@@ -21,7 +22,8 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
-from tests.archives_tests.factories import ArchiveFactory
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.factories import EvaluationFactory
 from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
 from tests.factories import (
@@ -302,20 +304,25 @@ class TestJobPermissions(TestCase):
         im = ImageFactory()
         s.image_set.set([im])
 
-        archive.images.set([im])
+        civ = ComponentInterfaceValueFactory(image=im)
+        archive_item = ArchiveItemFactory(archive=archive)
+        with capture_on_commit_callbacks(execute=True):
+            archive_item.values.add(civ)
+
         archive.algorithms.set([ai.algorithm])
 
         create_algorithm_jobs_for_archive(archive_pks=[archive.pk])
 
         job = Job.objects.get()
 
-        # The archive editors, users and uploaders, algorithm editors and job
-        # viewers should be able to view the job
+        # The archive editors, users and uploaders and job
+        # viewers should be able to view the job.
+        # NOTE: NOT THE ALGORITHM EDITORS, if they need
+        # access the job can be shared with them.
         assert get_groups_with_set_perms(job) == {
             archive.editors_group: {"view_job"},
             archive.users_group: {"view_job"},
             archive.uploaders_group: {"view_job"},
-            ai.algorithm.editors_group: {"view_job"},
             job.viewers: {"view_job"},
         }
         # No-one should be able to change the job
@@ -341,7 +348,10 @@ class TestJobPermissions(TestCase):
         im = ImageFactory()
         s.image_set.set([im])
 
-        archive.images.set([im])
+        civ = ComponentInterfaceValueFactory(image=im)
+        archive_item = ArchiveItemFactory(archive=archive)
+        with capture_on_commit_callbacks(execute=True):
+            archive_item.values.add(civ)
 
         create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
 

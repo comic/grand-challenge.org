@@ -1,27 +1,106 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.timezone import now
-from django.views.generic import TemplateView
+from actstream.models import Follow
+from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
+from django.views.generic import CreateView, DeleteView, ListView
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionListMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
+from rest_framework import mixins, viewsets
+from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.profiles.models import UserProfile
+from grandchallenge.core.filters import FilterMixin
+from grandchallenge.notifications.filters import NotificationFilter
+from grandchallenge.notifications.forms import FollowForm
+from grandchallenge.notifications.models import Notification
+from grandchallenge.notifications.serializers import NotificationSerializer
+from grandchallenge.notifications.utils import (
+    prefetch_generic_foreign_key_objects,
+    prefetch_nested_generic_foreign_key_objects,
+)
+from grandchallenge.subdomains.utils import reverse
 
 
-class NotificationList(LoginRequiredMixin, TemplateView):
-    template_name = "notifications/notification_list.html"
+class NotificationViewSet(
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.ReadOnlyModelViewSet,
+):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = (DjangoObjectPermissions,)
+    filter_backends = [ObjectPermissionsFilter]
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def destroy(self, request, *args, **kwargs):
+        response = super().destroy(request, *args, **kwargs)
+        messages.add_message(
+            request, messages.SUCCESS, "Notifications successfully deleted.",
+        )
+        return response
 
-        profile = self.request.user.user_profile
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        messages.add_message(
+            request, messages.SUCCESS, "Notifications successfully updated.",
+        )
+        return response
 
-        context.update(
-            {
-                "notifications_last_read_at": profile.notifications_last_read_at,
-                "object_list": profile.notifications,
-            }
+
+class NotificationList(
+    LoginRequiredMixin, FilterMixin, PermissionListMixin, ListView
+):
+    model = Notification
+    permission_required = "view_notification"
+    filter_class = NotificationFilter
+    paginate_by = 50
+
+    def get_queryset(self):
+        return prefetch_nested_generic_foreign_key_objects(
+            super().get_queryset().order_by("-created")
         )
 
-        UserProfile.objects.filter(pk=profile.pk).update(
-            notifications_last_read_at=now()
+
+class FollowList(LoginRequiredMixin, PermissionListMixin, ListView):
+    model = Follow
+    permission_required = "view_follow"
+
+    def get_queryset(self, *args, **kwargs):
+        return prefetch_generic_foreign_key_objects(
+            super().get_queryset().select_related("user")
         )
 
-        return context
+
+class FollowDelete(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
+):
+    model = Follow
+    success_message = "Subscription successfully deleted"
+    permission_required = "delete_follow"
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.get_object()
+
+    def get_success_url(self):
+        return reverse("notifications:follow-list")
+
+
+class FollowCreate(
+    LoginRequiredMixin, SuccessMessageMixin, CreateView,
+):
+    model = Follow
+    form_class = FollowForm
+    success_message = "Subscription successfully added"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
+
+    def get_success_url(self):
+        return reverse("notifications:follow-list")

@@ -1,6 +1,6 @@
 # The default owners for everything in
 # the repo. Unless a later match takes precedence,
-# @jmsmkn will be requested for review when someone 
+# @jmsmkn will be requested for review when someone
 # opens a pull request.
 *       @jmsmkn
 
@@ -18,6 +18,5 @@
 /app/grandchallenge/reader_studies/   @MikeOverkamp-diag
 /app/grandchallenge/retina_api/       @HarmvZ
 /app/grandchallenge/retina_core/      @HarmvZ
-/app/grandchallenge/retina_importers/ @HarmvZ
 /app/grandchallenge/products/         @MikeOverkamp-diag
 /app/grandchallenge/workstations/     @jmsmkn

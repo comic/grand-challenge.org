@@ -24,7 +24,7 @@ def strtobool(val) -> bool:
     return bool(strtobool_i(val))
 
 
-DEBUG = strtobool(os.environ.get("DEBUG", "True"))
+DEBUG = strtobool(os.environ.get("DEBUG", "False"))
 
 COMMIT_ID = os.environ.get("COMMIT_ID", "unknown")
 
@@ -260,6 +260,25 @@ SECURE_REFERRER_POLICY = os.environ.get(
     "SECURE_REFERRER_POLICY", "origin-when-cross-origin"
 )
 
+PERMISSIONS_POLICY = {
+    "accelerometer": [],
+    "ambient-light-sensor": [],
+    "autoplay": [],
+    "camera": [],
+    "display-capture": [],
+    "document-domain": [],
+    "encrypted-media": [],
+    "fullscreen": [],
+    "geolocation": [],
+    "gyroscope": [],
+    "interest-cohort": [],
+    "magnetometer": [],
+    "microphone": [],
+    "midi": [],
+    "payment": [],
+    "usb": [],
+}
+
 IPWARE_META_PRECEDENCE_ORDER = (
     # Set by nginx
     "HTTP_X_FORWARDED_FOR",
@@ -333,6 +352,7 @@ MIDDLEWARE = (
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
+    "django_permissions_policy.PermissionsPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -376,7 +396,6 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
     "guardian",  # per object permissions
-    "easy_thumbnails",  # for mugshots
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
@@ -388,6 +407,7 @@ THIRD_PARTY_APPS = [
     "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
+    "stdimage",
     "django_filters",
     "drf_spectacular",
     "allauth",
@@ -440,9 +460,9 @@ LOCAL_APPS = [
     "grandchallenge.registrations",
     "grandchallenge.annotations",
     "grandchallenge.retina_core",
-    "grandchallenge.retina_importers",
     "grandchallenge.retina_api",
     "grandchallenge.workstations",
+    "grandchallenge.workspaces",
     "grandchallenge.reader_studies",
     "grandchallenge.workstation_configs",
     "grandchallenge.policies",
@@ -457,6 +477,7 @@ LOCAL_APPS = [
     "grandchallenge.datatables",
     "grandchallenge.organizations",
     "grandchallenge.groups",
+    "grandchallenge.github",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -469,7 +490,6 @@ AUTHENTICATION_BACKENDS = [
     "guardian.backends.ObjectPermissionBackend",
 ]
 
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 GOOGLE_ANALYTICS_ID = os.environ.get("GOOGLE_ANALYTICS_ID", "GA_TRACKING_ID")
 
 ##############################################################################
@@ -506,7 +526,36 @@ LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
 LOGIN_REDIRECT_URL = "/users/profile/"
 
-PROFILES_MUGSHOT_SIZE = 460
+##############################################################################
+#
+# stdimage
+#
+##############################################################################
+
+# Re-render the existing images if these values change
+# https://github.com/codingjoe/django-stdimage#re-rendering-variations
+STDIMAGE_LOGO_VARIATIONS = {
+    # Must be square
+    "full": (None, None, False),
+    "x20": (640, 640, True),
+    "x15": (480, 480, True),
+    "x10": (320, 320, True),
+    "x02": (64, 64, True),
+}
+STDIMAGE_SOCIAL_VARIATIONS = {
+    # Values from social sharing
+    "full": (None, None, False),
+    "x20": (1280, 640, False),
+    "x15": (960, 480, False),
+    "x10": (640, 320, False),
+}
+STDIMAGE_BANNER_VARIATIONS = {
+    # Fixed width, any height
+    "full": (None, None, False),
+    "x20": (2220, None, False),
+    "x15": (1665, None, False),
+    "x10": (1110, None, False),
+}
 
 ##############################################################################
 #
@@ -740,10 +789,21 @@ CORS_ALLOW_CREDENTIALS = True
 #
 ###############################################################################
 
+CELERY_TASK_DECORATOR_KWARGS = {
+    "acks-late-2xlarge": {
+        "acks_late": True,
+        "reject_on_worker_lost": True,
+        "queue": "acks-late-2xlarge",
+    }
+}
+
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_TASK_ACKS_LATE = strtobool(
     os.environ.get("CELERY_TASK_ACKS_LATE", "False")
+)
+CELERY_WORKER_PREFETCH_MULTIPLIER = int(
+    os.environ.get("CELERY_WORKER_PREFETCH_MULTIPLIER", "1")
 )
 CELERY_TASK_SOFT_TIME_LIMIT = int(
     os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", "7200")
@@ -776,6 +836,12 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
 else:
     CELERY_BROKER_URL = os.environ.get("BROKER_URL", "redis://redis:6379/0")
 
+# Keep results of sent emails
+CELERY_EMAIL_CHUNK_SIZE = 1
+CELERY_EMAIL_TASK_CONFIG = {
+    "ignore_result": False,
+}
+
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )
@@ -785,7 +851,7 @@ COMPONENTS_DOCKER_TLSVERIFY = strtobool(
 COMPONENTS_DOCKER_TLSCACERT = os.environ.get("COMPONENTS_DOCKER_TLSCACERT", "")
 COMPONENTS_DOCKER_TLSCERT = os.environ.get("COMPONENTS_DOCKER_TLSCERT", "")
 COMPONENTS_DOCKER_TLSKEY = os.environ.get("COMPONENTS_DOCKER_TLSKEY", "")
-COMPONENTS_MEMORY_LIMIT = os.environ.get("COMPONENTS_MEMORY_LIMIT", "4g")
+COMPONENTS_MEMORY_LIMIT = int(os.environ.get("COMPONENTS_MEMORY_LIMIT", "4"))
 COMPONENTS_IO_IMAGE = "alpine:3.12"
 COMPONENTS_CPU_QUOTA = int(os.environ.get("COMPONENTS_CPU_QUOTA", "100000"))
 COMPONENTS_CPU_PERIOD = int(os.environ.get("COMPONENTS_CPU_PERIOD", "100000"))
@@ -808,6 +874,22 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 # The name of the group whose members will be able to create reader studies
 READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 
+###############################################################################
+#
+# workspaces
+#
+###############################################################################
+
+WORKBENCH_SECRET_KEY = os.environ.get("WORKBENCH_SECRET_KEY")
+WORKBENCH_API_URL = os.environ.get("WORKBENCH_API_URL")
+WORKBENCH_ADMIN_USERNAME = os.environ.get("WORKBENCH_ADMIN_USERNAME", "demo")
+
+###############################################################################
+#
+# workstations
+#
+###############################################################################
+
 # The workstation that is accessible by all authorised users
 DEFAULT_WORKSTATION_SLUG = os.environ.get(
     "DEFAULT_WORKSTATION_SLUG", "cirrus-core"
@@ -829,9 +911,6 @@ WORKSTATIONS_MAXIMUM_SESSIONS = int(
 WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
 WORKSTATIONS_SESSION_DURATION_LIMIT = int(
     os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
-)
-WORKSTATION_INTERNAL_NETWORK = strtobool(
-    os.environ.get("WORKSTATION_INTERNAL_NETWORK", "False")
 )
 # Which regions are available for workstations to run in
 WORKSTATIONS_ACTIVE_REGIONS = os.environ.get(
@@ -871,6 +950,10 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_publication_metadata": {
         "task": "grandchallenge.publications.tasks.update_publication_metadata",
+        "schedule": timedelta(days=1),
+    },
+    "send_unread_notification_emails": {
+        "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
         "schedule": timedelta(days=1),
     },
     "cleanup_stale_uploads": {
@@ -933,8 +1016,6 @@ CELERY_BEAT_SCHEDULE = {
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.components.tasks.execute_job": "evaluation",
-    "grandchallenge.components.tasks.validate_docker_image": "images",
-    "grandchallenge.cases.tasks.build_images": "images",
 }
 
 # The name of the group whose members will be able to create algorithms
@@ -967,14 +1048,17 @@ DISALLOWED_CHALLENGE_NAMES = {
 DISALLOWED_EMAIL_DOMAINS = {
     "qq.com",
     "gm.uit.edu.vn",
+    "wust.edu.cn",
     *blocklist,
 }
 
-# Modality name constants
-MODALITY_OCT = "OCT"  # Optical coherence tomography
-MODALITY_CF = "Fundus Photography"  # Color fundus photography
-MODALITY_FA = "Flurescein Angiography"  # Fluorescein angiography
-MODALITY_IR = "Infrared Reflectance Imaging"  # Infrared Reflectance imaging
+# GitHub App
+GITHUB_APP_INSTALL_URL = os.environ.get("GITHUB_APP_INSTALL_URL", "")
+GITHUB_APP_ID = os.environ.get("GITHUB_APP_ID", "")
+GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
+GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+GITHUB_PRIVATE_KEY_BASE64 = os.environ.get("GITHUB_PRIVATE_KEY_BASE64", "")
+GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
@@ -992,7 +1076,6 @@ RETINA_DEFAULT_THUMBNAIL_SIZE = 128
 # Retina specific settings
 RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
-RETINA_IMPORT_USER_NAME = "retina_import_user"
 
 ENABLE_DEBUG_TOOLBAR = False
 

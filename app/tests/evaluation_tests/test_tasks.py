@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
@@ -102,12 +101,11 @@ def test_method_validation_invalid_dockerfile(alpine_images):
     method = MethodFactory(image__from_path=alpine_images)
     assert method.ready is False
 
-    with pytest.raises(ValidationError):
-        validate_docker_image(
-            pk=method.pk,
-            app_label=method._meta.app_label,
-            model_name=method._meta.model_name,
-        )
+    validate_docker_image(
+        pk=method.pk,
+        app_label=method._meta.app_label,
+        model_name=method._meta.model_name,
+    )
 
     method = Method.objects.get(pk=method.pk)
     assert method.ready is False
@@ -120,12 +118,11 @@ def test_method_validation_root_dockerfile(root_image):
     method = MethodFactory(image__from_path=root_image)
     assert method.ready is False
 
-    with pytest.raises(ValidationError):
-        validate_docker_image(
-            pk=method.pk,
-            app_label=method._meta.app_label,
-            model_name=method._meta.model_name,
-        )
+    validate_docker_image(
+        pk=method.pk,
+        app_label=method._meta.app_label,
+        model_name=method._meta.model_name,
+    )
 
     method = Method.objects.get(pk=method.pk)
     assert method.ready is False
@@ -138,12 +135,11 @@ def test_method_validation_not_a_docker_tar(submission_file):
     method = MethodFactory(image__from_path=submission_file)
     assert method.ready is False
 
-    with pytest.raises(ValidationError):
-        validate_docker_image(
-            pk=method.pk,
-            app_label=method._meta.app_label,
-            model_name=method._meta.model_name,
-        )
+    validate_docker_image(
+        pk=method.pk,
+        app_label=method._meta.app_label,
+        model_name=method._meta.model_name,
+    )
 
     method = Method.objects.get(pk=method.pk)
     assert method.ready is False

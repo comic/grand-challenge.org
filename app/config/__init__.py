@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from config.celery import app as celery_app
+from config.celery import celery_app
 
 __all__ = ["celery_app"]
 

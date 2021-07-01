@@ -151,7 +151,7 @@ class Phase(UUIDModel):
         ALGORITHM = 3, "Algorithm"
 
     challenge = models.ForeignKey(
-        Challenge, on_delete=models.CASCADE, editable=False,
+        Challenge, on_delete=models.PROTECT, editable=False,
     )
     archive = models.ForeignKey(
         Archive,
@@ -389,7 +389,10 @@ class Phase(UUIDModel):
             ("challenge", "slug"),
         )
         ordering = ("challenge", "submissions_open", "created")
-        permissions = (("create_phase_submission", "Create Phase Submission"),)
+        permissions = (
+            ("create_phase_submission", "Create Phase Submission"),
+            ("create_phase_workspace", "Create Phase Workspace"),
+        )
 
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
@@ -477,7 +480,7 @@ class Phase(UUIDModel):
 class Method(UUIDModel, ComponentImage):
     """Store the methods for performing an evaluation."""
 
-    phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
+    phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -534,7 +537,7 @@ class Submission(UUIDModel):
         blank=True, default="", editable=False
     )
 
-    phase = models.ForeignKey(Phase, on_delete=models.CASCADE, null=True)
+    phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.SET_NULL
     )
@@ -697,8 +700,8 @@ class SubmissionEvaluator(Executor):
 class Evaluation(UUIDModel, ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
-    submission = models.ForeignKey("Submission", on_delete=models.CASCADE)
-    method = models.ForeignKey("Method", on_delete=models.CASCADE)
+    submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
+    method = models.ForeignKey("Method", on_delete=models.PROTECT)
 
     published = models.BooleanField(default=True, db_index=True)
     rank = models.PositiveIntegerField(

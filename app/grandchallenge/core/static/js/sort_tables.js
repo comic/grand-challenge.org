@@ -1,5 +1,3 @@
-"use strict";
-
 $(document).ready(function () {
     $('table.sortable').dataTable({
         "bJQueryUI": false,

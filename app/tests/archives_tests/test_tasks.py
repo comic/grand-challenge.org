@@ -10,16 +10,22 @@ def test_add_images_is_idempotent():
     archive = ArchiveFactory()
     image = ImageFactory()
 
-    assert archive.images.count() == 0
+    assert archive.items.count() == 0
 
     add_images_to_archive(
         upload_session_pk=image.origin.pk, archive_pk=archive.pk
     )
 
-    assert archive.images.count() == 1
+    assert archive.items.count() == 1
+    assert list(
+        archive.items.first().values.values_list("image", flat=True)
+    ) == [image.pk]
 
     add_images_to_archive(
         upload_session_pk=image.origin.pk, archive_pk=archive.pk
     )
 
-    assert archive.images.count() == 1
+    assert archive.items.count() == 1
+    assert list(
+        archive.items.first().values.values_list("image", flat=True)
+    ) == [image.pk]

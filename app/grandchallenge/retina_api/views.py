@@ -71,7 +71,7 @@ class ArchiveAPIView(APIView):
     pagination_class = None
 
     def get(self, request, pk=None):
-        image_prefetch_related = ("modality", "study__patient", "archive_set")
+        image_prefetch_related = ("modality", "study__patient")
         objects = []
         images = []
         if pk is None:
@@ -86,15 +86,16 @@ class ArchiveAPIView(APIView):
                     .exists()
                 ):
                     objects = Patient.objects.filter(
-                        study__image__archive__pk=pk
+                        study__image__componentinterfacevalue__archive_items__archive__pk=pk
                     ).distinct()
                     images = Image.objects.filter(
-                        archive__pk=pk, study=None
+                        componentinterfacevalue__archive_items__archive__pk=pk,
+                        study=None,
                     ).prefetch_related(*image_prefetch_related)
             elif Patient.objects.filter(pk=pk).exists():
                 objects = Study.objects.filter(
                     patient__pk=pk,
-                    image__archive__in=get_objects_for_user(
+                    image__componentinterfacevalue__archive_items__archive__in=get_objects_for_user(
                         request.user, "archives.view_archive"
                     ),
                 ).distinct()
@@ -102,7 +103,7 @@ class ArchiveAPIView(APIView):
             elif Study.objects.filter(pk=pk).exists():
                 images = Image.objects.filter(
                     study__pk=pk,
-                    archive__in=get_objects_for_user(
+                    componentinterfacevalue__archive_items__archive__in=get_objects_for_user(
                         request.user, "archives.view_archive"
                     ),
                 ).prefetch_related(*image_prefetch_related)
@@ -121,6 +122,7 @@ class ArchiveAPIView(APIView):
 
 class B64ThumbnailAPIView(RetrieveAPIView):
     permission_classes = (DjangoObjectPermissions, RetinaAPIPermission)
+    filters = (filters.ObjectPermissionsFilter,)
     queryset = Image.objects.all()
     serializer_class = B64ImageSerializer
 

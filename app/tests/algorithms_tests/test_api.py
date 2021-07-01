@@ -42,12 +42,16 @@ def test_keys_used_in_algorithm_session_js(client):
     assert response.json()["status"] == "Queued"
     assert response.json()["api_url"] == j.api_url
 
-    # Image API
+    # Job API
     response = get_view_for_user(
-        client=client, url=j.inputs.first().image.api_url, user=u
+        client=client,
+        viewname="api:algorithms-job-list",
+        user=u,
+        data={"input_image": str(j.inputs.first().image.pk)},
     )
     assert response.status_code == 200
-    assert response.json()["job_set"] == [j.api_url]
+    assert len(response.json()["results"]) == 1
+    assert response.json()["results"][0]["pk"] == str(j.pk)
 
 
 @pytest.mark.django_db

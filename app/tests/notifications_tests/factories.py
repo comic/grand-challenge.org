@@ -1,17 +1,20 @@
 import factory
+from actstream.models import Action
+from django.contrib.contenttypes.models import ContentType
 from django.utils.text import slugify
 from factory import fuzzy
 from factory.fuzzy import FuzzyChoice
 from faker import Faker
-from machina.apps.forum_conversation.models import Post
 from machina.core.db.models import get_model
 
+from grandchallenge.notifications.models import Notification
 from tests.factories import UserFactory
 
 faker = Faker()
 
 Topic = get_model("forum_conversation", "Topic")
 Forum = get_model("forum", "Forum")
+Post = get_model("forum_conversation", "Post")
 
 NAMES = [faker.name() for i in range(10)]
 
@@ -37,6 +40,13 @@ class TopicFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Topic
 
+    # make sure that topic creation also results in post creation
+    @factory.post_generation
+    def create_first_topic_post(self, create, extracted, **kwargs):
+        if create:
+            _ = PostFactory(topic=self, poster=self.poster)
+            return self
+
 
 class PostFactory(factory.django.DjangoModelFactory):
     topic = factory.SubFactory(TopicFactory)
@@ -46,3 +56,29 @@ class PostFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Post
+
+
+# TODO: make target and action_object optional fields
+class ActionFactory(factory.django.DjangoModelFactory):
+    actor = factory.SubFactory(UserFactory)
+    verb = fuzzy.FuzzyText(length=10)
+    target_content_type = factory.LazyAttribute(
+        lambda o: ContentType.objects.get_for_model(o.target)
+    )
+    target_object_id = factory.SelfAttribute("target.id")
+    action_object_content_type = factory.LazyAttribute(
+        lambda o: ContentType.objects.get_for_model(o.action_object)
+    )
+    action_object_object_id = factory.SelfAttribute("action_object.id")
+
+    class Meta:
+        model = Action
+        exclude = ["target", "action_object"]
+
+
+class NotificationFactory(factory.django.DjangoModelFactory):
+    user = factory.SubFactory(UserFactory)
+    action = factory.SubFactory(ActionFactory)
+
+    class Meta:
+        model = Notification

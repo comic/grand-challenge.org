@@ -5,9 +5,7 @@ from allauth.account.models import EmailAddress
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.core.files.storage import DefaultStorage
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.pages.models import Page
@@ -17,6 +15,7 @@ from tests.factories import (
     RegistrationRequestFactory,
     UserFactory,
 )
+from tests.fixtures import create_uploaded_image
 from tests.utils import get_http_host
 
 PI_LINE_END_REGEX = "(\r\n|\n)"
@@ -74,7 +73,6 @@ def is_subset(a, b):
     all(item in a for item in b)
 
 
-@override_settings(DEFAULT_FILE_STORAGE="tests.storage.MockStorage")
 class GrandChallengeFrameworkTestCase(TestCase):
     def setUp(self):
         self.set_up_base()
@@ -333,13 +331,11 @@ class GrandChallengeFrameworkTestCase(TestCase):
         self, user, short_name, description="test project"
     ):
         url = reverse("challenges:create")
-        storage = DefaultStorage()
-        banner = storage._open("fake_test_dir/fakefile2.jpg")
         data = {
             "short_name": short_name,
             "description": description,
-            "logo": "fakelogo.jpg",
-            "banner": banner,
+            "logo": create_uploaded_image(),
+            "banner": create_uploaded_image(),
             "prefix": "form",
             "page_set-TOTAL_FORMS": "0",
             "page_set-INITIAL_FORMS": "0",

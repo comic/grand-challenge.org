@@ -1,5 +1,14 @@
 {% if profile.user %}
-    <img loading="lazy" class="avatar rounded-circle" src="{{ profile.user.user_profile.get_mugshot_url }}" alt="{{ profile.user.username }}"/>
+    <img loading="lazy" class="avatar rounded-circle"
+            {% if profile.user.user_profile.mugshot %}
+         src="{{ profile.user.user_profile.mugshot.x20.url }}"
+         srcset="{{ profile.user.user_profile.mugshot.x10.url }} 1x,
+                 {{ profile.user.user_profile.mugshot.x15.url }} 1.5x,
+                 {{ profile.user.user_profile.mugshot.x20.url }} 2x"
+            {% else %}
+         src="{{ profile.user.user_profile.get_mugshot_url }}"
+            {% endif %}
+         alt="{{ profile.user.username }}"/>
 {% elif show_placeholder %}
     <span class="avatar empty">
       <i class="far fa-user fa-4x"></i>

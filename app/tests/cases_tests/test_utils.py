@@ -1,11 +1,9 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import SimpleITK
 import pytest
 from panimg.image_builders.metaio_utils import load_sitk_image
-from panimg.image_builders.utils import convert_itk_to_internal
-from panimg.models import ColorSpace, PanImg
+from panimg.models import ColorSpace, SimpleITKImage
 from pytest import approx
 
 from tests.cases_tests import RESOURCE_PATH
@@ -44,7 +42,9 @@ def assert_sitk_img_equivalence(
     ),
 )
 def test_convert_itk_to_internal(image: Path):
-    def assert_img_properties(img: SimpleITK.Image, internal_image: PanImg):
+    def assert_img_properties(
+        img: SimpleITK.Image, internal_image: SimpleITKImage
+    ):
         color_space = {
             1: ColorSpace.GRAY,
             3: ColorSpace.RGB,
@@ -69,11 +69,12 @@ def test_convert_itk_to_internal(image: Path):
         assert internal_image.height == img.GetHeight()
         assert internal_image.voxel_width_mm == approx(img.GetSpacing()[0])
         assert internal_image.voxel_height_mm == approx(img.GetSpacing()[1])
-        assert internal_image.resolution_levels is None
 
     img_ref = load_sitk_image(image)
-    with TemporaryDirectory() as output:
-        internal_image = convert_itk_to_internal(
-            simple_itk_image=img_ref, output_directory=output
-        )
-    assert_img_properties(img_ref, internal_image[0])
+    internal_image = SimpleITKImage(
+        name=image.name,
+        image=img_ref,
+        consumed_files=set(),
+        spacing_valid=True,
+    )
+    assert_img_properties(img_ref, internal_image)

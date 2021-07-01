@@ -16,11 +16,22 @@ def init_algorithm_creators_group(*_, **__):
     )
 
 
+def init_job_permissions(*_, **__):
+    from django.contrib.auth.models import Group
+    from guardian.shortcuts import assign_perm
+    from grandchallenge.algorithms.models import Job
+
+    g, _ = Group.objects.get_or_create(
+        name=settings.REGISTERED_USERS_GROUP_NAME
+    )
+    assign_perm(f"{Job._meta.app_label}.add_{Job._meta.model_name}", g)
+
+
 class AlgorithmsConfig(AppConfig):
     name = "grandchallenge.algorithms"
 
     def ready(self):
         post_migrate.connect(init_algorithm_creators_group, sender=self)
-
+        post_migrate.connect(init_job_permissions, sender=self)
         # noinspection PyUnresolvedReferences
         import grandchallenge.algorithms.signals  # noqa: F401

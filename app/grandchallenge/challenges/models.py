@@ -22,6 +22,7 @@ from machina.apps.forum_permission.models import (
     GroupForumPermission,
     UserForumPermission,
 )
+from stdimage import JPEGField
 from tldextract import extract
 
 from grandchallenge.anatomy.models import BodyStructure
@@ -125,17 +126,19 @@ class ChallengeBase(models.Model):
             "used."
         ),
     )
-    logo = models.ImageField(
+    logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
         blank=True,
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = models.ImageField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this challenge which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
     hidden = models.BooleanField(
         default=True,
@@ -249,7 +252,7 @@ class ChallengeBase(models.Model):
 
 
 class Challenge(ChallengeBase):
-    banner = models.ImageField(
+    banner = JPEGField(
         upload_to=get_banner_path,
         storage=public_s3_storage,
         blank=True,
@@ -257,6 +260,7 @@ class Challenge(ChallengeBase):
             "Image that gets displayed at the top of each page. "
             "Recommended resolution 2200x440 px."
         ),
+        variations=settings.STDIMAGE_BANNER_VARIATIONS,
     )
     disclaimer = models.CharField(
         max_length=2048,
@@ -288,8 +292,9 @@ class Challenge(ChallengeBase):
             "a data usage agreement here. You can use HTML markup here."
         ),
     )
+    use_workspaces = models.BooleanField(default=False)
     use_evaluation = models.BooleanField(
-        default=False,
+        default=True,
         help_text=(
             "If true, use the automated evaluation system. See the evaluation "
             "page created in the Challenge site."
@@ -305,17 +310,17 @@ class Challenge(ChallengeBase):
     admins_group = models.OneToOneField(
         Group,
         editable=False,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="admins_of_challenge",
     )
     participants_group = models.OneToOneField(
         Group,
         editable=False,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="participants_of_challenge",
     )
     forum = models.OneToOneField(
-        Forum, editable=False, on_delete=models.CASCADE
+        Forum, editable=False, on_delete=models.PROTECT
     )
     display_forum_link = models.BooleanField(
         default=False,

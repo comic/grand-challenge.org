@@ -16,7 +16,7 @@
 
     <h2>External Challenges</h2>
 
-    {% if request.user.is_staff %}
+    {% if perms.challenges.add_externalchallenge %}
         <p>
             <a class="btn btn-primary"
                href="{% url 'challenges:external-create' %}">
@@ -40,7 +40,6 @@
                 <th>Cases</th>
                 <th>Data Stored?</th>
                 <th>Edit</th>
-                <th>Delete</th>
             </tr>
             </thead>
             <tbody>
@@ -96,23 +95,11 @@
                             Test: {{ challenge.number_of_test_cases|intcomma }}
                         {% endif %}
                     </td>
-                    <td>
-                        {% if challenge.data_stored %}
-                            Yes
-                        {% else %}
-                            No
-                        {% endif %}
-                    </td>
+                    <td>{{ challenge.data_stored|yesno }}</td>
                     <td>
                         <a href="{% url 'challenges:external-update' challenge.short_name %}">
                             <i class="fa fa-edit"
                                title="Edit External Challenge"></i>
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{% url 'challenges:external-delete' challenge.short_name %}">
-                            <i class="fa fa-trash text-danger"
-                               title="Delete External Challenge"></i>
                         </a>
                     </td>
                 </tr>

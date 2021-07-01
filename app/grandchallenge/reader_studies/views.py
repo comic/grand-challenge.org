@@ -53,10 +53,6 @@ from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
-from grandchallenge.core.permissions.rest_framework import (
-    DjangoObjectOnlyPermissions,
-    DjangoObjectOnlyWithCustomPostPermissions,
-)
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
@@ -98,10 +94,10 @@ class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
     )
     ordering = "-created"
     filter_class = ReaderStudyFilter
+    paginate_by = 40
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-
         context.update(
             {
                 "jumbotron_title": "Reader Studies",
@@ -433,9 +429,6 @@ class QuestionUpdate(
     def form_valid(self, form):
         return self.validate_options(form, super())
 
-    def get_success_url(self):
-        return self.object.reader_study.get_absolute_url()
-
 
 class BaseAddObjectToReaderStudyMixin(
     LoginRequiredMixin, ObjectPermissionRequiredMixin
@@ -473,9 +466,6 @@ class AddObjectToReaderStudyMixin(BaseAddObjectToReaderStudyMixin, CreateView):
         form.instance.creator = self.request.user
         form.instance.reader_study = self.reader_study
         return super().form_valid(form)
-
-    def get_success_url(self):
-        return self.object.reader_study.get_absolute_url()
 
 
 class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
@@ -603,9 +593,6 @@ class AddImagesToReaderStudy(AddObjectToReaderStudyMixin):
             }
         )
         return kwargs
-
-    def get_success_url(self):
-        return self.object.get_absolute_url()
 
 
 class AddQuestionToReaderStudy(
@@ -804,7 +791,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     queryset = ReaderStudy.objects.all().prefetch_related(
         "images", "questions__options"
     )
-    permission_classes = [DjangoObjectOnlyPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["slug"]
     change_permission = (
@@ -903,7 +890,7 @@ class AnswerViewSet(
         .select_related("creator", "question__reader_study")
         .prefetch_related("images")
     )
-    permission_classes = [DjangoObjectOnlyWithCustomPostPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_fields = ["question__reader_study"]
     renderer_classes = (

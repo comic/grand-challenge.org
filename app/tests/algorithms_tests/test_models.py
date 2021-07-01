@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -45,16 +46,8 @@ def test_group_deletion_reverse(group):
     assert users_group
     assert editors_group
 
-    getattr(algorithm, group).delete()
-
-    with pytest.raises(ObjectDoesNotExist):
-        users_group.refresh_from_db()
-
-    with pytest.raises(ObjectDoesNotExist):
-        editors_group.refresh_from_db()
-
-    with pytest.raises(ObjectDoesNotExist):
-        algorithm.refresh_from_db()
+    with pytest.raises(ProtectedError):
+        getattr(algorithm, group).delete()
 
 
 @pytest.mark.django_db
@@ -159,10 +152,8 @@ class TestAlgorithmJobGroups(TestCase):
         j = AlgorithmJobFactory()
         g = j.viewers
 
-        g.delete()
-
-        with pytest.raises(ObjectDoesNotExist):
-            j.refresh_from_db()
+        with pytest.raises(ProtectedError):
+            g.delete()
 
     def test_creator_in_viewers_group(self):
         j = AlgorithmJobFactory()

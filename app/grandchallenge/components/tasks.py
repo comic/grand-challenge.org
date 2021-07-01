@@ -19,7 +19,7 @@ from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
-@shared_task()
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -35,12 +35,14 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         image_sha256 = _validate_docker_image_manifest(
             model=model, instance=instance
         )
+        ready = True
     except ValidationError:
         send_invalid_dockerfile_email(container_image=instance)
-        raise
+        image_sha256 = ""
+        ready = False
 
     model.objects.filter(pk=instance.pk).update(
-        image_sha256=f"sha256:{image_sha256}", ready=True
+        image_sha256=image_sha256, ready=ready
     )
 
 
@@ -66,7 +68,9 @@ def _validate_docker_image_manifest(*, model, instance) -> str:
     )
     config = json.loads(config)
 
-    if str(config["config"]["User"].lower()) in ["", "root", "0"]:
+    if "User" not in config["config"] or str(
+        config["config"]["User"].lower()
+    ) in ["", "root", "0"]:
         model.objects.filter(pk=instance.pk).update(
             status=(
                 "The container runs as root. Please add a user, group and "
@@ -77,7 +81,7 @@ def _validate_docker_image_manifest(*, model, instance) -> str:
         )
         raise ValidationError("Invalid Dockerfile")
 
-    return image_sha256
+    return f"sha256:{image_sha256}"
 
 
 def _extract_docker_image_file(*, model, instance, filename: str):
@@ -162,6 +166,7 @@ def execute_job(
             output_interfaces=job.output_interfaces,
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,
+            memory_limit=job.container.requires_memory_gb,
         ) as ev:
             # This call is potentially very long
             ev.execute()
@@ -234,7 +239,7 @@ def mark_long_running_jobs_failed(
 
     for j in jobs_to_mark:
         j.update_status(
-            status=Job.FAILURE, error_message="Evaluation timed out."
+            status=Job.FAILURE, error_message="Time limit exceeded."
         )
 
     return [j.pk for j in jobs_to_mark]

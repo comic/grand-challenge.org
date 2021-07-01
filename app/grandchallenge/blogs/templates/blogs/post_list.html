@@ -1,19 +1,43 @@
 {% extends "base.html" %}
+{% load url %}
 
 {% block title %}Blogs - {{ block.super }}{% endblock %}
 
 {% block breadcrumbs %}
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active">Blogs</li>
-    </ol>
+    {% if tag %}
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'blogs:list' %}">Blogs</a></li>
+            <li class="breadcrumb-item active">Tag: {{ tag }}</li>
+        </ol>
+    {% else %}
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active">Blogs</li>
+        </ol>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
+
+    {% if perms.blogs.add_post %}
+        <p>
+            <a href="{% url "blogs:create" %}"
+               class="btn btn-primary">
+                <i class="fa fa-plus"></i> Add a new post
+            </a>
+        </p>
+    {% endif %}
+
+    {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
+
     {% for object in object_list %}
         <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
             <div class="col-lg-6 py-5">
                 <a href="{{ object.get_absolute_url }}">
-                    <img class="w-100 rounded shadow" src="{{ object.logo.url }}"
+                    <img class="w-100 rounded shadow"
+                         src="{{ object.logo.x20.url }}"
+                         srcset="{{ object.logo.x10.url }} 1x,
+                                 {{ object.logo.x15.url }} 1.5x,
+                                 {{ object.logo.x20.url }} 2x"
                          alt="Logo for blog post {{ object.title }}"/>
                 </a>
             </div>

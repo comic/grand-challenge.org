@@ -25,7 +25,10 @@
                     <div class="embed-responsive embed-responsive-1by1">
                         <img class="card-img-top embed-responsive-item"
                              loading="lazy"
-                             src="{{ object.logo.url }}"
+                             src="{{ object.logo.x20.url }}"
+                             srcset="{{ object.logo.x10.url }} 1x,
+                                     {{ object.logo.x15.url }} 1.5x,
+                                     {{ object.logo.x20.url }} 2x"
                              alt="{{ object }} Logo">
                     </div>
                     <div class="card-body d-flex flex-column">

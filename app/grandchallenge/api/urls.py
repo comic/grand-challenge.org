@@ -15,7 +15,9 @@ from grandchallenge.cases.views import (
     RawImageUploadSessionViewSet,
 )
 from grandchallenge.evaluation.views.api import EvaluationViewSet
+from grandchallenge.github.views import github_webhook
 from grandchallenge.jqfileupload.views import StagedFileViewSet
+from grandchallenge.notifications.views import NotificationViewSet
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
@@ -73,6 +75,9 @@ router.register(r"chunked-uploads", StagedFileViewSet, basename="staged-file")
 router.register(
     r"evaluations", EvaluationViewSet, basename="evaluation",
 )
+
+# Notifications
+router.register(r"notifications", NotificationViewSet, basename="notification")
 
 # Profiles
 router.register(
@@ -167,6 +172,7 @@ urlpatterns = [
     # Do not namespace the router.urls without updating the view names in
     # the serializers
     path("v1/", include(router.urls)),
+    path("v1/github/", github_webhook, name="github-webhook"),
     path("v1/metrics/", MetricsAPIView.as_view(), name="metrics"),
     path(
         "",

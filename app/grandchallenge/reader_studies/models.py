@@ -18,6 +18,7 @@ from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
 from simple_history.models import HistoricalRecords
 from sklearn.metrics import accuracy_score
+from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.cases.models import Image
@@ -196,13 +197,13 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
     editors_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="editors_of_readerstudy",
     )
     readers_group = models.OneToOneField(
         Group,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         editable=False,
         related_name="readers_of_readerstudy",
     )
@@ -210,7 +211,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
         "cases.Image", related_name="readerstudies"
     )
     workstation = models.ForeignKey(
-        "workstations.Workstation", on_delete=models.CASCADE
+        "workstations.Workstation", on_delete=models.PROTECT
     )
     workstation_config = models.ForeignKey(
         "workstation_configs.WorkstationConfig",
@@ -227,14 +228,17 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             "study's readers group in order to do that."
         ),
     )
-    logo = models.ImageField(
-        upload_to=get_logo_path, storage=public_s3_storage
+    logo = JPEGField(
+        upload_to=get_logo_path,
+        storage=public_s3_storage,
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = models.ImageField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
     help_text_markdown = models.TextField(blank=True)
 
@@ -862,13 +866,17 @@ ANSWER_TYPE_SCHEMA = {
                     "maxItems": 4,
                 },
                 "name": {"type": "string"},
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["version", "type", "corners"],
+            "additionalProperties": False,
         },
         "line-object": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Distance measurement"]},
                 "start": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -881,26 +889,32 @@ ANSWER_TYPE_SCHEMA = {
                     "minItems": 3,
                     "maxItems": 3,
                 },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["start", "end"],
+            "additionalProperties": False,
         },
         "point-object": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Point"]},
                 "point": {
                     "type": "array",
                     "items": {"type": "number"},
                     "minItems": 3,
                     "maxItems": 3,
                 },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["point"],
+            "additionalProperties": False,
         },
         "polygon-object": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Polygon"]},
                 "seed_point": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -918,14 +932,10 @@ ANSWER_TYPE_SCHEMA = {
                 },
                 "sub_type": {"type": "string"},
                 "groups": {"type": "array", "items": {"type": "string"}},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
-            "required": [
-                "name",
-                "seed_point",
-                "path_points",
-                "sub_type",
-                "groups",
-            ],
+            "required": ["seed_point", "path_points", "sub_type", "groups"],
+            "additionalProperties": False,
         },
         "DIST": {
             "type": "object",
@@ -944,8 +954,11 @@ ANSWER_TYPE_SCHEMA = {
                     "minItems": 3,
                     "maxItems": 3,
                 },
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["version", "type", "start", "end"],
+            "additionalProperties": False,
         },
         "MDIS": {
             "type": "object",
@@ -958,8 +971,10 @@ ANSWER_TYPE_SCHEMA = {
                         "allOf": [{"$ref": "#/definitions/line-object"}]
                     },
                 },
+                "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["version", "type", "lines"],
+            "additionalProperties": False,
         },
         "POIN": {
             "type": "object",
@@ -972,8 +987,11 @@ ANSWER_TYPE_SCHEMA = {
                     "minItems": 3,
                     "maxItems": 3,
                 },
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["version", "type", "point"],
+            "additionalProperties": False,
         },
         "MPOI": {
             "type": "object",
@@ -986,13 +1004,16 @@ ANSWER_TYPE_SCHEMA = {
                         "allOf": [{"$ref": "#/definitions/point-object"}]
                     },
                 },
+                "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["version", "type", "points"],
+            "additionalProperties": False,
         },
         "POLY": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["Polygon"]},
                 "seed_point": {
                     "type": "array",
                     "items": {"type": "number"},
@@ -1010,15 +1031,17 @@ ANSWER_TYPE_SCHEMA = {
                 },
                 "sub_type": {"type": "string"},
                 "groups": {"type": "array", "items": {"type": "string"}},
+                "version": {"$ref": "#/definitions/version-object"},
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": [
-                "name",
                 "seed_point",
                 "path_points",
                 "sub_type",
                 "groups",
                 "version",
             ],
+            "additionalProperties": False,
         },
         "PIMG": {
             "type": "object",
@@ -1026,6 +1049,7 @@ ANSWER_TYPE_SCHEMA = {
                 "upload_session_pk": {"type": "string", "format": "uuid"}
             },
             "required": ["upload_session_pk"],
+            "additionalProperties": False,
         },
         "MPOL": {
             "type": "object",
@@ -1036,8 +1060,10 @@ ANSWER_TYPE_SCHEMA = {
                     "type": "array",
                     "items": {"$ref": "#/definitions/polygon-object"},
                 },
+                "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["type", "version", "polygons"],
+            "additionalProperties": False,
         },
         "MPIM": {
             "type": "object",
@@ -1045,11 +1071,13 @@ ANSWER_TYPE_SCHEMA = {
                 "upload_session_pk": {"type": "string", "format": "uuid"}
             },
             "required": ["upload_session_pk"],
+            "additionalProperties": False,
         },
         "2D-bounding-box-object": {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
+                "type": {"enum": ["2D bounding box"]},
                 "corners": {
                     "type": "array",
                     "items": {
@@ -1061,8 +1089,10 @@ ANSWER_TYPE_SCHEMA = {
                     "minItems": 4,
                     "maxItems": 4,
                 },
+                "probability": {"type": "number", "minimum": 0, "maximum": 1},
             },
             "required": ["corners"],
+            "additionalProperties": False,
         },
         "M2DB": {
             "type": "object",
@@ -1077,16 +1107,20 @@ ANSWER_TYPE_SCHEMA = {
                         ]
                     },
                 },
+                "version": {"$ref": "#/definitions/version-object"},
             },
             "required": ["version", "type", "boxes"],
+            "additionalProperties": False,
         },
-    },
-    "properties": {
-        "version": {
+        "version-object": {
             "type": "object",
-            "additionalProperties": {"type": "number"},
+            "properties": {
+                "major": {"type": "number", "minimum": 0, "multipleOf": 1.0},
+                "minor": {"type": "number", "minimum": 0, "multipleOf": 1.0},
+            },
             "required": ["major", "minor"],
-        }
+            "additionalProperties": False,
+        },
     },
     # anyOf should exist, check Question.is_answer_valid
     "anyOf": [
@@ -1161,7 +1195,7 @@ class Question(UUIDModel):
     }
 
     reader_study = models.ForeignKey(
-        ReaderStudy, on_delete=models.CASCADE, related_name="questions"
+        ReaderStudy, on_delete=models.PROTECT, related_name="questions"
     )
     question_text = models.TextField()
     help_text = models.TextField(blank=True)
@@ -1348,6 +1382,9 @@ class Question(UUIDModel):
             self.AnswerType.MULTIPLE_POLYGONS_IMAGE,
         ]
 
+    def get_absolute_url(self):
+        return self.reader_study.get_absolute_url() + "#questions"
+
 
 class CategoricalOption(models.Model):
     question = models.ForeignKey(
@@ -1366,14 +1403,14 @@ class Answer(UUIDModel):
     ``ReaderStudy``.
     """
 
-    creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    creator = models.ForeignKey(get_user_model(), on_delete=models.PROTECT)
+    question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = models.JSONField(
         null=True, validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
     answer_image = models.ForeignKey(
-        "cases.Image", null=True, on_delete=models.SET_NULL
+        "cases.Image", null=True, on_delete=models.PROTECT
     )
     is_ground_truth = models.BooleanField(default=False)
     score = models.FloatField(null=True)

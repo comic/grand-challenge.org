@@ -475,6 +475,8 @@ class Image(UUIDModel):
             image from the results image set, and is used when the pre_clear
             signal is sent.
         """
+        from grandchallenge.archives.models import Archive
+
         if exclude_jobs is None:
             exclude_jobs = []
 
@@ -484,17 +486,22 @@ class Image(UUIDModel):
         reader_studies_groups = Q(
             editors_of_readerstudy__images__id__exact=self.pk
         ) | Q(readers_of_readerstudy__images__id__exact=self.pk)
-        archive_groups = (
-            Q(editors_of_archive__images__id__exact=self.pk)
-            | Q(uploaders_of_archive__images__id__exact=self.pk)
-            | Q(users_of_archive__images__id__exact=self.pk)
-        )
 
         expected_groups = {
             *Group.objects.filter(algorithm_jobs_groups),
             *Group.objects.filter(reader_studies_groups),
-            *Group.objects.filter(archive_groups),
         }
+
+        for archive in Archive.objects.filter(
+            items__values__image=self
+        ).select_related("editors_group", "uploaders_group", "users_group"):
+            expected_groups.update(
+                [
+                    archive.editors_group,
+                    archive.uploaders_group,
+                    archive.users_group,
+                ]
+            )
 
         # Reader study editors for reader studies that have answers that
         # include this image.

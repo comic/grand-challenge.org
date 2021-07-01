@@ -4,11 +4,13 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.test import RequestFactory
 from django.views.generic import View
+from guardian.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin as ObjectPermissionRequiredMixin,
+)
 
 from grandchallenge.core.permissions.mixins import (
-    UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
-    UserIsStaffMixin,
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import assert_redirect, assert_status
@@ -19,7 +21,15 @@ class EmptyResponseView(View):
         return HttpResponse()
 
 
-class AdminOnlyView(UserIsChallengeAdminMixin, EmptyResponseView):
+class AdminOnlyView(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, EmptyResponseView
+):
+    permission_required = "change_challenge"
+    raise_exception = True
+
+    def get_permission_object(self):
+        return self.request.challenge
+
     pass
 
 
@@ -27,38 +37,6 @@ class ParticipantOrAdminOnlyView(
     UserIsChallengeParticipantOrAdminMixin, EmptyResponseView
 ):
     pass
-
-
-class StaffOnlyView(UserIsStaffMixin, EmptyResponseView):
-    pass
-
-
-@pytest.mark.django_db
-def test_staff_view(rf: RequestFactory, challenge_set, admin_user, mocker):
-    # admin_user is a superuser, not a challenge admin
-    creator = challenge_set.creator
-    challenge = challenge_set.challenge
-    participant = challenge_set.participant
-    non_participant = challenge_set.non_participant
-
-    # Messages need to be mocked when using request factory
-    mock_messages = mocker.patch(
-        "grandchallenge.core.permissions.mixins.messages"
-    ).start()
-    mock_messages.INFO = "INFO"
-
-    assert_redirect(
-        settings.LOGIN_URL, AnonymousUser(), StaffOnlyView, challenge, rf
-    )
-    assert_status(403, participant, StaffOnlyView, challenge, rf)
-    assert_status(403, non_participant, StaffOnlyView, challenge, rf)
-    assert_status(403, creator, StaffOnlyView, challenge, rf)
-    assert_status(200, admin_user, StaffOnlyView, challenge, rf)
-
-    participant.is_staff = True
-    participant.save()
-
-    assert_status(200, participant, StaffOnlyView, challenge, rf)
 
 
 @pytest.mark.django_db

@@ -219,7 +219,7 @@ def test_session_api_permissions(client, two_workstation_sets, viewname):
         (two_workstation_sets.ws2.user, 404),
         (UserFactory(), 404),
         (UserFactory(is_staff=True), 404),
-        (None, 401),
+        (None, 404),
     )
 
     s = SessionFactory(
@@ -239,7 +239,7 @@ def test_session_api_permissions(client, two_workstation_sets, viewname):
             user=test[0],
             reverse_kwargs=kwargs,
         )
-        if viewname == "api:session-list" and test[0] is not None:
+        if viewname == "api:session-list":
             if test[1] == 200:
                 assert response.json()["count"] == 1
             else:

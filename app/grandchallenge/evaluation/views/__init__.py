@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models import Q
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -432,8 +433,10 @@ class LeaderboardDetail(
 
     @cached_property
     def phase(self):
-        return Phase.objects.get(
-            challenge=self.request.challenge, slug=self.kwargs["slug"]
+        return get_object_or_404(
+            klass=Phase,
+            challenge=self.request.challenge,
+            slug=self.kwargs["slug"],
         )
 
     @property

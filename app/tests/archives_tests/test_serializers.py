@@ -20,10 +20,12 @@ from tests.serializer_helpers import (
                 "fields": (
                     "id",
                     "name",
-                    "images",
                     "title",
                     "api_url",
+                    "url",
                     "algorithms",
+                    "logo",
+                    "description",
                 ),
             },
         )

@@ -1,19 +1,42 @@
-{% extends "machina/board_base.html" %}
+{% extends MACHINA_BASE_TEMPLATE_NAME %}
 {% load static %}
+{% load i18n %}
+{% load forum_permission_tags %}
 
 {% block title %}{% block sub_title %}{% endblock sub_title %} - {{ request.site.name }} Forums{% endblock title %}
 
 {% block css %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'css/machina.board_theme.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/machina.board_theme.min.css' %}" />
 {% endblock css %}
 
-{% block header %}
+{% block body %}
     {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
     {% include "partials/breadcrumb.html" %}
-{% endblock %}
-
-{% block breadcrumb %}
+<div class="my-5 container" id="main_container">
+    <div class="row">
+        <div class="col-12">
+            <div class="float-right controls-link-wrapper">
+                {% if not request.user.is_anonymous %}
+                    <a href="{% url 'notifications:follow-list' %}" class="d-inline-block ml-3"><i class="fas fa-bookmark">&nbsp;</i>{% trans "Subscriptions" %}</a>
+                    <a href="{% url 'forum_member:user_posts' request.user.id %}" class="d-inline-block ml-3"><i class="fas fa-comments">&nbsp;</i>{% trans "View my posts" %}</a>
+                {% endif %}
+                {% get_permission 'can_access_moderation_queue' request.user as can_access_moderation_queue %}
+                {% if can_access_moderation_queue %}
+                    <a href="{% url 'forum_moderation:queue' %}" class="d-inline-block ml-3"><i class="fas fa-gavel">&nbsp;</i>{% trans "Moderation queue" %}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <br />
+            {% block messages %}{% include "partials/messages.html" %}{% endblock messages %}
+        </div>
+    </div>
+    {% block content %}
+    {% endblock content %}
+</div>
 {% endblock %}
 
 {% block js %}

@@ -2,6 +2,8 @@ import logging
 from datetime import timedelta
 from typing import Dict
 
+import requests
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
@@ -10,7 +12,6 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.core.files import File
-from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -32,8 +33,13 @@ from guardian.mixins import (
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
 from guardian.shortcuts import get_perms
+from rest_framework.mixins import (
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+)
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
@@ -43,6 +49,7 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageUpdateForm,
     AlgorithmInputsForm,
     AlgorithmPermissionRequestUpdateForm,
+    AlgorithmRepoForm,
     JobForm,
     UsersForm,
     ViewersForm,
@@ -57,11 +64,9 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
     HyperlinkedJobSerializer,
+    JobPostSerializer,
 )
-from grandchallenge.algorithms.tasks import (
-    create_algorithm_jobs_for_session,
-    run_algorithm_job_for_inputs,
-)
+from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_session
 from grandchallenge.cases.forms import UploadRawImagesForm
 from grandchallenge.cases.models import RawImageFile, RawImageUploadSession
 from grandchallenge.components.models import (
@@ -109,6 +114,7 @@ class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
     }
     ordering = "-created"
     filter_class = AlgorithmFilter
+    paginate_by = 40
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -176,7 +182,10 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             status=AlgorithmPermissionRequest.PENDING,
         ).count()
         context.update(
-            {"pending_permission_requests": pending_permission_requests}
+            {
+                "pending_permission_requests": pending_permission_requests,
+                "github_app_install_url": f"{settings.GITHUB_APP_INSTALL_URL}?state={self.object.slug}",
+            }
         )
 
         return context
@@ -483,12 +492,7 @@ class AlgorithmExperimentCreate(
                 civs.append(civ)
 
         job.inputs.add(*civs)
-
-        run_job = run_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": job.pk, "upload_pks": upload_pks},
-            immutable=True,
-        )
-        on_commit(run_job.apply_async)
+        job.run_job(upload_pks=upload_pks)
 
         return HttpResponseRedirect(
             reverse(
@@ -525,7 +529,12 @@ class AlgorithmExecutionSessionDetail(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"algorithm": self.algorithm})
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "job_list_api_url": reverse("api:algorithms-job-list"),
+            }
+        )
         return context
 
 
@@ -627,7 +636,7 @@ class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):
-    queryset = Algorithm.objects.all()
+    queryset = Algorithm.objects.all().prefetch_related("outputs", "inputs")
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -642,16 +651,29 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     filterset_fields = ["algorithm"]
 
 
-class JobViewSet(ReadOnlyModelViewSet):
+class JobViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
     queryset = (
         Job.objects.all()
         .prefetch_related("outputs__interface", "inputs__interface")
         .select_related("algorithm_image__algorithm")
     )
-    serializer_class = HyperlinkedJobSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
     filterset_class = JobViewsetFilter
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return JobPostSerializer
+        else:
+            return HyperlinkedJobSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        user = context["request"].user
+        context.update({"user": user})
+        return context
 
 
 class AlgorithmPermissionRequestCreate(
@@ -737,3 +759,52 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
         context = super().get_context_data(**kwargs)
         context.update({"algorithm": self.base_object})
         return context
+
+
+class AlgorithmAddRepo(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView,
+):
+    model = Algorithm
+    form_class = AlgorithmRepoForm
+    template_name = "algorithms/algorithm_add_repo.html"
+    permission_required = (
+        f"{Algorithm._meta.app_label}.change_{Algorithm._meta.model_name}"
+    )
+    raise_exception = True
+
+    def get_form_kwargs(self):
+        """Return the keyword arguments for instantiating the form."""
+        kwargs = super().get_form_kwargs()
+
+        code = self.request.GET.get("code")
+        repos = []
+        if code is not None:
+            headers = {"Accept": "application/vnd.github.v3+json"}
+
+            resp = requests.post(
+                "https://github.com/login/oauth/access_token",
+                data={
+                    "code": code,
+                    "client_id": settings.GITHUB_CLIENT_ID,
+                    "client_secret": settings.GITHUB_CLIENT_SECRET,
+                },
+                timeout=5,
+                headers=headers,
+            )
+
+            payload = resp.json()
+            headers["Authorization"] = f"token {payload['access_token']}"
+            installations = requests.get(
+                "https://api.github.com/user/installations", headers=headers
+            ).json()
+
+            response = requests.get(
+                f"https://api.github.com/user/installations/{installations['installations'][0]['id']}/repositories",
+                headers=headers,
+                timeout=5,
+            ).json()
+
+            repos = [repo["full_name"] for repo in response["repositories"]]
+
+        kwargs.update({"repos": repos})
+        return kwargs

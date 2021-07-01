@@ -42,7 +42,6 @@ class ImageAdmin(GuardedModelAdmin):
         "eye_choice",
         "field_of_view",
         "stereoscopic_choice",
-        "archive__slug",
     )
     inlines = [ImageFileInline]
     readonly_fields = ("origin",)

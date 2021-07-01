@@ -166,6 +166,10 @@
                         {{product.ce_class}}
                         <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_CE_class.html" %}></i>
                     {% endif %}
+                    {% if product.ce_under %}
+                      , {{product.ce_under}}
+                      <i class="fas fa-info-circle text-radboud" data-toggle="tooltip" title={% include "products/partials/tooltip_CE_MDD_MDR.html" %}></i>
+                    {% endif %}
                 </div>
             </td>
           </tr>

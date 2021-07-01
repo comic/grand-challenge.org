@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load profiles %}
+{% load humanize %}
+{% load crispy_forms_tags %}
+
+{% block title %}Subscriptions - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">Subscriptions</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <input type="submit" value="Update">
+    </form>
+{% endblock %}
