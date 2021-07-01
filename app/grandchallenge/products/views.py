@@ -202,10 +202,6 @@ class ProjectAirPage(ListView):
     context_object_name = "project_air_files"
     queryset = ProjectAirFiles.objects.all()
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        return context
-
 
 class ImportDataView(PermissionRequiredMixin, FormView):
     template_name = "products/import_data.html"
