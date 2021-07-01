@@ -80,6 +80,7 @@ services:
         PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected.localhost:9081
       PUBLIC_S3_STORAGE_ACCESS_KEY: miniopublic
       PUBLIC_S3_STORAGE_SECRET_KEY: miniopublic12345
+      DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
@@ -146,6 +147,7 @@ services:
       <<: *postgresenv
       <<: *private_storage_credentials
       <<: *protected_storage_credentials
+      DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
       WORKBENCH_SECRET_KEY: "${WORKBENCH_SECRET_KEY-}"
       WORKBENCH_API_URL: "${WORKBENCH_API_URL-}"
@@ -173,9 +175,10 @@ services:
       <<: *private_storage_credentials
       <<: *protected_storage_credentials
       REMAP_SIGTERM: 'SIGQUIT'
+      DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: "celery -A config worker -c 1 -Q evaluation,images,gpu,acks-late-2xlarge"
+    command: "celery -A config worker -c 1 -Q evaluation,gpu,acks-late-2xlarge"
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:

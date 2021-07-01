@@ -19,7 +19,7 @@ from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
-@shared_task()
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -35,12 +35,14 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         image_sha256 = _validate_docker_image_manifest(
             model=model, instance=instance
         )
+        ready = True
     except ValidationError:
         send_invalid_dockerfile_email(container_image=instance)
-        raise
+        image_sha256 = ""
+        ready = False
 
     model.objects.filter(pk=instance.pk).update(
-        image_sha256=f"sha256:{image_sha256}", ready=True
+        image_sha256=image_sha256, ready=ready
     )
 
 
@@ -79,7 +81,7 @@ def _validate_docker_image_manifest(*, model, instance) -> str:
         )
         raise ValidationError("Invalid Dockerfile")
 
-    return image_sha256
+    return f"sha256:{image_sha256}"
 
 
 def _extract_docker_image_file(*, model, instance, filename: str):
