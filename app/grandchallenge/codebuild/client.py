@@ -6,13 +6,12 @@ from django.core import files
 from django.core.files.temp import NamedTemporaryFile
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.codebuild.models import Build
 
 
 class CodeBuildClient:
-    build_id = None
-
     def __init__(
-        self, *, project_name,
+        self, *, project_name=None, msg=None, algorithm=None, build_id=None,
     ):
         self.client = boto3.client(
             "codebuild",
@@ -27,6 +26,9 @@ class CodeBuildClient:
             region_name="eu-central-1",
         )
         self.project_name = project_name
+        self.msg = msg
+        self.algorithm = algorithm
+        self.build_id = build_id
         self.config = {
             "name": project_name,
             "source": {"type": "S3", "location": ""},
@@ -56,6 +58,15 @@ class CodeBuildClient:
     def start_build(self):
         data = self.client.start_build(projectName=self.project_name)
         self.build_id = data["build"]["id"]
+        build = Build.objects.create(
+            build_id=self.build_id,
+            project_name=self.project_name,
+            status=data["build"]["buildStatus"],
+            build_config=self.config,
+            webhook_message=self.msg,
+            algorithm=self.algorithm,
+        )
+        return build.pk
 
     def get_build_status(self):
         builds = self.client.batch_get_builds(ids=[self.build_id])
