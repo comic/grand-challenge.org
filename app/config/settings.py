@@ -24,7 +24,7 @@ def strtobool(val) -> bool:
     return bool(strtobool_i(val))
 
 
-DEBUG = strtobool(os.environ.get("DEBUG", "True"))
+DEBUG = strtobool(os.environ.get("DEBUG", "False"))
 
 COMMIT_ID = os.environ.get("COMMIT_ID", "unknown")
 

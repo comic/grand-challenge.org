@@ -80,6 +80,7 @@ services:
         PROTECTED_S3_STORAGE_ENDPOINT_URL: http://minio-protected.localhost:9081
       PUBLIC_S3_STORAGE_ACCESS_KEY: miniopublic
       PUBLIC_S3_STORAGE_SECRET_KEY: miniopublic12345
+      DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     # Use werkzeug debugger in dev, this should never be used in production!
     # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
