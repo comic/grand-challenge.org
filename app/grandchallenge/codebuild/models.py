@@ -8,7 +8,7 @@ class Build(UUIDModel):
     build_id = models.CharField(max_length=1024)
     project_name = models.CharField(max_length=1024)
     status = models.CharField(blank=True, max_length=256)
-    build_log = models.TextField(blank=True)
+    build_log = models.JSONField(null=True)
     build_config = models.JSONField()
     webhook_message = models.ForeignKey(
         "github.GitHubWebhookMessage", on_delete=models.SET_NULL, null=True

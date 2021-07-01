@@ -1,5 +1,3 @@
-from time import sleep
-
 import boto3
 from django.conf import settings
 from django.core import files
@@ -10,6 +8,8 @@ from grandchallenge.codebuild.models import Build
 
 
 class CodeBuildClient:
+    build = None
+
     def __init__(
         self, *, project_name=None, msg=None, algorithm=None, build_id=None,
     ):
@@ -21,6 +21,12 @@ class CodeBuildClient:
         )
         self.s3_client = boto3.client(
             "s3",
+            aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
+            aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
+            region_name="eu-central-1",
+        )
+        self.log_client = boto3.client(
+            "logs",
             aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
             aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
             region_name="eu-central-1",
@@ -70,17 +76,16 @@ class CodeBuildClient:
 
     def get_build_status(self):
         builds = self.client.batch_get_builds(ids=[self.build_id])
-        build = builds["builds"][0]
-        return build["buildStatus"]
+        self.build = builds["builds"][0]
+        return self.build["buildStatus"]
 
-    def wait_for_completion(self):
-        build_status = self.get_build_status()
-        while self.get_build_status() == "IN_PROGRESS":
-            sleep(3)
-            build_status = self.get_build_status()
-        return build_status
+    def get_logs(self):
+        return self.log_client.get_log_events(
+            logGroupName=self.build["logs"]["groupName"],
+            logStreamName=self.build["logs"]["streamName"],
+        )
 
-    def add_image_to_algorithm(self, *, algorithm):
+    def add_image_to_algorithm(self):
         response = self.s3_client.get_object(
             Bucket=settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"],
             Key=f"{self.project_name}/{self.project_name}.tar",
@@ -92,5 +97,7 @@ class CodeBuildClient:
 
             tmp_file.flush()
             temp_file = files.File(tmp_file, name="{self.project_name}.tar",)
-            AlgorithmImage.objects.create(algorithm=algorithm, image=temp_file)
+            AlgorithmImage.objects.create(
+                algorithm=self.algorithm, image=temp_file
+            )
         return temp_file

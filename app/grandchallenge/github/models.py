@@ -41,7 +41,6 @@ class GitHubWebhookMessage(models.Model):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
         super().save(*args, **kwargs)
         if adding and self.payload.get("ref_type") == "tag":
             on_commit(lambda: get_zipfile.apply_async(kwargs={"pk": self.pk}))
