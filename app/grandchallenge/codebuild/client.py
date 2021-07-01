@@ -17,19 +17,19 @@ class CodeBuildClient:
             "codebuild",
             aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
             aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
-            region_name="eu-central-1",
+            region_name=settings.CODEBUILD_REGION,
         )
         self.s3_client = boto3.client(
             "s3",
             aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
             aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
-            region_name="eu-central-1",
+            region_name=settings.AWS_S3_REGION_NAME,
         )
         self.log_client = boto3.client(
             "logs",
             aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
             aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
-            region_name="eu-central-1",
+            region_name=settings.CODEBUILD_REGION,
         )
         self.project_name = project_name
         self.msg = msg
