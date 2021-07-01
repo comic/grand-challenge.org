@@ -175,7 +175,7 @@ services:
       REMAP_SIGTERM: 'SIGQUIT'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: "celery -A config worker -c 1 -Q evaluation,images,gpu,acks-late-2xlarge"
+    command: "celery -A config worker -c 1 -Q evaluation,gpu,acks-late-2xlarge"
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:

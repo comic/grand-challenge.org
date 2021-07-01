@@ -24,6 +24,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import transaction
+from django.db.transaction import on_commit
 from django.utils import timezone
 from panimg import convert
 from panimg.models import PanImgResult
@@ -55,7 +56,7 @@ def _populate_tmp_dir(tmp_dir, upload_session):
         duplicate.error = "Filename not unique"
         saf = StagedAjaxFile(duplicate.staged_file_id)
         duplicate.staged_file_id = None
-        saf.delete()
+        on_commit(saf.delete)
         duplicate.consumed = False
         duplicate.save()
 
@@ -250,7 +251,7 @@ def extract_files(source_path: Path):
         check_compressed_and_extract(file_path, source_path, checked_paths)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def build_images(*, upload_session_pk):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -272,9 +273,6 @@ def build_images(*, upload_session_pk):
     The operation of building images will delete associated `StagedAjaxFile`s
     of analyzed images in order to free up space on the server (only done if the
     function does not error out).
-
-    If a job fails due to a RawImageUploadSession.DoesNotExist error, the
-    job is queued for a retry (max 15 times).
 
     Parameters
     ----------
@@ -298,8 +296,9 @@ def build_images(*, upload_session_pk):
         tmp_dir = Path(tmp_dir)
 
         try:
-            _populate_tmp_dir(tmp_dir, upload_session)
-            _handle_raw_image_files(tmp_dir, upload_session)
+            with transaction.atomic():
+                _populate_tmp_dir(tmp_dir, upload_session)
+                _handle_raw_image_files(tmp_dir, upload_session)
         except ProvisioningError as e:
             upload_session.error_message = str(e)
             upload_session.status = upload_session.FAILURE
@@ -471,15 +470,14 @@ def _store_images(
     image_files: Set[ImageFile],
     folders: Set[FolderUpload],
 ):
-    with transaction.atomic():
-        for image in images:
-            image.origin = origin
-            image.full_clean()
-            image.save()
+    for image in images:
+        image.origin = origin
+        image.full_clean()
+        image.save()
 
-        for obj in chain(image_files, folders):
-            obj.full_clean()
-            obj.save()
+    for obj in chain(image_files, folders):
+        obj.full_clean()
+        obj.save()
 
 
 def _handle_raw_files(
@@ -539,7 +537,7 @@ def _delete_session_files(*, session_files):
                     continue
 
                 file.staged_file_id = None
-                saf.delete()
+                on_commit(saf.delete)
             file.save()
         except NotFoundError:
             pass
