@@ -4,11 +4,16 @@ from operator import or_
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Q
 from django.shortcuts import reverse
-from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic import CreateView, DetailView, ListView, TemplateView
 from django.views.generic.edit import FormView
 
-from grandchallenge.products.forms import ImportForm
-from grandchallenge.products.models import Company, Product, Status
+from grandchallenge.products.forms import ImportForm, ProjectAirFilesForm
+from grandchallenge.products.models import (
+    Company,
+    Product,
+    ProjectAirFiles,
+    Status,
+)
 from grandchallenge.products.utils import DataImporter
 
 
@@ -200,6 +205,13 @@ class ContactPage(TemplateView):
     template_name = "products/contact.html"
 
 
+class ProjectAirPage(ListView):
+    template_name = "products/project_air.html"
+    model = ProjectAirFiles
+    context_object_name = "project_air_files"
+    queryset = ProjectAirFiles.objects.all()
+
+
 class ImportDataView(PermissionRequiredMixin, FormView):
     template_name = "products/import_data.html"
     form_class = ImportForm
@@ -226,3 +238,12 @@ class ImportDataView(PermissionRequiredMixin, FormView):
 
     def get_success_url(self):
         return reverse("products:product-list")
+
+
+class ProjectAirForm(PermissionRequiredMixin, CreateView):
+    template_name = "products/projectairfiles_form.html"
+    form_class = ProjectAirFilesForm
+    permission_required = f"{ProjectAirFiles._meta.app_label}.add_{ProjectAirFiles._meta.model_name}"
+
+    def get_success_url(self):
+        return reverse("products:project-air")

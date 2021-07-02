@@ -1,0 +1,30 @@
+{% extends 'products/base.html' %}
+{% load static %}
+
+{% block title %}
+    Project AIR - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+  <li class="breadcrumb-item active" aria-current="page">Project AIR</li>
+{% endblock %}
+
+{% block content %}
+  <div class="container pl-0">
+    <div class="row pb-4">
+      <div class="col-sm-8">
+        <h1 class="h2">Project AIR</h1>
+        <h1 class="h5 mb-4">Multi use case, multi vendor, multicenter validation of AI software in radiology</h1>
+        {% include "products/partials/project_air_description.html" %}
+      </div>
+    </div>
+
+    <div class="row pb-4">
+      <div class="col-sm-8">
+        <h2 class="h4">Study Protocols</h2>
+        <h5 class="h5 mb-4">Open to feedback (until August 9th 2021)</h5>
+        {% include "products/partials/project_air_files.html" %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
