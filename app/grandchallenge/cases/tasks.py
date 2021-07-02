@@ -44,10 +44,6 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 )
 
 
-class ProvisioningError(Exception):
-    pass
-
-
 def _populate_tmp_dir(tmp_dir, upload_session):
     session_files = upload_session.rawimagefile_set.all()
     session_files, duplicates = remove_duplicate_files(session_files)
@@ -116,7 +112,7 @@ def populate_provisioning_directory(
             exceptions_raised += 1
 
     if exceptions_raised > 0:
-        raise ProvisioningError(
+        raise RuntimeError(
             f"{exceptions_raised} errors occurred during provisioning of the "
             f"image construction directory"
         )
@@ -294,35 +290,32 @@ def build_images(*, upload_session_pk):
         upload_session.status = upload_session.STARTED
         upload_session.save()
 
-    try:
-        with transaction.atomic():
-            # Acquire locks
-            _ = files_queryset.all()
-            upload_session = session_queryset.get()
+    with TemporaryDirectory() as tmp_dir:
+        tmp_dir = Path(tmp_dir)
 
-            with TemporaryDirectory() as tmp_dir:
-                tmp_dir = Path(tmp_dir)
+        try:
+            with transaction.atomic():
+                # Acquire locks
+                _ = files_queryset.all()
+                upload_session = session_queryset.get()
+
                 _populate_tmp_dir(tmp_dir, upload_session)
                 _handle_raw_image_files(tmp_dir, upload_session)
-    except OperationalError:
-        # Could not acquire locks
-        raise
-    except ProvisioningError as e:
-        upload_session.error_message = str(e)
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
-    except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        upload_session.error_message = "Time limit exceeded."
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
-    except Exception:
-        upload_session.error_message = "An unknown error occurred"
-        upload_session.status = upload_session.FAILURE
-        upload_session.save()
-        raise
-    else:
-        upload_session.status = upload_session.SUCCESS
-        upload_session.save()
+
+                upload_session.status = upload_session.SUCCESS
+                upload_session.save()
+        except OperationalError:
+            # Could not acquire locks
+            raise
+        except (SoftTimeLimitExceeded, TimeLimitExceeded):
+            upload_session.error_message = "Time limit exceeded."
+            upload_session.status = upload_session.FAILURE
+            upload_session.save()
+        except Exception:
+            upload_session.error_message = "An unknown error occurred"
+            upload_session.status = upload_session.FAILURE
+            upload_session.save()
+            raise
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):
