@@ -1,6 +1,5 @@
 import base64
 import json
-import zipfile
 from datetime import datetime
 
 import jwt
@@ -15,20 +14,6 @@ from django.core.files.temp import NamedTemporaryFile
 from django.db.transaction import on_commit
 
 from grandchallenge.codebuild.tasks import create_algorithm_image
-from grandchallenge.codebuild.utils import get_buildspec_path
-
-
-def get_buildspec_zip(*, zfile, algorithm_name, output_path):
-    with zipfile.ZipFile(zfile, "a") as zipf:
-        folder_name = zipf.filelist[0].filename
-        source_path = get_buildspec_path(
-            algorithm_name=algorithm_name,
-            folder_name=folder_name,
-            output_path=output_path,
-        )
-        destination = "buildspec.yml"
-        zipf.write(source_path, destination)
-    return zfile
 
 
 @shared_task()
@@ -76,12 +61,7 @@ def get_zipfile(*, pk):
                     fd.write(chunk)
 
             tmp_file.flush()
-            zfile = get_buildspec_zip(
-                zfile=tmp_file,
-                algorithm_name=ghwm.project_name,
-                output_path=ghwm.output_path,
-            )
-            temp_file = files.File(zfile, name=f"{ghwm.project_name}.zip",)
+            temp_file = files.File(tmp_file, name=f"{ghwm.project_name}.zip",)
 
             ghwm.zipfile = temp_file
             ghwm.save()

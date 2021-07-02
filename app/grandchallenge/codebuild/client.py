@@ -30,11 +30,30 @@ class CodeBuildClient:
         self.msg = msg
         self.algorithm = algorithm
         self.build_id = build_id
+        if build_id is not None:
+            self.build_number = build_id.split(":")[-1]
 
-    def start_build(self, source):
+    def start_build(self, source, folder_name):
         data = self.client.start_build(
             projectName=settings.CODEBUILD_PROJECT_NAME,
             sourceLocationOverride=source,
+            environmentVariablesOverride=[
+                {
+                    "name": "IMAGE_REPO_NAME",
+                    "value": self.project_name,
+                    "type": "PLAINTEXT",
+                },
+                {
+                    "name": "IMAGE_TAG",
+                    "value": self.project_name,
+                    "type": "PLAINTEXT",
+                },
+                {
+                    "name": "FOLDER_NAME",
+                    "value": folder_name,
+                    "type": "PLAINTEXT",
+                },
+            ],
         )
         self.build_id = data["build"]["id"]
         build = Build.objects.create(
@@ -52,15 +71,9 @@ class CodeBuildClient:
         self.build = builds["builds"][0]
         return self.build["buildStatus"]
 
-    def get_logs(self):
-        return self.log_client.get_log_events(
-            logGroupName=self.build["logs"]["groupName"],
-            logStreamName=self.build["logs"]["streamName"],
-        )
-
-    def add_image_to_algorithm(self):
+    def add_logs_for_build(self, build):
         with private_s3_storage.open(
-            f"{settings.CODEBUILD_PROJECT_NAME}/{self.msg.output_path}/{self.project_name}.tar"
+            f"codebuild/logs/{self.build_number}.gz"
         ) as file:
             with NamedTemporaryFile(delete=True) as tmp_file:
                 with open(tmp_file.name, "wb") as fd:
@@ -69,7 +82,23 @@ class CodeBuildClient:
 
                 tmp_file.flush()
                 temp_file = files.File(
-                    tmp_file, name="{self.project_name}.tar",
+                    tmp_file, name=f"{self.build_number}.gz",
+                )
+                build.build_log = temp_file
+                build.save()
+
+    def add_image_to_algorithm(self):
+        with private_s3_storage.open(
+            f"codebuild/artifacts/{self.build_number}/{settings.CODEBUILD_PROJECT_NAME}/container-image.tar.gz"
+        ) as file:
+            with NamedTemporaryFile(delete=True) as tmp_file:
+                with open(tmp_file.name, "wb") as fd:
+                    for chunk in file.chunks():
+                        fd.write(chunk)
+
+                tmp_file.flush()
+                temp_file = files.File(
+                    tmp_file, name=f"{self.project_name}.tar",
                 )
                 AlgorithmImage.objects.create(
                     algorithm=self.algorithm, image=temp_file

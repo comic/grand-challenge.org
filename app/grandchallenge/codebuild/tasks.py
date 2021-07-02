@@ -1,3 +1,5 @@
+import zipfile
+
 from celery import shared_task
 from django.apps import apps
 from django.conf import settings
@@ -23,8 +25,10 @@ def create_algorithm_image(*, pk):
     client = CodeBuildClient(
         project_name=ghwm.project_name, msg=ghwm, algorithm=algorithm
     )
+    folder_name = zipfile.ZipFile(ghwm.zipfile).filelist[0].filename
     build_pk = client.start_build(
-        source=f"{settings.PRIVATE_S3_STORAGE_KWARGS['bucket_name']}/{ghwm.zipfile.name}"
+        source=f"{settings.PRIVATE_S3_STORAGE_KWARGS['bucket_name']}/{ghwm.zipfile.name}",
+        folder_name=folder_name,
     )
     on_commit(
         lambda: wait_for_build_completion.apply_async(
@@ -38,14 +42,13 @@ def wait_for_build_completion(self, *, build_pk):
     build = Build.objects.get(pk=build_pk)
 
     client = CodeBuildClient(build_id=build.build_id)
-
     status = client.get_build_status()
     if status == "IN_PROGRESS":
         self.retry(countdown=30)
     else:
         build.status = status
-        build.build_log = client.get_logs()
         build.save()
+        client.add_logs_for_build(build)
         if status == "SUCCEEDED":
             on_commit(
                 lambda: add_image_to_algorithm.apply_async(
@@ -59,6 +62,7 @@ def add_image_to_algorithm(*, build_pk):
     build = Build.objects.get(pk=build_pk)
 
     client = CodeBuildClient(
+        build_id=build.build_id,
         project_name=build.project_name,
         algorithm=build.algorithm,
         msg=build.webhook_message,

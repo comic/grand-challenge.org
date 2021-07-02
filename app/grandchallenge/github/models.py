@@ -13,6 +13,7 @@ def zipfile_path(instance, filename):
     pk_as_padded_hex = f"{instance.pk:04x}"
 
     return (
+        "codebuild/sources/"
         f"{instance._meta.app_label.lower()}/"
         f"{instance._meta.model_name.lower()}/"
         f"{pk_as_padded_hex[-4:-2]}/{pk_as_padded_hex[-2:]}/{instance.pk}/"
@@ -31,7 +32,7 @@ class GitHubWebhookMessage(models.Model):
 
     @property
     def output_path(self):
-        return zipfile_path(self, "output")
+        return zipfile_path(self, "container-image.tar.gz")
 
     @property
     def project_name(self):
