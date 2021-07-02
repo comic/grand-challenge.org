@@ -583,8 +583,8 @@ def test_reader_study_delete(client):
     rs = ReaderStudyFactory()
     editor = UserFactory()
     reader = UserFactory()
-    rs.editors_group.user_set.add(editor)
-    rs.readers_group.user_set.add(reader)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
 
     assert ReaderStudy.objects.count() == 1
     assert is_following(user=editor, obj=rs)
