@@ -104,4 +104,4 @@ def create_editor_follows(sender, created, instance, *_, **__):
 @receiver(pre_delete, sender=ArchivePermissionRequest)
 @receiver(pre_delete, sender=ReaderStudyPermissionRequest)
 def delete_editor_follows(sender, instance, *_, **__):
-    Follow.objects.filter(follow_object=instance).delete()
+    Follow.objects.filter(object_id=instance.pk).delete()
