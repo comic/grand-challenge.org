@@ -60,6 +60,7 @@ def add_image_to_algorithm(*, build_pk):
     build = Build.objects.get(pk=build_pk)
 
     client = CodeBuildClient(
-        project_name=build.project_name, algorithm=build.algorithm
+        project_name="mikeoverkamp-diag-private-3-v0-0-103",
+        algorithm=build.algorithm,
     )
     client.add_image_to_algorithm()

@@ -5,6 +5,7 @@ from django.core.files.temp import NamedTemporaryFile
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.codebuild.models import Build
+from grandchallenge.core.storage import private_s3_storage
 
 
 class CodeBuildClient:
@@ -18,12 +19,6 @@ class CodeBuildClient:
             aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
             aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
             region_name=settings.CODEBUILD_REGION,
-        )
-        self.s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
-            aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
         )
         self.log_client = boto3.client(
             "logs",
@@ -86,18 +81,19 @@ class CodeBuildClient:
         )
 
     def add_image_to_algorithm(self):
-        response = self.s3_client.get_object(
-            Bucket=settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"],
-            Key=f"{self.project_name}/{self.project_name}.tar",
-        )
-        with NamedTemporaryFile(delete=True) as tmp_file:
-            with open(tmp_file.name, "wb") as fd:
-                for chunk in response["Body"].iter_chunks():
-                    fd.write(chunk)
+        with private_s3_storage.open(
+            f"{self.project_name}/{self.project_name}.tar"
+        ) as file:
+            with NamedTemporaryFile(delete=True) as tmp_file:
+                with open(tmp_file.name, "wb") as fd:
+                    for chunk in file.chunks():
+                        fd.write(chunk)
 
-            tmp_file.flush()
-            temp_file = files.File(tmp_file, name="{self.project_name}.tar",)
-            AlgorithmImage.objects.create(
-                algorithm=self.algorithm, image=temp_file
-            )
+                tmp_file.flush()
+                temp_file = files.File(
+                    tmp_file, name="{self.project_name}.tar",
+                )
+                AlgorithmImage.objects.create(
+                    algorithm=self.algorithm, image=temp_file
+                )
         return temp_file
