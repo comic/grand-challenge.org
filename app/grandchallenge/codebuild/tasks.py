@@ -34,7 +34,7 @@ def create_algorithm_image(*, pk):
     )
 
 
-@shared_task(bind=True, max_retries=100)
+@shared_task(bind=True, max_retries=120)
 def wait_for_build_completion(self, *, build_pk):
     build = Build.objects.get(pk=build_pk)
 
