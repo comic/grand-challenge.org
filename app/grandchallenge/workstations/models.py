@@ -394,7 +394,12 @@ class Session(UUIDModel):
             if self.auth_token:
                 self.auth_token.delete()
 
-            auth_token, token = AuthToken.objects.create(user=self.creator)
+            duration_limit = timedelta(
+                seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT
+            ) + timedelta(minutes=settings.WORKSTATIONS_GRACE_MINUTES)
+            auth_token, token = AuthToken.objects.create(
+                user=self.creator, expiry=duration_limit
+            )
 
             self.auth_token = auth_token
             self.save()
@@ -525,15 +530,6 @@ class Session(UUIDModel):
             self.region = settings.WORKSTATIONS_ACTIVE_REGIONS[0]
 
         super().save(*args, **kwargs)
-
-        if self.auth_token and self.auth_token.expiry != (
-            self.expires_at
-            + timedelta(minutes=settings.WORKSTATIONS_GRACE_MINUTES)
-        ):
-            self.auth_token.expiry = self.expires_at + timedelta(
-                minutes=settings.WORKSTATIONS_GRACE_MINUTES
-            )
-            self.auth_token.save(update_fields=("expiry",))
 
         if created:
             self.assign_permissions()
