@@ -1,13 +1,13 @@
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 from docker.errors import NotFound
 from knox.models import AuthToken
 
-from config.settings import WORKSTATIONS_GRACE_MINUTES
 from grandchallenge.components.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
@@ -51,10 +51,14 @@ def test_session_auth_token():
 
     _ = s.environment
 
-    assert s.auth_token.user == s.creator
-    assert s.auth_token.expiry == s.expires_at + timedelta(
-        minutes=WORKSTATIONS_GRACE_MINUTES
+    expected_duration = (
+        s.created
+        + timedelta(minutes=settings.WORKSTATIONS_GRACE_MINUTES)
+        + timedelta(seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT)
     )
+
+    assert s.auth_token.user == s.creator
+    assert abs(s.auth_token.expiry - expected_duration) < timedelta(seconds=10)
 
     # old tokens should be deleted
     old_pk = s.auth_token.pk
@@ -62,14 +66,6 @@ def test_session_auth_token():
     _ = s.environment
 
     assert s.auth_token.pk != old_pk
-
-    # expiry should stay in sync
-    s.maximum_duration = timedelta(days=1)
-    s.save()
-
-    assert s.auth_token.expiry == s.expires_at + timedelta(
-        minutes=WORKSTATIONS_GRACE_MINUTES
-    )
 
 
 @pytest.mark.django_db
