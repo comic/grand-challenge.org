@@ -23,10 +23,9 @@ def create_algorithm_image(*, pk):
     client = CodeBuildClient(
         project_name=ghwm.project_name, msg=ghwm, algorithm=algorithm
     )
-    client.create_build_project(
+    build_pk = client.start_build(
         source=f"{settings.PRIVATE_S3_STORAGE_KWARGS['bucket_name']}/{ghwm.zipfile.name}"
     )
-    build_pk = client.start_build()
     on_commit(
         lambda: wait_for_build_completion.apply_async(
             kwargs={"build_pk": str(build_pk)}

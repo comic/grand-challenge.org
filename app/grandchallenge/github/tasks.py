@@ -76,9 +76,6 @@ def get_zipfile(*, pk):
                     fd.write(chunk)
 
             tmp_file.flush()
-            import ipdb
-
-            ipdb.set_trace()
             zfile = get_buildspec_zip(
                 zfile=tmp_file,
                 algorithm_name=ghwm.project_name,

@@ -30,40 +30,18 @@ class CodeBuildClient:
         self.msg = msg
         self.algorithm = algorithm
         self.build_id = build_id
-        self.config = {
-            "name": project_name,
-            "source": {"type": "S3", "location": ""},
-            "artifacts": {
-                "type": "S3",
-                "location": settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"],
-            },
-            "environment": {
-                "type": "LINUX_CONTAINER",
-                "image": "docker:dind",
-                "computeType": "BUILD_GENERAL1_SMALL",
-                "privilegedMode": True,
-                "registryCredential": {
-                    "credential": settings.DOCKER_SECRET_ARN,
-                    "credentialProvider": "SECRETS_MANAGER",
-                },
-                "imagePullCredentialsType": "SERVICE_ROLE",
-            },
-            "serviceRole": settings.CODEBUILD_SERVICE_ROLE,
-            "encryptionKey": settings.CODEBUILD_ENCRYPTION_KEY,
-        }
 
-    def create_build_project(self, *, source):
-        self.config["source"]["location"] = source
-        self.client.create_project(**self.config)
-
-    def start_build(self):
-        data = self.client.start_build(projectName=self.project_name)
+    def start_build(self, source):
+        data = self.client.start_build(
+            projectName=settings.CODEBUILD_PROJECT_NAME,
+            sourceLocationOverride=source,
+        )
         self.build_id = data["build"]["id"]
         build = Build.objects.create(
             build_id=self.build_id,
             project_name=self.project_name,
             status=data["build"]["buildStatus"],
-            build_config=self.config,
+            build_config={"source": {"location": source}},
             webhook_message=self.msg,
             algorithm=self.algorithm,
         )
@@ -82,7 +60,7 @@ class CodeBuildClient:
 
     def add_image_to_algorithm(self):
         with private_s3_storage.open(
-            f"{self.project_name}/{self.msg.output_path}/{self.project_name}.tar"
+            f"{settings.CODEBUILD_PROJECT_NAME}/{self.msg.output_path}/{self.project_name}.tar"
         ) as file:
             with NamedTemporaryFile(delete=True) as tmp_file:
                 with open(tmp_file.name, "wb") as fd:
