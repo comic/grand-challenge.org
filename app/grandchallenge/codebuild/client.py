@@ -20,12 +20,6 @@ class CodeBuildClient:
             aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
             region_name=settings.CODEBUILD_REGION,
         )
-        self.log_client = boto3.client(
-            "logs",
-            aws_access_key_id=settings.CODEBUILD_ACCESS_KEY,
-            aws_secret_access_key=settings.CODEBUILD_SECRET_KEY,
-            region_name=settings.CODEBUILD_REGION,
-        )
         self.project_name = project_name
         self.msg = msg
         self.algorithm = algorithm
