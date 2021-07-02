@@ -23,7 +23,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import transaction
+from django.db import OperationalError, transaction
 from django.db.transaction import on_commit
 from django.utils import timezone
 from panimg import convert
@@ -279,43 +279,50 @@ def build_images(*, upload_session_pk):
     upload_session_uuid: UUID
         The uuid of the upload sessions that should be analyzed.
     """
-    upload_session = RawImageUploadSession.objects.get(
+    session_queryset = RawImageUploadSession.objects.filter(
         pk=upload_session_pk
-    )  # type: RawImageUploadSession
+    ).select_for_update(nowait=True)
+    files_queryset = RawImageFile.objects.filter(
+        upload_session_id=upload_session_pk
+    ).select_for_update(nowait=True)
 
-    if (
-        upload_session.status != upload_session.REQUEUED
-        or upload_session.rawimagefile_set.filter(consumed=True).exists()
-    ):
-        raise RuntimeError("Job is not set to be executed.")
+    with transaction.atomic():
+        if files_queryset.filter(consumed=True).exists():
+            raise RuntimeError("Session has consumed files.")
 
-    upload_session.status = upload_session.STARTED
-    upload_session.save()
+        upload_session = session_queryset.get()
+        upload_session.status = upload_session.STARTED
+        upload_session.save()
 
-    with TemporaryDirectory(prefix="construct_image_volumes-") as tmp_dir:
-        tmp_dir = Path(tmp_dir)
+    try:
+        with transaction.atomic():
+            # Acquire locks
+            _ = files_queryset.all()
+            upload_session = session_queryset.get()
 
-        try:
-            with transaction.atomic():
+            with TemporaryDirectory() as tmp_dir:
+                tmp_dir = Path(tmp_dir)
                 _populate_tmp_dir(tmp_dir, upload_session)
                 _handle_raw_image_files(tmp_dir, upload_session)
-        except ProvisioningError as e:
-            upload_session.error_message = str(e)
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
-            return
-        except (SoftTimeLimitExceeded, TimeLimitExceeded):
-            upload_session.error_message = "Time limit exceeded."
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
-        except Exception:
-            upload_session.error_message = "An unknown error occurred"
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
-            raise
-        else:
-            upload_session.status = upload_session.SUCCESS
-            upload_session.save()
+    except OperationalError:
+        # Could not acquire locks
+        raise
+    except ProvisioningError as e:
+        upload_session.error_message = str(e)
+        upload_session.status = upload_session.FAILURE
+        upload_session.save()
+    except (SoftTimeLimitExceeded, TimeLimitExceeded):
+        upload_session.error_message = "Time limit exceeded."
+        upload_session.status = upload_session.FAILURE
+        upload_session.save()
+    except Exception:
+        upload_session.error_message = "An unknown error occurred"
+        upload_session.status = upload_session.FAILURE
+        upload_session.save()
+        raise
+    else:
+        upload_session.status = upload_session.SUCCESS
+        upload_session.save()
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):

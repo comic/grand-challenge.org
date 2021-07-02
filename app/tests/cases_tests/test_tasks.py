@@ -19,13 +19,6 @@ def test_linked_task_called_with_session_pk(settings):
 
     session = UploadSessionFactory()
 
-    session.process_images()
-
-    assert called == {}
-
-    session.status = session.REQUEUED
-    session.save()
-
     with capture_on_commit_callbacks(execute=True):
         session.process_images(linked_task=local_linked_task.signature())
 

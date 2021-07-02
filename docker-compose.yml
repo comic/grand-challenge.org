@@ -152,7 +152,7 @@ services:
       WORKBENCH_SECRET_KEY: "${WORKBENCH_SECRET_KEY-}"
       WORKBENCH_API_URL: "${WORKBENCH_API_URL-}"
     restart: always
-    command: "celery -A config worker -c 1 -Q celery,workstations-eu-central-1"
+    command: "celery -A config worker -l info -c 1 -Q celery,workstations-eu-central-1"
     scale: 1
     hostname: "celery-worker"
     depends_on:
@@ -178,7 +178,7 @@ services:
       DEBUG: 'true'
       PYTHONDONTWRITEBYTECODE: 1
     restart: always
-    command: "celery -A config worker -c 1 -Q evaluation,gpu,acks-late-2xlarge"
+    command: "celery -A config worker -l info -c 1 -Q evaluation,gpu,acks-late-2xlarge"
     scale: 1
     hostname: "celery-worker-evaluation"
     depends_on:
