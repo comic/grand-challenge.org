@@ -18,11 +18,13 @@ from grandchallenge.codebuild.tasks import create_algorithm_image
 from grandchallenge.codebuild.utils import get_buildspec_path
 
 
-def get_buildspec_zip(*, zfile, algorithm_name):
+def get_buildspec_zip(*, zfile, algorithm_name, output_path):
     with zipfile.ZipFile(zfile, "a") as zipf:
         folder_name = zipf.filelist[0].filename
         source_path = get_buildspec_path(
-            algorithm_name=algorithm_name, folder_name=folder_name
+            algorithm_name=algorithm_name,
+            folder_name=folder_name,
+            output_path=output_path,
         )
         destination = "buildspec.yml"
         zipf.write(source_path, destination)
@@ -74,8 +76,13 @@ def get_zipfile(*, pk):
                     fd.write(chunk)
 
             tmp_file.flush()
+            import ipdb
+
+            ipdb.set_trace()
             zfile = get_buildspec_zip(
-                zfile=tmp_file, algorithm_name=ghwm.project_name
+                zfile=tmp_file,
+                algorithm_name=ghwm.project_name,
+                output_path=ghwm.output_path,
             )
             temp_file = files.File(zfile, name=f"{ghwm.project_name}.zip",)
 

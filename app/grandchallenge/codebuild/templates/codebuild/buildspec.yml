@@ -10,7 +10,8 @@ phases:
       - docker build -t {{ algorithm_name }} {{ folder_name }}
   build:
     commands:
-      - docker save -o {{ algorithm_name }}.tar {{ algorithm_name }}
+      - mkdir -p {{ output_path }}
+      - docker save -o {{ output_path }}/{{ algorithm_name }}.tar {{ algorithm_name }}
 artifacts:
   files:
-    - {{ algorithm_name }}.tar
+    - {{ output_path }}/{{ algorithm_name }}.tar

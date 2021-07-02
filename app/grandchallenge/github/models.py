@@ -30,6 +30,10 @@ class GitHubWebhookMessage(models.Model):
     )
 
     @property
+    def output_path(self):
+        return zipfile_path(self, "output")
+
+    @property
     def project_name(self):
         if not (self.payload.get("repository") and self.payload.get("ref")):
             return "project"

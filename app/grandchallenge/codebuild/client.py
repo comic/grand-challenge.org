@@ -82,7 +82,7 @@ class CodeBuildClient:
 
     def add_image_to_algorithm(self):
         with private_s3_storage.open(
-            f"{self.project_name}/{self.project_name}.tar"
+            f"{self.project_name}/{self.msg.output_path}/{self.project_name}.tar"
         ) as file:
             with NamedTemporaryFile(delete=True) as tmp_file:
                 with open(tmp_file.name, "wb") as fd:
