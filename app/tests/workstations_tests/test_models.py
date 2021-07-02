@@ -111,7 +111,7 @@ def test_session_start(http_image, docker_client, settings):
             # noinspection PyStatementEffect
             s.service.container
     finally:
-        s.stop()
+        stop_all_sessions()
 
 
 @pytest.mark.django_db
