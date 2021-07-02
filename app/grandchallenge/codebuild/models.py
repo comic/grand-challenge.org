@@ -4,7 +4,6 @@ from grandchallenge.core.models import UUIDModel
 
 
 class Build(UUIDModel):
-    created = models.DateTimeField(auto_now_add=True)
     build_id = models.CharField(max_length=1024)
     project_name = models.CharField(max_length=1024)
     status = models.CharField(blank=True, max_length=256)
