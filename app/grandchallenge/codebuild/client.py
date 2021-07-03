@@ -1,3 +1,5 @@
+import gzip
+
 import boto3
 from django.conf import settings
 from django.core import files
@@ -70,17 +72,8 @@ class CodeBuildClient:
         with private_s3_storage.open(
             f"codebuild/logs/{self.build_number}.gz"
         ) as file:
-            with NamedTemporaryFile(delete=True) as tmp_file:
-                with open(tmp_file.name, "wb") as fd:
-                    for chunk in file.chunks():
-                        fd.write(chunk)
-
-                tmp_file.flush()
-                temp_file = files.File(
-                    tmp_file, name=f"{self.build_number}.gz",
-                )
-                build.build_log = temp_file
-                build.save()
+            build.build_log = gzip.open(file).read()
+            build.save()
 
     def add_image_to_algorithm(self):
         with private_s3_storage.open(
