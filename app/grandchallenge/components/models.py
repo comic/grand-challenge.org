@@ -731,12 +731,17 @@ class ComponentImage(models.Model):
         default=Decimal("1.0"), max_digits=4, decimal_places=2
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._image_orig = self.image
+
     def save(self, *args, **kwargs):
-        adding = self._state.adding
+        if self.image != self._image_orig:
+            self.ready = False
 
         super().save(*args, **kwargs)
 
-        if adding:
+        if not self.ready:
             on_commit(
                 lambda: validate_docker_image.apply_async(
                     kwargs={

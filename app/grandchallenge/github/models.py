@@ -1,12 +1,14 @@
+import re
+
 from django.db import models
 from django.db.transaction import on_commit
 from django.utils.text import get_valid_filename
 
 from grandchallenge.core.storage import private_s3_storage
-from grandchallenge.github.tasks import get_tarball
+from grandchallenge.github.tasks import get_zipfile
 
 
-def tarball_path(instance, filename):
+def zipfile_path(instance, filename):
     # Convert the pk to a hex, padded to 4 chars with zeros
     pk_as_padded_hex = f"{instance.pk:04x}"
 
@@ -23,17 +25,32 @@ class GitHubWebhookMessage(models.Model):
         auto_now_add=True, help_text="When we received the event."
     )
     payload = models.JSONField(default=None, null=True)
-    tarball = models.FileField(
-        null=True, upload_to=tarball_path, storage=private_s3_storage
+    zipfile = models.FileField(
+        null=True, upload_to=zipfile_path, storage=private_s3_storage
     )
+
+    def __str__(self):
+        return f"{self.repo_name} {self.tag}"
+
+    @property
+    def repo_name(self):
+        if not self.payload.get("repository"):
+            return "repo"
+        return re.sub(
+            "[^0-9a-zA-Z]+", "-", self.payload["repository"]["full_name"],
+        ).lower()
+
+    @property
+    def tag(self):
+        if not self.payload.get("ref"):
+            return "tag"
+        return re.sub("[^0-9a-zA-Z]+", "-", self.payload["ref"],).lower()
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-
         super().save(*args, **kwargs)
-
         if adding and self.payload.get("ref_type") == "tag":
-            on_commit(lambda: get_tarball.apply_async(kwargs={"pk": self.pk}))
+            on_commit(lambda: get_zipfile.apply_async(kwargs={"pk": self.pk}))
 
     class Meta:
         indexes = [
