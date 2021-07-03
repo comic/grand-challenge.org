@@ -86,7 +86,6 @@ class Build(UUIDModel):
     def _create_build(self):
         self.build_config = {
             "projectName": settings.CODEBUILD_PROJECT_NAME,
-            "timeoutInMinutesOverride": settings.CODEBUILD_TIMEOUT_IN_MINUTES,
             "sourceLocationOverride": f"{settings.PRIVATE_S3_STORAGE_KWARGS['bucket_name']}/{self.webhook_message.zipfile.name}",
             "sourceTypeOverride": "S3",
             "environmentVariablesOverride": [
