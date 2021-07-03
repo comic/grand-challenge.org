@@ -28,7 +28,7 @@ class Build(UUIDModel):
     webhook_message = models.ForeignKey(
         GitHubWebhookMessage, on_delete=models.SET_NULL, null=True
     )
-    algorithm_image = models.ForeignKey(
+    algorithm_image = models.OneToOneField(
         AlgorithmImage, on_delete=models.SET_NULL, null=True
     )
     build_config = models.JSONField()

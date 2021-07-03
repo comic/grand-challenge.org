@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
                 ("build_log", models.TextField(blank=True)),
                 (
                     "algorithm_image",
-                    models.ForeignKey(
+                    models.OneToOneField(
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         to="algorithms.algorithmimage",
