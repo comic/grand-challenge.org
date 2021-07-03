@@ -101,6 +101,9 @@ class RawImageUploadSession(UUIDModel):
         # Local import to avoid circular dependency
         from grandchallenge.cases.tasks import build_images
 
+        if self.status != self.PENDING:
+            raise RuntimeError("Job is not in PENDING state")
+
         RawImageUploadSession.objects.filter(pk=self.pk).update(
             status=RawImageUploadSession.REQUEUED
         )

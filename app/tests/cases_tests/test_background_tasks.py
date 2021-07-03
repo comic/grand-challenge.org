@@ -454,7 +454,7 @@ def test_failed_dicom_files_are_retained(settings):
     images = [f"dicom/{x}.dcm" for x in range(1, 21)]
     session, _ = create_raw_upload_image_session(images=images)
     session.refresh_from_db()
-    session.process_images()
+
     assert Image.objects.count() == 1
     assert not any(
         RawImageFile.objects.values_list("staged_file_id", flat=True)
@@ -466,7 +466,7 @@ def test_failed_dicom_files_are_retained(settings):
     images = [f"dicom/{x}.dcm" for x in range(1, 22)]
     session, _ = create_raw_upload_image_session(images=images)
     session.refresh_from_db()
-    session.process_images()
+
     assert Image.objects.count() == 1
     assert not any(
         RawImageFile.objects.values_list("staged_file_id", flat=True)
@@ -480,7 +480,7 @@ def test_failed_dicom_files_are_retained(settings):
     g.user_set.add(user)
     session, _ = create_raw_upload_image_session(images=images, user=user)
     session.refresh_from_db()
-    session.process_images()
+
     assert Image.objects.count() == 1
     assert all(RawImageFile.objects.values_list("staged_file_id", flat=True))
     RawImageFile.objects.all().delete()
