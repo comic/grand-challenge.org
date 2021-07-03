@@ -31,6 +31,7 @@ class CodeBuildClient:
         data = self.client.start_build(
             projectName=settings.CODEBUILD_PROJECT_NAME,
             sourceLocationOverride=source,
+            sourceTypeOverride="S3",
             environmentVariablesOverride=[
                 {
                     "name": "IMAGE_REPO_NAME",
