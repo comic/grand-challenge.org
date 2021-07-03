@@ -26,10 +26,14 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     instance = model.objects.get(pk=pk)
 
     if not instance.image:
-        # Create the image from the staged file
-        uploaded_image = StagedAjaxFile(instance.staged_image_uuid)
-        with uploaded_image.open() as f:
-            instance.image.save(uploaded_image.name, File(f))
+        if instance.staged_image_uuid:
+            # Create the image from the staged file
+            uploaded_image = StagedAjaxFile(instance.staged_image_uuid)
+            with uploaded_image.open() as f:
+                instance.image.save(uploaded_image.name, File(f))
+        else:
+            # No image to validate
+            return
 
     try:
         image_sha256 = _validate_docker_image_manifest(

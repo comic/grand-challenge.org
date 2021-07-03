@@ -13,7 +13,7 @@ from django.core import files
 from django.core.files.temp import NamedTemporaryFile
 from django.db.transaction import on_commit
 
-from grandchallenge.codebuild.tasks import create_algorithm_image
+from grandchallenge.codebuild.tasks import create_codebuild_build
 
 
 @shared_task()
@@ -61,11 +61,13 @@ def get_zipfile(*, pk):
                     fd.write(chunk)
 
             tmp_file.flush()
-            temp_file = files.File(tmp_file, name=f"{ghwm.project_name}.zip",)
+            temp_file = files.File(
+                tmp_file, name=f"{ghwm.repo_name}-{ghwm.tag}.zip",
+            )
 
             ghwm.zipfile = temp_file
             ghwm.save()
 
     on_commit(
-        lambda: create_algorithm_image.apply_async(kwargs={"pk": ghwm.pk})
+        lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm.pk})
     )

@@ -13,7 +13,6 @@ def zipfile_path(instance, filename):
     pk_as_padded_hex = f"{instance.pk:04x}"
 
     return (
-        "codebuild/sources/"
         f"{instance._meta.app_label.lower()}/"
         f"{instance._meta.model_name.lower()}/"
         f"{pk_as_padded_hex[-4:-2]}/{pk_as_padded_hex[-2:]}/{instance.pk}/"
@@ -30,6 +29,9 @@ class GitHubWebhookMessage(models.Model):
         null=True, upload_to=zipfile_path, storage=private_s3_storage
     )
 
+    def __str__(self):
+        return f"{self.repo_name} {self.tag}"
+
     @property
     def repo_name(self):
         if not self.payload.get("repository"):
@@ -43,10 +45,6 @@ class GitHubWebhookMessage(models.Model):
         if not self.payload.get("ref"):
             return "tag"
         return re.sub("[^0-9a-zA-Z]+", "-", self.payload["ref"],).lower()
-
-    @property
-    def project_name(self):
-        return f"{self.repo_name}-{self.tag}"
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

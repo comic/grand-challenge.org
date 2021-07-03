@@ -1063,6 +1063,12 @@ GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
 GITHUB_PRIVATE_KEY_BASE64 = os.environ.get("GITHUB_PRIVATE_KEY_BASE64", "")
 GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
+CODEBUILD_TIMEOUT_IN_MINUTES = 15
+CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
+CODEBUILD_ACCESS_KEY = os.environ.get("CODEBUILD_ACCESS_KEY", "")
+CODEBUILD_SECRET_KEY = os.environ.get("CODEBUILD_SECRET_KEY", "")
+CODEBUILD_REGION = os.environ.get("CODEBUILD_REGION", "")
+
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 
@@ -1081,11 +1087,6 @@ RETINA_GRADERS_GROUP_NAME = "retina_graders"
 RETINA_ADMINS_GROUP_NAME = "retina_admins"
 
 ENABLE_DEBUG_TOOLBAR = False
-
-CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
-CODEBUILD_ACCESS_KEY = os.environ.get("CODEBUILD_ACCESS_KEY", "")
-CODEBUILD_SECRET_KEY = os.environ.get("CODEBUILD_SECRET_KEY", "")
-CODEBUILD_REGION = os.environ.get("CODEBUILD_REGION", "")
 
 if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

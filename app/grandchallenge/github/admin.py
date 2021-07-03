@@ -3,4 +3,9 @@ from django.contrib import admin
 from grandchallenge.github.models import GitHubWebhookMessage
 
 
-admin.site.register(GitHubWebhookMessage)
+class GitHubWebhookMessageAdmin(admin.ModelAdmin):
+    exclude = ("zipfile",)
+    readonly_fields = ("payload",)
+
+
+admin.site.register(GitHubWebhookMessage, GitHubWebhookMessageAdmin)
