@@ -31,18 +31,22 @@ class GitHubWebhookMessage(models.Model):
     )
 
     @property
-    def output_path(self):
-        return zipfile_path(self, "container-image.tar.gz")
+    def repo_name(self):
+        if not self.payload.get("repository"):
+            return "repo"
+        return re.sub(
+            "[^0-9a-zA-Z]+", "-", self.payload["repository"]["full_name"],
+        ).lower()
+
+    @property
+    def tag(self):
+        if not self.payload.get("ref"):
+            return "tag"
+        return re.sub("[^0-9a-zA-Z]+", "-", self.payload["ref"],).lower()
 
     @property
     def project_name(self):
-        if not (self.payload.get("repository") and self.payload.get("ref")):
-            return "project"
-        return re.sub(
-            "[^0-9a-zA-Z]+",
-            "-",
-            f"{self.payload['repository']['full_name']}-{self.payload['ref']}",
-        ).lower()
+        return f"{self.repo_name}-{self.tag}"
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

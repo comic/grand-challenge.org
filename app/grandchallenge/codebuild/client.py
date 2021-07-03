@@ -35,12 +35,12 @@ class CodeBuildClient:
             environmentVariablesOverride=[
                 {
                     "name": "IMAGE_REPO_NAME",
-                    "value": self.project_name,
+                    "value": self.msg.repo_name,
                     "type": "PLAINTEXT",
                 },
                 {
                     "name": "IMAGE_TAG",
-                    "value": self.project_name,
+                    "value": self.msg.tag,
                     "type": "PLAINTEXT",
                 },
                 {
