@@ -215,28 +215,45 @@
                     <p>You need to upload a valid algorithm container.</p>
                 {% endif %}
 
-                <p>
-                    <a class="btn btn-success"
-                       href="{{ github_app_install_url }}">
-                        <i class="fa fa-code-branch"></i> Add GitHub repo
-                    </a>
-                </p>
+                {% if not object.repo_name %}
+                    <p>
+                        <a class="btn btn-success"
+                           href="{{ github_app_install_url }}">
+                            <i class="fa fa-code-branch"></i> Link GitHub Repo
+                        </a>
+                    </p>
+                {% endif %}
 
-                <ul>
+                <ul class="list-unstyled">
                     {% for image in object.algorithm_container_images.all %}
                         <li>
-                            <a href="{{ image.get_absolute_url }}">
-                                Container uploaded
-                                by {{ image.creator }} {{ image.created|naturaltime }}.
-                                {% if image.ready %}
-                                    Ready to be used.
-                                {% else %}
-                                    Not ready to be used.
-                                {% endif %}
-                                {% if image == object.latest_ready_image %}
-                                    <b>Active</b>.
-                                {% endif %}
+                            <a class="btn btn-primary btn-sm" href="{{ image.get_absolute_url }}">
+                                <i class="fas fa-cog"></i>
                             </a>
+                            {% if image.build %}
+                                <a class="btn btn-sm btn-{{ image.build.status_context }}">
+                                    {% if image.build.animate %}
+                                        <span class="spinner-border spinner-border-sm" role="status"
+                                              aria-hidden="true"></span>
+                                    {% endif %}
+                                    Build {{ image.build.get_status_display }}
+                                </a>
+                            {% endif %}
+                            {% if image.build %}
+                                Container from
+                                <a href="{{ image.build.webhook_message.tag_url }}">{{ image.build.webhook_message.repo_name }}:{{ image.build.webhook_message.tag }}</a>
+                            {% else %}
+                                Container uploaded by {{ image.creator }} {{ image.created|naturaltime }}
+                            {% endif %}
+                            {% if image.ready and image == object.latest_ready_image %}
+                                <span class="badge badge-success">
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="badge badge-danger">
+                                    Inactive
+                                </span>
+                            {% endif %}
                         </li>
                     {% endfor %}
                 </ul>
