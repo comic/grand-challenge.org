@@ -144,6 +144,9 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     )
     raise_exception = True
+    queryset = Algorithm.objects.prefetch_related(
+        "algorithm_container_images__build__webhook_message"
+    )
 
     def on_permission_check_fail(self, request, response, obj=None):
         response = self.get(request)

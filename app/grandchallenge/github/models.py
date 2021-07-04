@@ -95,6 +95,10 @@ class GitHubWebhookMessage(models.Model):
             return "tag"
         return re.sub("[^0-9a-zA-Z]+", "-", self.payload["ref"],).lower()
 
+    @property
+    def tag_url(self):
+        return f"https://github.com/{self.payload['repository']['full_name']}/releases/tag/{self.payload['ref']}"
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
         super().save(*args, **kwargs)

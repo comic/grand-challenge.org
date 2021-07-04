@@ -108,6 +108,27 @@ class Build(UUIDModel):
 
         super().save(*args, **kwargs)
 
+    @property
+    def animate(self):
+        return self.status == BuildStatusChoices.IN_PROGRESS
+
+    @property
+    def status_context(self):
+        if self.status == BuildStatusChoices.SUCCEEDED:
+            return "success"
+        elif self.status in {BuildStatusChoices.STOPPED}:
+            return "warning"
+        elif self.status in {
+            BuildStatusChoices.FAILED,
+            BuildStatusChoices.FAULT,
+            BuildStatusChoices.TIMED_OUT,
+        }:
+            return "danger"
+        elif self.status in {BuildStatusChoices.IN_PROGRESS}:
+            return "info"
+        else:
+            return "secondary"
+
     class Meta:
         indexes = [
             models.Index(fields=["build_id"]),
