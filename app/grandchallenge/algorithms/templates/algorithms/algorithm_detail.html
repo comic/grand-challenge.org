@@ -212,17 +212,38 @@
                 <h2>Container Images</h2>
 
                 {% if not object.latest_ready_image %}
-                    <p>You need to upload a valid algorithm container image.</p>
+                    <p>
+                        You need to link your algorithm to a GitHub repo and create a new tag,
+                        or upload a valid algorithm container image.
+                    </p>
                 {% endif %}
 
-                {% if not object.repo_name %}
+                {% if object.repo_name %}
                     <p>
+                        New container images will be automatically built when
+                        <a href="https://github.com/{{ object.repo_name }}">https://github.com/{{ object.repo_name }}</a>
+                        is tagged.
+                        However, if you wish, you can still upload container images here.
+                    </p>
+                {% endif %}
+
+                <p>
+                    {% if object.repo_name %}
+                        <a class="btn btn-primary"
+                           href={% url "algorithms:add-repo" slug=object.slug %}>
+                           <i class="fa fa-code-branch"></i> Update Linked Repo
+                        </a>
+                    {% else %}
                         <a class="btn btn-success"
                            href="{{ github_app_install_url }}">
                             <i class="fa fa-code-branch"></i> Link GitHub Repo
                         </a>
-                    </p>
-                {% endif %}
+                    {% endif %}
+                    <a class="btn btn-primary"
+                       href="{% url 'algorithms:image-create' slug=object.slug %}">
+                        <i class="fa fa-upload"></i> Upload a Container
+                    </a>
+                </p>
 
                 <ul class="list-unstyled">
                     {% for image in object.algorithm_container_images.all %}
@@ -257,24 +278,6 @@
                         </li>
                     {% endfor %}
                 </ul>
-
-                {% if object.repo_name %}
-                    <p>
-                        New container images will be automatically built when
-                        <a href="https://github.com/{{ object.repo_name }}">https://github.com/{{ object.repo_name }}</a>
-                        is tagged.
-                        However, if you wish, you can still upload container images here.
-                        You can change the repo linked to this algorithm <a
-                            href={% url "algorithms:add-repo" slug=object.slug %}>here</a>.
-                    </p>
-                {% endif %}
-
-                <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:image-create' slug=object.slug %}">
-                        <i class="fa fa-upload"></i> Upload a Container
-                    </a>
-                </p>
             </div>
         {% endif %}
     </div>
