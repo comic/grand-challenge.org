@@ -38,10 +38,7 @@ class GitHubUserToken(models.Model):
 
     @property
     def access_token_is_expired(self):
-        # Add small grace time for work to happen
-        return self.access_token_expires > timezone.now() + timedelta(
-            seconds=60
-        )
+        return self.access_token_expires > timezone.now()
 
     def refresh_access_token(self):
         resp = requests.post(
