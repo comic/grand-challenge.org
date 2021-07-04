@@ -1,7 +1,11 @@
 import re
+from datetime import timedelta
 
+import requests
+from django.conf import settings
 from django.db import models
 from django.db.transaction import on_commit
+from django.utils import timezone
 from django.utils.text import get_valid_filename
 
 from grandchallenge.core.storage import private_s3_storage
@@ -18,6 +22,51 @@ def zipfile_path(instance, filename):
         f"{pk_as_padded_hex[-4:-2]}/{pk_as_padded_hex[-2:]}/{instance.pk}/"
         f"{get_valid_filename(filename)}"
     )
+
+
+class GitHubUserToken(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+    )
+    access_token = models.CharField(max_length=64)
+    access_token_expires = models.DateTimeField()
+    refresh_token = models.CharField(max_length=128)
+    refresh_token_expires = models.DateTimeField()
+
+    def __str__(self):
+        return f"Token for {self.user}, expires at {self.access_token_expires}"
+
+    @property
+    def access_token_is_expired(self):
+        return self.access_token_expires > timezone.now()
+
+    def refresh_access_token(self):
+        resp = requests.post(
+            "https://github.com/login/oauth/access_token",
+            data={
+                "refresh_token": self.refresh_token,
+                "grant_type": "refresh_token",
+                "client_id": settings.GITHUB_CLIENT_ID,
+                "client_secret": settings.GITHUB_CLIENT_SECRET,
+            },
+            timeout=5,
+            headers={"Accept": "application/vnd.github.v3+json"},
+        )
+        resp.raise_for_status()
+        self.update_from_payload(payload=resp.json())
+
+    def update_from_payload(self, *, payload):
+        # Small grace time for when the tokens were issued
+        token_acquired_at = timezone.now() - timedelta(seconds=60)
+
+        self.access_token = payload["access_token"]
+        self.access_token_expires = token_acquired_at + timedelta(
+            seconds=int(payload["expires_in"])
+        )
+        self.refresh_token = payload["refresh_token"]
+        self.refresh_token_expires = token_acquired_at + timedelta(
+            seconds=int(payload["refresh_token_expires_in"])
+        )
 
 
 class GitHubWebhookMessage(models.Model):
