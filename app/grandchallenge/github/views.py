@@ -62,6 +62,8 @@ def post_install_redirect(request):
     resp.raise_for_status()
 
     try:
+        # Do not use get_or_create here as we need to manipulate
+        # the payload before saving it to our model
         user_token = GitHubUserToken.objects.get(user=request.user)
     except ObjectDoesNotExist:
         user_token = GitHubUserToken(user=request.user)
