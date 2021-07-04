@@ -209,10 +209,10 @@
             <div class="tab-pane fade" id="containers" role="tabpanel"
                  aria-labelledby="v-pills-containers">
 
-                <h2>Containers</h2>
+                <h2>Container Images</h2>
 
                 {% if not object.latest_ready_image %}
-                    <p>You need to upload a valid algorithm container.</p>
+                    <p>You need to upload a valid algorithm container image.</p>
                 {% endif %}
 
                 {% if not object.repo_name %}
@@ -227,7 +227,9 @@
                 <ul class="list-unstyled">
                     {% for image in object.algorithm_container_images.all %}
                         <li>
-                            <a class="btn btn-primary btn-sm" href="{{ image.get_absolute_url }}">
+                            <a class="btn btn-primary btn-sm"
+                               href="{{ image.get_absolute_url }}"
+                               title="Update Image Settings">
                                 <i class="fas fa-cog"></i>
                             </a>
                             {% if image.build %}
@@ -238,12 +240,10 @@
                                     {% endif %}
                                     Build {{ image.build.get_status_display }}
                                 </a>
-                            {% endif %}
-                            {% if image.build %}
-                                Container from
+                                Container image from
                                 <a href="{{ image.build.webhook_message.tag_url }}">{{ image.build.webhook_message.repo_name }}:{{ image.build.webhook_message.tag }}</a>
                             {% else %}
-                                Container uploaded by {{ image.creator }} {{ image.created|naturaltime }}
+                                Container image uploaded by {{ image.creator }} {{ image.created|naturaltime }}
                             {% endif %}
                             {% if image.ready and image == object.latest_ready_image %}
                                 <span class="badge badge-success">
