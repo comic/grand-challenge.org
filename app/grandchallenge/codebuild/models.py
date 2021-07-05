@@ -64,7 +64,7 @@ class Build(UUIDModel):
         with private_s3_storage.open(
             f"codebuild/logs/{self.build_number}.gz"
         ) as file:
-            self.build_log = gzip.open(file).read()
+            self.build_log = gzip.open(file).read().decode("utf-8")
 
     def add_image_to_algorithm(self):
         with private_s3_storage.open(

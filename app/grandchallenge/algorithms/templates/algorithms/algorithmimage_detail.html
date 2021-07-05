@@ -28,6 +28,17 @@
 {% block content %}
     <h2>Algorithm Container Image</h2>
 
+    {% get_obj_perms request.user for object as "algorithm_image_perms" %}
+
+    {% if "change_algorithmimage" in algorithm_image_perms %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
+                <i class="fa fa-edit"></i> Edit this algorithm image
+            </a>
+        </p>
+    {% endif %}
+
     <dl class="inline">
         <dt>ID</dt>
         <dd>{{ object.pk }}</dd>
@@ -57,7 +68,11 @@
         <dd>{{ object.image_sha256 }}</dd>
 
         <dt>Ready</dt>
-        <dd>{{ object.ready }}</dd>
+        <dd>
+            <span class="badge badge-{{ object.ready|yesno:'success,danger' }}">
+                {{ object.ready }}
+            </span>
+        </dd>
 
         <dt>Status</dt>
         <dd>{{ object.status }}</dd>
@@ -69,14 +84,32 @@
         <dd>{{ object.requires_memory_gb }}g</dd>
     </dl>
 
-    {% get_obj_perms request.user for object as "algorithm_image_perms" %}
+    {% if object.build %}
+        <h3>Build Info</h3>
 
-    {% if "change_algorithmimage" in algorithm_image_perms %}
-        <p>
-            <a class="btn btn-primary"
-               href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
-                <i class="fa fa-edit"></i> Edit this algorithm image
-            </a>
-        </p>
+        <dl class="inline">
+            <dt>Origin</dt>
+            <dd><a href="{{ object.build.webhook_message.tag_url }}">{{ object.build.webhook_message.repo_name }}:{{ object.build.webhook_message.tag }}</a></dd>
+
+            <dt>Status</dt>
+            <dd>
+                <span class="badge badge-{{ object.build.status_context }}">
+                    {% if object.build.animate %}
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    {% endif %}
+                    {{ object.build.get_status_display }}
+                </span>
+            </dd>
+        </dl>
+
+        {% if object.build.build_log %}
+            <h4>Build Log</h4>
+
+            {# @formatter:off #}
+            <pre class="console">{{ object.build.build_log }}</pre>
+            {# @formatter:on #}
+        {% endif %}
+
     {% endif %}
+
 {% endblock %}
