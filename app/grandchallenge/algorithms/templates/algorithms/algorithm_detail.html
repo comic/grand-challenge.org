@@ -249,12 +249,12 @@
                     {% for image in object.algorithm_container_images.all %}
                         <li>
                             <a class="btn btn-primary btn-sm"
-                               href="{{ image.get_absolute_url }}"
-                               title="Update Image Settings">
-                                <i class="fas fa-cog"></i>
+                               href="{{ image.get_absolute_url }}">
+                                <i class="fas fa-info-circle"></i>
                             </a>
                             {% if image.build %}
-                                <a class="btn btn-sm btn-{{ image.build.status_context }}">
+                                <a class="btn btn-sm btn-{{ image.build.status_context }}"
+                                    href="{{ image.get_absolute_url }}">
                                     {% if image.build.animate %}
                                         <span class="spinner-border spinner-border-sm" role="status"
                                               aria-hidden="true"></span>

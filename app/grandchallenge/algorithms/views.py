@@ -296,6 +296,9 @@ class AlgorithmImageDetail(
     model = AlgorithmImage
     permission_required = f"{AlgorithmImage._meta.app_label}.view_{AlgorithmImage._meta.model_name}"
     raise_exception = True
+    queryset = AlgorithmImage.objects.prefetch_related(
+        "build__webhook_message"
+    )
 
 
 class AlgorithmImageUpdate(
