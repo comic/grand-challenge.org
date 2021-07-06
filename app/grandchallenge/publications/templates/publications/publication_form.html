@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}Add Publication{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'publications:list' %}">Publications</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Add Publication</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Add a publication" %}</h1>
+    <form action="" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        {{ form | crispy }}
+        <input class="btn btn-primary" type="submit" value="{% trans "Save publication" %}"/>
+    </form>
+{% endblock %}

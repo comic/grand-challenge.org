@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% load publication_extras %}
+{% load guardian_tags %}
+{% load url %}
+
+
+{% block title %}Publications - {{ block.super }}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">Publications</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between">
+        <h2>Publications</h2>
+        <a class="btn btn-primary my-3" href="{% url 'publications:create' %}" role="button">Add a publication</a>
+    </div>
+        <ul class="list-group">
+            {% for publication in object_list %}
+                <li class="list-group-item p-0">
+                    <div class="py-2 pl-3">
+                        {{ publication.citation|safe }}
+                    </div>
+                    <div class="pt-1 pb-2 pl-3">
+                        <a class="btn btn-outline-primary btn-sm mb-1 mr-1" href="{{ publication.url }}"><i class="fa fa-link"></i></a>
+                        {% with publication|get_associated_objects as publication_objects %}
+                            {% if publication_objects %}
+                                {% for obj, obj_model in publication_objects.items %}
+                                    {% get_obj_perms request.user for obj as "object_perms" %}
+                                    {% if "view_"|add:obj_model in object_perms %}
+                                        <a class="btn btn-outline-primary btn-sm mb-1 mr-1" href="{{ obj.get_absolute_url }}">{{ obj }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </li>
+                {% empty %}
+                <li class="list-group-item">No publications found.</li>
+            {% endfor %}
+        </ul>
+    <br>
+    {% include "grandchallenge/partials/pagination.html" %}
+{% endblock %}
