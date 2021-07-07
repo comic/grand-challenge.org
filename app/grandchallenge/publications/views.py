@@ -15,6 +15,19 @@ class PublicationList(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return super().get_queryset().order_by("-created")
 
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data()
+        num_citations = 0
+        for pub in Publication.objects.all():
+            num_citations += pub.referenced_by_count
+        context.update(
+            {
+                "num_publications": Publication.objects.all().count(),
+                "num_citations": num_citations,
+            }
+        )
+        return context
+
 
 class PublicationCreate(
     LoginRequiredMixin,
