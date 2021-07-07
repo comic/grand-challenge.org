@@ -147,3 +147,11 @@ class Publication(models.Model):
         citation = re.sub(r"^1\. ", "", citation)
 
         return clean(citation)
+
+    @property
+    def authors(self):
+        authors = []
+        match = re.search(r".+?\.", self.citation)
+        for author in re.split(",", match.group()):
+            authors.append(re.split(r"\s", re.sub(r"^\s", "", author))[0])
+        return authors
