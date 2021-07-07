@@ -4,6 +4,7 @@ from guardian.utils import get_anonymous_user
 
 from config import settings
 from grandchallenge.publications.models import Publication
+from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
@@ -41,3 +42,46 @@ def test_publication_creation(client):
     )
     assert response.status_code == 302
     assert Publication.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_publication_object_visibilty(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+
+    alg = AlgorithmFactory()
+    alg.add_user(user1)
+    assert user1.has_perm("view_algorithm", alg)
+    assert not user2.has_perm("view_algorithm", alg)
+
+    # create publication
+    _ = get_view_for_user(
+        viewname="publications:create",
+        client=client,
+        method=client.post,
+        data={"identifier": TEST_DOI},
+        user=user1,
+    )
+    # add publication to algorithm
+    alg.publications.add(Publication.objects.get())
+    alg.save()
+
+    response = get_view_for_user(
+        viewname="publications:list",
+        client=client,
+        method=client.get,
+        user=user1,
+    )
+
+    assert response.status_code == 200
+    assert alg.title in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="publications:list",
+        client=client,
+        method=client.get,
+        user=user2,
+    )
+
+    assert response.status_code == 200
+    assert alg.title not in response.rendered_content

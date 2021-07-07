@@ -22,7 +22,10 @@ class PublicationList(LoginRequiredMixin, FilterMixin, ListView):
         context = super().get_context_data()
         num_citations = 0
         for pub in Publication.objects.all():
-            num_citations += pub.referenced_by_count
+            try:
+                num_citations += pub.referenced_by_count
+            except TypeError:
+                continue
         context.update(
             {
                 "num_publications": Publication.objects.all().count(),
