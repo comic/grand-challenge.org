@@ -290,32 +290,31 @@ def build_images(*, upload_session_pk):
         upload_session.status = upload_session.STARTED
         upload_session.save()
 
-    with TemporaryDirectory() as tmp_dir:
-        tmp_dir = Path(tmp_dir)
+    try:
+        with transaction.atomic():
+            # Acquire locks
+            _ = files_queryset.all()
+            upload_session = session_queryset.get()
 
-        try:
-            with transaction.atomic():
-                # Acquire locks
-                _ = files_queryset.all()
-                upload_session = session_queryset.get()
-
+            with TemporaryDirectory() as tmp_dir:
+                tmp_dir = Path(tmp_dir)
                 _populate_tmp_dir(tmp_dir, upload_session)
                 _handle_raw_image_files(tmp_dir, upload_session)
 
-                upload_session.status = upload_session.SUCCESS
-                upload_session.save()
-        except OperationalError:
-            # Could not acquire locks
-            raise
-        except (SoftTimeLimitExceeded, TimeLimitExceeded):
-            upload_session.error_message = "Time limit exceeded."
-            upload_session.status = upload_session.FAILURE
+            upload_session.status = upload_session.SUCCESS
             upload_session.save()
-        except Exception:
-            upload_session.error_message = "An unknown error occurred"
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
-            raise
+    except OperationalError:
+        # Could not acquire locks
+        raise
+    except (SoftTimeLimitExceeded, TimeLimitExceeded):
+        upload_session.error_message = "Time limit exceeded."
+        upload_session.status = upload_session.FAILURE
+        upload_session.save()
+    except Exception:
+        upload_session.error_message = "An unknown error occurred"
+        upload_session.status = upload_session.FAILURE
+        upload_session.save()
+        raise
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):
