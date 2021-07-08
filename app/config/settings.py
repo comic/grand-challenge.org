@@ -1101,6 +1101,7 @@ if DEBUG:
         }
     )
     DEMO_ALGORITHM_IMAGE_PATH = os.path.join(SITE_ROOT, "algorithm.tar.gz")
+    DEMO_ALGORITHM_SHA256 = "sha256:5e81cef3738b7dbffc12c101990eb3b97f17642c09a2e0b64d5b3d4dd144e79b"
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
