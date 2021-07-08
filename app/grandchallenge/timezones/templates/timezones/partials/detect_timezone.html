@@ -3,9 +3,9 @@
 {% load static %}
 
 {# Timezone Determination #}
-{% if TIME_ZONE == "UTC" %}
-    {% url 'timezones:set' as set_timezone_url %}
-    {{ set_timezone_url|json_script:"setTimezoneUrl" }}
-    {% csrf_token %}
-    <script src="{% static 'timezones/js/detect-timezone.mjs' %}" type="module"></script>
-{% endif %}
+{% url 'timezones:set' as set_timezone_url %}
+{{ set_timezone_url|json_script:"setTimezoneUrl" }}
+{# TIME_ZONE is set by {% load_tz %} #}
+{{ TIME_ZONE|json_script:"currentTimezone" }}
+{% csrf_token %}
+<script src="{% static 'timezones/js/detect-timezone.mjs' %}" type="module"></script>

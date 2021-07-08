@@ -1,4 +1,5 @@
 const setTimezoneUrl = JSON.parse(document.getElementById('setTimezoneUrl').textContent);
+const currentTimezone = JSON.parse(document.getElementById('currentTimezone').textContent);
 
 function getCookie(name) {
     let cookieValue = null;
@@ -20,13 +21,13 @@ async function updateTimezone() {
     const csrftoken = getCookie("_csrftoken");
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    if (csrftoken !== null && timeZone !== undefined) {
+    if (timeZone !== currentTimezone && csrftoken !== null) {
         let dataForm = new FormData();
 
         dataForm.append('timezone', timeZone);
         dataForm.append('csrfmiddlewaretoken', csrftoken);
 
-        return await fetch(setTimezoneUrl, {
+        return fetch(setTimezoneUrl, {
             method: 'POST',
             mode: 'same-origin',
             body: dataForm,
