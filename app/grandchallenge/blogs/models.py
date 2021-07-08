@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 from django_extensions.db.fields import AutoSlugField
 from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
@@ -47,6 +48,16 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._published_orig = self.published
+
+    def save(self, *args, **kwargs):
+        if self._published_orig is False and self.published is True:
+            self.created = timezone.now()
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse("blogs:detail", kwargs={"slug": self.slug})
