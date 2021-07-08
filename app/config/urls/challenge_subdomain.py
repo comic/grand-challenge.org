@@ -28,6 +28,10 @@ urlpatterns = [
         "workspaces/",
         include("grandchallenge.workspaces.urls", namespace="workspaces"),
     ),
+    path(
+        "timezone/",
+        include("grandchallenge.timezones.urls", namespace="timezones"),
+    ),
     path("", include("grandchallenge.pages.urls", namespace="pages")),
 ]
 

@@ -1,0 +1,11 @@
+{# Note: do not {% load url %} here, for same origin resons the set view must be on all subdomains #}
+{% load tz %}
+{% load static %}
+
+{# Timezone Determination #}
+{% if TIME_ZONE == "UTC" %}
+    {% url 'timezones:set' as set_timezone_url %}
+    {{ set_timezone_url|json_script:"setTimezoneUrl" }}
+    {% csrf_token %}
+    <script src="{% static 'timezones/js/detect-timezone.mjs' %}" type="module"></script>
+{% endif %}

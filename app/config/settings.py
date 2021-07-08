@@ -365,6 +365,7 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    "grandchallenge.timezones.middleware.TimezoneMiddleware",
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
@@ -479,6 +480,7 @@ LOCAL_APPS = [
     "grandchallenge.groups",
     "grandchallenge.github",
     "grandchallenge.codebuild",
+    "grandchallenge.timezones",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS

@@ -139,6 +139,10 @@ urlpatterns = [
         ),
     ),
     path("forums/", include(machina_urls)),
+    path(
+        "timezone/",
+        include("grandchallenge.timezones.urls", namespace="timezones"),
+    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:
