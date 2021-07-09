@@ -23,6 +23,10 @@ from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.subdomains.utils import reverse
 
 
+class ImageImportError(ValueError):
+    pass
+
+
 @shared_task
 def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
     start_jobs = execute_algorithm_job_for_inputs.signature(
@@ -68,9 +72,12 @@ def on_chord_error(self, task_id, *args, **kwargs):
             f"Job can't be started, input is missing for interface(s):"
             f" {list(c.interface.title for c in missing_inputs)} "
         )
+
     res = self.AsyncResult(task_id).result
-    if isinstance(res, Exception):
+
+    if isinstance(res, ImageImportError):
         error_message += str(res)
+
     job.update_status(
         status=job.FAILURE, error_message=error_message,
     )
@@ -89,7 +96,7 @@ def add_images_to_component_interface_value(
         session.status = RawImageUploadSession.FAILURE
         session.error_message = error_message
         session.save()
-        raise ValueError(error_message)
+        raise ImageImportError(error_message)
 
     civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
     civ.image = session.image_set.get()
