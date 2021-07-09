@@ -22,15 +22,13 @@ async function updateTimezone() {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     if (timeZone !== currentTimezone && csrftoken !== null) {
-        let dataForm = new FormData();
-
-        dataForm.append('timezone', timeZone);
-        dataForm.append('csrfmiddlewaretoken', csrftoken);
-
         return fetch(setTimezoneUrl, {
             method: 'POST',
-            mode: 'same-origin',
-            body: dataForm,
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({'timezone': timeZone}),
         });
     }
 }

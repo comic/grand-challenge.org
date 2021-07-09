@@ -1,15 +1,19 @@
-from django.views.generic import FormView
+from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from grandchallenge.timezones.forms import TimezoneForm
+from grandchallenge.timezones.serializers import TimezoneSerializer
 
 
-class SetTimezone(FormView):
-    form_class = TimezoneForm
-    template_name = "timezones/set_timezone_form.html"
+class SetTimezone(APIView):
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [AllowAny]
 
-    def form_valid(self, form):
-        self.request.session["timezone"] = form.cleaned_data["timezone"]
-        return super().form_valid(form=form)
-
-    def get_success_url(self):
-        return "/"
+    def post(self, request, format=None):
+        serializer = TimezoneSerializer(data=request.data)
+        if serializer.is_valid():
+            request.session["timezone"] = serializer.validated_data["timezone"]
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

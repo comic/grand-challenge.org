@@ -1,9 +1,9 @@
-{# Note: do not {% load url %} here, for same origin resons the set view must be on all subdomains #}
 {% load tz %}
 {% load static %}
+{% load url %}
 
 {# Timezone Determination #}
-{% url 'timezones:set' as set_timezone_url %}
+{% url 'api:set-timezone' as set_timezone_url %}
 {{ set_timezone_url|json_script:"setTimezoneUrl" }}
 {# TIME_ZONE is set by {% load_tz %} #}
 {{ TIME_ZONE|json_script:"currentTimezone" }}

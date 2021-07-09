@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.urls import include, path
+from django.urls import path
 from django.views.generic import TemplateView
 
 from grandchallenge.workstations.views import SessionDetail, session_proxy
@@ -35,9 +35,5 @@ urlpatterns = [
         "workstations/<slug>/sessions/<uuid:pk>/<path:path>",
         session_proxy,
         name="session-proxy",
-    ),
-    path(
-        "timezone/",
-        include("grandchallenge.timezones.urls", namespace="timezones"),
     ),
 ]
