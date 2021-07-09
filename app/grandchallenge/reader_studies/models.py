@@ -793,18 +793,52 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
             .order_by("score__avg")
         )
 
+        options = {}
+        for option in CategoricalOption.objects.filter(
+            question__reader_study=self
+        ).values("id", "title", "question"):
+            qt = option["question"]
+            options[qt] = options.get(qt, {})
+            options[qt].update({option["id"]: option["title"]})
+
         ground_truths = {}
-        questions = set()
-        for gt in Answer.objects.filter(
-            question__reader_study=self, is_ground_truth=True
-        ).values("images__name", "answer", "question__question_text"):
+        questions = []
+        for gt in (
+            Answer.objects.filter(
+                question__reader_study=self, is_ground_truth=True
+            )
+            .values(
+                "images__name",
+                "answer",
+                "question",
+                "question__question_text",
+                "question__answer_type",
+            )
+            .order_by("question__order", "question__created")
+        ):
+            questions.append(gt["question__question_text"])
+
             ground_truths[gt["images__name"]] = ground_truths.get(
                 gt["images__name"], {}
             )
+
+            if gt["question__answer_type"] in [
+                Question.AnswerType.MULTIPLE_CHOICE,
+                Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
+            ]:
+                human_readable_answer = ", ".join(
+                    options[gt["question"]].get(a) for a in gt["answer"]
+                )
+            else:
+                human_readable_answer = options.get(gt["question"], {}).get(
+                    gt["answer"], gt["answer"]
+                )
+
             ground_truths[gt["images__name"]][
                 gt["question__question_text"]
-            ] = gt["answer"]
-            questions.add(gt["question__question_text"])
+            ] = human_readable_answer
+
+        questions = list(dict.fromkeys(questions))
 
         return {
             "max_score_questions": float(len(self.hanging_list))
