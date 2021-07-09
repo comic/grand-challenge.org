@@ -79,9 +79,6 @@ router.register(
     r"evaluations", EvaluationViewSet, basename="evaluation",
 )
 
-# Follows
-router.register(r"subscriptions", FollowViewSet, basename="follow")
-
 # Notifications
 router.register(r"notifications", NotificationViewSet, basename="notification")
 
@@ -157,6 +154,9 @@ router.register(
     ETDRSGridAnnotationViewSet,
     basename="retina-etdrs-grid-annotation",
 )
+
+# Follows (Subscriptions)
+router.register(r"subscriptions", FollowViewSet, basename="follow")
 
 # Workstations
 router.register(

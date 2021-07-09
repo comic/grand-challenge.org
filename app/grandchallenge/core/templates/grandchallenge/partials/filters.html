@@ -1,6 +1,12 @@
 {% load crispy_forms_tags %}
 {% load meta_attr %}
 
+{% comment %}
+    The model_name variable was added to adjust the displayed filter name for the actstream Follow model.
+    It would be nicer to instead add a proxy model for the actstream Follow model on which we set the verbose name accordingly.
+    Trying this out, however, we could not get the permission checks to work for the proxy model.
+    It might be worth debugging why the permissions for the proxy model were not set correctly and to get rid of this work-around eventually.
+{% endcomment %}
 <p>
     <a class="btn btn-primary"
        role="button"

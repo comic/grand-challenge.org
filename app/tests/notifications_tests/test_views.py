@@ -339,3 +339,65 @@ def test_follow_create_permission(client):
     )
     assert response.status_code == 302
     assert is_following(user1, f)
+
+
+@pytest.mark.django_db
+def test_follow_deletion_through_api(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    follow(user1, f)
+
+    assert len(Follow.objects.all()) == 1
+
+    # users can only delete their own follows
+    response = get_view_for_user(
+        viewname="api:follow-detail",
+        client=client,
+        method=client.delete,
+        reverse_kwargs={"pk": Follow.objects.get().pk},
+        content_type="application/json",
+        user=user2,
+    )
+    assert response.status_code == 404
+
+    response = get_view_for_user(
+        viewname="api:follow-detail",
+        client=client,
+        method=client.delete,
+        reverse_kwargs={"pk": Follow.objects.get().pk},
+        content_type="application/json",
+        user=user1,
+    )
+    assert response.status_code == 204
+    assert len(Follow.objects.all()) == 0
+
+
+@pytest.mark.django_db
+def test_follow_view_permissions(client):
+    user1 = UserFactory()
+    user2 = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    follow(user1, f)
+
+    response = get_view_for_user(
+        viewname="notifications:follow-list",
+        client=client,
+        method=client.get,
+        user=user2,
+    )
+    assert response.status_code == 200
+    assert (
+        str(Follow.objects.get().follow_object)
+        not in response.rendered_content
+    )
+
+    # user1 cannot see user2 notifications
+    response = get_view_for_user(
+        viewname="notifications:follow-list",
+        client=client,
+        method=client.get,
+        user=user1,
+    )
+    assert response.status_code == 200
+    assert str(Follow.objects.get().follow_object) in response.rendered_content
