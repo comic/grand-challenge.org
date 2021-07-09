@@ -11,9 +11,9 @@ class SetTimezone(APIView):
     authentication_classes = [SessionAuthentication]
     permission_classes = [AllowAny]
 
-    def post(self, request, format=None):
+    def put(self, request, format=None):
         serializer = TimezoneSerializer(data=request.data)
         if serializer.is_valid():
             request.session["timezone"] = serializer.validated_data["timezone"]
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

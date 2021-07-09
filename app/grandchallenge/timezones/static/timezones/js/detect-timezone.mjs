@@ -23,7 +23,7 @@ async function updateTimezone() {
 
     if (timeZone !== currentTimezone && csrftoken !== null) {
         return fetch(setTimezoneUrl, {
-            method: 'POST',
+            method: 'PUT',
             headers: {
                 'X-CSRFToken': csrftoken,
                 'Content-Type': 'application/json'
