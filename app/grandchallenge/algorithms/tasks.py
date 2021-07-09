@@ -1,4 +1,4 @@
-from celery import chord, group, shared_task
+from celery import chain, chord, group, shared_task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -30,12 +30,17 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
     )
     if upload_pks:
         image_tasks = group(
-            add_images_to_component_interface_value.signature(
-                kwargs={
-                    "component_interface_value_pk": civ_pk,
-                    "upload_pk": upload_pk,
-                },
-                immutable=True,
+            chain(
+                build_images.signature(
+                    kwargs={"upload_session_pk": upload_pk}, immutable=True
+                ),
+                add_images_to_component_interface_value.signature(
+                    kwargs={
+                        "component_interface_value_pk": civ_pk,
+                        "upload_session_pk": upload_pk,
+                    },
+                    immutable=True,
+                ),
             )
             for civ_pk, upload_pk in upload_pks.items()
         )
@@ -75,13 +80,9 @@ def on_chord_error(self, task_id, *args, **kwargs):
 
 @shared_task
 def add_images_to_component_interface_value(
-    *, component_interface_value_pk, upload_pk
+    *, component_interface_value_pk, upload_session_pk
 ):
-    session = RawImageUploadSession.objects.get(pk=upload_pk)
-    session.status = RawImageUploadSession.REQUEUED
-    session.save()
-
-    build_images(upload_session_pk=upload_pk)
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
     if session.image_set.count() != 1:
         error_message = "Image imports should result in a single image"

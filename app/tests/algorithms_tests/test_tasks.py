@@ -1,6 +1,5 @@
 import re
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from django.test import TestCase
@@ -374,9 +373,8 @@ def test_algorithm_multiple_inputs(
 
 
 @pytest.mark.django_db
-@patch("grandchallenge.algorithms.tasks.build_images", return_value=None)
 def test_algorithm_input_image_multiple_files(
-    build_images, client, algorithm_io_image, settings, component_interfaces
+    client, algorithm_io_image, settings, component_interfaces
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -435,7 +433,7 @@ def test_add_images_to_component_interface_value():
 
     with pytest.raises(ValueError) as err:
         add_images_to_component_interface_value(
-            component_interface_value_pk=civ.pk, upload_pk=us.pk
+            component_interface_value_pk=civ.pk, upload_session_pk=us.pk
         )
     assert "Image imports should result in a single image" in str(err)
     assert civ.image is None
@@ -444,7 +442,7 @@ def test_add_images_to_component_interface_value():
     image = ImageFactory(origin=us2)
     civ2 = ComponentInterfaceValueFactory(interface=ci, image=None)
     add_images_to_component_interface_value(
-        component_interface_value_pk=civ2.pk, upload_pk=us2.pk
+        component_interface_value_pk=civ2.pk, upload_session_pk=us2.pk
     )
     civ2.refresh_from_db()
     assert civ2.image == image
