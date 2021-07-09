@@ -3,7 +3,7 @@
 {% load url %}
 
 {# Timezone Determination #}
-{% url 'api:set-timezone' as set_timezone_url %}
+{% url 'api:timezone' as set_timezone_url %}
 {{ set_timezone_url|json_script:"setTimezoneUrl" }}
 {# TIME_ZONE is set by {% load_tz %} #}
 {{ TIME_ZONE|json_script:"currentTimezone" }}

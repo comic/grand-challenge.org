@@ -9,7 +9,7 @@ def test_session_timezone(client):
     assert timezone_orig is None
 
     response = client.put(
-        path=reverse("api:set-timezone"),
+        path=reverse("api:timezone"),
         data={"timezone": "Europe/Amsterdam"},
         content_type="application/json",
     )

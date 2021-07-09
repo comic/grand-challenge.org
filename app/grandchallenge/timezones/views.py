@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from grandchallenge.timezones.serializers import TimezoneSerializer
 
 
-class SetTimezone(APIView):
+class TimezoneAPIView(APIView):
     authentication_classes = [SessionAuthentication]
     permission_classes = [AllowAny]
 
