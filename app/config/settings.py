@@ -24,7 +24,7 @@ def strtobool(val) -> bool:
     return bool(strtobool_i(val))
 
 
-DEBUG = strtobool(os.environ.get("DEBUG", "True"))
+DEBUG = strtobool(os.environ.get("DEBUG", "False"))
 
 COMMIT_ID = os.environ.get("COMMIT_ID", "unknown")
 
@@ -190,11 +190,12 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 # Caching
 #
 ##############################################################################
+REDIS_HOSTNAME = os.environ.get("REDIS_HOSTNAME", "redis")
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": f"redis://{REDIS_HOSTNAME}:6379/1",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     },
     "machina_attachments": {
@@ -365,6 +366,7 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
+    "grandchallenge.timezones.middleware.TimezoneMiddleware",
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
     # Flatpage fallback almost last
     "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
@@ -478,6 +480,8 @@ LOCAL_APPS = [
     "grandchallenge.organizations",
     "grandchallenge.groups",
     "grandchallenge.github",
+    "grandchallenge.codebuild",
+    "grandchallenge.timezones",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -834,7 +838,9 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
         }
     )
 else:
-    CELERY_BROKER_URL = os.environ.get("BROKER_URL", "redis://redis:6379/0")
+    CELERY_BROKER_URL = os.environ.get(
+        "BROKER_URL", f"redis://{REDIS_HOSTNAME}:6379/0"
+    )
 
 # Keep results of sent emails
 CELERY_EMAIL_CHUNK_SIZE = 1
@@ -1016,8 +1022,6 @@ CELERY_BEAT_SCHEDULE = {
 
 CELERY_TASK_ROUTES = {
     "grandchallenge.components.tasks.execute_job": "evaluation",
-    "grandchallenge.components.tasks.validate_docker_image": "images",
-    "grandchallenge.cases.tasks.build_images": "images",
 }
 
 # The name of the group whose members will be able to create algorithms
@@ -1062,6 +1066,11 @@ GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
 GITHUB_PRIVATE_KEY_BASE64 = os.environ.get("GITHUB_PRIVATE_KEY_BASE64", "")
 GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 
+CODEBUILD_PROJECT_NAME = os.environ.get("CODEBUILD_PROJECT_NAME", "")
+CODEBUILD_ACCESS_KEY = os.environ.get("CODEBUILD_ACCESS_KEY", "")
+CODEBUILD_SECRET_KEY = os.environ.get("CODEBUILD_SECRET_KEY", "")
+CODEBUILD_REGION = os.environ.get("CODEBUILD_REGION", "")
+
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in cases.models.Image.get_sitk_image()
 MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 
@@ -1097,6 +1106,7 @@ if DEBUG:
         }
     )
     DEMO_ALGORITHM_IMAGE_PATH = os.path.join(SITE_ROOT, "algorithm.tar.gz")
+    DEMO_ALGORITHM_SHA256 = "sha256:5e81cef3738b7dbffc12c101990eb3b97f17642c09a2e0b64d5b3d4dd144e79b"
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)

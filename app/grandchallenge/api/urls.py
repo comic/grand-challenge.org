@@ -17,7 +17,10 @@ from grandchallenge.cases.views import (
 from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.github.views import github_webhook
 from grandchallenge.jqfileupload.views import StagedFileViewSet
-from grandchallenge.notifications.views import NotificationViewSet
+from grandchallenge.notifications.views import (
+    FollowViewSet,
+    NotificationViewSet,
+)
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
@@ -38,6 +41,7 @@ from grandchallenge.retina_api.views import (
     TextAnnotationViewSet,
 )
 from grandchallenge.statistics.views import MetricsAPIView
+from grandchallenge.timezones.views import TimezoneAPIView
 from grandchallenge.workstation_configs.views import WorkstationConfigViewSet
 from grandchallenge.workstations.views import SessionViewSet
 
@@ -152,6 +156,9 @@ router.register(
     basename="retina-etdrs-grid-annotation",
 )
 
+# Follows (Subscriptions)
+router.register(r"subscriptions", FollowViewSet, basename="follow")
+
 # Workstations
 router.register(
     r"workstations/configs",
@@ -174,6 +181,7 @@ urlpatterns = [
     path("v1/", include(router.urls)),
     path("v1/github/", github_webhook, name="github-webhook"),
     path("v1/metrics/", MetricsAPIView.as_view(), name="metrics"),
+    path("v1/timezone/", TimezoneAPIView.as_view(), name="timezone"),
     path(
         "",
         SpectacularSwaggerView.as_view(url_name="api:schema"),

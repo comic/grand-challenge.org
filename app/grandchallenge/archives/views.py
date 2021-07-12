@@ -1,4 +1,4 @@
-from celery import chord, group
+from celery import chain, chord, group
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
@@ -61,6 +61,7 @@ from grandchallenge.cases.models import (
     RawImageFile,
     RawImageUploadSession,
 )
+from grandchallenge.cases.tasks import build_images
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -458,12 +459,17 @@ class ArchiveEditArchiveItem(
 
         if len(upload_pks) > 0:
             image_tasks = group(
-                add_images_to_component_interface_value.signature(
-                    kwargs={
-                        "component_interface_value_pk": civ_pk,
-                        "upload_pk": upload_pk,
-                    },
-                    immutable=True,
+                chain(
+                    build_images.signature(
+                        kwargs={"upload_session_pk": upload_pk}
+                    ),
+                    add_images_to_component_interface_value.signature(
+                        kwargs={
+                            "component_interface_value_pk": civ_pk,
+                            "upload_session_pk": upload_pk,
+                        },
+                        immutable=True,
+                    ),
                 )
                 for civ_pk, upload_pk in upload_pks.items()
             )

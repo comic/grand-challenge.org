@@ -23,7 +23,8 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import transaction
+from django.db import OperationalError, transaction
+from django.db.transaction import on_commit
 from django.utils import timezone
 from panimg import convert
 from panimg.models import PanImgResult
@@ -43,10 +44,6 @@ from grandchallenge.jqfileupload.widgets.uploader import (
 )
 
 
-class ProvisioningError(Exception):
-    pass
-
-
 def _populate_tmp_dir(tmp_dir, upload_session):
     session_files = upload_session.rawimagefile_set.all()
     session_files, duplicates = remove_duplicate_files(session_files)
@@ -55,7 +52,7 @@ def _populate_tmp_dir(tmp_dir, upload_session):
         duplicate.error = "Filename not unique"
         saf = StagedAjaxFile(duplicate.staged_file_id)
         duplicate.staged_file_id = None
-        saf.delete()
+        on_commit(saf.delete)
         duplicate.consumed = False
         duplicate.save()
 
@@ -115,7 +112,7 @@ def populate_provisioning_directory(
             exceptions_raised += 1
 
     if exceptions_raised > 0:
-        raise ProvisioningError(
+        raise RuntimeError(
             f"{exceptions_raised} errors occurred during provisioning of the "
             f"image construction directory"
         )
@@ -250,7 +247,7 @@ def extract_files(source_path: Path):
         check_compressed_and_extract(file_path, source_path, checked_paths)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def build_images(*, upload_session_pk):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -273,50 +270,51 @@ def build_images(*, upload_session_pk):
     of analyzed images in order to free up space on the server (only done if the
     function does not error out).
 
-    If a job fails due to a RawImageUploadSession.DoesNotExist error, the
-    job is queued for a retry (max 15 times).
-
     Parameters
     ----------
     upload_session_uuid: UUID
         The uuid of the upload sessions that should be analyzed.
     """
-    upload_session = RawImageUploadSession.objects.get(
+    session_queryset = RawImageUploadSession.objects.filter(
         pk=upload_session_pk
-    )  # type: RawImageUploadSession
+    ).select_for_update(nowait=True)
+    files_queryset = RawImageFile.objects.filter(
+        upload_session_id=upload_session_pk
+    ).select_for_update(nowait=True)
 
-    if (
-        upload_session.status != upload_session.REQUEUED
-        or upload_session.rawimagefile_set.filter(consumed=True).exists()
-    ):
-        raise RuntimeError("Job is not set to be executed.")
+    with transaction.atomic():
+        if files_queryset.filter(consumed=True).exists():
+            raise RuntimeError("Session has consumed files.")
 
-    upload_session.status = upload_session.STARTED
-    upload_session.save()
+        upload_session = session_queryset.get()
+        upload_session.status = upload_session.STARTED
+        upload_session.save()
 
-    with TemporaryDirectory(prefix="construct_image_volumes-") as tmp_dir:
-        tmp_dir = Path(tmp_dir)
+    try:
+        with transaction.atomic():
+            # Acquire locks
+            _ = files_queryset.all()
+            upload_session = session_queryset.get()
 
-        try:
-            _populate_tmp_dir(tmp_dir, upload_session)
-            _handle_raw_image_files(tmp_dir, upload_session)
-        except ProvisioningError as e:
-            upload_session.error_message = str(e)
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
-            return
-        except (SoftTimeLimitExceeded, TimeLimitExceeded):
-            upload_session.error_message = "Time limit exceeded."
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
-        except Exception:
-            upload_session.error_message = "An unknown error occurred"
-            upload_session.status = upload_session.FAILURE
-            upload_session.save()
-            raise
-        else:
+            with TemporaryDirectory() as tmp_dir:
+                tmp_dir = Path(tmp_dir)
+                _populate_tmp_dir(tmp_dir, upload_session)
+                _handle_raw_image_files(tmp_dir, upload_session)
+
             upload_session.status = upload_session.SUCCESS
             upload_session.save()
+    except OperationalError:
+        # Could not acquire locks
+        raise
+    except (SoftTimeLimitExceeded, TimeLimitExceeded):
+        upload_session.error_message = "Time limit exceeded."
+        upload_session.status = upload_session.FAILURE
+        upload_session.save()
+    except Exception:
+        upload_session.error_message = "An unknown error occurred"
+        upload_session.status = upload_session.FAILURE
+        upload_session.save()
+        raise
 
 
 def _handle_raw_image_files(tmp_dir, upload_session):
@@ -471,15 +469,14 @@ def _store_images(
     image_files: Set[ImageFile],
     folders: Set[FolderUpload],
 ):
-    with transaction.atomic():
-        for image in images:
-            image.origin = origin
-            image.full_clean()
-            image.save()
+    for image in images:
+        image.origin = origin
+        image.full_clean()
+        image.save()
 
-        for obj in chain(image_files, folders):
-            obj.full_clean()
-            obj.save()
+    for obj in chain(image_files, folders):
+        obj.full_clean()
+        obj.save()
 
 
 def _handle_raw_files(
@@ -539,7 +536,7 @@ def _delete_session_files(*, session_files):
                     continue
 
                 file.staged_file_id = None
-                saf.delete()
+                on_commit(saf.delete)
             file.save()
         except NotFoundError:
             pass

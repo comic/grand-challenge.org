@@ -81,6 +81,7 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.credits.models import Credit
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.github.models import GitHubUserToken
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.subdomains.utils import reverse
@@ -143,6 +144,9 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
         f"{Algorithm._meta.app_label}.view_{Algorithm._meta.model_name}"
     )
     raise_exception = True
+    queryset = Algorithm.objects.prefetch_related(
+        "algorithm_container_images__build__webhook_message"
+    )
 
     def on_permission_check_fail(self, request, response, obj=None):
         response = self.get(request)
@@ -292,6 +296,9 @@ class AlgorithmImageDetail(
     model = AlgorithmImage
     permission_required = f"{AlgorithmImage._meta.app_label}.view_{AlgorithmImage._meta.model_name}"
     raise_exception = True
+    queryset = AlgorithmImage.objects.prefetch_related(
+        "build__webhook_message"
+    )
 
 
 class AlgorithmImageUpdate(
@@ -776,35 +783,30 @@ class AlgorithmAddRepo(
         """Return the keyword arguments for instantiating the form."""
         kwargs = super().get_form_kwargs()
 
-        code = self.request.GET.get("code")
-        repos = []
-        if code is not None:
-            headers = {"Accept": "application/vnd.github.v3+json"}
+        user_token = get_object_or_404(GitHubUserToken, user=self.request.user)
 
-            resp = requests.post(
-                "https://github.com/login/oauth/access_token",
-                data={
-                    "code": code,
-                    "client_id": settings.GITHUB_CLIENT_ID,
-                    "client_secret": settings.GITHUB_CLIENT_SECRET,
-                },
-                timeout=5,
-                headers=headers,
-            )
+        if user_token.access_token_is_expired:
+            user_token.refresh_access_token()
+            user_token.save()
 
-            payload = resp.json()
-            headers["Authorization"] = f"token {payload['access_token']}"
-            installations = requests.get(
-                "https://api.github.com/user/installations", headers=headers
-            ).json()
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": f"token {user_token.access_token}",
+        }
 
-            response = requests.get(
-                f"https://api.github.com/user/installations/{installations['installations'][0]['id']}/repositories",
-                headers=headers,
-                timeout=5,
-            ).json()
+        installations = requests.get(
+            "https://api.github.com/user/installations",
+            headers=headers,
+            timeout=5,
+        ).json()
 
-            repos = [repo["full_name"] for repo in response["repositories"]]
+        response = requests.get(
+            f"https://api.github.com/user/installations/{installations['installations'][0]['id']}/repositories",
+            headers=headers,
+            timeout=5,
+        ).json()
+
+        repos = [repo["full_name"] for repo in response["repositories"]]
 
         kwargs.update({"repos": repos})
         return kwargs

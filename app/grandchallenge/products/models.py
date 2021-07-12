@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from grandchallenge.core.storage import get_logo_path
+from grandchallenge.core.storage import get_logo_path, get_pdf_path
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -153,3 +153,8 @@ class Product(models.Model):
 
     def get_absolute_url(self):
         return reverse("products:product-detail", kwargs={"slug": self.slug})
+
+
+class ProjectAirFiles(models.Model):
+    title = models.CharField(max_length=150)
+    study_file = models.FileField(upload_to=get_pdf_path)

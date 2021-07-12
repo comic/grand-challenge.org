@@ -2,15 +2,19 @@ USER_ID = $(shell id -u)
 PYTHON_VERSION = 3.8
 GDCM_VERSION_TAG = 3.0.6
 POETRY_HASH = $(shell shasum -a 512 poetry.lock | cut -c 1-8)
+GRAND_CHALLENGE_HTTP_REPOSITORY_URI = public.ecr.aws/m3y0m7n5/grand-challenge/http
+GRAND_CHALLENGE_WEB_REPOSITORY_URI = public.ecr.aws/m3y0m7n5/grand-challenge/web
+GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI = public.ecr.aws/m3y0m7n5/grand-challenge/web-base
+GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI = public.ecr.aws/m3y0m7n5/grand-challenge/web-test-base
 
 
 build_web_test:
-	@docker pull grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
+	@docker pull $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
 		docker buildx build \
 			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 			--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
 			--target test-base \
-			-t grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) \
+			-t $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) \
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
@@ -19,19 +23,21 @@ build_web_test:
 		--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--build-arg POETRY_HASH=$(POETRY_HASH) \
+		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
+		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
 		--target test \
-		-t grandchallenge/web-test:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
-		-t grandchallenge/web-test:latest \
+		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI)-test:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
+		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI)-test:latest \
 		-f dockerfiles/web/Dockerfile \
 		.
 
 build_web_dist:
-	@docker pull grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
+	@docker pull $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) || { \
 		docker buildx build \
 			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 			--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
 			--target base \
-			-t grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) \
+			-t $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) \
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
@@ -40,55 +46,35 @@ build_web_dist:
 		--build-arg GDCM_VERSION_TAG=$(GDCM_VERSION_TAG) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--build-arg POETRY_HASH=$(POETRY_HASH) \
+		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
+		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
 		--target dist \
-		-t grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
-		-t grandchallenge/web:latest \
+		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
+		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest \
 		-f dockerfiles/web/Dockerfile \
 		.
 
 build_http:
 	docker buildx build \
-		-t grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
-		-t grandchallenge/http:latest \
+		-t $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
+		-t $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest \
 		dockerfiles/http
 
 push_web_base:
-	docker push grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
-
-push_web_base_ecr:
-	docker tag grandchallenge/web-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
 	docker push $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
 
 push_web_test_base:
-	docker push grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
-
-push_web_test_base_ecr:
-	docker tag grandchallenge/web-test-base:$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH) $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
 	docker push $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(GDCM_VERSION_TAG)-$(POETRY_HASH)
 
 push_web:
-	docker push grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
-	docker push grandchallenge/web:latest
-
-push_web_ecr:
-	docker tag grandchallenge/web:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
 	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
-	docker tag grandchallenge/web:latest $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest
 	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest
 
 push_http:
-	docker push grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
-	docker push grandchallenge/http:latest
-
-push_http_ecr:
-	docker tag grandchallenge/http:$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
 	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
-	docker tag grandchallenge/http:latest $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest
 	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest
 
 build: build_web_test build_web_dist build_http
-
-push: push_web_base push_web_test_base push_web push_http
 
 migrate:
 	docker-compose run --rm web python manage.py migrate

@@ -91,23 +91,16 @@ jobs:
       - name: Build the distributable containers
         run: |
           make build
-      - name: Push the containers
-        run: |
-          echo $DOCKER_PASSWORD | docker login --username $DOCKER_USER --password-stdin
-          make push
-        env:
-          DOCKER_USER: grandchallenge
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push to ECR
         run: |
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_BASE_REGISTRY_ENDPOINT}
-          make push_web_base_ecr
+          make push_web_base
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_TEST_BASE_REGISTRY_ENDPOINT}
-          make push_web_test_base_ecr
+          make push_web_test_base
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_WEB_REGISTRY_ENDPOINT}
-          make push_web_ecr
+          make push_web
           aws ecr-public get-login-password | docker login --username AWS --password-stdin ${GRAND_CHALLENGE_HTTP_REGISTRY_ENDPOINT}
-          make push_http_ecr
+          make push_http
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}

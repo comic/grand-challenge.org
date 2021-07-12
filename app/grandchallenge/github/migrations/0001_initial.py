@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                     models.FileField(
                         null=True,
                         storage=grandchallenge.core.storage.PrivateS3Storage(),
-                        upload_to=grandchallenge.github.models.tarball_path,
+                        upload_to=grandchallenge.github.models.zipfile_path,
                     ),
                 ),
             ],

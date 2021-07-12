@@ -1,4 +1,4 @@
-from celery import chord, group, shared_task
+from celery import chain, chord, group, shared_task
 from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -23,6 +23,10 @@ from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.subdomains.utils import reverse
 
 
+class ImageImportError(ValueError):
+    pass
+
+
 @shared_task
 def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
     start_jobs = execute_algorithm_job_for_inputs.signature(
@@ -30,12 +34,17 @@ def run_algorithm_job_for_inputs(*, job_pk, upload_pks):
     )
     if upload_pks:
         image_tasks = group(
-            add_images_to_component_interface_value.signature(
-                kwargs={
-                    "component_interface_value_pk": civ_pk,
-                    "upload_pk": upload_pk,
-                },
-                immutable=True,
+            chain(
+                build_images.signature(
+                    kwargs={"upload_session_pk": upload_pk}, immutable=True
+                ),
+                add_images_to_component_interface_value.signature(
+                    kwargs={
+                        "component_interface_value_pk": civ_pk,
+                        "upload_session_pk": upload_pk,
+                    },
+                    immutable=True,
+                ),
             )
             for civ_pk, upload_pk in upload_pks.items()
         )
@@ -63,9 +72,12 @@ def on_chord_error(self, task_id, *args, **kwargs):
             f"Job can't be started, input is missing for interface(s):"
             f" {list(c.interface.title for c in missing_inputs)} "
         )
+
     res = self.AsyncResult(task_id).result
-    if isinstance(res, Exception):
+
+    if isinstance(res, ImageImportError):
         error_message += str(res)
+
     job.update_status(
         status=job.FAILURE, error_message=error_message,
     )
@@ -75,20 +87,16 @@ def on_chord_error(self, task_id, *args, **kwargs):
 
 @shared_task
 def add_images_to_component_interface_value(
-    *, component_interface_value_pk, upload_pk
+    *, component_interface_value_pk, upload_session_pk
 ):
-    session = RawImageUploadSession.objects.get(pk=upload_pk)
-    session.status = RawImageUploadSession.REQUEUED
-    session.save()
-
-    build_images(upload_session_pk=upload_pk)
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
     if session.image_set.count() != 1:
         error_message = "Image imports should result in a single image"
         session.status = RawImageUploadSession.FAILURE
         session.error_message = error_message
         session.save()
-        raise ValueError(error_message)
+        raise ImageImportError(error_message)
 
     civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
     civ.image = session.image_set.get()
