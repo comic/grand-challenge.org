@@ -14,9 +14,6 @@ def init_publication_permissions(*_, **__):
     assign_perm(
         f"{Publication._meta.app_label}.add_{Publication._meta.model_name}", g
     )
-    assign_perm(
-        f"{Publication._meta.app_label}.view_{Publication._meta.model_name}", g
-    )
 
 
 class PublicationsConfig(AppConfig):

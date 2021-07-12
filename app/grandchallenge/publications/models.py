@@ -150,8 +150,4 @@ class Publication(models.Model):
 
     @property
     def authors(self):
-        authors = []
-        match = re.search(r".+?\.", self.citation)
-        for author in re.split(",", match.group()):
-            authors.append(re.split(r"\s", re.sub(r"^\s", "", author))[0])
-        return authors
+        return [a["family"] for a in self.csl.get("author", [])]

@@ -3,6 +3,7 @@
 {% load publication_extras %}
 {% load guardian_tags %}
 {% load url %}
+{% load bleach %}
 
 
 {% block title %}Publications - {{ block.super }}{% endblock %}
@@ -26,7 +27,7 @@
             {% for publication in object_list %}
                 <li class="list-group-item p-0">
                     <div class="py-2 pl-3">
-                        {{ publication.citation|safe }}
+                        {{ publication.citation|clean }}
                     </div>
                     <div class="pt-1 pb-2 pl-3">
                         <a class="btn btn-outline-primary btn-sm mb-1 mr-1" href="{{ publication.url }}"><i class="fa fa-link"></i></a>

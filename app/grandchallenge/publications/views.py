@@ -16,19 +16,30 @@ class PublicationList(LoginRequiredMixin, FilterMixin, ListView):
     filter_class = PublicationFilter
 
     def get_queryset(self):
-        return super().get_queryset().order_by("-created")
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                "algorithm_set",
+                "archive_set",
+                "readerstudy_set",
+                "challenge_set",
+                "externalchallenge_set",
+            )
+            .order_by("-created")
+        )
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data()
         num_citations = 0
-        for pub in Publication.objects.all():
+        for pub in context["object_list"]:
             try:
                 num_citations += pub.referenced_by_count
             except TypeError:
                 continue
         context.update(
             {
-                "num_publications": Publication.objects.all().count(),
+                "num_publications": context["object_list"].count(),
                 "num_citations": num_citations,
             }
         )
