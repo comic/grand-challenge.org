@@ -1,9 +1,10 @@
 from actstream import action
+from actstream.actions import follow, unfollow
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import m2m_changed, post_save, pre_save
 from django.dispatch import receiver
 from guardian.utils import get_anonymous_user
 
@@ -60,3 +61,33 @@ def process_permission_request_update(sender, instance, *_, **__):
             action.send(
                 sender=instance, verb="was rejected",
             )
+
+
+@receiver(m2m_changed, sender=Group.user_set.through)
+def update_editor_follows(
+    sender, instance, action, reverse, model, pk_set, **_
+):
+
+    if action not in ["post_add", "pre_clear"]:
+        # nothing to do for the other actions
+        return
+
+    changed_object = model.objects.filter(pk__in=pk_set).get()
+    if hasattr(changed_object, "editors_of_algorithm"):
+        follow_object = changed_object.editors_of_algorithm
+    elif hasattr(changed_object, "editors_of_archive"):
+        follow_object = changed_object.editors_of_archive
+    elif hasattr(changed_object, "editors_of_readerstudy"):
+        follow_object = changed_object.editors_of_readerstudy
+    else:
+        follow_object = []
+
+    if action == "post_add" and follow_object:
+        follow(
+            user=instance,
+            obj=follow_object,
+            actor_only=False,
+            send_action=False,
+        )
+    elif action == "pre_clear" and follow_object:
+        unfollow(user=instance, obj=follow_object, send_action=False)

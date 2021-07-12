@@ -4,7 +4,7 @@ from datetime import timedelta
 from itertools import chain
 
 from actstream import action
-from actstream.actions import follow, unfollow
+from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -302,11 +302,9 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
     def add_editor(self, user):
-        follow(user=user, obj=self, actor_only=False, send_action=False)
         return user.groups.add(self.editors_group)
 
     def remove_editor(self, user):
-        unfollow(user=user, obj=self, send_action=False)
         return user.groups.remove(self.editors_group)
 
     def is_user(self, user):
