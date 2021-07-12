@@ -1,5 +1,6 @@
 import copy
 import datetime
+from base64 import b64decode
 from uuid import uuid4
 
 from botocore.signers import CloudFrontSigner
@@ -97,10 +98,13 @@ class ProtectedS3Storage(S3Storage):
 
     @property
     def _cloudfront_signer(self):
-        with open(settings.CLOUDFRONT_PRIVATE_KEY_PATH, "rb") as key_file:
-            private_key = serialization.load_pem_private_key(
-                key_file.read(), password=None, backend=default_backend()
-            )
+        key_bytes = b64decode(
+            settings.CLOUDFRONT_PRIVATE_KEY_BASE64.encode("ascii")
+        )
+
+        private_key = serialization.load_pem_private_key(
+            key_bytes, password=None, backend=default_backend()
+        )
 
         return CloudFrontSigner(
             settings.CLOUDFRONT_KEY_PAIR_ID,
