@@ -17,7 +17,10 @@ from grandchallenge.cases.views import (
 from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.github.views import github_webhook
 from grandchallenge.jqfileupload.views import StagedFileViewSet
-from grandchallenge.notifications.views import NotificationViewSet
+from grandchallenge.notifications.views import (
+    FollowViewSet,
+    NotificationViewSet,
+)
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
@@ -152,6 +155,9 @@ router.register(
     ETDRSGridAnnotationViewSet,
     basename="retina-etdrs-grid-annotation",
 )
+
+# Follows (Subscriptions)
+router.register(r"subscriptions", FollowViewSet, basename="follow")
 
 # Workstations
 router.register(

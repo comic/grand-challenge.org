@@ -12,10 +12,16 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.core.filters import FilterMixin
-from grandchallenge.notifications.filters import NotificationFilter
+from grandchallenge.notifications.filters import (
+    FollowFilter,
+    NotificationFilter,
+)
 from grandchallenge.notifications.forms import FollowForm
 from grandchallenge.notifications.models import Notification
-from grandchallenge.notifications.serializers import NotificationSerializer
+from grandchallenge.notifications.serializers import (
+    FollowSerializer,
+    NotificationSerializer,
+)
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
     prefetch_nested_generic_foreign_key_objects,
@@ -48,6 +54,22 @@ class NotificationViewSet(
         return response
 
 
+class FollowViewSet(
+    mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet,
+):
+    queryset = Follow.objects.all()
+    serializer_class = FollowSerializer
+    permission_classes = (DjangoObjectPermissions,)
+    filter_backends = [ObjectPermissionsFilter]
+
+    def destroy(self, request, *args, **kwargs):
+        response = super().destroy(request, *args, **kwargs)
+        messages.add_message(
+            request, messages.SUCCESS, "Subscription successfully deleted.",
+        )
+        return response
+
+
 class NotificationList(
     LoginRequiredMixin, FilterMixin, PermissionListMixin, ListView
 ):
@@ -62,13 +84,20 @@ class NotificationList(
         )
 
 
-class FollowList(LoginRequiredMixin, PermissionListMixin, ListView):
+class FollowList(
+    LoginRequiredMixin, FilterMixin, PermissionListMixin, ListView
+):
     model = Follow
     permission_required = "view_follow"
+    filter_class = FollowFilter
+    paginate_by = 50
 
     def get_queryset(self, *args, **kwargs):
         return prefetch_generic_foreign_key_objects(
-            super().get_queryset().select_related("user")
+            super()
+            .get_queryset()
+            .select_related("user")
+            .order_by("content_type")
         )
 
 
