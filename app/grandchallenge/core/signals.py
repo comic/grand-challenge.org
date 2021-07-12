@@ -65,21 +65,24 @@ def process_permission_request_update(sender, instance, *_, **__):
 
 @receiver(m2m_changed, sender=Group.user_set.through)
 def update_editor_follows(
-    sender, instance, action, reverse, model, pk_set, **_
+    sender, instance, action, reverse, using, model, pk_set, **_
 ):
 
-    if action not in ["post_add", "pre_clear"]:
+    if action not in ["post_add", "pre_remove"]:
         # nothing to do for the other actions
         return
 
-    changed_object = model.objects.filter(pk__in=pk_set).get()
-    if hasattr(changed_object, "editors_of_algorithm"):
-        follow_object = changed_object.editors_of_algorithm
-    elif hasattr(changed_object, "editors_of_archive"):
-        follow_object = changed_object.editors_of_archive
-    elif hasattr(changed_object, "editors_of_readerstudy"):
-        follow_object = changed_object.editors_of_readerstudy
-    else:
+    try:
+        changed_object = model.objects.filter(pk__in=pk_set).all()
+        if hasattr(changed_object, "editors_of_algorithm"):
+            follow_object = changed_object.editors_of_algorithm
+        elif hasattr(changed_object, "editors_of_archive"):
+            follow_object = changed_object.editors_of_archive
+        elif hasattr(changed_object, "editors_of_readerstudy"):
+            follow_object = changed_object.editors_of_readerstudy
+        else:
+            follow_object = []
+    except model.DoesNotExist:
         follow_object = []
 
     if action == "post_add" and follow_object:
@@ -89,5 +92,5 @@ def update_editor_follows(
             actor_only=False,
             send_action=False,
         )
-    elif action == "pre_clear" and follow_object:
+    elif action == "pre_remove" and follow_object:
         unfollow(user=instance, obj=follow_object, send_action=False)

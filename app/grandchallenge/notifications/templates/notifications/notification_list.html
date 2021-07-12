@@ -45,12 +45,12 @@
                             {% if not object.read %}
                                 <span class="text-primary align-middle ml-2"><i class="fa fa-circle pl-2"></i></span>
                             {% endif %}
-                            &nbsp;
-                            {% if object.action.actor|get_content_type == 3 %}
-                                {{ object.action.actor|user_profile_link }}
-                            {% elif object.action.actor|get_content_type == 35 or object.action.actor|get_content_type == 70 or object.action.actor|get_content_type == 39 %}
-                                Your registration request for <a href="{{ object.action.actor.base_object.get_absolute_url }}">{{ object.action.actor.object_name }}</a>
-                            {% endif %}
+                            {% get_content_type object.action.actor as actor_ct %}
+                                {% if actor_ct.model == 'user' %}
+                                    {{ object.action.actor|user_profile_link }}
+                                {% elif actor_ct.model == 'algorithmpermissionrequest' or actor_ct.model == 'readerstudypermissionrequest' or actor_ct.model == 'archivepermissionrequest' %}
+                                    Your registration request for <a href="{{ object.action.actor.base_object.get_absolute_url }}">{{ object.action.actor.object_name }}</a>
+                                {% endif %}
                             {{ object.action.verb }}
                             {% if object.action.action_object %}
                                 <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
