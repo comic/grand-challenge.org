@@ -138,11 +138,11 @@
             </dd>
         {% endif %}
 
-        {% if object.submission.phase.show_publication_url %}
-            <dt>Publication:</dt>
+        {% if object.submission.phase.show_supplementary_url %}
+            <dt>{{ object.submission.phase.supplementary_url_label }}:</dt>
             <dd>
-                {% if object.submission.publication_url %}
-                    <a href="{{ object.submission.publication_url }}">
+                {% if object.submission.supplementary_url %}
+                    <a href="{{ object.submission.supplementary_url }}">
                         <i class="fa fa-file"></i>
                     </a>
                 {% endif %}

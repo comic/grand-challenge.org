@@ -54,7 +54,7 @@ class SubmissionSerializer(ModelSerializer):
             "comment",
             "predictions_file",
             "supplementary_file",
-            "publication_url",
+            "supplementary_url",
         )
 
 

@@ -1,6 +1,7 @@
 import pytest
 
 from grandchallenge.evaluation.forms import SubmissionForm
+from grandchallenge.evaluation.models import Phase
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -98,3 +99,45 @@ class TestSubmissionForm:
         )
 
         assert bool("creator" in form.errors) is not is_verified
+
+
+@pytest.mark.django_db
+class TestSubmissionFormOptions:
+    def test_no_supplementary_url(self):
+        form = SubmissionForm(
+            user=UserFactory(), supplementary_url_choice=Phase.OFF
+        )
+        assert "supplementary_url" not in form.fields
+
+    def test_supplementary_url_optional(self):
+        form = SubmissionForm(
+            user=UserFactory(), supplementary_url_choice=Phase.OPTIONAL
+        )
+        assert "supplementary_url" in form.fields
+        assert form.fields["supplementary_url"].required is False
+
+    def test_supplementary_url_required(self):
+        form = SubmissionForm(
+            user=UserFactory(), supplementary_url_choice=Phase.REQUIRED
+        )
+        assert "supplementary_url" in form.fields
+        assert form.fields["supplementary_url"].required is True
+
+    def test_supplementary_url_label(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            supplementary_url_choice=Phase.OPTIONAL,
+            supplementary_url_label="TEST",
+        )
+        assert form.fields["supplementary_url"].label == "TEST"
+
+    def test_supplementary_url_help_text(self):
+        form = SubmissionForm(
+            user=UserFactory(),
+            supplementary_url_choice=Phase.OPTIONAL,
+            supplementary_url_help_text="<script>TEST</script>",
+        )
+        assert (
+            form.fields["supplementary_url"].help_text
+            == "&lt;script&gt;TEST&lt;/script&gt;"
+        )

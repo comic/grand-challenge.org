@@ -1,3 +1,4 @@
+from bleach import clean
 from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
@@ -40,7 +41,9 @@ submission_options = (
     "supplementary_file_choice",
     "supplementary_file_label",
     "supplementary_file_help_text",
-    "publication_url_choice",
+    "supplementary_url_choice",
+    "supplementary_url_label",
+    "supplementary_url_help_text",
 )
 
 scoring_options = (
@@ -58,7 +61,7 @@ scoring_options = (
 leaderboard_options = (
     "display_submission_comments",
     "show_supplementary_file_link",
-    "show_publication_url",
+    "show_supplementary_url",
     "evaluation_comparison_observable_url",
 )
 
@@ -159,7 +162,7 @@ submission_fields = (
     "creator",
     "comment",
     "supplementary_file",
-    "publication_url",
+    "supplementary_url",
     "chunked_upload",
 )
 
@@ -183,7 +186,7 @@ class SubmissionForm(forms.ModelForm):
         ),
     )
 
-    def __init__(
+    def __init__(  # noqa: C901
         self,
         *args,
         user,
@@ -193,7 +196,9 @@ class SubmissionForm(forms.ModelForm):
         supplementary_file_choice=Phase.OFF,
         supplementary_file_label="",
         supplementary_file_help_text="",
-        publication_url_choice=Phase.OFF,
+        supplementary_url_choice=Phase.OFF,
+        supplementary_url_label="",
+        supplementary_url_help_text="",
         **kwargs,
     ):
         """
@@ -211,19 +216,27 @@ class SubmissionForm(forms.ModelForm):
             self.fields["supplementary_file"].label = supplementary_file_label
 
         if supplementary_file_help_text:
-            self.fields[
-                "supplementary_file"
-            ].help_text = supplementary_file_help_text
+            self.fields["supplementary_file"].help_text = clean(
+                supplementary_file_help_text
+            )
 
         if supplementary_file_choice == Phase.REQUIRED:
             self.fields["supplementary_file"].required = True
         elif supplementary_file_choice == Phase.OFF:
             del self.fields["supplementary_file"]
 
-        if publication_url_choice == Phase.REQUIRED:
-            self.fields["publication_url"].required = True
-        elif publication_url_choice == Phase.OFF:
-            del self.fields["publication_url"]
+        if supplementary_url_label:
+            self.fields["supplementary_url"].label = supplementary_url_label
+
+        if supplementary_url_help_text:
+            self.fields["supplementary_url"].help_text = clean(
+                supplementary_url_help_text
+            )
+
+        if supplementary_url_choice == Phase.REQUIRED:
+            self.fields["supplementary_url"].required = True
+        elif supplementary_url_choice == Phase.OFF:
+            del self.fields["supplementary_url"]
 
         if algorithm_submission:
             del self.fields["chunked_upload"]

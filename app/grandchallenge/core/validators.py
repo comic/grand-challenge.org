@@ -95,8 +95,17 @@ class ExtensionValidator:
 
 
 def get_file_mimetype(file):
-    with file.open("rb") as f:
-        mimetype = magic.from_buffer(f.read(2048), mime=True)
+    n_bytes = 2048
+
+    try:
+        file.seek(0)
+        mimetype = magic.from_buffer(file.read(n_bytes), mime=True)
+        file.seek(0)
+    except AttributeError:
+        # File not open, so manage that here
+        with file.open("rb") as f:
+            mimetype = magic.from_buffer(f.read(n_bytes), mime=True)
+
     return mimetype
 
 

@@ -270,7 +270,7 @@ class Migration(migrations.Migration):
                             ("req", "Required"),
                         ],
                         default="off",
-                        help_text="Show a publication url field on the submission page so that users can submit a link to a publication that corresponds to their submission. Off turns this feature off, Optional means that including the url is optional for the user, Required means that the user must provide an url.",
+                        help_text="Show a supplementary url field on the submission page so that users can submit a link to a publication that corresponds to their submission. Off turns this feature off, Optional means that including the url is optional for the user, Required means that the user must provide an url.",
                         max_length=3,
                     ),
                 ),
@@ -278,7 +278,7 @@ class Migration(migrations.Migration):
                     "show_publication_url",
                     models.BooleanField(
                         default=False,
-                        help_text="Show a link to the publication on the results page",
+                        help_text="Show a link to the supplementary url on the results page",
                     ),
                 ),
                 (
@@ -463,7 +463,7 @@ class Migration(migrations.Migration):
                     "publication_url",
                     models.URLField(
                         blank=True,
-                        help_text="A URL for the publication associated with this submission.",
+                        help_text="A URL associated with this submission.",
                     ),
                 ),
                 (
