@@ -295,7 +295,7 @@ class StagedAjaxFile:
 
         Returns
         -------
-        :class:`OpenedStagedAjaxFile` represeting the opened file.
+        :class:`OpenedStagedAjaxFile` representing the opened file.
         """
         if not self.is_complete:
             raise OSError("incomplete upload")

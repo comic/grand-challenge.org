@@ -210,8 +210,9 @@ def test_missing_file():
         tested_file.size
     with pytest.raises(NotFoundError):
         tested_file.delete()
-    with pytest.raises(IOError):
-        tested_file.open()
+    with pytest.raises(OSError):
+        with tested_file.open() as f:
+            f.read()
 
 
 @pytest.mark.django_db

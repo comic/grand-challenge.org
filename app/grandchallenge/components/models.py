@@ -9,6 +9,7 @@ from typing import Tuple, Type
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
@@ -464,7 +465,7 @@ class ComponentInterface(models.Model):
         if self.save_in_object_store:
             civ = ComponentInterfaceValue.objects.create(interface=self)
             try:
-                civ.file = File(file, name=str(output_file.name))
+                civ.file = ContentFile(file.read(), name=str(output_file.name))
                 civ.full_clean()
                 civ.save()
             except ValidationError:
