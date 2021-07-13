@@ -7,9 +7,7 @@ from tests.components_tests.factories import ComponentInterfaceValueFactory
 @pytest.mark.django_db
 def test_str():
     model = ArchiveFactory()
-    assert str(model) == "<{} {}>".format(
-        model.__class__.__name__, model.title
-    )
+    assert str(model) == f"{model.title}"
 
 
 def create_archive_items_for_images(images, archive):

@@ -54,8 +54,11 @@ class NotificationFilter(FilterSet):
 
 
 FOLLOW_CHOICES = (
-    ("forum_forum", "Forum subscriptions"),
-    ("topic_forum_conversation", "Topic subscriptions"),
+    ("forum_forum", "Forums"),
+    ("topic_forum_conversation", "Topics"),
+    ("readerstudy_reader_studies", "Reader studies"),
+    ("archive_archives", "Archives"),
+    ("algorithm_algorithms", "Algorithms"),
 )
 
 

@@ -1,18 +1,15 @@
+from actstream import action
+from actstream.actions import follow, unfollow
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import m2m_changed, post_save, pre_save
 from django.dispatch import receiver
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.archives.models import ArchivePermissionRequest
-from grandchallenge.core.emails import (
-    send_permission_denied_email,
-    send_permission_granted_email,
-    send_permission_request_email,
-)
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
 
@@ -45,7 +42,7 @@ def add_user_to_groups(
 @receiver(pre_save, sender=AlgorithmPermissionRequest)
 @receiver(pre_save, sender=ArchivePermissionRequest)
 @receiver(pre_save, sender=ReaderStudyPermissionRequest)
-def process_permission_request(sender, instance, *_, **__):
+def process_permission_request_update(sender, instance, *_, **__):
     try:
         old_values = sender.objects.get(pk=instance.pk)
     except ObjectDoesNotExist:
@@ -54,11 +51,54 @@ def process_permission_request(sender, instance, *_, **__):
     old_status = old_values.status if old_values else None
 
     if instance.status != old_status:
-        if instance.status == instance.PENDING:
-            send_permission_request_email(instance)
-        elif instance.status == instance.ACCEPTED:
+        if instance.status == instance.ACCEPTED:
             instance.add_method(instance.user)
-            send_permission_granted_email(instance)
-        else:
+            action.send(
+                sender=instance, verb="was accepted",
+            )
+        elif instance.status == instance.REJECTED:
             instance.remove_method(instance.user)
-            send_permission_denied_email(instance)
+            action.send(
+                sender=instance, verb="was rejected",
+            )
+
+
+@receiver(m2m_changed, sender=Group.user_set.through)
+def update_editor_follows(  # noqa: C901
+    instance, action, reverse, model, pk_set, **_
+):  # noqa: C901
+
+    if action not in ["post_add", "pre_remove", "pre_clear"]:
+        # nothing to do for the other actions
+        return
+
+    if reverse:
+        groups = [instance]
+        if pk_set is None:
+            users = instance.user_set.all()
+        else:
+            users = model.objects.filter(pk__in=pk_set).all()
+    else:
+        if pk_set is None:
+            groups = instance.groups.all()
+        else:
+            groups = model.objects.filter(pk__in=pk_set).all()
+        users = [instance]
+
+    follow_objects = []
+    for group in groups:
+        if hasattr(group, "editors_of_algorithm"):
+            follow_objects.append(group.editors_of_algorithm)
+        elif hasattr(group, "editors_of_archive"):
+            follow_objects.append(group.editors_of_archive)
+        elif hasattr(group, "editors_of_readerstudy"):
+            follow_objects.append(group.editors_of_readerstudy)
+
+    for user in users:
+        for obj in follow_objects:
+            if action == "post_add":
+                follow(
+                    user=user, obj=obj, actor_only=False, send_action=False,
+                )
+            elif action == "pre_remove" or action == "pre_clear":
+                unfollow(user=user, obj=obj, send_action=False)

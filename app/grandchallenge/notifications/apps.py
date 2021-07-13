@@ -36,6 +36,16 @@ class NotificationsConfig(AppConfig):
         registry.register(apps.get_model("forum.Forum"))
         registry.register(apps.get_model("forum_conversation.Topic"))
         registry.register(apps.get_model("forum_conversation.Post"))
+        registry.register(apps.get_model("algorithms.Algorithm"))
+        registry.register(
+            apps.get_model("algorithms.AlgorithmPermissionRequest")
+        )
+        registry.register(apps.get_model("archives.Archive"))
+        registry.register(apps.get_model("archives.ArchivePermissionRequest"))
+        registry.register(apps.get_model("reader_studies.ReaderStudy"))
+        registry.register(
+            apps.get_model("reader_studies.ReaderStudyPermissionRequest")
+        )
         post_migrate.connect(init_notification_permissions, sender=self)
 
         # noinspection PyUnresolvedReferences

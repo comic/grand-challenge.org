@@ -1,4 +1,5 @@
 import pytest
+from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
@@ -156,6 +157,7 @@ def test_archive_create(client, uploaded_image):
     assert archive.slug == "foo-bar"
     assert archive.is_editor(user=creator)
     assert not archive.is_user(user=creator)
+    assert is_following(user=creator, obj=archive)
 
 
 @pytest.mark.django_db
