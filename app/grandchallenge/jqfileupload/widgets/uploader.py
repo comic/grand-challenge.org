@@ -297,12 +297,6 @@ class StagedAjaxFile:
         -------
         :class:`OpenedStagedAjaxFile` representing the opened file.
         """
-        if not self.is_complete:
-            raise OSError("incomplete upload")
-
-        if mode != "rb":
-            raise ValueError("Can only be opened in rb mode")
-
         f = OpenedStagedAjaxFile(self.__uuid)
         try:
             yield f
