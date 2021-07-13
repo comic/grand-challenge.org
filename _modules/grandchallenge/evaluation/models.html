@@ -817,11 +817,7 @@
             <span class="n">dest_file</span> <span class="o">=</span> <span class="s2">&quot;/tmp/submission-src&quot;</span>
             <span class="n">put_file</span><span class="p">(</span><span class="n">container</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">file</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="n">dest_file</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s2">&quot;content_type&quot;</span><span class="p">):</span>
-                <span class="n">mimetype</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">content_type</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                    <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">mimetype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;application/zip&quot;</span><span class="p">:</span>
                 <span class="c1"># Unzip the file in the container rather than in the python</span>
