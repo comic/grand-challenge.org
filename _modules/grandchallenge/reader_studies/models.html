@@ -163,6 +163,9 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">actstream</span> <span class="kn">import</span> <span class="n">action</span>
+<span class="kn">from</span> <span class="nn">actstream.actions</span> <span class="kn">import</span> <span class="n">follow</span>
+<span class="kn">from</span> <span class="nn">actstream.models</span> <span class="kn">import</span> <span class="n">Follow</span>
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
@@ -604,6 +607,10 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">assign_workstation_permissions</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Follow</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
 
 <div class="viewcode-block" id="ReaderStudy.is_editor"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_editor">[docs]</a>    <span class="k">def</span> <span class="nf">is_editor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Checks if ``user`` is an editor for this ``ReaderStudy``.&quot;&quot;&quot;</span>
@@ -1797,6 +1804,23 @@
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object_name</span><span class="si">}</span><span class="s2"> registration request by user </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<div class="viewcode-block" id="ReaderStudyPermissionRequest.save"><a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="n">follow</span><span class="p">(</span>
+                <span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">actor_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">send_action</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">action</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
+                <span class="n">sender</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+                <span class="n">verb</span><span class="o">=</span><span class="s2">&quot;requested access to&quot;</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_object</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Follow</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="n">RequestBase</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;reader_study&quot;</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">),)</span></div>

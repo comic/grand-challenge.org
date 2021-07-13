@@ -525,6 +525,9 @@ a set of questions on a set of images (cases).</p>
 <li><p><strong>modalities</strong> (<em>ManyToManyField</em>) – Modalities. The imaging modalities contained in this reader study</p></li>
 <li><p><strong>structures</strong> (<em>ManyToManyField</em>) – Structures. The structures contained in this reader study</p></li>
 <li><p><strong>organizations</strong> (<em>ManyToManyField</em>) – Organizations. The organizations associated with this reader study</p></li>
+<li><p><strong>actor_actions</strong> (<em>GenericRelation</em>) – Actor actions</p></li>
+<li><p><strong>target_actions</strong> (<em>GenericRelation</em>) – Target actions</p></li>
+<li><p><strong>action_object_actions</strong> (<em>GenericRelation</em>) – Action object actions</p></li>
 </ul>
 </dd>
 </dl>
@@ -728,6 +731,9 @@ the needed info for that.</p>
 <li><p><strong>status</strong> (<em>CharField</em>) – Status</p></li>
 <li><p><strong>reader_study</strong> (ForeignKey to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study. To which reader study has the user requested access?</p></li>
 <li><p><strong>rejection_text</strong> (<em>TextField</em>) – Rejection text. The text that will be sent to the user with the reason for their rejection.</p></li>
+<li><p><strong>actor_actions</strong> (<em>GenericRelation</em>) – Actor actions</p></li>
+<li><p><strong>target_actions</strong> (<em>GenericRelation</em>) – Target actions</p></li>
+<li><p><strong>action_object_actions</strong> (<em>GenericRelation</em>) – Action object actions</p></li>
 </ul>
 </dd>
 </dl>
@@ -740,6 +746,16 @@ the needed info for that.</p>
 <dt id="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.MultipleObjectsReturned">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></code><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save">
+<code class="sig-name descname"><span class="pre">save</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyPermissionRequest.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyPermissionRequest.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the current instance. Override this in a subclass if you want to
+control the saving process.</p>
+<p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
+that the “save” must be an SQL insert or update (or equivalent for
+non-SQL backends), respectively. Normally, they should not be set.</p>
+</dd></dl>
 
 </dd></dl>
 
