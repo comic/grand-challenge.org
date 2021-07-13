@@ -275,7 +275,7 @@
     <span class="n">OFF</span> <span class="o">=</span> <span class="s2">&quot;off&quot;</span>
     <span class="n">OPTIONAL</span> <span class="o">=</span> <span class="s2">&quot;opt&quot;</span>
     <span class="n">REQUIRED</span> <span class="o">=</span> <span class="s2">&quot;req&quot;</span>
-    <span class="n">PUBLICATION_LINK_CHOICES</span> <span class="o">=</span> <span class="n">SUPPLEMENTARY_FILE_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">SUPPLEMENTARY_URL_CHOICES</span> <span class="o">=</span> <span class="n">SUPPLEMENTARY_FILE_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">OFF</span><span class="p">,</span> <span class="s2">&quot;Off&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">OPTIONAL</span><span class="p">,</span> <span class="s2">&quot;Optional&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">REQUIRED</span><span class="p">,</span> <span class="s2">&quot;Required&quot;</span><span class="p">),</span>
@@ -455,21 +455,39 @@
             <span class="s2">&quot;page.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">publication_url_choice</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+    <span class="n">supplementary_url_choice</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="n">PUBLICATION_LINK_CHOICES</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">SUPPLEMENTARY_URL_CHOICES</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="n">OFF</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Show a publication url field on the submission page so that &quot;</span>
+            <span class="s2">&quot;Show a supplementary url field on the submission page so that &quot;</span>
             <span class="s2">&quot;users can submit a link to a publication that corresponds to &quot;</span>
             <span class="s2">&quot;their submission. Off turns this feature off, Optional means &quot;</span>
             <span class="s2">&quot;that including the url is optional for the user, Required means &quot;</span>
             <span class="s2">&quot;that the user must provide an url.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">show_publication_url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+    <span class="n">supplementary_url_label</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;Publication&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The label that will be used on the submission and results page &quot;</span>
+            <span class="s2">&quot;for the supplementary url. For example: Publication.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">supplementary_url_help_text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The help text to include on the submissions page to describe the &quot;</span>
+            <span class="s1">&#39;submissions url. Eg: &quot;A link to your publication.&quot;.&#39;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">show_supplementary_url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Show a link to the publication on the results page&quot;</span><span class="p">),</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Show a link to the supplementary url on the results page&quot;</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">daily_submission_limit</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
@@ -727,11 +745,8 @@
             <span class="s2">&quot;submissions.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">publication_url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span>
-        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;A URL for the publication associated with this submission.&quot;</span>
-        <span class="p">),</span>
+    <span class="n">supplementary_url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;A URL associated with this submission.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
