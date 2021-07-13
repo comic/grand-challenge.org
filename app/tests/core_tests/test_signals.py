@@ -31,6 +31,7 @@ def test_update_editor_follows_signal(client, factory, reverse):
             user.groups.remove(m1.editors_group)
         for user in [u1, u2, u3, u4]:
             user.groups.remove(m2.editors_group)
+
     else:
         g = Group.objects.filter(name=m1.editors_group).get()
         g.user_set.add(u1, u2, u3, u4)
@@ -44,3 +45,12 @@ def test_update_editor_follows_signal(client, factory, reverse):
     assert not is_following(u2, m2)
     assert not is_following(u3, m2)
     assert not is_following(u4, m2)
+
+    # Test clearing
+    if reverse:
+        u1.groups.clear()
+    else:
+        g = Group.objects.filter(name=m1.editors_group).get()
+        g.user_set.clear()
+
+    assert not is_following(u1, m1)

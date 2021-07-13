@@ -126,10 +126,6 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
 
         super().save(*args, **kwargs)
 
-        if adding:
-            for user in self.editors_group.user_set.all():
-                follow(user=user, obj=self, send_action=False)
-
         self.assign_permissions()
 
     def delete(self):

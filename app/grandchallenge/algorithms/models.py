@@ -185,8 +185,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
 
         if adding:
             self.set_default_interfaces()
-            for user in self.editors_group.user_set.all():
-                follow(user=user, obj=self, send_action=False)
 
         self.assign_permissions()
         self.assign_workstation_permissions()

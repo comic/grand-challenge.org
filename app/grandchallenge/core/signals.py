@@ -68,16 +68,21 @@ def update_editor_follows(  # noqa: C901
     instance, action, reverse, model, pk_set, **_
 ):  # noqa: C901
 
-    if action not in ["post_add", "pre_remove"]:
+    if action not in ["post_add", "pre_remove", "pre_clear"]:
         # nothing to do for the other actions
         return
 
     if reverse:
         groups = [instance]
-        users = model.objects.filter(pk__in=pk_set).all()
-
+        if pk_set is None:
+            users = instance.user_set.all()
+        else:
+            users = model.objects.filter(pk__in=pk_set).all()
     else:
-        groups = model.objects.filter(pk__in=pk_set).all()
+        if pk_set is None:
+            groups = instance.groups.all()
+        else:
+            groups = model.objects.filter(pk__in=pk_set).all()
         users = [instance]
 
     follow_objects = []
@@ -95,5 +100,5 @@ def update_editor_follows(  # noqa: C901
                 follow(
                     user=user, obj=obj, actor_only=False, send_action=False,
                 )
-            elif action == "pre_remove":
+            elif action == "pre_remove" or action == "pre_clear":
                 unfollow(user=user, obj=obj, send_action=False)
