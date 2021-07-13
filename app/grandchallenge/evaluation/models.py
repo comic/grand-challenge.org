@@ -115,7 +115,7 @@ class Phase(UUIDModel):
     OFF = "off"
     OPTIONAL = "opt"
     REQUIRED = "req"
-    PUBLICATION_LINK_CHOICES = SUPPLEMENTARY_FILE_CHOICES = (
+    SUPPLEMENTARY_URL_CHOICES = SUPPLEMENTARY_FILE_CHOICES = (
         (OFF, "Off"),
         (OPTIONAL, "Optional"),
         (REQUIRED, "Required"),
@@ -295,21 +295,39 @@ class Phase(UUIDModel):
             "page."
         ),
     )
-    publication_url_choice = models.CharField(
+    supplementary_url_choice = models.CharField(
         max_length=3,
-        choices=PUBLICATION_LINK_CHOICES,
+        choices=SUPPLEMENTARY_URL_CHOICES,
         default=OFF,
         help_text=(
-            "Show a publication url field on the submission page so that "
+            "Show a supplementary url field on the submission page so that "
             "users can submit a link to a publication that corresponds to "
             "their submission. Off turns this feature off, Optional means "
             "that including the url is optional for the user, Required means "
             "that the user must provide an url."
         ),
     )
-    show_publication_url = models.BooleanField(
+    supplementary_url_label = models.CharField(
+        max_length=32,
+        blank=True,
+        default="Publication",
+        help_text=(
+            "The label that will be used on the submission and results page "
+            "for the supplementary url. For example: Publication."
+        ),
+    )
+    supplementary_url_help_text = models.CharField(
+        max_length=128,
+        blank=True,
+        default="",
+        help_text=(
+            "The help text to include on the submissions page to describe the "
+            'submissions url. Eg: "A link to your publication.".'
+        ),
+    )
+    show_supplementary_url = models.BooleanField(
         default=False,
-        help_text=("Show a link to the publication on the results page"),
+        help_text=("Show a link to the supplementary url on the results page"),
     )
     daily_submission_limit = models.PositiveIntegerField(
         default=10,
@@ -567,11 +585,8 @@ class Submission(UUIDModel):
             "submissions."
         ),
     )
-    publication_url = models.URLField(
-        blank=True,
-        help_text=(
-            "A URL for the publication associated with this submission."
-        ),
+    supplementary_url = models.URLField(
+        blank=True, help_text="A URL associated with this submission.",
     )
 
     class Meta:
