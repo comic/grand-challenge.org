@@ -1,5 +1,6 @@
 import hashlib
 import uuid
+from contextlib import contextmanager
 from io import BufferedIOBase
 
 from django import forms
@@ -287,7 +288,8 @@ class StagedAjaxFile:
 
         return self.size is not None
 
-    def open(self):
+    @contextmanager
+    def open(self, mode="rb"):
         """
         Opens a file handle-like object for reading the file. Opens in read mode.
 
@@ -298,7 +300,14 @@ class StagedAjaxFile:
         if not self.is_complete:
             raise OSError("incomplete upload")
 
-        return OpenedStagedAjaxFile(self.__uuid)
+        if mode != "rb":
+            raise ValueError("Can only be opened in rb mode")
+
+        f = OpenedStagedAjaxFile(self.__uuid)
+        try:
+            yield f
+        finally:
+            f.close()
 
     def delete(self):
         query = self._raise_if_missing()

@@ -2,6 +2,7 @@ from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
@@ -14,7 +15,10 @@ from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.core.validators import (
+    ExtensionValidator,
+    MimeTypeValidator,
+)
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
@@ -164,7 +168,10 @@ class SubmissionForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
         widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
         label="Predictions File",
-        validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
+        validators=[
+            MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
+            ExtensionValidator(allowed_extensions=(".zip", ".csv")),
+        ],
     )
     algorithm = ModelChoiceField(
         queryset=None,
@@ -238,6 +245,17 @@ class SubmissionForm(forms.ModelForm):
 
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
+
+    def clean_chunked_upload(self):
+        chunked_upload = self.cleaned_data["chunked_upload"]
+
+        if (
+            sum([f.size for f in chunked_upload])
+            > settings.PREDICTIONS_FILE_MAX_BYTES
+        ):
+            raise ValidationError("Predictions file is too large.")
+
+        return chunked_upload
 
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]

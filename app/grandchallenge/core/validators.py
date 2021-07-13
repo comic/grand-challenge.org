@@ -16,6 +16,13 @@ class MimeTypeValidator:
         super().__init__()
 
     def __call__(self, value):
+        if isinstance(value, list):
+            for v in value:
+                self._validate_mimetype(v)
+        else:
+            self._validate_mimetype(value)
+
+    def _validate_mimetype(self, value):
         mimetype = get_file_mimetype(value)
         if mimetype.lower() not in self.allowed_types:
             raise ValidationError(
@@ -58,12 +65,11 @@ class ExtensionValidator:
         super().__init__()
 
     def __call__(self, value):
-        try:
-            self._validate_filepath(value.name)
-        except AttributeError:
-            # probably passed a list
+        if isinstance(value, list):
             for v in value:
                 self._validate_filepath(v.name)
+        else:
+            self._validate_filepath(value.name)
 
     def _validate_filepath(self, s):
         extensions = Path(s).suffixes
@@ -88,9 +94,9 @@ class ExtensionValidator:
         return hash(ExtensionValidator) + 7 * hash(self.allowed_extensions)
 
 
-def get_file_mimetype(f):
-    mimetype = magic.from_buffer(f.read(1024), mime=True)
-    f.seek(0)
+def get_file_mimetype(file):
+    with file.open("rb") as f:
+        mimetype = magic.from_buffer(f.read(2048), mime=True)
     return mimetype
 
 
