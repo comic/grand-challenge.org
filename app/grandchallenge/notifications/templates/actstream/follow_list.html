@@ -35,16 +35,18 @@
     <ul class="list-group">
         {% for follow in object_list %}
             {% get_content_type follow.follow_object as follow_ct %}
+            {% if not 'permissionrequest' in follow_ct.model %}
                 <li class="list-group-item p-1 pl-3">
                     <div class="d-flex justify-content-between">
                         <div class="mt-1 pt-2 p-0">
                         <input class="checkbox mr-2" name="checkbox" type="checkbox" id="{{ follow.pk }}"
                                    value="{{ follow.pk }}" data-url="{% url 'api:follow-detail' pk=follow.pk %}">
                             <a href="{{ follow.follow_object.get_absolute_url }}">{{ follow.follow_object }}</a>
-                            <span class="text-truncate font-italic text-muted align-middle mx-2 ">{{ follow_ct.name }} | subscribed to since {{ follow.started|date:'F j, Y' }} {% if forum.follow_object.last_post_on %}| last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
+                            <span class="text-truncate font-italic text-muted align-middle mx-2 ">{{ follow_ct.name|title }} | subscribed to since {{ follow.started|date:'F j, Y' }} {% if forum.follow_object.last_post_on %}| last activity on {{ forum.follow_object.last_post_on|date:'F j, Y, P' }}{% endif %}</span>
                         </div>
                     </div>
                 </li>
+            {% endif %}
         {% empty %}
             <br>You do not have any subscriptions.<br><br>
         {% endfor %}
