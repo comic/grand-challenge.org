@@ -133,6 +133,7 @@ AWS_S3_FILE_OVERWRITE = False
 # Note: deprecated in django storages 2.0
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
+AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
 
 # This is for storing files that should not be served to the public
@@ -1078,6 +1079,9 @@ MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 
 # The maximum size of all the files in an upload session in bytes
 UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
+
+# The maximum size of predictions files
+PREDICTIONS_FILE_MAX_BYTES = 1_073_741_824  # 1 GB
 
 # Some forms have a lot of data, such as a reader study update view
 # that can contain reports about the medical images

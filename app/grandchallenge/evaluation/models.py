@@ -657,11 +657,7 @@ class SubmissionEvaluator(Executor):
             dest_file = "/tmp/submission-src"
             put_file(container=writer, src=file, dest=dest_file)
 
-            if hasattr(file, "content_type"):
-                mimetype = file.content_type
-            else:
-                with file.open("rb") as f:
-                    mimetype = get_file_mimetype(f)
+            mimetype = get_file_mimetype(file)
 
             if mimetype.lower() == "application/zip":
                 # Unzip the file in the container rather than in the python
