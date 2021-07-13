@@ -64,33 +64,36 @@ def process_permission_request_update(sender, instance, *_, **__):
 
 
 @receiver(m2m_changed, sender=Group.user_set.through)
-def update_editor_follows(
-    sender, instance, action, reverse, using, model, pk_set, **_
-):
+def update_editor_follows(  # noqa: C901
+    instance, action, reverse, model, pk_set, **_
+):  # noqa: C901
 
     if action not in ["post_add", "pre_remove"]:
         # nothing to do for the other actions
         return
 
-    try:
-        changed_object = model.objects.filter(pk__in=pk_set).all()
-        if hasattr(changed_object, "editors_of_algorithm"):
-            follow_object = changed_object.editors_of_algorithm
-        elif hasattr(changed_object, "editors_of_archive"):
-            follow_object = changed_object.editors_of_archive
-        elif hasattr(changed_object, "editors_of_readerstudy"):
-            follow_object = changed_object.editors_of_readerstudy
-        else:
-            follow_object = []
-    except model.DoesNotExist:
-        follow_object = []
+    if reverse:
+        groups = [instance]
+        users = model.objects.filter(pk__in=pk_set).all()
 
-    if action == "post_add" and follow_object:
-        follow(
-            user=instance,
-            obj=follow_object,
-            actor_only=False,
-            send_action=False,
-        )
-    elif action == "pre_remove" and follow_object:
-        unfollow(user=instance, obj=follow_object, send_action=False)
+    else:
+        groups = model.objects.filter(pk__in=pk_set).all()
+        users = [instance]
+
+    follow_objects = []
+    for group in groups:
+        if hasattr(group, "editors_of_algorithm"):
+            follow_objects.append(group.editors_of_algorithm)
+        elif hasattr(group, "editors_of_archive"):
+            follow_objects.append(group.editors_of_archive)
+        elif hasattr(group, "editors_of_readerstudy"):
+            follow_objects.append(group.editors_of_readerstudy)
+
+    for user in users:
+        for obj in follow_objects:
+            if action == "post_add":
+                follow(
+                    user=user, obj=obj, actor_only=False, send_action=False,
+                )
+            elif action == "pre_remove":
+                unfollow(user=user, obj=obj, send_action=False)
