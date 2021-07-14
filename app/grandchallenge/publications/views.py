@@ -10,7 +10,7 @@ from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 
 
-class PublicationList(LoginRequiredMixin, FilterMixin, ListView):
+class PublicationList(FilterMixin, ListView):
     model = Publication
     paginate_by = 50
     filter_class = PublicationFilter
