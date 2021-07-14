@@ -1,12 +1,17 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import CreateView, ListView
+from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.archives.models import Archive
+from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.publications.filters import PublicationFilter
 from grandchallenge.publications.forms import PublicationForm
 from grandchallenge.publications.models import Publication
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -32,13 +37,27 @@ class PublicationList(FilterMixin, ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data()
         num_citations = 0
+
         for pub in context["object_list"]:
             try:
                 num_citations += pub.referenced_by_count
             except TypeError:
                 continue
+
+        checker = ObjectPermissionChecker(user_or_group=self.request.user)
+        for qs in [
+            Archive.objects.all(),
+            ReaderStudy.objects.all(),
+            Challenge.objects.all(),
+            Algorithm.objects.all(),
+            ExternalChallenge.objects.all(),
+        ]:
+            # Perms can only be prefetched for sets of the same objects
+            checker.prefetch_perms(objects=qs)
+
         context.update(
             {
+                "checker": checker,
                 "num_publications": context["object_list"].count(),
                 "num_citations": num_citations,
             }

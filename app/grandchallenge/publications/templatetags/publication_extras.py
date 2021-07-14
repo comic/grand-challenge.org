@@ -3,8 +3,8 @@ from django import template
 register = template.Library()
 
 
-@register.filter
-def get_associated_objects(publication):
+@register.simple_tag
+def get_associated_objects(*, publication, checker):
 
     archives = publication.archive_set.all()
     algorithms = publication.algorithm_set.all()
@@ -21,6 +21,7 @@ def get_associated_objects(publication):
     ]
     objects = {}
     for obj in object_list:
-        objects[obj] = obj._meta.model_name
+        if checker.has_perm(f"view_{obj._meta.model_name}", obj):
+            objects[obj] = obj._meta.model_name
 
     return objects
