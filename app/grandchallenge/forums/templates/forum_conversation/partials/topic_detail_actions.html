@@ -18,12 +18,14 @@
 {% endif %}
 {% if request.user|is_following:topic %}
     {% get_follow_object_pk request.user topic as follow_object_pk %}
-    <form class="d-inline" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
-            {% trans "Unsubscribe" %}
-        </button>
-    </form>
+    {% if follow_object_pk %}
+        <form class="d-inline" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
+                {% trans "Unsubscribe" %}
+            </button>
+        </form>
+    {% endif %}
 {% elif user_can_add_post and not request.user|is_following:topic %}
     {% get_content_type topic as topic_ct %}
     {% follow_form user=request.user content_type=topic_ct.id object_id=topic.id as follow_form %}
