@@ -719,6 +719,14 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": True,
         },
+        # As AWS_XRAY_CONTEXT_MISSING can only be set to LOG_ERROR,
+        # silence errors from this sdk as they flood the logs in
+        # RedirectFallbackMiddleware
+        "aws_xray_sdk": {
+            "handlers": ["console"],
+            "propagate": True,
+            "level": "CRITICAL",
+        },
     },
 }
 
@@ -738,10 +746,11 @@ if SENTRY_DSN:
         integrations=[DjangoIntegration(), CeleryIntegration()],
         release=COMMIT_ID,
         traces_sample_rate=float(
-            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.01")
+            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
         ),
     )
     ignore_logger("django.security.DisallowedHost")
+    ignore_logger("aws_xray_sdk")
 
 ###############################################################################
 # XRAY
