@@ -755,6 +755,7 @@ XRAY_RECORDER = {
     "PLUGINS": ("ECSPlugin",),
     "SAMPLING": True,
     "AWS_XRAY_TRACING_NAME": SESSION_COOKIE_DOMAIN.lstrip("."),
+    "DYNAMIC_NAMING": f"*{SESSION_COOKIE_DOMAIN}",
 }
 
 ###############################################################################

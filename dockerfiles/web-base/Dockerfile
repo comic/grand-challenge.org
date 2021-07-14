@@ -54,7 +54,8 @@ RUN apt-get update \
     && rm -r /opt/gdcm \
     && apt-get purge -y swig cmake
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1\
+    AWS_XRAY_SDK_ENABLED=false
 
 RUN mkdir -p /opt/poetry /app /static /opt/static \
     && python -m pip install -U pip \
