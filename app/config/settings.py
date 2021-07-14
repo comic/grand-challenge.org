@@ -747,13 +747,8 @@ if SENTRY_DSN:
 # XRAY
 ###############################################################################
 XRAY_RECORDER = {
-    "AWS_XRAY_DAEMON_ADDRESS": os.environ.get(
-        "AWS_XRAY_DAEMON_ADDRESS", "xray:2000"
-    ),
-    "AUTO_INSTRUMENT": True,
     "AWS_XRAY_CONTEXT_MISSING": "LOG_ERROR",
     "PLUGINS": ("ECSPlugin",),
-    "SAMPLING": True,
     "AWS_XRAY_TRACING_NAME": SESSION_COOKIE_DOMAIN.lstrip("."),
     "DYNAMIC_NAMING": f"*{SESSION_COOKIE_DOMAIN}",
 }
