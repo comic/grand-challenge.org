@@ -353,6 +353,7 @@ MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
     "whitenoise.middleware.WhiteNoiseMiddleware",
     # Keep whitenoise after security and before all else
+    "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
@@ -397,6 +398,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "aws_xray_sdk.ext.django",  # tracing
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
@@ -720,6 +722,10 @@ LOGGING = {
     },
 }
 
+###############################################################################
+# SENTRY
+###############################################################################
+
 SENTRY_DSN = os.environ.get("DJANGO_SENTRY_DSN", "")
 SENTRY_ENABLE_JS_REPORTING = strtobool(
     os.environ.get("SENTRY_ENABLE_JS_REPORTING", "False")
@@ -736,6 +742,16 @@ if SENTRY_DSN:
         ),
     )
     ignore_logger("django.security.DisallowedHost")
+
+###############################################################################
+# XRAY
+###############################################################################
+XRAY_RECORDER = {
+    "AWS_XRAY_CONTEXT_MISSING": "LOG_ERROR",
+    "PLUGINS": ("ECSPlugin",),
+    "AWS_XRAY_TRACING_NAME": SESSION_COOKIE_DOMAIN.lstrip("."),
+    "DYNAMIC_NAMING": f"*{SESSION_COOKIE_DOMAIN}",
+}
 
 ###############################################################################
 #
