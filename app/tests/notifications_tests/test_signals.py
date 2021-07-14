@@ -83,7 +83,7 @@ def test_notification_created_for_target_followers_on_action_creation():
 
 
 @pytest.mark.django_db
-def test_follow_clean_up():
+def test_follow_clean_up_after_topic_removal():
     u = UserFactory()
     f = ForumFactory(type=Forum.FORUM_POST)
     t1 = TopicFactory(forum=f, type=Topic.TOPIC_POST)
@@ -94,3 +94,32 @@ def test_follow_clean_up():
     t1.delete()
 
     assert not is_following(u, t1)
+
+
+@pytest.mark.django_db
+def test_follow_clean_up_after_post_removal():
+    u = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    t = TopicFactory(forum=f, type=Topic.TOPIC_POST)
+    p1 = PostFactory(topic=t, poster=u)
+    p2 = PostFactory(topic=t, poster=u)
+
+    follow(u, p1)
+    follow(u, p2)
+
+    p1.delete()
+
+    assert not is_following(u, p1)
+
+
+@pytest.mark.django_db
+def test_follow_clean_up_after_forum_removal():
+    u = UserFactory()
+    f1 = ForumFactory(type=Forum.FORUM_POST)
+    f2 = ForumFactory(type=Forum.FORUM_POST)
+    follow(u, f1, send_action=False)
+    follow(u, f2, send_action=False)
+
+    f1.delete()
+
+    assert not is_following(u, f1)
