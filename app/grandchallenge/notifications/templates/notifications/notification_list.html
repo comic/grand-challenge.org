@@ -46,11 +46,13 @@
                                 <span class="text-primary align-middle ml-2"><i class="fa fa-circle pl-2"></i></span>
                             {% endif %}
                             {% get_content_type object.action.actor as actor_ct %}
+                            {% if actor_ct %}
                                 {% if actor_ct.model == 'user' %}
                                     {{ object.action.actor|user_profile_link }}
                                 {% elif actor_ct.model == 'algorithmpermissionrequest' or actor_ct.model == 'readerstudypermissionrequest' or actor_ct.model == 'archivepermissionrequest' %}
                                     Your registration request for <a href="{{ object.action.actor.base_object.get_absolute_url }}">{{ object.action.actor.object_name }}</a>
                                 {% endif %}
+                            {% endif %}
                             {{ object.action.verb }}
                             {% if object.action.action_object %}
                                 <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
