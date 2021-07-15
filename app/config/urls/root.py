@@ -139,6 +139,10 @@ urlpatterns = [
         ),
     ),
     path("forums/", include(machina_urls)),
+    path(
+        "publications/",
+        include("grandchallenge.publications.urls", namespace="publications"),
+    ),
 ]
 
 if settings.DEBUG and settings.ENABLE_DEBUG_TOOLBAR:

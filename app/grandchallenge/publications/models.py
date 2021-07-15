@@ -147,3 +147,7 @@ class Publication(models.Model):
         citation = re.sub(r"^1\. ", "", citation)
 
         return clean(citation)
+
+    @property
+    def authors(self):
+        return [a["family"] for a in self.csl.get("author", [])]
