@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import Sum
 from django.views.generic import CreateView, ListView
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import LoginRequiredMixin
@@ -36,13 +37,6 @@ class PublicationList(FilterMixin, ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data()
-        num_citations = 0
-
-        for pub in context["object_list"]:
-            try:
-                num_citations += pub.referenced_by_count
-            except TypeError:
-                continue
 
         checker = ObjectPermissionChecker(user_or_group=self.request.user)
         for qs in [
@@ -58,8 +52,11 @@ class PublicationList(FilterMixin, ListView):
         context.update(
             {
                 "checker": checker,
-                "num_publications": context["object_list"].count(),
-                "num_citations": num_citations,
+                "num_citations": self.get_queryset()
+                .exclude(referenced_by_count__isnull=True)
+                .aggregate(Sum("referenced_by_count"))[
+                    "referenced_by_count__sum"
+                ],
             }
         )
         return context
