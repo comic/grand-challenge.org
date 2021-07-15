@@ -16,10 +16,16 @@ def get_follow_object_pk(user, follow_object):
             model=follow_object._meta.model_name,
         ),
     ).all()
-    current_follow_object = []
-    for obj in object_follows_for_user:
-        if obj.follow_object.id == follow_object.id:
-            current_follow_object = obj.pk
+
+    if not object_follows_for_user:
+        current_follow_object = []
+    else:
+        current_follow_object = []
+        for obj in object_follows_for_user:
+            if not obj.follow_object:
+                continue
+            elif obj.follow_object.id == follow_object.id:
+                current_follow_object = obj.pk
     return current_follow_object
 
 
@@ -37,8 +43,11 @@ def follow_form(*, user, object_id, content_type):
 
 @register.simple_tag()
 def get_content_type(follow_object):
-    ct = ContentType.objects.get(
-        app_label=follow_object._meta.app_label,
-        model=follow_object._meta.model_name,
-    )
+    try:
+        ct = ContentType.objects.get(
+            app_label=follow_object._meta.app_label,
+            model=follow_object._meta.model_name,
+        )
+    except AttributeError:
+        ct = None
     return ct
