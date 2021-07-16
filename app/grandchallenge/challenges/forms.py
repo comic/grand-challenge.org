@@ -25,16 +25,6 @@ class ChallengeCreateForm(forms.ModelForm):
             "require_participant_review",
             "use_evaluation",
         ]
-        help_texts = {
-            "publications": format_lazy(
-                (
-                    "The publications associated with this archive. "
-                    'If your publication is missing click <a href="{}">here</a> to add it '
-                    "and then refresh this page."
-                ),
-                reverse_lazy("publications:create"),
-            )
-        }
 
 
 common_information_items = (
