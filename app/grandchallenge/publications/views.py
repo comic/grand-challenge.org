@@ -40,11 +40,11 @@ class PublicationList(FilterMixin, ListView):
 
         checker = ObjectPermissionChecker(user_or_group=self.request.user)
         for qs in [
-            Archive.objects.all(),
-            ReaderStudy.objects.all(),
-            Challenge.objects.all(),
-            Algorithm.objects.all(),
-            ExternalChallenge.objects.all(),
+            Archive.objects.only("pk").all(),
+            ReaderStudy.objects.only("pk").all(),
+            Challenge.objects.only("pk").all(),
+            Algorithm.objects.only("pk").all(),
+            ExternalChallenge.objects.only("pk").all(),
         ]:
             # Perms can only be prefetched for sets of the same objects
             checker.prefetch_perms(objects=qs)

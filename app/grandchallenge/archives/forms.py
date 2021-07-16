@@ -80,6 +80,14 @@ class ArchiveForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                 ),
                 reverse_lazy("workstation-configs:create"),
             ),
+            "publications": format_lazy(
+                (
+                    "The publications associated with this archive. "
+                    'If your publication is missing click <a href="{}">here</a> to add it '
+                    "and then refresh this page."
+                ),
+                reverse_lazy("publications:create"),
+            ),
         }
 
 

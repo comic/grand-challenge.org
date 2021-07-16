@@ -150,4 +150,4 @@ class Publication(models.Model):
 
     @property
     def authors(self):
-        return [a["family"] for a in self.csl.get("author", [])]
+        return [a.get("family") for a in self.csl.get("author", [])]
