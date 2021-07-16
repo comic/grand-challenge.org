@@ -8,7 +8,9 @@ class AuthorFilter(Filter):
     def filter(self, qs, value):
         if value:
             pub_list = [
-                row.id for row in qs if str(row.authors).__contains__(value)
+                row.id
+                for row in qs
+                if value.casefold() in str(row.authors).casefold()
             ]
             return qs.filter(pk__in=pub_list)
         else:
