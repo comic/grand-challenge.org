@@ -125,7 +125,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     publications = models.ManyToManyField(
         Publication,
         blank=True,
-        help_text="The publications associated with this algorithm.",
+        help_text="The publications associated with this algorithm",
     )
     modalities = models.ManyToManyField(
         ImagingModality,

@@ -169,7 +169,7 @@ class ChallengeBase(models.Model):
     publications = models.ManyToManyField(
         Publication,
         blank=True,
-        help_text="The publications associated with this challenge.",
+        help_text="Which publications are associated with this challenge?",
     )
     data_license_agreement = models.TextField(
         blank=True,

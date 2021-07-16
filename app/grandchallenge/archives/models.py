@@ -78,7 +78,7 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
     publications = models.ManyToManyField(
         Publication,
         blank=True,
-        help_text="The publications associated with this archive.",
+        help_text="The publications associated with this archive",
     )
     modalities = models.ManyToManyField(
         ImagingModality,

@@ -293,7 +293,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     publications = models.ManyToManyField(
         Publication,
         blank=True,
-        help_text="The publications associated with this reader study.",
+        help_text="The publications associated with this reader study",
     )
     modalities = models.ManyToManyField(
         ImagingModality,
