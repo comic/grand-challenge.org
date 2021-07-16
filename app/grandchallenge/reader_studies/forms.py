@@ -71,6 +71,14 @@ READER_STUDY_HELP_TEXTS = {
         "Extra information that will be presented to the reader in the help "
         "text modal and on the reader study detail page."
     ),
+    "publications": format_lazy(
+        (
+            "The publications associated with this reader study. "
+            'If your publication is missing click <a href="{}">here</a> to add it '
+            "and then refresh this page."
+        ),
+        reverse_lazy("publications:create"),
+    ),
 }
 
 

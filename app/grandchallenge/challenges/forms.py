@@ -3,10 +3,12 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 from django_summernote.widgets import SummernoteInplaceWidget
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
+from grandchallenge.subdomains.utils import reverse_lazy
 
 
 class ChallengeCreateForm(forms.ModelForm):
@@ -23,6 +25,16 @@ class ChallengeCreateForm(forms.ModelForm):
             "require_participant_review",
             "use_evaluation",
         ]
+        help_texts = {
+            "publications": format_lazy(
+                (
+                    "The publications associated with this archive. "
+                    'If your publication is missing click <a href="{}">here</a> to add it '
+                    "and then refresh this page."
+                ),
+                reverse_lazy("publications:create"),
+            )
+        }
 
 
 common_information_items = (
@@ -92,6 +104,16 @@ class ChallengeUpdateForm(forms.ModelForm):
             "publications": Select2MultipleWidget,
             "registration_page_text": SummernoteInplaceWidget(),
         }
+        help_texts = {
+            "publications": format_lazy(
+                (
+                    "The publications associated with this archive. "
+                    'If your publication is missing click <a href="{}">here</a> to add it '
+                    "and then refresh this page."
+                ),
+                reverse_lazy("publications:create"),
+            )
+        }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -148,4 +170,14 @@ class ExternalChallengeUpdateForm(forms.ModelForm):
             "organizations": Select2MultipleWidget,
             "series": Select2MultipleWidget,
             "publications": Select2MultipleWidget,
+        }
+        help_texts = {
+            "publications": format_lazy(
+                (
+                    "The publications associated with this archive. "
+                    'If your publication is missing click <a href="{}">here</a> to add it '
+                    "and then refresh this page."
+                ),
+                reverse_lazy("publications:create"),
+            )
         }
