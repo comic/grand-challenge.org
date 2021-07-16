@@ -7,7 +7,9 @@ from grandchallenge.publications.models import Publication
 class AuthorFilter(Filter):
     def filter(self, qs, value):
         if value:
-            pub_list = [row.id for row in qs if value in row.authors]
+            pub_list = [
+                row.id for row in qs if str(row.authors).__contains__(value)
+            ]
             return qs.filter(pk__in=pub_list)
         else:
             return qs

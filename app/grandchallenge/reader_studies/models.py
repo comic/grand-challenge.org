@@ -15,6 +15,7 @@ from django.db.models import Avg, Count, OuterRef, Subquery, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
+from django.utils.text import format_lazy
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
@@ -36,7 +37,7 @@ from grandchallenge.core.validators import JSONSchemaValidator
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstations.models import Workstation
 
 __doc__ = """
@@ -293,7 +294,14 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     publications = models.ManyToManyField(
         Publication,
         blank=True,
-        help_text="The publications associated with this reader study",
+        help_text=format_lazy(
+            (
+                "The publications associated with this reader study. "
+                'If your publication is missing click <a href="{}">here</a> to add it '
+                "and then refresh this page."
+            ),
+            reverse_lazy("publications:create"),
+        ),
     )
     modalities = models.ManyToManyField(
         ImagingModality,

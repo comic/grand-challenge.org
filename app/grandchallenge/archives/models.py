@@ -4,6 +4,7 @@ from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
+from django.utils.text import format_lazy
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
@@ -20,7 +21,7 @@ from grandchallenge.core.storage import (
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class Archive(UUIDModel, TitleSlugDescriptionModel):
@@ -78,7 +79,14 @@ class Archive(UUIDModel, TitleSlugDescriptionModel):
     publications = models.ManyToManyField(
         Publication,
         blank=True,
-        help_text="The publications associated with this archive",
+        help_text=format_lazy(
+            (
+                "The publications associated with this archive. "
+                'If your publication is missing click <a href="{}">here</a> to add it '
+                "and then refresh this page."
+            ),
+            reverse_lazy("publications:create"),
+        ),
     )
     modalities = models.ManyToManyField(
         ImagingModality,

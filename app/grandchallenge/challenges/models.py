@@ -14,6 +14,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import format_html
+from django.utils.text import format_lazy
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -41,7 +42,7 @@ from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
 from grandchallenge.publications.models import Publication
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.task_categories.models import TaskType
 
 logger = logging.getLogger(__name__)
@@ -169,7 +170,14 @@ class ChallengeBase(models.Model):
     publications = models.ManyToManyField(
         Publication,
         blank=True,
-        help_text="Which publications are associated with this challenge?",
+        help_text=format_lazy(
+            (
+                "The publications associated with this challenge. "
+                'If your publication is missing click <a href="{}">here</a> to add it '
+                "and then refresh this page."
+            ),
+            reverse_lazy("publications:create"),
+        ),
     )
     data_license_agreement = models.TextField(
         blank=True,

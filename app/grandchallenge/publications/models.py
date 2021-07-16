@@ -150,4 +150,7 @@ class Publication(models.Model):
 
     @property
     def authors(self):
-        return [a["family"] for a in self.csl.get("author", [])]
+        return [
+            a["family"] if "family" in a else a["literal"]
+            for a in self.csl.get("author", [])
+        ]

@@ -16,6 +16,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.text import format_lazy
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jinja2 import sandbox
@@ -39,7 +40,7 @@ from grandchallenge.evaluation.utils import get
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
-from grandchallenge.subdomains.utils import reverse
+from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
@@ -125,7 +126,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
     publications = models.ManyToManyField(
         Publication,
         blank=True,
-        help_text="The publications associated with this algorithm",
+        help_text=format_lazy(
+            (
+                "The publications associated with this algorithm. "
+                'If your publication is missing click <a href="{}">here</a> to add it '
+                "and then refresh this page."
+            ),
+            reverse_lazy("publications:create"),
+        ),
     )
     modalities = models.ManyToManyField(
         ImagingModality,
