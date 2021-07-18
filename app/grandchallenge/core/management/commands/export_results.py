@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 "supplementary_file": j.submission.supplementary_file.url
                 if j.submission.supplementary_file
                 else None,
-                "publication": j.submission.publication_url,
+                "supplementary_url": j.submission.supplementary_url,
                 "method": str(j.method.pk),
                 "creator": str(j.submission.creator),
                 "published": j.published,

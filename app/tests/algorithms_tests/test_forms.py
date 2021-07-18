@@ -1,4 +1,5 @@
 import pytest
+from actstream.actions import is_following
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -145,6 +146,7 @@ def test_algorithm_create(client, uploaded_image):
     assert alg.slug == "foo-bar"
     assert alg.is_editor(user=creator)
     assert not alg.is_user(user=creator)
+    assert is_following(user=creator, obj=alg)
 
 
 @pytest.mark.django_db

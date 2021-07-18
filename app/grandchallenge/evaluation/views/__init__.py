@@ -183,7 +183,9 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
                 "supplementary_file_choice": self.phase.supplementary_file_choice,
                 "supplementary_file_label": self.phase.supplementary_file_label,
                 "supplementary_file_help_text": self.phase.supplementary_file_help_text,
-                "publication_url_choice": self.phase.publication_url_choice,
+                "supplementary_url_choice": self.phase.supplementary_url_choice,
+                "supplementary_url_label": self.phase.supplementary_url_label,
+                "supplementary_url_help_text": self.phase.supplementary_url_help_text,
                 "algorithm_submission": self.phase.submission_kind
                 == self.phase.SubmissionKind.ALGORITHM,
             }
@@ -503,11 +505,11 @@ class LeaderboardDetail(
                 Column(title="Comment", sort_field="submission__comment")
             )
 
-        if self.phase.show_publication_url:
+        if self.phase.show_supplementary_url:
             columns.append(
                 Column(
-                    title="Publication",
-                    sort_field="submission__publication_url",
+                    title=self.phase.supplementary_url_label,
+                    sort_field="submission__supplementary_url",
                 )
             )
 

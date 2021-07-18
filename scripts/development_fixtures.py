@@ -188,7 +188,8 @@ def _create_demo_challenge(users):
                 "order": "desc",
             }
         ]
-        phase.submission_kind = phase.SubmissionKind.ALGORITHM
+        if phase_num == 0:
+            phase.submission_kind = phase.SubmissionKind.ALGORITHM
         phase.evaluation_detail_observable_url = (
             phase.evaluation_comparison_observable_url
         ) = "https://observablehq.com/embed/@grand-challenge/data-fetch-example?cell=*"

@@ -81,7 +81,7 @@ http {
     text/x-cross-domain-policy;
 
   upstream app_server {
-    server web:8000;
+    server ${APP_SERVER_HOST}:8000;
   }
 
   upstream workstations_http {

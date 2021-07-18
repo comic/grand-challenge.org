@@ -40,14 +40,17 @@
     {% endif %}
     {% if user_can_read_forum and request.user|is_following:forum %}
         {% get_follow_object_pk request.user forum as follow_object_pk %}
-        <form class="d-inline" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
-                {% trans "Unsubscribe" %}
-            </button>
-        </form>
+        {% if follow_object_pk %}
+            <form class="d-inline" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-info btn-sm btn-subscription"><i class="fas fa-check"></i>
+                    {% trans "Unsubscribe" %}
+                </button>
+            </form>
+        {% endif %}
     {% elif user_can_read_forum and not request.user|is_following:forum %}
-        {% follow_form user=request.user content_type=forum|get_content_type object_id=forum.id as follow_form %}
+        {% get_content_type forum as forum_ct %}
+        {% follow_form user=request.user content_type=forum_ct.id object_id=forum.id as follow_form %}
         <form class="d-inline" method="post" action="{% url 'notifications:follow-create' %}">
             {% csrf_token %}
             {{ follow_form|crispy }}

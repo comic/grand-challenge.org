@@ -1,9 +1,11 @@
 from actstream import action
 from actstream.actions import follow
 from actstream.models import Action, Follow, followers
-from django.db.models.signals import post_save
+from django.contrib.contenttypes.models import ContentType
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
+from machina.apps.forum.models import Forum
 from machina.apps.forum_conversation.models import Post, Topic
 
 from grandchallenge.notifications.models import Notification
@@ -77,3 +79,13 @@ def add_permissions(*, instance, created, **_):
         assign_perm("change_follow", instance.user, instance)
         assign_perm("delete_follow", instance.user, instance)
         assign_perm("view_follow", instance.user, instance)
+
+
+@receiver(pre_delete, sender=Topic)
+@receiver(pre_delete, sender=Forum)
+@receiver(pre_delete, sender=Post)
+def clean_up_follows(*, instance, **_):
+    ct = ContentType.objects.filter(
+        app_label=instance._meta.app_label, model=instance._meta.model_name
+    ).get()
+    Follow.objects.filter(content_type=ct, object_id=instance.pk).delete()

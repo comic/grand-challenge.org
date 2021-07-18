@@ -1,13 +1,7 @@
-from unittest import mock
-
 import pytest
 from guardian.shortcuts import get_perms
 
-from grandchallenge.algorithms.models import AlgorithmPermissionRequest
-from tests.algorithms_tests.factories import (
-    AlgorithmJobFactory,
-    AlgorithmPermissionRequestFactory,
-)
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import GroupFactory, ImageFactory, UserFactory
@@ -199,34 +193,6 @@ def test_user_can_download_input_images(client, reverse):
         assert response.json()["count"] == 1
     else:
         assert response.json()["count"] == 0
-
-
-@pytest.mark.django_db
-def test_process_algorithm_permission_request():
-    # signals.pre_save.connect(process_algorithm_permission_request, sender=AlgorithmPermissionRequest, weak=False)
-    with mock.patch(
-        "grandchallenge.core.signals.send_permission_request_email"
-    ) as send_email:
-        pr = AlgorithmPermissionRequestFactory()
-        assert pr.status == AlgorithmPermissionRequest.PENDING
-        send_email.assert_called_once
-        assert not pr.algorithm.is_user(pr.user)
-
-    with mock.patch(
-        "grandchallenge.core.signals.send_permission_denied_email"
-    ) as send_email:
-        pr.status = AlgorithmPermissionRequest.REJECTED
-        pr.save()
-        send_email.assert_called_once()
-        assert not pr.algorithm.is_user(pr.user)
-
-    with mock.patch(
-        "grandchallenge.core.signals.send_permission_granted_email"
-    ) as send_email:
-        pr.status = AlgorithmPermissionRequest.ACCEPTED
-        pr.save()
-        send_email.assert_called_once()
-        assert pr.algorithm.is_user(pr.user)
 
 
 @pytest.mark.django_db

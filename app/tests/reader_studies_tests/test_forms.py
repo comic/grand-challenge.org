@@ -1,6 +1,7 @@
 import html
 
 import pytest
+from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
 from grandchallenge.reader_studies.models import Answer, Question, ReaderStudy
@@ -148,6 +149,7 @@ def test_reader_study_create(client, uploaded_image):
     assert rs.slug == "foo-bar"
     assert rs.is_editor(user=creator)
     assert not rs.is_reader(user=creator)
+    assert is_following(user=creator, obj=rs)
 
 
 @pytest.mark.django_db
@@ -581,10 +583,11 @@ def test_reader_study_delete(client):
     rs = ReaderStudyFactory()
     editor = UserFactory()
     reader = UserFactory()
-    rs.editors_group.user_set.add(editor)
-    rs.readers_group.user_set.add(reader)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
 
     assert ReaderStudy.objects.count() == 1
+    assert is_following(user=editor, obj=rs)
 
     response = get_view_for_user(
         viewname="reader-studies:delete",
@@ -621,6 +624,7 @@ def test_reader_study_delete(client):
 
     assert response.status_code == 200
     assert ReaderStudy.objects.count() == 0
+    assert not is_following(user=editor, obj=rs)
 
 
 @pytest.mark.django_db

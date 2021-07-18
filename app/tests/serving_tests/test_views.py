@@ -1,5 +1,4 @@
 import json
-from textwrap import dedent
 
 import pytest
 from django.core.files.base import ContentFile
@@ -21,30 +20,26 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 @pytest.mark.parametrize("cloudfront", (True, False))
 def test_image_response(client, settings, cloudfront, tmpdir):
-    pem = tmpdir.join("cf.pem")
-    pem.write(
-        dedent(
-            """
-            -----BEGIN RSA PRIVATE KEY-----
-            MIICXQIBAAKBgQDA7ki9gI/lRygIoOjV1yymgx6FYFlzJ+z1ATMaLo57nL57AavW
-            hb68HYY8EA0GJU9xQdMVaHBogF3eiCWYXSUZCWM/+M5+ZcdQraRRScucmn6g4EvY
-            2K4W2pxbqH8vmUikPxir41EeBPLjMOzKvbzzQy9e/zzIQVREKSp/7y1mywIDAQAB
-            AoGABc7mp7XYHynuPZxChjWNJZIq+A73gm0ASDv6At7F8Vi9r0xUlQe/v0AQS3yc
-            N8QlyR4XMbzMLYk3yjxFDXo4ZKQtOGzLGteCU2srANiLv26/imXA8FVidZftTAtL
-            viWQZBVPTeYIA69ATUYPEq0a5u5wjGyUOij9OWyuy01mbPkCQQDluYoNpPOekQ0Z
-            WrPgJ5rxc8f6zG37ZVoDBiexqtVShIF5W3xYuWhW5kYb0hliYfkq15cS7t9m95h3
-            1QJf/xI/AkEA1v9l/WN1a1N3rOK4VGoCokx7kR2SyTMSbZgF9IWJNOugR/WZw7HT
-            njipO3c9dy1Ms9pUKwUF46d7049ck8HwdQJARgrSKuLWXMyBH+/l1Dx/I4tXuAJI
-            rlPyo+VmiOc7b5NzHptkSHEPfR9s1OK0VqjknclqCJ3Ig86OMEtEFBzjZQJBAKYz
-            470hcPkaGk7tKYAgP48FvxRsnzeooptURW5E+M+PQ2W9iDPPOX9739+Xi02hGEWF
-            B0IGbQoTRFdE4VVcPK0CQQCeS84lODlC0Y2BZv2JxW3Osv/WkUQ4dslfAQl1T303
-            7uwwr7XTroMv8dIFQIPreoPhRKmd/SbJzbiKfS/4QDhU
-            -----END RSA PRIVATE KEY-----
-            """
-        )
+    settings.CLOUDFRONT_PRIVATE_KEY_BASE64 = (
+        "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlDWFFJQkFBS0JnUURBN2tp"
+        "OWdJL2xSeWdJb09qVjF5eW1neDZGWUZsekorejFBVE1hTG81N25MNTdBYXZXCmhiNjhI"
+        "WVk4RUEwR0pVOXhRZE1WYUhCb2dGM2VpQ1dZWFNVWkNXTS8rTTUrWmNkUXJhUlJTY3Vj"
+        "bW42ZzRFdlkKMks0VzJweGJxSDh2bVVpa1B4aXI0MUVlQlBMak1Pekt2Ynp6UXk5ZS96"
+        "eklRVlJFS1NwLzd5MW15d0lEQVFBQgpBb0dBQmM3bXA3WFlIeW51UFp4Q2hqV05KWklx"
+        "K0E3M2dtMEFTRHY2QXQ3RjhWaTlyMHhVbFFlL3YwQVFTM3ljCk44UWx5UjRYTWJ6TUxZ"
+        "azN5anhGRFhvNFpLUXRPR3pMR3RlQ1Uyc3JBTmlMdjI2L2ltWEE4RlZpZFpmdFRBdEwK"
+        "dmlXUVpCVlBUZVlJQTY5QVRVWVBFcTBhNXU1d2pHeVVPaWo5T1d5dXkwMW1iUGtDUVFE"
+        "bHVZb05wUE9la1EwWgpXclBnSjVyeGM4ZjZ6RzM3WlZvREJpZXhxdFZTaElGNVczeFl1"
+        "V2hXNWtZYjBobGlZZmtxMTVjUzd0OW05NWgzCjFRSmYveEkvQWtFQTF2OWwvV04xYTFO"
+        "M3JPSzRWR29Db2t4N2tSMlN5VE1TYlpnRjlJV0pOT3VnUi9XWnc3SFQKbmppcE8zYzlk"
+        "eTFNczlwVUt3VUY0NmQ3MDQ5Y2s4SHdkUUpBUmdyU0t1TFdYTXlCSCsvbDFEeC9JNHRY"
+        "dUFKSQpybFB5bytWbWlPYzdiNU56SHB0a1NIRVBmUjlzMU9LMFZxamtuY2xxQ0ozSWc4"
+        "Nk9NRXRFRkJ6alpRSkJBS1l6CjQ3MGhjUGthR2s3dEtZQWdQNDhGdnhSc256ZW9vcHRV"
+        "Ulc1RStNK1BRMlc5aURQUE9YOTczOStYaTAyaEdFV0YKQjBJR2JRb1RSRmRFNFZWY1BL"
+        "MENRUUNlUzg0bE9EbEMwWTJCWnYySnhXM09zdi9Xa1VRNGRzbGZBUWwxVDMwMwo3dXd3"
+        "cjdYVHJvTXY4ZElGUUlQcmVvUGhSS21kL1NiSnpiaUtmUy80UURoVQotLS0tLUVORCBS"
+        "U0EgUFJJVkFURSBLRVktLS0tLQo="
     )
-
-    settings.CLOUDFRONT_PRIVATE_KEY_PATH = pem.strpath
     settings.CLOUDFRONT_KEY_PAIR_ID = "PK123456789754"
     settings.PROTECTED_S3_STORAGE_USE_CLOUDFRONT = cloudfront
 

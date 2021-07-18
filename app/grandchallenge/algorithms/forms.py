@@ -134,7 +134,15 @@ class AlgorithmForm(WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm):
                     '<a href="{}">create a new one</a>.'
                 ),
                 reverse_lazy("workstation-configs:create"),
-            )
+            ),
+            "publications": format_lazy(
+                (
+                    "The publications associated with this reader study. "
+                    'If your publication is missing click <a href="{}">here</a> to add it '
+                    "and then refresh this page."
+                ),
+                reverse_lazy("publications:create"),
+            ),
         }
 
     def clean(self):

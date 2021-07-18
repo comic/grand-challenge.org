@@ -7,8 +7,8 @@ from grandchallenge.subdomains.utils import reverse
 
 
 def send_unread_notifications_email(recipients):
-    subject = "You have unread notifications"
     site = Site.objects.get_current()
+    subject = f"[{site.domain.lower()}] You have unread notifications"
     for profile, n_notifications in recipients.items():
         msg = (
             f"Dear {profile.user.username},\n\n"

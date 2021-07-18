@@ -1,6 +1,12 @@
 {% load crispy_forms_tags %}
 {% load meta_attr %}
 
+{% comment %}
+    The model_name variable was added to adjust the displayed filter name for the actstream Follow model.
+    It would be nicer to instead add a proxy model for the actstream Follow model on which we set the verbose name accordingly.
+    Trying this out, however, we could not get the permission checks to work for the proxy model.
+    It might be worth debugging why the permissions for the proxy model were not set correctly and to get rid of this work-around eventually.
+{% endcomment %}
 <p>
     <a class="btn btn-primary"
        role="button"
@@ -8,7 +14,7 @@
        data-target="#filterForm"
        aria-expanded="false"
        aria-controls="filterForm">
-        <i class="fas fa-filter"></i>&nbsp;Filter {{ filter.Meta.model|meta_attr:'verbose_name_plural'|title }}
+        <i class="fas fa-filter"></i>&nbsp;Filter  {% if not model_name %}{{ filter.Meta.model|meta_attr:'verbose_name_plural'|title }}{% else %} {{ model_name|title }}s {% endif %}
     </a>
     {% if filters_applied %}
         <a class="btn btn-danger" href="?">
@@ -24,14 +30,14 @@
 
 <p class="text-muted">
 {% if total_count == 0 %}
-        No {{ filter.Meta.model|meta_attr:'verbose_name_plural' }} found.
+        No {% if not model_name %}{{ filter.Meta.model|meta_attr:'verbose_name_plural' }}{% else %} {{ model_name }}s {% endif %} found.
 {% elif filters_applied %}
-        Filters included {{ num_results }} of {{ total_count }} total {{ filter.Meta.model|meta_attr:'verbose_name_plural' }}
+        Filters included {{ num_results }} of {{ total_count }} total {% if not model_name %}{{ filter.Meta.model|meta_attr:'verbose_name_plural' }}{% else %} {{ model_name }}s {% endif %}
 {% else %}
         {% if total_count == 1 %}
-            {{ total_count }} {{ filter.Meta.model|meta_attr:'verbose_name' }} found
+            {{ total_count }} {% if not model_name %}{{ filter.Meta.model|meta_attr:'verbose_name' }}{% else %} {{ model_name }} {% endif %} found
         {% else %}
-            {{ total_count }} {{ filter.Meta.model|meta_attr:'verbose_name_plural' }} found
+            {{ total_count }} {% if not model_name %}{{ filter.Meta.model|meta_attr:'verbose_name_plural' }}{% else %} {{ model_name }}s {% endif %} found
         {% endif %}
 {% endif %}
  </p>

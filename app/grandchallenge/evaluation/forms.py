@@ -1,7 +1,9 @@
+from bleach import clean
 from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.functions import Lower
@@ -14,7 +16,10 @@ from guardian.shortcuts import get_objects_for_user
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.validators import ExtensionValidator
+from grandchallenge.core.validators import (
+    ExtensionValidator,
+    MimeTypeValidator,
+)
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
@@ -36,7 +41,9 @@ submission_options = (
     "supplementary_file_choice",
     "supplementary_file_label",
     "supplementary_file_help_text",
-    "publication_url_choice",
+    "supplementary_url_choice",
+    "supplementary_url_label",
+    "supplementary_url_help_text",
 )
 
 scoring_options = (
@@ -54,7 +61,7 @@ scoring_options = (
 leaderboard_options = (
     "display_submission_comments",
     "show_supplementary_file_link",
-    "show_publication_url",
+    "show_supplementary_url",
     "evaluation_comparison_observable_url",
 )
 
@@ -155,7 +162,7 @@ submission_fields = (
     "creator",
     "comment",
     "supplementary_file",
-    "publication_url",
+    "supplementary_url",
     "chunked_upload",
 )
 
@@ -164,7 +171,10 @@ class SubmissionForm(forms.ModelForm):
     chunked_upload = UploadedAjaxFileList(
         widget=uploader.AjaxUploadWidget(multifile=False, auto_commit=False),
         label="Predictions File",
-        validators=[ExtensionValidator(allowed_extensions=(".zip", ".csv"))],
+        validators=[
+            MimeTypeValidator(allowed_types=("application/zip", "text/plain")),
+            ExtensionValidator(allowed_extensions=(".zip", ".csv")),
+        ],
     )
     algorithm = ModelChoiceField(
         queryset=None,
@@ -176,7 +186,7 @@ class SubmissionForm(forms.ModelForm):
         ),
     )
 
-    def __init__(
+    def __init__(  # noqa: C901
         self,
         *args,
         user,
@@ -186,7 +196,9 @@ class SubmissionForm(forms.ModelForm):
         supplementary_file_choice=Phase.OFF,
         supplementary_file_label="",
         supplementary_file_help_text="",
-        publication_url_choice=Phase.OFF,
+        supplementary_url_choice=Phase.OFF,
+        supplementary_url_label="",
+        supplementary_url_help_text="",
         **kwargs,
     ):
         """
@@ -204,19 +216,27 @@ class SubmissionForm(forms.ModelForm):
             self.fields["supplementary_file"].label = supplementary_file_label
 
         if supplementary_file_help_text:
-            self.fields[
-                "supplementary_file"
-            ].help_text = supplementary_file_help_text
+            self.fields["supplementary_file"].help_text = clean(
+                supplementary_file_help_text
+            )
 
         if supplementary_file_choice == Phase.REQUIRED:
             self.fields["supplementary_file"].required = True
         elif supplementary_file_choice == Phase.OFF:
             del self.fields["supplementary_file"]
 
-        if publication_url_choice == Phase.REQUIRED:
-            self.fields["publication_url"].required = True
-        elif publication_url_choice == Phase.OFF:
-            del self.fields["publication_url"]
+        if supplementary_url_label:
+            self.fields["supplementary_url"].label = supplementary_url_label
+
+        if supplementary_url_help_text:
+            self.fields["supplementary_url"].help_text = clean(
+                supplementary_url_help_text
+            )
+
+        if supplementary_url_choice == Phase.REQUIRED:
+            self.fields["supplementary_url"].required = True
+        elif supplementary_url_choice == Phase.OFF:
+            del self.fields["supplementary_url"]
 
         if algorithm_submission:
             del self.fields["chunked_upload"]
@@ -238,6 +258,17 @@ class SubmissionForm(forms.ModelForm):
 
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
+
+    def clean_chunked_upload(self):
+        chunked_upload = self.cleaned_data["chunked_upload"]
+
+        if (
+            sum([f.size for f in chunked_upload])
+            > settings.PREDICTIONS_FILE_MAX_BYTES
+        ):
+            raise ValidationError("Predictions file is too large.")
+
+        return chunked_upload
 
     def clean_algorithm(self):
         algorithm = self.cleaned_data["algorithm"]

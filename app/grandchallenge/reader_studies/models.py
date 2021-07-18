@@ -3,6 +3,9 @@ import json
 from collections import Counter
 
 import numpy as np
+from actstream import action
+from actstream.actions import follow
+from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -444,6 +447,10 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
 
         self.assign_permissions()
         self.assign_workstation_permissions()
+
+    def delete(self):
+        Follow.objects.filter(object_id=self.pk).delete()
+        super().delete()
 
     def is_editor(self, user):
         """Checks if ``user`` is an editor for this ``ReaderStudy``."""
@@ -1671,6 +1678,23 @@ class ReaderStudyPermissionRequest(RequestBase):
 
     def __str__(self):
         return f"{self.object_name} registration request by user {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+        super().save(*args, **kwargs)
+        if adding:
+            follow(
+                user=self.user, obj=self, actor_only=False, send_action=False,
+            )
+            action.send(
+                sender=self.user,
+                verb="requested access to",
+                target=self.base_object,
+            )
+
+    def delete(self):
+        Follow.objects.filter(object_id=self.pk).delete()
+        super().delete()
 
     class Meta(RequestBase.Meta):
         unique_together = (("reader_study", "user"),)

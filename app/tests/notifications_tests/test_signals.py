@@ -1,5 +1,5 @@
 import pytest
-from actstream.actions import follow
+from actstream.actions import follow, is_following
 from actstream.models import Action, Follow
 from machina.apps.forum.models import Forum
 from machina.apps.forum_conversation.models import Topic
@@ -80,3 +80,46 @@ def test_notification_created_for_target_followers_on_action_creation():
     # check that the poster did not receive a notification
     assert notification.user == user2
     assert notification.user != user1
+
+
+@pytest.mark.django_db
+def test_follow_clean_up_after_topic_removal():
+    u = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    t1 = TopicFactory(forum=f, type=Topic.TOPIC_POST)
+    t2 = TopicFactory(forum=f, type=Topic.TOPIC_POST)
+    follow(u, t1, send_action=False)
+    follow(u, t2, send_action=False)
+
+    t1.delete()
+
+    assert not is_following(u, t1)
+
+
+@pytest.mark.django_db
+def test_follow_clean_up_after_post_removal():
+    u = UserFactory()
+    f = ForumFactory(type=Forum.FORUM_POST)
+    t = TopicFactory(forum=f, type=Topic.TOPIC_POST)
+    p1 = PostFactory(topic=t, poster=u)
+    p2 = PostFactory(topic=t, poster=u)
+
+    follow(u, p1)
+    follow(u, p2)
+
+    p1.delete()
+
+    assert not is_following(u, p1)
+
+
+@pytest.mark.django_db
+def test_follow_clean_up_after_forum_removal():
+    u = UserFactory()
+    f1 = ForumFactory(type=Forum.FORUM_POST)
+    f2 = ForumFactory(type=Forum.FORUM_POST)
+    follow(u, f1, send_action=False)
+    follow(u, f2, send_action=False)
+
+    f1.delete()
+
+    assert not is_following(u, f1)

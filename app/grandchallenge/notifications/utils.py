@@ -73,15 +73,19 @@ def _content_type_to_content_mapping_for_gfks(queryset, gfks):
 
 def _get_related_content_type_and_related_object_pk(model, fk_field, fk):
     """Get related object's pk and content type."""
-    related_content_type_id = getattr(
-        model, fk_field._meta.get_field(fk.ct_field).get_attname(),
-    )
+
     try:
-        related_object_id = int(getattr(model, fk.fk_field))
+        related_content_type_id = getattr(
+            model, fk_field._meta.get_field(fk.ct_field).get_attname(),
+        )
+        related_object_id = getattr(model, fk.fk_field)
         related_content_type = ContentType.objects.get_for_id(
             related_content_type_id
         )
     except TypeError:
+        related_object_id = None
+        related_content_type = None
+    except ContentType.DoesNotExist:
         related_object_id = None
         related_content_type = None
 

@@ -90,7 +90,8 @@ Pillow = "*"
 panimg = "*"
 django-activity-stream = "*"
 django-stdimage = "*"
-django-permissions-policy = "^4.1.0"
+django-permissions-policy = "*"
+aws-xray-sdk = "*"
 
 [tool.poetry.dev-dependencies]
 pytest-django = "*"

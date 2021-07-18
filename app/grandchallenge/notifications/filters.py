@@ -1,6 +1,9 @@
+import re
 from functools import reduce
 from operator import or_
 
+from actstream.models import Follow
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django_filters import CharFilter, ChoiceFilter, FilterSet
 from machina.apps.forum.models import Forum
@@ -48,3 +51,79 @@ class NotificationFilter(FilterSet):
                 or_, [Q(**{f"{f}__in": name_qs}) for f in search_fields], Q(),
             )
         )
+
+
+FOLLOW_CHOICES = (
+    ("forum_forum", "Forums"),
+    ("topic_forum_conversation", "Topics"),
+    ("readerstudy_reader_studies", "Reader studies"),
+    ("archive_archives", "Archives"),
+    ("algorithm_algorithms", "Algorithms"),
+)
+
+
+class FollowFilter(FilterSet):
+
+    forum = CharFilter(method="search_filter", label="Search for a forum")
+    topic = CharFilter(
+        method="search_filter", label="Search for a forum topic"
+    )
+    forums_for_user = CharFilter(
+        method="search_forum_topics",
+        label="Show all topic subscriptions for a specific forum",
+    )
+    content_type = ChoiceFilter(
+        choices=FOLLOW_CHOICES,
+        method="get_content_type",
+        label="Filter by subscription type",
+    )
+
+    class Meta:
+        model = Follow
+        form = FilterForm
+        fields = ("forum", "topic", "forums_for_user", "content_type")
+
+    def search_filter(self, queryset, name, value):
+        model_name = name
+        if model_name == "forum":
+            app_label = "forum"
+            model = Forum
+            kwargs = {"name__icontains": value}
+        elif model_name == "topic":
+            app_label = "forum_conversation"
+            model = Topic
+            kwargs = {"subject__icontains": value}
+
+        name_qs = [x.id for x in model.objects.filter(**kwargs).all()]
+
+        return queryset.filter(
+            **{"object_id__in": name_qs},
+            **{
+                "content_type__exact": ContentType.objects.filter(
+                    model=model_name, app_label=app_label
+                ).get()
+            },
+        )
+
+    def search_forum_topics(self, queryset, name, value):
+        forums = [
+            x.id for x in Forum.objects.filter(name__icontains=value).all()
+        ]
+        name_qs = [
+            x.id for x in Topic.objects.filter(forum__id__in=forums).all()
+        ]
+        return queryset.filter(
+            **{"object_id__in": name_qs},
+            **{
+                "content_type__exact": ContentType.objects.filter(
+                    model="topic", app_label="forum_conversation"
+                ).get()
+            },
+        )
+
+    def get_content_type(self, queryset, name, value):
+        ct = ContentType.objects.filter(
+            model=re.split(r"_", value, 1)[0],
+            app_label=re.split(r"_", value, 1)[1],
+        ).get()
+        return queryset.filter(content_type__exact=ct)

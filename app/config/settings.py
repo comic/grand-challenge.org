@@ -133,6 +133,7 @@ AWS_S3_FILE_OVERWRITE = False
 # Note: deprecated in django storages 2.0
 AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
+AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", None)
 
 # This is for storing files that should not be served to the public
@@ -180,7 +181,9 @@ PUBLIC_S3_STORAGE_KWARGS = {
 # Key pair used for signing CloudFront URLS, only used if
 # PROTECTED_S3_STORAGE_USE_CLOUDFRONT is True
 CLOUDFRONT_KEY_PAIR_ID = os.environ.get("CLOUDFRONT_KEY_PAIR_ID", "")
-CLOUDFRONT_PRIVATE_KEY_PATH = os.environ.get("CLOUDFRONT_PRIVATE_KEY_PATH", "")
+CLOUDFRONT_PRIVATE_KEY_BASE64 = os.environ.get(
+    "CLOUDFRONT_PRIVATE_KEY_BASE64", ""
+)
 CLOUDFRONT_URL_EXPIRY_SECONDS = int(
     os.environ.get("CLOUDFRONT_URL_EXPIRY_SECONDS", "300")  # 5 mins
 )
@@ -190,11 +193,12 @@ CLOUDFRONT_URL_EXPIRY_SECONDS = int(
 # Caching
 #
 ##############################################################################
+REDIS_HOSTNAME = os.environ.get("REDIS_HOSTNAME", "redis")
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
+        "LOCATION": f"redis://{REDIS_HOSTNAME}:6379/1",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     },
     "machina_attachments": {
@@ -349,6 +353,7 @@ MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
     "whitenoise.middleware.WhiteNoiseMiddleware",
     # Keep whitenoise after security and before all else
+    "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
@@ -393,6 +398,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "aws_xray_sdk.ext.django",  # tracing
     "django_celery_results",  # database results backend
     "django_celery_beat",  # periodic tasks
     "djcelery_email",  # asynchronous emails
@@ -713,8 +719,20 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": True,
         },
+        # As AWS_XRAY_CONTEXT_MISSING can only be set to LOG_ERROR,
+        # silence errors from this sdk as they flood the logs in
+        # RedirectFallbackMiddleware
+        "aws_xray_sdk": {
+            "handlers": ["console"],
+            "propagate": True,
+            "level": "CRITICAL",
+        },
     },
 }
+
+###############################################################################
+# SENTRY
+###############################################################################
 
 SENTRY_DSN = os.environ.get("DJANGO_SENTRY_DSN", "")
 SENTRY_ENABLE_JS_REPORTING = strtobool(
@@ -728,10 +746,21 @@ if SENTRY_DSN:
         integrations=[DjangoIntegration(), CeleryIntegration()],
         release=COMMIT_ID,
         traces_sample_rate=float(
-            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.01")
+            os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
         ),
     )
     ignore_logger("django.security.DisallowedHost")
+    ignore_logger("aws_xray_sdk")
+
+###############################################################################
+# XRAY
+###############################################################################
+XRAY_RECORDER = {
+    "AWS_XRAY_CONTEXT_MISSING": "LOG_ERROR",
+    "PLUGINS": ("ECSPlugin",),
+    "AWS_XRAY_TRACING_NAME": SESSION_COOKIE_DOMAIN.lstrip("."),
+    "DYNAMIC_NAMING": f"*{SESSION_COOKIE_DOMAIN}",
+}
 
 ###############################################################################
 #
@@ -837,7 +866,9 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
         }
     )
 else:
-    CELERY_BROKER_URL = os.environ.get("BROKER_URL", "redis://redis:6379/0")
+    CELERY_BROKER_URL = os.environ.get(
+        "BROKER_URL", f"redis://{REDIS_HOSTNAME}:6379/0"
+    )
 
 # Keep results of sent emails
 CELERY_EMAIL_CHUNK_SIZE = 1
@@ -1073,6 +1104,9 @@ MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 
 # The maximum size of all the files in an upload session in bytes
 UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
+
+# The maximum size of predictions files
+PREDICTIONS_FILE_MAX_BYTES = 1_073_741_824  # 1 GB
 
 # Some forms have a lot of data, such as a reader study update view
 # that can contain reports about the medical images
