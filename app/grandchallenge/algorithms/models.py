@@ -440,8 +440,6 @@ class Job(UUIDModel, ComponentJob):
         return self.algorithm_image
 
     def get_path_and_value(self, inp):
-        if inp.file:
-            return [(inp.interface.relative_path, inp.file)]
         if inp.image:
             return [
                 (
@@ -453,7 +451,10 @@ class Job(UUIDModel, ComponentJob):
                 )
                 for im_file in inp.image.files.all()
             ]
-        return [(inp.interface.relative_path, inp.value)]
+        elif inp.file:
+            return [(inp.interface.relative_path, inp.file)]
+        else:
+            return [(inp.interface.relative_path, inp.value)]
 
     @property
     def input_files(self):

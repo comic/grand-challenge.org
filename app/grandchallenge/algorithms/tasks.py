@@ -147,9 +147,21 @@ def create_algorithm_jobs_for_session(
         kwargs={"session_pk": session.pk}, immutable=True
     )
 
+    default_input_interface = ComponentInterface.objects.get(
+        slug=DEFAULT_INPUT_INTERFACE_SLUG
+    )
+    civ_sets = [
+        {
+            ComponentInterfaceValue.objects.create(
+                interface=default_input_interface, image=image
+            )
+        }
+        for image in session.image_set.all()
+    ]
+
     execute_jobs(
         algorithm_image=algorithm_image,
-        images=session.image_set.all(),
+        civ_sets=civ_sets,
         creator=session.creator,
         extra_viewer_groups=groups,
         linked_task=linked_task,
@@ -182,7 +194,7 @@ def create_algorithm_jobs_for_archive(
         for algorithm in algorithms:
             execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
-                archive_items=archive_items,
+                civ_sets=[{*ai.values.all()} for ai in archive_items],
                 creator=None,
                 extra_viewer_groups=archive_groups,
                 # NOTE: no emails in case the logs leak data
@@ -211,7 +223,10 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 
     execute_jobs(
         algorithm_image=evaluation.submission.algorithm_image,
-        archive_items=evaluation.submission.phase.archive.items.all(),
+        civ_sets=[
+            {*ai.values.all()}
+            for ai in evaluation.submission.phase.archive.items.all()
+        ],
         creator=None,
         extra_viewer_groups=groups,
         linked_task=linked_task,
@@ -221,16 +236,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
 def execute_jobs(
     *,
     algorithm_image,
-    images=None,
-    archive_items=None,
+    civ_sets,
     creator=None,
     extra_viewer_groups=None,
     linked_task=None,
 ):
     jobs = create_algorithm_jobs(
         algorithm_image=algorithm_image,
-        images=images,
-        archive_items=archive_items,
+        civ_sets=civ_sets,
         creator=creator,
         extra_viewer_groups=extra_viewer_groups,
     )
@@ -245,109 +258,38 @@ def execute_jobs(
         on_commit(workflow.apply_async)
 
 
-def create_algorithm_job_with_inputs(
-    *, algorithm_image, inputs, creator=None, extra_viewer_groups=None
+def create_algorithm_jobs(
+    *, algorithm_image, civ_sets, creator=None, extra_viewer_groups=None,
 ):
-    if not algorithm_image:
-        return None
-
-    if creator:
-        if (
-            not algorithm_image.algorithm.is_editor(creator)
-            and algorithm_image.algorithm.credits_per_job > 0
-        ):
-            r = remaining_jobs(
-                creator=creator, algorithm_image=algorithm_image
-            )
-            if r <= 0:
-                # no more credits to start job, should not happen as
-                # this is handled in the UI already
-                return None
-
-    job = Job.objects.create(creator=creator, algorithm_image=algorithm_image)
-    job.inputs.set(
-        [ComponentInterfaceValue.objects.get(pk=pk) for pk in inputs]
+    civ_sets = filter_civs_for_algorithm(
+        civ_sets=civ_sets, algorithm_image=algorithm_image
     )
 
-    if extra_viewer_groups is not None:
-        job.viewer_groups.add(*extra_viewer_groups)
-
-    return job
-
-
-def create_algorithm_jobs(  # noqa: C901
-    *,
-    algorithm_image,
-    images=None,
-    archive_items=None,
-    creator=None,
-    extra_viewer_groups=None,
-):
-    default_input_interface = ComponentInterface.objects.get(
-        slug=DEFAULT_INPUT_INTERFACE_SLUG
-    )
-    jobs = []
-
-    if not images:
-        images = []
-
-    if not archive_items:
-        archive_items = []
-
-    if not algorithm_image:
-        return jobs
-
-    if creator:
-        if (
-            not algorithm_image.algorithm.is_editor(creator)
-            and algorithm_image.algorithm.credits_per_job > 0
-        ):
-            images = images[
-                : remaining_jobs(
-                    creator=creator, algorithm_image=algorithm_image
-                )
-            ]
-            archive_items = archive_items[
-                : remaining_jobs(
-                    creator=creator, algorithm_image=algorithm_image
-                )
-            ]
-
-    if archive_items:
-        civ_sets = [{*ai.values.all()} for ai in archive_items]
-        filtered_civ_sets = filter_civs_for_algorithm(
-            civ_sets=civ_sets, algorithm_image=algorithm_image
+    if (
+        creator
+        and not algorithm_image.algorithm.is_editor(creator)
+        and algorithm_image.algorithm.credits_per_job > 0
+    ):
+        n_jobs = remaining_jobs(
+            creator=creator, algorithm_image=algorithm_image
         )
+        if n_jobs > 0:
+            civ_sets = civ_sets[:n_jobs]
+        else:
+            # Out of credits
+            return []
 
-        for civ_set in filtered_civ_sets:
-            j = Job.objects.create(
-                creator=creator, algorithm_image=algorithm_image
-            )
-            j.inputs.set(civ_set)
-            jobs.append(j)
+    jobs = []
+    for civ_set in civ_sets:
+        j = Job.objects.create(
+            creator=creator, algorithm_image=algorithm_image
+        )
+        j.inputs.set(civ_set)
 
-    for image in images:
-        if not ComponentInterfaceValue.objects.filter(
-            interface=default_input_interface,
-            image=image,
-            algorithms_jobs_as_input__algorithm_image=algorithm_image,
-            algorithms_jobs_as_input__creator=creator,
-        ).exists():
-            j = Job.objects.create(
-                creator=creator, algorithm_image=algorithm_image
-            )
-            j.inputs.set(
-                [
-                    ComponentInterfaceValue.objects.create(
-                        interface=default_input_interface, image=image
-                    )
-                ]
-            )
-            jobs.append(j)
-
-    if extra_viewer_groups is not None:
-        for j in jobs:
+        if extra_viewer_groups is not None:
             j.viewer_groups.add(*extra_viewer_groups)
+
+        jobs.append(j)
 
     return jobs
 
