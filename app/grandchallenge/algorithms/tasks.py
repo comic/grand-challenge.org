@@ -297,8 +297,6 @@ def create_algorithm_jobs(  # noqa: C901
     if not algorithm_image:
         return jobs
 
-    input_interfaces = algorithm_image.algorithm.inputs.all()
-
     if creator:
         if (
             not algorithm_image.algorithm.is_editor(creator)
@@ -315,30 +313,18 @@ def create_algorithm_jobs(  # noqa: C901
                 )
             ]
 
-    for archive_item in archive_items:
-        job_inputs = archive_item.values.filter(interface__in=input_interfaces)
-
-        # Check if a Job with identical inputs already exists
-        skip = False
-        for job in Job.objects.filter(
-            inputs__interface__in=input_interfaces,
-            algorithm_image=algorithm_image,
-            creator=creator,
-        ):
-            if list(
-                job.inputs.order_by("pk").values("value", "image", "file")
-            ) == list(
-                job_inputs.order_by("pk").values("value", "image", "file")
-            ):
-                skip = True
-                break
-        if skip:
-            continue
-        j = Job.objects.create(
-            creator=creator, algorithm_image=algorithm_image
+    if archive_items:
+        civ_sets = [{*ai.values.all()} for ai in archive_items]
+        filtered_civ_sets = filter_civs_for_algorithm(
+            civ_sets=civ_sets, algorithm_image=algorithm_image
         )
-        j.inputs.set(job_inputs)
-        jobs.append(j)
+
+        for civ_set in filtered_civ_sets:
+            j = Job.objects.create(
+                creator=creator, algorithm_image=algorithm_image
+            )
+            j.inputs.set(civ_set)
+            jobs.append(j)
 
     for image in images:
         if not ComponentInterfaceValue.objects.filter(
