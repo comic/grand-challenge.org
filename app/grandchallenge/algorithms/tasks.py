@@ -315,14 +315,13 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
 
     Returns
     -------
-    Filters set of ComponentInterfaceValues
+    Filtered set of ComponentInterfaceValues
     """
     input_interfaces = {*algorithm_image.algorithm.inputs.all()}
 
-    valid_job_inputs = []
-
-    existing_jobs = (
-        Job.objects.filter(algorithm_image=algorithm_image)
+    existing_jobs = {
+        frozenset(j.inputs.all())
+        for j in Job.objects.filter(algorithm_image=algorithm_image)
         .annotate(
             inputs_match_count=Count(
                 "inputs",
@@ -333,9 +332,9 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
         )
         .filter(inputs_match_count=len(input_interfaces))
         .prefetch_related("inputs")
-    )
+    }
 
-    civ_jobs = {frozenset(j.inputs.all()): j for j in existing_jobs}
+    valid_job_inputs = []
 
     for civ_set in civ_sets:
         # Check interfaces are complete
@@ -348,7 +347,7 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
             continue
 
         # Check job has not been run
-        if frozenset(valid_input) in civ_jobs:
+        if frozenset(valid_input) in existing_jobs:
             continue
 
         valid_job_inputs.append(valid_input)
