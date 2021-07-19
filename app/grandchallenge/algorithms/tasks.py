@@ -337,10 +337,6 @@ def create_algorithm_jobs(  # noqa: C901
             creator=creator, algorithm_image=algorithm_image
         )
         j.inputs.set(job_inputs)
-
-        if extra_viewer_groups is not None:
-            j.viewer_groups.add(*extra_viewer_groups)
-
         jobs.append(j)
 
     for image in images:
@@ -360,11 +356,11 @@ def create_algorithm_jobs(  # noqa: C901
                     )
                 ]
             )
-
-            if extra_viewer_groups is not None:
-                j.viewer_groups.add(*extra_viewer_groups)
-
             jobs.append(j)
+
+    if extra_viewer_groups is not None:
+        for j in jobs:
+            j.viewer_groups.add(*extra_viewer_groups)
 
     return jobs
 
