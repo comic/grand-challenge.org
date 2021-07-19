@@ -11,6 +11,7 @@ from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
     execute_algorithm_job_for_inputs,
     execute_jobs,
+    filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
 )
 from grandchallenge.components.models import (
@@ -478,3 +479,38 @@ def test_execute_algorithm_job_for_inputs(
         "Job can't be started, input is missing for interface(s):"
         in job.error_message
     )
+
+
+@pytest.mark.django_db
+class TestJobCreation:
+    def test_unmatched_interface_filter(self):
+        ai = AlgorithmImageFactory()
+        civs = ComponentInterfaceFactory.create_batch(2)
+        ai.algorithm.inputs.set(civs)
+
+        civ_sets = [
+            [],  # No interfaces
+            [ComponentInterfaceValue(interface=civs[0])],  # Missing interface
+            [
+                # OK
+                ComponentInterfaceValue(interface=civs[0]),
+                ComponentInterfaceValue(interface=civs[1]),
+            ],
+            [
+                # Unmatched interface
+                ComponentInterfaceValue(interface=civs[0]),
+                ComponentInterfaceValue(interface=ComponentInterfaceFactory()),
+            ],
+            [
+                # Extra interface
+                ComponentInterfaceValue(interface=civs[0]),
+                ComponentInterfaceValue(interface=civs[1]),
+                ComponentInterfaceValue(interface=ComponentInterfaceFactory()),
+            ],
+        ]
+
+        filtered_civ_sets = filter_civs_for_algorithm(
+            civ_sets=civ_sets, algorithm_image=ai
+        )
+
+        assert filtered_civ_sets == [civ_sets[2]]

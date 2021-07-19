@@ -365,6 +365,38 @@ def create_algorithm_jobs(  # noqa: C901
     return jobs
 
 
+def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
+    """
+    Removes sets of civs that are invalid for new jobs
+
+    Parameters
+    ----------
+    civ_sets
+        Iterable of sets of ComponentInterfaceValues that are candidate for
+        new Jobs
+    algorithm_image
+        The algorithm image to use for new job
+
+    Returns
+    -------
+    Filters set of ComponentInterfaceValues
+    """
+    input_interfaces = {*algorithm_image.algorithm.inputs.all()}
+
+    valid_job_inputs = []
+
+    for civ_set in civ_sets:
+
+        # Check interfaces match
+        civ_interfaces = {civ.interface for civ in civ_set}
+        if civ_interfaces != input_interfaces:
+            continue
+
+        valid_job_inputs.append(civ_set)
+
+    return valid_job_inputs
+
+
 def remaining_jobs(*, creator, algorithm_image):
     user_credit = Credit.objects.get(user=creator)
     jobs = Job.credits_set.spent_credits(user=creator)
