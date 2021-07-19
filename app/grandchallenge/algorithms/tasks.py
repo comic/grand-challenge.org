@@ -3,6 +3,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
+from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
 from grandchallenge.algorithms.models import (
@@ -385,14 +386,36 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
 
     valid_job_inputs = []
 
-    for civ_set in civ_sets:
+    existing_jobs = (
+        Job.objects.filter(algorithm_image=algorithm_image)
+        .annotate(
+            inputs_match_count=Count(
+                "inputs",
+                filter=Q(
+                    inputs__in={civ for civ_set in civ_sets for civ in civ_set}
+                ),
+            )
+        )
+        .filter(inputs_match_count=len(input_interfaces))
+        .prefetch_related("inputs")
+    )
 
+    civ_jobs = {frozenset(j.inputs.all()): j for j in existing_jobs}
+
+    for civ_set in civ_sets:
         # Check interfaces match
         civ_interfaces = {civ.interface for civ in civ_set}
-        if civ_interfaces != input_interfaces:
+        if input_interfaces.issubset(civ_interfaces):
+            valid_input = {
+                civ for civ in civ_set if civ.interface in input_interfaces
+            }
+        else:
             continue
 
-        valid_job_inputs.append(civ_set)
+        if frozenset(valid_input) in civ_jobs:
+            continue
+
+        valid_job_inputs.append(valid_input)
 
     return valid_job_inputs
 

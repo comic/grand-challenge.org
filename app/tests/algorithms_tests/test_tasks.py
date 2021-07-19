@@ -485,28 +485,26 @@ def test_execute_algorithm_job_for_inputs(
 class TestJobCreation:
     def test_unmatched_interface_filter(self):
         ai = AlgorithmImageFactory()
-        civs = ComponentInterfaceFactory.create_batch(2)
-        ai.algorithm.inputs.set(civs)
+        cis = ComponentInterfaceFactory.create_batch(2)
+        ai.algorithm.inputs.set(cis)
 
         civ_sets = [
-            [],  # No interfaces
-            [ComponentInterfaceValue(interface=civs[0])],  # Missing interface
-            [
+            {},  # No interfaces
+            {
+                ComponentInterfaceValueFactory(interface=cis[0])
+            },  # Missing interface
+            {
                 # OK
-                ComponentInterfaceValue(interface=civs[0]),
-                ComponentInterfaceValue(interface=civs[1]),
-            ],
-            [
+                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(interface=cis[1]),
+            },
+            {
                 # Unmatched interface
-                ComponentInterfaceValue(interface=civs[0]),
-                ComponentInterfaceValue(interface=ComponentInterfaceFactory()),
-            ],
-            [
-                # Extra interface
-                ComponentInterfaceValue(interface=civs[0]),
-                ComponentInterfaceValue(interface=civs[1]),
-                ComponentInterfaceValue(interface=ComponentInterfaceFactory()),
-            ],
+                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(
+                    interface=ComponentInterfaceFactory()
+                ),
+            },
         ]
 
         filtered_civ_sets = filter_civs_for_algorithm(
@@ -514,3 +512,56 @@ class TestJobCreation:
         )
 
         assert filtered_civ_sets == [civ_sets[2]]
+
+    def test_unmatched_interface_filter_subset(self):
+        ai = AlgorithmImageFactory()
+        cis = ComponentInterfaceFactory.create_batch(2)
+        ai.algorithm.inputs.set(cis)
+
+        civ_sets = [
+            {
+                # Extra interface
+                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(interface=cis[1]),
+                ComponentInterfaceValueFactory(
+                    interface=ComponentInterfaceFactory()
+                ),
+            },
+        ]
+
+        filtered_civ_sets = filter_civs_for_algorithm(
+            civ_sets=civ_sets, algorithm_image=ai
+        )
+
+        assert len(filtered_civ_sets) == 1
+        assert {civ.interface for civ in filtered_civ_sets[0]} == {*cis}
+
+    def test_existing_jobs(self):
+        ai = AlgorithmImageFactory()
+        cis = ComponentInterfaceFactory.create_batch(2)
+        ai.algorithm.inputs.set(cis)
+
+        civs = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+
+        j = AlgorithmJobFactory(algorithm_image=ai)
+        j.inputs.set(civs)
+
+        civ_sets = [
+            civs,  # Job already exists
+            {
+                # New values
+                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(interface=cis[1]),
+            },
+            {
+                # Changed values
+                civs[0],
+                ComponentInterfaceValueFactory(interface=cis[1]),
+            },
+        ]
+
+        filtered_civ_sets = filter_civs_for_algorithm(
+            civ_sets=civ_sets, algorithm_image=ai
+        )
+
+        assert filtered_civ_sets == civ_sets[1:]
