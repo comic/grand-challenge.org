@@ -194,7 +194,12 @@ def create_algorithm_jobs_for_archive(
         for algorithm in algorithms:
             execute_jobs(
                 algorithm_image=algorithm.latest_ready_image,
-                civ_sets=[{*ai.values.all()} for ai in archive_items],
+                civ_sets=[
+                    {*ai.values.all()}
+                    for ai in archive_items.prefetch_related(
+                        "values__interface"
+                    )
+                ],
                 creator=None,
                 extra_viewer_groups=archive_groups,
                 # NOTE: no emails in case the logs leak data
@@ -225,7 +230,9 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
         algorithm_image=evaluation.submission.algorithm_image,
         civ_sets=[
             {*ai.values.all()}
-            for ai in evaluation.submission.phase.archive.items.all()
+            for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                "values__interface"
+            )
         ],
         creator=None,
         extra_viewer_groups=groups,
@@ -331,7 +338,7 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
     civ_jobs = {frozenset(j.inputs.all()): j for j in existing_jobs}
 
     for civ_set in civ_sets:
-        # Check interfaces match
+        # Check interfaces are complete
         civ_interfaces = {civ.interface for civ in civ_set}
         if input_interfaces.issubset(civ_interfaces):
             valid_input = {
@@ -340,6 +347,7 @@ def filter_civs_for_algorithm(*, civ_sets, algorithm_image):
         else:
             continue
 
+        # Check job has not been run
         if frozenset(valid_input) in civ_jobs:
             continue
 
