@@ -304,7 +304,9 @@ class TestJobPermissions(TestCase):
         im = ImageFactory()
         s.image_set.set([im])
 
-        civ = ComponentInterfaceValueFactory(image=im)
+        civ = ComponentInterfaceValueFactory(
+            image=im, interface=ai.algorithm.inputs.get()
+        )
         archive_item = ArchiveItemFactory(archive=archive)
         with capture_on_commit_callbacks(execute=True):
             archive_item.values.add(civ)
@@ -348,7 +350,9 @@ class TestJobPermissions(TestCase):
         im = ImageFactory()
         s.image_set.set([im])
 
-        civ = ComponentInterfaceValueFactory(image=im)
+        civ = ComponentInterfaceValueFactory(
+            image=im, interface=ai.algorithm.inputs.get()
+        )
         archive_item = ArchiveItemFactory(archive=archive)
         with capture_on_commit_callbacks(execute=True):
             archive_item.values.add(civ)

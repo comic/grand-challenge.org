@@ -8,7 +8,11 @@ from grandchallenge.archives.models import (
     Archive,
     ArchivePermissionRequest,
 )
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKind,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -232,11 +236,13 @@ def test_archive_item_form(client, settings):
 
     alg = AlgorithmFactory()
     AlgorithmImageFactory(algorithm=alg, ready=True)
-    alg.inputs.add(ci)
+    alg.inputs.set([ci])
     with capture_on_commit_callbacks(execute=True):
         archive.algorithms.add(alg)
 
     assert Job.objects.count() == 1
+
+    civ_count = ComponentInterfaceValue.objects.count()
 
     with capture_on_commit_callbacks(execute=True):
         with capture_on_commit_callbacks(execute=True):
@@ -251,6 +257,8 @@ def test_archive_item_form(client, settings):
             )
 
     assert ai.values.filter(pk=civ.pk).count() == 0
+    # This should created a new CIV as they are immutable
+    assert ComponentInterfaceValue.objects.count() == civ_count + 1
 
     # A new job should have been created, because the value for 'bool'
     # has changed
@@ -268,6 +276,6 @@ def test_archive_item_form(client, settings):
                 user=editor,
             )
 
-    # No new jobs should have been created, because the value for 'bool'
-    # has changed to a value for which a job already exists
-    assert Job.objects.count() == 2
+    # New jobs should be created as there is a new CIV
+    assert Job.objects.count() == 3
+    assert ComponentInterfaceValue.objects.count() == civ_count + 2

@@ -11,6 +11,7 @@ from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
     execute_algorithm_job_for_inputs,
     execute_jobs,
+    filter_civs_for_algorithm,
     run_algorithm_job_for_inputs,
 )
 from grandchallenge.components.models import (
@@ -45,7 +46,7 @@ class TestCreateAlgorithmJobs:
 
     def test_no_images_does_nothing(self):
         ai = AlgorithmImageFactory()
-        create_algorithm_jobs(algorithm_image=ai, images=[])
+        create_algorithm_jobs(algorithm_image=ai, civ_sets=[])
         assert Job.objects.count() == 0
 
     def test_civ_existing_does_nothing(self):
@@ -63,8 +64,11 @@ class TestCreateAlgorithmJobs:
     def test_creates_job_correctly(self):
         ai = AlgorithmImageFactory()
         image = ImageFactory()
+        civ = ComponentInterfaceValueFactory(
+            image=image, interface=ai.algorithm.inputs.get()
+        )
         assert Job.objects.count() == 0
-        jobs = create_algorithm_jobs(algorithm_image=ai, images=[image])
+        jobs = create_algorithm_jobs(algorithm_image=ai, civ_sets=[{civ}])
         assert Job.objects.count() == 1
         j = Job.objects.first()
         assert j.algorithm_image == ai
@@ -78,30 +82,42 @@ class TestCreateAlgorithmJobs:
     def test_is_idempotent(self):
         ai = AlgorithmImageFactory()
         image = ImageFactory()
+        civ = ComponentInterfaceValueFactory(
+            image=image, interface=ai.algorithm.inputs.get()
+        )
         assert Job.objects.count() == 0
-        create_algorithm_jobs(algorithm_image=ai, images=[image])
+        create_algorithm_jobs(algorithm_image=ai, civ_sets=[{civ}])
         assert Job.objects.count() == 1
-        jobs = create_algorithm_jobs(algorithm_image=ai, images=[image])
+        jobs = create_algorithm_jobs(algorithm_image=ai, civ_sets=[{civ}])
         assert Job.objects.count() == 1
         assert len(jobs) == 0
 
     def test_gets_creator_from_session(self):
+        ai = AlgorithmImageFactory()
         riu = RawImageUploadSessionFactory()
         riu.image_set.add(ImageFactory(), ImageFactory())
+        civ_sets = [
+            {
+                ComponentInterfaceValueFactory(
+                    image=image, interface=ai.algorithm.inputs.get()
+                )
+            }
+            for image in riu.image_set.all()
+        ]
         create_algorithm_jobs(
-            algorithm_image=AlgorithmImageFactory(),
-            images=riu.image_set.all(),
-            creator=riu.creator,
+            algorithm_image=ai, civ_sets=civ_sets, creator=riu.creator,
         )
         j = Job.objects.first()
         assert j.creator == riu.creator
 
     def test_extra_viewer_groups(self):
         ai = AlgorithmImageFactory()
-        image = ImageFactory()
+        civ = ComponentInterfaceValueFactory(
+            interface=ai.algorithm.inputs.get()
+        )
         groups = (GroupFactory(), GroupFactory(), GroupFactory())
         jobs = create_algorithm_jobs(
-            algorithm_image=ai, images=[image], extra_viewer_groups=groups
+            algorithm_image=ai, civ_sets=[{civ}], extra_viewer_groups=groups
         )
         for g in groups:
             assert jobs[0].viewer_groups.filter(pk=g.pk).exists()
@@ -123,16 +139,20 @@ class TestCreateAlgorithmJobs:
                 ImageFactory(origin=riu),
 
             riu.save()
-            return riu
+
+            interface = algorithm_image.algorithm.inputs.get()
+
+            return [
+                {ComponentInterfaceValueFactory(image=im, interface=interface)}
+                for im in riu.image_set.all()
+            ]
 
         assert Job.objects.count() == 0
 
         # Create an upload session as editor; should not be limited
         upload = create_upload(editor)
         create_algorithm_jobs(
-            algorithm_image=algorithm_image,
-            images=upload.image_set.all(),
-            creator=upload.creator,
+            algorithm_image=algorithm_image, civ_sets=upload, creator=editor,
         )
 
         assert Job.objects.count() == 3
@@ -140,9 +160,7 @@ class TestCreateAlgorithmJobs:
         # Create an upload session as user; should be limited
         upload_2 = create_upload(user)
         create_algorithm_jobs(
-            algorithm_image=algorithm_image,
-            images=upload_2.image_set.all(),
-            creator=upload_2.creator,
+            algorithm_image=algorithm_image, civ_sets=upload_2, creator=user,
         )
 
         # An additional 2 jobs should be created (standard nr of credits is 1000
@@ -154,9 +172,7 @@ class TestCreateAlgorithmJobs:
 
         # The job that was skipped on the previous run should now be accepted
         create_algorithm_jobs(
-            algorithm_image=algorithm_image,
-            images=upload_2.image_set.all(),
-            creator=upload_2.creator,
+            algorithm_image=algorithm_image, civ_sets=upload_2, creator=user,
         )
         assert Job.objects.count() == 6
 
@@ -165,14 +181,22 @@ class TestCreateJobsWorkflow(TestCase):
     def test_no_jobs_workflow(self):
         ai = AlgorithmImageFactory()
         with capture_on_commit_callbacks() as callbacks:
-            execute_jobs(algorithm_image=ai, images=[])
+            execute_jobs(algorithm_image=ai, civ_sets=[])
         assert len(callbacks) == 0
 
     def test_jobs_workflow(self):
         ai = AlgorithmImageFactory()
         images = [ImageFactory(), ImageFactory()]
+        civ_sets = [
+            {
+                ComponentInterfaceValueFactory(
+                    image=im, interface=ai.algorithm.inputs.get()
+                )
+            }
+            for im in images
+        ]
         with capture_on_commit_callbacks() as callbacks:
-            execute_jobs(algorithm_image=ai, images=images)
+            execute_jobs(algorithm_image=ai, civ_sets=civ_sets)
         assert len(callbacks) == 1
 
 
@@ -196,11 +220,15 @@ def test_algorithm(client, algorithm_image, settings):
 
     # Run the algorithm, it will create a results.json and an output.tif
     image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
+        file__from_path=Path(__file__).parent / "resources" / "input_file.tif",
     )
+    civ = ComponentInterfaceValueFactory(
+        image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
+    )
+    assert civ.interface.slug == "generic-medical-image"
 
     with capture_on_commit_callbacks(execute=True):
-        execute_jobs(algorithm_image=alg, images=[image_file.image])
+        execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
 
     jobs = Job.objects.filter(algorithm_image=alg).all()
 
@@ -242,9 +270,12 @@ def test_algorithm(client, algorithm_image, settings):
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
+    civ = ComponentInterfaceValueFactory(
+        image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
+    )
 
     with capture_on_commit_callbacks(execute=True):
-        execute_jobs(algorithm_image=alg, images=[image_file.image])
+        execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
 
     jobs = Job.objects.filter(
         algorithm_image=alg, inputs__image=image_file.image
@@ -286,9 +317,12 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
+    civ = ComponentInterfaceValueFactory(
+        image=image_file.image, interface=alg.algorithm.inputs.get(), file=None
+    )
 
     with capture_on_commit_callbacks(execute=True):
-        execute_jobs(algorithm_image=alg, images=[image_file.image])
+        execute_jobs(algorithm_image=alg, civ_sets=[{civ}])
 
     jobs = Job.objects.filter(
         algorithm_image=alg, inputs__image=image_file.image, status=Job.FAILURE
@@ -478,3 +512,89 @@ def test_execute_algorithm_job_for_inputs(
         "Job can't be started, input is missing for interface(s):"
         in job.error_message
     )
+
+
+@pytest.mark.django_db
+class TestJobCreation:
+    def test_unmatched_interface_filter(self):
+        ai = AlgorithmImageFactory()
+        cis = ComponentInterfaceFactory.create_batch(2)
+        ai.algorithm.inputs.set(cis)
+
+        civ_sets = [
+            {},  # No interfaces
+            {
+                ComponentInterfaceValueFactory(interface=cis[0])
+            },  # Missing interface
+            {
+                # OK
+                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(interface=cis[1]),
+            },
+            {
+                # Unmatched interface
+                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(
+                    interface=ComponentInterfaceFactory()
+                ),
+            },
+        ]
+
+        filtered_civ_sets = filter_civs_for_algorithm(
+            civ_sets=civ_sets, algorithm_image=ai
+        )
+
+        assert filtered_civ_sets == [civ_sets[2]]
+
+    def test_unmatched_interface_filter_subset(self):
+        ai = AlgorithmImageFactory()
+        cis = ComponentInterfaceFactory.create_batch(2)
+        ai.algorithm.inputs.set(cis)
+
+        civ_sets = [
+            {
+                # Extra interface
+                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(interface=cis[1]),
+                ComponentInterfaceValueFactory(
+                    interface=ComponentInterfaceFactory()
+                ),
+            },
+        ]
+
+        filtered_civ_sets = filter_civs_for_algorithm(
+            civ_sets=civ_sets, algorithm_image=ai
+        )
+
+        assert len(filtered_civ_sets) == 1
+        assert {civ.interface for civ in filtered_civ_sets[0]} == {*cis}
+
+    def test_existing_jobs(self):
+        ai = AlgorithmImageFactory()
+        cis = ComponentInterfaceFactory.create_batch(2)
+        ai.algorithm.inputs.set(cis)
+
+        civs = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+
+        j = AlgorithmJobFactory(algorithm_image=ai)
+        j.inputs.set(civs)
+
+        civ_sets = [
+            civs,  # Job already exists
+            {
+                # New values
+                ComponentInterfaceValueFactory(interface=cis[0]),
+                ComponentInterfaceValueFactory(interface=cis[1]),
+            },
+            {
+                # Changed values
+                civs[0],
+                ComponentInterfaceValueFactory(interface=cis[1]),
+            },
+        ]
+
+        filtered_civ_sets = filter_civs_for_algorithm(
+            civ_sets=civ_sets, algorithm_image=ai
+        )
+
+        assert filtered_civ_sets == civ_sets[1:]
