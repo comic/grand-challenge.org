@@ -1,24 +1,35 @@
 import io
+import json
+import logging
 import os
 import re
 import sys
 import tarfile
 from contextlib import contextmanager
+from json import JSONDecodeError
 from pathlib import Path
 from random import randint
 from shutil import copyfileobj
-from tempfile import SpooledTemporaryFile
+from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from time import sleep
 
 import docker
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
+from django.db import transaction
 from django.db.models import Model
+from django.utils._os import safe_join
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, ImageNotFound
+from docker.errors import APIError, ImageNotFound, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
+from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from requests import HTTPError
+
+from grandchallenge.cases.tasks import import_images
+
+logger = logging.getLogger(__name__)
 
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
 LOGLINES = 2000  # The number of loglines to keep
@@ -201,7 +212,7 @@ class Executor(DockerConnection):
 
         self._stdout = ""
         self._stderr = ""
-        self._result = {}
+        self._outputs = []
 
     def execute(self):
         self._pull_images()
@@ -220,8 +231,8 @@ class Executor(DockerConnection):
         return self._stderr
 
     @property
-    def result(self):
-        return self._result
+    def outputs(self):
+        return self._outputs
 
     def _pull_images(self):
         try:
@@ -340,9 +351,6 @@ class Executor(DockerConnection):
 
     def _get_outputs(self):
         """Create ComponentInterfaceValues from the output interfaces"""
-        job = self._job_class.objects.get(pk=self._job_id)
-        output_interfaces = self._output_interfaces.all()
-
         with cleanup(
             self._client.containers.run(
                 image=self._io_image,
@@ -356,10 +364,97 @@ class Executor(DockerConnection):
                 **self._run_kwargs,
             )
         ) as reader:
-            for output in output_interfaces:
-                output.create_component_interface_values(
-                    reader=reader, job=job
-                )
+            with transaction.atomic():
+                # Atomic block required as create_instance needs to
+                # create interfaces in order to store the files
+                for interface in self._output_interfaces.all():
+                    if interface.is_image_kind:
+                        self._create_images_result(
+                            interface=interface, reader=reader
+                        )
+                    else:
+                        self._create_file_result(
+                            interface=interface, reader=reader
+                        )
+
+    def _create_images_result(self, *, interface, reader):
+        base_dir = Path(interface.output_path)
+        found_files = reader.exec_run(f"find {base_dir} -type f")
+
+        if found_files.exit_code != 0:
+            raise ComponentException(f"Error listing {base_dir}")
+
+        output_files = [
+            base_dir / Path(f)
+            for f in found_files.output.decode().splitlines()
+        ]
+
+        if not output_files:
+            raise ComponentException(f"{base_dir} is empty")
+
+        with TemporaryDirectory() as tmpdir:
+            for file in output_files:
+                temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
+                temp_file.parent.mkdir(parents=True, exist_ok=True)
+
+                with open(temp_file, "wb") as outfile:
+                    infile = get_file(container=reader, src=file)
+
+                    buffer = True
+                    while buffer:
+                        buffer = infile.read(1024)
+                        outfile.write(buffer)
+
+            importer_result = import_images(
+                input_directory=tmpdir,
+                builders=[image_builder_mhd, image_builder_tiff],
+            )
+
+        if len(importer_result.new_images) == 0:
+            raise ComponentException(f"No images imported from {base_dir}")
+        elif len(importer_result.new_images) > 1:
+            raise ComponentException(
+                f"Only 1 image should be produced in {base_dir}, "
+                f"we found {len(importer_result.new_images)}"
+            )
+
+        try:
+            civ = interface.create_instance(
+                image=next(iter(importer_result.new_images))
+            )
+        except ValidationError:
+            raise ComponentException(
+                f"The image produced in {base_dir} is not valid"
+            )
+        self._outputs.append(civ)
+
+    def _create_file_result(self, *, interface, reader):
+        output_file = Path(interface.output_path)
+
+        try:
+            file = get_file(container=reader, src=output_file)
+        except NotFound:
+            raise ComponentException(
+                f"File {interface.output_path} was not produced."
+            )
+
+        try:
+            result = json.loads(
+                file.read().decode("utf-8"),
+                parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+            )
+        except JSONDecodeError:
+            raise ComponentException(
+                f"The file produced at {output_file} is not valid json"
+            )
+
+        try:
+            civ = interface.create_instance(value=result)
+        except ValidationError:
+            raise ComponentException(
+                f"The file produced at {output_file} is not valid"
+            )
+        self._outputs.append(civ)
 
 
 class Service(DockerConnection):

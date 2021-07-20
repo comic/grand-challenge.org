@@ -329,8 +329,11 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
         algorithm_image=alg, inputs__image=image_file.image, status=Job.FAILURE
     ).all()
     assert len(jobs) == 1
-    assert jobs.first().error_message == "Invalid filetype."
-    assert len(jobs[0].outputs.all()) == 2
+    assert (
+        jobs.first().error_message
+        == "The file produced at /output/some_text.txt is not valid json"
+    )
+    assert len(jobs[0].outputs.all()) == 0
 
 
 @pytest.mark.django_db

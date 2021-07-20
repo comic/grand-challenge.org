@@ -1,12 +1,10 @@
 import json
 import logging
 from decimal import Decimal
-from json import JSONDecodeError
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import models
@@ -18,15 +16,8 @@ from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
-from docker.errors import NotFound
-from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.models import Image, ImageFile
-from grandchallenge.cases.tasks import import_images
-from grandchallenge.components.backends.docker import (
-    ComponentException,
-    get_file,
-)
 from grandchallenge.components.tasks import execute_job, validate_docker_image
 from grandchallenge.components.validators import validate_safe_path
 from grandchallenge.core.storage import (
@@ -398,93 +389,26 @@ class ComponentInterface(models.Model):
             or not self.store_in_database
         )
 
+    def create_instance(self, *, image=None, value=None):
+        civ = ComponentInterfaceValue.objects.create(interface=self)
+
+        if image:
+            civ.image = image
+        elif self.save_in_object_store:
+            civ.file = ContentFile(
+                json.dumps(value).encode("utf-8"),
+                name=str(Path(self.output_path).name),
+            )
+        else:
+            civ.value = value
+
+        civ.full_clean()
+        civ.save()
+
+        return civ
+
     class Meta:
         ordering = ("pk",)
-
-    def create_component_interface_values(self, *, reader, job):
-        # TODO JM These functions rely on docker specific code (reader)
-        if self.is_image_kind:
-            self._create_images_result(reader=reader, job=job)
-        else:
-            self._create_file_result(reader=reader, job=job)
-
-    def _create_images_result(self, *, reader, job):
-        # TODO JM in the future this will be a file, not a directory
-        base_dir = Path(self.output_path)
-        found_files = reader.exec_run(f"find {base_dir} -type f")
-
-        if found_files.exit_code != 0:
-            logger.warning(f"Error listing {base_dir}")
-            return
-
-        output_files = [
-            base_dir / Path(f)
-            for f in found_files.output.decode().splitlines()
-        ]
-
-        if not output_files:
-            logger.warning("Output directory is empty")
-            return
-
-        with TemporaryDirectory() as tmpdir:
-            for file in output_files:
-                temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
-                temp_file.parent.mkdir(parents=True, exist_ok=True)
-
-                with open(temp_file, "wb") as outfile:
-                    infile = get_file(container=reader, src=file)
-
-                    buffer = True
-                    while buffer:
-                        buffer = infile.read(1024)
-                        outfile.write(buffer)
-
-            importer_result = import_images(
-                input_directory=tmpdir,
-                builders=[image_builder_mhd, image_builder_tiff],
-            )
-
-        for image in importer_result.new_images:
-            civ = ComponentInterfaceValue.objects.create(
-                interface=self, image=image
-            )
-            job.outputs.add(civ)
-
-    def _create_file_result(self, reader, job):
-        output_file = Path(self.output_path)
-        try:
-            file = get_file(container=reader, src=output_file)
-        except NotFound:
-            raise ComponentException(
-                f"The evaluation or algorithm failed for an unknown reason as "
-                f"file {self.output_path} was not produced. Please contact the "
-                f"organisers for assistance."
-            )
-
-        if self.save_in_object_store:
-            civ = ComponentInterfaceValue.objects.create(interface=self)
-            try:
-                civ.file = ContentFile(file.read(), name=str(output_file.name))
-                civ.full_clean()
-                civ.save()
-            except ValidationError:
-                raise ComponentException("Invalid filetype.")
-        else:
-            try:
-                result = json.loads(
-                    file.read().decode(),
-                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-                )
-            except JSONDecodeError as e:
-                raise ComponentException(
-                    f"Could not decode json file: {e.msg}"
-                )
-
-            civ = ComponentInterfaceValue.objects.create(
-                interface=self, value=result
-            )
-
-        job.outputs.add(civ)
 
 
 def component_interface_value_path(instance, filename):
