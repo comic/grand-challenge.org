@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from shutil import copy
 from warnings import warn
 
 if __name__ == "__main__":
@@ -14,7 +15,13 @@ if __name__ == "__main__":
             warn(f"Could not load {file} as json, {e}")
             val = "file"
 
-        res[str(file.absolute()).replace("/input/", "")] = val
-    with open("/output/results.json", "w") as f:
-        res = json.dumps(res, ensure_ascii=True, indent=2)
-        f.write(res)
+        res[str(file.absolute())] = val
+
+        # Copy all the input files to output
+        new_file = Path("/output/") / file.relative_to("/input/")
+        new_file.parent.mkdir(parents=True, exist_ok=True)
+        copy(file, new_file)
+
+    for output_filename in ["results", "metrics"]:
+        with open(f"/output/{output_filename}.json", "w") as f:
+            f.write(json.dumps(res))

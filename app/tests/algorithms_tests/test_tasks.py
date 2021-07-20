@@ -18,6 +18,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
+    InterfaceKindChoices,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
@@ -328,8 +329,11 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
         algorithm_image=alg, inputs__image=image_file.image, status=Job.FAILURE
     ).all()
     assert len(jobs) == 1
-    assert jobs.first().error_message == "Invalid filetype."
-    assert len(jobs[0].outputs.all()) == 2
+    assert (
+        jobs.first().error_message
+        == "The file produced at /output/some_text.txt is not valid json"
+    )
+    assert len(jobs[0].outputs.all()) == 0
 
 
 @pytest.mark.django_db
@@ -352,11 +356,16 @@ def test_algorithm_multiple_inputs(
     alg.algorithm.add_editor(creator)
 
     alg.algorithm.inputs.set(ComponentInterface.objects.all())
+    alg.algorithm.outputs.set(
+        [ComponentInterface.objects.get(slug="results-json-file")]
+    )
     # create the job
     job = Job.objects.create(creator=creator, algorithm_image=alg)
 
     expected = []
-    for ci in ComponentInterface.objects.all():
+    for ci in ComponentInterface.objects.exclude(
+        kind=InterfaceKindChoices.ZIP
+    ):
         if ci.kind in InterfaceKind.interface_type_image():
             image_file = ImageFileFactory(
                 file__from_path=Path(__file__).parent
@@ -395,7 +404,7 @@ def test_algorithm_multiple_inputs(
 
     job = Job.objects.get()
     assert job.status == job.SUCCESS
-    assert {x[0] for x in job.input_files} == set(
+    assert {str(x.input_path) for x in job.inputs.all()} == set(
         job.outputs.first().value.keys()
     )
     assert sorted(

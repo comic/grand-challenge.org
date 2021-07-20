@@ -1,33 +1,23 @@
 import json
 import logging
 from decimal import Decimal
-from json import JSONDecodeError
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import Tuple, Type
+from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
+from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
-from docker.errors import NotFound
-from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
-from grandchallenge.cases.models import Image
-from grandchallenge.cases.tasks import import_images
-from grandchallenge.components.backends.docker import (
-    ComponentException,
-    Executor,
-    get_file,
-)
+from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.tasks import execute_job, validate_docker_image
 from grandchallenge.components.validators import validate_safe_path
 from grandchallenge.core.storage import (
@@ -399,93 +389,26 @@ class ComponentInterface(models.Model):
             or not self.store_in_database
         )
 
+    def create_instance(self, *, image=None, value=None):
+        civ = ComponentInterfaceValue.objects.create(interface=self)
+
+        if image:
+            civ.image = image
+        elif self.save_in_object_store:
+            civ.file = ContentFile(
+                json.dumps(value).encode("utf-8"),
+                name=str(Path(self.output_path).name),
+            )
+        else:
+            civ.value = value
+
+        civ.full_clean()
+        civ.save()
+
+        return civ
+
     class Meta:
         ordering = ("pk",)
-
-    def create_component_interface_values(self, *, reader, job):
-        # TODO JM These functions rely on docker specific code (reader)
-        if self.is_image_kind:
-            self._create_images_result(reader=reader, job=job)
-        else:
-            self._create_file_result(reader=reader, job=job)
-
-    def _create_images_result(self, *, reader, job):
-        # TODO JM in the future this will be a file, not a directory
-        base_dir = Path(self.output_path)
-        found_files = reader.exec_run(f"find {base_dir} -type f")
-
-        if found_files.exit_code != 0:
-            logger.warning(f"Error listing {base_dir}")
-            return
-
-        output_files = [
-            base_dir / Path(f)
-            for f in found_files.output.decode().splitlines()
-        ]
-
-        if not output_files:
-            logger.warning("Output directory is empty")
-            return
-
-        with TemporaryDirectory() as tmpdir:
-            for file in output_files:
-                temp_file = Path(safe_join(tmpdir, file.relative_to(base_dir)))
-                temp_file.parent.mkdir(parents=True, exist_ok=True)
-
-                with open(temp_file, "wb") as outfile:
-                    infile = get_file(container=reader, src=file)
-
-                    buffer = True
-                    while buffer:
-                        buffer = infile.read(1024)
-                        outfile.write(buffer)
-
-            importer_result = import_images(
-                input_directory=tmpdir,
-                builders=[image_builder_mhd, image_builder_tiff],
-            )
-
-        for image in importer_result.new_images:
-            civ = ComponentInterfaceValue.objects.create(
-                interface=self, image=image
-            )
-            job.outputs.add(civ)
-
-    def _create_file_result(self, reader, job):
-        output_file = Path(self.output_path)
-        try:
-            file = get_file(container=reader, src=output_file)
-        except NotFound:
-            raise ComponentException(
-                f"The evaluation or algorithm failed for an unknown reason as "
-                f"file {self.output_path} was not produced. Please contact the "
-                f"organisers for assistance."
-            )
-
-        if self.save_in_object_store:
-            civ = ComponentInterfaceValue.objects.create(interface=self)
-            try:
-                civ.file = ContentFile(file.read(), name=str(output_file.name))
-                civ.full_clean()
-                civ.save()
-            except ValidationError:
-                raise ComponentException("Invalid filetype.")
-        else:
-            try:
-                result = json.loads(
-                    file.read().decode(),
-                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
-                )
-            except JSONDecodeError as e:
-                raise ComponentException(
-                    f"Could not decode json file: {e.msg}"
-                )
-
-            civ = ComponentInterfaceValue.objects.create(
-                interface=self, value=result
-            )
-
-        job.outputs.add(civ)
 
 
 def component_interface_value_path(instance, filename):
@@ -541,6 +464,60 @@ class ComponentInterfaceValue(models.Model):
     @property
     def has_value(self):
         return self.value is not None or self.image or self.file
+
+    @property
+    def decompress(self):
+        """
+        Should the CIV be decompressed?
+
+        This is only for legacy support of zip file submission for
+        prediction evaluation. We should not support this anywhere
+        else as it clobbers the input directory.
+        """
+        return self.interface.kind == InterfaceKindChoices.ZIP
+
+    @cached_property
+    def image_file(self):
+        """The single image file for this interface"""
+        return (
+            self.image.files.filter(
+                image_type__in=[
+                    ImageFile.IMAGE_TYPE_MHD,
+                    ImageFile.IMAGE_TYPE_TIFF,
+                ]
+            )
+            .get()
+            .file
+        )
+
+    @property
+    def input_file(self):
+        """The file to use as component input"""
+        if self.image:
+            return self.image_file
+        elif self.file:
+            return self.file
+        else:
+            src = NamedTemporaryFile(delete=True)
+            src.write(bytes(json.dumps(self.value), "utf-8"))
+            src.flush()
+            return File(src, name=self.input_path)
+
+    @property
+    def input_path(self):
+        """
+        Where should the input_file be located when used for input?
+
+        Images need special handling as their names are fixed.
+        """
+        if self.image:
+            path = safe_join(
+                self.interface.input_path, Path(self.image_file.name).name
+            )
+        else:
+            path = self.interface.input_path
+
+        return Path(path)
 
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"
@@ -641,26 +618,9 @@ class ComponentJob(models.Model):
         raise NotImplementedError
 
     @property
-    def input_files(self) -> Tuple[File, ...]:
-        """
-        Returns a tuple of the input files that will be mounted into the
-        container when it is executed
-        """
-        raise NotImplementedError
-
-    @property
     def output_interfaces(self) -> QuerySet:
         """Returns an unevaluated QuerySet for the output interfaces"""
         raise NotImplementedError
-
-    @property
-    def executor_cls(self) -> Type[Executor]:
-        """
-        Return the executor class for this job.
-
-        The executor class must be a subclass of ``Executor``.
-        """
-        return Executor
 
     @property
     def signature(self):

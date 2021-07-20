@@ -89,10 +89,15 @@ development_fixtures:
 		web \
 		bash -c "python manage.py migrate && python manage.py runscript development_fixtures"
 
-create_io_algorithm:
+algorithm_evaluation_fixtures:
 	docker buildx build -t algorithm_io app/tests/resources/gc_demo_algorithm/
 	docker save algorithm_io -o app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 	chmod a+r app/tests/resources/gc_demo_algorithm/algorithm_io.tar
+	docker-compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts/:ro \
+		--rm \
+		web \
+		python manage.py runscript algorithm_evaluation_fixtures
 
 .PHONY: docs
 docs:
