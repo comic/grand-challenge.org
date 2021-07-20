@@ -3,8 +3,7 @@ import logging
 from decimal import Decimal
 from json import JSONDecodeError
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import Tuple, Type
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -14,6 +13,7 @@ from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
+from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -21,11 +21,10 @@ from django_extensions.db.fields import AutoSlugField
 from docker.errors import NotFound
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.docker import (
     ComponentException,
-    Executor,
     get_file,
 )
 from grandchallenge.components.tasks import execute_job, validate_docker_image
@@ -542,6 +541,60 @@ class ComponentInterfaceValue(models.Model):
     def has_value(self):
         return self.value is not None or self.image or self.file
 
+    @property
+    def decompress(self):
+        """
+        Should the CIV be decompressed?
+
+        This is only for legacy support of zip file submission for
+        prediction evaluation. We should not support this anywhere
+        else as it clobbers the input directory.
+        """
+        return self.interface.kind == InterfaceKindChoices.ZIP
+
+    @cached_property
+    def image_file(self):
+        """The single image file for this interface"""
+        return (
+            self.image.files.filter(
+                image_type__in=[
+                    ImageFile.IMAGE_TYPE_MHD,
+                    ImageFile.IMAGE_TYPE_TIFF,
+                ]
+            )
+            .get()
+            .file
+        )
+
+    @property
+    def input_file(self):
+        """The file to use as component input"""
+        if self.image:
+            return self.image_file
+        elif self.file:
+            return self.file
+        else:
+            src = NamedTemporaryFile(delete=True)
+            src.write(bytes(json.dumps(self.value), "utf-8"))
+            src.flush()
+            return File(src, name=self.input_path)
+
+    @property
+    def input_path(self):
+        """
+        Where should the input_file be located when used for input?
+
+        Images need special handling as their names are fixed.
+        """
+        if self.image:
+            path = safe_join(
+                self.interface.input_path, Path(self.image_file.name).name
+            )
+        else:
+            path = self.interface.input_path
+
+        return Path(path)
+
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"
 
@@ -641,26 +694,9 @@ class ComponentJob(models.Model):
         raise NotImplementedError
 
     @property
-    def input_files(self) -> Tuple[File, ...]:
-        """
-        Returns a tuple of the input files that will be mounted into the
-        container when it is executed
-        """
-        raise NotImplementedError
-
-    @property
     def output_interfaces(self) -> QuerySet:
         """Returns an unevaluated QuerySet for the output interfaces"""
         raise NotImplementedError
-
-    @property
-    def executor_cls(self) -> Type[Executor]:
-        """
-        Return the executor class for this job.
-
-        The executor class must be a subclass of ``Executor``.
-        """
-        return Executor
 
     @property
     def signature(self):

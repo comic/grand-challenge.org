@@ -1,7 +1,5 @@
 import logging
-import os
 from datetime import timedelta
-from itertools import chain
 
 from actstream import action
 from actstream.actions import follow
@@ -438,29 +436,6 @@ class Job(UUIDModel, ComponentJob):
     @property
     def container(self):
         return self.algorithm_image
-
-    def get_path_and_value(self, inp):
-        if inp.image:
-            return [
-                (
-                    os.path.join(
-                        inp.interface.relative_path,
-                        im_file.file.name.split("/")[-1],
-                    ),
-                    im_file.file,
-                )
-                for im_file in inp.image.files.all()
-            ]
-        elif inp.file:
-            return [(inp.interface.relative_path, inp.file)]
-        else:
-            return [(inp.interface.relative_path, inp.value)]
-
-    @property
-    def input_files(self):
-        return chain(
-            *[self.get_path_and_value(inp) for inp in self.inputs.all()]
-        )
 
     @property
     def output_interfaces(self):

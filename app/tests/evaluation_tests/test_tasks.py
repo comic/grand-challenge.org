@@ -66,6 +66,7 @@ def test_submission_evaluation(
         )
 
     assert len(submission.evaluation_set.all()) == 1
+    assert evaluation.status == evaluation.SUCCESS
     assert (
         submission.evaluation_set.first()
         .outputs.get(interface__slug="metrics-json-file")

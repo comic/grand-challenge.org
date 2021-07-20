@@ -18,6 +18,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKind,
+    InterfaceKindChoices,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
@@ -359,7 +360,9 @@ def test_algorithm_multiple_inputs(
     job = Job.objects.create(creator=creator, algorithm_image=alg)
 
     expected = []
-    for ci in ComponentInterface.objects.all():
+    for ci in ComponentInterface.objects.exclude(
+        kind=InterfaceKindChoices.ZIP
+    ):
         if ci.kind in InterfaceKind.interface_type_image():
             image_file = ImageFileFactory(
                 file__from_path=Path(__file__).parent
@@ -398,7 +401,7 @@ def test_algorithm_multiple_inputs(
 
     job = Job.objects.get()
     assert job.status == job.SUCCESS
-    assert {x[0] for x in job.input_files} == set(
+    assert {str(x.input_path) for x in job.inputs.all()} == set(
         job.outputs.first().value.keys()
     )
     assert sorted(

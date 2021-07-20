@@ -1,11 +1,9 @@
 import logging
-from json import dumps
 from urllib.parse import parse_qs, urljoin, urlparse
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.transaction import on_commit
@@ -19,10 +17,6 @@ from grandchallenge.algorithms.tasks import (
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.components.backends.docker import (
-    Executor,
-    put_file,
-)
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
@@ -666,48 +660,6 @@ class Submission(UUIDModel):
         )
 
 
-class SubmissionEvaluator(Executor):
-    def _copy_input_files(self, writer):
-        for file in self._input_files:
-            dest_file = "/tmp/submission-src"
-            put_file(container=writer, src=file, dest=dest_file)
-
-            mimetype = get_file_mimetype(file)
-
-            if mimetype.lower() == "application/zip":
-                # Unzip the file in the container rather than in the python
-                # process. With resource limits this should provide some
-                # protection against zip bombs etc.
-                writer.exec_run(
-                    f"unzip {dest_file} -d /input/ -x '__MACOSX/*'"
-                )
-
-                # Remove a duplicated directory
-                input_files = (
-                    writer.exec_run("ls -1 /input/")
-                    .output.decode()
-                    .splitlines()
-                )
-
-                if (
-                    len(input_files) == 1
-                    and not writer.exec_run(
-                        f"ls -d /input/{input_files[0]}/"
-                    ).exit_code
-                ):
-                    writer.exec_run(
-                        f'/bin/sh -c "mv /input/{input_files[0]}/* /input/ '
-                        f'&& rm -r /input/{input_files[0]}/"'
-                    )
-
-            elif mimetype.lower() == "application/json":
-                writer.exec_run(f"mv {dest_file} /input/predictions.json")
-
-            else:
-                # Not a zip file, so must be a csv
-                writer.exec_run(f"mv {dest_file} /input/submission.csv")
-
-
 class Evaluation(UUIDModel, ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
@@ -777,29 +729,8 @@ class Evaluation(UUIDModel, ComponentJob):
         return self.method
 
     @property
-    def input_files(self):
-        try:
-            return [
-                SimpleUploadedFile(
-                    "predictions.json",
-                    dumps(
-                        self.inputs.get(
-                            interface__title="Predictions JSON File"
-                        ).value
-                    ).encode("utf-8"),
-                    content_type="application/json",
-                )
-            ]
-        except ObjectDoesNotExist:
-            return [inpt.file for inpt in self.inputs.all()]
-
-    @property
     def output_interfaces(self):
         return self.submission.phase.outputs
-
-    @property
-    def executor_cls(self):
-        return SubmissionEvaluator
 
     def clean(self):
         if self.submission.phase != self.method.phase:

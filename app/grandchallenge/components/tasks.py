@@ -14,7 +14,10 @@ from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils.timezone import now
 
-from grandchallenge.components.backends.docker import ComponentException
+from grandchallenge.components.backends.docker import (
+    ComponentException,
+    Executor,
+)
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -163,10 +166,12 @@ def execute_job(
         job.update_status(status=job.FAILURE, error_message=msg)
         raise RuntimeError(msg)
     try:
-        with job.executor_cls(
+        with Executor(
             job_id=str(job.pk),
             job_class=Job,
-            input_files=job.input_files,
+            input_civs=job.inputs.prefetch_related(
+                "interface", "image__files"
+            ).all(),
             output_interfaces=job.output_interfaces,
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,

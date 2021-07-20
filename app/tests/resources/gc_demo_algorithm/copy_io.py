@@ -15,11 +15,11 @@ if __name__ == "__main__":
             warn(f"Could not load {file} as json, {e}")
             val = "file"
 
-        res[str(file.absolute()).replace("/input/", "")] = val
+        res[str(file.absolute())] = val
 
         # Copy all the input files to output
         new_file = Path("/output/") / file.relative_to("/input/")
-        new_file.parent.mkdir(exist_ok=True)
+        new_file.parent.mkdir(parents=True, exist_ok=True)
         copy(file, new_file)
 
     for output_filename in ["results", "metrics"]:

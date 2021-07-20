@@ -1,5 +1,4 @@
 import io
-import json
 import os
 import re
 import sys
@@ -10,13 +9,11 @@ from random import randint
 from shutil import copyfileobj
 from tempfile import SpooledTemporaryFile
 from time import sleep
-from typing import Tuple
 
 import docker
 from django.conf import settings
 from django.core.files import File
-from django.core.files.temp import NamedTemporaryFile
-from django.db.models import Model, QuerySet
+from django.db.models import Model
 from docker.api.container import ContainerApiMixin
 from docker.errors import APIError, ImageNotFound
 from docker.tls import TLSConfig
@@ -192,14 +189,10 @@ class DockerConnection:
 
 class Executor(DockerConnection):
     def __init__(
-        self,
-        *args,
-        input_files: Tuple[File, ...],
-        output_interfaces: QuerySet,
-        **kwargs,
+        self, *args, input_civs, output_interfaces, **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self._input_files = input_files
+        self._input_civs = input_civs
         self._output_interfaces = output_interfaces
         self._io_image = settings.COMPONENTS_IO_IMAGE
 
@@ -259,21 +252,40 @@ class Executor(DockerConnection):
             self._copy_input_files(writer=writer)
 
     def _copy_input_files(self, writer):
-        for input_file in self._input_files:
-            if isinstance(input_file, tuple):
-                name, input_file = input_file
-                if not hasattr(input_file, "name"):
-                    file = NamedTemporaryFile(delete=True)
-                    file.write(bytes(json.dumps(input_file), "utf-8"))
-                    file.flush()
-                    input_file = File(file, name=name)
+        for civ in self._input_civs:
+            if civ.decompress:
+                dest = Path("/tmp/submission-src")
             else:
-                name = input_file.name
-            subdirs = os.path.join("/input", *name.split("/")[:-1])
-            writer.exec_run(f"mkdir -p {subdirs}")
+                dest = civ.input_path
+
+            writer.exec_run(f"mkdir -p {dest.parent}")
             put_file(
-                container=writer, src=input_file, dest=f"/input/{name}",
+                container=writer, src=civ.input_file, dest=dest,
             )
+
+            if civ.decompress:
+                # Decompression is legacy for submission evaluations where
+                # we offered to unzip prediction files for challenge admins
+
+                writer.exec_run(f"unzip {dest} -d /input/ -x '__MACOSX/*'")
+
+                # Remove a duplicated directory
+                input_files = (
+                    writer.exec_run("ls -1 /input/")
+                    .output.decode()
+                    .splitlines()
+                )
+
+                if (
+                    len(input_files) == 1
+                    and not writer.exec_run(
+                        f"ls -d /input/{input_files[0]}/"
+                    ).exit_code
+                ):
+                    writer.exec_run(
+                        f'/bin/sh -c "mv /input/{input_files[0]}/* /input/ '
+                        f'&& rm -r /input/{input_files[0]}/"'
+                    )
 
     def _chmod_volumes(self):
         """Ensure that the i/o directories are writable."""
