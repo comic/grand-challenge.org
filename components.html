@@ -223,6 +223,34 @@
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></code><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="py method">
+<dt id="grandchallenge.components.models.ComponentInterfaceValue.decompress">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">decompress</span></code><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.decompress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Should the CIV be decompressed?</p>
+<p>This is only for legacy support of zip file submission for
+prediction evaluation. We should not support this anywhere
+else as it clobbers the input directory.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="grandchallenge.components.models.ComponentInterfaceValue.image_file">
+<code class="sig-name descname"><span class="pre">image_file</span></code><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.image_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>The single image file for this interface</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.components.models.ComponentInterfaceValue.input_file">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">input_file</span></code><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.input_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>The file to use as component input</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.components.models.ComponentInterfaceValue.input_path">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">input_path</span></code><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.input_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Where should the input_file be located when used for input?</p>
+<p>Images need special handling as their names are fixed.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">

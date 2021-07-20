@@ -159,13 +159,11 @@
             
   <h1>Source code for grandchallenge.evaluation.models</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">dumps</span>
 <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">parse_qs</span><span class="p">,</span> <span class="n">urljoin</span><span class="p">,</span> <span class="n">urlparse</span>
 
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">Group</span>
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
-<span class="kn">from</span> <span class="nn">django.core.files.uploadedfile</span> <span class="kn">import</span> <span class="n">SimpleUploadedFile</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.core.validators</span> <span class="kn">import</span> <span class="n">RegexValidator</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
@@ -179,10 +177,6 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">Archive</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.backends.docker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Executor</span><span class="p">,</span>
-    <span class="n">put_file</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
@@ -826,48 +820,6 @@
         <span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">SubmissionEvaluator</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">_copy_input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">writer</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_files</span><span class="p">:</span>
-            <span class="n">dest_file</span> <span class="o">=</span> <span class="s2">&quot;/tmp/submission-src&quot;</span>
-            <span class="n">put_file</span><span class="p">(</span><span class="n">container</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">file</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="n">dest_file</span><span class="p">)</span>
-
-            <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">mimetype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;application/zip&quot;</span><span class="p">:</span>
-                <span class="c1"># Unzip the file in the container rather than in the python</span>
-                <span class="c1"># process. With resource limits this should provide some</span>
-                <span class="c1"># protection against zip bombs etc.</span>
-                <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;unzip </span><span class="si">{</span><span class="n">dest_file</span><span class="si">}</span><span class="s2"> -d /input/ -x &#39;__MACOSX/*&#39;&quot;</span>
-                <span class="p">)</span>
-
-                <span class="c1"># Remove a duplicated directory</span>
-                <span class="n">input_files</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="s2">&quot;ls -1 /input/&quot;</span><span class="p">)</span>
-                    <span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-                    <span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
-                <span class="p">)</span>
-
-                <span class="k">if</span> <span class="p">(</span>
-                    <span class="nb">len</span><span class="p">(</span><span class="n">input_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
-                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;ls -d /input/</span><span class="si">{</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">/&quot;</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">exit_code</span>
-                <span class="p">):</span>
-                    <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s1">&#39;/bin/sh -c &quot;mv /input/</span><span class="si">{</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">/* /input/ &#39;</span>
-                        <span class="sa">f</span><span class="s1">&#39;&amp;&amp; rm -r /input/</span><span class="si">{</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">/&quot;&#39;</span>
-                    <span class="p">)</span>
-
-            <span class="k">elif</span> <span class="n">mimetype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;application/json&quot;</span><span class="p">:</span>
-                <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mv </span><span class="si">{</span><span class="n">dest_file</span><span class="si">}</span><span class="s2"> /input/predictions.json&quot;</span><span class="p">)</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Not a zip file, so must be a csv</span>
-                <span class="n">writer</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mv </span><span class="si">{</span><span class="n">dest_file</span><span class="si">}</span><span class="s2"> /input/submission.csv&quot;</span><span class="p">)</span>
-
-
 <span class="k">class</span> <span class="nc">Evaluation</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Stores information about a evaluation for a given submission.&quot;&quot;&quot;</span>
 
@@ -937,29 +889,8 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span>
-                <span class="n">SimpleUploadedFile</span><span class="p">(</span>
-                    <span class="s2">&quot;predictions.json&quot;</span><span class="p">,</span>
-                    <span class="n">dumps</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                            <span class="n">interface__title</span><span class="o">=</span><span class="s2">&quot;Predictions JSON File&quot;</span>
-                        <span class="p">)</span><span class="o">.</span><span class="n">value</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
-                    <span class="n">content_type</span><span class="o">=</span><span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">inpt</span><span class="o">.</span><span class="n">file</span> <span class="k">for</span> <span class="n">inpt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">()]</span>
-
-    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">outputs</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">executor_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">SubmissionEvaluator</span>
 
     <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">.</span><span class="n">phase</span><span class="p">:</span>

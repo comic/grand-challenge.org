@@ -161,33 +161,23 @@
 <span></span><span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
-<span class="kn">from</span> <span class="nn">json</span> <span class="kn">import</span> <span class="n">JSONDecodeError</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">TemporaryDirectory</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span>
+<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
 
 <span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span> <span class="nn">django.core.files</span> <span class="kn">import</span> <span class="n">File</span>
 <span class="kn">from</span> <span class="nn">django.core.files.base</span> <span class="kn">import</span> <span class="n">ContentFile</span>
 <span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span> <span class="nn">django.db.models</span> <span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">QuerySet</span>
 <span class="kn">from</span> <span class="nn">django.db.transaction</span> <span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span> <span class="nn">django.utils._os</span> <span class="kn">import</span> <span class="n">safe_join</span>
+<span class="kn">from</span> <span class="nn">django.utils.functional</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span> <span class="nn">django.utils.timezone</span> <span class="kn">import</span> <span class="n">now</span>
 <span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
 <span class="kn">from</span> <span class="nn">django_extensions.db.fields</span> <span class="kn">import</span> <span class="n">AutoSlugField</span>
-<span class="kn">from</span> <span class="nn">docker.errors</span> <span class="kn">import</span> <span class="n">NotFound</span>
-<span class="kn">from</span> <span class="nn">panimg.image_builders</span> <span class="kn">import</span> <span class="n">image_builder_mhd</span><span class="p">,</span> <span class="n">image_builder_tiff</span>
 
-<span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.cases.tasks</span> <span class="kn">import</span> <span class="n">import_images</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.backends.docker</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ComponentException</span><span class="p">,</span>
-    <span class="n">Executor</span><span class="p">,</span>
-    <span class="n">get_file</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">execute_job</span><span class="p">,</span> <span class="n">validate_docker_image</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.validators</span> <span class="kn">import</span> <span class="n">validate_safe_path</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.storage</span> <span class="kn">import</span> <span class="p">(</span>
@@ -559,93 +549,26 @@
             <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span>
         <span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">create_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">civ</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">image</span><span class="p">:</span>
+            <span class="n">civ</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_in_object_store</span><span class="p">:</span>
+            <span class="n">civ</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">ContentFile</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">civ</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="n">civ</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+        <span class="n">civ</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">civ</span>
+
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
-        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span>
-
-    <span class="k">def</span> <span class="nf">create_component_interface_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reader</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
-        <span class="c1"># TODO JM These functions rely on docker specific code (reader)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_create_images_result</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="n">reader</span><span class="p">,</span> <span class="n">job</span><span class="o">=</span><span class="n">job</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_create_file_result</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="n">reader</span><span class="p">,</span> <span class="n">job</span><span class="o">=</span><span class="n">job</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_create_images_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reader</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
-        <span class="c1"># TODO JM in the future this will be a file, not a directory</span>
-        <span class="n">base_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_path</span><span class="p">)</span>
-        <span class="n">found_files</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">exec_run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;find </span><span class="si">{</span><span class="n">base_dir</span><span class="si">}</span><span class="s2"> -type f&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">found_files</span><span class="o">.</span><span class="n">exit_code</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error listing </span><span class="si">{</span><span class="n">base_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="n">output_files</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">base_dir</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">found_files</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
-        <span class="p">]</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">output_files</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Output directory is empty&quot;</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="k">with</span> <span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmpdir</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">output_files</span><span class="p">:</span>
-                <span class="n">temp_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">safe_join</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">file</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">base_dir</span><span class="p">)))</span>
-                <span class="n">temp_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">temp_file</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outfile</span><span class="p">:</span>
-                    <span class="n">infile</span> <span class="o">=</span> <span class="n">get_file</span><span class="p">(</span><span class="n">container</span><span class="o">=</span><span class="n">reader</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-
-                    <span class="n">buffer</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="k">while</span> <span class="n">buffer</span><span class="p">:</span>
-                        <span class="n">buffer</span> <span class="o">=</span> <span class="n">infile</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
-                        <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
-
-            <span class="n">importer_result</span> <span class="o">=</span> <span class="n">import_images</span><span class="p">(</span>
-                <span class="n">input_directory</span><span class="o">=</span><span class="n">tmpdir</span><span class="p">,</span>
-                <span class="n">builders</span><span class="o">=</span><span class="p">[</span><span class="n">image_builder_mhd</span><span class="p">,</span> <span class="n">image_builder_tiff</span><span class="p">],</span>
-            <span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">importer_result</span><span class="o">.</span><span class="n">new_images</span><span class="p">:</span>
-            <span class="n">civ</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="n">image</span>
-            <span class="p">)</span>
-            <span class="n">job</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">civ</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_create_file_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reader</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
-        <span class="n">output_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_path</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">file</span> <span class="o">=</span> <span class="n">get_file</span><span class="p">(</span><span class="n">container</span><span class="o">=</span><span class="n">reader</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">output_file</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">NotFound</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ComponentException</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;The evaluation or algorithm failed for an unknown reason as &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;file </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_path</span><span class="si">}</span><span class="s2"> was not produced. Please contact the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;organisers for assistance.&quot;</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_in_object_store</span><span class="p">:</span>
-            <span class="n">civ</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">civ</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">ContentFile</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">output_file</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
-                <span class="n">civ</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
-                <span class="n">civ</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
-            <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ComponentException</span><span class="p">(</span><span class="s2">&quot;Invalid filetype.&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span>
-                    <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(),</span>
-                    <span class="n">parse_constant</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Removes -inf, inf and NaN</span>
-                <span class="p">)</span>
-            <span class="k">except</span> <span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ComponentException</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Could not decode json file: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-
-            <span class="n">civ</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">result</span>
-            <span class="p">)</span>
-
-        <span class="n">job</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">civ</span><span class="p">)</span></div>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,)</span></div>
 
 
 <span class="k">def</span> <span class="nf">component_interface_value_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
@@ -701,6 +624,60 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">has_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">decompress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Should the CIV be decompressed?</span>
+
+<span class="sd">        This is only for legacy support of zip file submission for</span>
+<span class="sd">        prediction evaluation. We should not support this anywhere</span>
+<span class="sd">        else as it clobbers the input directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">image_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The single image file for this interface&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">image_type__in</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">ImageFile</span><span class="o">.</span><span class="n">IMAGE_TYPE_MHD</span><span class="p">,</span>
+                    <span class="n">ImageFile</span><span class="o">.</span><span class="n">IMAGE_TYPE_TIFF</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">file</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">input_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The file to use as component input&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_file</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">src</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">),</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+            <span class="n">src</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">File</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_path</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">input_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Where should the input_file be located when used for input?</span>
+
+<span class="sd">        Images need special handling as their names are fixed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">safe_join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">input_path</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">input_path</span>
+
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Component Interface Value </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -801,26 +778,9 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">File</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a tuple of the input files that will be mounted into the</span>
-<span class="sd">        container when it is executed</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuerySet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Returns an unevaluated QuerySet for the output interfaces&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">executor_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Executor</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return the executor class for this job.</span>
-
-<span class="sd">        The executor class must be a subclass of ``Executor``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Executor</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
