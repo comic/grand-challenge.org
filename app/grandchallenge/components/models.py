@@ -25,6 +25,7 @@ from grandchallenge.core.storage import (
 )
 from grandchallenge.core.validators import (
     ExtensionValidator,
+    JSONSchemaValidator,
     MimeTypeValidator,
 )
 
@@ -331,6 +332,7 @@ class ComponentInterface(models.Model):
             "satisfy. See https://json-schema.org/. "
             "Only Draft 7, 6, 4 or 3 are supported."
         ),
+        validators=[JSONSchemaValidator()],
     )
     kind = models.CharField(
         blank=False,

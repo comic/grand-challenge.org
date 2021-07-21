@@ -4,7 +4,12 @@ from typing import Tuple
 import magic
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
-from jsonschema import ValidationError as JSONValidationError, validate
+from jsonschema import (
+    SchemaError,
+    ValidationError as JSONValidationError,
+    validate,
+    validators,
+)
 
 
 @deconstructible
@@ -123,10 +128,28 @@ class JSONValidator:
         try:
             validate(value, self.schema)
         except JSONValidationError as e:
-            raise ValidationError(str(e))
+            raise ValidationError(f"JSON does not fulfill schema: {e}")
 
     def __eq__(self, other):
         return isinstance(other, JSONValidator) and self.schema == other.schema
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+@deconstructible
+class JSONSchemaValidator:
+    """Validates JSON Schema against the latest or defined schema."""
+
+    def __call__(self, value):
+        try:
+            cls = validators.validator_for(schema=value)
+            cls.check_schema(schema=value)
+        except SchemaError as e:
+            raise ValidationError(f"Invalid schema: {e}")
+
+    def __eq__(self, other):
+        return isinstance(other, JSONValidator)
 
     def __ne__(self, other):
         return not (self == other)
