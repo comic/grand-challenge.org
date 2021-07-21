@@ -323,6 +323,15 @@ class ComponentInterface(models.Model):
         default=None,
         help_text="Default value for this field, only valid for inputs.",
     )
+    schema = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            "Additional JSON schema that the values for this interface must "
+            "satisfy. See https://json-schema.org/. "
+            "Only Draft 7, 6, 4 or 3 are supported."
+        ),
+    )
     kind = models.CharField(
         blank=False,
         max_length=4,
@@ -561,7 +570,7 @@ class ComponentJob(models.Model):
         help_text=(
             "Map of the ComponentInterfaceValue id to the path prefix to use "
             "for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at "
-            "/input/foo/bar/<relative_path>",
+            "/input/foo/bar/<relative_path>"
         ),
     )
 
