@@ -110,7 +110,7 @@ def get_file_mimetype(file):
 
 
 @deconstructible
-class JSONSchemaValidator:
+class JSONValidator:
     """Uses jsonschema to validate json fields."""
 
     schema = None
@@ -126,10 +126,7 @@ class JSONSchemaValidator:
             raise ValidationError(str(e))
 
     def __eq__(self, other):
-        return (
-            isinstance(other, JSONSchemaValidator)
-            and self.schema == other.schema
-        )
+        return isinstance(other, JSONValidator) and self.schema == other.schema
 
     def __ne__(self, other):
         return not (self == other)

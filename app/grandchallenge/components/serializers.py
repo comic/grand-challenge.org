@@ -8,7 +8,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
-from grandchallenge.core.validators import JSONSchemaValidator
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 
 
@@ -102,7 +102,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             value = get_value()
             allowed_types = [{"$ref": f"#/definitions/{interface.kind}"}]
 
-            JSONSchemaValidator(
+            JSONValidator(
                 schema={**ANSWER_TYPE_SCHEMA, "anyOf": allowed_types}
             )(value)
 

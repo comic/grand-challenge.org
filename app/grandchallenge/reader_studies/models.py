@@ -32,7 +32,7 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.templatetags.bleach import md2html
-from grandchallenge.core.validators import JSONSchemaValidator
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
@@ -250,7 +250,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     hanging_list = models.JSONField(
         default=list,
         blank=True,
-        validators=[JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)],
+        validators=[JSONValidator(schema=HANGING_LIST_SCHEMA)],
     )
     shuffle_hanging_list = models.BooleanField(default=False)
     is_educational = models.BooleanField(
@@ -265,7 +265,7 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
     case_text = models.JSONField(
         default=dict,
         blank=True,
-        validators=[JSONSchemaValidator(schema=CASE_TEXT_SCHEMA)],
+        validators=[JSONValidator(schema=CASE_TEXT_SCHEMA)],
     )
     allow_answer_modification = models.BooleanField(
         default=False,
@@ -1369,7 +1369,7 @@ class Question(UUIDModel):
 
         try:
             return (
-                JSONSchemaValidator(
+                JSONValidator(
                     schema={**ANSWER_TYPE_SCHEMA, "anyOf": allowed_types}
                 )(answer)
                 is None
@@ -1414,7 +1414,7 @@ class Answer(UUIDModel):
     question = models.ForeignKey(Question, on_delete=models.PROTECT)
     images = models.ManyToManyField("cases.Image", related_name="answers")
     answer = models.JSONField(
-        null=True, validators=[JSONSchemaValidator(schema=ANSWER_TYPE_SCHEMA)],
+        null=True, validators=[JSONValidator(schema=ANSWER_TYPE_SCHEMA)],
     )
     answer_image = models.ForeignKey(
         "cases.Image", null=True, on_delete=models.PROTECT

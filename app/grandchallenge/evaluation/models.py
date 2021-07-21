@@ -27,7 +27,7 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import protected_s3_storage, public_s3_storage
 from grandchallenge.core.validators import (
     ExtensionValidator,
-    JSONSchemaValidator,
+    JSONValidator,
     MimeTypeValidator,
     get_file_mimetype,
 )
@@ -210,7 +210,7 @@ class Phase(UUIDModel):
             "A JSON object that contains the extra columns from metrics.json "
             "that will be displayed on the results page. "
         ),
-        validators=[JSONSchemaValidator(schema=EXTRA_RESULT_COLUMNS_SCHEMA)],
+        validators=[JSONValidator(schema=EXTRA_RESULT_COLUMNS_SCHEMA)],
     )
     scoring_method_choice = models.CharField(
         max_length=3,
