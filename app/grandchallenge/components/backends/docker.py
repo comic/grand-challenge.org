@@ -200,10 +200,11 @@ class DockerConnection:
 
 class Executor(DockerConnection):
     def __init__(
-        self, *args, input_civs, output_interfaces, **kwargs,
+        self, *args, input_civs, input_prefixes, output_interfaces, **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self._input_civs = input_civs
+        self._input_prefixes = input_prefixes
         self._output_interfaces = output_interfaces
         self._io_image = settings.COMPONENTS_IO_IMAGE
 
@@ -262,12 +263,19 @@ class Executor(DockerConnection):
         ) as writer:
             self._copy_input_files(writer=writer)
 
-    def _copy_input_files(self, writer):
+    def _copy_input_files(self, *, writer):
         for civ in self._input_civs:
+            prefix = "/input/"
+
+            if str(civ.pk) in self._input_prefixes:
+                prefix = safe_join(prefix, self._input_prefixes[str(civ.pk)])
+
             if civ.decompress:
-                dest = Path("/tmp/submission-src")
+                dest = Path(
+                    safe_join("/tmp/", prefix.lstrip("/"), "submission-src")
+                )
             else:
-                dest = civ.input_path
+                dest = Path(safe_join(prefix, civ.relative_path))
 
             writer.exec_run(f"mkdir -p {dest.parent}")
             put_file(
@@ -277,12 +285,14 @@ class Executor(DockerConnection):
             if civ.decompress:
                 # Decompression is legacy for submission evaluations where
                 # we offered to unzip prediction files for challenge admins
+                if prefix[0] != "/" or prefix[-1] != "/":
+                    raise RuntimeError(f"Prefix {prefix} is not a full path")
 
-                writer.exec_run(f"unzip {dest} -d /input/ -x '__MACOSX/*'")
+                writer.exec_run(f"unzip {dest} -d {prefix} -x '__MACOSX/*'")
 
                 # Remove a duplicated directory
                 input_files = (
-                    writer.exec_run("ls -1 /input/")
+                    writer.exec_run(f"ls -1 {prefix}")
                     .output.decode()
                     .splitlines()
                 )
@@ -290,12 +300,12 @@ class Executor(DockerConnection):
                 if (
                     len(input_files) == 1
                     and not writer.exec_run(
-                        f"ls -d /input/{input_files[0]}/"
+                        f"ls -d {prefix}{input_files[0]}/"
                     ).exit_code
                 ):
                     writer.exec_run(
-                        f'/bin/sh -c "mv /input/{input_files[0]}/* /input/ '
-                        f'&& rm -r /input/{input_files[0]}/"'
+                        f'/bin/sh -c "mv {prefix}{input_files[0]}/* {prefix} '
+                        f'&& rm -r {prefix}{input_files[0]}/"'
                     )
 
     def _chmod_volumes(self):
@@ -378,7 +388,7 @@ class Executor(DockerConnection):
                         )
 
     def _create_images_result(self, *, interface, reader):
-        base_dir = Path(interface.output_path)
+        base_dir = Path(safe_join("/output/", interface.relative_path))
         found_files = reader.exec_run(f"find {base_dir} -type f")
 
         if found_files.exit_code != 0:
@@ -429,14 +439,12 @@ class Executor(DockerConnection):
         self._outputs.append(civ)
 
     def _create_file_result(self, *, interface, reader):
-        output_file = Path(interface.output_path)
+        output_file = Path(safe_join("/output/", interface.relative_path))
 
         try:
             file = get_file(container=reader, src=output_file)
         except NotFound:
-            raise ComponentException(
-                f"File {interface.output_path} was not produced."
-            )
+            raise ComponentException(f"File {output_file} was not produced.")
 
         try:
             result = json.loads(
@@ -561,7 +569,7 @@ def cleanup(container: ContainerApiMixin):
         container.remove(force=True)
 
 
-def put_file(*, container: ContainerApiMixin, src: File, dest: str) -> ():
+def put_file(*, container: ContainerApiMixin, src: File, dest: Path) -> ():
     """
     Puts a file on the host into a container.
     This method will create an in memory tar archive, add the src file to this

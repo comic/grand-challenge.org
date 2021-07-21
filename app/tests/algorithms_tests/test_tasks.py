@@ -404,7 +404,7 @@ def test_algorithm_multiple_inputs(
 
     job = Job.objects.get()
     assert job.status == job.SUCCESS
-    assert {str(x.input_path) for x in job.inputs.all()} == set(
+    assert {f"/input/{x.relative_path}" for x in job.inputs.all()} == set(
         job.outputs.first().value.keys()
     )
     assert sorted(

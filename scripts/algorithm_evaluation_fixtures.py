@@ -24,11 +24,19 @@ def run():
     users = _get_users()
     inputs = _get_inputs()
     outputs = _get_outputs()
-    archive = _create_archive(creator=users["demo"], interfaces=inputs)
-    _create_challenge(
-        creator=users["demo"], participant=users["demop"], archive=archive
+    suffix = Challenge.objects.count()
+    archive = _create_archive(
+        creator=users["demo"], interfaces=inputs, suffix=suffix
     )
-    _create_algorithm(creator=users["demop"], inputs=inputs, outputs=outputs)
+    _create_challenge(
+        creator=users["demo"],
+        participant=users["demop"],
+        archive=archive,
+        suffix=suffix,
+    )
+    _create_algorithm(
+        creator=users["demop"], inputs=inputs, outputs=outputs, suffix=suffix
+    )
 
 
 def _get_users():
@@ -48,9 +56,9 @@ def _get_outputs():
     )
 
 
-def _create_archive(*, creator, interfaces, items=2):
+def _create_archive(*, creator, interfaces, suffix, items=2):
     a = Archive.objects.create(
-        title="Algorithm Evaluation Test Set",
+        title=f"Algorithm Evaluation {suffix} Test Set",
         logo=create_uploaded_image(),
         workstation=Workstation.objects.get(
             slug=settings.DEFAULT_WORKSTATION_SLUG
@@ -80,9 +88,9 @@ def _create_archive(*, creator, interfaces, items=2):
     return a
 
 
-def _create_challenge(*, creator, participant, archive):
+def _create_challenge(*, creator, participant, archive, suffix):
     c = Challenge.objects.create(
-        short_name="algorithm-evaluation-12",
+        short_name=f"algorithm-evaluation-{suffix}",
         creator=creator,
         hidden=False,
         logo=create_uploaded_image(),
@@ -103,9 +111,9 @@ def _create_challenge(*, creator, participant, archive):
         m.save()
 
 
-def _create_algorithm(*, creator, inputs, outputs):
+def _create_algorithm(*, creator, inputs, outputs, suffix):
     algorithm = Algorithm.objects.create(
-        title="Test Algorithm Evaluation",
+        title=f"Test Algorithm Evaluation {suffix}",
         logo=create_uploaded_image(),
         use_flexible_inputs=True,
     )

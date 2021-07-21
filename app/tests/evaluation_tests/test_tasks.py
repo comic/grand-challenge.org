@@ -183,7 +183,10 @@ class TestSetEvaluationInputs(TestCase):
         evaluation.refresh_from_db()
         assert evaluation.status == evaluation.PENDING
         assert evaluation.error_message == ""
-        assert evaluation.inputs.count() == 1
+        assert evaluation.inputs.count() == 3
+        assert evaluation.input_prefixes == {
+            str(civ.pk): f"{alg.pk}/output/" for alg, civ in zip(jobs, civs)
+        }
 
 
 @pytest.mark.django_db

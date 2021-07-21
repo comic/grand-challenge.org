@@ -172,6 +172,7 @@ def execute_job(
             input_civs=job.inputs.prefetch_related(
                 "interface", "image__files"
             ).all(),
+            input_prefixes=job.input_prefixes,
             output_interfaces=job.output_interfaces,
             exec_image=job.container.image,
             exec_image_sha256=job.container.image_sha256,

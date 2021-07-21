@@ -51,9 +51,13 @@ def set_evaluation_inputs(evaluation_pk, job_pks):
             ComponentInterfaceValue,
         )
 
-        serializer = JobSerializer(
-            Job.objects.filter(pk__in=job_pks).all(), many=True
+        algorithm_jobs = (
+            Job.objects.filter(pk__in=job_pks)
+            .prefetch_related("outputs__interface", "inputs__interface")
+            .select_related("algorithm_image__algorithm")
         )
+
+        serializer = JobSerializer(algorithm_jobs, many=True)
         interface = ComponentInterface.objects.get(
             title="Predictions JSON File"
         )
@@ -61,7 +65,14 @@ def set_evaluation_inputs(evaluation_pk, job_pks):
             interface=interface, value=serializer.data
         )
 
-        evaluation.inputs.set([civ])
+        output_to_job = {o: j for j in algorithm_jobs for o in j.outputs.all()}
+
+        evaluation.inputs.set([civ, *output_to_job.keys()])
+        evaluation.input_prefixes = {
+            str(o.pk): f"{j.pk}/output/" for o, j in output_to_job.items()
+        }
+        evaluation.save()
+
         on_commit(evaluation.signature.apply_async)
 
 

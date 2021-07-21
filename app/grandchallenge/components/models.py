@@ -10,7 +10,6 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
-from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
@@ -355,14 +354,6 @@ class ComponentInterface(models.Model):
         return f"{self.title} ({self.get_kind_display()})"
 
     @property
-    def input_path(self):
-        return safe_join("/input", self.relative_path)
-
-    @property
-    def output_path(self):
-        return safe_join("/output", self.relative_path)
-
-    @property
     def is_image_kind(self):
         return self.kind in InterfaceKind.interface_type_image()
 
@@ -397,7 +388,7 @@ class ComponentInterface(models.Model):
         elif self.save_in_object_store:
             civ.file = ContentFile(
                 json.dumps(value).encode("utf-8"),
-                name=str(Path(self.output_path).name),
+                name=Path(self.relative_path).name,
             )
         else:
             civ.value = value
@@ -501,23 +492,21 @@ class ComponentInterfaceValue(models.Model):
             src = NamedTemporaryFile(delete=True)
             src.write(bytes(json.dumps(self.value), "utf-8"))
             src.flush()
-            return File(src, name=self.input_path)
+            return File(src, name=self.relative_path.name)
 
     @property
-    def input_path(self):
+    def relative_path(self):
         """
-        Where should the input_file be located when used for input?
+        Where should the file be located?
 
         Images need special handling as their names are fixed.
         """
-        if self.image:
-            path = safe_join(
-                self.interface.input_path, Path(self.image_file.name).name
-            )
-        else:
-            path = self.interface.input_path
+        path = Path(self.interface.relative_path)
 
-        return Path(path)
+        if self.image:
+            path /= Path(self.image_file.name).name
+
+        return path
 
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"
@@ -567,6 +556,14 @@ class ComponentJob(models.Model):
     error_message = models.CharField(max_length=1024, default="")
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
+    input_prefixes = models.JSONField(
+        default=dict,
+        help_text=(
+            "Map of the ComponentInterfaceValue id to the path prefix to use "
+            "for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at "
+            "/input/foo/bar/<relative_path>",
+        ),
+    )
 
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
