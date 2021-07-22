@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from decimal import Decimal
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -9,6 +10,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
@@ -21,7 +23,10 @@ from django_extensions.db.fields import AutoSlugField
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import execute_job, validate_docker_image
-from grandchallenge.components.validators import validate_safe_path
+from grandchallenge.components.validators import (
+    validate_no_slash_at_ends,
+    validate_safe_path,
+)
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
@@ -373,7 +378,16 @@ class ComponentInterface(models.Model):
             "to the input or output directory."
         ),
         unique=True,
-        validators=[validate_safe_path],
+        validators=[
+            validate_safe_path,
+            validate_no_slash_at_ends,
+            # No uuids in path
+            RegexValidator(
+                regex=r".*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.*",
+                inverse_match=True,
+                flags=re.IGNORECASE,
+            ),
+        ],
     )
     store_in_database = models.BooleanField(
         default=True,
@@ -427,6 +441,43 @@ class ComponentInterface(models.Model):
         civ.save()
 
         return civ
+
+    def clean(self):
+        super().clean()
+
+        self._validate_store_in_db()
+
+        if self.kind in InterfaceKind.interface_type_other():
+            if not self.relative_path.endswith(".json"):
+                raise ValidationError("Relative path should end with .json")
+        elif self.kind in InterfaceKind.interface_type_file():
+            if not self.relative_path.endswith(f".{self.kind.lower()}"):
+                raise ValidationError(
+                    f"Relative path should end with .{self.kind.lower()}"
+                )
+
+        if self.kind in InterfaceKind.interface_type_image():
+            if not self.relative_path.startswith("images/"):
+                raise ValidationError(
+                    "Relative path should start with images/"
+                )
+            if Path(self.relative_path).name != Path(self.relative_path).stem:
+                # Maybe not in the future
+                raise ValidationError("Images should be a directory")
+        else:
+            if self.relative_path.startswith("images/"):
+                raise ValidationError(
+                    "Relative path should not start with images/"
+                )
+
+    def _validate_store_in_db(self):
+        if (
+            self.kind not in InterfaceKind.interface_type_other()
+            and self.store_in_database
+        ):
+            raise ValidationError(
+                f"Interface {self.kind} objects cannot be stored in the database"
+            )
 
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
@@ -566,20 +617,26 @@ class ComponentInterfaceValue(models.Model):
     def _validate_image_only(self):
         if not self.image:
             raise ValidationError("Image must be set")
-        if self.file is not None and self.value is not None:
-            raise ValidationError("File or value should not be set for images")
+        if self.file or self.value is not None:
+            raise ValidationError(
+                f"File ({self.file}) or value should not be set for images"
+            )
 
     def _validate_file_only(self):
         if not self.file:
             raise ValidationError("File must be set")
-        if self.image is not None and self.value is not None:
-            raise ValidationError("Image or value must not be set for files")
+        if self.image or self.value is not None:
+            raise ValidationError(
+                f"Image ({self.image}) or value must not be set for files"
+            )
 
     def _validate_value_only(self):
         # Do not check self.value here, it can be anything including None.
         # This is checked later with interface.validate_against_schema.
-        if self.image is not None and self.file is not None:
-            raise ValidationError("Image or file must not be set for values")
+        if self.image or self.file:
+            raise ValidationError(
+                f"Image ({self.image}) or file ({self.file}) must not be set for values"
+            )
 
     def _validate_value(self):
         if self.interface.save_in_object_store:

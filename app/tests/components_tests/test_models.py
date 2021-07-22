@@ -1,4 +1,5 @@
 import json
+import uuid
 from contextlib import nullcontext
 from datetime import timedelta
 
@@ -11,12 +12,15 @@ from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceKind,
     InterfaceKindChoices,
     InterfaceSuperKindChoices,
 )
+from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import EvaluationFactory
+from tests.factories import ImageFactory
 
 
 @pytest.mark.django_db
@@ -127,12 +131,94 @@ def test_save_in_object_store(kind, object_store_required, is_image):
         assert ci.super_kind == InterfaceSuperKindChoices.FILE
 
 
-# TODO test only one value set
+def test_all_interfaces_in_schema():
+    for i in InterfaceKind.interface_type_other():
+        assert str(i) in INTERFACE_VALUE_SCHEMA["definitions"]
+
+
+def test_all_interfaces_covered():
+    assert {str(i) for i in InterfaceKindChoices} == {
+        *InterfaceKind.interface_type_image(),
+        *InterfaceKind.interface_type_file(),
+        *InterfaceKind.interface_type_other(),
+    }
+
+
+@pytest.mark.django_db
+def test_no_uuid_validation():
+    # For multi job inputs we add uuid prefixes, so check that the relative
+    # path does not contain a UUID
+    i = ComponentInterfaceFactory(
+        relative_path=f"{uuid.uuid4()}/whatever.json",
+        kind=InterfaceKindChoices.JSON,
+    )
+    with pytest.raises(ValidationError) as e:
+        i.full_clean()
+    assert str(e.value) == "{'relative_path': ['Enter a valid value.']}"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "kind",
+    (
+        *InterfaceKind.interface_type_file(),
+        *InterfaceKind.interface_type_other(),
+    ),
+)
+def test_relative_path_file_ending(kind):
+    if kind in InterfaceKind.interface_type_other():
+        good_suffix = "json"
+    else:
+        good_suffix = kind.lower()
+
+    i = ComponentInterfaceFactory(
+        kind=kind, relative_path=f"foo/bar.{good_suffix}"
+    )
+    i.full_clean()
+
+    i.relative_path = "foo/bar"
+    with pytest.raises(ValidationError):
+        i.full_clean()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "kind,image,file,value",
+    (
+        (InterfaceKindChoices.IMAGE, True, True, None),
+        (InterfaceKindChoices.IMAGE, True, None, True),
+        (InterfaceKindChoices.IMAGE, True, True, True),
+        (InterfaceKindChoices.CSV, True, True, None),
+        (InterfaceKindChoices.CSV, None, True, True),
+        (InterfaceKindChoices.CSV, True, True, True),
+        (InterfaceKindChoices.BOOL, True, None, True),
+        (InterfaceKindChoices.BOOL, None, True, True),
+        (InterfaceKindChoices.BOOL, True, True, True),
+    ),
+)
+def test_multi_value_fails(kind, image, file, value):
+    if image:
+        image = ImageFactory()
+
+    if file:
+        file = ContentFile(json.dumps(True).encode("utf-8"), name="test.csv",)
+
+    i = ComponentInterfaceFactory(kind=kind)
+    v = ComponentInterfaceValue(
+        interface=i, image=image, file=file, value=value
+    )
+
+    with pytest.raises(ValidationError):
+        v.full_clean()
 
 
 @pytest.mark.django_db
 def test_valid_schema_ok():
-    i = ComponentInterfaceFactory(schema={"type": "object"})
+    i = ComponentInterfaceFactory(
+        schema={"type": "object"},
+        relative_path="test.json",
+        kind=InterfaceKindChoices.JSON,
+    )
     i.full_clean()
 
 
