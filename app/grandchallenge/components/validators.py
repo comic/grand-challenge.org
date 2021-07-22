@@ -15,3 +15,8 @@ def validate_safe_path(value):
 
     if value != valid_path:
         raise ValidationError(f"Invalid file path, should be {valid_path}.")
+
+
+def validate_no_slash_at_ends(value):
+    if value[0] == "/" or value[-1] == "/":
+        raise ValidationError("Path must not begin or end with '/'")

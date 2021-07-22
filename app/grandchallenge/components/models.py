@@ -1,12 +1,16 @@
 import json
 import logging
+import re
 from decimal import Decimal
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from django import forms
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
@@ -17,16 +21,23 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import execute_job, validate_docker_image
-from grandchallenge.components.validators import validate_safe_path
+from grandchallenge.components.validators import (
+    validate_no_slash_at_ends,
+    validate_safe_path,
+)
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
 )
 from grandchallenge.core.validators import (
     ExtensionValidator,
+    JSONSchemaValidator,
+    JSONValidator,
     MimeTypeValidator,
 )
+from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +51,7 @@ class InterfaceKindChoices(models.TextChoices):
     INTEGER = "INT", _("Integer")
     FLOAT = "FLT", _("Float")
     BOOL = "BOOL", _("Bool")
+    ANY = "JSON", _("Anything")
 
     # Annotation Types
     TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
@@ -64,7 +76,6 @@ class InterfaceKindChoices(models.TextChoices):
     HEAT_MAP = "HMAP", _("Heat Map")
 
     # Legacy support
-    JSON = "JSON", _("JSON file")
     CSV = "CSV", _("CSV file")
     ZIP = "ZIP", _("ZIP file")
 
@@ -81,38 +92,14 @@ class InterfaceKind:
     InterfaceKindChoices = InterfaceKindChoices
 
     @staticmethod
-    def interface_type_file():
-        """Interface kinds that are files:
+    def interface_type_json():
+        """Interface kinds that are json serializable:
 
-        * CSV file
-        * JSON file
-        * ZIP file
-        """
-        return (
-            InterfaceKind.InterfaceKindChoices.CSV,
-            InterfaceKind.InterfaceKindChoices.JSON,
-            InterfaceKind.InterfaceKindChoices.ZIP,
-        )
-
-    @staticmethod
-    def interface_type_image():
-        """Interface kinds that are images:
-
-        * Image
-        * Heat Map
-        * Segmentation
-        """
-        return (
-            InterfaceKind.InterfaceKindChoices.IMAGE,
-            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
-            InterfaceKind.InterfaceKindChoices.SEGMENTATION,
-        )
-
-    @staticmethod
-    def interface_type_annotation():
-        """Interface kinds that are annotations:
-
-
+        * String
+        * Integer
+        * Float
+        * Bool
+        * Anything that is JSON serializable (any object)
         * 2D bounding box
         * Multiple 2D bounding boxes
         * Distance measurement
@@ -121,6 +108,8 @@ class InterfaceKind:
         * Multiple points
         * Polygon
         * Multiple polygons
+        * Choice (string)
+        * Multiple choice (array of strings)
 
         Example json for 2D bounding box annotation
 
@@ -274,6 +263,10 @@ class InterfaceKind:
 
         """
         return (
+            InterfaceKind.InterfaceKindChoices.STRING,
+            InterfaceKind.InterfaceKindChoices.INTEGER,
+            InterfaceKind.InterfaceKindChoices.FLOAT,
+            InterfaceKind.InterfaceKindChoices.BOOL,
             InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
             InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT,
@@ -282,27 +275,63 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
             InterfaceKind.InterfaceKindChoices.POLYGON,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKind.InterfaceKindChoices.CHOICE,
+            InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
+            InterfaceKind.InterfaceKindChoices.ANY,
         )
 
     @staticmethod
-    def interface_type_simple():
-        """Simple interface kinds.
+    def interface_type_image():
+        """Interface kinds that are images:
 
-        * String
-        * Integer
-        * Float
-        * Bool
-        * Choice
-        * Multiple choice
+        * Image
+        * Heat Map
+        * Segmentation
         """
         return (
-            InterfaceKind.InterfaceKindChoices.STRING,
-            InterfaceKind.InterfaceKindChoices.INTEGER,
-            InterfaceKind.InterfaceKindChoices.FLOAT,
-            InterfaceKind.InterfaceKindChoices.BOOL,
-            InterfaceKind.InterfaceKindChoices.CHOICE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
+            InterfaceKind.InterfaceKindChoices.IMAGE,
+            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
+            InterfaceKind.InterfaceKindChoices.SEGMENTATION,
         )
+
+    @staticmethod
+    def interface_type_file():
+        """Interface kinds that are files:
+
+        * CSV file
+        * ZIP file
+        """
+        return (
+            InterfaceKind.InterfaceKindChoices.CSV,
+            InterfaceKind.InterfaceKindChoices.ZIP,
+        )
+
+    @classmethod
+    def get_default_field(cls, *, kind):
+        if kind in {*cls.interface_type_file(), *cls.interface_type_image()}:
+            return UploadedAjaxFileList
+        elif kind in {
+            InterfaceKind.InterfaceKindChoices.STRING,
+            InterfaceKind.InterfaceKindChoices.CHOICE,
+        }:
+            return forms.CharField
+        elif kind == InterfaceKind.InterfaceKindChoices.INTEGER:
+            return forms.IntegerField
+        elif kind == InterfaceKind.InterfaceKindChoices.FLOAT:
+            return forms.FloatField
+        elif kind == InterfaceKind.InterfaceKindChoices.BOOL:
+            return forms.BooleanField
+        else:
+            return forms.JSONField
+
+    @classmethod
+    def get_file_mimetypes(cls, *, kind):
+        if kind == InterfaceKind.InterfaceKindChoices.CSV:
+            return ("text/plain",)
+        elif kind == InterfaceKind.InterfaceKindChoices.ZIP:
+            return ("application/zip",)
+        else:
+            raise RuntimeError(f"Unknown kind {kind}")
 
 
 class ComponentInterface(models.Model):
@@ -323,6 +352,16 @@ class ComponentInterface(models.Model):
         default=None,
         help_text="Default value for this field, only valid for inputs.",
     )
+    schema = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            "Additional JSON schema that the values for this interface must "
+            "satisfy. See https://json-schema.org/. "
+            "Only Draft 7, 6, 4 or 3 are supported."
+        ),
+        validators=[JSONSchemaValidator()],
+    )
     kind = models.CharField(
         blank=False,
         max_length=4,
@@ -339,7 +378,16 @@ class ComponentInterface(models.Model):
             "to the input or output directory."
         ),
         unique=True,
-        validators=[validate_safe_path],
+        validators=[
+            validate_safe_path,
+            validate_no_slash_at_ends,
+            # No uuids in path
+            RegexValidator(
+                regex=r".*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.*",
+                inverse_match=True,
+                flags=re.IGNORECASE,
+            ),
+        ],
     )
     store_in_database = models.BooleanField(
         default=True,
@@ -372,11 +420,7 @@ class ComponentInterface(models.Model):
         # CSV and ZIP should always be saved to S3, others are optional
         return (
             self.is_image_kind
-            or self.kind
-            in (
-                InterfaceKind.InterfaceKindChoices.CSV,
-                InterfaceKind.InterfaceKindChoices.ZIP,
-            )
+            or self.kind in InterfaceKind.interface_type_file()
             or not self.store_in_database
         )
 
@@ -397,6 +441,56 @@ class ComponentInterface(models.Model):
         civ.save()
 
         return civ
+
+    def clean(self):
+        super().clean()
+        self._clean_store_in_database()
+        self._clean_relative_path()
+
+    def _clean_relative_path(self):
+        if self.kind in InterfaceKind.interface_type_json():
+            if not self.relative_path.endswith(".json"):
+                raise ValidationError("Relative path should end with .json")
+        elif self.kind in InterfaceKind.interface_type_file():
+            if not self.relative_path.endswith(f".{self.kind.lower()}"):
+                raise ValidationError(
+                    f"Relative path should end with .{self.kind.lower()}"
+                )
+
+        if self.kind in InterfaceKind.interface_type_image():
+            if not self.relative_path.startswith("images/"):
+                raise ValidationError(
+                    "Relative path should start with images/"
+                )
+            if Path(self.relative_path).name != Path(self.relative_path).stem:
+                # Maybe not in the future
+                raise ValidationError("Images should be a directory")
+        else:
+            if self.relative_path.startswith("images/"):
+                raise ValidationError(
+                    "Relative path should not start with images/"
+                )
+
+    def _clean_store_in_database(self):
+        if (
+            self.kind not in InterfaceKind.interface_type_json()
+            and self.store_in_database
+        ):
+            raise ValidationError(
+                f"Interface {self.kind} objects cannot be stored in the database"
+            )
+
+    def validate_against_schema(self, *, value):
+        """Validates values against both default and custom schemas"""
+        JSONValidator(
+            schema={
+                **INTERFACE_VALUE_SCHEMA,
+                "anyOf": [{"$ref": f"#/definitions/{self.kind}"}],
+            }
+        )(value=value)
+
+        if self.schema:
+            JSONValidator(schema=self.schema)(value=value)
 
     class Meta:
         ordering = ("pk",)
@@ -511,6 +605,51 @@ class ComponentInterfaceValue(models.Model):
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"
 
+    def clean(self):
+        super().clean()
+
+        if self.interface.kind in InterfaceKind.interface_type_image():
+            self._validate_image_only()
+        elif self.interface.kind in InterfaceKind.interface_type_file():
+            self._validate_file_only()
+        else:
+            self._validate_value()
+
+    def _validate_image_only(self):
+        if not self.image:
+            raise ValidationError("Image must be set")
+        if self.file or self.value is not None:
+            raise ValidationError(
+                f"File ({self.file}) or value should not be set for images"
+            )
+
+    def _validate_file_only(self):
+        if not self.file:
+            raise ValidationError("File must be set")
+        if self.image or self.value is not None:
+            raise ValidationError(
+                f"Image ({self.image}) or value must not be set for files"
+            )
+
+    def _validate_value_only(self):
+        # Do not check self.value here, it can be anything including None.
+        # This is checked later with interface.validate_against_schema.
+        if self.image or self.file:
+            raise ValidationError(
+                f"Image ({self.image}) or file ({self.file}) must not be set for values"
+            )
+
+    def _validate_value(self):
+        if self.interface.save_in_object_store:
+            self._validate_file_only()
+            with self.file.open("r") as f:
+                value = json.loads(f.read().decode("utf-8"))
+        else:
+            self._validate_value_only()
+            value = self.value
+
+        self.interface.validate_against_schema(value=value)
+
     class Meta:
         ordering = ("pk",)
 
@@ -561,7 +700,7 @@ class ComponentJob(models.Model):
         help_text=(
             "Map of the ComponentInterfaceValue id to the path prefix to use "
             "for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at "
-            "/input/foo/bar/<relative_path>",
+            "/input/foo/bar/<relative_path>"
         ),
     )
 

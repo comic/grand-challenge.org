@@ -418,34 +418,31 @@ class ArchiveEditArchiveItem(
         civ_pks_to_add = set()
 
         for slug, value in form.cleaned_data.items():
-
             if value is None:
                 continue
 
             ci = ComponentInterface.objects.get(slug=slug)
             civ = self.archive_item.values.filter(interface=ci).first()
 
-            if civ and civ.value is not None:
+            if civ:
                 if civ.value == value:
                     continue
                 civ_pks_to_remove.add(civ.pk)
-                civ = None
-
-            if not civ:
-                civ = ComponentInterfaceValue.objects.create(interface=ci)
 
             if ci.kind in InterfaceKind.interface_type_image():
+                civ = ComponentInterfaceValue.objects.create(interface=ci)
                 civ_pks_to_add.add(civ.pk)
                 upload_pks[civ.pk] = create_upload(value)
             elif ci.kind in InterfaceKind.interface_type_file():
+                civ = ComponentInterfaceValue(interface=ci)
                 name = get_valid_filename(value[0].name)
                 with value[0].open() as f:
                     civ.file = File(f, name=name)
-                    civ.save()
+                civ.full_clean()
+                civ.save()
                 civ_pks_to_add.add(civ.pk)
             else:
-                civ.value = value
-                civ.save()
+                civ = ci.create_instance(value=value)
                 civ_pks_to_add.add(civ.pk)
 
         tasks = update_archive_item_values.signature(

@@ -104,5 +104,5 @@ def test_default_interfaces_created():
         InterfaceKind.InterfaceKindChoices.CSV
     }
     assert {o.kind for o in p.outputs.all()} == {
-        InterfaceKind.InterfaceKindChoices.JSON
+        InterfaceKind.InterfaceKindChoices.ANY
     }

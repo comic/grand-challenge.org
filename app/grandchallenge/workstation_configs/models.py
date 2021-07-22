@@ -10,7 +10,7 @@ from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.validators import JSONSchemaValidator
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
 
 OVERLAY_SEGMENTS_SCHEMA = {
@@ -212,13 +212,13 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
     overlay_segments = models.JSONField(
         default=list,
         blank=True,
-        validators=[JSONSchemaValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
+        validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
 
     key_bindings = models.JSONField(
         default=list,
         blank=True,
-        validators=[JSONSchemaValidator(schema=KEY_BINDINGS_SCHEMA)],
+        validators=[JSONValidator(schema=KEY_BINDINGS_SCHEMA)],
     )
 
     # 4 digits, 2 decimal places, 0.01 min, 99.99 max

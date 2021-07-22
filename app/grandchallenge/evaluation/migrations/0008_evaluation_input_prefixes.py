@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             field=models.JSONField(
                 default=dict,
                 help_text=(
-                    "Map of the ComponentInterfaceValue id to the path prefix to use for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at /input/foo/bar/<relative_path>",
+                    "Map of the ComponentInterfaceValue id to the path prefix to use for this input, e.g. {'1': 'foo/bar/'} will place CIV 1 at /input/foo/bar/<relative_path>"
                 ),
             ),
         ),

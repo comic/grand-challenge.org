@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
+from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.subdomains.utils import reverse
 from tests.utils import assert_viewname_status
 

@@ -106,7 +106,7 @@ class Migration(migrations.Migration):
                         default=list,
                         help_text="A JSON object that contains the extra columns from metrics.json that will be displayed on the results page. ",
                         validators=[
-                            grandchallenge.core.validators.JSONSchemaValidator(
+                            grandchallenge.core.validators.JSONValidator(
                                 schema={
                                     "$schema": "http://json-schema.org/draft-06/schema#",
                                     "definitions": {},

@@ -8,8 +8,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
-from grandchallenge.core.validators import JSONSchemaValidator
-from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
@@ -52,7 +50,6 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         view_name="api:image-detail",
         required=False,
     )
-
     interface = SlugRelatedField(
         slug_field="slug", queryset=ComponentInterface.objects.all()
     )
@@ -74,51 +71,29 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             "upload_session",
         ]
 
-    def validate(self, attrs):  # noqa: C901
+    def validate(self, attrs):
         interface = attrs["interface"]
 
-        def get_value():
-            value = attrs.get("value", None)
-            if not value:
-                raise serializers.ValidationError(
-                    f"Value is required for interface kind {interface.kind}"
-                )
-            return value
-
-        def validate_simple():
-            kind_to_type = {
-                ComponentInterface.Kind.INTEGER: int,
-                ComponentInterface.Kind.STRING: str,
-                ComponentInterface.Kind.BOOL: bool,
-                ComponentInterface.Kind.FLOAT: float,
-            }
-            value = get_value()
-            if not isinstance(value, kind_to_type.get(interface.kind)):
-                raise serializers.ValidationError(
-                    f"Type of {value} does not match interface kind {interface.kind}"
-                )
-
-        def validate_annotations():
-            value = get_value()
-            allowed_types = [{"$ref": f"#/definitions/{interface.kind}"}]
-
-            JSONSchemaValidator(
-                schema={**ANSWER_TYPE_SCHEMA, "anyOf": allowed_types}
-            )(value)
-
-        def validate_image():
-            # either image or upload_session should be provided
-            if not any(key in attrs for key in ("upload_session", "image")):
-                raise serializers.ValidationError(
-                    f"Upload_session or image are required for interface kind {interface.kind}"
-                )
-
-        if interface.kind in InterfaceKind.interface_type_simple():
-            validate_simple()
-        if interface.kind in InterfaceKind.interface_type_annotation():
-            validate_annotations()
         if interface.kind in InterfaceKind.interface_type_image():
-            validate_image()
+            if not attrs.get("image") and not attrs.get("upload_session"):
+                raise serializers.ValidationError(
+                    f"upload_session or image are required for interface "
+                    f"kind {interface.kind}"
+                )
+
+            if attrs.get("image") and attrs.get("upload_session"):
+                raise serializers.ValidationError(
+                    "Only one of image or upload_session should be set"
+                )
+
+        if not attrs.get("upload_session"):
+            # Instances without an image are never valid, this will be checked
+            # later, but for now check everything else. DRF 3.0 dropped calling
+            # full_clean on instances, so we need to do it ourselves.
+            instance = ComponentInterfaceValue(
+                **{k: v for k, v in attrs.items() if k != "upload_session"}
+            )
+            instance.full_clean()
 
         return attrs
 

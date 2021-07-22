@@ -1,7 +1,9 @@
 import re
+from io import BytesIO
 from pathlib import Path
 
 import pytest
+from django.core.files.base import File
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
@@ -264,7 +266,7 @@ def test_algorithm(client, algorithm_image, settings):
         relative_path="detection_results.json",
         title="detection-json-file",
         slug="detection-json-file",
-        kind=ComponentInterface.Kind.JSON,
+        kind=ComponentInterface.Kind.ANY,
     )
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
@@ -311,7 +313,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
         store_in_database=False,
         relative_path="some_text.txt",
         slug="detection-json-file",
-        kind=ComponentInterface.Kind.JSON,
+        kind=ComponentInterface.Kind.ANY,
     )
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
@@ -374,26 +376,19 @@ def test_algorithm_multiple_inputs(
             )
             job.inputs.add(
                 ComponentInterfaceValueFactory(
-                    interface=ci, image=image_file.image, file=None
+                    interface=ci, image=image_file.image
                 )
             )
             expected.append("file")
         elif ci.kind in InterfaceKind.interface_type_file():
-            job.inputs.add(
-                ComponentInterfaceValueFactory(
-                    interface=ci,
-                    file__from_path=Path(__file__).parent
-                    / "resources"
-                    / "test.json",
-                    image=None,
-                )
-            )
-            expected.append("json")
+            civ = ComponentInterfaceValueFactory(interface=ci)
+            civ.file.save("test", File(BytesIO(b"")))
+            civ.save()
+            job.inputs.add(civ)
+            expected.append("file")
         else:
             job.inputs.add(
-                ComponentInterfaceValueFactory(
-                    interface=ci, value="test", file=None, image=None
-                )
+                ComponentInterfaceValueFactory(interface=ci, value="test")
             )
             expected.append("test")
 
@@ -403,6 +398,7 @@ def test_algorithm_multiple_inputs(
             run_algorithm_job_for_inputs(job_pk=job.pk, upload_pks=[])
 
     job = Job.objects.get()
+    assert job.error_message == ""
     assert job.status == job.SUCCESS
     assert {f"/input/{x.relative_path}" for x in job.inputs.all()} == set(
         job.outputs.first().value.keys()
@@ -472,7 +468,7 @@ def test_add_images_to_component_interface_value():
     ImageFactory(origin=us), ImageFactory(origin=us)
     ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
 
-    civ = ComponentInterfaceValueFactory(interface=ci, image=None)
+    civ = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
 
     with pytest.raises(ValueError) as err:
         add_images_to_component_interface_value(
@@ -483,7 +479,7 @@ def test_add_images_to_component_interface_value():
 
     us2 = RawImageUploadSessionFactory()
     image = ImageFactory(origin=us2)
-    civ2 = ComponentInterfaceValueFactory(interface=ci, image=None)
+    civ2 = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
     add_images_to_component_interface_value(
         component_interface_value_pk=civ2.pk, upload_session_pk=us2.pk
     )

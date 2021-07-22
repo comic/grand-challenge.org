@@ -211,6 +211,7 @@ class ArchiveItemForm(SaveFormInitMixin, Form):
                 initial = initial.value
             self.fields[inp.slug] = InterfaceFormField(
                 kind=inp.kind,
+                schema=inp.schema,
                 initial=initial or inp.default_value,
                 required=False,
                 user=user,

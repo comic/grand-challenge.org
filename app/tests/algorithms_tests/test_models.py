@@ -58,7 +58,7 @@ def test_default_interfaces_created():
         InterfaceKind.InterfaceKindChoices.IMAGE
     }
     assert {o.kind for o in a.outputs.all()} == {
-        InterfaceKind.InterfaceKindChoices.JSON,
+        InterfaceKind.InterfaceKindChoices.ANY,
         InterfaceKind.InterfaceKindChoices.HEAT_MAP,
     }
 

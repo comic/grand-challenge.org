@@ -64,6 +64,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "stdout",
         "stderr",
         "error_message",
+        "input_prefixes",
     )
 
 

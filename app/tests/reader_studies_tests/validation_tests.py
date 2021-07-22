@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.core.validators import JSONSchemaValidator
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.reader_studies.models import (
     HANGING_LIST_SCHEMA,
     Question,
@@ -50,9 +50,7 @@ from tests.utils import get_view_for_user
     ),
 )
 def test_hanging_list_validation(hanging_list, expected):
-    assert (
-        JSONSchemaValidator(schema=HANGING_LIST_SCHEMA)(hanging_list) is None
-    )
+    assert JSONValidator(schema=HANGING_LIST_SCHEMA)(hanging_list) is None
 
     rs = ReaderStudyFactory(hanging_list=hanging_list)
     images = [ImageFactory(name=f"image_{n}") for n in range(5)]

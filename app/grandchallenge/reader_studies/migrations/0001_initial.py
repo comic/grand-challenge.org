@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         default=list,
                         validators=[
-                            grandchallenge.core.validators.JSONSchemaValidator(
+                            grandchallenge.core.validators.JSONValidator(
                                 schema={
                                     "$schema": "http://json-schema.org/draft-06/schema#",
                                     "definitions": {},
@@ -149,7 +149,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         default=dict,
                         validators=[
-                            grandchallenge.core.validators.JSONSchemaValidator(
+                            grandchallenge.core.validators.JSONValidator(
                                 schema={
                                     "additionalProperties": {"type": "string"},
                                     "properties": {},
@@ -321,7 +321,7 @@ class Migration(migrations.Migration):
                     models.JSONField(
                         null=True,
                         validators=[
-                            grandchallenge.core.validators.JSONSchemaValidator(
+                            grandchallenge.core.validators.JSONValidator(
                                 schema={
                                     "$schema": "http://json-schema.org/draft-07/schema#",
                                     "anyOf": [
@@ -768,7 +768,7 @@ class Migration(migrations.Migration):
                     models.JSONField(
                         null=True,
                         validators=[
-                            grandchallenge.core.validators.JSONSchemaValidator(
+                            grandchallenge.core.validators.JSONValidator(
                                 schema={
                                     "$schema": "http://json-schema.org/draft-07/schema#",
                                     "anyOf": [

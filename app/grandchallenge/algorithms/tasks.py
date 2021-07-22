@@ -101,6 +101,7 @@ def add_images_to_component_interface_value(
 
     civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
     civ.image = session.image_set.get()
+    civ.full_clean()
     civ.save()
 
     civ.image.update_viewer_groups_permissions()

@@ -9,8 +9,8 @@ from rest_framework.serializers import (
 )
 
 from grandchallenge.cases.models import Image
+from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.reader_studies.models import (
-    ANSWER_TYPE_SCHEMA,
     Answer,
     CategoricalOption,
     Question,

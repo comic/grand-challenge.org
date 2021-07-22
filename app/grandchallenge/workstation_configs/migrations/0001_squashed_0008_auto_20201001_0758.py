@@ -332,7 +332,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         default=list,
                         validators=[
-                            grandchallenge.core.validators.JSONSchemaValidator(
+                            grandchallenge.core.validators.JSONValidator(
                                 schema={
                                     "$id": "http://example.com/example.json",
                                     "$schema": "http://json-schema.org/draft-06/schema",
@@ -407,7 +407,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         default=list,
                         validators=[
-                            grandchallenge.core.validators.JSONSchemaValidator(
+                            grandchallenge.core.validators.JSONValidator(
                                 schema={
                                     "$id": "http://example.com/example.json",
                                     "$schema": "http://json-schema.org/draft-06/schema",
