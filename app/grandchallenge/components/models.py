@@ -5,6 +5,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import models
@@ -17,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image, ImageFile
+from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import execute_job, validate_docker_image
 from grandchallenge.components.validators import validate_safe_path
 from grandchallenge.core.storage import (
@@ -26,6 +28,7 @@ from grandchallenge.core.storage import (
 from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONSchemaValidator,
+    JSONValidator,
     MimeTypeValidator,
 )
 
@@ -86,12 +89,10 @@ class InterfaceKind:
         """Interface kinds that are files:
 
         * CSV file
-        * JSON file
         * ZIP file
         """
         return (
             InterfaceKind.InterfaceKindChoices.CSV,
-            InterfaceKind.InterfaceKindChoices.JSON,
             InterfaceKind.InterfaceKindChoices.ZIP,
         )
 
@@ -295,6 +296,7 @@ class InterfaceKind:
         * Bool
         * Choice
         * Multiple choice
+        * Anything that is JSON serializable
         """
         return (
             InterfaceKind.InterfaceKindChoices.STRING,
@@ -303,6 +305,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.BOOL,
             InterfaceKind.InterfaceKindChoices.CHOICE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
+            InterfaceKind.InterfaceKindChoices.JSON,
         )
 
 
@@ -383,11 +386,7 @@ class ComponentInterface(models.Model):
         # CSV and ZIP should always be saved to S3, others are optional
         return (
             self.is_image_kind
-            or self.kind
-            in (
-                InterfaceKind.InterfaceKindChoices.CSV,
-                InterfaceKind.InterfaceKindChoices.ZIP,
-            )
+            or self.kind in InterfaceKind.interface_type_file()
             or not self.store_in_database
         )
 
@@ -408,6 +407,18 @@ class ComponentInterface(models.Model):
         civ.save()
 
         return civ
+
+    def validate_against_schema(self, *, value):
+        """Validates values against both default and custom schemas"""
+        JSONValidator(
+            schema={
+                **INTERFACE_VALUE_SCHEMA,
+                "anyOf": [{"$ref": f"#/definitions/{self.kind}"}],
+            }
+        )(value=value)
+
+        if self.schema:
+            JSONValidator(schema=self.schema)(value=value)
 
     class Meta:
         ordering = ("pk",)
@@ -521,6 +532,45 @@ class ComponentInterfaceValue(models.Model):
 
     def __str__(self):
         return f"Component Interface Value {self.pk} for {self.interface}"
+
+    def clean(self):
+        super().clean()
+
+        if self.interface.kind in InterfaceKind.interface_type_image():
+            self._validate_image_only()
+        elif self.interface.kind in InterfaceKind.interface_type_file():
+            self._validate_file_only()
+        else:
+            self._validate_value()
+
+    def _validate_image_only(self):
+        if not self.image:
+            raise ValidationError("Image must be set")
+        if self.file is not None and self.value is not None:
+            raise ValidationError("File or value should not be set for images")
+
+    def _validate_file_only(self):
+        if not self.file:
+            raise ValidationError("File must be set")
+        if self.image is not None and self.value is not None:
+            raise ValidationError("Image or value must not be set for files")
+
+    def _validate_value_only(self):
+        # Do not check self.value here, it can be anything including None.
+        # This is checked later with interface.validate_against_schema.
+        if self.image is not None and self.file is not None:
+            raise ValidationError("Image or file must not be set for values")
+
+    def _validate_value(self):
+        if self.interface.save_in_object_store:
+            self._validate_file_only()
+            with self.file.open("r") as f:
+                value = json.loads(f.read().decode("utf-8"))
+        else:
+            self._validate_value_only()
+            value = self.value
+
+        self.interface.validate_against_schema(value=value)
 
     class Meta:
         ordering = ("pk",)

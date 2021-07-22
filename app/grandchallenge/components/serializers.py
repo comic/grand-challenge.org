@@ -8,8 +8,8 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
 )
+from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
@@ -103,7 +103,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             allowed_types = [{"$ref": f"#/definitions/{interface.kind}"}]
 
             JSONValidator(
-                schema={**ANSWER_TYPE_SCHEMA, "anyOf": allowed_types}
+                schema={**INTERFACE_VALUE_SCHEMA, "anyOf": allowed_types}
             )(value)
 
         def validate_image():

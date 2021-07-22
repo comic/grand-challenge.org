@@ -8,11 +8,11 @@ from django.forms import (
 
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.core.validators import ExtensionValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.jqfileupload.widgets import uploader
 from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
-from grandchallenge.reader_studies.models import ANSWER_TYPE_SCHEMA
 
 file_upload_text = (
     "The total size of all files uploaded in a single session "
@@ -56,7 +56,7 @@ class InterfaceFormField:
             kwargs["initial"] = initial
         if kind in InterfaceKind.interface_type_annotation():
             kwargs["widget"] = JSONEditorWidget(
-                schema=ANSWER_TYPE_SCHEMA["definitions"][kind]
+                schema=INTERFACE_VALUE_SCHEMA["definitions"][kind]
             )
         if kind in InterfaceKind.interface_type_file():
             kwargs["widget"] = uploader.AjaxUploadWidget(

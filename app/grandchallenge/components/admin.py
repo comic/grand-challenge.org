@@ -14,6 +14,7 @@ class ComponentInterfaceAdmin(admin.ModelAdmin):
         "kind",
         "default_value",
         "relative_path",
+        "schema",
     )
 
     def get_readonly_fields(self, request, obj=None):
