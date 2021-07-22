@@ -8,7 +8,6 @@ from grandchallenge.components.serializers import (
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import ImageFactory, UploadSessionFactory, UserFactory
 
-
 TEST_DATA = {
     "STR": "test",
     "INT": 12345,
@@ -116,7 +115,6 @@ TEST_DATA = {
     ),
 )
 def test_civ_post_objects_do_not_exist(civ, error_message):
-
     # test
     serializer = ComponentInterfaceValuePostSerializer(data=civ)
 
@@ -155,24 +153,38 @@ def test_civ_post_value_validation(kind):
 
         # verify
         assert serializer.is_valid() == (
-            kind == test or kind == "INT" and test == "BOOL"
+            kind == test
+            or (
+                # Ints are valid for float types
+                kind == "FLT"
+                and test == "INT"
+            )
         )
         if not serializer.is_valid():
-            error_message = (
-                f"Type of {TEST_DATA[test]} does not match interface kind {kind}"
-                if kind in InterfaceKind.interface_type_simple()
-                else "Failed validating"
+            assert "JSON does not fulfill schema: " in str(
+                serializer.errors["__all__"][0]
             )
-
-            assert error_message in serializer.errors["non_field_errors"][0]
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "kind,",
+    "kind",
     (
-        InterfaceKind.interface_type_annotation()
-        + InterfaceKind.interface_type_simple()
+        InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+        InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+        InterfaceKind.InterfaceKindChoices.POINT,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
+        InterfaceKind.InterfaceKindChoices.POLYGON,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
+        InterfaceKind.InterfaceKindChoices.STRING,
+        InterfaceKind.InterfaceKindChoices.INTEGER,
+        InterfaceKind.InterfaceKindChoices.FLOAT,
+        InterfaceKind.InterfaceKindChoices.BOOL,
+        InterfaceKind.InterfaceKindChoices.CHOICE,
+        InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
+        # Do not test JSON type here as that is always valid
     ),
 )
 def test_civ_post_value_required(kind):
@@ -186,9 +198,8 @@ def test_civ_post_value_required(kind):
 
     # verify
     assert not serializer.is_valid()
-    assert (
-        f"Value is required for interface kind {kind}"
-        in serializer.errors["non_field_errors"]
+    assert "JSON does not fulfill schema: None is not of type" in str(
+        serializer.errors["__all__"][0]
     )
 
 
@@ -206,7 +217,7 @@ def test_civ_post_image_or_upload_required_validation(kind):
     # verify
     assert not serializer.is_valid()
     assert (
-        f"Upload_session or image are required for interface kind {kind}"
+        f"upload_session or image are required for interface kind {kind}"
         in serializer.errors["non_field_errors"]
     )
 

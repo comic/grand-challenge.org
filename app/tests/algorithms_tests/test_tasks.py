@@ -472,7 +472,7 @@ def test_add_images_to_component_interface_value():
     ImageFactory(origin=us), ImageFactory(origin=us)
     ci = ComponentInterface.objects.get(slug=DEFAULT_INPUT_INTERFACE_SLUG)
 
-    civ = ComponentInterfaceValueFactory(interface=ci, image=None)
+    civ = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
 
     with pytest.raises(ValueError) as err:
         add_images_to_component_interface_value(
@@ -483,7 +483,7 @@ def test_add_images_to_component_interface_value():
 
     us2 = RawImageUploadSessionFactory()
     image = ImageFactory(origin=us2)
-    civ2 = ComponentInterfaceValueFactory(interface=ci, image=None)
+    civ2 = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
     add_images_to_component_interface_value(
         component_interface_value_pk=civ2.pk, upload_session_pk=us2.pk
     )
