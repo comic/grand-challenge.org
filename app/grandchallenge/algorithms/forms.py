@@ -18,7 +18,10 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.components.form_fields import InterfaceFormField
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -45,8 +48,10 @@ class AlgorithmInputsForm(SaveFormInitMixin, Form):
         for inp in algorithm.inputs.all():
             self.fields[inp.slug] = InterfaceFormField(
                 kind=inp.kind,
+                schema=inp.schema,
                 initial=inp.default_value,
                 user=user,
+                required=(inp.kind != InterfaceKindChoices.BOOL),
                 help_text=clean(inp.description) if inp.description else "",
             ).field
 

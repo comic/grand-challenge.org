@@ -4,6 +4,7 @@ from decimal import Decimal
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -31,6 +32,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
+from grandchallenge.jqfileupload.widgets.uploader import UploadedAjaxFileList
 
 logger = logging.getLogger(__name__)
 
@@ -85,36 +87,13 @@ class InterfaceKind:
     InterfaceKindChoices = InterfaceKindChoices
 
     @staticmethod
-    def interface_type_file():
-        """Interface kinds that are files:
+    def interface_type_other():
+        """Interface kinds that are json serializable:
 
-        * CSV file
-        * ZIP file
-        """
-        return (
-            InterfaceKind.InterfaceKindChoices.CSV,
-            InterfaceKind.InterfaceKindChoices.ZIP,
-        )
-
-    @staticmethod
-    def interface_type_image():
-        """Interface kinds that are images:
-
-        * Image
-        * Heat Map
-        * Segmentation
-        """
-        return (
-            InterfaceKind.InterfaceKindChoices.IMAGE,
-            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
-            InterfaceKind.InterfaceKindChoices.SEGMENTATION,
-        )
-
-    @staticmethod
-    def interface_type_annotation():
-        """Interface kinds that are annotations:
-
-
+        * String
+        * Integer
+        * Float
+        * Bool
         * 2D bounding box
         * Multiple 2D bounding boxes
         * Distance measurement
@@ -123,6 +102,9 @@ class InterfaceKind:
         * Multiple points
         * Polygon
         * Multiple polygons
+        * Choice (string)
+        * Multiple choice (array of strings)
+        * Anything that is JSON serializable (any object)
 
         Example json for 2D bounding box annotation
 
@@ -276,6 +258,10 @@ class InterfaceKind:
 
         """
         return (
+            InterfaceKind.InterfaceKindChoices.STRING,
+            InterfaceKind.InterfaceKindChoices.INTEGER,
+            InterfaceKind.InterfaceKindChoices.FLOAT,
+            InterfaceKind.InterfaceKindChoices.BOOL,
             InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
             InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT,
@@ -284,29 +270,63 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
             InterfaceKind.InterfaceKindChoices.POLYGON,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-        )
-
-    @staticmethod
-    def interface_type_simple():
-        """Simple interface kinds.
-
-        * String
-        * Integer
-        * Float
-        * Bool
-        * Choice
-        * Multiple choice
-        * Anything that is JSON serializable
-        """
-        return (
-            InterfaceKind.InterfaceKindChoices.STRING,
-            InterfaceKind.InterfaceKindChoices.INTEGER,
-            InterfaceKind.InterfaceKindChoices.FLOAT,
-            InterfaceKind.InterfaceKindChoices.BOOL,
             InterfaceKind.InterfaceKindChoices.CHOICE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
             InterfaceKind.InterfaceKindChoices.JSON,
         )
+
+    @staticmethod
+    def interface_type_image():
+        """Interface kinds that are images:
+
+        * Image
+        * Heat Map
+        * Segmentation
+        """
+        return (
+            InterfaceKind.InterfaceKindChoices.IMAGE,
+            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
+            InterfaceKind.InterfaceKindChoices.SEGMENTATION,
+        )
+
+    @staticmethod
+    def interface_type_file():
+        """Interface kinds that are files:
+
+        * CSV file
+        * ZIP file
+        """
+        return (
+            InterfaceKind.InterfaceKindChoices.CSV,
+            InterfaceKind.InterfaceKindChoices.ZIP,
+        )
+
+    @classmethod
+    def get_default_field(cls, *, kind):
+        if kind in {*cls.interface_type_file(), *cls.interface_type_image()}:
+            return UploadedAjaxFileList
+        elif kind in {
+            InterfaceKind.InterfaceKindChoices.STRING,
+            InterfaceKind.InterfaceKindChoices.CHOICE,
+        }:
+            return forms.CharField
+        elif kind == InterfaceKind.InterfaceKindChoices.INTEGER:
+            return forms.IntegerField
+        elif kind == InterfaceKind.InterfaceKindChoices.FLOAT:
+            return forms.FloatField
+        elif kind == InterfaceKind.InterfaceKindChoices.BOOL:
+            return forms.BooleanField
+        else:
+            return forms.JSONField
+
+    @classmethod
+    def get_file_mimetypes(cls, *, kind):
+        if kind == InterfaceKind.InterfaceKindChoices.CSV:
+            return ("text/plain",)
+        elif kind == InterfaceKind.InterfaceKindChoices.ZIP:
+            return ("application/zip",)
+        else:
+            raise RuntimeError(f"Unknown kind {kind}")
 
 
 class ComponentInterface(models.Model):

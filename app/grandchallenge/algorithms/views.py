@@ -490,12 +490,11 @@ class AlgorithmExperimentCreate(
                 name = get_valid_filename(value[0].name)
                 with value[0].open() as f:
                     civ.file = File(f, name=name)
-                    civ.save()
+                civ.full_clean()
+                civ.save()
                 civs.append(civ)
             else:
-                civ = ComponentInterfaceValue.objects.create(
-                    interface=ci, value=value
-                )
+                civ = ci.create_instance(value=value)
                 civs.append(civ)
 
         job.inputs.add(*civs)
