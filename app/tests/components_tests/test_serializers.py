@@ -184,7 +184,7 @@ def test_civ_post_value_validation(kind):
         InterfaceKind.InterfaceKindChoices.BOOL,
         InterfaceKind.InterfaceKindChoices.CHOICE,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
-        # Do not test JSON type here as that is always valid
+        # Do not test ANY type here as that is always valid
     ),
 )
 def test_civ_post_value_required(kind):

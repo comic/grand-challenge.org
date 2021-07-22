@@ -313,6 +313,7 @@ INTERFACE_VALUE_SCHEMA = {
         "INT": {"type": "integer"},
         "FLT": {"type": "number"},
         "BOOL": {"type": "boolean"},
+        "JSON": {},
         "2DBB": ANSWER_TYPE_SCHEMA["definitions"]["2DBB"],
         "M2DB": ANSWER_TYPE_SCHEMA["definitions"]["M2DB"],
         "DIST": ANSWER_TYPE_SCHEMA["definitions"]["DIST"],
@@ -323,7 +324,6 @@ INTERFACE_VALUE_SCHEMA = {
         "MPOL": ANSWER_TYPE_SCHEMA["definitions"]["MPOL"],
         "CHOI": {"type": "string"},
         "MCHO": {"type": "array", "items": {"type": "string"}},
-        "JSON": {},
         # Support types
         "version-object": ANSWER_TYPE_SCHEMA["definitions"]["version-object"],
         "2D-bounding-box-object": ANSWER_TYPE_SCHEMA["definitions"][
@@ -338,6 +338,7 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/INT"},
         {"$ref": "#/definitions/FLT"},
         {"$ref": "#/definitions/BOOL"},
+        {"$ref": "#/definitions/JSON"},
         {"$ref": "#/definitions/2DBB"},
         {"$ref": "#/definitions/M2DB"},
         {"$ref": "#/definitions/DIST"},
@@ -348,6 +349,5 @@ INTERFACE_VALUE_SCHEMA = {
         {"$ref": "#/definitions/MPOL"},
         {"$ref": "#/definitions/CHOI"},
         {"$ref": "#/definitions/MCHO"},
-        {"$ref": "#/definitions/JSON"},
     ],
 }
