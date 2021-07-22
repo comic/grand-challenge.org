@@ -444,9 +444,10 @@ class ComponentInterface(models.Model):
 
     def clean(self):
         super().clean()
+        self._clean_store_in_database()
+        self._clean_relative_path()
 
-        self._validate_store_in_db()
-
+    def _clean_relative_path(self):
         if self.kind in InterfaceKind.interface_type_other():
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
@@ -470,7 +471,7 @@ class ComponentInterface(models.Model):
                     "Relative path should not start with images/"
                 )
 
-    def _validate_store_in_db(self):
+    def _clean_store_in_database(self):
         if (
             self.kind not in InterfaceKind.interface_type_other()
             and self.store_in_database
