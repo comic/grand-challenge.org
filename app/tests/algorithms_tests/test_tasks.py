@@ -266,7 +266,7 @@ def test_algorithm(client, algorithm_image, settings):
         relative_path="detection_results.json",
         title="detection-json-file",
         slug="detection-json-file",
-        kind=ComponentInterface.Kind.JSON,
+        kind=ComponentInterface.Kind.ANY,
     )
     alg.algorithm.outputs.add(detection_interface)
     alg.save()
@@ -313,7 +313,7 @@ def test_algorithm_with_invalid_output(client, algorithm_image, settings):
         store_in_database=False,
         relative_path="some_text.txt",
         slug="detection-json-file",
-        kind=ComponentInterface.Kind.JSON,
+        kind=ComponentInterface.Kind.ANY,
     )
     alg.algorithm.outputs.add(detection_interface)
     alg.save()

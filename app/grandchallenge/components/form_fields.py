@@ -60,7 +60,7 @@ class InterfaceFormField:
                 ),
             ]
             extra_help = f"{file_upload_text} .{kind.lower()}"
-        elif kind in InterfaceKind.interface_type_other():
+        elif kind in InterfaceKind.interface_type_json():
             default_schema = {
                 **INTERFACE_VALUE_SCHEMA,
                 "anyOf": [{"$ref": f"#/definitions/{kind}"}],

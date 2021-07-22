@@ -88,7 +88,7 @@ def test_average_duration_filtering():
     (
         (InterfaceKindChoices.CSV, True, False),
         (InterfaceKindChoices.ZIP, True, False),
-        (InterfaceKindChoices.JSON, False, False),
+        (InterfaceKindChoices.ANY, False, False),
         (InterfaceKindChoices.IMAGE, True, True),
         (InterfaceKindChoices.HEAT_MAP, True, True),
         (InterfaceKindChoices.SEGMENTATION, True, True),
@@ -132,7 +132,7 @@ def test_save_in_object_store(kind, object_store_required, is_image):
 
 
 def test_all_interfaces_in_schema():
-    for i in InterfaceKind.interface_type_other():
+    for i in InterfaceKind.interface_type_json():
         assert str(i) in INTERFACE_VALUE_SCHEMA["definitions"]
 
 
@@ -140,7 +140,7 @@ def test_all_interfaces_covered():
     assert {str(i) for i in InterfaceKindChoices} == {
         *InterfaceKind.interface_type_image(),
         *InterfaceKind.interface_type_file(),
-        *InterfaceKind.interface_type_other(),
+        *InterfaceKind.interface_type_json(),
     }
 
 
@@ -150,7 +150,7 @@ def test_no_uuid_validation():
     # path does not contain a UUID
     i = ComponentInterfaceFactory(
         relative_path=f"{uuid.uuid4()}/whatever.json",
-        kind=InterfaceKindChoices.JSON,
+        kind=InterfaceKindChoices.ANY,
     )
     with pytest.raises(ValidationError) as e:
         i.full_clean()
@@ -162,17 +162,19 @@ def test_no_uuid_validation():
     "kind",
     (
         *InterfaceKind.interface_type_file(),
-        *InterfaceKind.interface_type_other(),
+        *InterfaceKind.interface_type_json(),
     ),
 )
 def test_relative_path_file_ending(kind):
-    if kind in InterfaceKind.interface_type_other():
+    if kind in InterfaceKind.interface_type_json():
         good_suffix = "json"
     else:
         good_suffix = kind.lower()
 
     i = ComponentInterfaceFactory(
-        kind=kind, relative_path=f"foo/bar.{good_suffix}"
+        kind=kind,
+        relative_path=f"foo/bar.{good_suffix}",
+        store_in_database=kind in InterfaceKind.interface_type_json(),
     )
     i.full_clean()
 
@@ -217,7 +219,7 @@ def test_valid_schema_ok():
     i = ComponentInterfaceFactory(
         schema={"type": "object"},
         relative_path="test.json",
-        kind=InterfaceKindChoices.JSON,
+        kind=InterfaceKindChoices.ANY,
     )
     i.full_clean()
 
@@ -359,9 +361,9 @@ def test_invalid_schema_raises_error():
             [1, 2],
             pytest.raises(ValidationError),
         ),
-        (InterfaceKindChoices.JSON, [], nullcontext()),
-        (InterfaceKindChoices.JSON, None, nullcontext()),
-        (InterfaceKindChoices.JSON, {}, nullcontext()),
+        (InterfaceKindChoices.ANY, [], nullcontext()),
+        (InterfaceKindChoices.ANY, None, nullcontext()),
+        (InterfaceKindChoices.ANY, {}, nullcontext()),
     ),
 )
 def test_default_validation(kind, value, expectation, use_file):
@@ -509,7 +511,7 @@ def test_default_validation(kind, value, expectation, use_file):
             ["1", "2"],
             {"type": "array", "items": {"enum": [1, 2]}},
         ),
-        (InterfaceKindChoices.JSON, [], {"type": "object"}),
+        (InterfaceKindChoices.ANY, [], {"type": "object"}),
     ),
 )
 def test_extra_schema_validation(kind, value, invalidation_schema, use_file):

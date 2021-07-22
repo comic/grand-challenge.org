@@ -310,9 +310,9 @@ def _create_algorithm_demo(users):
     detection_interface = ComponentInterface(
         store_in_database=False,
         relative_path="detection_results.json",
-        slug="detection-json-file",
-        title="Detection JSON File",
-        kind=ComponentInterface.Kind.JSON,
+        slug="detection-results",
+        title="Detection Results",
+        kind=ComponentInterface.Kind.ANY,
     )
     detection_interface.save()
     algorithm.outputs.add(detection_interface)

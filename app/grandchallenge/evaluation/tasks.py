@@ -59,7 +59,7 @@ def set_evaluation_inputs(evaluation_pk, job_pks):
 
         serializer = JobSerializer(algorithm_jobs, many=True)
         interface = ComponentInterface.objects.get(
-            title="Predictions JSON File"
+            slug="predictions-json-file"
         )
         civ = ComponentInterfaceValue.objects.create(
             interface=interface, value=serializer.data

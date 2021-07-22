@@ -6,18 +6,20 @@ from tests.components_tests.factories import ComponentInterfaceFactory
 
 
 @pytest.mark.parametrize(
-    "title",
+    "slug",
     [
-        "Generic Medical Image",
-        "Metrics JSON File",
-        "Results JSON File",
-        "Predictions CSV File",
-        "Predictions ZIP File",
+        "generic-medical-image",
+        "generic-overlay",
+        "metrics-json-file",
+        "results-json-file",
+        "predictions-json-file",
+        "predictions-csv-file",
+        "predictions-zip-file",
     ],
 )
 @pytest.mark.django_db
-def test_default_interfaces_initialised(title):
-    interface = ComponentInterface.objects.get(title=title)
+def test_default_interfaces_initialised(slug):
+    interface = ComponentInterface.objects.get(slug=slug)
     assert interface
 
 

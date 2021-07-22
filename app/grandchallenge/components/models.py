@@ -51,6 +51,7 @@ class InterfaceKindChoices(models.TextChoices):
     INTEGER = "INT", _("Integer")
     FLOAT = "FLT", _("Float")
     BOOL = "BOOL", _("Bool")
+    ANY = "JSON", _("Anything")
 
     # Annotation Types
     TWO_D_BOUNDING_BOX = "2DBB", _("2D bounding box")
@@ -75,7 +76,6 @@ class InterfaceKindChoices(models.TextChoices):
     HEAT_MAP = "HMAP", _("Heat Map")
 
     # Legacy support
-    JSON = "JSON", _("JSON file")
     CSV = "CSV", _("CSV file")
     ZIP = "ZIP", _("ZIP file")
 
@@ -92,13 +92,14 @@ class InterfaceKind:
     InterfaceKindChoices = InterfaceKindChoices
 
     @staticmethod
-    def interface_type_other():
+    def interface_type_json():
         """Interface kinds that are json serializable:
 
         * String
         * Integer
         * Float
         * Bool
+        * Anything that is JSON serializable (any object)
         * 2D bounding box
         * Multiple 2D bounding boxes
         * Distance measurement
@@ -109,7 +110,6 @@ class InterfaceKind:
         * Multiple polygons
         * Choice (string)
         * Multiple choice (array of strings)
-        * Anything that is JSON serializable (any object)
 
         Example json for 2D bounding box annotation
 
@@ -277,7 +277,7 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
             InterfaceKind.InterfaceKindChoices.CHOICE,
             InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
-            InterfaceKind.InterfaceKindChoices.JSON,
+            InterfaceKind.InterfaceKindChoices.ANY,
         )
 
     @staticmethod
@@ -448,7 +448,7 @@ class ComponentInterface(models.Model):
         self._clean_relative_path()
 
     def _clean_relative_path(self):
-        if self.kind in InterfaceKind.interface_type_other():
+        if self.kind in InterfaceKind.interface_type_json():
             if not self.relative_path.endswith(".json"):
                 raise ValidationError("Relative path should end with .json")
         elif self.kind in InterfaceKind.interface_type_file():
@@ -473,7 +473,7 @@ class ComponentInterface(models.Model):
 
     def _clean_store_in_database(self):
         if (
-            self.kind not in InterfaceKind.interface_type_other()
+            self.kind not in InterfaceKind.interface_type_json()
             and self.store_in_database
         ):
             raise ValidationError(
