@@ -165,7 +165,7 @@
 <span id="id1"></span><h1>Components<a class="headerlink" href="#components" title="Permalink to this headline">¶</a></h1>
 <span class="target" id="module-grandchallenge.components.models"></span><dl class="py class">
 <dt id="grandchallenge.components.models.ComponentInterface">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></code><code class="sig-name descname"><span class="pre">ComponentInterface</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_in_database</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentInterface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentInterface" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></code><code class="sig-name descname"><span class="pre">ComponentInterface</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_in_database</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentInterface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentInterface" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -174,6 +174,7 @@
 <li><p><strong>slug</strong> (<em>AutoSlugField</em>) – Slug</p></li>
 <li><p><strong>description</strong> (<em>TextField</em>) – Description. Description of this input/output field.</p></li>
 <li><p><strong>default_value</strong> (<em>JSONField</em>) – Default value. Default value for this field, only valid for inputs.</p></li>
+<li><p><strong>schema</strong> (<em>JSONField</em>) – Schema. Additional JSON schema that the values for this interface must satisfy. See <a class="reference external" href="https://json-schema.org/">https://json-schema.org/</a>. Only Draft 7, 6, 4 or 3 are supported.</p></li>
 <li><p><strong>kind</strong> (<em>CharField</em>) – Kind. What is the type of this interface? Used to validate interface values and connections between components.</p></li>
 <li><p><strong>relative_path</strong> (<em>CharField</em>) – Relative path. The path to the entity that implements this interface relative to the input or output directory.</p></li>
 <li><p><strong>store_in_database</strong> (<em>BooleanField</em>) – Store in database. Should the value be saved in a database field, only valid for outputs.</p></li>
@@ -195,6 +196,21 @@
 <dt id="grandchallenge.components.models.ComponentInterface.MultipleObjectsReturned">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></code><a class="headerlink" href="#grandchallenge.components.models.ComponentInterface.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.components.models.ComponentInterface.clean">
+<code class="sig-name descname"><span class="pre">clean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentInterface.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentInterface.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook for doing any extra model-wide validation after clean() has been
+called on every field by self.clean_fields. Any ValidationError raised
+by this method will not be associated with a particular field; it will
+have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.components.models.ComponentInterface.validate_against_schema">
+<code class="sig-name descname"><span class="pre">validate_against_schema</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentInterface.validate_against_schema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentInterface.validate_against_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validates values against both default and custom schemas</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -222,6 +238,15 @@
 <dt id="grandchallenge.components.models.ComponentInterfaceValue.MultipleObjectsReturned">
 <em class="property"><span class="pre">exception</span> </em><code class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></code><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.MultipleObjectsReturned" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.components.models.ComponentInterfaceValue.clean">
+<code class="sig-name descname"><span class="pre">clean</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentInterfaceValue.clean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook for doing any extra model-wide validation after clean() has been
+called on every field by self.clean_fields. Any ValidationError raised
+by this method will not be associated with a particular field; it will
+have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="grandchallenge.components.models.ComponentInterfaceValue.decompress">
@@ -281,10 +306,36 @@ else as it clobbers the input directory.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="grandchallenge.components.models.InterfaceKind.interface_type_annotation">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">interface_type_annotation</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceKind.interface_type_annotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceKind.interface_type_annotation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interface kinds that are annotations:</p>
+<dt id="grandchallenge.components.models.InterfaceKind.interface_type_file">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">interface_type_file</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceKind.interface_type_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceKind.interface_type_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface kinds that are files:</p>
 <ul class="simple">
+<li><p>CSV file</p></li>
+<li><p>ZIP file</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.components.models.InterfaceKind.interface_type_image">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">interface_type_image</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceKind.interface_type_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceKind.interface_type_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface kinds that are images:</p>
+<ul class="simple">
+<li><p>Image</p></li>
+<li><p>Heat Map</p></li>
+<li><p>Segmentation</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt id="grandchallenge.components.models.InterfaceKind.interface_type_json">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">interface_type_json</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceKind.interface_type_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceKind.interface_type_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interface kinds that are json serializable:</p>
+<ul class="simple">
+<li><p>String</p></li>
+<li><p>Integer</p></li>
+<li><p>Float</p></li>
+<li><p>Bool</p></li>
+<li><p>Anything that is JSON serializable (any object)</p></li>
 <li><p>2D bounding box</p></li>
 <li><p>Multiple 2D bounding boxes</p></li>
 <li><p>Distance measurement</p></li>
@@ -293,6 +344,8 @@ else as it clobbers the input directory.</p>
 <li><p>Multiple points</p></li>
 <li><p>Polygon</p></li>
 <li><p>Multiple polygons</p></li>
+<li><p>Choice (string)</p></li>
+<li><p>Multiple choice (array of strings)</p></li>
 </ul>
 <p>Example json for 2D bounding box annotation</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
@@ -428,42 +481,6 @@ else as it clobbers the input directory.</p>
 <span class="p">}</span>
 </pre></div>
 </div>
-</dd></dl>
-
-<dl class="py method">
-<dt id="grandchallenge.components.models.InterfaceKind.interface_type_file">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">interface_type_file</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceKind.interface_type_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceKind.interface_type_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interface kinds that are files:</p>
-<ul class="simple">
-<li><p>CSV file</p></li>
-<li><p>JSON file</p></li>
-<li><p>ZIP file</p></li>
-</ul>
-</dd></dl>
-
-<dl class="py method">
-<dt id="grandchallenge.components.models.InterfaceKind.interface_type_image">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">interface_type_image</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceKind.interface_type_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceKind.interface_type_image" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interface kinds that are images:</p>
-<ul class="simple">
-<li><p>Image</p></li>
-<li><p>Heat Map</p></li>
-<li><p>Segmentation</p></li>
-</ul>
-</dd></dl>
-
-<dl class="py method">
-<dt id="grandchallenge.components.models.InterfaceKind.interface_type_simple">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">interface_type_simple</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceKind.interface_type_simple"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceKind.interface_type_simple" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simple interface kinds.</p>
-<ul class="simple">
-<li><p>String</p></li>
-<li><p>Integer</p></li>
-<li><p>Float</p></li>
-<li><p>Bool</p></li>
-<li><p>Choice</p></li>
-<li><p>Multiple choice</p></li>
-</ul>
 </dd></dl>
 
 </dd></dl>
