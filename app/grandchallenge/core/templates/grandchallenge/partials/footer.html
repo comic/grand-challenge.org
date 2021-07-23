@@ -1,117 +1,120 @@
 {% load flatpages %}
-{% get_flatpages as flatpages %}
 {% load url %}
+{% load cache %}
 
-<footer class="footer">
-    <div class="container">
-        <hr class="m-0">
-        <div class="row small">
-            <div class="col-sm-6 col-md-3 p-3">
-                <h6>About</h6>
-                <ul class="list-unstyled">
-                    {% for page in flatpages %}
-                        <li class="my-1">
-                            {# Manual construction of url is used here due to flatpage redirect errors #}
-                            <a class="text-muted"
-                                    {# @formatter:off #}
+{% cache 600 grandchallenge-partials-footer %}
+    {% get_flatpages as flatpages %}
+    <footer class="footer">
+        <div class="container">
+            <hr class="m-0">
+            <div class="row small">
+                <div class="col-sm-6 col-md-3 p-3">
+                    <h6>About</h6>
+                    <ul class="list-unstyled">
+                        {% for page in flatpages %}
+                            <li class="my-1">
+                                {# Manual construction of url is used here due to flatpage redirect errors #}
+                                <a class="text-muted"
+                                        {# @formatter:off #}
                                    href="{{ request.scheme }}://{{ request.site.domain }}{{ page.url }}">
                                         {# @formatter:on #}
-                                {{ page.title }}
+                                    {{ page.title }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        <li class="my-1">
+                            <a class="text-muted"
+                               href="{% url 'statistics:detail' %}">
+                                Statistics
                             </a>
                         </li>
-                    {% endfor %}
-                   <li class="my-1">
-                       <a class="text-muted"
-                           href="{% url 'statistics:detail' %}">
-                            Statistics
-                        </a>
-                   </li>
-                </ul>
-            </div>
-            <div class="col-sm-6 col-md-3 p-3">
-                <h6>Policies</h6>
-                <ul class="list-unstyled">
-                    {% for policy in policy_pages %}
-                        <li class="my-1"><a class="text-muted"
-                                            href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
+                    </ul>
+                </div>
+                <div class="col-sm-6 col-md-3 p-3">
+                    <h6>Policies</h6>
+                    <ul class="list-unstyled">
+                        {% for policy in policy_pages %}
+                            <li class="my-1"><a class="text-muted"
+                                                href="{{ policy.get_absolute_url }}">{{ policy.title }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-sm-6 col-md-3 p-3">
+                    <h6>Blog Posts</h6>
+                    <ul class="list-unstyled">
+                        {% for post in blog_posts %}
+                            <li class="my-1"><a class="text-muted"
+                                                href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-sm-6 col-md-3 p-3">
+                    <h6>Developers</h6>
+                    <ul class="list-unstyled">
+                        <li class="my-1">
+                            <a class="text-muted"
+                               href="{% url 'api:swagger-ui' %}"
+                               title="The interactive documentation for the API.">
+                                API Documentation
+                            </a>
                         </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="col-sm-6 col-md-3 p-3">
-                <h6>Blog Posts</h6>
-                <ul class="list-unstyled">
-                    {% for post in blog_posts %}
-                        <li class="my-1"><a class="text-muted"
-                                            href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                        <li class="my-1">
+                            <a class="text-muted"
+                               href="{% url 'api:schema' %}"
+                               title="The OpenAPI schema for the API.">
+                                API Schema
+                            </a>
                         </li>
-                    {% endfor %}
-                </ul>
+                        <li class="my-1">
+                            <a class="text-muted"
+                               href="https://comic.github.io/grand-challenge.org/"
+                               title="Read the developer documentation">
+                                Developer Documentation
+                            </a>
+                        </li>
+                        <li class="my-1">
+                            <a class="text-muted"
+                               href="https://rse.diagnijmegen.nl"
+                               title="Research Software Engineering Team, Diagnostic Image Analysis Group, Radboud University Medical Center">
+                                rse.diagnijmegen.nl
+                            </a>
+                        </li>
+                        <li class="my-1">
+                            <a class="text-muted"
+                               href="http://diagnijmegen.nl/"
+                               title="Diagnostic Image Analysis Group, Radboud University Medical Center">
+                                diagnijmegen.nl
+                            </a>
+                        </li>
+                        <li class="my-1">
+                            <a class="text-muted"
+                               href="https://www.mevis.fraunhofer.de/"
+                               title="Fraunhofer Institute for Digital Medicine MEVIS">
+                                mevis.fraunhofer.de
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="col-sm-6 col-md-3 p-3">
-                <h6>Developers</h6>
-                <ul class="list-unstyled">
-                    <li class="my-1">
-                        <a class="text-muted"
-                           href="{% url 'api:swagger-ui' %}"
-                           title="The interactive documentation for the API.">
-                            API Documentation
-                        </a>
-                    </li>
-                    <li class="my-1">
-                        <a class="text-muted"
-                           href="{% url 'api:schema' %}"
-                           title="The OpenAPI schema for the API.">
-                            API Schema
-                        </a>
-                    </li>
-                    <li class="my-1">
-                        <a class="text-muted"
-                           href="https://comic.github.io/grand-challenge.org/"
-                           title="Read the developer documentation">
-                            Developer Documentation
-                        </a>
-                    </li>
-                    <li class="my-1">
-                        <a class="text-muted"
-                           href="https://rse.diagnijmegen.nl"
-                           title="Research Software Engineering Team, Diagnostic Image Analysis Group, Radboud University Medical Center">
-                            rse.diagnijmegen.nl
-                        </a>
-                    </li>
-                    <li class="my-1">
-                        <a class="text-muted"
-                           href="http://diagnijmegen.nl/"
-                           title="Diagnostic Image Analysis Group, Radboud University Medical Center">
-                            diagnijmegen.nl
-                        </a>
-                    </li>
-                    <li class="my-1">
-                        <a class="text-muted"
-                           href="https://www.mevis.fraunhofer.de/"
-                           title="Fraunhofer Institute for Digital Medicine MEVIS">
-                            mevis.fraunhofer.de
-                        </a>
-                    </li>
-                </ul>
+            <div class="row">
+                <div class="col text-center p-3">
+                    <ul class="list-unstyled">
+                        <li>
+                            <a class="p-1 text-muted"
+                               href="https://github.com/comic/grand-challenge.org/"
+                               title="Join us on Github">
+                                <i class="fab fa-github fa-lg"></i></a>
+                            <a class="p-1 text-muted"
+                               href="https://twitter.com/Grnd_Challenge/"
+                               title="Follow us on Twitter">
+                                <i class="fab fa-twitter fa-lg"></i></a>
+                        </li>
+                    </ul>
+                    <p class="text-muted small">&copy; 2012-{% now "Y" %}</p>
+                </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col text-center p-3">
-                <ul class="list-unstyled">
-                    <li>
-                        <a class="p-1 text-muted"
-                           href="https://github.com/comic/grand-challenge.org/"
-                           title="Join us on Github">
-                            <i class="fab fa-github fa-lg"></i></a>
-                        <a class="p-1 text-muted"
-                           href="https://twitter.com/Grnd_Challenge/"
-                           title="Follow us on Twitter">
-                            <i class="fab fa-twitter fa-lg"></i></a>
-                    </li>
-                </ul>
-                <p class="text-muted small">&copy; 2012-{% now "Y" %}</p>
-            </div>
-        </div>
-    </div>
-</footer>
+    </footer>
+{% endcache %}
