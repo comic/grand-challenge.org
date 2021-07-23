@@ -43,8 +43,6 @@ def get_doi_csl(*, doi):
         headers={"Accept": "application/vnd.citationstyles.csl+json"},
         timeout=5,
     )
-
-    if response.status_code != 200:
-        raise ValueError("DOI not found")
+    response.raise_for_status()
 
     return response.json()

@@ -60,6 +60,7 @@ import requests
 
 def query_arxiv_api(*args, **kwargs):
     response = requests.get(*args, **kwargs)
+    response.raise_for_status()
     xml_tree = xml.etree.ElementTree.fromstring(response.text)
     return xml_tree
 
