@@ -16,12 +16,6 @@ def test_challenge_update(
         submission__phase__challenge=c1, method__phase__challenge=c1
     )
     _ = EvaluationFactory(
-        submission__phase__challenge=c1, method__phase__challenge=c1
-    )
-    _ = EvaluationFactory(
-        submission__phase__challenge=c2, method__phase__challenge=c2
-    )
-    _ = EvaluationFactory(
         submission__phase__challenge=c2, method__phase__challenge=c2
     )
 
