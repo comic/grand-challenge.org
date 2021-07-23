@@ -12,15 +12,11 @@ from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.algorithms.tasks import (
-    create_algorithm_jobs_for_evaluation,
-)
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
-    ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.core.models import UUIDModel
@@ -29,14 +25,12 @@ from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONValidator,
     MimeTypeValidator,
-    get_file_mimetype,
 )
 from grandchallenge.evaluation.emails import (
     send_failed_evaluation_email,
-    send_missing_method_email,
     send_successful_evaluation_email,
 )
-from grandchallenge.evaluation.tasks import calculate_ranks
+from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
@@ -542,16 +536,12 @@ class Submission(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    creators_ip = models.GenericIPAddressField(
-        null=True, default=None, editable=False
-    )
-    creators_user_agent = models.TextField(
-        blank=True, default="", editable=False
-    )
-
     phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.SET_NULL
+    )
+    staged_predictions_file_uuid = models.UUIDField(
+        blank=True, null=True, editable=False
     )
     predictions_file = models.FileField(
         upload_to=submission_file_path,
@@ -592,55 +582,15 @@ class Submission(UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            self.create_evaluation()
             self.assign_permissions()
+            e = create_evaluation.signature(
+                kwargs={"submission_pk": self.pk}, immutable=True,
+            )
+            on_commit(e.apply_async)
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
         assign_perm("view_submission", self.creator, self)
-
-    def create_evaluation(self):
-        method = self.latest_ready_method
-
-        if not method:
-            send_missing_method_email(self)
-            return
-
-        evaluation = Evaluation.objects.create(submission=self, method=method)
-
-        if self.algorithm_image:
-            on_commit(
-                lambda: create_algorithm_jobs_for_evaluation.apply_async(
-                    kwargs={"evaluation_pk": evaluation.pk}
-                )
-            )
-        else:
-            mimetype = get_file_mimetype(self.predictions_file)
-
-            if mimetype == "application/zip":
-                interface = ComponentInterface.objects.get(
-                    slug="predictions-zip-file"
-                )
-            elif mimetype == "text/plain":
-                interface = ComponentInterface.objects.get(
-                    slug="predictions-csv-file"
-                )
-            else:
-                evaluation.update_status(
-                    status=Evaluation.FAILURE,
-                    stderr=f"{mimetype} files are not supported.",
-                    error_message=f"{mimetype} files are not supported.",
-                )
-                return
-
-            evaluation.inputs.set(
-                [
-                    ComponentInterfaceValue.objects.create(
-                        interface=interface, file=self.predictions_file
-                    )
-                ]
-            )
-            on_commit(evaluation.signature.apply_async)
 
     @property
     def latest_ready_method(self):

@@ -1,11 +1,126 @@
+import logging
 import uuid
 from statistics import mean, median
 
 from celery import shared_task
 from django.apps import apps
+from django.core.files import File
 from django.db.transaction import on_commit
 
+from grandchallenge.algorithms.tasks import execute_jobs
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+)
+from grandchallenge.core.validators import get_file_mimetype
+from grandchallenge.evaluation.emails import send_missing_method_email
 from grandchallenge.evaluation.utils import Metric, rank_results
+from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
+
+
+logger = logging.getLogger(__name__)
+
+
+@shared_task
+def create_evaluation(*, submission_pk):
+    Submission = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Submission"
+    )
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+
+    submission = Submission.objects.get(pk=submission_pk)
+
+    if (
+        not submission.predictions_file
+        and submission.staged_predictions_file_uuid
+    ):
+        uploaded_file = StagedAjaxFile(submission.staged_predictions_file_uuid)
+        with uploaded_file.open() as f:
+            submission.predictions_file.save(uploaded_file.name, File(f))
+
+    # TODO - move this to the form and make it an input here
+    method = submission.latest_ready_method
+    if not method:
+        logger.info("No method ready for this submission")
+        send_missing_method_email(submission)
+        return
+
+    evaluation, created = Evaluation.objects.get_or_create(
+        submission=submission, method=method
+    )
+    if not created:
+        logger.info("Evaluation already created for this submission")
+        return
+
+    if submission.algorithm_image:
+        on_commit(
+            lambda: create_algorithm_jobs_for_evaluation.apply_async(
+                kwargs={"evaluation_pk": evaluation.pk}
+            )
+        )
+    elif submission.predictions_file:
+        mimetype = get_file_mimetype(submission.predictions_file)
+
+        if mimetype == "application/zip":
+            interface = ComponentInterface.objects.get(
+                slug="predictions-zip-file"
+            )
+        elif mimetype == "text/plain":
+            interface = ComponentInterface.objects.get(
+                slug="predictions-csv-file"
+            )
+        else:
+            evaluation.update_status(
+                status=Evaluation.FAILURE,
+                stderr=f"{mimetype} files are not supported.",
+                error_message=f"{mimetype} files are not supported.",
+            )
+            return
+
+        civ = ComponentInterfaceValue(
+            interface=interface, file=submission.predictions_file
+        )
+        civ.full_clean()
+        civ.save()
+
+        evaluation.inputs.set([civ])
+        on_commit(evaluation.signature.apply_async)
+    else:
+        raise RuntimeError("No algorithm or predictions file found")
+
+
+@shared_task
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    # Only the challenge admins should be able to view these jobs, never
+    # the algorithm editors as these are participants - they must never
+    # be able to see the test data.
+    groups = [evaluation.submission.phase.challenge.admins_group]
+
+    # Once the algorithm has been run, score the submission. No emails as
+    # algorithm editors should not have access to the underlying images.
+    linked_task = set_evaluation_inputs.signature(
+        kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+    )
+
+    execute_jobs(
+        algorithm_image=evaluation.submission.algorithm_image,
+        civ_sets=[
+            {*ai.values.all()}
+            for ai in evaluation.submission.phase.archive.items.prefetch_related(
+                "values__interface"
+            )
+        ],
+        creator=None,
+        extra_viewer_groups=groups,
+        linked_task=linked_task,
+    )
 
 
 @shared_task

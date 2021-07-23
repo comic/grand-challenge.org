@@ -33,8 +33,6 @@ class SubmissionAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "creator",
-        "creators_ip",
-        "creators_user_agent",
         "phase",
         "predictions_file",
         "algorithm_image",

@@ -13,8 +13,10 @@ from guardian.shortcuts import (
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs_for_archive,
-    create_algorithm_jobs_for_evaluation,
     create_algorithm_jobs_for_session,
+)
+from grandchallenge.evaluation.tasks import (
+    create_algorithm_jobs_for_evaluation,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,

@@ -380,7 +380,7 @@ def _create_job_result(users, algorithm_image, cases_image, result, detection):
         )
     )
     civ = ComponentInterfaceValue.objects.create(
-        interface=ComponentInterface.objects.get(slug="detection-json-file"),
+        interface=ComponentInterface.objects.get(slug="detection-results"),
     )
     civ.file.save(
         "detection_results.json",

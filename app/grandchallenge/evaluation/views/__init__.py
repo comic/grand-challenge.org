@@ -5,7 +5,6 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files import File
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -26,7 +25,6 @@ from guardian.mixins import (
     PermissionListMixin,
     PermissionRequiredMixin as ObjectPermissionRequiredMixin,
 )
-from ipware import get_client_ip
 
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.forms import (
@@ -252,12 +250,6 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         }
 
     def form_valid(self, form):
-        client_ip, _ = get_client_ip(self.request)
-        form.instance.creators_ip = client_ip
-        form.instance.creators_user_agent = self.request.META.get(
-            "HTTP_USER_AGENT", ""
-        )
-
         form.instance.phase = self.phase
 
         if "algorithm" in form.cleaned_data:
@@ -268,10 +260,7 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
         else:
             # Predictions file submission
             uploaded_file = form.cleaned_data["chunked_upload"][0]
-            with uploaded_file.open() as f:
-                form.instance.predictions_file.save(
-                    uploaded_file.name, File(f)
-                )
+            form.instance.staged_predictions_file_uuid = uploaded_file.uuid
 
         return super().form_valid(form)
 

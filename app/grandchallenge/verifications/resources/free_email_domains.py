@@ -78,6 +78,7 @@ FREE_EMAIL_DOMAINS = frozenset(
         "5star.com",
         "74.ru",
         "88.am",
+        "88.com",
         "8848.net",
         "888.luk2.com",
         "888.nu",
