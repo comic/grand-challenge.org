@@ -172,15 +172,11 @@
 <span class="kn">from</span> <span class="nn">guardian.shortcuts</span> <span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 
 <span class="kn">from</span> <span class="nn">grandchallenge.algorithms.models</span> <span class="kn">import</span> <span class="n">AlgorithmImage</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.algorithms.tasks</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">create_algorithm_jobs_for_evaluation</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.archives.models</span> <span class="kn">import</span> <span class="n">Archive</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.challenges.models</span> <span class="kn">import</span> <span class="n">Challenge</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.models</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
-    <span class="n">ComponentInterfaceValue</span><span class="p">,</span>
     <span class="n">ComponentJob</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.core.models</span> <span class="kn">import</span> <span class="n">UUIDModel</span>
@@ -189,14 +185,12 @@
     <span class="n">ExtensionValidator</span><span class="p">,</span>
     <span class="n">JSONValidator</span><span class="p">,</span>
     <span class="n">MimeTypeValidator</span><span class="p">,</span>
-    <span class="n">get_file_mimetype</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.evaluation.emails</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">send_failed_evaluation_email</span><span class="p">,</span>
-    <span class="n">send_missing_method_email</span><span class="p">,</span>
     <span class="n">send_successful_evaluation_email</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="n">calculate_ranks</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.evaluation.tasks</span> <span class="kn">import</span> <span class="n">calculate_ranks</span><span class="p">,</span> <span class="n">create_evaluation</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.subdomains.utils</span> <span class="kn">import</span> <span class="n">reverse</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -702,16 +696,12 @@
     <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
     <span class="p">)</span>
-    <span class="n">creators_ip</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">GenericIPAddressField</span><span class="p">(</span>
-        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
-    <span class="p">)</span>
-    <span class="n">creators_user_agent</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
-        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
-    <span class="p">)</span>
-
     <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">algorithm_image</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">AlgorithmImage</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
+    <span class="p">)</span>
+    <span class="n">staged_predictions_file_uuid</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">UUIDField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
     <span class="n">predictions_file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">submission_file_path</span><span class="p">,</span>
@@ -752,55 +742,15 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">create_evaluation</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">create_evaluation</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;submission_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span> <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">on_commit</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latest_ready_method</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">:</span>
-            <span class="n">send_missing_method_email</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="n">evaluation</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
-            <span class="n">on_commit</span><span class="p">(</span>
-                <span class="k">lambda</span><span class="p">:</span> <span class="n">create_algorithm_jobs_for_evaluation</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
-                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">mimetype</span> <span class="o">=</span> <span class="n">get_file_mimetype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions_file</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;application/zip&quot;</span><span class="p">:</span>
-                <span class="n">interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                    <span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-zip-file&quot;</span>
-                <span class="p">)</span>
-            <span class="k">elif</span> <span class="n">mimetype</span> <span class="o">==</span> <span class="s2">&quot;text/plain&quot;</span><span class="p">:</span>
-                <span class="n">interface</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                    <span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-csv-file&quot;</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">evaluation</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span>
-                    <span class="n">status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
-                    <span class="n">stderr</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mimetype</span><span class="si">}</span><span class="s2"> files are not supported.&quot;</span><span class="p">,</span>
-                    <span class="n">error_message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mimetype</span><span class="si">}</span><span class="s2"> files are not supported.&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">return</span>
-
-            <span class="n">evaluation</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
-                <span class="p">[</span>
-                    <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                        <span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions_file</span>
-                    <span class="p">)</span>
-                <span class="p">]</span>
-            <span class="p">)</span>
-            <span class="n">on_commit</span><span class="p">(</span><span class="n">evaluation</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">latest_ready_method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
