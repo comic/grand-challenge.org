@@ -122,6 +122,7 @@ def get_arxiv_csl(*, arxiv_id):
             "metadataPrefix": "arXiv",
             "identifier": f"oai:arXiv.org:{arxiv_id}",
         },
+        timeout=5,
     )
 
     # Extract parent XML elements
