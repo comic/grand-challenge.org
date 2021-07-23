@@ -66,6 +66,10 @@
                             {% elif evaluation.FAILURE %}
                                 {% firstof evaluation.error_message evaluation.get_status_display %}
                             {% endif %}
+                        {% empty %}
+                            {% if submission.staged_predictions_file_uuid and not submission.predictions_file %}
+                                <span class="badge badge-info">Preparing</span>
+                            {% endif %}
                         {% endfor %}
                     </td>
                 </tr>

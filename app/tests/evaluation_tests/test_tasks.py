@@ -37,9 +37,10 @@ def test_submission_evaluation(
 
     # This will create an evaluation, and we'll wait for it to be executed
     with capture_on_commit_callbacks(execute=True):
-        submission = SubmissionFactory(
-            predictions_file__from_path=submission_file, phase=method.phase
-        )
+        with capture_on_commit_callbacks(execute=True):
+            submission = SubmissionFactory(
+                predictions_file__from_path=submission_file, phase=method.phase
+            )
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
@@ -58,12 +59,13 @@ def test_submission_evaluation(
 
     # Try with a csv file
     with capture_on_commit_callbacks(execute=True):
-        submission = SubmissionFactory(
-            predictions_file__from_path=Path(__file__).parent
-            / "resources"
-            / "submission.csv",
-            phase=method.phase,
-        )
+        with capture_on_commit_callbacks(execute=True):
+            submission = SubmissionFactory(
+                predictions_file__from_path=Path(__file__).parent
+                / "resources"
+                / "submission.csv",
+                phase=method.phase,
+            )
 
     assert len(submission.evaluation_set.all()) == 1
     assert evaluation.status == evaluation.SUCCESS
@@ -204,12 +206,13 @@ def test_non_zip_submission_failure(
     )
 
     # Try with a 7z file
-    submission = SubmissionFactory(
-        predictions_file__from_path=Path(__file__).parent
-        / "resources"
-        / "submission.7z",
-        phase=method.phase,
-    )
+    with capture_on_commit_callbacks(execute=True):
+        submission = SubmissionFactory(
+            predictions_file__from_path=Path(__file__).parent
+            / "resources"
+            / "submission.7z",
+            phase=method.phase,
+        )
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1

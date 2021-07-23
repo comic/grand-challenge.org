@@ -1,5 +1,4 @@
 from celery import chain, chord, group, shared_task
-from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import send_mail
@@ -20,7 +19,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.credits.models import Credit
-from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -207,38 +205,6 @@ def create_algorithm_jobs_for_archive(
                 # to the algorithm editors
                 linked_task=None,
             )
-
-
-@shared_task
-def create_algorithm_jobs_for_evaluation(*, evaluation_pk):
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
-
-    # Only the challenge admins should be able to view these jobs, never
-    # the algorithm editors as these are participants - they must never
-    # be able to see the test data.
-    groups = [evaluation.submission.phase.challenge.admins_group]
-
-    # Once the algorithm has been run, score the submission. No emails as
-    # algorithm editors should not have access to the underlying images.
-    linked_task = set_evaluation_inputs.signature(
-        kwargs={"evaluation_pk": evaluation.pk}, immutable=True
-    )
-
-    execute_jobs(
-        algorithm_image=evaluation.submission.algorithm_image,
-        civ_sets=[
-            {*ai.values.all()}
-            for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                "values__interface"
-            )
-        ],
-        creator=None,
-        extra_viewer_groups=groups,
-        linked_task=linked_task,
-    )
 
 
 def execute_jobs(

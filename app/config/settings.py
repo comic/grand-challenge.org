@@ -1106,7 +1106,7 @@ MAX_SITK_FILE_SIZE = 268_435_456  # 256 mb
 UPLOAD_SESSION_MAX_BYTES = 10_737_418_240  # 10 gb
 
 # The maximum size of predictions files
-PREDICTIONS_FILE_MAX_BYTES = 1_073_741_824  # 1 GB
+PREDICTIONS_FILE_MAX_BYTES = 3_221_223_823  # 3 GB
 
 # Some forms have a lot of data, such as a reader study update view
 # that can contain reports about the medical images
