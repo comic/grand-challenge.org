@@ -1,11 +1,11 @@
 from celery import shared_task
+from django.contrib.auth import get_user_model
 from django.core.mail import mail_managers
 from django.db.models import Count, Max
 from requests import exceptions, get
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
 from grandchallenge.evaluation.models import Evaluation
-from grandchallenge.profiles.admin import User
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -13,7 +13,7 @@ from grandchallenge.subdomains.utils import reverse
 def update_challenge_results_cache():
     challenges = Challenge.objects.all()
     evaluation_info = (
-        Evaluation.objects.filter(rank__gt=0, published=True)
+        Evaluation.objects.filter(published=True)
         .values("submission__phase__challenge_id")
         .annotate(
             cached_num_results=Count("submission__phase__challenge_id"),
@@ -23,9 +23,11 @@ def update_challenge_results_cache():
     evaluation_info_by_challenge = {
         str(v["submission__phase__challenge_id"]): v for v in evaluation_info
     }
-    participant_counts = User.objects.values(
-        "groups__participants_of_challenge"
-    ).annotate(cached_num_participants=Count("pk"))
+    participant_counts = (
+        get_user_model()
+        .objects.values("groups__participants_of_challenge")
+        .annotate(cached_num_participants=Count("pk"))
+    )
     participant_counts_by_challenge = {
         str(v["groups__participants_of_challenge"]): v
         for v in participant_counts
