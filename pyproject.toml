@@ -33,7 +33,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.8"
 "beautifulsoup4" = "*"
-celery = {extras = ["redis", "sqs"], version = "<5.1"}
+celery = {extras = ["redis", "sqs"], version = "*"}
 django = "<3.2"
 django-countries = "*"
 django-crispy-forms = "*"
