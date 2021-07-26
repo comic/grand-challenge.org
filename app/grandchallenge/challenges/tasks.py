@@ -1,5 +1,7 @@
 from celery import shared_task
+from django.contrib.auth import get_user_model
 from django.core.mail import mail_managers
+from django.db.models import Count, Max
 from requests import exceptions, get
 
 from grandchallenge.challenges.models import Challenge, ExternalChallenge
@@ -9,29 +11,47 @@ from grandchallenge.subdomains.utils import reverse
 
 @shared_task
 def update_challenge_results_cache():
-    for c in Challenge.objects.all():
-        kwargs = {
-            "cached_num_participants": c.participants_group.user_set.all().count()
-        }
+    challenges = Challenge.objects.all()
+    evaluation_info = (
+        Evaluation.objects.filter(published=True)
+        .values("submission__phase__challenge_id")
+        .annotate(
+            cached_num_results=Count("submission__phase__challenge_id"),
+            cached_latest_result=Max("created"),
+        )
+    )
+    evaluation_info_by_challenge = {
+        str(v["submission__phase__challenge_id"]): v for v in evaluation_info
+    }
+    participant_counts = (
+        get_user_model()
+        .objects.values("groups__participants_of_challenge")
+        .annotate(cached_num_participants=Count("pk"))
+    )
+    participant_counts_by_challenge = {
+        str(v["groups__participants_of_challenge"]): v
+        for v in participant_counts
+    }
 
-        challenge_results = Evaluation.objects.filter(
-            submission__phase__challenge=c, published=True
-        ).order_by("-created")
+    for c in challenges:
+        c.cached_num_results = evaluation_info_by_challenge.get(
+            str(c.pk), {}
+        ).get("cached_num_results", 0)
+        c.cached_latest_result = evaluation_info_by_challenge.get(
+            str(c.pk), {}
+        ).get("cached_latest_result", None)
+        c.cached_num_participants = participant_counts_by_challenge.get(
+            str(c.pk), {}
+        ).get("cached_num_participants", 0)
 
-        try:
-            kwargs.update(
-                {
-                    "cached_num_results": challenge_results.count(),
-                    "cached_latest_result": challenge_results.first().created,
-                }
-            )
-        except AttributeError:
-            # No results for this challenge
-            kwargs.update(
-                {"cached_num_results": 0, "cached_latest_result": None}
-            )
-
-        Challenge.objects.filter(pk=c.pk).update(**kwargs)
+    Challenge.objects.bulk_update(
+        challenges,
+        [
+            "cached_num_results",
+            "cached_num_participants",
+            "cached_latest_result",
+        ],
+    )
 
 
 @shared_task
