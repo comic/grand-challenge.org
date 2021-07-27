@@ -1,14 +1,11 @@
 import pytest
 from actstream.actions import is_following
 from actstream.models import Action
-from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.management import call_command
 from django.db.models import ProtectedError
 from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.notifications.models import Notification
 from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import TopicFactory
 
@@ -88,18 +85,3 @@ def test_non_posters_notified(group):
 
     assert u.user_profile.has_unread_notifications is True
     assert p.user_profile.has_unread_notifications is False
-
-
-@pytest.mark.django_db
-def test_staff_users_notified_of_challenge_creation():
-    staff_user = UserFactory(is_staff=True)
-    call_command("create_staff_follows")
-    assert is_following(staff_user, Site.objects.get_current())
-
-    challenge = ChallengeFactory()
-    assert len(Notification.objects.all()) == 1
-    assert Notification.objects.first().user == staff_user
-    assert (
-        f"created the challenge {challenge.short_name} on {Site.objects.get_current()}"
-        in str(Notification.objects.first().action)
-    )
