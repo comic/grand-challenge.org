@@ -58,12 +58,10 @@
                             {{ object.action.verb }}
                             {% if object.action.action_object %}
                                 <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
-                                {% if object.action.target %}
-                                    in
-                                {% endif %}
                             {% endif %}
                             {% if object.action.target %}
                                 {% get_content_type object.action.target as target_ct %}
+                                in
                                 <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
                             {% endif %}
                             {{ object.action.timestamp|naturaltime }}

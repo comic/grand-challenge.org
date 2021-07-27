@@ -1,7 +1,13 @@
 import pytest
+from actstream.actions import is_following
 
+from grandchallenge.notifications.models import Notification
 from grandchallenge.participants.models import RegistrationRequest
-from tests.factories import RegistrationRequestFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    RegistrationRequestFactory,
+    UserFactory,
+)
 from tests.utils import get_view_for_user
 
 
@@ -60,3 +66,80 @@ def test_duplicate_registration_denied(client, two_challenge_sets):
     assert RegistrationRequest.objects.filter(
         user=user, challenge=two_challenge_sets.challenge_set_2.challenge
     ).exists()
+
+
+@pytest.mark.django_db
+def test_participation_request_notifications(client):
+    user = UserFactory()
+    ch = ChallengeFactory()
+    assert is_following(ch.creator, ch)
+
+    # create permission request
+    _ = get_view_for_user(
+        viewname="participants:registration-create",
+        client=client,
+        method=client.post,
+        challenge=ch,
+        user=user,
+    )
+    # follow and notification only created when participation review is active
+    reg = RegistrationRequest.objects.get()
+    assert not is_following(user, reg)
+    assert Notification.objects.count() == 0
+
+    # change participation review to active
+    ch.require_participant_review = True
+    ch.save()
+
+    # create new permission request
+    user2 = UserFactory()
+    _ = get_view_for_user(
+        viewname="participants:registration-create",
+        client=client,
+        method=client.post,
+        challenge=ch,
+        user=user2,
+    )
+
+    reg2 = RegistrationRequest.objects.last()
+    assert is_following(user2, reg2)
+    assert Notification.objects.count() == 1
+    assert Notification.objects.get().user == ch.creator
+    assert f"{user2} requested access to {ch}" in str(
+        Notification.objects.get().action
+    )
+
+    Notification.objects.all().delete()
+    # accept permission request
+    _ = get_view_for_user(
+        client=client,
+        user=ch.creator,
+        viewname="participants:registration-update",
+        reverse_kwargs={"pk": reg2.pk},
+        challenge=ch,
+        method=client.post,
+        data={"status": reg2.ACCEPTED},
+    )
+
+    reg2.refresh_from_db()
+    assert reg2.status == "ACPT"
+    assert Notification.objects.count() == 1
+    assert Notification.objects.first().user == user2
+    assert "was accepted" in str(Notification.objects.first().action)
+    Notification.objects.all().delete()
+
+    # reject permission request
+    _ = get_view_for_user(
+        client=client,
+        user=ch.creator,
+        viewname="participants:registration-update",
+        reverse_kwargs={"pk": reg2.pk},
+        challenge=ch,
+        method=client.post,
+        data={"status": reg2.REJECTED},
+    )
+
+    reg2.refresh_from_db()
+    assert reg2.status == "RJCT"
+    assert Notification.objects.get().user == user2
+    assert "was rejected" in str(Notification.objects.get().action)
