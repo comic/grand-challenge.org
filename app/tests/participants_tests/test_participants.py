@@ -82,14 +82,17 @@ def test_participation_request_notifications(client):
         challenge=ch,
         user=user,
     )
-    # follow and notification only created when participation review is active
-    reg = RegistrationRequest.objects.get()
-    assert not is_following(user, reg)
-    assert Notification.objects.count() == 0
+    assert RegistrationRequest.objects.count() == 1
+    assert is_following(user, RegistrationRequest.objects.get())
+    # no notification for admin created, only for the user
+    assert Notification.objects.count() == 1
+    assert Notification.objects.get().user != ch.creator
+    assert Notification.objects.get().user == user
 
     # change participation review to active
     ch.require_participant_review = True
     ch.save()
+    Notification.objects.all().delete()
 
     # create new permission request
     user2 = UserFactory()
