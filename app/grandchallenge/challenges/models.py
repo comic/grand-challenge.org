@@ -358,7 +358,7 @@ class Challenge(ChallengeBase):
                 sender=self.creator,
                 verb="created the challenge",
                 action_object=self,
-                target=Site.objects.filter(domain="gc.localhost").get(),
+                target=Site.objects.get_current(),
             )
 
         if adding or self.hidden != self._hidden_orig:
@@ -600,7 +600,7 @@ class ExternalChallenge(ChallengeBase):
                 sender=self.creator,
                 verb="created the external challenge",
                 action_object=self,
-                target=Site.objects.filter(domain="gc.localhost").get(),
+                target=Site.objects.get_current(),
             )
 
     def get_absolute_url(self):
