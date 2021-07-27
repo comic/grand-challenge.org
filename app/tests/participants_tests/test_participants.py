@@ -125,7 +125,7 @@ def test_participation_request_notifications(client):
     assert reg2.status == "ACPT"
     assert Notification.objects.count() == 1
     assert Notification.objects.first().user == user2
-    assert "was accepted" in str(Notification.objects.first().action)
+    assert "was approved" in str(Notification.objects.first().action)
     Notification.objects.all().delete()
 
     # reject permission request
