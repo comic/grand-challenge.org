@@ -354,12 +354,20 @@ class Challenge(ChallengeBase):
             self.create_forum_permissions()
             self.create_default_pages()
             self.create_default_phases()
-            action.send(
-                sender=self.creator,
-                verb="created the challenge",
-                action_object=self,
-                target=Site.objects.get_current(),
-            )
+            try:
+                action.send(
+                    sender=self.creator,
+                    verb="created the challenge",
+                    action_object=self,
+                    target=Site.objects.get_current(),
+                )
+            except AttributeError:
+                action.send(
+                    sender=get_anonymous_user(),
+                    verb="created the challenge",
+                    action_object=self,
+                    target=Site.objects.get_current(),
+                )
 
         if adding or self.hidden != self._hidden_orig:
             on_commit(
@@ -596,12 +604,20 @@ class ExternalChallenge(ChallengeBase):
         super().save(*args, **kwargs)
 
         if adding:
-            action.send(
-                sender=self.creator,
-                verb="created the external challenge",
-                action_object=self,
-                target=Site.objects.get_current(),
-            )
+            try:
+                action.send(
+                    sender=self.creator,
+                    verb="created the external challenge",
+                    action_object=self,
+                    target=Site.objects.get_current(),
+                )
+            except AttributeError:
+                action.send(
+                    sender=get_anonymous_user(),
+                    verb="created the external challenge",
+                    action_object=self,
+                    target=Site.objects.get_current(),
+                )
 
     def get_absolute_url(self):
         return self.homepage

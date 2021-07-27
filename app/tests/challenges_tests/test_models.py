@@ -68,8 +68,8 @@ def test_participants_follow_forum(group):
     remove_method(user=u)
     assert is_following(user=u, obj=c.forum) is False
 
-    # No actions should be created
-    assert Action.objects.exists() is False
+    # Only one action (challenge creation) should be created
+    assert Action.objects.count() == 1
 
 
 @pytest.mark.django_db
