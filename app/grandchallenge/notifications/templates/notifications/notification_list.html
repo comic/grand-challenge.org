@@ -55,15 +55,23 @@
                             {% endif %}
                             {{ object.action.verb }}
                             {% if object.action.action_object %}
+                                {% get_content_type object.action.action_object as action_object_ct %}
                                 <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
-                                {% if object.action.target %}
-                                    in
-                                {% endif %}
                             {% endif %}
                             {% if object.action.target %}
-                                <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
+                                {% get_content_type object.action.target as target_ct %}
+                                {% if target_ct.model == "site" %}
+                                    on
+                                    <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target.name }}</a>
+                                {% else %}
+                                    in
+                                    <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
+                                {% endif %}
                             {% endif %}
                             {{ object.action.timestamp|naturaltime }}
+                            {% if object.action.action_object and action_object_ct.model == "externalchallenge" %}
+                                <span class="text-truncate font-italic text-muted align-middle mx-2 ">| Edit external challenge <a href="{% url "challenges:external-update" short_name=object.action.action_object.short_name %}">here</a>.</span>
+                            {% endif %}
                         </div>
                     </div>
                 </li>

@@ -2,10 +2,12 @@ import datetime
 import logging
 from itertools import chain, product
 
+from actstream import action
 from actstream.actions import follow, unfollow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField, CICharField
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_slug
 from django.db import models
@@ -26,10 +28,6 @@ from stdimage import JPEGField
 from tldextract import extract
 
 from grandchallenge.anatomy.models import BodyStructure
-from grandchallenge.challenges.emails import (
-    send_challenge_created_email,
-    send_external_challenge_created_email,
-)
 from grandchallenge.core.storage import (
     get_banner_path,
     get_logo_path,
@@ -356,7 +354,12 @@ class Challenge(ChallengeBase):
             self.create_forum_permissions()
             self.create_default_pages()
             self.create_default_phases()
-            send_challenge_created_email(self)
+            action.send(
+                sender=self.creator,
+                verb="created the challenge",
+                action_object=self,
+                target=Site.objects.filter(domain="gc.localhost").get(),
+            )
 
         if adding or self.hidden != self._hidden_orig:
             on_commit(
@@ -593,7 +596,12 @@ class ExternalChallenge(ChallengeBase):
         super().save(*args, **kwargs)
 
         if adding:
-            send_external_challenge_created_email(self)
+            action.send(
+                sender=self.creator,
+                verb="created the external challenge",
+                action_object=self,
+                target=Site.objects.filter(domain="gc.localhost").get(),
+            )
 
     def get_absolute_url(self):
         return self.homepage
