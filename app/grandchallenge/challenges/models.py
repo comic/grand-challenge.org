@@ -3,13 +3,14 @@ import logging
 from itertools import chain, product
 
 from actstream.actions import follow, unfollow
+from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import ArrayField, CICharField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_slug
 from django.db import models
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -346,12 +347,11 @@ class Challenge(ChallengeBase):
             self.create_groups()
             self.create_forum()
 
-            if self.creator:
-                self.add_admin(user=self.creator)
-
         super().save(*args, **kwargs)
 
         if adding:
+            if self.creator:
+                self.add_admin(user=self.creator)
             self.update_permissions()
             self.create_forum_permissions()
             self.create_default_pages()
@@ -601,3 +601,9 @@ class ExternalChallenge(ChallengeBase):
     @property
     def is_self_hosted(self):
         return False
+
+
+@receiver(pre_delete, sender=Challenge)
+@receiver(pre_delete, sender=ExternalChallenge)
+def delete_challenge_follows(*_, instance: Challenge, **__):
+    Follow.objects.filter(object_id=instance.pk).delete()

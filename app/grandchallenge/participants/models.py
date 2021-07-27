@@ -1,3 +1,4 @@
+from actstream.models import Follow
 from django.db import models
 
 from grandchallenge.challenges.models import Challenge
@@ -26,3 +27,7 @@ class RegistrationRequest(RequestBase):
 
     class Meta:
         unique_together = (("challenge", "user"),)
+
+    def delete(self):
+        Follow.objects.filter(object_id=self.pk).delete()
+        super().delete()

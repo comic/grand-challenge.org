@@ -93,6 +93,8 @@ def update_editor_follows(  # noqa: C901
             follow_objects.append(group.editors_of_archive)
         elif hasattr(group, "editors_of_readerstudy"):
             follow_objects.append(group.editors_of_readerstudy)
+        elif hasattr(group, "admins_of_challenge"):
+            follow_objects.append(group.admins_of_challenge)
 
     for user in users:
         for obj in follow_objects:
