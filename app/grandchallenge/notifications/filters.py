@@ -59,6 +59,8 @@ FOLLOW_CHOICES = (
     ("readerstudy_reader_studies", "Reader studies"),
     ("archive_archives", "Archives"),
     ("algorithm_algorithms", "Algorithms"),
+    ("challenge_challenges", "Challenges"),
+    ("externalchallenge_challenges", "External Challenges"),
 )
 
 
