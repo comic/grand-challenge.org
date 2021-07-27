@@ -61,7 +61,9 @@
                             {% endif %}
                             {% if object.action.target %}
                                 {% get_content_type object.action.target as target_ct %}
-                                in
+                                {% if target_ct.model == "forum" or target_ct.model == "topic" %}
+                                    in
+                                {% endif %}
                                 <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
                             {% endif %}
                             {{ object.action.timestamp|naturaltime }}
