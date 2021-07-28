@@ -28,6 +28,7 @@ from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from requests import HTTPError
 
 from grandchallenge.cases.tasks import import_images
+from grandchallenge.components.backends.exceptions import ComponentException
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +57,6 @@ def user_error(obj: str):
             error_message = e
 
     return error_message
-
-
-class ComponentException(Exception):
-    """These exceptions will be sent to the user."""
 
 
 class DockerConnection:

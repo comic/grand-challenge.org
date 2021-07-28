@@ -773,6 +773,7 @@ class ComponentJob(models.Model):
                 "job_pk": self.pk,
                 "job_app_label": self._meta.app_label,
                 "job_model_name": self._meta.model_name,
+                "backend": "grandchallenge.components.backends.docker.Executor",
             },
             options=options,
         )

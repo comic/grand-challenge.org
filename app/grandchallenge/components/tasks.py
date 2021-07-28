@@ -12,12 +12,10 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
+from django.utils.module_loading import import_string
 from django.utils.timezone import now
 
-from grandchallenge.components.backends.docker import (
-    ComponentException,
-    Executor,
-)
+from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -149,7 +147,11 @@ def get_model_instance(*, pk, app_label, model_name):
 
 @shared_task
 def execute_job(
-    *_, job_pk: uuid.UUID, job_app_label: str, job_model_name: str
+    *_,
+    job_pk: uuid.UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
 ) -> None:
     Job = apps.get_model(  # noqa: N806
         app_label=job_app_label, model_name=job_model_name
@@ -166,6 +168,7 @@ def execute_job(
         job.update_status(status=job.FAILURE, error_message=msg)
         raise RuntimeError(msg)
     try:
+        Executor = import_string(backend)  # noqa: N806
         with Executor(
             job_id=str(job.pk),
             job_class=Job,

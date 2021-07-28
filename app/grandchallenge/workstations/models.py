@@ -16,10 +16,8 @@ from knox.models import AuthToken
 from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
-from grandchallenge.components.backends.docker import (
-    ComponentException,
-    Service,
-)
+from grandchallenge.components.backends.docker import Service
+from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.models import ComponentImage
 from grandchallenge.components.tasks import start_service, stop_service
 from grandchallenge.core.models import UUIDModel
