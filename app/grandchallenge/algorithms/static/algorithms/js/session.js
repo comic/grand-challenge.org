@@ -82,7 +82,7 @@ function handleJobStatus(jobs) {
     let jobStatuses = jobs.map(j => j.status.toLowerCase());
     let jobUrls = jobs.map(j => j.api_url);
 
-    let queuedJobs = jobStatuses.filter(s => ["queued",].includes(s)).length;
+    let queuedJobs = jobStatuses.filter(s => ["queued", "re-queued"].includes(s)).length;
     let estimatedRemainingTime = queuedJobs * averageJobDuration;
 
     if (jobStatuses.some(s => s === "started")) {
@@ -91,12 +91,12 @@ function handleJobStatus(jobs) {
 
     if (jobStatuses.every(s => s === "succeeded")) {
         setCardCompleteMessage(cards.job, "View Results");
-    } else if (jobStatuses.some(s => s === "started")) {
+    } else if (jobStatuses.some(s => ["started", "provisioning", "provisioned", "executing", "executed", "parsing"].includes(s))) {
         setCardActiveMessage(cards.job, `Started, ${moment.duration(estimatedRemainingTime).humanize()} remaining`);
         setTimeout(function () {
             getJobStatus(jobUrls)
         }, Math.floor(Math.random() * timeout) + 100);
-    } else if (jobStatuses.some(s => s === "queued") || jobStatuses.some(s => s === "re-queued")) {
+    } else if (jobStatuses.some(s => ["queued", "re-queued"].includes(s))) {
         setCardAwaitingMessage(cards.job, "Queued");
         setTimeout(function () {
             getJobStatus(jobUrls)
