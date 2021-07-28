@@ -15,9 +15,15 @@
             const options = {
                 mode: 'tree',
                 modes: ['code', 'tree'],
-                onChange: function () {
-                    var json = editor.get();
-                    document.getElementById("{{ widget.attrs.id }}").value = JSON.stringify(json);
+                onChangeText: function (jsonString) {
+                    let widget = document.getElementById("{{ widget.attrs.id }}")
+                    try {
+                        JSON.parse(jsonString);
+                        widget.value = jsonString;
+                        widget.setCustomValidity("");
+                    } catch(err) {
+                        widget.setCustomValidity("JSON is invalid");
+                    }
                 }
             };
             const schema = JSON.parse(document.getElementById("{{ schema_id }}").textContent);

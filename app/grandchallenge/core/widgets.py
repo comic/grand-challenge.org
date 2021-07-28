@@ -17,11 +17,11 @@ class JSONEditorWidget(forms.Textarea):
     class Media:
         css = {
             "all": (
-                "https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.25.0/jsoneditor.min.css",
+                "https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.5.2/jsoneditor.min.css",
             )
         }
         js = (
-            "https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.25.0/jsoneditor.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.5.2/jsoneditor.min.js",
         )
 
 
