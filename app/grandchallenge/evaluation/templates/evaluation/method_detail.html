@@ -77,16 +77,10 @@
                         <a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id }}</a>
                     </td>
                     <td>
-                    <span class="badge
-                    {% if evaluation.status == evaluation.FAILURE or evaluation.status == evaluation.CANCELLED %}
-                        badge-danger
-                    {% elif evaluation.status == evaluation.RETRY %}
-                        badge-warning
-                    {% elif evaluation.status == evaluation.SUCCESS %}
-                        badge-success
-                    {% else %}
-                        badge-info
-                    {% endif %}">
+                    <span class="badge badge-{{ evaluation.status_context }}">
+                        {% if evaluation.animate %}
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        {% endif %}
                         {{ evaluation.get_status_display }}
                     </span>
                     </td>

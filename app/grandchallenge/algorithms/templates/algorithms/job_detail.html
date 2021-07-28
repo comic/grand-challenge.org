@@ -85,20 +85,10 @@
 
                 <dt class="col-sm-3">Status</dt>
                 <dd class="col-sm-9">
-                    <span class="badge
-                        {% if object.status == object.FAILURE or object.status == object.CANCELLED %}
-                            badge-danger
-                        {% elif object.status == object.RETRY %}
-                            badge-warning
-                        {% elif object.status == object.SUCCESS %}
-                            {% if object.stderr %}
-                                badge-warning
-                            {% else %}
-                                badge-success
-                            {% endif %}
-                        {% else %}
-                            badge-info
-                        {% endif %}">
+                    <span class="badge badge-{{ object.status_context }}">
+                        {% if object.animate %}
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        {% endif %}
                         {{ object.get_status_display }}{% if object.status == object.SUCCESS and object.stderr %},
                             with warnings{% endif %}
                     </span>

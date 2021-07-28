@@ -205,13 +205,15 @@ class MetricsAPIView(APIView):
             AlgorithmJob.objects.filter(status=AlgorithmJob.PENDING).count()
         )
         metrics.ALGORITHM_JOBS_ACTIVE.set(
-            AlgorithmJob.objects.filter(status=AlgorithmJob.STARTED).count()
+            AlgorithmJob.objects.filter(status=AlgorithmJob.EXECUTING).count()
         )
         metrics.EVALUATION_JOBS_PENDING.set(
             EvaluationJob.objects.filter(status=EvaluationJob.PENDING).count()
         )
         metrics.EVALUATION_JOBS_ACTIVE.set(
-            EvaluationJob.objects.filter(status=EvaluationJob.STARTED).count()
+            EvaluationJob.objects.filter(
+                status=EvaluationJob.EXECUTING
+            ).count()
         )
         metrics.UPLOAD_SESSIONS_PENDING.set(
             RawImageUploadSession.objects.filter(

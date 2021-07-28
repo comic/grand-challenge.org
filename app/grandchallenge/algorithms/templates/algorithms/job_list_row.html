@@ -20,20 +20,7 @@
 <split></split>
 
 <a href="#resultInfoModal"
-   class="badge
-{% if object.status == object.FAILURE or object.status == object.CANCELLED %}
-    badge-danger
-{% elif object.status == object.RETRY %}
-    badge-warning
-{% elif object.status == object.SUCCESS %}
-    {% if object.stderr %}
-        badge-warning
-    {% else %}
-        badge-success
-    {% endif %}
-{% else %}
-    badge-info
-{% endif %}"
+   class="badge badge-{{ object.status_context }}"
    data-toggle="modal"
    data-target="#resultInfoModal"
    data-title="Result Info"
@@ -45,6 +32,9 @@
    {% endif %}"
    data-pk="{{ object.pk }}"
    title="Result Info">
+    {% if object.animate %}
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    {% endif %}
     <i class="fa fa-file"></i>
     {% for input in object.inputs.all %}
         {{ input.image.name|truncatechars:15 }}
