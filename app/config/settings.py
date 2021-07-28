@@ -1048,10 +1048,6 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-CELERY_TASK_ROUTES = {
-    "grandchallenge.components.tasks.execute_job": "evaluation",
-}
-
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 

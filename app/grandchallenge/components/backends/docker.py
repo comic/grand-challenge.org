@@ -77,7 +77,6 @@ class DockerConnection:
         super().__init__()
         self._job_id = job_id
         self._job_label = f"{job_class._meta.app_label}-{job_class._meta.model_name}-{job_id}"
-        self._job_class = job_class
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
 
@@ -145,7 +144,7 @@ class DockerConnection:
                 return f"0-{cpus - 1}"
 
     @staticmethod
-    def __retry_docker_obj_prune(*, obj, filters: dict):
+    def _retry_docker_obj_prune(*, obj, filters: dict):
         # Retry and exponential backoff of the prune command as only 1 prune
         # operation can occur at a time on a docker host
         num_retries = 0
@@ -162,14 +161,13 @@ class DockerConnection:
             raise e
 
     def stop_and_cleanup(self, timeout: int = 10):
-        """Stops and prunes all artifacts associated with this job."""
+        """Stops and prunes all containers associated with this job."""
         flt = {"label": f"job={self._job_label}"}
 
         for c in self._client.containers.list(filters=flt):
             c.stop(timeout=timeout)
 
-        self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
-        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
+        self._retry_docker_obj_prune(obj=self._client.containers, filters=flt)
 
     def __enter__(self):
         return self
@@ -212,13 +210,26 @@ class Executor(DockerConnection):
         self._stderr = ""
         self._outputs = []
 
-    def execute(self):
+    def provision(self):
         self._pull_images()
         self._create_io_volumes()
         self._provision_input_volume()
         self._chmod_volumes()
+
+    def execute(self):
+        self._pull_images()
         self._execute_container()
+
+    def get_outputs(self):
+        self._pull_images()
         self._get_outputs()
+
+    def deprovision(self):
+        self._pull_images()
+        self._retry_docker_obj_prune(
+            obj=self._client.volumes,
+            filters={"label": f"job={self._job_label}"},
+        )
 
     @property
     def stdout(self):

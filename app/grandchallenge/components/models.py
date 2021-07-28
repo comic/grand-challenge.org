@@ -22,7 +22,12 @@ from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
-from grandchallenge.components.tasks import execute_job, validate_docker_image
+from grandchallenge.components.tasks import (
+    deprovision_job,
+    execute_job,
+    provision_job,
+    validate_docker_image,
+)
 from grandchallenge.components.validators import (
     validate_no_slash_at_ends,
     validate_safe_path,
@@ -677,6 +682,11 @@ class ComponentJob(models.Model):
     FAILURE = 3
     SUCCESS = 4
     CANCELLED = 5
+    PROVISIONING = 6
+    PROVISIONED = 7
+    EXECUTING = 8
+    EXECUTED = 9
+    DEPROVISIONING = 10
 
     STATUS_CHOICES = (
         (PENDING, "Queued"),
@@ -685,6 +695,11 @@ class ComponentJob(models.Model):
         (FAILURE, "Failed"),
         (SUCCESS, "Succeeded"),
         (CANCELLED, "Cancelled"),
+        (PROVISIONING, "Provisioning"),
+        (PROVISIONED, "Provisioned"),
+        (EXECUTING, "Executing"),
+        (EXECUTED, "Executed"),
+        (DEPROVISIONING, "Deprovisioning"),
     )
 
     status = models.PositiveSmallIntegerField(
@@ -760,23 +775,59 @@ class ComponentJob(models.Model):
 
     @property
     def signature(self):
-        options = {}
-
-        if self.container.requires_gpu:
-            options.update({"queue": "gpu"})
-
-        if getattr(self.container, "queue_override", None):
-            options.update({"queue": self.container.queue_override})
-
-        return execute_job.signature(
-            kwargs={
+        kwargs = {
+            "kwargs": {
                 "job_pk": self.pk,
                 "job_app_label": self._meta.app_label,
                 "job_model_name": self._meta.model_name,
                 "backend": "grandchallenge.components.backends.docker.Executor",
             },
-            options=options,
+            "options": {},
+            "immutable": True,
+        }
+
+        if self.container.requires_gpu:
+            kwargs["options"].update({"queue": "gpu"})
+
+        if getattr(self.container, "queue_override", None):
+            kwargs["options"].update({"queue": self.container.queue_override})
+
+        return (
+            provision_job.signature(**kwargs)
+            | execute_job.signature(**kwargs)
+            | deprovision_job.signature(**kwargs)
         )
+
+    @property
+    def animate(self):
+        return self.status in {
+            self.STARTED,
+            self.PROVISIONING,
+            self.EXECUTING,
+            self.DEPROVISIONING,
+        }
+
+    @property
+    def status_context(self):
+        if self.stderr:
+            return "warning"
+        elif self.status == self.SUCCESS:
+            return "success"
+        elif self.status in {self.FAILURE, self.CANCELLED}:
+            return "danger"
+        elif self.status in {
+            self.PENDING,
+            self.STARTED,
+            self.RETRY,
+            self.PROVISIONING,
+            self.PROVISIONED,
+            self.EXECUTING,
+            self.EXECUTED,
+            self.DEPROVISIONING,
+        }:
+            return "info"
+        else:
+            return "secondary"
 
     class Meta:
         abstract = True
