@@ -25,6 +25,7 @@ from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
     deprovision_job,
     execute_job,
+    parse_job_outputs,
     provision_job,
     validate_docker_image,
 )
@@ -686,7 +687,7 @@ class ComponentJob(models.Model):
     PROVISIONED = 7
     EXECUTING = 8
     EXECUTED = 9
-    DEPROVISIONING = 10
+    PARSING = 10
 
     STATUS_CHOICES = (
         (PENDING, "Queued"),
@@ -699,7 +700,7 @@ class ComponentJob(models.Model):
         (PROVISIONED, "Provisioned"),
         (EXECUTING, "Executing"),
         (EXECUTED, "Executed"),
-        (DEPROVISIONING, "Deprovisioning"),
+        (PARSING, "Parsing Outputs"),
     )
 
     status = models.PositiveSmallIntegerField(
@@ -795,6 +796,7 @@ class ComponentJob(models.Model):
         return (
             provision_job.signature(**kwargs)
             | execute_job.signature(**kwargs)
+            | parse_job_outputs.signature(**kwargs)
             | deprovision_job.signature(**kwargs)
         )
 
@@ -804,7 +806,7 @@ class ComponentJob(models.Model):
             self.STARTED,
             self.PROVISIONING,
             self.EXECUTING,
-            self.DEPROVISIONING,
+            self.PARSING,
         }
 
     @property
@@ -823,7 +825,7 @@ class ComponentJob(models.Model):
             self.PROVISIONED,
             self.EXECUTING,
             self.EXECUTED,
-            self.DEPROVISIONING,
+            self.PARSING,
         }:
             return "info"
         else:

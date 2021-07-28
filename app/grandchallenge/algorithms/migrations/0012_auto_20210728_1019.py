@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                     (7, "Provisioned"),
                     (8, "Executing"),
                     (9, "Executed"),
-                    (10, "Deprovisioning"),
+                    (10, "Parsing Outputs"),
                 ],
                 db_index=True,
                 default=0,

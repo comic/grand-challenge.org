@@ -196,7 +196,7 @@ def provision_job(
         job.update_status(status=job.PROVISIONED)
 
 
-@shared_task
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def execute_job(
     *_,
     job_pk: uuid.UUID,
@@ -263,7 +263,7 @@ def execute_job(
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def deprovision_job(
+def parse_job_outputs(
     *_,
     job_pk: uuid.UUID,
     job_app_label: str,
@@ -274,19 +274,15 @@ def deprovision_job(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
 
-    job_executed = bool(job.status == job.EXECUTED)
-
-    if job.status in [job.EXECUTED, job.PROVISIONED, job.FAILURE]:
-        job.update_status(status=job.DEPROVISIONING)
+    if job.status == job.EXECUTED or job.outputs.exists():
+        job.update_status(status=job.PARSING)
     else:
-        raise RuntimeError("Job is not ready for deprovisioning")
+        raise RuntimeError("Job is not ready for output parsing")
 
     try:
         Executor = import_string(backend)  # noqa: N806
         with Executor(**_get_executor_kwargs(job=job)) as ev:
-            if job_executed:
-                ev.get_outputs()
-            ev.deprovision()
+            ev.get_outputs()
     except ComponentException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
@@ -299,19 +295,35 @@ def deprovision_job(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
         job.update_status(
-            status=job.FAILURE,
-            error_message="Could not deprovision resources",
+            status=job.FAILURE, error_message="Could not parse outputs",
         )
         raise
     else:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
-        if job_executed:
-            job.outputs.add(*ev.outputs)
-            job.update_status(status=job.SUCCESS)
-        else:
-            job.update_status(status=job.FAILURE)
+        job.outputs.add(*ev.outputs)
+        job.update_status(status=job.SUCCESS)
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def deprovision_job(
+    *_,
+    job_pk: uuid.UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
+):
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    )
+
+    if job.status not in [job.PROVISIONED, job.SUCCESS, job.FAILURE]:
+        raise RuntimeError("Job is not ready for deprovisioning")
+
+    Executor = import_string(backend)  # noqa: N806
+    with Executor(**_get_executor_kwargs(job=job)) as ev:
+        ev.deprovision()
 
 
 @shared_task
