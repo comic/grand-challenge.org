@@ -14,11 +14,11 @@ from tests.evaluation_tests.factories import EvaluationFactory
 def test_mark_long_running_jobs_failed():
     # Started jobs should be unaffected
     j1 = EvaluationFactory()
-    j1.update_status(status=EvaluationJob.STARTED)
+    j1.update_status(status=EvaluationJob.EXECUTING)
 
     # Long running jobs should be marked as failed
     j2 = EvaluationFactory()
-    j2.update_status(status=EvaluationJob.STARTED)
+    j2.update_status(status=EvaluationJob.EXECUTING)
     j2.started_at = timezone.now() - timedelta(days=1)
     j2.save()
 
@@ -30,20 +30,20 @@ def test_mark_long_running_jobs_failed():
 
     # Algorithm jobs should not be affected
     a = AlgorithmJobFactory()
-    a.update_status(status=AlgorithmJob.STARTED)
+    a.update_status(status=AlgorithmJob.EXECUTING)
 
     assert EvaluationJob.objects.all().count() == 3
     assert (
-        AlgorithmJob.objects.filter(status=AlgorithmJob.STARTED).count() == 1
+        AlgorithmJob.objects.filter(status=AlgorithmJob.EXECUTING).count() == 1
     )
     assert (
         EvaluationJob.objects.filter(status=EvaluationJob.FAILURE).count() == 0
     )
 
-    assert j1.status == EvaluationJob.STARTED
-    assert j2.status == EvaluationJob.STARTED
+    assert j1.status == EvaluationJob.EXECUTING
+    assert j2.status == EvaluationJob.EXECUTING
     assert j3.status == EvaluationJob.PENDING
-    assert a.status == AlgorithmJob.STARTED
+    assert a.status == AlgorithmJob.EXECUTING
 
     mark_long_running_jobs_failed(
         app_label="evaluation", model_name="evaluation"
@@ -54,7 +54,7 @@ def test_mark_long_running_jobs_failed():
     j3.refresh_from_db()
     a.refresh_from_db()
 
-    assert j1.status == EvaluationJob.STARTED
+    assert j1.status == EvaluationJob.EXECUTING
     assert j2.status == EvaluationJob.FAILURE
     assert j3.status == EvaluationJob.PENDING
-    assert a.status == AlgorithmJob.STARTED
+    assert a.status == AlgorithmJob.EXECUTING

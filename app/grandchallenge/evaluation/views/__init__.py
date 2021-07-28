@@ -200,11 +200,20 @@ class SubmissionCreateBase(SuccessMessageMixin, CreateView):
             )
         )
 
-        pending_evaluations = Evaluation.objects.filter(
-            submission__phase__challenge=self.request.challenge,
-            submission__creator=self.request.user,
-            status__in=(Evaluation.PENDING, Evaluation.STARTED),
-        ).count()
+        pending_evaluations = (
+            Evaluation.objects.filter(
+                submission__phase__challenge=self.request.challenge,
+                submission__creator=self.request.user,
+            )
+            .exclude(
+                status__in=(
+                    Evaluation.SUCCESS,
+                    Evaluation.FAILURE,
+                    Evaluation.CANCELLED,
+                )
+            )
+            .count()
+        )
 
         context.update(
             {"pending_evaluations": pending_evaluations, "phase": self.phase}

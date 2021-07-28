@@ -347,7 +347,7 @@ def mark_long_running_jobs_failed(
     jobs_to_mark = Job.objects.filter(
         started_at__lt=now()
         - 1.2 * timedelta(seconds=settings.CELERY_TASK_TIME_LIMIT),
-        status=Job.STARTED,
+        status=Job.EXECUTING,
     )
 
     if extra_filters:

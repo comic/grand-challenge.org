@@ -750,10 +750,14 @@ class ComponentJob(models.Model):
         if error_message:
             self.error_message = error_message[:1024]
 
-        if status == self.STARTED and self.started_at is None:
+        if (
+            status in [self.STARTED, self.EXECUTING]
+            and self.started_at is None
+        ):
             self.started_at = now()
         elif (
-            status in [self.SUCCESS, self.FAILURE, self.CANCELLED]
+            status
+            in [self.EXECUTED, self.SUCCESS, self.FAILURE, self.CANCELLED]
             and self.completed_at is None
         ):
             self.completed_at = now()

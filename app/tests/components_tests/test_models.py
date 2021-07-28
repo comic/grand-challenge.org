@@ -29,7 +29,7 @@ def test_update_started_adds_time():
     assert j.started_at is None
     assert j.completed_at is None
 
-    j.update_status(status=j.STARTED)
+    j.update_status(status=j.EXECUTING)
 
     j.refresh_from_db()
     assert j.started_at is not None
