@@ -185,7 +185,13 @@
 
 <span class="kn">from</span> <span class="nn">grandchallenge.cases.models</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.schemas</span> <span class="kn">import</span> <span class="n">INTERFACE_VALUE_SCHEMA</span>
-<span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="n">execute_job</span><span class="p">,</span> <span class="n">validate_docker_image</span>
+<span class="kn">from</span> <span class="nn">grandchallenge.components.tasks</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">deprovision_job</span><span class="p">,</span>
+    <span class="n">execute_job</span><span class="p">,</span>
+    <span class="n">parse_job_outputs</span><span class="p">,</span>
+    <span class="n">provision_job</span><span class="p">,</span>
+    <span class="n">validate_docker_image</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">grandchallenge.components.validators</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">validate_no_slash_at_ends</span><span class="p">,</span>
     <span class="n">validate_safe_path</span><span class="p">,</span>
@@ -840,6 +846,11 @@
     <span class="n">FAILURE</span> <span class="o">=</span> <span class="mi">3</span>
     <span class="n">SUCCESS</span> <span class="o">=</span> <span class="mi">4</span>
     <span class="n">CANCELLED</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">PROVISIONING</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">PROVISIONED</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">EXECUTING</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">EXECUTED</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="n">PARSING</span> <span class="o">=</span> <span class="mi">10</span>
 
     <span class="n">STATUS_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">(</span><span class="n">PENDING</span><span class="p">,</span> <span class="s2">&quot;Queued&quot;</span><span class="p">),</span>
@@ -848,6 +859,11 @@
         <span class="p">(</span><span class="n">FAILURE</span><span class="p">,</span> <span class="s2">&quot;Failed&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="s2">&quot;Succeeded&quot;</span><span class="p">),</span>
         <span class="p">(</span><span class="n">CANCELLED</span><span class="p">,</span> <span class="s2">&quot;Cancelled&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">PROVISIONING</span><span class="p">,</span> <span class="s2">&quot;Provisioning&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">PROVISIONED</span><span class="p">,</span> <span class="s2">&quot;Provisioned&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">EXECUTING</span><span class="p">,</span> <span class="s2">&quot;Executing&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">EXECUTED</span><span class="p">,</span> <span class="s2">&quot;Executed&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">PARSING</span><span class="p">,</span> <span class="s2">&quot;Parsing Outputs&quot;</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
@@ -897,10 +913,14 @@
         <span class="k">if</span> <span class="n">error_message</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error_message</span> <span class="o">=</span> <span class="n">error_message</span><span class="p">[:</span><span class="mi">1024</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">EXECUTING</span><span class="p">]</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="o">=</span> <span class="n">now</span><span class="p">()</span>
         <span class="k">elif</span> <span class="p">(</span>
-            <span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">]</span>
+            <span class="n">status</span>
+            <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">EXECUTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">]</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">=</span> <span class="n">now</span><span class="p">()</span>
@@ -923,22 +943,60 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">signature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">requires_gpu</span><span class="p">:</span>
-            <span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;queue&quot;</span><span class="p">:</span> <span class="s2">&quot;gpu&quot;</span><span class="p">})</span>
-
-        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">,</span> <span class="s2">&quot;queue_override&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;queue&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">queue_override</span><span class="p">})</span>
-
-        <span class="k">return</span> <span class="n">execute_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;kwargs&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;job_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
                 <span class="s2">&quot;job_app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
                 <span class="s2">&quot;job_model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+                <span class="s2">&quot;backend&quot;</span><span class="p">:</span> <span class="s2">&quot;grandchallenge.components.backends.docker.Executor&quot;</span><span class="p">,</span>
             <span class="p">},</span>
-            <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+            <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">&quot;immutable&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">requires_gpu</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;options&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;queue&quot;</span><span class="p">:</span> <span class="s2">&quot;gpu&quot;</span><span class="p">})</span>
+
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">,</span> <span class="s2">&quot;queue_override&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;options&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;queue&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">queue_override</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">provision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="o">|</span> <span class="n">execute_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="o">|</span> <span class="n">parse_job_outputs</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="o">|</span> <span class="n">deprovision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PROVISIONING</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">EXECUTING</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PARSING</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;warning&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">}:</span>
+            <span class="k">return</span> <span class="s2">&quot;danger&quot;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PENDING</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">RETRY</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PROVISIONING</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PROVISIONED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">EXECUTING</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">EXECUTED</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PARSING</span><span class="p">,</span>
+        <span class="p">}:</span>
+            <span class="k">return</span> <span class="s2">&quot;info&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;secondary&quot;</span>
 
     <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
