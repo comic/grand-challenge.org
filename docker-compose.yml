@@ -163,6 +163,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      registry:
+        condition: service_started
     volumes:
       # Bind the app directory for live reloading in development
       - type: bind
@@ -188,6 +190,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_started
+      registry:
         condition: service_started
     volumes:
       # The docker socket is only needed for testing
@@ -248,6 +252,9 @@ services:
     networks:
       - default
       - workstations
+
+  registry:
+    image: registry:2.7
 
   flower:
     image: mher/flower
