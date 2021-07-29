@@ -1,7 +1,9 @@
 import json
+import subprocess
 import tarfile
 import uuid
 from datetime import timedelta
+from tempfile import NamedTemporaryFile
 from typing import Dict
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
@@ -13,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
+from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 
@@ -50,6 +53,60 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model.objects.filter(pk=instance.pk).update(
         image_sha256=image_sha256, ready=ready
     )
+
+    if ready:
+        # TODO: Set ready after pushing
+        on_commit(
+            push_container_image.signature(
+                kwargs={
+                    "pk": pk,
+                    "app_label": app_label,
+                    "model_name": model_name,
+                },
+                immutable=True,
+            ).apply_async
+        )
+
+
+@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
+def push_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if not instance.image_sha256:
+        raise RuntimeError("Image was not ready to be pushed")
+
+    with NamedTemporaryFile(suffix=".tar") as o:
+        with instance.image.open(mode="rb") as im:
+            # Rewrite to tar as crane cannot handle gz
+            _decompress_tarball(in_fileobj=im, out_fileobj=o)
+
+        login_cmd = ""
+        push_cmd = f"crane push {o.name} {instance.repo_tag}"
+
+        if settings.COMPONENTS_REGISTRY_INSECURE:
+            # Note, not setting this on login_cmd as it should never happen
+            push_cmd += " --insecure"
+
+        if login_cmd:
+            cmd = f"{login_cmd} && {push_cmd}"
+        else:
+            cmd = push_cmd
+
+        try:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Could not push image: {e.stdout.decode()}")
+
+
+def _decompress_tarball(*, in_fileobj, out_fileobj):
+    """Create an uncompress tarball from a (compressed) tarball"""
+    with tarfile.open(fileobj=in_fileobj, mode="r") as it, tarfile.open(
+        fileobj=out_fileobj, mode="w|"
+    ) as ot:
+        for member in it.getmembers():
+            extracted = it.extractfile(member)
+            ot.addfile(member, extracted)
 
 
 def _validate_docker_image_manifest(*, model, instance) -> str:

@@ -1,11 +1,16 @@
 from pathlib import Path
 
 import pytest
+import requests
+from django.conf import settings
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.tasks import validate_docker_image
+from grandchallenge.components.tasks import (
+    push_container_image,
+    validate_docker_image,
+)
 from grandchallenge.evaluation.models import Method
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -96,6 +101,32 @@ def test_method_validation(evaluation_image):
     method = Method.objects.get(pk=method.pk)
     assert method.image_sha256 == sha256
     assert method.ready is True
+
+
+@pytest.mark.django_db
+def test_container_pushing(evaluation_image):
+    container, sha256 = evaluation_image
+    method = MethodFactory(image__from_path=container)
+
+    push_container_image(
+        pk=method.pk,
+        app_label=method._meta.app_label,
+        model_name=method._meta.model_name,
+    )
+
+    response = requests.get(
+        f"http://{settings.COMPONENTS_REGISTRY_URL}/v2/_catalog"
+    )
+
+    assert response.status_code == 200
+    assert "evaluation/method" in response.json()["repositories"]
+
+    response = requests.get(
+        f"http://{settings.COMPONENTS_REGISTRY_URL}/v2/evaluation/method/tags/list"
+    )
+
+    assert response.status_code == 200
+    assert str(method.pk) in response.json()["tags"]
 
 
 @pytest.mark.django_db
