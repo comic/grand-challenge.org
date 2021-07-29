@@ -488,10 +488,6 @@ class Method(UUIDModel, ComponentImage):
 
     phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
 
-    @property
-    def queue_override(self):
-        return "evaluation"
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 

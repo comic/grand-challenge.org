@@ -786,7 +786,10 @@ class ComponentJob(models.Model):
                 "job_model_name": self._meta.model_name,
                 "backend": "grandchallenge.components.backends.docker.Executor",
             },
-            "options": {},
+            "options": {
+                # TODO: remove this
+                "queue": "evaluation",
+            },
             "immutable": True,
         }
 
