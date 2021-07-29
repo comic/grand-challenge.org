@@ -23,7 +23,6 @@ from django_extensions.db.fields import AutoSlugField
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
-    deprovision_job,
     execute_job,
     parse_job_outputs,
     provision_job,
@@ -801,7 +800,6 @@ class ComponentJob(models.Model):
             provision_job.signature(**kwargs)
             | execute_job.signature(**kwargs)
             | parse_job_outputs.signature(**kwargs)
-            | deprovision_job.signature(**kwargs)
         )
 
     @property
