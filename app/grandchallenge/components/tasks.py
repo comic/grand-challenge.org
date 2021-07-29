@@ -275,7 +275,7 @@ def parse_job_outputs(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
 
-    if job.status == job.EXECUTED or job.outputs.exists():
+    if job.status == job.EXECUTED and not job.outputs.exists():
         job.update_status(status=job.PARSING)
     else:
         raise Reject("Job is not ready for output parsing")
