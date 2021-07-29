@@ -6,6 +6,7 @@ from typing import Dict
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
+from celery.exceptions import Reject
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -175,7 +176,7 @@ def provision_job(
     if job.status in [job.PENDING, job.RETRY]:
         job.update_status(status=job.PROVISIONING)
     else:
-        raise RuntimeError("Job is not ready for provisioning")
+        raise Reject("Job is not ready for provisioning")
 
     try:
         Executor = import_string(backend)  # noqa: N806
@@ -211,12 +212,12 @@ def execute_job(
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)
     else:
-        raise RuntimeError("Job is not set to be executed")
+        raise Reject("Job is not set to be executed")
 
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
-        raise RuntimeError(msg)
+        raise Reject(msg)
     try:
         Executor = import_string(backend)  # noqa: N806
         with Executor(**_get_executor_kwargs(job=job)) as ev:
@@ -274,10 +275,10 @@ def parse_job_outputs(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
 
-    if job.status == job.EXECUTED or job.outputs.exists():
+    if job.status == job.EXECUTED and not job.outputs.exists():
         job.update_status(status=job.PARSING)
     else:
-        raise RuntimeError("Job is not ready for output parsing")
+        raise Reject("Job is not ready for output parsing")
 
     try:
         Executor = import_string(backend)  # noqa: N806
@@ -319,7 +320,7 @@ def deprovision_job(
     )
 
     if job.status not in [job.PROVISIONED, job.SUCCESS, job.FAILURE]:
-        raise RuntimeError("Job is not ready for deprovisioning")
+        raise Reject("Job is not ready for deprovisioning")
 
     Executor = import_string(backend)  # noqa: N806
     with Executor(**_get_executor_kwargs(job=job)) as ev:
