@@ -98,6 +98,8 @@ services:
         condition: service_started
       redis:
         condition: service_started
+      registry:
+        condition: service_started
     volumes:
       # Bind the app directory for live reloading in development
       - type: bind
