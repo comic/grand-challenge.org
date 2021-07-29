@@ -212,6 +212,7 @@ def execute_job(
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)
     else:
+        deprovision_job(job=job, backend=backend)
         raise Reject("Job is not set to be executed")
 
     if not job.container.ready:
@@ -278,6 +279,7 @@ def parse_job_outputs(
     if job.status == job.EXECUTED and not job.outputs.exists():
         job.update_status(status=job.PARSING)
     else:
+        deprovision_job(job=job, backend=backend)
         raise Reject("Job is not ready for output parsing")
 
     try:
@@ -305,23 +307,13 @@ def parse_job_outputs(
         )
         job.outputs.add(*ev.outputs)
         job.update_status(status=job.SUCCESS)
+    finally:
+        deprovision_job(job=job, backend=backend)
 
 
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def deprovision_job(
-    *_,
-    job_pk: uuid.UUID,
-    job_app_label: str,
-    job_model_name: str,
-    backend: str,
+    *_, job, backend: str,
 ):
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
-
-    if job.status not in [job.PROVISIONED, job.SUCCESS, job.FAILURE]:
-        raise Reject("Job is not ready for deprovisioning")
-
     Executor = import_string(backend)  # noqa: N806
     with Executor(**_get_executor_kwargs(job=job)) as ev:
         ev.deprovision()
