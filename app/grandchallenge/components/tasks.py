@@ -1,3 +1,4 @@
+import base64
 import json
 import subprocess
 import tarfile
@@ -6,6 +7,7 @@ from datetime import timedelta
 from tempfile import NamedTemporaryFile
 from typing import Dict
 
+import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
 from celery.exceptions import Reject
@@ -81,7 +83,7 @@ def push_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
             # Rewrite to tar as crane cannot handle gz
             _decompress_tarball(in_fileobj=im, out_fileobj=o)
 
-        login_cmd = ""
+        login_cmd = _get_repo_login_cmd()
         push_cmd = f"crane push {o.name} {instance.repo_tag}"
 
         if settings.COMPONENTS_REGISTRY_INSECURE:
@@ -97,6 +99,28 @@ def push_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
             subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Could not push image: {e.stdout.decode()}")
+
+
+def _get_repo_login_cmd():
+    if settings.COMPONENTS_REGISTRY_INSECURE:
+        # Do not login to insecure registries
+        return ""
+    else:
+        user, token = _get_ecr_user_and_token()
+        return f"crane auth login {settings.COMPONENTS_REGISTRY_URL} -u {user} -p {token}"
+
+
+def _get_ecr_user_and_token():
+    client = boto3.client("ecr")
+    auth = client.get_authorization_token()
+
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecr.html#ECR.Client.get_authorization_token
+    b64_user_token = auth["authorizationData"][0]["authorizationToken"]
+    b64_user_token_bytes = b64_user_token.encode("ascii")
+    user_token = base64.b64decode(b64_user_token_bytes).decode("ascii")
+    user, token = user_token.split(":")
+
+    return user, token
 
 
 def _decompress_tarball(*, in_fileobj, out_fileobj):

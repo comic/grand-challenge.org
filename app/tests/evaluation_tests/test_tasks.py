@@ -119,10 +119,10 @@ def test_container_pushing(evaluation_image):
     )
 
     assert response.status_code == 200
-    assert "evaluation/method" in response.json()["repositories"]
+    assert "testserver/evaluation/method" in response.json()["repositories"]
 
     response = requests.get(
-        f"http://{settings.COMPONENTS_REGISTRY_URL}/v2/evaluation/method/tags/list"
+        f"http://{settings.COMPONENTS_REGISTRY_URL}/v2/testserver/evaluation/method/tags/list"
     )
 
     assert response.status_code == 200
