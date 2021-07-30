@@ -36,6 +36,8 @@ python = "^3.8"
 # There is a bug with chords of groups in Celery 5.1, test with a
 # submission using algorithm_evaluation_fixtures to see if it is fixed
 celery = {extras = ["redis", "sqs"], version = "!=5.0.6,<5.1"}
+# Also pin kombu for Celery 5.1 due to https://github.com/celery/kombu/issues/1358
+kombu = "<5.1"
 django = "<3.2"
 django-countries = "*"
 django-crispy-forms = "*"
