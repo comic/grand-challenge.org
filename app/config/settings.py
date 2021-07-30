@@ -878,6 +878,15 @@ CELERY_EMAIL_TASK_CONFIG = {
     "ignore_result": False,
 }
 
+COMPONENTS_REGISTRY_URL = os.environ.get(
+    "COMPONENTS_REGISTRY_URL", "registry:5000"
+)
+COMPONENTS_REGISTRY_PREFIX = os.environ.get(
+    "COMPONENTS_REGISTRY_PREFIX", SESSION_COOKIE_DOMAIN.lstrip(".")
+)
+COMPONENTS_REGISTRY_INSECURE = strtobool(
+    os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
+)
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )

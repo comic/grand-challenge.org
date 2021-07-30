@@ -908,5 +908,14 @@ class ComponentImage(models.Model):
                 )
             )
 
+    @property
+    def repo_tag(self):
+        """The tag of this image in the container repository"""
+        return (
+            f"{settings.COMPONENTS_REGISTRY_URL}/"
+            f"{settings.COMPONENTS_REGISTRY_PREFIX}/"
+            f"{self._meta.app_label}/{self._meta.model_name}:{self.pk}"
+        )
+
     class Meta:
         abstract = True

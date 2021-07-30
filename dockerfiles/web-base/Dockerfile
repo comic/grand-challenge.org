@@ -54,6 +54,14 @@ RUN apt-get update \
     && rm -r /opt/gdcm \
     && apt-get purge -y swig cmake
 
+# Fetch and install crane for pushing containers
+RUN mkdir -p /opt/crane \
+    && wget https://github.com/google/go-containerregistry/releases/download/v0.5.1/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
+    && tar -C /opt/crane/ -xzvf /opt/crane/src.tar.gz crane \
+    && chmod a+x /opt/crane/crane \
+    && mv /opt/crane/crane /usr/local/bin/ \
+    && rm -r /opt/crane
+
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false
 
