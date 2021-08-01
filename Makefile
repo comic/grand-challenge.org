@@ -2,10 +2,10 @@ USER_ID = $(shell id -u)
 PYTHON_VERSION = 3.8
 GDCM_VERSION_TAG = 3.0.6
 POETRY_HASH = $(shell shasum -a 512 poetry.lock | cut -c 1-8)
-GRAND_CHALLENGE_HTTP_REPOSITORY_URI = public.ecr.aws/m3y0m7n5/grand-challenge/http
-GRAND_CHALLENGE_WEB_REPOSITORY_URI = public.ecr.aws/m3y0m7n5/grand-challenge/web
-GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI = public.ecr.aws/m3y0m7n5/grand-challenge/web-base
-GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI = public.ecr.aws/m3y0m7n5/grand-challenge/web-test-base
+GRAND_CHALLENGE_HTTP_REPOSITORY_URI = public.ecr.aws/diag-nijmegen/grand-challenge/http
+GRAND_CHALLENGE_WEB_REPOSITORY_URI = public.ecr.aws/diag-nijmegen/grand-challenge/web
+GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI = public.ecr.aws/diag-nijmegen/grand-challenge/web-base
+GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI = public.ecr.aws/diag-nijmegen/grand-challenge/web-test-base
 
 
 build_web_test:
