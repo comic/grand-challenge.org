@@ -10,6 +10,7 @@ from typing import Dict
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
+from celery.exceptions import MaxRetriesExceededError
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -19,7 +20,10 @@ from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 
-from grandchallenge.components.backends.exceptions import ComponentException
+from grandchallenge.components.backends.exceptions import (
+    ComponentException,
+    ComponentJobActive,
+)
 from grandchallenge.components.emails import send_invalid_dockerfile_email
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -218,7 +222,7 @@ def _get_executor_kwargs(*, job):
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def provision_job(
-    *_,
+    *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
@@ -238,28 +242,33 @@ def provision_job(
         with Executor(**_get_executor_kwargs(job=job)) as ev:
             ev.provision()
     except Exception:
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.update_status(
             status=job.FAILURE, error_message="Could not provision resources",
         )
+        deprovision_job(job=job, backend=backend)
         raise
     else:
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.update_status(status=job.PROVISIONED)
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def execute_job(
-    *_,
+    *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
-) -> None:
+):
+    """
+    Executes the component job, can block with some backends.
+
+    `execute_job` can raise `ComponentException` in which case
+    the job will be marked as failed and the error returned to the user.
+
+    Job must be in the PROVISIONED state.
+
+    Once the job has executed it will be in the EXECUTING or FAILURE states.
+    """
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
@@ -273,7 +282,9 @@ def execute_job(
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
+        deprovision_job(job=job, backend=backend)
         raise PriorStepFailed(msg)
+
     try:
         Executor = import_string(backend)  # noqa: N806
         with Executor(**_get_executor_kwargs(job=job)) as ev:
@@ -309,19 +320,83 @@ def execute_job(
             stderr=ev.stderr,
             error_message="An unexpected error occurred",
         )
+        deprovision_job(job=job, backend=backend)
+        raise
+
+
+@shared_task(
+    **settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"], bind=True
+)
+def await_job_completion(
+    self,
+    *,
+    job_pk: uuid.UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
+):
+    """
+    Waits for the job to complete and sets stdout and stderr.
+    `await_completion` is expected to raise `ComponentJobActive` in which
+    case the job will be requeued, or `ComponentException` in which case
+    the job will be marked as failed and the error returned to the user.
+
+    Job must be in the EXECUTING state.
+
+    Once the job has executed it will be in the EXECUTED or FAILURE states.
+    """
+    job = get_model_instance(
+        pk=job_pk, app_label=job_app_label, model_name=job_model_name
+    )
+
+    if job.status != job.EXECUTING:
+        deprovision_job(job=job, backend=backend)
+        raise PriorStepFailed("Job is not executing")
+
+    try:
+        Executor = import_string(backend)  # noqa: N806
+        with Executor(**_get_executor_kwargs(job=job)) as ev:
+            ev.await_completion()
+    except ComponentJobActive:
+        try:
+            self.retry(countdown=60, max_retries=120)
+        except MaxRetriesExceededError:
+            job.update_status(
+                status=job.FAILURE,
+                stdout=ev.stdout,
+                stderr=ev.stderr,
+                error_message="Time limit exceeded",
+            )
+            deprovision_job(job=job, backend=backend)
+            raise
+    except ComponentException as e:
+        job.update_status(
+            status=job.FAILURE,
+            stdout=ev.stdout,
+            stderr=ev.stderr,
+            error_message=str(e),
+        )
+    except Exception:
+        job.update_status(
+            status=job.FAILURE,
+            stdout=ev.stdout,
+            stderr=ev.stderr,
+            error_message="An unexpected error occurred",
+        )
+        deprovision_job(job=job, backend=backend)
         raise
     else:
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.update_status(
-            status=job.EXECUTED, stdout=ev.stdout, stderr=ev.stderr
+            status=job.EXECUTED,
+            stdout=ev.stdout,
+            stderr=ev.stderr,
+            duration=ev.duration,
         )
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def parse_job_outputs(
-    *_,
+    *,
     job_pk: uuid.UUID,
     job_app_label: str,
     job_model_name: str,
@@ -342,24 +417,15 @@ def parse_job_outputs(
         with Executor(**_get_executor_kwargs(job=job)) as ev:
             ev.get_outputs()
     except ComponentException as e:
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.update_status(
             status=job.FAILURE, error_message=str(e),
         )
     except Exception:
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.update_status(
             status=job.FAILURE, error_message="Could not parse outputs",
         )
         raise
     else:
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.outputs.add(*ev.outputs)
         job.update_status(status=job.SUCCESS)
     finally:
@@ -367,7 +433,7 @@ def parse_job_outputs(
 
 
 def deprovision_job(
-    *_, job, backend: str,
+    *, job, backend: str,
 ):
     Executor = import_string(backend)  # noqa: N806
     with Executor(**_get_executor_kwargs(job=job)) as ev:

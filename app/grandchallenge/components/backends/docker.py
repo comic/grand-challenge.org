@@ -14,6 +14,7 @@ from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from time import sleep
 
 import docker
+from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -144,7 +145,7 @@ class DockerConnection:
                 return f"0-{cpus - 1}"
 
     @staticmethod
-    def _retry_docker_obj_prune(*, obj, filters: dict):
+    def __retry_docker_obj_prune(*, obj, filters: dict):
         # Retry and exponential backoff of the prune command as only 1 prune
         # operation can occur at a time on a docker host
         num_retries = 0
@@ -167,13 +168,14 @@ class DockerConnection:
         for c in self._client.containers.list(filters=flt):
             c.stop(timeout=timeout)
 
-        self._retry_docker_obj_prune(obj=self._client.containers, filters=flt)
+        self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
+        self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop_and_cleanup()
+        pass
 
     def _pull_images(self):
         try:
@@ -210,6 +212,8 @@ class Executor(DockerConnection):
         self._stderr = ""
         self._outputs = []
 
+        self._execution_container_name = f"{self._job_label}-executor"
+
     def provision(self):
         self._pull_images()
         self._create_io_volumes()
@@ -220,16 +224,18 @@ class Executor(DockerConnection):
         self._pull_images()
         self._execute_container()
 
+    def await_completion(self):
+        container = self._client.containers.get(
+            container_id=self._execution_container_name
+        )
+        self._fetch_logs(container=container)
+
     def get_outputs(self):
         self._pull_images()
         self._get_outputs()
 
     def deprovision(self):
-        self._pull_images()
-        self._retry_docker_obj_prune(
-            obj=self._client.volumes,
-            filters={"label": f"job={self._job_label}"},
-        )
+        self.stop_and_cleanup()
 
     @property
     def stdout(self):
@@ -238,6 +244,19 @@ class Executor(DockerConnection):
     @property
     def stderr(self):
         return self._stderr
+
+    @property
+    def duration(self):
+        container = self._client.containers.get(
+            container_id=self._execution_container_name
+        )
+        if container.status == "exited":
+            state = self._client.api.inspect_container(container=container.id)
+            started_at = state["State"]["StartedAt"]
+            finished_at = state["State"]["FinishedAt"]
+            return isoparse(finished_at) - isoparse(started_at)
+        else:
+            return None
 
     @property
     def outputs(self):
@@ -256,13 +275,14 @@ class Executor(DockerConnection):
             self._client.volumes.create(name=volume, labels=self._labels)
 
     def _provision_input_volume(self):
-        with cleanup(
+        with stop(
             self._client.containers.run(
                 image=self._io_image,
                 volumes={
                     self._input_volume: {"bind": "/input/", "mode": "rw"}
                 },
                 name=f"{self._job_label}-writer",
+                remove=True,
                 detach=True,
                 tty=True,
                 labels=self._labels,
@@ -332,14 +352,14 @@ class Executor(DockerConnection):
         )
 
     def _execute_container(self) -> None:
-        with cleanup(
+        with stop(
             self._client.containers.run(
                 image=self._exec_image_sha256,
                 volumes={
                     self._input_volume: {"bind": "/input/", "mode": "ro"},
                     self._output_volume: {"bind": "/output/", "mode": "rw"},
                 },
-                name=f"{self._job_label}-executor",
+                name=self._execution_container_name,
                 detach=True,
                 labels=self._labels,
                 environment={
@@ -351,12 +371,7 @@ class Executor(DockerConnection):
             try:
                 container_state = c.wait()
             finally:
-                self._stdout = c.logs(
-                    stdout=True, stderr=False, timestamps=True, tail=LOGLINES
-                ).decode()
-                self._stderr = c.logs(
-                    stdout=False, stderr=True, timestamps=True, tail=LOGLINES
-                ).decode()
+                self._fetch_logs(container=c)
 
         exit_code = int(container_state["StatusCode"])
         if exit_code == 137:
@@ -367,15 +382,24 @@ class Executor(DockerConnection):
         elif exit_code != 0:
             raise ComponentException(user_error(self._stderr))
 
+    def _fetch_logs(self, *, container):
+        self._stdout = container.logs(
+            stdout=True, stderr=False, timestamps=True, tail=LOGLINES
+        ).decode()
+        self._stderr = container.logs(
+            stdout=False, stderr=True, timestamps=True, tail=LOGLINES
+        ).decode()
+
     def _get_outputs(self):
         """Create ComponentInterfaceValues from the output interfaces"""
-        with cleanup(
+        with stop(
             self._client.containers.run(
                 image=self._io_image,
                 volumes={
                     self._output_volume: {"bind": "/output/", "mode": "ro"}
                 },
                 name=f"{self._job_label}-reader",
+                remove=True,
                 detach=True,
                 tty=True,
                 labels=self._labels,
@@ -563,9 +587,9 @@ class Service(DockerConnection):
 
 
 @contextmanager
-def cleanup(container: ContainerApiMixin):
+def stop(container: ContainerApiMixin):
     """
-    Cleans up a docker container which is running in detached mode
+    Stops a docker container which is running in detached mode
 
     :param container: An instance of a container
     :return:
@@ -574,7 +598,7 @@ def cleanup(container: ContainerApiMixin):
         yield container
 
     finally:
-        container.remove(force=True)
+        container.stop()
 
 
 def put_file(*, container: ContainerApiMixin, src: File, dest: Path) -> ():
