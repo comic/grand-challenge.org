@@ -810,16 +810,19 @@ class ComponentJob(models.Model):
         return self.status in {
             self.STARTED,
             self.PROVISIONING,
+            self.PROVISIONED,
             self.EXECUTING,
+            self.EXECUTED,
             self.PARSING,
         }
 
     @property
     def status_context(self):
-        if self.stderr:
-            return "warning"
-        elif self.status == self.SUCCESS:
-            return "success"
+        if self.status == self.SUCCESS:
+            if self.stderr:
+                return "warning"
+            else:
+                return "success"
         elif self.status in {self.FAILURE, self.CANCELLED}:
             return "danger"
         elif self.status in {

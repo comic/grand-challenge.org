@@ -205,14 +205,24 @@ class MetricsAPIView(APIView):
             AlgorithmJob.objects.filter(status=AlgorithmJob.PENDING).count()
         )
         metrics.ALGORITHM_JOBS_ACTIVE.set(
-            AlgorithmJob.objects.filter(status=AlgorithmJob.EXECUTING).count()
+            AlgorithmJob.objects.filter(
+                status__in=[
+                    AlgorithmJob.EXECUTING,
+                    AlgorithmJob.PROVISIONING,
+                    AlgorithmJob.PARSING,
+                ]
+            ).count()
         )
         metrics.EVALUATION_JOBS_PENDING.set(
             EvaluationJob.objects.filter(status=EvaluationJob.PENDING).count()
         )
         metrics.EVALUATION_JOBS_ACTIVE.set(
             EvaluationJob.objects.filter(
-                status=EvaluationJob.EXECUTING
+                status__in=[
+                    EvaluationJob.EXECUTING,
+                    EvaluationJob.PROVISIONING,
+                    AlgorithmJob.PARSING,
+                ]
             ).count()
         )
         metrics.UPLOAD_SESSIONS_PENDING.set(
