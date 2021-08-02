@@ -16,7 +16,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
 from config.denylist import USERNAME_DENYLIST
-from grandchallenge.algorithms.tasks import ImageImportError
+from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.utils.markdown import BS4Extension
 

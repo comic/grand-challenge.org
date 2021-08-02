@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 
+from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
@@ -20,10 +21,6 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.credits.models import Credit
 from grandchallenge.subdomains.utils import reverse
-
-
-class ImageImportError(ValueError):
-    pass
 
 
 @shared_task

@@ -8,10 +8,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-
-
-class AlgorithmImageAdmin(GuardedModelAdmin):
-    exclude = ("image",)
+from grandchallenge.components.admin import ComponentImageAdmin
 
 
 def requeue_jobs(modeladmin, request, queryset):
@@ -77,7 +74,7 @@ class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
 
 
 admin.site.register(Algorithm, GuardedModelAdmin)
-admin.site.register(AlgorithmImage, AlgorithmImageAdmin)
+admin.site.register(AlgorithmImage, ComponentImageAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(
     AlgorithmPermissionRequest, AlgorithmPermissionRequestAdmin
