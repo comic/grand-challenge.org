@@ -888,6 +888,7 @@ COMPONENTS_REGISTRY_PREFIX = os.environ.get(
 COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
+COMPONENTS_MAXIMUM_IMAGE_SIZE = 10_737_418_240  # 10 gb
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )

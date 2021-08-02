@@ -1,4 +1,5 @@
 from crispy_forms.helper import FormHelper
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.forms import (
     ChoiceField,
@@ -191,6 +192,15 @@ class AlgorithmImageForm(ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.fields["chunked_upload"].widget.user = user
+
+    def clean_chunked_upload(self):
+        files = self.cleaned_data["chunked_upload"]
+        if (
+            sum([f.size for f in files])
+            > settings.COMPONENTS_MAXIMUM_IMAGE_SIZE
+        ):
+            raise ValidationError("File size limit exceeded")
+        return files
 
     class Meta:
         model = AlgorithmImage
