@@ -17,19 +17,18 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
-from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.emails import send_invalid_dockerfile_email
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
 
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-
     instance = model.objects.get(pk=pk)
 
     if not instance.image:
@@ -43,41 +42,21 @@ def validate_docker_image(*, pk: uuid.UUID, app_label: str, model_name: str):
             return
 
     try:
-        image_sha256 = _validate_docker_image_manifest(
-            model=model, instance=instance
+        image_sha256 = _validate_docker_image_manifest(instance=instance)
+    except ValidationError as e:
+        model.objects.filter(pk=instance.pk).update(
+            image_sha256="", ready=False, status=oxford_comma(e)
         )
-        ready = True
-    except ValidationError:
         send_invalid_dockerfile_email(container_image=instance)
-        image_sha256 = ""
-        ready = False
+        return
 
+    push_container_image(instance=instance)
     model.objects.filter(pk=instance.pk).update(
-        image_sha256=image_sha256, ready=ready
+        image_sha256=image_sha256, ready=True
     )
 
-    if ready:
-        # TODO: Set ready after pushing
-        on_commit(
-            push_container_image.signature(
-                kwargs={
-                    "pk": pk,
-                    "app_label": app_label,
-                    "model_name": model_name,
-                },
-                immutable=True,
-            ).apply_async
-        )
 
-
-@shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
-def push_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
-
-    if not instance.image_sha256:
-        raise RuntimeError("Image was not ready to be pushed")
-
+def push_container_image(*, instance):
     with NamedTemporaryFile(suffix=".tar") as o:
         with instance.image.open(mode="rb") as im:
             # Rewrite to tar as crane cannot handle gz
@@ -133,45 +112,43 @@ def _decompress_tarball(*, in_fileobj, out_fileobj):
             ot.addfile(member, extracted)
 
 
-def _validate_docker_image_manifest(*, model, instance) -> str:
+def _validate_docker_image_manifest(*, instance) -> str:
     manifest = _extract_docker_image_file(
-        model=model, instance=instance, filename="manifest.json"
+        instance=instance, filename="manifest.json"
     )
     manifest = json.loads(manifest)
 
     if len(manifest) != 1:
-        model.objects.filter(pk=instance.pk).update(
-            status=(
-                f"The container image file should only have 1 image. "
-                f"This file contains {len(manifest)}."
-            )
+        raise ValidationError(
+            f"The container image file should only have 1 image. "
+            f"This file contains {len(manifest)}."
         )
-        raise ValidationError("Invalid Dockerfile")
 
     image_sha256 = manifest[0]["Config"][:64]
 
     config = _extract_docker_image_file(
-        model=model, instance=instance, filename=f"{image_sha256}.json"
+        instance=instance, filename=f"{image_sha256}.json"
     )
     config = json.loads(config)
 
-    if "User" not in config["config"] or str(
-        config["config"]["User"].lower()
-    ) in ["", "root", "0"]:
-        model.objects.filter(pk=instance.pk).update(
-            status=(
-                "The container runs as root. Please add a user, group and "
-                "USER instruction to your Dockerfile, rebuild, test and "
-                "upload the container again, see "
-                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user"
-            )
+    user = str(config["config"].get("User", "")).lower()
+
+    if (
+        user in ["", "root", "0"]
+        or user.startswith("0:")
+        or user.startswith("root:")
+    ):
+        raise ValidationError(
+            "The container runs as root. Please add a user, group and "
+            "USER instruction to your Dockerfile, rebuild, test and "
+            "upload the container again, see "
+            "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user"
         )
-        raise ValidationError("Invalid Dockerfile")
 
     return f"sha256:{image_sha256}"
 
 
-def _extract_docker_image_file(*, model, instance, filename: str):
+def _extract_docker_image_file(*, instance, filename: str):
     """Extract a file from the root of a tarball."""
     try:
         with instance.image.open(mode="rb") as im, tarfile.open(
@@ -181,13 +158,10 @@ def _extract_docker_image_file(*, model, instance, filename: str):
             file = t.extractfile(member).read()
         return file
     except (KeyError, tarfile.ReadError):
-        model.objects.filter(pk=instance.pk).update(
-            status=(
-                f"{filename} not found at the root of the container image "
-                f"file. Was this created with docker save?"
-            )
+        raise ValidationError(
+            f"{filename} not found at the root of the container image "
+            f"file. Was this created with docker save?"
         )
-        raise ValidationError("Invalid Dockerfile")
 
 
 def retry_if_dropped(func):
