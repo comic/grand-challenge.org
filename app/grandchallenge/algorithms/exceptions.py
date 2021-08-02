@@ -1,0 +1,2 @@
+class ImageImportError(Exception):
+    pass

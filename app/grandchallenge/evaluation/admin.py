@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from grandchallenge.components.admin import ComponentImageAdmin
 from grandchallenge.evaluation.models import (
     Evaluation,
     Method,
@@ -12,15 +13,6 @@ class PhaseAdmin(admin.ModelAdmin):
     ordering = ("challenge",)
     list_display = ("pk", "challenge", "title", "slug", "modified")
     search_fields = ("pk",)
-
-
-class MethodAdmin(admin.ModelAdmin):
-    ordering = ("-created",)
-    list_display = ("pk", "created", "phase", "ready", "status")
-    list_filter = ("phase__challenge__short_name",)
-    search_fields = ("pk",)
-    readonly_fields = ("creator", "phase")
-    exclude = ("image",)
 
 
 class SubmissionAdmin(admin.ModelAdmin):
@@ -67,6 +59,6 @@ class EvaluationAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Phase, PhaseAdmin)
-admin.site.register(Method, MethodAdmin)
+admin.site.register(Method, ComponentImageAdmin)
 admin.site.register(Submission, SubmissionAdmin)
 admin.site.register(Evaluation, EvaluationAdmin)

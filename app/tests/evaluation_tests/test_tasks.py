@@ -108,11 +108,7 @@ def test_container_pushing(evaluation_image):
     container, sha256 = evaluation_image
     method = MethodFactory(image__from_path=container)
 
-    push_container_image(
-        pk=method.pk,
-        app_label=method._meta.app_label,
-        model_name=method._meta.model_name,
-    )
+    push_container_image(instance=method)
 
     response = requests.get(
         f"http://{settings.COMPONENTS_REGISTRY_URL}/v2/_catalog"

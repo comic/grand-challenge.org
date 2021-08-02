@@ -6,7 +6,6 @@ from itertools import product
 from urllib.parse import quote
 
 import sentry_sdk
-from celery.exceptions import Reject
 from corsheaders.defaults import default_headers
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
@@ -17,6 +16,8 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
 from config.denylist import USERNAME_DENYLIST
+from grandchallenge.algorithms.exceptions import ImageImportError
+from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.utils.markdown import BS4Extension
 
 
@@ -749,7 +750,7 @@ if SENTRY_DSN:
         traces_sample_rate=float(
             os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
         ),
-        ignore_errors=[Reject],
+        ignore_errors=[PriorStepFailed, ImageImportError],
     )
     ignore_logger("django.security.DisallowedHost")
     ignore_logger("aws_xray_sdk")
@@ -887,6 +888,7 @@ COMPONENTS_REGISTRY_PREFIX = os.environ.get(
 COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
+COMPONENTS_MAXIMUM_IMAGE_SIZE = 10_737_418_240  # 10 gb
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )

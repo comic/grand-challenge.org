@@ -7,6 +7,7 @@ from django.core.files.base import File
 from django.test import TestCase
 from django_capture_on_commit_callbacks import capture_on_commit_callbacks
 
+from grandchallenge.algorithms.exceptions import ImageImportError
 from grandchallenge.algorithms.models import DEFAULT_INPUT_INTERFACE_SLUG, Job
 from grandchallenge.algorithms.tasks import (
     add_images_to_component_interface_value,
@@ -441,7 +442,7 @@ def test_algorithm_input_image_multiple_files(
     civ = ComponentInterfaceValue.objects.create(interface=ci)
     job.inputs.add(civ)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ImageImportError):
         with capture_on_commit_callbacks(execute=True):
             run_algorithm_job_for_inputs(
                 job_pk=job.pk, upload_pks={civ.pk: us.pk}
@@ -470,7 +471,7 @@ def test_add_images_to_component_interface_value():
 
     civ = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
 
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ImageImportError) as err:
         add_images_to_component_interface_value(
             component_interface_value_pk=civ.pk, upload_session_pk=us.pk
         )
