@@ -1,9 +1,11 @@
 import json
 import logging
 import re
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 from django import forms
 from django.conf import settings
@@ -738,6 +740,7 @@ class ComponentJob(models.Model):
         stdout: str = "",
         stderr: str = "",
         error_message="",
+        duration: Optional[timedelta] = None,
     ):
         self.status = status
 
@@ -760,7 +763,11 @@ class ComponentJob(models.Model):
             in [self.EXECUTED, self.SUCCESS, self.FAILURE, self.CANCELLED]
             and self.completed_at is None
         ):
-            self.completed_at = now()
+            if duration and self.started_at:
+                # TODO: maybe add separate timings for provisioning, executing, parsing and total
+                self.completed_at = self.started_at + duration
+            else:
+                self.completed_at = now()
 
         self.save()
 

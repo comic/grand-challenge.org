@@ -14,6 +14,7 @@ from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from time import sleep
 
 import docker
+from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -243,6 +244,19 @@ class Executor(DockerConnection):
     @property
     def stderr(self):
         return self._stderr
+
+    @property
+    def duration(self):
+        container = self._client.containers.get(
+            container_id=self._execution_container_name
+        )
+        if container.status == "exited":
+            state = self._client.api.inspect_container(container=container.id)
+            started_at = state["State"]["StartedAt"]
+            finished_at = state["State"]["FinishedAt"]
+            return isoparse(finished_at) - isoparse(started_at)
+        else:
+            return None
 
     @property
     def outputs(self):

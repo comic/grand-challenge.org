@@ -387,7 +387,10 @@ def await_job_completion(
         raise
     else:
         job.update_status(
-            status=job.EXECUTED, stdout=ev.stdout, stderr=ev.stderr
+            status=job.EXECUTED,
+            stdout=ev.stdout,
+            stderr=ev.stderr,
+            duration=ev.duration,
         )
 
 
