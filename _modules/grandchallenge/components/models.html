@@ -973,16 +973,19 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">PROVISIONING</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PROVISIONED</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">EXECUTING</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">EXECUTED</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">PARSING</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;warning&quot;</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;warning&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">}:</span>
             <span class="k">return</span> <span class="s2">&quot;danger&quot;</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
