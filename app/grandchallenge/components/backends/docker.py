@@ -195,7 +195,7 @@ class DockerConnection:
             self._client.api.timeout = old_timeout
 
 
-class Executor(DockerConnection):
+class DockerExecutor(DockerConnection):
     def __init__(
         self, *args, input_civs, input_prefixes, output_interfaces, **kwargs,
     ):
