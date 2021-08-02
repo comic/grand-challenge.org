@@ -33,10 +33,10 @@
             <li>
                 {{ interface }} at
                 {% if interface.is_image_kind %}
-                    <code>{{ interface.input_path }}/&lt;uuid&gt;.mha</code> or
-                    <code>{{ interface.input_path }}/&lt;uuid&gt;.tif</code>
+                    <code>/input/{{ interface.relative_path }}/&lt;uuid&gt;.mha</code> or
+                    <code>/input/{{ interface.relative_path }}/&lt;uuid&gt;.tif</code>
                 {% else %}
-                    <code>{{ interface.input_path }}</code>
+                    <code>/input/{{ interface.relative_path }}</code>
                 {% endif %}
             </li>
         {% endfor %}
@@ -51,10 +51,10 @@
             <li>
                 {{ interface }} to
                 {% if interface.is_image_kind %}
-                    <code>{{ interface.output_path }}/&lt;uuid&gt;.mha</code> or
-                    <code>{{ interface.output_path }}/&lt;uuid&gt;.tif</code>
+                    <code>/output/{{ interface.relative_path }}/&lt;uuid&gt;.mha</code> or
+                    <code>/output/{{ interface.relative_path }}/&lt;uuid&gt;.tif</code>
                 {% else %}
-                    <code>{{ interface.output_path }}</code>
+                    <code>/output/{{ interface.relative_path }}</code>
                 {% endif %}
             </li>
         {% endfor %}
