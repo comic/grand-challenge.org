@@ -10,7 +10,6 @@ from typing import Dict
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import shared_task
-from celery.exceptions import Reject
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -22,6 +21,7 @@ from django.utils.timezone import now
 
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.emails import send_invalid_dockerfile_email
+from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.jqfileupload.widgets.uploader import StagedAjaxFile
 
@@ -231,7 +231,7 @@ def provision_job(
     if job.status in [job.PENDING, job.RETRY]:
         job.update_status(status=job.PROVISIONING)
     else:
-        raise Reject("Job is not ready for provisioning")
+        raise PriorStepFailed("Job is not ready for provisioning")
 
     try:
         Executor = import_string(backend)  # noqa: N806
@@ -268,12 +268,12 @@ def execute_job(
         job.update_status(status=job.EXECUTING)
     else:
         deprovision_job(job=job, backend=backend)
-        raise Reject("Job is not set to be executed")
+        raise PriorStepFailed("Job is not set to be executed")
 
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
-        raise Reject(msg)
+        raise PriorStepFailed(msg)
     try:
         Executor = import_string(backend)  # noqa: N806
         with Executor(**_get_executor_kwargs(job=job)) as ev:
@@ -335,7 +335,7 @@ def parse_job_outputs(
         job.update_status(status=job.PARSING)
     else:
         deprovision_job(job=job, backend=backend)
-        raise Reject("Job is not ready for output parsing")
+        raise PriorStepFailed("Job is not ready for output parsing")
 
     try:
         Executor = import_string(backend)  # noqa: N806
