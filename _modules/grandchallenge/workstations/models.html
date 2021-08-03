@@ -581,10 +581,10 @@
 <span class="sd">            The service for this session, could be active or inactive.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Service</span><span class="p">(</span>
-            <span class="n">job_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
-            <span class="n">job_class</span><span class="o">=</span><span class="n">Session</span><span class="p">,</span>
-            <span class="n">exec_image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">image</span><span class="p">,</span>
+            <span class="n">job_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">exec_image_sha256</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">image_sha256</span><span class="p">,</span>
+            <span class="n">exec_image_repo_tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">repo_tag</span><span class="p">,</span>
+            <span class="n">exec_image_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">image</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
