@@ -775,13 +775,7 @@ class ComponentJob(models.Model):
     @property
     def executor_kwargs(self):
         return {
-            "job_id": str(self.pk),
-            "job_class": type(self),
-            "input_civs": self.inputs.prefetch_related(
-                "interface", "image__files"
-            ).all(),
-            "input_prefixes": self.input_prefixes,
-            "output_interfaces": self.output_interfaces,
+            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             "exec_image": self.container.image,
             "exec_image_sha256": self.container.image_sha256,
             "memory_limit": self.container.requires_memory_gb,

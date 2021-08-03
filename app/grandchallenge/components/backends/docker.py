@@ -19,10 +19,9 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import transaction
-from django.db.models import Model
 from django.utils._os import safe_join
 from docker.api.container import ContainerApiMixin
-from docker.errors import APIError, ImageNotFound, NotFound
+from docker.errors import APIError, DockerException, ImageNotFound, NotFound
 from docker.tls import TLSConfig
 from docker.types import LogConfig
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
@@ -70,47 +69,56 @@ class DockerConnection:
         self,
         *,
         job_id: str,
-        job_class: Model,
         exec_image: File,
         exec_image_sha256: str,
         memory_limit: int = settings.COMPONENTS_MEMORY_LIMIT,
     ):
         super().__init__()
         self._job_id = job_id
-        self._job_label = f"{job_class._meta.app_label}-{job_class._meta.model_name}-{job_id}"
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
+        self._memory_limit = min(
+            memory_limit, settings.COMPONENTS_MEMORY_LIMIT
+        )
 
-        client_kwargs = {"base_url": settings.COMPONENTS_DOCKER_BASE_URL}
+        self.__client = None
 
-        if settings.COMPONENTS_DOCKER_TLSVERIFY:
-            tlsconfig = TLSConfig(
-                verify=True,
-                client_cert=(
-                    settings.COMPONENTS_DOCKER_TLSCERT,
-                    settings.COMPONENTS_DOCKER_TLSKEY,
-                ),
-                ca_cert=settings.COMPONENTS_DOCKER_TLSCACERT,
-            )
-            client_kwargs.update({"tls": tlsconfig})
+    @property
+    def _client(self):
+        if self.__client is None:
+            client_kwargs = {"base_url": settings.COMPONENTS_DOCKER_BASE_URL}
 
-        self._client = docker.DockerClient(**client_kwargs)
+            if settings.COMPONENTS_DOCKER_TLSVERIFY:
+                tlsconfig = TLSConfig(
+                    verify=True,
+                    client_cert=(
+                        settings.COMPONENTS_DOCKER_TLSCERT,
+                        settings.COMPONENTS_DOCKER_TLSKEY,
+                    ),
+                    ca_cert=settings.COMPONENTS_DOCKER_TLSCACERT,
+                )
+                client_kwargs.update({"tls": tlsconfig})
 
-        self._labels = {"job": f"{self._job_label}", "traefik.enable": "false"}
+            self.__client = docker.DockerClient(**client_kwargs)
 
-        # Do not allow a component to use more memory that the limit
-        memory_limit = min(memory_limit, settings.COMPONENTS_MEMORY_LIMIT)
+        return self.__client
 
-        self._run_kwargs = {
+    @property
+    def _labels(self):
+        return {"job": f"{self._job_id}", "traefik.enable": "false"}
+
+    @property
+    def _run_kwargs(self):
+        return {
             "init": True,
             "network_disabled": True,
-            "mem_limit": f"{memory_limit}g",
+            "mem_limit": f"{self._memory_limit}g",
             # Set to the same as mem_limit to avoid using swap
-            "memswap_limit": f"{memory_limit}g",
+            "memswap_limit": f"{self._memory_limit}g",
             "cpu_period": settings.COMPONENTS_CPU_PERIOD,
             "cpu_quota": settings.COMPONENTS_CPU_QUOTA,
             "cpu_shares": settings.COMPONENTS_CPU_SHARES,
-            "cpuset_cpus": self.cpuset_cpus,
+            "cpuset_cpus": self._cpuset_cpus,
             "runtime": settings.COMPONENTS_DOCKER_RUNTIME,
             "cap_drop": ["all"],
             "security_opt": ["no-new-privileges"],
@@ -121,7 +129,7 @@ class DockerConnection:
         }
 
     @property
-    def cpuset_cpus(self):
+    def _cpuset_cpus(self):
         """
         The cpuset_cpus as a string.
 
@@ -163,7 +171,7 @@ class DockerConnection:
 
     def stop_and_cleanup(self, timeout: int = 10):
         """Stops and prunes all containers associated with this job."""
-        flt = {"label": f"job={self._job_label}"}
+        flt = {"label": f"job={self._job_id}"}
 
         for c in self._client.containers.list(filters=flt):
             c.stop(timeout=timeout)
@@ -190,24 +198,12 @@ class DockerConnection:
 
 
 class DockerExecutor(DockerConnection):
-    def __init__(
-        self, *args, input_civs, input_prefixes, output_interfaces, **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self._input_civs = input_civs
-        self._input_prefixes = input_prefixes
-        self._output_interfaces = output_interfaces
-        self._io_image = settings.COMPONENTS_IO_IMAGE
-
-        self._input_volume = f"{self._job_label}-input"
-        self._output_volume = f"{self._job_label}-output"
-
-        self._execution_container_name = f"{self._job_label}-executor"
-
-    def provision(self):
+    def provision(self, *, input_civs, input_prefixes):
         self._pull_images()
         self._create_io_volumes()
-        self._provision_input_volume()
+        self._provision_input_volume(
+            input_civs=input_civs, input_prefixes=input_prefixes
+        )
         self._chmod_volumes()
 
     def execute(self):
@@ -217,37 +213,63 @@ class DockerExecutor(DockerConnection):
     def await_completion(self):
         pass
 
-    def get_outputs(self):
+    def get_outputs(self, *, output_interfaces):
         self._pull_images()
-        return self._get_outputs()
+        return self._get_outputs(output_interfaces=output_interfaces)
 
     def deprovision(self):
         self.stop_and_cleanup()
 
     @property
     def stdout(self):
-        container = self._execution_container
-        return container.logs(
-            stdout=True, stderr=False, timestamps=True, tail=LOGLINES
-        ).decode()
+        try:
+            container = self._execution_container
+            return container.logs(
+                stdout=True, stderr=False, timestamps=True, tail=LOGLINES
+            ).decode()
+        except DockerException as e:
+            logger.warning(f"Could not fetch stdout: {e}")
+            return ""
 
     @property
     def stderr(self):
-        container = self._execution_container
-        return container.logs(
-            stdout=False, stderr=True, timestamps=True, tail=LOGLINES
-        ).decode()
+        try:
+            container = self._execution_container
+            return container.logs(
+                stdout=False, stderr=True, timestamps=True, tail=LOGLINES
+            ).decode()
+        except DockerException as e:
+            logger.warning(f"Could not fetch stderr: {e}")
+            return ""
 
     @property
     def duration(self):
-        container = self._execution_container
-        if container.status == "exited":
-            state = self._client.api.inspect_container(container=container.id)
-            started_at = state["State"]["StartedAt"]
-            finished_at = state["State"]["FinishedAt"]
-            return isoparse(finished_at) - isoparse(started_at)
-        else:
+        try:
+            container = self._execution_container
+            if container.status == "exited":
+                state = self._client.api.inspect_container(
+                    container=container.id
+                )
+                started_at = state["State"]["StartedAt"]
+                finished_at = state["State"]["FinishedAt"]
+                return isoparse(finished_at) - isoparse(started_at)
+            else:
+                return None
+        except DockerException as e:
+            logger.warning(f"Could not inspect container: {e}")
             return None
+
+    @property
+    def _input_volume_name(self):
+        return f"{self._job_id}-input"
+
+    @property
+    def _output_volume_name(self):
+        return f"{self._job_id}-output"
+
+    @property
+    def _execution_container_name(self):
+        return f"{self._job_id}-executor"
 
     @property
     def _execution_container(self):
@@ -257,24 +279,24 @@ class DockerExecutor(DockerConnection):
 
     def _pull_images(self):
         try:
-            self._client.images.get(name=self._io_image)
+            self._client.images.get(name=settings.COMPONENTS_IO_IMAGE)
         except ImageNotFound:
-            self._client.images.pull(repository=self._io_image)
+            self._client.images.pull(repository=settings.COMPONENTS_IO_IMAGE)
 
         super()._pull_images()
 
     def _create_io_volumes(self):
-        for volume in [self._input_volume, self._output_volume]:
+        for volume in [self._input_volume_name, self._output_volume_name]:
             self._client.volumes.create(name=volume, labels=self._labels)
 
-    def _provision_input_volume(self):
+    def _provision_input_volume(self, *, input_civs, input_prefixes):
         with stop(
             self._client.containers.run(
-                image=self._io_image,
+                image=settings.COMPONENTS_IO_IMAGE,
                 volumes={
-                    self._input_volume: {"bind": "/input/", "mode": "rw"}
+                    self._input_volume_name: {"bind": "/input/", "mode": "rw"}
                 },
-                name=f"{self._job_label}-writer",
+                name=f"{self._job_id}-writer",
                 remove=True,
                 detach=True,
                 tty=True,
@@ -282,14 +304,18 @@ class DockerExecutor(DockerConnection):
                 **self._run_kwargs,
             )
         ) as writer:
-            self._copy_input_files(writer=writer)
+            self._copy_input_files(
+                writer=writer,
+                input_civs=input_civs,
+                input_prefixes=input_prefixes,
+            )
 
-    def _copy_input_files(self, *, writer):
-        for civ in self._input_civs:
+    def _copy_input_files(self, *, writer, input_civs, input_prefixes):
+        for civ in input_civs:
             prefix = "/input/"
 
-            if str(civ.pk) in self._input_prefixes:
-                prefix = safe_join(prefix, self._input_prefixes[str(civ.pk)])
+            if str(civ.pk) in input_prefixes:
+                prefix = safe_join(prefix, input_prefixes[str(civ.pk)])
 
             if civ.decompress:
                 dest = Path(
@@ -332,12 +358,12 @@ class DockerExecutor(DockerConnection):
     def _chmod_volumes(self):
         """Ensure that the i/o directories are writable."""
         self._client.containers.run(
-            image=self._io_image,
+            image=settings.COMPONENTS_IO_IMAGE,
             volumes={
-                self._input_volume: {"bind": "/input/", "mode": "rw"},
-                self._output_volume: {"bind": "/output/", "mode": "rw"},
+                self._input_volume_name: {"bind": "/input/", "mode": "rw"},
+                self._output_volume_name: {"bind": "/output/", "mode": "rw"},
             },
-            name=f"{self._job_label}-chmod-volumes",
+            name=f"{self._job_id}-chmod-volumes",
             command="chmod -R 0777 /input/ /output/",
             remove=True,
             labels=self._labels,
@@ -349,8 +375,11 @@ class DockerExecutor(DockerConnection):
             self._client.containers.run(
                 image=self._exec_image_sha256,
                 volumes={
-                    self._input_volume: {"bind": "/input/", "mode": "ro"},
-                    self._output_volume: {"bind": "/output/", "mode": "rw"},
+                    self._input_volume_name: {"bind": "/input/", "mode": "ro"},
+                    self._output_volume_name: {
+                        "bind": "/output/",
+                        "mode": "rw",
+                    },
                 },
                 name=self._execution_container_name,
                 detach=True,
@@ -372,17 +401,20 @@ class DockerExecutor(DockerConnection):
         elif exit_code != 0:
             raise ComponentException(user_error(self.stderr))
 
-    def _get_outputs(self):
+    def _get_outputs(self, *, output_interfaces):
         """Create ComponentInterfaceValues from the output interfaces"""
         outputs = []
 
         with stop(
             self._client.containers.run(
-                image=self._io_image,
+                image=settings.COMPONENTS_IO_IMAGE,
                 volumes={
-                    self._output_volume: {"bind": "/output/", "mode": "ro"}
+                    self._output_volume_name: {
+                        "bind": "/output/",
+                        "mode": "ro",
+                    }
                 },
-                name=f"{self._job_label}-reader",
+                name=f"{self._job_id}-reader",
                 remove=True,
                 detach=True,
                 tty=True,
@@ -393,7 +425,7 @@ class DockerExecutor(DockerConnection):
             with transaction.atomic():
                 # Atomic block required as create_instance needs to
                 # create interfaces in order to store the files
-                for interface in self._output_interfaces.all():
+                for interface in output_interfaces:
                     if interface.is_image_kind:
                         res = self._create_images_result(
                             interface=interface, reader=reader
@@ -488,16 +520,17 @@ class DockerExecutor(DockerConnection):
 
 
 class Service(DockerConnection):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Allow networking for service containers
-        self._run_kwargs.update(
+    @property
+    def _run_kwargs(self):
+        kwargs = super()._run_kwargs
+        kwargs.update(
             {
+                # Allow networking for service containers
                 "network_disabled": False,
                 "network": settings.WORKSTATIONS_NETWORK_NAME,
             }
         )
+        return kwargs
 
     @property
     def extra_hosts(self):
@@ -521,7 +554,7 @@ class Service(DockerConnection):
 
     @property
     def container(self):
-        return self._client.containers.get(f"{self._job_label}-service")
+        return self._client.containers.get(f"{self._job_id}-service")
 
     def logs(self) -> str:
         """Get the container logs for this service."""
@@ -562,7 +595,7 @@ class Service(DockerConnection):
 
         self._client.containers.run(
             image=self._exec_image_sha256,
-            name=f"{self._job_label}-service",
+            name=f"{self._job_id}-service",
             remove=True,
             detach=True,
             labels={**self._labels, **traefik_labels},

@@ -418,8 +418,7 @@ class Session(UUIDModel):
             The service for this session, could be active or inactive.
         """
         return Service(
-            job_id=self.pk,
-            job_class=Session,
+            job_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             exec_image=self.workstation_image.image,
             exec_image_sha256=self.workstation_image.image_sha256,
         )

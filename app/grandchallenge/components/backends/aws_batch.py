@@ -3,29 +3,16 @@ from django.conf import settings
 
 class AWSBatchExecutor:
     def __init__(
-        self,
-        *,
-        job_id,
-        job_class,
-        input_civs,
-        input_prefixes,
-        output_interfaces,
-        exec_image,
-        exec_image_sha256,
-        memory_limit,
+        self, *, job_id, exec_image, exec_image_sha256, memory_limit,
     ):
         self._job_id = job_id
-        self._job_label = f"{job_class._meta.app_label}-{job_class._meta.model_name}-{job_id}"
         self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
-        self._input_civs = input_civs
-        self._input_prefixes = input_prefixes
-        self._output_interfaces = output_interfaces
         self._memory_limit = min(
             memory_limit, settings.COMPONENTS_MEMORY_LIMIT
         )
 
-    def provision(self):
+    def provision(self, *, input_civs, input_prefixes):
         raise NotImplementedError
 
     def execute(self):
@@ -34,7 +21,7 @@ class AWSBatchExecutor:
     def await_completion(self):
         raise NotImplementedError
 
-    def get_outputs(self):
+    def get_outputs(self, *, ouput_interfaces):
         raise NotImplementedError
 
     def deprovision(self):

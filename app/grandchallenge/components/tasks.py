@@ -223,7 +223,12 @@ def provision_job(
         raise PriorStepFailed("Job is not ready for provisioning")
 
     try:
-        executor.provision()
+        executor.provision(
+            input_civs=job.inputs.prefetch_related(
+                "interface", "image__files"
+            ).all(),
+            input_prefixes=job.input_prefixes,
+        )
     except Exception:
         job.update_status(
             status=job.FAILURE, error_message="Could not provision resources",
@@ -395,7 +400,9 @@ def parse_job_outputs(
         raise PriorStepFailed("Job is not ready for output parsing")
 
     try:
-        outputs = executor.get_outputs()
+        outputs = executor.get_outputs(
+            output_interfaces=job.output_interfaces.all()
+        )
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE, error_message=str(e),
