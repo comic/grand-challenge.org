@@ -822,6 +822,13 @@ class ComponentJob(models.Model):
         if getattr(self.container, "queue_override", None):
             kwargs["options"].update({"queue": self.container.queue_override})
 
+            if self.container.queue_override == "acks-late-2xlarge":
+                kwargs["kwargs"].update(
+                    {
+                        "backend": "grandchallenge.components.backends.aws_batch.AWSBatchExecutor"
+                    }
+                )
+
         return (
             provision_job.signature(**kwargs)
             | execute_job.signature(**kwargs)

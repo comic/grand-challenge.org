@@ -507,7 +507,7 @@ class DockerExecutor(DockerConnection):
         try:
             file = get_file(container=reader, src=output_file)
         except NotFound:
-            raise ComponentException(f"File {output_file} was not produced.")
+            raise ComponentException(f"File {output_file} was not produced")
 
         try:
             result = json.loads(

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from django.core.files.base import ContentFile
@@ -79,7 +80,13 @@ def test_provision(tmp_path, settings):
     civs = [
         ComponentInterfaceValueFactory(interface=interfaces[0], value=True),
         ComponentInterfaceValueFactory(
-            interface=interfaces[1], image=ImageFileFactory().image
+            interface=interfaces[1],
+            image=ImageFileFactory(
+                file__from_path=Path(__file__).parent.parent
+                / "algorithms_tests"
+                / "resources"
+                / "input_file.tif"
+            ).image,
         ),
         ComponentInterfaceValueFactory(interface=interfaces[2]),
     ]
@@ -108,7 +115,7 @@ def test_provision(tmp_path, settings):
         "foo/bar/12345-67890/input/test/bool.json",
         "foo/bar/12345-67890/input/images",
         "foo/bar/12345-67890/input/images/test-image",
-        "foo/bar/12345-67890/input/images/test-image/example.dat",
+        "foo/bar/12345-67890/input/images/test-image/input_file.tif",
         "foo/bar/12345-67890/output",
         "foo/bar/12345-67890/output/metrics.json",
         "foo/bar/12345-67890/output/results.json",
@@ -117,8 +124,12 @@ def test_provision(tmp_path, settings):
         "foo/bar/12345-67890/output/test/bool.json",
         "foo/bar/12345-67890/output/images",
         "foo/bar/12345-67890/output/images/test-image",
-        "foo/bar/12345-67890/output/images/test-image/example.dat",
+        "foo/bar/12345-67890/output/images/test-image/input_file.tif",
     }
+
+    # Exclude the CIV reading as this is unsupported
+    outputs = executor.get_outputs(output_interfaces=interfaces[:2])
+    assert len(outputs) == 2
 
     executor.deprovision()
 

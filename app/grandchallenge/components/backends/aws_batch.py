@@ -1,10 +1,17 @@
 import json
 import shutil
+from json import JSONDecodeError
 from pathlib import Path
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files import File
+from django.db import transaction
 from django.utils._os import safe_join
+from panimg.image_builders import image_builder_mhd, image_builder_tiff
+
+from grandchallenge.cases.tasks import import_images
+from grandchallenge.components.backends.exceptions import ComponentException
 
 
 class AWSBatchExecutor:
@@ -40,7 +47,20 @@ class AWSBatchExecutor:
         pass
 
     def get_outputs(self, *, output_interfaces):
-        raise NotImplementedError
+        outputs = []
+
+        with transaction.atomic():
+            # Atomic block required as create_instance needs to
+            # create interfaces in order to store the files
+            for interface in output_interfaces:
+                if interface.is_image_kind:
+                    res = self._create_images_result(interface=interface)
+                else:
+                    res = self._create_file_result(interface=interface)
+
+                outputs.append(res)
+
+        return outputs
 
     def deprovision(self):
         shutil.rmtree(self._job_directory)
@@ -136,3 +156,69 @@ class AWSBatchExecutor:
                 self._output_directory / f"{output_filename}.json", "w"
             ) as f:
                 f.write(json.dumps(res))
+
+    def _create_images_result(self, *, interface):
+        base_dir = Path(
+            safe_join(self._output_directory, interface.relative_path)
+        )
+        output_files = [f for f in base_dir.glob("*") if f.is_file()]
+
+        if not output_files:
+            raise ComponentException(f"{base_dir} is empty")
+
+        importer_result = import_images(
+            input_directory=base_dir,
+            builders=[image_builder_mhd, image_builder_tiff],
+            # TODO add option to not recurse subdirectories
+        )
+
+        if len(importer_result.new_images) == 0:
+            raise ComponentException(f"No images imported from {base_dir}")
+        elif len(importer_result.new_images) > 1:
+            raise ComponentException(
+                f"Only 1 image should be produced in {base_dir}, "
+                f"we found {len(importer_result.new_images)}"
+            )
+
+        try:
+            civ = interface.create_instance(
+                image=next(iter(importer_result.new_images))
+            )
+        except ValidationError:
+            raise ComponentException(
+                f"The image produced in {base_dir} is not valid"
+            )
+
+        return civ
+
+    def _create_file_result(self, *, interface):
+        output_file = Path(
+            safe_join(self._output_directory, interface.relative_path)
+        )
+
+        if (
+            output_file.is_symlink()
+            or not output_file.is_file()
+            or not output_file.exists()
+        ):
+            raise ComponentException(f"File {output_file} was not produced")
+
+        try:
+            with open(output_file, "rb") as f:
+                result = json.loads(
+                    f.read().decode("utf-8"),
+                    parse_constant=lambda x: None,  # Removes -inf, inf and NaN
+                )
+        except JSONDecodeError:
+            raise ComponentException(
+                f"The file produced at {output_file} is not valid json"
+            )
+
+        try:
+            civ = interface.create_instance(value=result)
+        except ValidationError:
+            raise ComponentException(
+                f"The file produced at {output_file} is not valid"
+            )
+
+        return civ
