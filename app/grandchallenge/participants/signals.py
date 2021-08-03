@@ -1,6 +1,7 @@
 from actstream import action
 from actstream.actions import follow, is_following
 from actstream.models import Follow
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
@@ -45,4 +46,7 @@ def process_registration(
 
 @receiver(pre_delete, sender=RegistrationRequest)
 def clean_up_request_follows(instance, **__):
-    Follow.objects.filter(object_id=instance.pk).delete()
+    ct = ContentType.objects.filter(
+        app_label=instance._meta.app_label, model=instance._meta.model_name
+    ).get()
+    Follow.objects.filter(object_id=instance.pk, content_type=ct).delete()

@@ -6,6 +6,7 @@ from actstream.actions import follow, unfollow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField, CICharField
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_slug
@@ -606,4 +607,7 @@ class ExternalChallenge(ChallengeBase):
 @receiver(pre_delete, sender=Challenge)
 @receiver(pre_delete, sender=ExternalChallenge)
 def delete_challenge_follows(*_, instance: Challenge, **__):
-    Follow.objects.filter(object_id=instance.pk).delete()
+    ct = ContentType.objects.filter(
+        app_label=instance._meta.app_label, model=instance._meta.model_name
+    ).get()
+    Follow.objects.filter(object_id=instance.pk, content_type=ct).delete()

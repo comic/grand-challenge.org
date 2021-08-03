@@ -6,6 +6,7 @@ from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Min, Sum
@@ -188,7 +189,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel):
         self.assign_workstation_permissions()
 
     def delete(self):
-        Follow.objects.filter(object_id=self.pk).delete()
+        ct = ContentType.objects.filter(
+            app_label=self._meta.app_label, model=self._meta.model_name
+        ).get()
+        Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
         super().delete()
 
     def create_groups(self):
@@ -611,7 +615,10 @@ class AlgorithmPermissionRequest(RequestBase):
             )
 
     def delete(self):
-        Follow.objects.filter(object_id=self.pk).delete()
+        ct = ContentType.objects.filter(
+            app_label=self._meta.app_label, model=self._meta.model_name
+        ).get()
+        Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
         super().delete()
 
     class Meta(RequestBase.Meta):

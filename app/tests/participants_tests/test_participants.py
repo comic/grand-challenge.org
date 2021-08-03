@@ -1,5 +1,6 @@
 import pytest
 from actstream.actions import is_following
+from actstream.models import Follow
 
 from grandchallenge.notifications.models import Notification
 from grandchallenge.participants.models import RegistrationRequest
@@ -69,7 +70,7 @@ def test_duplicate_registration_denied(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_participation_request_notifications(client):
+def test_participation_request_notification_flow(client):
     user = UserFactory()
     ch = ChallengeFactory()
     assert is_following(ch.creator, ch)
@@ -83,9 +84,10 @@ def test_participation_request_notifications(client):
         user=user,
     )
     assert RegistrationRequest.objects.count() == 1
+    reg = RegistrationRequest.objects.get()
     # requester follows the request object
-    assert is_following(user, RegistrationRequest.objects.get())
-    # when participation requests are automatically accepted,
+    assert is_following(user, reg)
+    # when participation request review is disabled,
     # no notification for admin should be created, only for the user
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user != ch.creator
@@ -95,6 +97,10 @@ def test_participation_request_notifications(client):
     ch.require_participant_review = True
     ch.save()
     Notification.objects.all().delete()
+
+    # when registration request is deleted, Follow is deleted as well
+    reg.delete()
+    assert not Follow.objects.filter(object_id=reg.pk).all() == 0
 
     # create new permission request
     user2 = UserFactory()

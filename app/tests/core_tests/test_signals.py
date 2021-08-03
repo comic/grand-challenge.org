@@ -1,10 +1,13 @@
 import pytest
-from actstream.actions import is_following
+from actstream.actions import follow, is_following
+from actstream.models import Follow
 from django.contrib.auth.models import Group
+from machina.apps.forum.models import Forum
 
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.factories import UserFactory
+from tests.notifications_tests.factories import ForumFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
 
@@ -54,3 +57,16 @@ def test_update_editor_follows_signal(client, factory, reverse):
         g.user_set.clear()
 
     assert not is_following(u1, m1)
+
+
+@pytest.mark.django_db
+def test_user_follow_clean_up(client):
+    user = UserFactory()
+    # create a forum that the user follows
+    f = ForumFactory(type=Forum.FORUM_POST)
+    follow(user, f)
+    assert Follow.objects.count() == 1
+
+    # delete user and check that follow is deleted as well
+    user.delete()
+    assert Follow.objects.count() == 0
