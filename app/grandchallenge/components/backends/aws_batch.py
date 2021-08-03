@@ -1,13 +1,21 @@
 from django.conf import settings
+from django.core.files import File
 
 
 class AWSBatchExecutor:
     def __init__(
-        self, *, job_id, exec_image, exec_image_sha256, memory_limit,
+        self,
+        *,
+        job_id: str,
+        exec_image_sha256: str,
+        exec_image_repo_tag: str,
+        exec_image_file: File,
+        memory_limit: int = settings.COMPONENTS_MEMORY_LIMIT,
     ):
         self._job_id = job_id
-        self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
+        self._exec_image_repo_tag = exec_image_repo_tag
+        self._exec_image_file = exec_image_file
         self._memory_limit = min(
             memory_limit, settings.COMPONENTS_MEMORY_LIMIT
         )

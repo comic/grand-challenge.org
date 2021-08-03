@@ -21,7 +21,12 @@ from grandchallenge.components.backends.docker import (
 def test_cpuset_cpus(settings, cpuset, expected):
     settings.COMPONENTS_CPUSET_CPUS = cpuset
 
-    c = DockerConnection(job_id="", exec_image=None, exec_image_sha256="",)
+    c = DockerConnection(
+        job_id="",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
+    )
 
     assert os.cpu_count() > 1
     assert c._run_kwargs["cpuset_cpus"] == expected

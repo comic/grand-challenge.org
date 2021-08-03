@@ -69,14 +69,16 @@ class DockerConnection:
         self,
         *,
         job_id: str,
-        exec_image: File,
         exec_image_sha256: str,
+        exec_image_repo_tag: str,
+        exec_image_file: File,
         memory_limit: int = settings.COMPONENTS_MEMORY_LIMIT,
     ):
         super().__init__()
         self._job_id = job_id
-        self._exec_image = exec_image
         self._exec_image_sha256 = exec_image_sha256
+        self._exec_image_repo_tag = exec_image_repo_tag
+        self._exec_image_file = exec_image_file
         self._memory_limit = min(
             memory_limit, settings.COMPONENTS_MEMORY_LIMIT
         )
@@ -189,7 +191,7 @@ class DockerConnection:
 
             with SpooledTemporaryFile(
                 max_size=MAX_SPOOL_SIZE
-            ) as fdst, self._exec_image.open("rb") as fsrc:
+            ) as fdst, self._exec_image_file.open("rb") as fsrc:
                 copyfileobj(fsrc=fsrc, fdst=fdst)
                 fdst.seek(0)
                 self._client.images.load(fdst)

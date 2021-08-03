@@ -16,7 +16,12 @@ def test_service_start_cleanup():
 
     exec_sha256 = dockerclient.images.get(exec_image).id
 
-    s = Service(job_id=job_id, exec_image=None, exec_image_sha256=exec_sha256,)
+    s = Service(
+        job_id=job_id,
+        exec_image_sha256=exec_sha256,
+        exec_image_repo_tag=exec_image,
+        exec_image_file=None,
+    )
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
     try:

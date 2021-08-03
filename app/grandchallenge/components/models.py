@@ -776,8 +776,9 @@ class ComponentJob(models.Model):
     def executor_kwargs(self):
         return {
             "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            "exec_image": self.container.image,
             "exec_image_sha256": self.container.image_sha256,
+            "exec_image_repo_tag": self.container.repo_tag,
+            "exec_image_file": self.container.image,
             "memory_limit": self.container.requires_memory_gb,
         }
 
