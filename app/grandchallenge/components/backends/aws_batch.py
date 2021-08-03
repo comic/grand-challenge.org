@@ -1,3 +1,5 @@
+import json
+import shutil
 from pathlib import Path
 
 from django.conf import settings
@@ -30,28 +32,33 @@ class AWSBatchExecutor:
         )
 
     def execute(self):
-        raise NotImplementedError
+        # TODO - Implement scheduling Task on AWS Batch
+        self._copy_to_output()
 
     def await_completion(self):
-        raise NotImplementedError
+        # TODO - Implement waiting on AWS Batch Task
+        pass
 
     def get_outputs(self, *, output_interfaces):
         raise NotImplementedError
 
     def deprovision(self):
-        raise NotImplementedError
+        shutil.rmtree(self._job_directory)
 
     @property
     def stdout(self):
-        raise NotImplementedError
+        # TODO Implement fetching logs from AWS Batch Task
+        return ""
 
     @property
     def stderr(self):
-        raise NotImplementedError
+        # TODO Implement fetching logs from AWS Batch Task
+        return ""
 
     @property
     def duration(self):
-        raise NotImplementedError
+        # TODO Implement fetching execution duration from AWS Batch Task
+        return None
 
     @property
     def _job_directory(self):
@@ -103,3 +110,29 @@ class AWSBatchExecutor:
             with civ.input_file.open("rb") as fs, open(dest, "wb") as fd:
                 for chunk in fs.chunks():
                     fd.write(chunk)
+
+    def _copy_to_output(self):
+        # TODO This task is just for testing
+        res = {}
+        files = {x for x in self._input_directory.rglob("*") if x.is_file()}
+
+        for file in files:
+            try:
+                with open(file) as f:
+                    val = json.loads(f.read())
+            except Exception:
+                val = "file"
+
+            res[str(file.absolute())] = val
+
+            new_file = self._output_directory / file.relative_to(
+                self._input_directory
+            )
+            new_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(file, new_file)
+
+        for output_filename in ["results", "metrics"]:
+            with open(
+                self._output_directory / f"{output_filename}.json", "w"
+            ) as f:
+                f.write(json.dumps(res))

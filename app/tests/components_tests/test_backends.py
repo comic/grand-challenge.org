@@ -93,7 +93,10 @@ def test_provision(tmp_path, settings):
         exec_image_repo_tag="",
         exec_image_file="",
     )
+
     executor.provision(input_civs=civs, input_prefixes={})
+    executor.execute()
+    executor.await_completion()
 
     assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
         "foo",
@@ -107,4 +110,19 @@ def test_provision(tmp_path, settings):
         "foo/bar/12345-67890/input/images/test-image",
         "foo/bar/12345-67890/input/images/test-image/example.dat",
         "foo/bar/12345-67890/output",
+        "foo/bar/12345-67890/output/metrics.json",
+        "foo/bar/12345-67890/output/results.json",
+        "foo/bar/12345-67890/output/test.csv",
+        "foo/bar/12345-67890/output/test",
+        "foo/bar/12345-67890/output/test/bool.json",
+        "foo/bar/12345-67890/output/images",
+        "foo/bar/12345-67890/output/images/test-image",
+        "foo/bar/12345-67890/output/images/test-image/example.dat",
+    }
+
+    executor.deprovision()
+
+    assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
+        "foo",
+        "foo/bar",
     }
