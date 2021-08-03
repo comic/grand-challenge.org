@@ -21,7 +21,7 @@ class AWSBatchExecutor:
     def await_completion(self):
         raise NotImplementedError
 
-    def get_outputs(self, *, ouput_interfaces):
+    def get_outputs(self, *, output_interfaces):
         raise NotImplementedError
 
     def deprovision(self):

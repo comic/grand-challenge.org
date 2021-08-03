@@ -2,15 +2,12 @@ import docker
 from django.conf import settings
 
 from grandchallenge.components.backends.docker import Service
-from tests.components_tests.test_backends import FakeJobClass
 
 
 def test_service_start_cleanup():
     job_id = "12345"
     exec_image = "crccheck/hello-world"
-    filters = {
-        "label": f"job={FakeJobClass._meta.app_label}-{FakeJobClass._meta.model_name}-{job_id}"
-    }
+    filters = {"label": f"job={job_id}"}
 
     dockerclient = docker.DockerClient(
         base_url=settings.COMPONENTS_DOCKER_BASE_URL
@@ -19,12 +16,7 @@ def test_service_start_cleanup():
 
     exec_sha256 = dockerclient.images.get(exec_image).id
 
-    s = Service(
-        job_id=job_id,
-        job_class=FakeJobClass,
-        exec_image=None,
-        exec_image_sha256=exec_sha256,
-    )
+    s = Service(job_id=job_id, exec_image=None, exec_image_sha256=exec_sha256,)
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
     try:
@@ -36,7 +28,7 @@ def test_service_start_cleanup():
         labels = containers[0].labels
 
         expected_labels = {
-            "job": f"{FakeJobClass._meta.app_label}-{FakeJobClass._meta.model_name}-{job_id}",
+            "job": job_id,
             "traefik.enable": "true",
             "traefik.http.routers.test-local-http.entrypoints": "workstation-http",
             "traefik.http.routers.test-local-http.rule": "Host(`test-local`)",
