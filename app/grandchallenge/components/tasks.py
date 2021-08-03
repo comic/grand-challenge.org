@@ -17,7 +17,6 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import OperationalError
 from django.db.models import DateTimeField, ExpressionWrapper, F
-from django.utils.module_loading import import_string
 from django.utils.timezone import now
 
 from grandchallenge.components.backends.exceptions import (
@@ -205,21 +204,6 @@ def get_model_instance(*, pk, app_label, model_name):
     return model.objects.get(pk=pk)
 
 
-def _get_executor_kwargs(*, job):
-    return {
-        "job_id": str(job.pk),
-        "job_class": type(job),
-        "input_civs": job.inputs.prefetch_related(
-            "interface", "image__files"
-        ).all(),
-        "input_prefixes": job.input_prefixes,
-        "output_interfaces": job.output_interfaces,
-        "exec_image": job.container.image,
-        "exec_image_sha256": job.container.image_sha256,
-        "memory_limit": job.container.requires_memory_gb,
-    }
-
-
 @shared_task(**settings.CELERY_TASK_DECORATOR_KWARGS["acks-late-2xlarge"])
 def provision_job(
     *,
@@ -231,6 +215,7 @@ def provision_job(
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
+    executor = job.get_executor(backend=backend)
 
     if job.status in [job.PENDING, job.RETRY]:
         job.update_status(status=job.PROVISIONING)
@@ -238,14 +223,17 @@ def provision_job(
         raise PriorStepFailed("Job is not ready for provisioning")
 
     try:
-        Executor = import_string(backend)  # noqa: N806
-        with Executor(**_get_executor_kwargs(job=job)) as ev:
-            ev.provision()
+        executor.provision(
+            input_civs=job.inputs.prefetch_related(
+                "interface", "image__files"
+            ).all(),
+            input_prefixes=job.input_prefixes,
+        )
     except Exception:
         job.update_status(
             status=job.FAILURE, error_message="Could not provision resources",
         )
-        deprovision_job(job=job, backend=backend)
+        executor.deprovision()
         raise
     else:
         job.update_status(status=job.PROVISIONED)
@@ -272,32 +260,31 @@ def execute_job(
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
+    executor = job.get_executor(backend=backend)
 
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)
     else:
-        deprovision_job(job=job, backend=backend)
+        executor.deprovision()
         raise PriorStepFailed("Job is not set to be executed")
 
     if not job.container.ready:
         msg = f"Method {job.container.pk} was not ready to be used"
         job.update_status(status=job.FAILURE, error_message=msg)
-        deprovision_job(job=job, backend=backend)
+        executor.deprovision()
         raise PriorStepFailed(msg)
 
     try:
-        Executor = import_string(backend)  # noqa: N806
-        with Executor(**_get_executor_kwargs(job=job)) as ev:
-            # This call is potentially very long
-            ev.execute()
+        # This call is potentially very long
+        executor.execute()
     except ComponentException as e:
         job = get_model_instance(
             pk=job_pk, app_label=job_app_label, model_name=job_model_name
         )
         job.update_status(
             status=job.FAILURE,
-            stdout=ev.stdout,
-            stderr=ev.stderr,
+            stdout=executor.stdout,
+            stderr=executor.stderr,
             error_message=str(e),
         )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
@@ -306,8 +293,8 @@ def execute_job(
         )
         job.update_status(
             status=job.FAILURE,
-            stdout=ev.stdout,
-            stderr=ev.stderr,
+            stdout=executor.stdout,
+            stderr=executor.stderr,
             error_message="Time limit exceeded",
         )
     except Exception:
@@ -316,11 +303,11 @@ def execute_job(
         )
         job.update_status(
             status=job.FAILURE,
-            stdout=ev.stdout,
-            stderr=ev.stderr,
+            stdout=executor.stdout,
+            stderr=executor.stderr,
             error_message="An unexpected error occurred",
         )
-        deprovision_job(job=job, backend=backend)
+        executor.deprovision()
         raise
 
 
@@ -348,49 +335,48 @@ def await_job_completion(
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
+    executor = job.get_executor(backend=backend)
 
     if job.status != job.EXECUTING:
-        deprovision_job(job=job, backend=backend)
+        executor.deprovision()
         raise PriorStepFailed("Job is not executing")
 
     try:
-        Executor = import_string(backend)  # noqa: N806
-        with Executor(**_get_executor_kwargs(job=job)) as ev:
-            ev.await_completion()
+        executor.await_completion()
     except ComponentJobActive:
         try:
             self.retry(countdown=60, max_retries=120)
         except MaxRetriesExceededError:
             job.update_status(
                 status=job.FAILURE,
-                stdout=ev.stdout,
-                stderr=ev.stderr,
+                stdout=executor.stdout,
+                stderr=executor.stderr,
                 error_message="Time limit exceeded",
             )
-            deprovision_job(job=job, backend=backend)
+            executor.deprovision()
             raise
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
-            stdout=ev.stdout,
-            stderr=ev.stderr,
+            stdout=executor.stdout,
+            stderr=executor.stderr,
             error_message=str(e),
         )
     except Exception:
         job.update_status(
             status=job.FAILURE,
-            stdout=ev.stdout,
-            stderr=ev.stderr,
+            stdout=executor.stdout,
+            stderr=executor.stderr,
             error_message="An unexpected error occurred",
         )
-        deprovision_job(job=job, backend=backend)
+        executor.deprovision()
         raise
     else:
         job.update_status(
             status=job.EXECUTED,
-            stdout=ev.stdout,
-            stderr=ev.stderr,
-            duration=ev.duration,
+            stdout=executor.stdout,
+            stderr=executor.stderr,
+            duration=executor.duration,
         )
 
 
@@ -405,17 +391,18 @@ def parse_job_outputs(
     job = get_model_instance(
         pk=job_pk, app_label=job_app_label, model_name=job_model_name
     )
+    executor = job.get_executor(backend=backend)
 
     if job.status == job.EXECUTED and not job.outputs.exists():
         job.update_status(status=job.PARSING)
     else:
-        deprovision_job(job=job, backend=backend)
+        executor.deprovision()
         raise PriorStepFailed("Job is not ready for output parsing")
 
     try:
-        Executor = import_string(backend)  # noqa: N806
-        with Executor(**_get_executor_kwargs(job=job)) as ev:
-            ev.get_outputs()
+        outputs = executor.get_outputs(
+            output_interfaces=job.output_interfaces.all()
+        )
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE, error_message=str(e),
@@ -426,18 +413,10 @@ def parse_job_outputs(
         )
         raise
     else:
-        job.outputs.add(*ev.outputs)
+        job.outputs.add(*outputs)
         job.update_status(status=job.SUCCESS)
     finally:
-        deprovision_job(job=job, backend=backend)
-
-
-def deprovision_job(
-    *, job, backend: str,
-):
-    Executor = import_string(backend)  # noqa: N806
-    with Executor(**_get_executor_kwargs(job=job)) as ev:
-        ev.deprovision()
+        executor.deprovision()
 
 
 @shared_task

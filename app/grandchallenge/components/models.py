@@ -17,6 +17,7 @@ from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
 from django.utils.functional import cached_property
+from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -772,6 +773,20 @@ class ComponentJob(models.Model):
         self.save()
 
     @property
+    def executor_kwargs(self):
+        return {
+            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            "exec_image_sha256": self.container.image_sha256,
+            "exec_image_repo_tag": self.container.repo_tag,
+            "exec_image_file": self.container.image,
+            "memory_limit": self.container.requires_memory_gb,
+        }
+
+    def get_executor(self, *, backend):
+        Executor = import_string(backend)  # noqa: N806
+        return Executor(**self.executor_kwargs)
+
+    @property
     def container(self) -> "ComponentImage":
         """
         Returns the container object associated with this instance, which
@@ -792,7 +807,7 @@ class ComponentJob(models.Model):
                 "job_pk": self.pk,
                 "job_app_label": self._meta.app_label,
                 "job_model_name": self._meta.model_name,
-                "backend": "grandchallenge.components.backends.docker.Executor",
+                "backend": "grandchallenge.components.backends.docker.DockerExecutor",
             },
             "options": {
                 # TODO: remove this
@@ -806,6 +821,13 @@ class ComponentJob(models.Model):
 
         if getattr(self.container, "queue_override", None):
             kwargs["options"].update({"queue": self.container.queue_override})
+
+            if self.container.queue_override == "acks-late-2xlarge":
+                kwargs["kwargs"].update(
+                    {
+                        "backend": "grandchallenge.components.backends.aws_batch.AWSBatchExecutor"
+                    }
+                )
 
         return (
             provision_job.signature(**kwargs)

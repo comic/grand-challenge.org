@@ -1,22 +1,22 @@
 import os
+from pathlib import Path
 
 import pytest
+from django.core.files.base import ContentFile
 
+from grandchallenge.components.backends.aws_batch import AWSBatchExecutor
 from grandchallenge.components.backends.docker import (
     DockerConnection,
     user_error,
 )
+from grandchallenge.components.models import InterfaceKindChoices
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.factories import ImageFileFactory
 
 
-class FakeJobClass:
-    class Meta:
-        app_label = "foo"
-        model_name = "bar"
-
-    _meta = Meta
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "cpuset,expected",
     (
@@ -31,9 +31,9 @@ def test_cpuset_cpus(settings, cpuset, expected):
 
     c = DockerConnection(
         job_id="",
-        job_class=FakeJobClass,
-        exec_image=None,
         exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file=None,
     )
 
     assert os.cpu_count() > 1
@@ -62,3 +62,78 @@ def test_user_error(with_timestamp):
         user_error(obj=f"{timestamp}\n{timestamp}\n")
         == "No errors were reported in the logs."
     )
+
+
+@pytest.mark.django_db
+def test_provision(tmp_path, settings):
+    interfaces = [
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.BOOL, relative_path="test/bool.json"
+        ),
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.IMAGE, relative_path="images/test-image"
+        ),
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.CSV, relative_path="test.csv"
+        ),
+    ]
+    civs = [
+        ComponentInterfaceValueFactory(interface=interfaces[0], value=True),
+        ComponentInterfaceValueFactory(
+            interface=interfaces[1],
+            image=ImageFileFactory(
+                file__from_path=Path(__file__).parent.parent
+                / "algorithms_tests"
+                / "resources"
+                / "input_file.tif"
+            ).image,
+        ),
+        ComponentInterfaceValueFactory(interface=interfaces[2]),
+    ]
+    civs[2].file.save("whatever.csv", ContentFile(b"foo,\nbar,\n"))
+
+    settings.COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT = tmp_path
+
+    executor = AWSBatchExecutor(
+        job_id="foo-bar-12345-67890",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file="",
+    )
+
+    executor.provision(input_civs=civs, input_prefixes={})
+    executor.execute()
+    executor.await_completion()
+
+    assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
+        "foo",
+        "foo/bar",
+        "foo/bar/12345-67890",
+        "foo/bar/12345-67890/input",
+        "foo/bar/12345-67890/input/test.csv",
+        "foo/bar/12345-67890/input/test",
+        "foo/bar/12345-67890/input/test/bool.json",
+        "foo/bar/12345-67890/input/images",
+        "foo/bar/12345-67890/input/images/test-image",
+        "foo/bar/12345-67890/input/images/test-image/input_file.tif",
+        "foo/bar/12345-67890/output",
+        "foo/bar/12345-67890/output/metrics.json",
+        "foo/bar/12345-67890/output/results.json",
+        "foo/bar/12345-67890/output/test.csv",
+        "foo/bar/12345-67890/output/test",
+        "foo/bar/12345-67890/output/test/bool.json",
+        "foo/bar/12345-67890/output/images",
+        "foo/bar/12345-67890/output/images/test-image",
+        "foo/bar/12345-67890/output/images/test-image/input_file.tif",
+    }
+
+    # Exclude the CIV reading as this is unsupported
+    outputs = executor.get_outputs(output_interfaces=interfaces[:2])
+    assert len(outputs) == 2
+
+    executor.deprovision()
+
+    assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
+        "foo",
+        "foo/bar",
+    }

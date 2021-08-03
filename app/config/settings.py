@@ -889,6 +889,9 @@ COMPONENTS_REGISTRY_INSECURE = strtobool(
     os.environ.get("COMPONENTS_REGISTRY_INSECURE", "False")
 )
 COMPONENTS_MAXIMUM_IMAGE_SIZE = 10_737_418_240  # 10 gb
+COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT = os.environ.get(
+    "COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT", "/mnt/aws-batch-nfs/"
+)
 COMPONENTS_DOCKER_BASE_URL = os.environ.get(
     "COMPONENTS_DOCKER_BASE_URL", "unix://var/run/docker.sock"
 )
