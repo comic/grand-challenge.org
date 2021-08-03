@@ -83,8 +83,10 @@ def test_participation_request_notifications(client):
         user=user,
     )
     assert RegistrationRequest.objects.count() == 1
+    # requester follows the request object
     assert is_following(user, RegistrationRequest.objects.get())
-    # no notification for admin created, only for the user
+    # when participation requests are automatically accepted,
+    # no notification for admin should be created, only for the user
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user != ch.creator
     assert Notification.objects.get().user == user
@@ -106,6 +108,8 @@ def test_participation_request_notifications(client):
 
     reg2 = RegistrationRequest.objects.last()
     assert is_following(user2, reg2)
+    # when participant review is required, a new request results in a notification
+    # for the admins of the challenge
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user == ch.creator
     assert f"{user2} requested access to {ch}" in str(
@@ -127,6 +131,7 @@ def test_participation_request_notifications(client):
     reg2.refresh_from_db()
     assert reg2.status == "ACPT"
     assert Notification.objects.count() == 1
+    # upon request acceptance, the user gets notified
     assert Notification.objects.first().user == user2
     assert "was approved" in str(Notification.objects.first().action)
     Notification.objects.all().delete()
@@ -144,5 +149,6 @@ def test_participation_request_notifications(client):
 
     reg2.refresh_from_db()
     assert reg2.status == "RJCT"
+    # upon request rejection, the user gets notified
     assert Notification.objects.get().user == user2
     assert "was rejected" in str(Notification.objects.get().action)

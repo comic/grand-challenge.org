@@ -110,8 +110,3 @@ class RegistrationRequestUpdate(
             "participants:registration-list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
-
-    def form_valid(self, form):
-        redirect = super().form_valid(form)
-        # TODO: check if the status has actually changed
-        return redirect
