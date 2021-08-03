@@ -228,7 +228,7 @@ class DockerExecutor(DockerConnection):
                 container.logs(
                     stdout=True, stderr=False, timestamps=True, tail=LOGLINES
                 )
-                .replace("\x00", "")
+                .replace(b"\x00", b"")
                 .decode("utf-8")
             )
         except DockerException as e:
@@ -243,7 +243,7 @@ class DockerExecutor(DockerConnection):
                 container.logs(
                     stdout=False, stderr=True, timestamps=True, tail=LOGLINES
                 )
-                .replace("\x00", "")
+                .replace(b"\x00", b"")
                 .decode("utf-8")
             )
         except DockerException as e:
