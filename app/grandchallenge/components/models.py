@@ -17,6 +17,7 @@ from django.db import models
 from django.db.models import Avg, F, QuerySet
 from django.db.transaction import on_commit
 from django.utils.functional import cached_property
+from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -770,6 +771,25 @@ class ComponentJob(models.Model):
                 self.completed_at = now()
 
         self.save()
+
+    @property
+    def executor_kwargs(self):
+        return {
+            "job_id": str(self.pk),
+            "job_class": type(self),
+            "input_civs": self.inputs.prefetch_related(
+                "interface", "image__files"
+            ).all(),
+            "input_prefixes": self.input_prefixes,
+            "output_interfaces": self.output_interfaces,
+            "exec_image": self.container.image,
+            "exec_image_sha256": self.container.image_sha256,
+            "memory_limit": self.container.requires_memory_gb,
+        }
+
+    def get_executor(self, *, backend):
+        Executor = import_string(backend)  # noqa: N806
+        return Executor(**self.executor_kwargs)
 
     @property
     def container(self) -> "ComponentImage":

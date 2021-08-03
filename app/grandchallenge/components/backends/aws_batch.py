@@ -25,16 +25,6 @@ class AWSBatchExecutor:
             memory_limit, settings.COMPONENTS_MEMORY_LIMIT
         )
 
-        self._stdout = ""
-        self._stderr = ""
-        self._outputs = []
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
     def provision(self):
         raise NotImplementedError
 
@@ -52,16 +42,12 @@ class AWSBatchExecutor:
 
     @property
     def stdout(self):
-        return self._stdout
+        raise NotImplementedError
 
     @property
     def stderr(self):
-        return self._stderr
+        raise NotImplementedError
 
     @property
     def duration(self):
         raise NotImplementedError
-
-    @property
-    def outputs(self):
-        return self._outputs

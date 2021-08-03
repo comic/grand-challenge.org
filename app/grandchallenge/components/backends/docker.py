@@ -171,12 +171,6 @@ class DockerConnection:
         self.__retry_docker_obj_prune(obj=self._client.containers, filters=flt)
         self.__retry_docker_obj_prune(obj=self._client.volumes, filters=flt)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
     def _pull_images(self):
         try:
             self._client.images.get(name=self._exec_image_sha256)
@@ -208,10 +202,6 @@ class DockerExecutor(DockerConnection):
         self._input_volume = f"{self._job_label}-input"
         self._output_volume = f"{self._job_label}-output"
 
-        self._stdout = ""
-        self._stderr = ""
-        self._outputs = []
-
         self._execution_container_name = f"{self._job_label}-executor"
 
     def provision(self):
@@ -225,31 +215,32 @@ class DockerExecutor(DockerConnection):
         self._execute_container()
 
     def await_completion(self):
-        container = self._client.containers.get(
-            container_id=self._execution_container_name
-        )
-        self._fetch_logs(container=container)
+        pass
 
     def get_outputs(self):
         self._pull_images()
-        self._get_outputs()
+        return self._get_outputs()
 
     def deprovision(self):
         self.stop_and_cleanup()
 
     @property
     def stdout(self):
-        return self._stdout
+        container = self._execution_container
+        return container.logs(
+            stdout=True, stderr=False, timestamps=True, tail=LOGLINES
+        ).decode()
 
     @property
     def stderr(self):
-        return self._stderr
+        container = self._execution_container
+        return container.logs(
+            stdout=False, stderr=True, timestamps=True, tail=LOGLINES
+        ).decode()
 
     @property
     def duration(self):
-        container = self._client.containers.get(
-            container_id=self._execution_container_name
-        )
+        container = self._execution_container
         if container.status == "exited":
             state = self._client.api.inspect_container(container=container.id)
             started_at = state["State"]["StartedAt"]
@@ -259,8 +250,10 @@ class DockerExecutor(DockerConnection):
             return None
 
     @property
-    def outputs(self):
-        return self._outputs
+    def _execution_container(self):
+        return self._client.containers.get(
+            container_id=self._execution_container_name
+        )
 
     def _pull_images(self):
         try:
@@ -368,10 +361,7 @@ class DockerExecutor(DockerConnection):
                 **self._run_kwargs,
             )
         ) as c:
-            try:
-                container_state = c.wait()
-            finally:
-                self._fetch_logs(container=c)
+            container_state = c.wait()
 
         exit_code = int(container_state["StatusCode"])
         if exit_code == 137:
@@ -380,18 +370,12 @@ class DockerExecutor(DockerConnection):
                 f"of {self._run_kwargs['mem_limit']}."
             )
         elif exit_code != 0:
-            raise ComponentException(user_error(self._stderr))
-
-    def _fetch_logs(self, *, container):
-        self._stdout = container.logs(
-            stdout=True, stderr=False, timestamps=True, tail=LOGLINES
-        ).decode()
-        self._stderr = container.logs(
-            stdout=False, stderr=True, timestamps=True, tail=LOGLINES
-        ).decode()
+            raise ComponentException(user_error(self.stderr))
 
     def _get_outputs(self):
         """Create ComponentInterfaceValues from the output interfaces"""
+        outputs = []
+
         with stop(
             self._client.containers.run(
                 image=self._io_image,
@@ -411,13 +395,17 @@ class DockerExecutor(DockerConnection):
                 # create interfaces in order to store the files
                 for interface in self._output_interfaces.all():
                     if interface.is_image_kind:
-                        self._create_images_result(
+                        res = self._create_images_result(
                             interface=interface, reader=reader
                         )
                     else:
-                        self._create_file_result(
+                        res = self._create_file_result(
                             interface=interface, reader=reader
                         )
+
+                    outputs.append(res)
+
+        return outputs
 
     def _create_images_result(self, *, interface, reader):
         base_dir = Path(safe_join("/output/", interface.relative_path))
@@ -468,7 +456,8 @@ class DockerExecutor(DockerConnection):
             raise ComponentException(
                 f"The image produced in {base_dir} is not valid"
             )
-        self._outputs.append(civ)
+
+        return civ
 
     def _create_file_result(self, *, interface, reader):
         output_file = Path(safe_join("/output/", interface.relative_path))
@@ -494,7 +483,8 @@ class DockerExecutor(DockerConnection):
             raise ComponentException(
                 f"The file produced at {output_file} is not valid"
             )
-        self._outputs.append(civ)
+
+        return civ
 
 
 class Service(DockerConnection):
@@ -508,10 +498,6 @@ class Service(DockerConnection):
                 "network": settings.WORKSTATIONS_NETWORK_NAME,
             }
         )
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Do not cleanup the containers for this job, leave them running."""
-        pass
 
     @property
     def extra_hosts(self):
