@@ -1,14 +1,21 @@
 import os
 
 import pytest
+from django.core.files.base import ContentFile
 
+from grandchallenge.components.backends.aws_batch import AWSBatchExecutor
 from grandchallenge.components.backends.docker import (
     DockerConnection,
     user_error,
 )
+from grandchallenge.components.models import InterfaceKindChoices
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.factories import ImageFileFactory
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "cpuset,expected",
     (
@@ -54,3 +61,50 @@ def test_user_error(with_timestamp):
         user_error(obj=f"{timestamp}\n{timestamp}\n")
         == "No errors were reported in the logs."
     )
+
+
+@pytest.mark.django_db
+def test_provision(tmp_path, settings):
+    interfaces = [
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.BOOL, relative_path="test/bool.json"
+        ),
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.IMAGE, relative_path="images/test-image"
+        ),
+        ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.CSV, relative_path="test.csv"
+        ),
+    ]
+    civs = [
+        ComponentInterfaceValueFactory(interface=interfaces[0], value=True),
+        ComponentInterfaceValueFactory(
+            interface=interfaces[1], image=ImageFileFactory().image
+        ),
+        ComponentInterfaceValueFactory(interface=interfaces[2]),
+    ]
+    civs[2].file.save("whatever.csv", ContentFile(b"foo,\nbar,\n"))
+
+    settings.COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT = tmp_path
+
+    executor = AWSBatchExecutor(
+        job_id="foo-bar-12345-67890",
+        exec_image_sha256="",
+        exec_image_repo_tag="",
+        exec_image_file="",
+    )
+    executor.provision(input_civs=civs, input_prefixes={})
+
+    assert {str(f.relative_to(tmp_path)) for f in tmp_path.glob("**/*")} == {
+        "foo",
+        "foo/bar",
+        "foo/bar/12345-67890",
+        "foo/bar/12345-67890/input",
+        "foo/bar/12345-67890/input/test.csv",
+        "foo/bar/12345-67890/input/test",
+        "foo/bar/12345-67890/input/test/bool.json",
+        "foo/bar/12345-67890/input/images",
+        "foo/bar/12345-67890/input/images/test-image",
+        "foo/bar/12345-67890/input/images/test-image/example.dat",
+        "foo/bar/12345-67890/output",
+    }
