@@ -224,9 +224,13 @@ class DockerExecutor(DockerConnection):
     def stdout(self):
         try:
             container = self._execution_container
-            return container.logs(
-                stdout=True, stderr=False, timestamps=True, tail=LOGLINES
-            ).decode()
+            return (
+                container.logs(
+                    stdout=True, stderr=False, timestamps=True, tail=LOGLINES
+                )
+                .replace("\x00", "")
+                .decode("utf-8")
+            )
         except DockerException as e:
             logger.warning(f"Could not fetch stdout: {e}")
             return ""
@@ -235,9 +239,13 @@ class DockerExecutor(DockerConnection):
     def stderr(self):
         try:
             container = self._execution_container
-            return container.logs(
-                stdout=False, stderr=True, timestamps=True, tail=LOGLINES
-            ).decode()
+            return (
+                container.logs(
+                    stdout=False, stderr=True, timestamps=True, tail=LOGLINES
+                )
+                .replace("\x00", "")
+                .decode("utf-8")
+            )
         except DockerException as e:
             logger.warning(f"Could not fetch stderr: {e}")
             return ""
