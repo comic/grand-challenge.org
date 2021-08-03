@@ -164,7 +164,7 @@ class AWSBatchExecutor:
         output_files = [f for f in base_dir.glob("*") if f.is_file()]
 
         if not output_files:
-            raise ComponentException(f"{base_dir} is empty")
+            raise ComponentException(f"{interface.relative_path} is empty")
 
         importer_result = import_images(
             input_directory=base_dir,
@@ -173,10 +173,12 @@ class AWSBatchExecutor:
         )
 
         if len(importer_result.new_images) == 0:
-            raise ComponentException(f"No images imported from {base_dir}")
+            raise ComponentException(
+                f"No images imported from {interface.relative_path}"
+            )
         elif len(importer_result.new_images) > 1:
             raise ComponentException(
-                f"Only 1 image should be produced in {base_dir}, "
+                f"Only 1 image should be produced in {interface.relative_path}, "
                 f"we found {len(importer_result.new_images)}"
             )
 
@@ -186,7 +188,7 @@ class AWSBatchExecutor:
             )
         except ValidationError:
             raise ComponentException(
-                f"The image produced in {base_dir} is not valid"
+                f"The image produced in {interface.relative_path} is not valid"
             )
 
         return civ
@@ -201,7 +203,9 @@ class AWSBatchExecutor:
             or not output_file.is_file()
             or not output_file.exists()
         ):
-            raise ComponentException(f"File {output_file} was not produced")
+            raise ComponentException(
+                f"File {interface.relative_path} was not produced"
+            )
 
         try:
             with open(output_file, "rb") as f:
@@ -211,14 +215,14 @@ class AWSBatchExecutor:
                 )
         except JSONDecodeError:
             raise ComponentException(
-                f"The file produced at {output_file} is not valid json"
+                f"The file produced at {interface.relative_path} is not valid json"
             )
 
         try:
             civ = interface.create_instance(value=result)
         except ValidationError:
             raise ComponentException(
-                f"The file produced at {output_file} is not valid"
+                f"The file produced at {interface.relative_path} is not valid"
             )
 
         return civ
