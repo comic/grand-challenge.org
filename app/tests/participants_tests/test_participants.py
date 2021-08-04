@@ -74,6 +74,9 @@ def test_participation_request_notification_flow(client):
     user = UserFactory()
     ch = ChallengeFactory()
     assert is_following(ch.creator, ch)
+    # challenge creation results in notification for new admin
+    # delete this notification for more transparent testing below
+    Notification.objects.all().delete()
 
     # create permission request
     _ = get_view_for_user(
