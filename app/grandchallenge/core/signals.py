@@ -112,6 +112,7 @@ def update_editor_follows(  # noqa: C901
                 follow(
                     user=user, obj=obj, actor_only=False, send_action=False,
                 )
+                # only new admins of a challenge get notified
                 if obj._meta.model_name == "challenge":
                     actstream.action.send(
                         sender=user,
