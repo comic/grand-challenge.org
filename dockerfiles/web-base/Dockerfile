@@ -65,11 +65,11 @@ RUN mkdir -p /opt/crane \
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false
 
-RUN mkdir -p /opt/poetry /app /static /opt/static \
+RUN mkdir -p /opt/poetry /app /static /opt/static /mnt/aws-batch-nfs \
     && python -m pip install -U pip \
     && python -m pip install -U poetry \
     && groupadd -r django && useradd -m -r -g django django \
-    && chown django:django /opt/poetry /app /static /opt/static
+    && chown django:django /opt/poetry /app /static /opt/static /mnt/aws-batch-nfs
 
 # Install base python packages
 COPY poetry.toml /opt/poetry
