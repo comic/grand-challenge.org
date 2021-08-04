@@ -65,6 +65,9 @@ def create_notification(*, instance, **_):
             # only send notifications to followers other than the poster
             if follower != instance.actor:
                 Notification(user=follower, action=instance).save()
+    elif instance.action_object:
+        # notify only the actor when there is not target, but an action object
+        Notification(user=instance.actor, action=instance).save()
     else:
         follower_group = followers(instance.actor)
         for follower in follower_group:
