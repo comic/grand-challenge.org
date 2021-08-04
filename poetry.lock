@@ -7,7 +7,6 @@ optional = false
 python-versions = "*"
 
 
-
 [[package]]
 name = "amqp"
 version = "5.0.6"
