@@ -46,6 +46,9 @@ class NotificationsConfig(AppConfig):
         registry.register(
             apps.get_model("reader_studies.ReaderStudyPermissionRequest")
         )
+        registry.register(apps.get_model("challenges.Challenge"))
+        registry.register(apps.get_model("challenges.ExternalChallenge"))
+        registry.register(apps.get_model("participants.RegistrationRequest"))
         post_migrate.connect(init_notification_permissions, sender=self)
 
         # noinspection PyUnresolvedReferences

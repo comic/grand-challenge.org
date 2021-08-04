@@ -51,19 +51,27 @@
                                     {{ object.action.actor|user_profile_link }}
                                 {% elif actor_ct.model == 'algorithmpermissionrequest' or actor_ct.model == 'readerstudypermissionrequest' or actor_ct.model == 'archivepermissionrequest' %}
                                     Your registration request for <a href="{{ object.action.actor.base_object.get_absolute_url }}">{{ object.action.actor.object_name }}</a>
+                                {% elif actor_ct.model == 'registrationrequest' %}
+                                    Your participation request for <a href="{{ object.action.actor.challenge.get_absolute_url }}">{{ object.action.actor.challenge }}</a>
                                 {% endif %}
                             {% endif %}
                             {{ object.action.verb }}
                             {% if object.action.action_object %}
                                 <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
-                                {% if object.action.target %}
-                                    in
-                                {% endif %}
                             {% endif %}
                             {% if object.action.target %}
+                                {% get_content_type object.action.target as target_ct %}
+                                {% if target_ct.model == "forum" or target_ct.model == "topic" %}
+                                    in
+                                {% endif %}
                                 <a href="{{ object.action.target.get_absolute_url }}">{{ object.action.target }}</a>
                             {% endif %}
                             {{ object.action.timestamp|naturaltime }}
+                            {% if object.action.target %}
+                                {% if target_ct.model == 'challenge' %}
+                                    <span class="text-truncate font-italic text-muted align-middle mx-2 ">| Accept or decline <a href="{% url 'participants:registration-list' challenge_short_name=object.action.target.short_name %}">here</a>.</span>
+                                {% endif %}
+                            {% endif %}
                         </div>
                     </div>
                 </li>

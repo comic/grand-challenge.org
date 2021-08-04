@@ -13,11 +13,6 @@ from guardian.mixins import (
 )
 
 from grandchallenge.core.permissions.mixins import UserIsNotAnonMixin
-from grandchallenge.participants.emails import (
-    send_participation_request_accepted_email,
-    send_participation_request_notification_email,
-    send_participation_request_rejected_email,
-)
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -59,12 +54,6 @@ class RegistrationRequestCreate(
         form.instance.challenge = challenge
         try:
             redirect = super().form_valid(form)
-            if challenge.require_participant_review:
-                # Note, sending an email here rather than in signals as
-                # the function requires the request.
-                send_participation_request_notification_email(
-                    self.request, self.object
-                )
             return redirect
 
         except ValidationError as e:
@@ -121,16 +110,3 @@ class RegistrationRequestUpdate(
             "participants:registration-list",
             kwargs={"challenge_short_name": self.object.challenge.short_name},
         )
-
-    def form_valid(self, form):
-        redirect = super().form_valid(form)
-        # TODO: check if the status has actually changed
-        if self.object.status == RegistrationRequest.ACCEPTED:
-            send_participation_request_accepted_email(
-                self.request, self.object
-            )
-        if self.object.status == RegistrationRequest.REJECTED:
-            send_participation_request_rejected_email(
-                self.request, self.object
-            )
-        return redirect

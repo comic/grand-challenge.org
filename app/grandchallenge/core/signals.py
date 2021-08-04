@@ -1,10 +1,18 @@
 from actstream import action
 from actstream.actions import follow, unfollow
+from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.signals import m2m_changed, post_save, pre_save
+from django.db.models import Q
+from django.db.models.signals import (
+    m2m_changed,
+    post_save,
+    pre_delete,
+    pre_save,
+)
 from django.dispatch import receiver
 from guardian.utils import get_anonymous_user
 
@@ -93,6 +101,9 @@ def update_editor_follows(  # noqa: C901
             follow_objects.append(group.editors_of_archive)
         elif hasattr(group, "editors_of_readerstudy"):
             follow_objects.append(group.editors_of_readerstudy)
+        elif hasattr(group, "admins_of_challenge"):
+            # NOTE: only admins of a challenge should follow a challenge
+            follow_objects.append(group.admins_of_challenge)
 
     for user in users:
         for obj in follow_objects:
@@ -102,3 +113,13 @@ def update_editor_follows(  # noqa: C901
                 )
             elif action == "pre_remove" or action == "pre_clear":
                 unfollow(user=user, obj=obj, send_action=False)
+
+
+@receiver(pre_delete, sender=get_user_model())
+def clean_up_user_follows(instance, **_):
+    ct = ContentType.objects.filter(
+        app_label=instance._meta.app_label, model=instance._meta.model_name
+    ).get()
+    Follow.objects.filter(
+        Q(object_id=instance.pk) | Q(user=instance.pk), content_type=ct
+    ).delete()
