@@ -3,6 +3,7 @@ import shutil
 from json import JSONDecodeError
 from pathlib import Path
 
+import boto3
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -11,7 +12,10 @@ from django.utils._os import safe_join
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
-from grandchallenge.components.backends.exceptions import ComponentException
+from grandchallenge.components.backends.exceptions import (
+    ComponentException,
+    ComponentJobActive,
+)
 
 
 class AWSBatchExecutor:
@@ -32,6 +36,8 @@ class AWSBatchExecutor:
             memory_limit, settings.COMPONENTS_MEMORY_LIMIT
         )
 
+        self.__client = None
+
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()
         self._copy_input_files(
@@ -39,12 +45,29 @@ class AWSBatchExecutor:
         )
 
     def execute(self):
-        # TODO - Implement scheduling Task on AWS Batch
-        self._copy_to_output()
+        job_definition_arn = self._register_job_definition()
+        self._submit_job(job_definition_arn=job_definition_arn)
 
     def await_completion(self):
-        # TODO - Implement waiting on AWS Batch Task
-        pass
+        job_summary = self._get_job_summary()
+        job_status = job_summary["status"]
+
+        if job_status.casefold() == "SUCCEEDED".casefold():
+            exit_code = int(job_summary["container"]["exitCode"])
+            if exit_code == 0:
+                # Job was a success, continue
+                return
+            elif exit_code == 137:
+                # TODO implement memory limits
+                raise ComponentException(
+                    "The container was killed as it exceeded the memory limit "
+                    f"of {self._memory_limit}g."
+                )
+            else:
+                # TODO fetch the logs
+                raise ComponentException("Job failed")
+        else:
+            raise ComponentJobActive(job_status)
 
     def get_outputs(self, *, output_interfaces):
         outputs = []
@@ -64,6 +87,7 @@ class AWSBatchExecutor:
 
     def deprovision(self):
         shutil.rmtree(self._job_directory)
+        self._deregister_job_definitions()
 
     @property
     def stdout(self):
@@ -79,6 +103,17 @@ class AWSBatchExecutor:
     def duration(self):
         # TODO Implement fetching execution duration from AWS Batch Task
         return None
+
+    @property
+    def _client(self):
+        if self.__client is None:
+            self.__client = boto3.client("batch")
+        return self.__client
+
+    @property
+    def _queue_arn(self):
+        # TODO switch based on GPU
+        return settings.COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN
 
     @property
     def _job_directory(self):
@@ -130,6 +165,59 @@ class AWSBatchExecutor:
             with civ.input_file.open("rb") as fs, open(dest, "wb") as fd:
                 for chunk in fs.chunks():
                     fd.write(chunk)
+
+    def _register_job_definition(self):
+        response = self._client.register_job_definition(
+            jobDefinitionName=self._job_id,
+            type="container",
+            containerProperties={
+                # TODO
+                "command": ["sleep", "10"],
+                "image": "busybox",
+                "memory": 128,
+                "vcpus": 1,
+            },
+            timeout={"attemptDurationSeconds": 300},  # TODO
+            platformCapabilities=["EC2"],
+            propagateTags=True,
+        )
+        return response["jobDefinitionArn"]
+
+    def _submit_job(self, *, job_definition_arn):
+        self._client.submit_job(
+            jobName=self._job_id,
+            jobQueue=self._queue_arn,
+            jobDefinition=job_definition_arn,
+        )
+
+    def _get_job_summary(self):
+        response = self._client.list_jobs(
+            jobQueue=self._queue_arn,
+            filters=[{"name": "JOB_NAME", "values": [self._job_id]}],
+        )
+
+        job_summary_list = response["jobSummaryList"]
+
+        if len(job_summary_list) != 1:
+            raise RuntimeError(
+                f"{len(job_summary_list)} job(s) found for with name {self._job_id}"
+            )
+
+        return job_summary_list[0]
+
+    def _deregister_job_definitions(self):
+        response = self._client.describe_job_definitions(
+            jobDefinitionName=self._job_id,
+        )
+        next_token = response.get("nextToken")
+
+        for job_definition in response["jobDefinitions"]:
+            self._client.deregister_job_definition(
+                jobDefinition=job_definition["jobDefinitionArn"],
+            )
+
+        if next_token:
+            self._deregister_job_definitions()
 
     def _copy_to_output(self):
         # TODO This task is just for testing
