@@ -59,7 +59,10 @@ from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
-from grandchallenge.reader_studies.filters import ReaderStudyFilter
+from grandchallenge.reader_studies.filters import (
+    AnswerFilter,
+    ReaderStudyFilter,
+)
 from grandchallenge.reader_studies.forms import (
     AnswersRemoveForm,
     CategoricalOptionFormSet,
@@ -892,7 +895,7 @@ class AnswerViewSet(
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
-    filterset_fields = ["question__reader_study"]
+    filterset_class = AnswerFilter
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
