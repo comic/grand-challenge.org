@@ -1,4 +1,5 @@
 import json
+import logging
 import shutil
 from datetime import datetime, timezone
 from json import JSONDecodeError
@@ -17,6 +18,9 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     ComponentJobActive,
 )
+from grandchallenge.components.backends.utils import LOGLINES, user_error
+
+logger = logging.getLogger(__name__)
 
 
 class AWSBatchExecutor:
@@ -70,8 +74,8 @@ class AWSBatchExecutor:
                     f"of {self._memory_limit}g."
                 )
             else:
-                # TODO fetch the logs
-                raise ComponentException("Job failed")
+                # TODO Implement non-unified logging and use stderr
+                raise ComponentException(user_error(self.stdout))
         else:
             raise ComponentJobActive(job_status)
 
@@ -97,17 +101,24 @@ class AWSBatchExecutor:
 
     @property
     def stdout(self):
-        # TODO Implement fetching logs from AWS Batch Task
-        return ""
+        try:
+            return "\n".join(self._job_last_attempt_unified_logs)
+        except Exception as e:
+            logger.warning(f"Could not fetch stdout: {e}")
+            return ""
 
     @property
     def stderr(self):
-        # TODO Implement fetching logs from AWS Batch Task
+        # TODO Implement non-unified logging
         return ""
 
     @property
     def duration(self):
-        return self._job_last_attempt_duration
+        try:
+            return self._job_last_attempt_duration
+        except Exception as e:
+            logger.warning(f"Could not determine duration: {e}")
+            return None
 
     @property
     def _batch_client(self):
@@ -116,7 +127,7 @@ class AWSBatchExecutor:
         return self.__batch_client
 
     @property
-    def _cloudwatch_client(self):
+    def _logs_client(self):
         if self.__logs_client is None:
             self.__logs_client = boto3.client("logs")
         return self.__logs_client
@@ -165,14 +176,33 @@ class AWSBatchExecutor:
         ]
 
     @property
+    def _job_last_attempt_unified_logs(self):
+        response = self._logs_client.get_log_events(
+            logGroupName="/aws/batch/job",
+            logStreamName=self._job_last_attempt_log_stream_name,
+            limit=LOGLINES,
+            startFromHead=False,
+        )
+        events = response["events"]
+
+        loglines = [
+            # Match the format of the docker logs
+            f"{self._timestamp_to_datetime(e['timestamp']).isoformat()} {e['message']}"
+            for e in events
+        ]
+
+        return loglines
+
+    @staticmethod
+    def _timestamp_to_datetime(timestamp):
+        """Convert AWS timestamps (ms from epoch) to datetime"""
+        return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
+
+    @property
     def _job_last_attempt_duration(self):
         attempt_info = self._job_description["attempts"][-1]
-        started_at = datetime.fromtimestamp(
-            attempt_info["startedAt"] * 0.001, tz=timezone.utc
-        )
-        stopped_at = datetime.fromtimestamp(
-            attempt_info["stoppedAt"] * 0.001, tz=timezone.utc
-        )
+        started_at = self._timestamp_to_datetime(attempt_info["startedAt"])
+        stopped_at = self._timestamp_to_datetime(attempt_info["stoppedAt"])
         return stopped_at - started_at
 
     @property

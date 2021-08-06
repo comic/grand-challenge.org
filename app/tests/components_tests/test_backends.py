@@ -5,10 +5,8 @@ import pytest
 from django.core.files.base import ContentFile
 
 from grandchallenge.components.backends.aws_batch import AWSBatchExecutor
-from grandchallenge.components.backends.docker import (
-    DockerConnection,
-    user_error,
-)
+from grandchallenge.components.backends.docker import DockerConnection
+from grandchallenge.components.backends.utils import user_error
 from grandchallenge.components.models import InterfaceKindChoices
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
