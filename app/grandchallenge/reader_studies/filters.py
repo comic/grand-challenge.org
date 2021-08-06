@@ -11,11 +11,8 @@ class ReaderStudyFilter(TitleDescriptionModalityStructureFilter):
 
 
 class AnswerFilter(FilterSet):
-    reader_study = CharFilter(
-        field_name="question__reader_study__title", label="reader study title"
-    )
     creator = CharFilter(field_name="creator__username", label="username")
 
     class Meta:
         model = Answer
-        fields = ("creator", "reader_study")
+        fields = ("creator", "question__reader_study")
