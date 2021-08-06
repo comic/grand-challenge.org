@@ -1206,7 +1206,7 @@ test = ["hypothesis (>=3.58)", "pytest (>=6.0)", "pytest-xdist"]
 
 [[package]]
 name = "panimg"
-version = "0.3.1"
+version = "0.3.2"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
@@ -2882,8 +2882,8 @@ pandas = [
     {file = "pandas-1.3.1.tar.gz", hash = "sha256:341935a594db24f3ff07d1b34d1d231786aa9adfa84b76eab10bf42907c8aed3"},
 ]
 panimg = [
-    {file = "panimg-0.3.1-py3-none-any.whl", hash = "sha256:9587366b65a902119ea1e055b1f300e5ac0fe99b2d8883861db684906a3825fc"},
-    {file = "panimg-0.3.1.tar.gz", hash = "sha256:95a9c88bd67084814be87fc064fbf9637759b44e48d59580d1ea470335955610"},
+    {file = "panimg-0.3.2-py3-none-any.whl", hash = "sha256:5555d4d7cad1f1ed518d54ed95a39364c30680d6356c0dea37a468722a168ebd"},
+    {file = "panimg-0.3.2.tar.gz", hash = "sha256:b81b415ed4167ad97e0cb10a1d7a8b2afaffcb9b2d5a535154ad4c2134aef627"},
 ]
 pillow = [
     {file = "Pillow-8.3.1-1-cp36-cp36m-win_amd64.whl", hash = "sha256:fd7eef578f5b2200d066db1b50c4aa66410786201669fb76d5238b007918fb24"},

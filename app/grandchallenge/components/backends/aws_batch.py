@@ -316,7 +316,7 @@ class AWSBatchExecutor:
         importer_result = import_images(
             input_directory=base_dir,
             builders=[image_builder_mhd, image_builder_tiff],
-            # TODO add option to not recurse subdirectories
+            recurse_subdirectories=False,
         )
 
         if len(importer_result.new_images) == 0:
