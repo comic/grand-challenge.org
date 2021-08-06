@@ -1,5 +1,6 @@
 import json
 import shutil
+from datetime import datetime, timezone
 from json import JSONDecodeError
 from pathlib import Path
 
@@ -35,8 +36,14 @@ class AWSBatchExecutor:
         self._memory_limit = min(
             memory_limit, settings.COMPONENTS_MEMORY_LIMIT
         )
+        # TODO
+        self._requires_gpu = False
 
-        self.__client = None
+        if self._memory_limit < 4 or self._memory_limit > 30:
+            raise RuntimeError("AWS only supports 4g to 30g of memory")
+
+        self.__batch_client = None
+        self.__logs_client = None
 
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()
@@ -49,16 +56,15 @@ class AWSBatchExecutor:
         self._submit_job(job_definition_arn=job_definition_arn)
 
     def await_completion(self):
-        job_summary = self._get_job_summary()
+        job_summary = self._job_summary
         job_status = job_summary["status"]
 
         if job_status.casefold() == "SUCCEEDED".casefold():
+            # Job was a success, continue
+            return
+        elif job_status.casefold() == "FAILED".casefold():
             exit_code = int(job_summary["container"]["exitCode"])
-            if exit_code == 0:
-                # Job was a success, continue
-                return
-            elif exit_code == 137:
-                # TODO implement memory limits
+            if exit_code == 137:
                 raise ComponentException(
                     "The container was killed as it exceeded the memory limit "
                     f"of {self._memory_limit}g."
@@ -101,19 +107,73 @@ class AWSBatchExecutor:
 
     @property
     def duration(self):
-        # TODO Implement fetching execution duration from AWS Batch Task
-        return None
+        return self._job_last_attempt_duration
 
     @property
-    def _client(self):
-        if self.__client is None:
-            self.__client = boto3.client("batch")
-        return self.__client
+    def _batch_client(self):
+        if self.__batch_client is None:
+            self.__batch_client = boto3.client("batch")
+        return self.__batch_client
+
+    @property
+    def _cloudwatch_client(self):
+        if self.__logs_client is None:
+            self.__logs_client = boto3.client("logs")
+        return self.__logs_client
 
     @property
     def _queue_arn(self):
-        # TODO switch based on GPU
-        return settings.COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN
+        if self._requires_gpu:
+            return settings.COMPONENTS_AWS_BATCH_GPU_QUEUE_ARN
+        else:
+            return settings.COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN
+
+    @property
+    def _job_summary(self):
+        response = self._batch_client.list_jobs(
+            jobQueue=self._queue_arn,
+            filters=[{"name": "JOB_NAME", "values": [self._job_id]}],
+        )
+
+        job_summary_list = response["jobSummaryList"]
+
+        if len(job_summary_list) != 1:
+            raise RuntimeError(
+                f"{len(job_summary_list)} job(s) found for with name {self._job_id}"
+            )
+
+        return job_summary_list[0]
+
+    @property
+    def _job_description(self):
+        job_id = self._job_summary["jobId"]
+        response = self._batch_client.describe_jobs(jobs=[job_id])
+
+        job_descriptions = response["jobs"]
+
+        if len(job_descriptions) != 1:
+            raise RuntimeError(
+                f"{len(job_descriptions)} job(s) found for with name {self._job_id}"
+            )
+
+        return job_descriptions[0]
+
+    @property
+    def _job_last_attempt_log_stream_name(self):
+        return self._job_description["attempts"][-1]["container"][
+            "logStreamName"
+        ]
+
+    @property
+    def _job_last_attempt_duration(self):
+        attempt_info = self._job_description["attempts"][-1]
+        started_at = datetime.fromtimestamp(
+            attempt_info["startedAt"] * 0.001, tz=timezone.utc
+        )
+        stopped_at = datetime.fromtimestamp(
+            attempt_info["stoppedAt"] * 0.001, tz=timezone.utc
+        )
+        return stopped_at - started_at
 
     @property
     def _job_directory(self):
@@ -166,16 +226,28 @@ class AWSBatchExecutor:
                 for chunk in fs.chunks():
                     fd.write(chunk)
 
+    @property
+    def _resource_requirements(self):
+        requirements = [
+            # boto requires strings rather than ints
+            {"type": "MEMORY", "value": str(1024 * self._memory_limit)},
+            {
+                "type": "VCPU",
+                "value": str(4 if self._memory_limit > 16 else 2),
+            },
+        ]
+        if self._requires_gpu:
+            requirements.append({"type": "GPU", "value": "1"})
+        return requirements
+
     def _register_job_definition(self):
-        response = self._client.register_job_definition(
+        response = self._batch_client.register_job_definition(
             jobDefinitionName=self._job_id,
             type="container",
             containerProperties={
                 # TODO
-                "command": ["sleep", "10"],
-                "image": "busybox",
-                "memory": 128,
-                "vcpus": 1,
+                "image": self._exec_image_repo_tag,
+                "resourceRequirements": self._resource_requirements,
             },
             timeout={"attemptDurationSeconds": 300},  # TODO
             platformCapabilities=["EC2"],
@@ -184,66 +256,25 @@ class AWSBatchExecutor:
         return response["jobDefinitionArn"]
 
     def _submit_job(self, *, job_definition_arn):
-        self._client.submit_job(
+        self._batch_client.submit_job(
             jobName=self._job_id,
             jobQueue=self._queue_arn,
             jobDefinition=job_definition_arn,
         )
 
-    def _get_job_summary(self):
-        response = self._client.list_jobs(
-            jobQueue=self._queue_arn,
-            filters=[{"name": "JOB_NAME", "values": [self._job_id]}],
-        )
-
-        job_summary_list = response["jobSummaryList"]
-
-        if len(job_summary_list) != 1:
-            raise RuntimeError(
-                f"{len(job_summary_list)} job(s) found for with name {self._job_id}"
-            )
-
-        return job_summary_list[0]
-
     def _deregister_job_definitions(self):
-        response = self._client.describe_job_definitions(
+        response = self._batch_client.describe_job_definitions(
             jobDefinitionName=self._job_id,
         )
         next_token = response.get("nextToken")
 
         for job_definition in response["jobDefinitions"]:
-            self._client.deregister_job_definition(
+            self._batch_client.deregister_job_definition(
                 jobDefinition=job_definition["jobDefinitionArn"],
             )
 
         if next_token:
             self._deregister_job_definitions()
-
-    def _copy_to_output(self):
-        # TODO This task is just for testing
-        res = {}
-        files = {x for x in self._input_directory.rglob("*") if x.is_file()}
-
-        for file in files:
-            try:
-                with open(file) as f:
-                    val = json.loads(f.read())
-            except Exception:
-                val = "file"
-
-            res[str(file.absolute())] = val
-
-            new_file = self._output_directory / file.relative_to(
-                self._input_directory
-            )
-            new_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(file, new_file)
-
-        for output_filename in ["results", "metrics"]:
-            with open(
-                self._output_directory / f"{output_filename}.json", "w"
-            ) as f:
-                f.write(json.dumps(res))
 
     def _create_images_result(self, *, interface):
         base_dir = Path(
