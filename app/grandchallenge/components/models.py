@@ -780,6 +780,7 @@ class ComponentJob(models.Model):
             "exec_image_repo_tag": self.container.repo_tag,
             "exec_image_file": self.container.image,
             "memory_limit": self.container.requires_memory_gb,
+            "requires_gpu": self.container.requires_gpu,
         }
 
     def get_executor(self, *, backend):

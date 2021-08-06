@@ -423,6 +423,7 @@ class Session(UUIDModel):
             exec_image_repo_tag=self.workstation_image.repo_tag,
             exec_image_file=self.workstation_image.image,
             memory_limit=settings.COMPONENTS_MEMORY_LIMIT,
+            requires_gpu=False,
         )
 
     @property

@@ -49,6 +49,7 @@ class DockerConnection:
         exec_image_repo_tag: str,
         exec_image_file: File,
         memory_limit: int,
+        requires_gpu: bool,
     ):
         super().__init__()
         self._job_id = job_id
@@ -56,6 +57,7 @@ class DockerConnection:
         self._exec_image_repo_tag = exec_image_repo_tag
         self._exec_image_file = exec_image_file
         self._memory_limit = memory_limit
+        self._requires_gpu = requires_gpu
 
         self.__client = None
 

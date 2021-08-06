@@ -32,14 +32,14 @@ class AWSBatchExecutor:
         exec_image_repo_tag: str,
         exec_image_file: File,
         memory_limit: int,
+        requires_gpu: bool,
     ):
         self._job_id = job_id
         self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
         self._exec_image_file = exec_image_file
         self._memory_limit = memory_limit
-        # TODO
-        self._requires_gpu = False
+        self._requires_gpu = requires_gpu
 
         if self._memory_limit < 4 or self._memory_limit > 30:
             raise RuntimeError("AWS only supports 4g to 30g of memory")
