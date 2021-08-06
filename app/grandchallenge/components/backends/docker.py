@@ -48,16 +48,14 @@ class DockerConnection:
         exec_image_sha256: str,
         exec_image_repo_tag: str,
         exec_image_file: File,
-        memory_limit: int = settings.COMPONENTS_MEMORY_LIMIT,
+        memory_limit: int,
     ):
         super().__init__()
         self._job_id = job_id
         self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
         self._exec_image_file = exec_image_file
-        self._memory_limit = min(
-            memory_limit, settings.COMPONENTS_MEMORY_LIMIT
-        )
+        self._memory_limit = memory_limit
 
         self.__client = None
 
