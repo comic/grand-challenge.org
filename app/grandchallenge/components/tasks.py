@@ -345,7 +345,7 @@ def await_job_completion(
         executor.await_completion()
     except ComponentJobActive:
         try:
-            self.retry(countdown=60, max_retries=120)
+            self.retry(countdown=60, max_retries=5760)  # 4 days
         except MaxRetriesExceededError:
             job.update_status(
                 status=job.FAILURE,

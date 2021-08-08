@@ -65,12 +65,16 @@ class AWSBatchExecutor:
             # Job was a success, continue
             return
         elif job_status.casefold() == "FAILED".casefold():
-            exit_code = int(job_summary["container"]["exitCode"])
-            if exit_code == 137:
+            exit_code = job_summary.get("container", {}).get("exitCode")
+            if exit_code is None:
+                raise RuntimeError(f"{self._job_id} did not start")
+            elif int(exit_code) == 137:
                 raise ComponentException(
                     "The container was killed as it exceeded the memory limit "
                     f"of {self._memory_limit}g."
                 )
+            elif int(exit_code) == 143:
+                raise ComponentException("Time limit exceeded")
             else:
                 # TODO Implement non-unified logging and use stderr
                 raise ComponentException(user_error(self.stdout))
@@ -281,7 +285,18 @@ class AWSBatchExecutor:
                 "image": self._exec_image_repo_tag,
                 "resourceRequirements": self._resource_requirements,
                 "linuxParameters": {
-                    # TODO devices,
+                    "devices": [
+                        {
+                            "containerPath": "/input",
+                            "hostPath": str(self._input_directory),
+                            "permissions": ["READ"],
+                        },
+                        {
+                            "containerPath": "/output",
+                            "hostPath": str(self._output_directory),
+                            "permissions": ["WRITE"],
+                        },
+                    ],
                     "initProcessEnabled": True,
                     "maxSwap": 0,
                     "swappiness": 0,
