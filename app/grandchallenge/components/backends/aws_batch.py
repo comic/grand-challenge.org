@@ -273,11 +273,32 @@ class AWSBatchExecutor:
             jobDefinitionName=self._job_id,
             type="container",
             containerProperties={
-                # TODO
+                # AWS batch does not appear to support dockerSecurityOptions,
+                # so security_opt, cap_drop are not set. However, the batch
+                # instances are heavily locked down.
+                # Also no way to set network_disabled, cpu_period, cpu_quota,
+                # cpu_shares, cpuset_cpus or runtime on batch
                 "image": self._exec_image_repo_tag,
                 "resourceRequirements": self._resource_requirements,
+                "linuxParameters": {
+                    # TODO devices,
+                    "initProcessEnabled": True,
+                    "maxSwap": 0,
+                    "swappiness": 0,
+                },
+                "ulimits": [
+                    {
+                        "name": "nproc",
+                        "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
+                        "softLimit": settings.COMPONENTS_PIDS_LIMIT,
+                    }
+                ],
+                "privileged": False,
+                "user": "nobody",
             },
-            timeout={"attemptDurationSeconds": 300},  # TODO
+            timeout={
+                "attemptDurationSeconds": settings.CELERY_TASK_TIME_LIMIT
+            },
             platformCapabilities=["EC2"],
             propagateTags=True,
         )
