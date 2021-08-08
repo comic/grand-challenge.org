@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from django.core.files.base import ContentFile
 
-from grandchallenge.components.backends.aws_batch import AWSBatchExecutor
 from grandchallenge.components.backends.docker import DockerConnection
 from grandchallenge.components.backends.utils import user_error
 from grandchallenge.components.models import InterfaceKindChoices
@@ -12,6 +11,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.components_tests.stubs import AWSBatchExecutorStub
 from tests.factories import ImageFileFactory
 
 
@@ -32,6 +32,8 @@ def test_cpuset_cpus(settings, cpuset, expected):
         exec_image_sha256="",
         exec_image_repo_tag="",
         exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
     )
 
     assert os.cpu_count() > 1
@@ -92,11 +94,13 @@ def test_provision(tmp_path, settings):
 
     settings.COMPONENTS_AWS_BATCH_NFS_MOUNT_POINT = tmp_path
 
-    executor = AWSBatchExecutor(
+    executor = AWSBatchExecutorStub(
         job_id="foo-bar-12345-67890",
         exec_image_sha256="",
         exec_image_repo_tag="",
-        exec_image_file="",
+        exec_image_file=None,
+        memory_limit=4,
+        requires_gpu=False,
     )
 
     executor.provision(input_civs=civs, input_prefixes={})

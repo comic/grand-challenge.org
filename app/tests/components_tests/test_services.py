@@ -21,6 +21,8 @@ def test_service_start_cleanup():
         exec_image_sha256=exec_sha256,
         exec_image_repo_tag=exec_image,
         exec_image_file=None,
+        requires_gpu=False,
+        memory_limit=4,
     )
     assert len(dockerclient.containers.list(filters=filters)) == 0
 
