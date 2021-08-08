@@ -585,6 +585,8 @@
             <span class="n">exec_image_sha256</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">image_sha256</span><span class="p">,</span>
             <span class="n">exec_image_repo_tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">repo_tag</span><span class="p">,</span>
             <span class="n">exec_image_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">image</span><span class="p">,</span>
+            <span class="n">memory_limit</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_MEMORY_LIMIT</span><span class="p">,</span>
+            <span class="n">requires_gpu</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
