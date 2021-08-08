@@ -1,8 +1,11 @@
 import json
+import logging
 import shutil
+from datetime import datetime, timezone
 from json import JSONDecodeError
 from pathlib import Path
 
+import boto3
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -11,7 +14,13 @@ from django.utils._os import safe_join
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
-from grandchallenge.components.backends.exceptions import ComponentException
+from grandchallenge.components.backends.exceptions import (
+    ComponentException,
+    ComponentJobActive,
+)
+from grandchallenge.components.backends.utils import LOGLINES, user_error
+
+logger = logging.getLogger(__name__)
 
 
 class AWSBatchExecutor:
@@ -22,15 +31,21 @@ class AWSBatchExecutor:
         exec_image_sha256: str,
         exec_image_repo_tag: str,
         exec_image_file: File,
-        memory_limit: int = settings.COMPONENTS_MEMORY_LIMIT,
+        memory_limit: int,
+        requires_gpu: bool,
     ):
         self._job_id = job_id
         self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
         self._exec_image_file = exec_image_file
-        self._memory_limit = min(
-            memory_limit, settings.COMPONENTS_MEMORY_LIMIT
-        )
+        self._memory_limit = memory_limit
+        self._requires_gpu = requires_gpu
+
+        if self._memory_limit < 4 or self._memory_limit > 30:
+            raise RuntimeError("AWS only supports 4g to 30g of memory")
+
+        self.__batch_client = None
+        self.__logs_client = None
 
     def provision(self, *, input_civs, input_prefixes):
         self._create_io_volumes()
@@ -39,12 +54,32 @@ class AWSBatchExecutor:
         )
 
     def execute(self):
-        # TODO - Implement scheduling Task on AWS Batch
-        self._copy_to_output()
+        job_definition_arn = self._register_job_definition()
+        self._submit_job(job_definition_arn=job_definition_arn)
 
     def await_completion(self):
-        # TODO - Implement waiting on AWS Batch Task
-        pass
+        job_summary = self._job_summary
+        job_status = job_summary["status"]
+
+        if job_status.casefold() == "SUCCEEDED".casefold():
+            # Job was a success, continue
+            return
+        elif job_status.casefold() == "FAILED".casefold():
+            exit_code = job_summary.get("container", {}).get("exitCode")
+            if exit_code is None:
+                raise RuntimeError(f"{self._job_id} did not start")
+            elif int(exit_code) == 137:
+                raise ComponentException(
+                    "The container was killed as it exceeded the memory limit "
+                    f"of {self._memory_limit}g."
+                )
+            elif int(exit_code) == 143:
+                raise ComponentException("Time limit exceeded")
+            else:
+                # TODO Implement non-unified logging and use stderr
+                raise ComponentException(user_error(self.stdout))
+        else:
+            raise ComponentJobActive(job_status)
 
     def get_outputs(self, *, output_interfaces):
         outputs = []
@@ -64,21 +99,113 @@ class AWSBatchExecutor:
 
     def deprovision(self):
         shutil.rmtree(self._job_directory)
+        self._deregister_job_definitions()
 
     @property
     def stdout(self):
-        # TODO Implement fetching logs from AWS Batch Task
-        return ""
+        try:
+            return "\n".join(self._job_last_attempt_unified_logs)
+        except Exception as e:
+            logger.warning(f"Could not fetch stdout: {e}")
+            return ""
 
     @property
     def stderr(self):
-        # TODO Implement fetching logs from AWS Batch Task
+        # TODO Implement non-unified logging
         return ""
 
     @property
     def duration(self):
-        # TODO Implement fetching execution duration from AWS Batch Task
-        return None
+        try:
+            return self._job_last_attempt_duration
+        except Exception as e:
+            logger.warning(f"Could not determine duration: {e}")
+            return None
+
+    @property
+    def _batch_client(self):
+        if self.__batch_client is None:
+            self.__batch_client = boto3.client("batch")
+        return self.__batch_client
+
+    @property
+    def _logs_client(self):
+        if self.__logs_client is None:
+            self.__logs_client = boto3.client("logs")
+        return self.__logs_client
+
+    @property
+    def _queue_arn(self):
+        if self._requires_gpu:
+            return settings.COMPONENTS_AWS_BATCH_GPU_QUEUE_ARN
+        else:
+            return settings.COMPONENTS_AWS_BATCH_CPU_QUEUE_ARN
+
+    @property
+    def _job_summary(self):
+        response = self._batch_client.list_jobs(
+            jobQueue=self._queue_arn,
+            filters=[{"name": "JOB_NAME", "values": [self._job_id]}],
+        )
+
+        job_summary_list = response["jobSummaryList"]
+
+        if len(job_summary_list) != 1:
+            raise RuntimeError(
+                f"{len(job_summary_list)} job(s) found for with name {self._job_id}"
+            )
+
+        return job_summary_list[0]
+
+    @property
+    def _job_description(self):
+        job_id = self._job_summary["jobId"]
+        response = self._batch_client.describe_jobs(jobs=[job_id])
+
+        job_descriptions = response["jobs"]
+
+        if len(job_descriptions) != 1:
+            raise RuntimeError(
+                f"{len(job_descriptions)} job(s) found for with name {self._job_id}"
+            )
+
+        return job_descriptions[0]
+
+    @property
+    def _job_last_attempt_log_stream_name(self):
+        return self._job_description["attempts"][-1]["container"][
+            "logStreamName"
+        ]
+
+    @property
+    def _job_last_attempt_unified_logs(self):
+        response = self._logs_client.get_log_events(
+            logGroupName="/aws/batch/job",
+            logStreamName=self._job_last_attempt_log_stream_name,
+            limit=LOGLINES,
+            startFromHead=False,
+        )
+        events = response["events"]
+
+        loglines = [
+            # Match the format of the docker logs
+            f"{self._timestamp_to_datetime(e['timestamp']).isoformat()} {e['message']}"
+            for e in events
+        ]
+
+        return loglines
+
+    @staticmethod
+    def _timestamp_to_datetime(timestamp):
+        """Convert AWS timestamps (ms from epoch) to datetime"""
+        return datetime.fromtimestamp(timestamp * 0.001, tz=timezone.utc)
+
+    @property
+    def _job_last_attempt_duration(self):
+        attempt_info = self._job_description["attempts"][-1]
+        started_at = self._timestamp_to_datetime(attempt_info["startedAt"])
+        stopped_at = self._timestamp_to_datetime(attempt_info["stoppedAt"])
+        return stopped_at - started_at
 
     @property
     def _job_directory(self):
@@ -131,31 +258,87 @@ class AWSBatchExecutor:
                 for chunk in fs.chunks():
                     fd.write(chunk)
 
-    def _copy_to_output(self):
-        # TODO This task is just for testing
-        res = {}
-        files = {x for x in self._input_directory.rglob("*") if x.is_file()}
+    @property
+    def _resource_requirements(self):
+        requirements = [
+            # boto requires strings rather than ints
+            {"type": "MEMORY", "value": str(1024 * self._memory_limit)},
+            {
+                "type": "VCPU",
+                "value": str(4 if self._memory_limit > 16 else 2),
+            },
+        ]
+        if self._requires_gpu:
+            requirements.append({"type": "GPU", "value": "1"})
+        return requirements
 
-        for file in files:
-            try:
-                with open(file) as f:
-                    val = json.loads(f.read())
-            except Exception:
-                val = "file"
+    def _register_job_definition(self):
+        response = self._batch_client.register_job_definition(
+            jobDefinitionName=self._job_id,
+            type="container",
+            containerProperties={
+                # AWS batch does not appear to support dockerSecurityOptions,
+                # so security_opt, cap_drop are not set. However, the batch
+                # instances are heavily locked down.
+                # Also no way to set network_disabled, cpu_period, cpu_quota,
+                # cpu_shares, cpuset_cpus or runtime on batch
+                "image": self._exec_image_repo_tag,
+                "resourceRequirements": self._resource_requirements,
+                "linuxParameters": {
+                    "devices": [
+                        {
+                            "containerPath": "/input",
+                            "hostPath": str(self._input_directory),
+                            "permissions": ["READ"],
+                        },
+                        {
+                            "containerPath": "/output",
+                            "hostPath": str(self._output_directory),
+                            "permissions": ["WRITE"],
+                        },
+                    ],
+                    "initProcessEnabled": True,
+                    "maxSwap": 0,
+                    "swappiness": 0,
+                },
+                "ulimits": [
+                    {
+                        "name": "nproc",
+                        "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
+                        "softLimit": settings.COMPONENTS_PIDS_LIMIT,
+                    }
+                ],
+                "privileged": False,
+                "user": "nobody",
+            },
+            timeout={
+                "attemptDurationSeconds": settings.CELERY_TASK_TIME_LIMIT
+            },
+            platformCapabilities=["EC2"],
+            propagateTags=True,
+        )
+        return response["jobDefinitionArn"]
 
-            res[str(file.absolute())] = val
+    def _submit_job(self, *, job_definition_arn):
+        self._batch_client.submit_job(
+            jobName=self._job_id,
+            jobQueue=self._queue_arn,
+            jobDefinition=job_definition_arn,
+        )
 
-            new_file = self._output_directory / file.relative_to(
-                self._input_directory
+    def _deregister_job_definitions(self):
+        response = self._batch_client.describe_job_definitions(
+            jobDefinitionName=self._job_id,
+        )
+        next_token = response.get("nextToken")
+
+        for job_definition in response["jobDefinitions"]:
+            self._batch_client.deregister_job_definition(
+                jobDefinition=job_definition["jobDefinitionArn"],
             )
-            new_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(file, new_file)
 
-        for output_filename in ["results", "metrics"]:
-            with open(
-                self._output_directory / f"{output_filename}.json", "w"
-            ) as f:
-                f.write(json.dumps(res))
+        if next_token:
+            self._deregister_job_definitions()
 
     def _create_images_result(self, *, interface):
         base_dir = Path(
@@ -169,7 +352,7 @@ class AWSBatchExecutor:
         importer_result = import_images(
             input_directory=base_dir,
             builders=[image_builder_mhd, image_builder_tiff],
-            # TODO add option to not recurse subdirectories
+            recurse_subdirectories=False,
         )
 
         if len(importer_result.new_images) == 0:

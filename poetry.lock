@@ -6,7 +6,6 @@ category = "dev"
 optional = false
 python-versions = "*"
 
-
 [[package]]
 name = "amqp"
 version = "5.0.6"
@@ -113,20 +112,23 @@ webencodings = "*"
 
 [[package]]
 name = "boto3"
-version = "1.18.6"
+version = "1.18.14"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.6"
 
 [package.dependencies]
-botocore = ">=1.21.6,<1.22.0"
+botocore = ">=1.21.14,<1.22.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.5.0,<0.6.0"
 
+[package.extras]
+crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
+
 [[package]]
 name = "botocore"
-version = "1.21.6"
+version = "1.21.14"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -1204,7 +1206,7 @@ test = ["hypothesis (>=3.58)", "pytest (>=6.0)", "pytest-xdist"]
 
 [[package]]
 name = "panimg"
-version = "0.3.1"
+version = "0.3.2"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
@@ -2226,7 +2228,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "9d1d62bdaeffad2dc2554c07a25a5e3736a8fe4fc489378669f35d882de5e4cb"
+content-hash = "66642d2e6aa6134d6c8ba95b03d801b0cb21a6d84f39065fb660f3b72350c86d"
 
 [metadata.files]
 alabaster = [
@@ -2271,12 +2273,12 @@ bleach = [
     {file = "bleach-3.3.1.tar.gz", hash = "sha256:306483a5a9795474160ad57fce3ddd1b50551e981eed8e15a582d34cef28aafa"},
 ]
 boto3 = [
-    {file = "boto3-1.18.6-py3-none-any.whl", hash = "sha256:68fbc8b7c13448f53164692163cc056fa242f8d7c39abbb77efc67b174b8f2a9"},
-    {file = "boto3-1.18.6.tar.gz", hash = "sha256:a0f5a806d072bd532c86ef10a2a5f7f1ca7e8e0e506561a21ab5d462a93aa810"},
+    {file = "boto3-1.18.14-py3-none-any.whl", hash = "sha256:611037785a35517d2a65339ad7531d7a223ce41a5c9a3968e2c14e64f6224f65"},
+    {file = "boto3-1.18.14.tar.gz", hash = "sha256:20516c8d0cb13d3d99496828d4b5dce82c254ce4c0163254c89d825ba9c65d30"},
 ]
 botocore = [
-    {file = "botocore-1.21.6-py3-none-any.whl", hash = "sha256:c92dc2b69aec36b7482e5b05ac0a00d65ac972d745a74546942f09c95e68d335"},
-    {file = "botocore-1.21.6.tar.gz", hash = "sha256:cabff036f702411f47c6dae09134315e0b524c8eda6bb1de99ee75fc1ee07f7f"},
+    {file = "botocore-1.21.14-py3-none-any.whl", hash = "sha256:7f64424def270f3bb8e29da8c9120153a7f3ff5a32a517cc64a66f53d70ecec5"},
+    {file = "botocore-1.21.14.tar.gz", hash = "sha256:45656938d7fb043f06cc1a013f276caa0193ab7cc4d71874a32c18910c1f8f8d"},
 ]
 brotli = [
     {file = "Brotli-1.0.9-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:268fe94547ba25b58ebc724680609c8ee3e5a843202e9a381f6f9c5e8bdb5c70"},
@@ -2880,8 +2882,8 @@ pandas = [
     {file = "pandas-1.3.1.tar.gz", hash = "sha256:341935a594db24f3ff07d1b34d1d231786aa9adfa84b76eab10bf42907c8aed3"},
 ]
 panimg = [
-    {file = "panimg-0.3.1-py3-none-any.whl", hash = "sha256:9587366b65a902119ea1e055b1f300e5ac0fe99b2d8883861db684906a3825fc"},
-    {file = "panimg-0.3.1.tar.gz", hash = "sha256:95a9c88bd67084814be87fc064fbf9637759b44e48d59580d1ea470335955610"},
+    {file = "panimg-0.3.2-py3-none-any.whl", hash = "sha256:5555d4d7cad1f1ed518d54ed95a39364c30680d6356c0dea37a468722a168ebd"},
+    {file = "panimg-0.3.2.tar.gz", hash = "sha256:b81b415ed4167ad97e0cb10a1d7a8b2afaffcb9b2d5a535154ad4c2134aef627"},
 ]
 pillow = [
     {file = "Pillow-8.3.1-1-cp36-cp36m-win_amd64.whl", hash = "sha256:fd7eef578f5b2200d066db1b50c4aa66410786201669fb76d5238b007918fb24"},

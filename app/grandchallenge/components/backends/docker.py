@@ -2,7 +2,6 @@ import io
 import json
 import logging
 import os
-import re
 import sys
 import tarfile
 from contextlib import contextmanager
@@ -29,34 +28,11 @@ from requests import HTTPError
 
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import ComponentException
+from grandchallenge.components.backends.utils import LOGLINES, user_error
 
 logger = logging.getLogger(__name__)
 
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
-LOGLINES = 2000  # The number of loglines to keep
-
-# Docker logline error message with optional RFC3339 timestamp
-LOGLINE_REGEX = r"^(?P<timestamp>([\d]+)-(0[1-9]|1[012])-(0[1-9]|[12][\d]|3[01])[Tt]([01][\d]|2[0-3]):([0-5][\d]):([0-5][\d]|60)(\.[\d]+)?(([Zz])|([\+|\-]([01][\d]|2[0-3]):[0-5][\d])))?(?P<error_message>.*)$"
-
-
-def user_error(obj: str):
-    """
-    Filter an error message to just return the last, none-empty line. Used
-    to return the last line of a traceback to a user.
-
-    :param obj: A string with newlines
-    :return: The last, none-empty line of obj
-    """
-    pattern = re.compile(LOGLINE_REGEX, re.MULTILINE)
-
-    error_message = "No errors were reported in the logs."
-
-    for m in re.finditer(pattern, obj):
-        e = m.group("error_message").strip()
-        if e:
-            error_message = e
-
-    return error_message
 
 
 class DockerConnection:
@@ -72,16 +48,16 @@ class DockerConnection:
         exec_image_sha256: str,
         exec_image_repo_tag: str,
         exec_image_file: File,
-        memory_limit: int = settings.COMPONENTS_MEMORY_LIMIT,
+        memory_limit: int,
+        requires_gpu: bool,
     ):
         super().__init__()
         self._job_id = job_id
         self._exec_image_sha256 = exec_image_sha256
         self._exec_image_repo_tag = exec_image_repo_tag
         self._exec_image_file = exec_image_file
-        self._memory_limit = min(
-            memory_limit, settings.COMPONENTS_MEMORY_LIMIT
-        )
+        self._memory_limit = memory_limit
+        self._requires_gpu = requires_gpu
 
         self.__client = None
 
