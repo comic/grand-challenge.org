@@ -833,8 +833,11 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 Question.AnswerType.MULTIPLE_CHOICE,
                 Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
             ]:
+                human_readable_answers = [
+                    options[gt["question"]].get(a, a) for a in gt["answer"]
+                ]
                 human_readable_answer = ", ".join(
-                    options[gt["question"]].get(a) for a in gt["answer"]
+                    human_readable_answers.sort()
                 )
             else:
                 human_readable_answer = options.get(gt["question"], {}).get(
@@ -1603,12 +1606,11 @@ class Answer(UUIDModel):
             Question.AnswerType.MULTIPLE_CHOICE,
             Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ):
-            options = self.question.options.filter(pk__in=self.answer).values(
-                "pk", "title"
+            return ", ".join(
+                self.question.options.filter(pk__in=self.answer)
+                .order_by("title")
+                .values_list("title", flat=True)
             )
-            order_in_answer = {pk: i for i, pk in enumerate(self.answer)}
-            options = sorted(options, key=lambda d: order_in_answer[d["pk"]])
-            return ", ".join(option["title"] for option in options)
         return self.answer
 
     def calculate_score(self, ground_truth):
