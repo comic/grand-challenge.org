@@ -5,7 +5,7 @@ from machina.apps.forum.models import Forum
 from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.notifications.models import Notification
-from tests.factories import UserFactory
+from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import (
     ForumFactory,
     PostFactory,
@@ -123,3 +123,32 @@ def test_follow_clean_up_after_forum_removal():
     f1.delete()
 
     assert not is_following(u, f1)
+
+
+@pytest.mark.django_db
+def test_notification_for_actor_only_when_only_action_object_specified():
+    # When an action does not have a target, but an action object instead,
+    # only the actor of the action should get notified.
+    # Though not intuitive, currently this is necessary to allow sending
+    # notifications to new challenge admins without also notifying
+    # existing challenge admins.
+    # If the challenge were the target or the actor of the action instead,
+    # all existing challenge admins would get notified as well.
+
+    user = UserFactory()
+    admin = UserFactory()
+    # create a challenge with user as admin
+    challenge = ChallengeFactory(creator=admin)
+
+    # clear existing notifications for easier testing below
+    Notification.objects.all().delete()
+
+    # add user as admin to challenge
+    challenge.add_admin(user)
+    # under the hood this sends an action with the challenge as action object
+    # and the user as actor
+    # i.e., action.send(sender=user, verb="added as admin for", action_object=challenge)
+
+    assert Notification.objects.count() == 1
+    assert Notification.objects.get().user == user
+    assert Notification.objects.get().user != admin
