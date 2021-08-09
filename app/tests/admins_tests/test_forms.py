@@ -1,7 +1,7 @@
 import pytest
-from django.core import mail
 
 from grandchallenge.admins.forms import AdminsForm
+from grandchallenge.notifications.models import Notification
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
@@ -11,6 +11,9 @@ def test_admins_add(client, two_challenge_sets):
     user = UserFactory()
     assert not two_challenge_sets.challenge_set_1.challenge.is_admin(user=user)
     assert not two_challenge_sets.challenge_set_2.challenge.is_admin(user=user)
+    # clear all notifications for easier testing below
+    Notification.objects.all().delete()
+
     response = get_view_for_user(
         viewname="admins:update",
         client=client,
@@ -20,12 +23,13 @@ def test_admins_add(client, two_challenge_sets):
         user=two_challenge_sets.challenge_set_1.admin,
     )
     assert response.status_code == 302
-    email = mail.outbox[-1]
-    assert (
-        two_challenge_sets.challenge_set_1.challenge.short_name
-        in email.subject
+    # adding an admin results in a notification for the new admin only
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.get()
+    assert two_challenge_sets.challenge_set_1.challenge.short_name in str(
+        notification.action
     )
-    assert user.email in email.to
+    assert user == notification.user
     assert two_challenge_sets.challenge_set_1.challenge.is_admin(user=user)
     assert not two_challenge_sets.challenge_set_2.challenge.is_admin(user=user)
 

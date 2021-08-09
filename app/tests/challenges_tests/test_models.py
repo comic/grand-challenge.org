@@ -6,6 +6,7 @@ from django.db.models import ProtectedError
 from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.notifications.models import Notification
 from tests.factories import ChallengeFactory, UserFactory
 from tests.notifications_tests.factories import TopicFactory
 
@@ -65,8 +66,11 @@ def test_participants_follow_forum(group):
     remove_method(user=u)
     assert is_following(user=u, obj=c.forum) is False
 
-    # No actions should be created
-    assert Action.objects.exists() is False
+    # No actions involving the forum should be created
+    for i in Action.objects.all():
+        assert c.forum != i.target
+        assert c.forum != i.action_object
+        assert c.forum != i.actor
 
 
 @pytest.mark.django_db
@@ -75,11 +79,13 @@ def test_non_posters_notified(group):
     p = UserFactory()
     u = UserFactory()
     c = ChallengeFactory()
-
     c.add_admin(user=p)
 
     add_method = getattr(c, f"add_{group}")
     add_method(user=u)
+
+    # delete all notifications for easier testing below
+    Notification.objects.all().delete()
 
     TopicFactory(forum=c.forum, poster=p, type=Topic.TOPIC_ANNOUNCE)
 

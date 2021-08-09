@@ -1,3 +1,4 @@
+import actstream
 from actstream import action
 from actstream.actions import follow, unfollow
 from actstream.models import Follow
@@ -111,6 +112,13 @@ def update_editor_follows(  # noqa: C901
                 follow(
                     user=user, obj=obj, actor_only=False, send_action=False,
                 )
+                # only new admins of a challenge get notified
+                if obj._meta.model_name == "challenge":
+                    actstream.action.send(
+                        sender=user,
+                        verb="added as admin for",
+                        action_object=obj,
+                    )
             elif action == "pre_remove" or action == "pre_clear":
                 unfollow(user=user, obj=obj, send_action=False)
 
