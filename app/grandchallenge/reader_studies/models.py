@@ -1603,11 +1603,12 @@ class Answer(UUIDModel):
             Question.AnswerType.MULTIPLE_CHOICE,
             Question.AnswerType.MULTIPLE_CHOICE_DROPDOWN,
         ):
-            return ", ".join(
-                self.question.options.filter(pk__in=self.answer).values_list(
-                    "title", flat=True
-                )
+            options = self.question.options.filter(pk__in=self.answer).values(
+                "pk", "title"
             )
+            order_in_answer = {pk: i for i, pk in enumerate(self.answer)}
+            options = sorted(options, key=lambda d: order_in_answer[d["pk"]])
+            return ", ".join(option["title"] for option in options)
         return self.answer
 
     def calculate_score(self, ground_truth):
