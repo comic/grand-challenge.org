@@ -285,22 +285,32 @@ class AWSBatchExecutor:
                 "image": self._exec_image_repo_tag,
                 "resourceRequirements": self._resource_requirements,
                 "linuxParameters": {
-                    "devices": [
-                        {
-                            "containerPath": "/input",
-                            "hostPath": str(self._input_directory),
-                            "permissions": ["READ"],
-                        },
-                        {
-                            "containerPath": "/output",
-                            "hostPath": str(self._output_directory),
-                            "permissions": ["WRITE"],
-                        },
-                    ],
                     "initProcessEnabled": True,
                     "maxSwap": 0,
                     "swappiness": 0,
                 },
+                "volumes": [
+                    {
+                        "name": f"{self._job_id}-input",
+                        "host": {"sourcePath": str(self._input_directory)},
+                    },
+                    {
+                        "name": f"{self._job_id}-output",
+                        "host": {"sourcePath": str(self._output_directory)},
+                    },
+                ],
+                "mountPoints": [
+                    {
+                        "containerPath": "/input",
+                        "sourceVolume": f"{self._job_id}-input",
+                        "readOnly": True,
+                    },
+                    {
+                        "containerPath": "/output",
+                        "sourceVolume": f"{self._job_id}-output",
+                        "readOnly": False,
+                    },
+                ],
                 "ulimits": [
                     {
                         "name": "nproc",
