@@ -1206,7 +1206,7 @@ test = ["hypothesis (>=3.58)", "pytest (>=6.0)", "pytest-xdist"]
 
 [[package]]
 name = "panimg"
-version = "0.3.2"
+version = "0.4.0"
 description = "Conversion of medical images to MHA and TIFF."
 category = "main"
 optional = false
@@ -1219,8 +1219,11 @@ numpy = "*"
 openslide-python = "*"
 Pillow = "*"
 pydantic = "*"
-pydicom = "*"
+pydicom = ">=2.2"
 pylibjpeg = "*"
+pylibjpeg-libjpeg = "*"
+pylibjpeg-openjpeg = "*"
+pylibjpeg-rle = "*"
 pyvips = "*"
 SimpleITK = "*"
 tifffile = "*"
@@ -1323,7 +1326,7 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pydicom"
-version = "2.1.2"
+version = "2.2.0"
 description = "Pure python package for DICOM medical file reading and writing"
 category = "main"
 optional = false
@@ -1366,6 +1369,17 @@ python-versions = ">=3.6"
 numpy = "*"
 pylibjpeg-openjpeg = "*"
 pylibjpeg-rle = "*"
+
+[[package]]
+name = "pylibjpeg-libjpeg"
+version = "1.2.0"
+description = "A Python wrapper for libjpeg, with a focus on use as a plugin for for pylibjpeg"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+numpy = ">=1.16.0"
 
 [[package]]
 name = "pylibjpeg-openjpeg"
@@ -2882,8 +2896,8 @@ pandas = [
     {file = "pandas-1.3.1.tar.gz", hash = "sha256:341935a594db24f3ff07d1b34d1d231786aa9adfa84b76eab10bf42907c8aed3"},
 ]
 panimg = [
-    {file = "panimg-0.3.2-py3-none-any.whl", hash = "sha256:5555d4d7cad1f1ed518d54ed95a39364c30680d6356c0dea37a468722a168ebd"},
-    {file = "panimg-0.3.2.tar.gz", hash = "sha256:b81b415ed4167ad97e0cb10a1d7a8b2afaffcb9b2d5a535154ad4c2134aef627"},
+    {file = "panimg-0.4.0-py3-none-any.whl", hash = "sha256:0b0721f74e00c103197bc0f7eb118504ba6a536940ac7eb904e9c9cdb8c4a1e7"},
+    {file = "panimg-0.4.0.tar.gz", hash = "sha256:440ca2acef490938504c7f66a5050e2e15707ed2006e4590fb1bd2ea50cf7f29"},
 ]
 pillow = [
     {file = "Pillow-8.3.1-1-cp36-cp36m-win_amd64.whl", hash = "sha256:fd7eef578f5b2200d066db1b50c4aa66410786201669fb76d5238b007918fb24"},
@@ -3005,8 +3019,8 @@ pydantic = [
     {file = "pydantic-1.8.2.tar.gz", hash = "sha256:26464e57ccaafe72b7ad156fdaa4e9b9ef051f69e175dbbb463283000c05ab7b"},
 ]
 pydicom = [
-    {file = "pydicom-2.1.2-py3-none-any.whl", hash = "sha256:d97f53a7b269dbd7414d18342f1b70f80d7d35dc4e479316bab146daac0e0c15"},
-    {file = "pydicom-2.1.2.tar.gz", hash = "sha256:65f36820c5fec24b4e7ca45b7dae93e054ed269d55f92681863d39d30459e2fd"},
+    {file = "pydicom-2.2.0-py3-none-any.whl", hash = "sha256:f55f236069d7f0445b5d0dcca7e8733ef17c39e87d6e06e0fac7b9a91442e8a9"},
+    {file = "pydicom-2.2.0.tar.gz", hash = "sha256:f8f5f5d7d5a6745e963dbeb8d44da1243cdc6910f64d1f36b055bc6e5a9aa25f"},
 ]
 pygments = [
     {file = "Pygments-2.9.0-py3-none-any.whl", hash = "sha256:d66e804411278594d764fc69ec36ec13d9ae9147193a1740cd34d272ca383b8e"},
@@ -3019,6 +3033,29 @@ pyjwt = [
 pylibjpeg = [
     {file = "pylibjpeg-1.3.0-py3-none-any.whl", hash = "sha256:0436dfbe1141e9ef360b9e94546d95352257f96eabdcdab638fde31c0f816e18"},
     {file = "pylibjpeg-1.3.0.tar.gz", hash = "sha256:5115ee908301737874312d28804db5891bb8e96ea8f9caf90d34621e8ca67879"},
+]
+pylibjpeg-libjpeg = [
+    {file = "pylibjpeg-libjpeg-1.2.0.tar.gz", hash = "sha256:c88f32f8ef75ff0aae254da4ca5e8580f45e40ab1347b5e198ac7b1d66b49383"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:01f427527a17ef75c0ddbe8c87b5d4c34d03d741b8310bf75c421bcddf8c1934"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:91e4109f8ddf7544e2241cee03d984091e3f8311aedfb85e88cad8e3a4a564e8"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:09782aac63c05edf0c906189dfe32b91b8d00fc603e1ca5c734bc5ff55672677"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp36-cp36m-win32.whl", hash = "sha256:eed34aff30b87d9384d7840701d8ebde46825c4a60190d23e38150702624a654"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp36-cp36m-win_amd64.whl", hash = "sha256:da78b3880f3fe448b862d51c7f3f0415fe55ec1bce624b5b854fde69ef7d7573"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:fefac98521569f55b449544d902359fc12948362c6333e4b87a31a7ab50026f7"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:8e9a4ad8b7e2db448e426cac57c0f420bed270b2a73197f12a5dbae4c02ea94d"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:345cd0468ba65a4cc609848a0e2d758d765c75c7b0249d34baa1f900e0f8c683"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp37-cp37m-win32.whl", hash = "sha256:3c386ccabf1d416f059a7c6e41a44789d39b0ebe937b73a636108d078e7ba066"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp37-cp37m-win_amd64.whl", hash = "sha256:2e16532e1a33b6aa19f3c6842e9f27015f16172ab4773ced86dcb60406b22c54"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:87df58e71fd310217e753604a3059494411997eb22ecd608550d52f097ee8985"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:4067d751d0a69e406e61b3262fdbd9387f95d76c65fdc8db9fd63451fd2c0b10"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:04f21e74903d6ead2fff9cc59b8e755e4ad1b88143e4d79ce4afdf7a60d04574"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp38-cp38-win32.whl", hash = "sha256:d66c78a9ca24576d3fcf755c4fecf651fae6daac8c46dc20e0dda2ae68519ecb"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp38-cp38-win_amd64.whl", hash = "sha256:ae60ca5251d0f740176142182285f597f6c564014cac038c7457b015612bc2d8"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:a188e72025929938a1efb02b2b2d068dc05abd9986209e2a537c04fb3bef9319"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp39-cp39-manylinux2010_i686.whl", hash = "sha256:984be91d4e861c31ad9f0425495c74963e73d7aa1b933edc3a2aadab8a822a05"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:c278ec57788b3751353e1c588da29d4ec52089e331265246297f4762961dd7ae"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp39-cp39-win32.whl", hash = "sha256:e31655aa29e0ea715cecb1bf3b43b5db66bf8d8a12e0117f526193033f635289"},
+    {file = "pylibjpeg_libjpeg-1.2.0-cp39-cp39-win_amd64.whl", hash = "sha256:282208df3ceb344174761a5d19c3bdea98385fac5a76e1a8bb624f165365c67f"},
 ]
 pylibjpeg-openjpeg = [
     {file = "pylibjpeg-openjpeg-1.1.1.tar.gz", hash = "sha256:e7adfd8e2c63661b75219d5ae381ac50381054df41ca94d0d01ddfbe362a66cc"},
