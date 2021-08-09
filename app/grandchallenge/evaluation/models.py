@@ -1,6 +1,8 @@
 import logging
 from urllib.parse import parse_qs, urljoin, urlparse
 
+from actstream import action
+from actstream.actions import follow
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -25,10 +27,6 @@ from grandchallenge.core.validators import (
     ExtensionValidator,
     JSONValidator,
     MimeTypeValidator,
-)
-from grandchallenge.evaluation.emails import (
-    send_failed_evaluation_email,
-    send_successful_evaluation_email,
 )
 from grandchallenge.evaluation.tasks import calculate_ranks, create_evaluation
 from grandchallenge.subdomains.utils import reverse
@@ -583,6 +581,12 @@ class Submission(UUIDModel):
 
         if adding:
             self.assign_permissions()
+            followers = list(self.phase.challenge.get_admins())
+            followers.append(self.creator)
+            for user in followers:
+                follow(
+                    user=user, obj=self, actor_only=False, send_action=False,
+                )
             e = create_evaluation.signature(
                 kwargs={"submission_pk": self.pk}, immutable=True,
             )
@@ -697,10 +701,10 @@ class Evaluation(UUIDModel, ComponentJob):
         res = super().update_status(*args, **kwargs)
 
         if self.status == self.FAILURE:
-            send_failed_evaluation_email(self)
+            action.send(sender=self, verb="failed", target=self.submission)
 
         if self.status == self.SUCCESS:
-            send_successful_evaluation_email(self)
+            action.send(sender=self, verb="succeeded", target=self.submission)
 
         return res
 
