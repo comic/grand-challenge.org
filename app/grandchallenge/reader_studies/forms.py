@@ -226,6 +226,7 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
                     Formset("options"),
                     css_class="options-formset",
                 ),
+                Field("scoring_function"),
                 Field("required"),
                 Field("image_port"),
                 Field("direction"),
@@ -254,6 +255,7 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
             "question_text",
             "help_text",
             "answer_type",
+            "scoring_function",
             "required",
             "image_port",
             "direction",
@@ -270,6 +272,7 @@ class QuestionForm(SaveFormInitMixin, ModelForm):
                 "clarification to the reader about this question."
             ),
             "answer_type": "The type of answer that the user will give.",
+            "scoring_function": "The metric applied for scoring the reader.",
             "image_port": (
                 "If the user will make a bounding box or measurement, "
                 "on which image port should they do it? "

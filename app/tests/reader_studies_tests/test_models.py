@@ -59,6 +59,7 @@ def test_read_only_fields():
     assert q.read_only_fields == [
         "question_text",
         "answer_type",
+        "scoring_function",
         "image_port",
         "required",
     ]

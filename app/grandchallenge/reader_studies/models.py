@@ -21,7 +21,7 @@ from guardian.shortcuts import assign_perm, get_objects_for_group, remove_perm
 from jsonschema import RefResolutionError
 from numpy.random.mtrand import RandomState
 from simple_history.models import HistoricalRecords
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, roc_auc_score
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
@@ -882,9 +882,11 @@ class Question(UUIDModel):
 
     class ScoringFunction(models.TextChoices):
         ACCURACY = "ACC", "Accuracy score"
+        AUCROC = "AUC", "ROC AUC score"
 
     SCORING_FUNCTIONS = {
         ScoringFunction.ACCURACY: accuracy_score,
+        ScoringFunction.AUCROC: roc_auc_score,
     }
 
     EXAMPLE_FOR_ANSWER_TYPE = {
@@ -906,6 +908,11 @@ class Question(UUIDModel):
         choices=AnswerType.choices,
         default=AnswerType.SINGLE_LINE_TEXT,
     )
+    scoring_function = models.CharField(
+        max_length=3,
+        choices=ScoringFunction.choices,
+        default=ScoringFunction.ACCURACY,
+    )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
         max_length=10, choices=ImagePort.choices, blank=True, default=""
@@ -913,11 +920,6 @@ class Question(UUIDModel):
     required = models.BooleanField(default=True)
     direction = models.CharField(
         max_length=1, choices=Direction.choices, default=Direction.HORIZONTAL
-    )
-    scoring_function = models.CharField(
-        max_length=3,
-        choices=ScoringFunction.choices,
-        default=ScoringFunction.ACCURACY,
     )
     order = models.PositiveSmallIntegerField(default=100)
 
@@ -966,7 +968,13 @@ class Question(UUIDModel):
         this ``Question`` is fully editable, an empty list otherwise.
         """
         if not self.is_fully_editable:
-            return ["question_text", "answer_type", "image_port", "required"]
+            return [
+                "question_text",
+                "answer_type",
+                "scoring_function",
+                "image_port",
+                "required",
+            ]
         return []
 
     @property
@@ -993,9 +1001,7 @@ class Question(UUIDModel):
         else:
             ans = [answer]
             gt = [ground_truth]
-        return self.SCORING_FUNCTIONS[self.scoring_function](
-            ans, gt, normalize=True
-        )
+        return self.SCORING_FUNCTIONS[self.scoring_function](gt, ans)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
