@@ -13,6 +13,7 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.evaluation.models import Method
 from grandchallenge.evaluation.tasks import set_evaluation_inputs
+from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.factories import (
@@ -248,3 +249,63 @@ def test_non_zip_submission_failure(
         "7z-compressed files are not supported."
     )
     assert evaluation.status == evaluation.FAILURE
+
+
+@pytest.mark.django_db
+def test_evaluation_notifications(
+    client, evaluation_image, submission_file, settings
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # Try to upload a submission without a method in place
+    with capture_on_commit_callbacks(execute=True):
+        submission = SubmissionFactory(
+            predictions_file__from_path=submission_file
+        )
+    # Missing should result in notification for admins of the challenge
+    # There are 2 notifications here. The second is about admin addition to the
+    # challenge, both notifications are for the admin.
+    for notification in Notification.objects.all():
+        assert notification.user == submission.phase.challenge.creator
+    notifications = [
+        str(notification.action) for notification in Notification.objects.all()
+    ]
+    assert "no method for this submission" in str(notifications)
+
+    # Add method and upload a submission
+    eval_container, sha256 = evaluation_image
+    method = MethodFactory(
+        image__from_path=eval_container, image_sha256=sha256, ready=True
+    )
+    # clear notifications for easier testing later
+    Notification.objects.all().delete()
+    # create submission and wait for it to be evaluated
+    with capture_on_commit_callbacks(execute=True):
+        with capture_on_commit_callbacks(execute=True):
+            submission = SubmissionFactory(
+                predictions_file__from_path=submission_file, phase=method.phase
+            )
+    # creator of submission and admins of challenge should get notification
+    # about successful submission
+    recipients = list(submission.phase.challenge.get_admins())
+    recipients.append(submission.creator)
+    assert Notification.objects.count() == len(recipients)
+    for recipient in recipients:
+        assert str(recipient) in str(Notification.objects.all())
+    for notification in Notification.objects.all():
+        assert "succeeded" in str(notification.action)
+
+    Notification.objects.all().delete()
+
+    # update evaluation status to failed
+    evaluation = submission.evaluation_set.first()
+    evaluation.update_status(status=evaluation.FAILURE)
+    assert evaluation.status == evaluation.FAILURE
+    # notifications for admin and creator of submission
+    assert Notification.objects.count() == len(recipients)
+    for recipient in recipients:
+        assert str(recipient) in str(Notification.objects.all())
+    for notification in Notification.objects.all():
+        assert "failed" in str(notification.action)
