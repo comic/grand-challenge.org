@@ -836,9 +836,8 @@ class ReaderStudy(UUIDModel, TitleSlugDescriptionModel):
                 human_readable_answers = [
                     options[gt["question"]].get(a, a) for a in gt["answer"]
                 ]
-                human_readable_answer = ", ".join(
-                    human_readable_answers.sort()
-                )
+                human_readable_answers.sort()
+                human_readable_answer = ", ".join(human_readable_answers)
             else:
                 human_readable_answer = options.get(gt["question"], {}).get(
                     gt["answer"], gt["answer"]
