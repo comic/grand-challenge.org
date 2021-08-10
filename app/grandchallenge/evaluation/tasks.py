@@ -45,9 +45,9 @@ def create_evaluation(*, submission_pk):
     if not method:
         logger.info("No method ready for this submission")
         action.send(
-            sender=submission.creator,
+            sender=submission,
             verb="no method for this submission",
-            target=submission,
+            target=submission.phase,
         )
         return
 

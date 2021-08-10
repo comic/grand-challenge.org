@@ -60,7 +60,12 @@ def create_post_action(sender, *, instance, created, **_):
 @receiver(post_save, sender=Action)
 def create_notification(*, instance, **_):
     if instance.target:
-        follower_group = followers(instance.target)
+        if instance.target_content_type.model == "phase":
+            follower_group = list(instance.target.challenge.get_admins())
+            if instance.actor_content_type.model == "evaluation":
+                follower_group.append(instance.actor.submission.creator)
+        else:
+            follower_group = followers(instance.target)
         for follower in follower_group:
             # only send notifications to followers other than the poster
             if follower != instance.actor:
