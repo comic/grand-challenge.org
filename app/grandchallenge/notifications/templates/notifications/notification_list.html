@@ -40,17 +40,19 @@
                 <li class="list-group-item {% if object.context_class %}list-group-item-{{ object.context_class }}{% endif %} p-0">
                     <div class="d-flex justify-content-between">
                         <div class="py-2 pl-3">
-                            <input class="checkbox pr-1" name="checkbox" type="checkbox" id="{{ object.id }}"
+                            <input class="checkbox pr-1 mr-1" name="checkbox" type="checkbox" id="{{ object.id }}"
                                    value="{{ object.id }}" data-url="{% url 'api:notification-detail' pk=object.pk %}">
                             {% if not object.read %}
-                                <span class="text-primary align-middle ml-2"><i class="fa fa-circle pl-2"></i></span>
+                                <span class="text-primary align-middle mr-1"><i class="fa fa-circle pl-1"></i></span>
                             {% endif %}
                             {% get_content_type object.action.actor as actor_ct %}
                             {% if actor_ct %}
-                                {% if actor_ct.model == 'user' and object.action.actor != request.user %}
+                                {% if actor_ct.model == 'user' and object.action.actor != request.user and object.action.target_content_type.model != 'submission' %}
                                     {{ object.action.actor|user_profile_link }}
-                                {% elif actor_ct.model == 'user' and object.action.actor == request.user %}
+                                {% elif actor_ct.model == 'user' and object.action.actor == request.user and object.action.target_content_type.model != 'submission' %}
                                     You {% if 'were' in object.action.verb or 'was' in object.action.verb or 'created' in object.action.verb or 'is' in object.action.verb or 'posted' in object.action.verb or 'responded' in object.action.verb %} {% else %}were {% endif %}
+                                {% elif actor_ct.model == 'user' and object.action.target_content_type.model == 'submission' %}
+                                    The <a href="{{ object.action.target.get_absolute_url }}">submission</a> from {{ object.action.actor|user_profile_link }} could not be evaluated because of there is no valid evaluation method for the <a href="{{ object.action.target.phase.get_absolute_url }}">{{ object.action.target.phase}}</a>.
                                 {% elif actor_ct.model == 'algorithmpermissionrequest' or actor_ct.model == 'readerstudypermissionrequest' or actor_ct.model == 'archivepermissionrequest' %}
                                     Your registration request for <a href="{{ object.action.actor.base_object.get_absolute_url }}">{{ object.action.actor.object_name }}</a>
                                 {% elif actor_ct.model == 'registrationrequest' %}
@@ -74,7 +76,8 @@
                                     <span class="text-truncate font-italic text-muted align-middle mx-2 ">You can publish the result on the leaderboard <a href="{{ object.action.actor.get_absolute_url }}">here</a></span>
                                 {% endif %}
                             {% endif %}
-                            {% if actor_ct.model != 'evaluation' %}
+                            {% if actor_ct.model == 'evaluation' or actor_ct.model == 'user' and object.action.target_content_type.model == 'submission'  %}
+                            {% else %}
                                 {{ object.action.verb }}
                                 {% if object.action.action_object %}
                                     <a href="{{ object.action.action_object.get_absolute_url }}">{{ object.action.action_object }}</a>
