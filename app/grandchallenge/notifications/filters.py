@@ -61,6 +61,7 @@ FOLLOW_CHOICES = (
     ("algorithm_algorithms", "Algorithms"),
     ("challenge_challenges", "Challenges"),
     ("externalchallenge_challenges", "External Challenges"),
+    ("phase_evaluation", "Challenge Phase"),
 )
 
 
